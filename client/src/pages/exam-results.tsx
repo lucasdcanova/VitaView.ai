@@ -383,13 +383,14 @@ export default function ExamResults() {
                                 key={i}
                                 className={cn(
                                   "w-full rounded-t",
+                                  !metric.status ? "bg-gray-200" :
                                   metric.status === "normal" ? "bg-green-200" :
-                                  metric.status.includes("alt") || metric.status.includes("high") ? "bg-red-200" :
-                                  metric.status.includes("baix") || metric.status.includes("low") ? "bg-blue-200" :
+                                  metric.status.toLowerCase().includes("alt") || metric.status.toLowerCase().includes("high") ? "bg-red-200" :
+                                  metric.status.toLowerCase().includes("baix") || metric.status.toLowerCase().includes("low") ? "bg-blue-200" :
                                   "bg-amber-200"
                                 )}
                                 style={{ height: `${heightPercent}%` }}
-                                title={`${metric.value} ${metric.unit} - ${new Date(metric.createdAt || Date.now()).toLocaleDateString()}`}
+                                title={`${metric.value} ${metric.unit || ''} - ${new Date(metric.date || Date.now()).toLocaleDateString()}`}
                               />
                             );
                           })}

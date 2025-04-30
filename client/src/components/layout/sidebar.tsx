@@ -5,7 +5,9 @@ import {
   Upload, 
   History, 
   UserCog, 
-  LogOut 
+  LogOut,
+  LineChart,
+  Filter
 } from "lucide-react";
 
 type SidebarProps = {
@@ -55,56 +57,59 @@ export default function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) 
       </div>
       
       <nav className="p-4 space-y-1">
-        <Link href="/">
-          <a
-            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-              location === '/' 
-                ? 'bg-primary-50 text-primary-700' 
-                : 'hover:bg-gray-50 text-gray-700'
-            }`}
-          >
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            <span>Dashboard</span>
-          </a>
+        <Link href="/" 
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <LayoutDashboard className="mr-3 h-5 w-5" />
+          <span>Dashboard</span>
         </Link>
         
-        <Link href="/upload">
-          <a
-            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-              location === '/upload' 
-                ? 'bg-primary-50 text-primary-700' 
-                : 'hover:bg-gray-50 text-gray-700'
-            }`}
-          >
-            <Upload className="mr-3 h-5 w-5" />
-            <span>Enviar Exames</span>
-          </a>
+        <Link href="/upload"
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/upload' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <Upload className="mr-3 h-5 w-5" />
+          <span>Enviar Exames</span>
         </Link>
         
-        <Link href="/history">
-          <a
-            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-              location === '/history' 
-                ? 'bg-primary-50 text-primary-700' 
-                : 'hover:bg-gray-50 text-gray-700'
-            }`}
-          >
-            <History className="mr-3 h-5 w-5" />
-            <span>Histórico</span>
-          </a>
+        <Link href="/history"
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/history' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <History className="mr-3 h-5 w-5" />
+          <span>Histórico</span>
         </Link>
         
-        <Link href="/profile">
-          <a
-            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-              location === '/profile' 
-                ? 'bg-primary-50 text-primary-700' 
-                : 'hover:bg-gray-50 text-gray-700'
-            }`}
-          >
-            <UserCog className="mr-3 h-5 w-5" />
-            <span>Perfil</span>
-          </a>
+        <Link href="/results"
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/results' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <LineChart className="mr-3 h-5 w-5" />
+          <span>Resultados</span>
+        </Link>
+        
+        <Link href="/profile"
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/profile' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <UserCog className="mr-3 h-5 w-5" />
+          <span>Perfil</span>
         </Link>
         
         <button
