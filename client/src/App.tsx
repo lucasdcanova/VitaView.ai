@@ -12,6 +12,7 @@ import Dashboard from "@/pages/dashboard";
 import UploadExams from "@/pages/upload-exams";
 import ExamHistory from "@/pages/exam-history";
 import ExamReport from "@/pages/exam-report";
+import ExamResults from "@/pages/exam-results";
 import Profile from "@/pages/profile";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/upload" component={UploadExams} />
       <ProtectedRoute path="/history" component={ExamHistory} />
       <ProtectedRoute path="/report/:id" component={ExamReport} />
+      <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/profile" component={Profile} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
