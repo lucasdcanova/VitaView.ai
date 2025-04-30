@@ -2,8 +2,15 @@ import { users, exams, examResults, healthMetrics, notifications } from "@shared
 import type { User, InsertUser, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, desc, asc } from "drizzle-orm";
+
+// Fix for type issues
+type SessionStore = ReturnType<typeof createMemoryStore> | ReturnType<typeof connectPg>;
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 // Interface for all storage operations
 export interface IStorage {
@@ -36,7 +43,7 @@ export interface IStorage {
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 }
 
 export class MemStorage implements IStorage {
@@ -45,7 +52,7 @@ export class MemStorage implements IStorage {
   private examResults: Map<number, ExamResult>;
   private healthMetricsMap: Map<number, HealthMetric>;
   private notificationsMap: Map<number, Notification>;
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
   
   private userIdCounter: number = 1;
   private examIdCounter: number = 1;
@@ -209,4 +216,141 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: SessionStore;
+  
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool,
+      createTableIfMissing: true 
+    });
+  }
+
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+  
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  // Exam operations
+  async createExam(exam: InsertExam): Promise<Exam> {
+    const examWithDefaults = {
+      ...exam,
+      originalContent: "",
+    };
+    const [newExam] = await db.insert(exams).values(examWithDefaults).returning();
+    return newExam;
+  }
+
+  async getExam(id: number): Promise<Exam | undefined> {
+    const [exam] = await db.select().from(exams).where(eq(exams.id, id));
+    return exam;
+  }
+
+  async getExamsByUserId(userId: number): Promise<Exam[]> {
+    return await db.select().from(exams).where(eq(exams.userId, userId));
+  }
+
+  async updateExam(id: number, examData: Partial<Exam>): Promise<Exam | undefined> {
+    const [updatedExam] = await db
+      .update(exams)
+      .set(examData)
+      .where(eq(exams.id, id))
+      .returning();
+    return updatedExam;
+  }
+
+  async deleteExam(id: number): Promise<boolean> {
+    const result = await db.delete(exams).where(eq(exams.id, id));
+    return result.count > 0;
+  }
+
+  // Exam results operations
+  async createExamResult(result: InsertExamResult): Promise<ExamResult> {
+    const [newResult] = await db.insert(examResults).values(result).returning();
+    return newResult;
+  }
+
+  async getExamResult(id: number): Promise<ExamResult | undefined> {
+    const [result] = await db.select().from(examResults).where(eq(examResults.id, id));
+    return result;
+  }
+
+  async getExamResultByExamId(examId: number): Promise<ExamResult | undefined> {
+    const [result] = await db.select().from(examResults).where(eq(examResults.examId, examId));
+    return result;
+  }
+
+  // Health metrics operations
+  async createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric> {
+    const [newMetric] = await db.insert(healthMetrics).values(metric).returning();
+    return newMetric;
+  }
+
+  async getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]> {
+    return await db.select().from(healthMetrics).where(eq(healthMetrics.userId, userId));
+  }
+
+  async getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]> {
+    // Get all metrics for the user
+    const userMetrics = await this.getHealthMetricsByUserId(userId);
+    
+    // Group by name to get latest of each type
+    const metricsByName = new Map<string, HealthMetric>();
+    for (const metric of userMetrics) {
+      const existingMetric = metricsByName.get(metric.name);
+      if (!existingMetric || metric.date > existingMetric.date) {
+        metricsByName.set(metric.name, metric);
+      }
+    }
+    
+    return Array.from(metricsByName.values())
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, limit);
+  }
+
+  // Notification operations
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.date));
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+}
+
+// Switch from MemStorage to DatabaseStorage
+export const storage = new DatabaseStorage();
