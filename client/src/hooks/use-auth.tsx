@@ -38,10 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Login bem-sucedido",
-        description: "Bem-vindo ao HealthAnalytics!",
-      });
+      // Popup de login bem-sucedido removido conforme solicitado
     },
     onError: (error: Error) => {
       toast({
@@ -59,10 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Registro bem-sucedido",
-        description: "Sua conta foi criada com sucesso!",
-      });
+      // Popup de registro bem-sucedido removido conforme solicitado
     },
     onError: (error: Error) => {
       toast({
@@ -79,10 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
-      });
+      // Popup de logout removido conforme solicitado
     },
     onError: (error: Error) => {
       toast({

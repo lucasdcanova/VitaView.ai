@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import MobileNav from "@/components/layout/mobile-nav";
 import FileUpload from "@/components/ui/file-upload";
 import { 
   FileUpIcon, 
@@ -14,12 +12,7 @@ import {
 } from "lucide-react";
 
 export default function UploadExams() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [, navigate] = useLocation();
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
   
   const handleUploadComplete = (result: any) => {
     // If we have a result with an exam ID, navigate to the report page
