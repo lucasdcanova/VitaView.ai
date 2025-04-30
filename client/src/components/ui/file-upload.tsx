@@ -89,7 +89,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     },
     onSuccess: (openaiInterpretation) => {
       // Salvar o exame no banco de dados
-      const filename = document.querySelector('input[type=file]')?.files?.[0]?.name || 'Exame';
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const filename = input?.files?.[0]?.name || 'Exame';
       
       const examData = {
         name: filename.split('.')[0],
