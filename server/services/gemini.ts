@@ -1,6 +1,13 @@
 import type { Request, Response } from "express";
 import { storage } from "../storage";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { 
+  GoogleGenerativeAI, 
+  HarmCategory, 
+  HarmBlockThreshold,
+  GenerateContentRequest,
+  Content,
+  Part
+} from "@google/generative-ai";
 
 // Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
@@ -71,23 +78,19 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       fileType === 'pdf' ? 'application/pdf' :
       fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
     
-    // Create the content parts in the format expected by the API
-    const textPart = { text: prompt };
-    const imagePart = { 
-      inlineData: { 
-        data: fileContent,
-        mimeType
+    // Prepare parts for the Gemini API
+    const parts: Part[] = [
+      { text: prompt },
+      { 
+        inlineData: { 
+          data: fileContent,
+          mimeType
+        }
       }
-    };
-    
-    // Create a properly structured content object
-    const content = {
-      role: "user",
-      parts: [textPart, imagePart]
-    };
-    
+    ];
+  
     // Generate content using Gemini
-    const result = await model.generateContent(content);
+    const result = await model.generateContent(parts);
     const response = result.response;
     const text = response.text();
     

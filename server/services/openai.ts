@@ -178,8 +178,12 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
     
     // Prepara informações dos exames em ordem cronológica
     const examsInfo = examResults.map((result, index) => {
+      const examDate = result.createdAt || 
+                       (result as any).analysisDate || 
+                       new Date();
+      
       return `
-        Exame #${index + 1} - Data: ${new Date(result.createdAt).toLocaleDateString('pt-BR')}
+        Exame #${index + 1} - Data: ${new Date(examDate).toLocaleDateString('pt-BR')}
         ID: ${result.id}
         Resumo: ${result.summary}
         Análise detalhada: ${result.detailedAnalysis}
@@ -262,14 +266,18 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: User) {
     const firstExam = examResults[0];
     const lastExam = examResults[examResults.length - 1];
     
-    if (firstExam.healthMetrics && lastExam.healthMetrics) {
+    // Verificar se healthMetrics está disponível e é um array
+    const firstMetrics = Array.isArray(firstExam.healthMetrics) ? firstExam.healthMetrics : [];
+    const lastMetrics = Array.isArray(lastExam.healthMetrics) ? lastExam.healthMetrics : [];
+    
+    if (firstMetrics.length > 0 && lastMetrics.length > 0) {
       // Conta melhorias e pioras em métricas comuns
       let improvements = 0;
       let declines = 0;
       
       // Análise simplificada das métricas
-      firstExam.healthMetrics.forEach(firstMetric => {
-        const matchingLastMetric = lastExam.healthMetrics.find(m => m.name === firstMetric.name);
+      firstMetrics.forEach((firstMetric: any) => {
+        const matchingLastMetric = lastMetrics.find((m: any) => m.name === firstMetric.name);
         if (matchingLastMetric) {
           const firstStatus = firstMetric.status;
           const lastStatus = matchingLastMetric.status;
