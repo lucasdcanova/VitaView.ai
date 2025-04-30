@@ -221,7 +221,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             Selecionar arquivos
           </button>
           <input {...getInputProps()} />
-          <p className="text-xs text-gray-500 mt-4">Formatos suportados: PDF, JPEG, PNG</p>
+          <p className="text-xs text-gray-500 mt-4">Formatos suportados: PDF, JPEG, PNG (máx. 50MB)</p>
         </div>
       )}
       
