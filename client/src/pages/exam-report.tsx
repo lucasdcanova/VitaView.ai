@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import MobileNav from "@/components/layout/mobile-nav";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights } from "@/lib/api";
 import {
@@ -19,12 +18,30 @@ import {
   CheckCircle2,
   ArrowDown,
   ArrowUp,
-  Minus
+  Minus,
+  Info,
+  AlertTriangle,
+  AlertCircle,
+  BookOpen,
+  ChevronRight,
+  Heart,
+  Activity,
+  Apple,
+  Dumbbell,
+  Moon,
+  User,
+  Microscope,
+  FileText as FileMedical,
+  Clipboard,
+  LineChart,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardContent, 
+  CardDescription,
+  CardFooter,
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
@@ -37,6 +54,21 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type HealthInsights = {
   recommendations: string[];
@@ -64,14 +96,9 @@ type HealthInsights = {
 };
 
 export default function ExamReport() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState("metrics");
   const [match, params] = useRoute<{ id: string }>("/report/:id");
   const examId = match && params ? parseInt(params.id) : 0;
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
   
   const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
     queryKey: [`/api/exams/${examId}`],
@@ -85,7 +112,60 @@ export default function ExamReport() {
     enabled: !!examId && !!data?.result,
   });
   
-  const getFileIcon = (fileType?: string) => {
+  // Format relative date
+  const formatRelativeDate = (dateString?: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+  };
+  
+  // Get icon for a given lifestyle category
+  const getLifestyleIcon = (category: string) => {
+    switch (category) {
+      case 'diet':
+        return <Apple className="h-5 w-5 text-emerald-600" />;
+      case 'exercise':
+        return <Dumbbell className="h-5 w-5 text-blue-600" />;
+      case 'sleep':
+        return <Moon className="h-5 w-5 text-indigo-600" />;
+      case 'stress_management':
+        return <Heart className="h-5 w-5 text-rose-600" />;
+      default:
+        return <Activity className="h-5 w-5 text-primary-600" />;
+    }
+  };
+  
+  // Get background color for lifestyle card
+  const getLifestyleCardStyle = (category: string) => {
+    switch (category) {
+      case 'diet':
+        return 'bg-emerald-50 border-emerald-200';
+      case 'exercise':
+        return 'bg-blue-50 border-blue-200';
+      case 'sleep':
+        return 'bg-indigo-50 border-indigo-200';
+      case 'stress_management':
+        return 'bg-rose-50 border-rose-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
+    }
+  };
+  
+  // Get color for confidence level
+  const getConfidenceLevelColor = (level?: string) => {
+    switch (level) {
+      case 'alto':
+        return 'text-green-700 bg-green-50 border-green-200';
+      case 'médio':
+        return 'text-amber-700 bg-amber-50 border-amber-200';
+      case 'baixo':
+        return 'text-red-700 bg-red-50 border-red-200';
+      default:
+        return 'text-gray-700 bg-gray-50 border-gray-200';
+    }
+  };
+  
+  const getFileIcon = (fileType?: string, iconSize: number = 16) => {
     switch (fileType) {
       case 'pdf':
         return <FileText className="text-gray-500" size={16} />;
@@ -133,10 +213,10 @@ export default function ExamReport() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MobileHeader toggleSidebar={toggleSidebar} />
+      <MobileHeader />
       
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar />
         
         <main className="flex-1">
           <div className="p-4 md:p-6">
