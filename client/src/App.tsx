@@ -15,6 +15,7 @@ import ExamHistory from "@/pages/exam-history";
 import ExamReport from "@/pages/exam-report";
 import ExamResults from "@/pages/exam-results";
 import Profile from "@/pages/profile";
+import DiagnosisPage from "@/pages/diagnosis-page";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/upload" component={UploadExams} />
       <ProtectedRoute path="/history" component={ExamHistory} />
       <ProtectedRoute path="/report/:id" component={ExamReport} />
+      <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/profile" component={Profile} />
       <Route path="/auth" component={AuthPage} />

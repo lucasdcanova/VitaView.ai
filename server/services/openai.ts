@@ -28,13 +28,13 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       `;
     }
     
-    // Prompt aprimorado para OpenAI com ênfase em evidências científicas e análise atualizada
+    // Prompt aprimorado para OpenAI com ênfase em diagnósticos possíveis e análise baseada em evidências
     const prompt = `
       Você é um médico especialista em interpretação de exames laboratoriais e diagnóstico clínico.
       Sua análise é baseada em evidências científicas atualizadas e diretrizes médicas de 2024.
       
-      Por favor, analise os seguintes resultados de exames médicos e forneça recomendações
-      personalizadas de saúde, considerando todos os dados disponíveis.
+      Analise detalhadamente os seguintes resultados de exames médicos e forneça possíveis diagnósticos
+      e recomendações personalizadas de saúde, considerando todos os dados disponíveis.
       
       ${patientContext}
       
@@ -46,22 +46,35 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       
       Métricas de saúde: ${JSON.stringify(examResult.healthMetrics)}
       
-      Responda em formato JSON com as seguintes propriedades:
-      1. recommendations: array de recomendações de saúde personalizadas baseadas em evidências (5 itens)
-      2. specialists: array de especialistas recomendados para consulta (3-4 itens)
-      3. lifestyle: objeto com sugestões de estilo de vida {diet, exercise, sleep, stress_management}
-      4. riskFactors: array de potenciais fatores de risco identificados com níveis de evidência (3-5 itens)
-      5. contextualAnalysis: uma análise contextualizada considerando o histórico e perfil do paciente
-      6. healthParameters: objeto com os seguintes parâmetros de saúde:
+      Responda em formato JSON com EXATAMENTE as seguintes propriedades:
+      1. contextualAnalysis: uma análise contextualizada considerando o perfil do paciente e resultados dos exames
+      2. possibleDiagnoses: array de diagnósticos possíveis com:
+         - condition: nome da condição diagnosticada
+         - probability: probabilidade (alta/média/baixa)
+         - description: descrição breve da condição
+         - indicativeMarkers: array de marcadores nos exames que indicam esta condição
+      3. recommendations: array de recomendações de saúde personalizadas baseadas em evidências (5-6 itens)
+      4. specialists: array de especialistas recomendados para consulta com justificativa (3-4 itens)
+      5. lifestyle: objeto com sugestões detalhadas de estilo de vida:
+         - diet: recomendações alimentares específicas
+         - exercise: tipo, frequência e intensidade de exercícios recomendados
+         - sleep: hábitos de sono e recomendações
+         - stress_management: técnicas e práticas para gerenciamento do estresse
+      6. riskFactors: array de potenciais fatores de risco identificados com níveis de evidência (3-5 itens)
+      7. healthParameters: objeto com os seguintes parâmetros de saúde:
          - healthScore: pontuação global de saúde (0-100)
          - criticalAreas: áreas que precisam de atenção imediata
          - stableAreas: áreas com parâmetros estáveis ou saudáveis
          - improvementTrends: tendências de melhoria identificadas
          - worseningTrends: tendências de piora identificadas
-      7. evidenceBasedAssessment: objeto com:
-         - clinicalGuidelines: diretrizes clínicas relevantes para os resultados
-         - studyReferences: referências de estudos científicos relevantes
+      8. evidenceBasedAssessment: objeto com:
+         - clinicalGuidelines: diretrizes clínicas oficiais relevantes para os resultados (2-3 itens)
+         - studyReferences: referências de estudos científicos relevantes em formato de citação (2-4 itens)
          - confidenceLevel: nível de confiança na avaliação (alto, médio, baixo)
+    
+      Certifique-se de incluir diagnósticos possíveis baseados nos valores dos exames, mesmo que 
+      a probabilidade seja baixa. Para cada possível diagnóstico, liste os marcadores dos exames
+      que sustentam essa possibilidade.
     `;
     
     // Check if OpenAI API key is available
@@ -112,8 +125,22 @@ async function callOpenAIApi(prompt: string) {
 function getFallbackInsights(patientData?: any) {
   console.log("Using fallback health insights response");
   
-  // Base response com estrutura atualizada conforme novo formato
+  // Base response com estrutura atualizada conforme novo formato, incluindo diagnósticos possíveis
   const response = {
+    possibleDiagnoses: [
+      {
+        condition: "Deficiência de Vitamina D",
+        probability: "média",
+        description: "Níveis baixos de Vitamina D podem afetar o sistema imunológico e a saúde óssea",
+        indicativeMarkers: ["Vitamina D < 30 ng/mL", "Histórico de pouca exposição solar"]
+      },
+      {
+        condition: "Pré-diabetes",
+        probability: "baixa",
+        description: "Níveis de glicose em jejum ligeiramente elevados, indicando potencial risco de diabetes",
+        indicativeMarkers: ["Glicemia em jejum entre 100-125 mg/dL", "Hemoglobina glicada (HbA1c) entre 5.7-6.4%"]
+      }
+    ],
     recommendations: [
       "Agende uma consulta com seu clínico geral para discutir os resultados dos exames",
       "Considere aumentar a exposição solar controlada ou suplementação de Vitamina D",

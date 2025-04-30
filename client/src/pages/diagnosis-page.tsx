@@ -386,7 +386,7 @@ export default function DiagnosisPage() {
                           <CardContent>
                             <div className="space-y-4">
                               {insights?.possibleDiagnoses?.length > 0 ? (
-                                insights.possibleDiagnoses.map((diagnosis, index) => (
+                                insights?.possibleDiagnoses?.map((diagnosis, index) => (
                                   <Card key={index} className="border-l-4" style={{
                                     borderLeftColor: diagnosis.probability === 'alta' ? '#ef4444' : 
                                                    diagnosis.probability === 'média' ? '#f59e0b' : '#3b82f6'
@@ -500,12 +500,12 @@ export default function DiagnosisPage() {
                                 <dl className="space-y-3">
                                   <div>
                                     <dt className="font-medium text-gray-700">Alimentação</dt>
-                                    <dd className="text-gray-600 mt-1">{insights.lifestyle.diet}</dd>
+                                    <dd className="text-gray-600 mt-1">{insights?.lifestyle?.diet}</dd>
                                   </div>
                                   <Separator />
                                   <div>
                                     <dt className="font-medium text-gray-700">Exercícios</dt>
-                                    <dd className="text-gray-600 mt-1">{insights.lifestyle.exercise}</dd>
+                                    <dd className="text-gray-600 mt-1">{insights?.lifestyle?.exercise}</dd>
                                   </div>
                                   <Separator />
                                   <div>
