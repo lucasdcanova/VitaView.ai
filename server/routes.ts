@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
-import { generateHealthInsights } from "./services/openai";
+import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for exams
   app.post("/api/exams/upload", uploadAndAnalyzeDocument);
   
-  // Direct Gemini analysis endpoint for PDF documents
+  // Rota para análise de documentos - etapa 1: análise com Gemini
   app.post("/api/analyze/gemini", async (req, res) => {
     try {
       const { fileContent, fileType } = req.body;
@@ -26,6 +26,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in direct Gemini analysis:", error);
       res.status(500).json({ message: "Erro ao analisar o documento com Gemini API" });
+    }
+  });
+  
+  // Rota para análise de documentos - etapa 2: interpretação com OpenAI
+  app.post("/api/analyze/interpretation", async (req, res) => {
+    try {
+      const { analysisResult, patientData } = req.body;
+      
+      if (!analysisResult) {
+        return res.status(400).json({ message: "Resultado da análise é obrigatório" });
+      }
+      
+      // Formatar como ExamResult para passar para o OpenAI
+      const formattedResult = {
+        id: 0, // ID temporário
+        examId: 0, // ID temporário
+        analysisDate: new Date(),
+        summary: analysisResult.summary,
+        detailedAnalysis: analysisResult.detailedAnalysis,
+        recommendations: Array.isArray(analysisResult.recommendations) 
+          ? analysisResult.recommendations.join('\n') 
+          : analysisResult.recommendations,
+        healthMetrics: analysisResult.healthMetrics,
+        aiProvider: "gemini"
+      };
+      
+      // Gerar insights usando OpenAI com contexto do paciente
+      const insights = await generateHealthInsights(formattedResult, patientData);
+      res.json(insights);
+    } catch (error) {
+      console.error("Error in OpenAI interpretation:", error);
+      res.status(500).json({ message: "Erro ao interpretar análise com OpenAI API" });
     }
   });
   
@@ -110,9 +142,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Resultado do exame não encontrado" });
       }
       
-      const insights = await generateHealthInsights(examResult);
+      // Obter dados do paciente para contextualização
+      const user = req.user;
+      
+      // Obter dados de histórico médico (se fornecidos via query params)
+      let patientData = null;
+      if (req.query.patientData) {
+        try {
+          patientData = JSON.parse(req.query.patientData as string);
+        } catch (e) {
+          console.warn("Error parsing patient data:", e);
+        }
+      } else {
+        // Se não fornecido, criar dados básicos do perfil do usuário
+        patientData = {
+          gender: user.gender,
+          age: user.birthDate ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+          diseases: [],
+          surgeries: [],
+          allergies: []
+        };
+      }
+      
+      // Chamada à OpenAI com contexto do paciente
+      const insights = await generateHealthInsights(examResult, patientData);
       res.json(insights);
     } catch (error) {
+      console.error("Error generating health insights:", error);
       res.status(500).json({ message: "Erro ao gerar insights" });
     }
   });
@@ -195,6 +251,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar perfil" });
+    }
+  });
+  
+  // Rota para gerar relatório cronológico contextual com OpenAI
+  app.get("/api/reports/chronological", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      
+      // Buscar todos os resultados de exames do usuário
+      const exams = await storage.getExamsByUserId(req.user!.id);
+      
+      if (!exams || exams.length === 0) {
+        return res.status(404).json({ message: "Nenhum exame encontrado para análise" });
+      }
+      
+      // Buscar resultados de exames
+      const examResults = [];
+      for (const exam of exams) {
+        const result = await storage.getExamResultByExamId(exam.id);
+        if (result) {
+          // Adicionamos a data do exame ao resultado para ordenação cronológica
+          examResults.push({
+            ...result,
+            createdAt: exam.uploadDate
+          });
+        }
+      }
+      
+      if (examResults.length === 0) {
+        return res.status(404).json({ message: "Nenhum resultado de exame encontrado para análise" });
+      }
+      
+      // Ordenar resultados por data (do mais antigo para o mais recente)
+      examResults.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      // Buscar dados do usuário para contextualização
+      const user = req.user;
+      
+      // Obter parâmetros adicionais do paciente (se fornecidos)
+      const patientData = req.query.patientData ? JSON.parse(req.query.patientData as string) : null;
+      
+      // Gerar relatório cronológico
+      const report = await generateChronologicalReport(examResults, user);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating chronological report:", error);
+      res.status(500).json({ message: "Erro ao gerar relatório cronológico" });
     }
   });
 
