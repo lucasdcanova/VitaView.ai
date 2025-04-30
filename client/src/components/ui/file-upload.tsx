@@ -1,26 +1,33 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileType, BrainCircuit } from "lucide-react";
+import { Upload, FileType, BrainCircuit, Sparkles, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 interface FileUploadProps {
   onUploadComplete?: (result: any) => void;
 }
 
 export default function FileUpload({ onUploadComplete }: FileUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadStep, setUploadStep] = useState<'idle' | 'uploading' | 'analyzing' | 'interpreting' | 'complete' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [analyzedResult, setAnalyzedResult] = useState<any>(null);
   const { toast } = useToast();
-  
-  const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch("/api/exams/upload", {
+  const { user } = useAuth();
+
+  // Gemini análise do documento
+  const analyzeWithGeminiMutation = useMutation({
+    mutationFn: async (data: { fileContent: string, fileType: string }) => {
+      const response = await fetch("/api/analyze/gemini", {
         method: "POST",
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
         credentials: "include"
       });
       
@@ -32,36 +39,113 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       return response.json();
     },
     onSuccess: (data) => {
+      setAnalyzedResult(data);
+      setUploadStep('interpreting');
+      
+      // Agora vamos para o segundo passo: interpretação com OpenAI
+      const patientData = {
+        gender: user?.gender || 'não informado',
+        age: user?.birthDate 
+          ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
+          : null,
+        diseases: [],
+        surgeries: [],
+        allergies: []
+      };
+      
+      interpretWithOpenAIMutation.mutate({ 
+        analysisResult: data,
+        patientData
+      });
+    },
+    onError: (error: Error) => {
+      setUploadStep('error');
+      toast({
+        title: "Erro na análise",
+        description: error.message || "Ocorreu um erro ao analisar o documento.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // OpenAI interpretação dos resultados
+  const interpretWithOpenAIMutation = useMutation({
+    mutationFn: async (data: { analysisResult: any, patientData: any }) => {
+      const response = await fetch("/api/analyze/interpretation", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setUploadStep('complete');
+      
+      // Atualizar cache com novos dados
       queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       
       toast({
-        title: "Upload concluído",
-        description: "Seu exame foi analisado com sucesso!",
+        title: "Análise concluída",
+        description: "Seu exame foi analisado e interpretado com sucesso!",
       });
       
       if (onUploadComplete) {
-        onUploadComplete(data);
+        onUploadComplete({
+          geminiAnalysis: analyzedResult,
+          openaiInterpretation: data
+        });
       }
     },
     onError: (error: Error) => {
+      setUploadStep('error');
       toast({
-        title: "Erro no upload",
-        description: error.message || "Ocorreu um erro ao enviar o arquivo.",
+        title: "Erro na interpretação",
+        description: error.message || "Ocorreu um erro ao interpretar os resultados.",
         variant: "destructive",
       });
+    }
+  });
+  
+  // Salvar exame completo no banco de dados
+  const saveExamMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/exams", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText);
+      }
+      
+      return response.json();
     }
   });
   
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     
-    // Simulate upload with progress
-    setIsUploading(true);
+    // Iniciar upload
+    setUploadStep('uploading');
     setUploadProgress(0);
     
-    // Create a progress interval
+    // Simular progresso de upload
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 100) {
@@ -72,47 +156,38 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     }, 100);
     
-    // After upload is "complete", prepare form data
+    // Após o "upload" estar completo, preparar dados para análise
     setTimeout(() => {
       clearInterval(progressInterval);
-      setIsUploading(false);
-      setIsAnalyzing(true);
+      setUploadStep('analyzing');
       
-      const formData = new FormData();
       const file = acceptedFiles[0];
-      formData.append('file', file);
       
-      // Get file type
+      // Determinar tipo de arquivo
       const fileType = file.type.includes('pdf') 
         ? 'pdf' 
         : file.type.includes('jpeg') || file.type.includes('jpg')
           ? 'jpeg'
           : 'png';
       
-      // Create a reader to get file content
+      // Ler o arquivo como base64
       const reader = new FileReader();
       reader.onload = (e) => {
-        // Only include the base64 portion
+        // Extrair apenas a parte base64 (sem o prefixo data:...)
         const base64Content = e.target?.result 
           ? String(e.target.result).split(',')[1]
           : '';
           
-        // Add other form data
-        formData.append('userId', '1'); // Use actual user ID from auth context
-        formData.append('name', file.name.split('.')[0]);
-        formData.append('fileType', fileType);
-        formData.append('fileContent', base64Content);
-        
-        // Call the upload mutation after a delay to simulate analysis
-        setTimeout(() => {
-          uploadMutation.mutate(formData);
-          setIsAnalyzing(false);
-        }, 3000);
+        // Chamar API para análise com o Gemini
+        analyzeWithGeminiMutation.mutate({
+          fileContent: base64Content,
+          fileType: fileType
+        });
       };
       
       reader.readAsDataURL(file);
     }, 2000);
-  }, [uploadMutation, onUploadComplete, toast]);
+  }, [analyzeWithGeminiMutation, interpretWithOpenAIMutation, onUploadComplete, toast, user]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -122,17 +197,17 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       'image/png': ['.png']
     },
     maxFiles: 1,
-    disabled: isUploading || isAnalyzing
+    disabled: uploadStep !== 'idle'
   });
 
   return (
     <div
       className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center ${
-        isDragActive ? 'bg-primary-50' : !isUploading && !isAnalyzing ? 'bg-gray-50' : ''
+        isDragActive ? 'bg-primary-50' : uploadStep === 'idle' ? 'bg-gray-50' : ''
       }`}
-      {...getRootProps()}
+      {...(uploadStep === 'idle' ? getRootProps() : {})}
     >
-      {!isUploading && !isAnalyzing && (
+      {uploadStep === 'idle' && (
         <div>
           <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-700 mb-1">
@@ -150,7 +225,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         </div>
       )}
       
-      {isUploading && (
+      {uploadStep === 'uploading' && (
         <div className="space-y-4">
           <FileType className="mx-auto h-12 w-12 text-primary-500" />
           <h3 className="text-lg font-medium text-gray-700">Enviando arquivo...</h3>
@@ -159,17 +234,63 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         </div>
       )}
       
-      {isAnalyzing && (
+      {uploadStep === 'analyzing' && (
         <div className="space-y-4">
           <BrainCircuit className="mx-auto h-12 w-12 text-primary-500" />
-          <h3 className="text-lg font-medium text-gray-700">Analisando seu exame...</h3>
+          <h3 className="text-lg font-medium text-gray-700">Analisando documento com IA Gemini</h3>
           <div className="flex justify-center">
             <svg className="animate-spin h-8 w-8 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
-          <p className="text-sm text-gray-500">Isso pode levar alguns minutos</p>
+          <p className="text-sm text-gray-500">Extração de métricas e análise do documento</p>
+        </div>
+      )}
+      
+      {uploadStep === 'interpreting' && (
+        <div className="space-y-4">
+          <Sparkles className="mx-auto h-12 w-12 text-amber-500" />
+          <h3 className="text-lg font-medium text-gray-700">Interpretando resultados com OpenAI</h3>
+          <div className="flex justify-center">
+            <svg className="animate-spin h-8 w-8 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <p className="text-sm text-gray-500">Gerando recomendações personalizadas baseadas nos resultados</p>
+        </div>
+      )}
+      
+      {uploadStep === 'complete' && (
+        <div className="space-y-4">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+          <h3 className="text-lg font-medium text-gray-700">Análise completa!</h3>
+          <p className="text-sm text-gray-600 mb-4">Seu exame foi analisado com sucesso e as recomendações foram geradas.</p>
+          <Button 
+            onClick={() => setUploadStep('idle')}
+            className="bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Fazer novo upload
+          </Button>
+        </div>
+      )}
+      
+      {uploadStep === 'error' && (
+        <div className="space-y-4">
+          <div className="mx-auto h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-700">Erro na análise</h3>
+          <p className="text-sm text-gray-600 mb-4">Ocorreu um erro durante o processamento. Por favor tente novamente.</p>
+          <Button 
+            onClick={() => setUploadStep('idle')}
+            variant="outline"
+          >
+            Tentar novamente
+          </Button>
         </div>
       )}
     </div>
