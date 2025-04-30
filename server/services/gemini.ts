@@ -14,7 +14,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 // Gemini model configuration - usando modelo mais recente 
 // O gemini-pro-vision foi descontinuado em julho de 2024
-const MODEL_NAME = "gemini-1.5-flash";
+// Utilizando o Gemini 2.0 conforme solicitado pelo usuário
+const MODEL_NAME = "gemini-2.0-pro";
 
 // Safety settings to ensure appropriate medical content 
 const safetySettings = [
