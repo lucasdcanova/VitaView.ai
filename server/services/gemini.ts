@@ -66,38 +66,28 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                 ]
               }`;
 
-    // Create properly typed content parts
-    const parts: Array<{
-      text?: string; 
-      inlineData?: { 
-        data: string; 
-        mimeType: string
-      }
-    }> = [{ text: prompt }];
+    // Determine the mime type based on file type
+    const mimeType = 
+      fileType === 'pdf' ? 'application/pdf' :
+      fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
     
-    // Add image part if it's a PDF, JPEG or PNG
-    if (fileContent) {
-      const mimeType = 
-        fileType === 'pdf' ? 'application/pdf' :
-        fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
-      
-      parts.push({
-        inlineData: {
-          data: fileContent,
-          mimeType
-        }
-      });
-    }
+    // Create the content parts in the format expected by the API
+    const textPart = { text: prompt };
+    const imagePart = { 
+      inlineData: { 
+        data: fileContent,
+        mimeType
+      }
+    };
+    
+    // Create a properly structured content object
+    const content = {
+      role: "user",
+      parts: [textPart, imagePart]
+    };
     
     // Generate content using Gemini
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
-      },
-    });
-    
+    const result = await model.generateContent(content);
     const response = result.response;
     const text = response.text();
     
