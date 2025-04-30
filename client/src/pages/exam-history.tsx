@@ -3,7 +3,6 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import MobileNav from "@/components/layout/mobile-nav";
 import { Exam } from "@shared/schema";
 import { 
   FileText, 
@@ -25,16 +24,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 export default function ExamHistory() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [fileTypeFilter, setFileTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
   
   const { data: exams, isLoading } = useQuery<Exam[]>({
     queryKey: ["/api/exams"],
@@ -90,10 +84,10 @@ export default function ExamHistory() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MobileHeader toggleSidebar={toggleSidebar} />
+      <MobileHeader />
       
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar />
         
         <main className="flex-1">
           <div className="p-4 md:p-6">
@@ -222,7 +216,7 @@ export default function ExamHistory() {
                             <span className="text-sm text-gray-900 uppercase">{exam.fileType}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge variant={exam.status === 'analyzed' ? 'success' : 'default'}>
+                            <Badge variant={exam.status === 'analyzed' ? 'default' : 'outline'} className={exam.status === 'analyzed' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}>
                               {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
                             </Badge>
                           </td>

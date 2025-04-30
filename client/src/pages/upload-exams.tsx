@@ -25,10 +25,10 @@ export default function UploadExams() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MobileHeader toggleSidebar={toggleSidebar} />
+      <MobileHeader />
       
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar />
         
         <main className="flex-1">
           <div className="p-4 md:p-6">
