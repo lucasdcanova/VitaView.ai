@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { ExamResult, User } from "@shared/schema";
+import type { HealthMetric } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const OPENAI_MODEL = "gpt-4o";
@@ -161,6 +162,115 @@ function getFallbackInsights(patientData?: any) {
  * @param user - Dados do usuário
  * @returns Relatório cronológico com análise de tendências
  */
+
+/**
+ * Analisa um documento médico usando a OpenAI como fallback quando o Gemini falha
+ * @param fileContent - Conteúdo do arquivo codificado em Base64
+ * @param fileType - Tipo do arquivo (pdf, jpeg, png)
+ * @returns Resultado da análise com métricas de saúde e recomendações
+ */
+export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: string) {
+  try {
+    console.log(`Analyzing ${fileType} document with OpenAI API as fallback`);
+    
+    // Verificar se a API key está disponível
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn("OpenAI API key not found for document analysis fallback");
+      throw new Error("OpenAI API key not available");
+    }
+    
+    // Limitar o tamanho do conteúdo para evitar exceder limites da API
+    // Nota: O GPT-4o suporta até 1 imagem. O conteúdo Base64 muito grande pode causar problemas
+    const truncatedContent = fileContent.length > 300000 
+      ? fileContent.substring(0, 300000)
+      : fileContent;
+      
+    // Determinar o tipo MIME baseado no tipo de arquivo
+    const mimeType = 
+      fileType === 'pdf' ? 'application/pdf' :
+      fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
+      
+    // Preparar o prompt para a API
+    const prompt = `Você é um médico especialista em análise de exames laboratoriais. 
+                  Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado 
+                  incluindo achados clínicos relevantes, interpretação dos valores, 
+                  recomendações médicas e instruções para o paciente.
+                  
+                  Analise a imagem ou PDF do exame e extraia as informações relevantes.
+                  
+                  Formate sua resposta como um JSON com a seguinte estrutura:
+                  {
+                    "summary": "resumo geral dos resultados, em uma frase",
+                    "detailedAnalysis": "análise detalhada dos resultados encontrados",
+                    "recommendations": ["lista de 3-5 recomendações para o paciente"],
+                    "healthMetrics": [
+                      {
+                        "name": "nome do parâmetro, ex: hemoglobina",
+                        "value": "valor numérico, ex: 14.2",
+                        "unit": "unidade, ex: g/dL",
+                        "status": "normal, atenção, alto ou baixo",
+                        "change": "+0.1 ou -0.2 comparado com o valor anterior"
+                      }
+                    ]
+                  }`;
+    
+    try {
+      // Chamar a API da OpenAI com suporte a imagens (GPT-4o)
+      const response = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { 
+                type: "text", 
+                text: prompt 
+              },
+              { 
+                type: "image_url", 
+                image_url: { 
+                  url: `data:${mimeType};base64,${truncatedContent}`
+                } 
+              }
+            ]
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 1500
+      });
+      
+      const content = response.choices[0].message.content;
+      if (!content) {
+        throw new Error("Empty response from OpenAI API");
+      }
+      
+      console.log("OpenAI API document analysis successful");
+      
+      try {
+        // Analisar a resposta JSON
+        const analysisData = JSON.parse(content);
+        
+        // Validar e melhorar os dados da resposta se necessário
+        if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
+          throw new Error("Invalid health metrics in OpenAI response");
+        }
+        
+        return analysisData;
+      } catch (jsonError) {
+        console.error("Error parsing OpenAI response:", jsonError);
+        throw jsonError;
+      }
+    } catch (apiError) {
+      console.error("Error calling OpenAI API for document analysis:", apiError);
+      throw apiError;
+    }
+  } catch (error) {
+    console.error("Error analyzing document with OpenAI:", error);
+    throw new Error("Falha ao analisar o documento com OpenAI como fallback");
+  }
+}
+
 export async function generateChronologicalReport(examResults: ExamResult[], user: User) {
   try {
     console.log("Generating chronological report with OpenAI API");

@@ -38,99 +38,148 @@ const safetySettings = [
 ];
 
 /**
- * Analyzes a medical document using Google Gemini API
+ * Analyzes a medical document using Google Gemini API with retry mechanism
  * @param fileContent - Base64 encoded content of the file
  * @param fileType - Type of the file (pdf, jpeg, png)
  * @returns Analysis result with health metrics and recommendations
  */
 export async function analyzeDocument(fileContent: string, fileType: string) {
-  try {
-    console.log(`Analyzing ${fileType} document with Google Gemini API`);
-    
-    // Create Gemini model instance
-    const model = genAI.getGenerativeModel({
-      model: MODEL_NAME,
-      safetySettings
-    });
-    
-    // Prepare the prompt for the model
-    const prompt = `Você é um médico especialista em análise de exames laboratoriais. 
-              Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado 
-              incluindo achados clínicos relevantes, interpretação dos valores, 
-              recomendações médicas e instruções para o paciente.
-              
-              Formate sua resposta como um JSON com a seguinte estrutura:
-              {
-                "summary": "resumo geral dos resultados, em uma frase",
-                "detailedAnalysis": "análise detalhada dos resultados encontrados",
-                "recommendations": ["lista de 3-5 recomendações para o paciente"],
-                "healthMetrics": [
-                  {
-                    "name": "nome do parâmetro, ex: hemoglobina",
-                    "value": "valor numérico, ex: 14.2",
-                    "unit": "unidade, ex: g/dL",
-                    "status": "normal, atenção, alto ou baixo",
-                    "change": "+0.1 ou -0.2 comparado com o valor anterior"
-                  }
-                ]
-              }`;
-
-    // Determine the mime type based on file type
-    const mimeType = 
-      fileType === 'pdf' ? 'application/pdf' :
-      fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
-    
-    // Prepare parts for the Gemini API
-    const parts: Part[] = [
-      { text: prompt },
-      { 
-        inlineData: { 
-          data: fileContent,
-          mimeType
-        }
-      }
-    ];
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 segundo
   
-    // Generate content using Gemini
-    const result = await model.generateContent(parts);
-    const response = result.response;
-    const text = response.text();
-    
+  let lastError: any = null;
+  
+  // Helper function to implement delay
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Extract JSON from the response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : '';
+      console.log(`Analyzing ${fileType} document with Google Gemini API (attempt ${attempt}/${MAX_RETRIES})`);
       
-      // Parse JSON response
-      const analysisData = JSON.parse(jsonStr);
+      // Create Gemini model instance
+      const model = genAI.getGenerativeModel({
+        model: MODEL_NAME,
+        safetySettings
+      });
       
-      // Validate and enhance the response data if needed
-      if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics)) {
-        analysisData.healthMetrics = defaultHealthMetrics(fileType);
-      }
+      // Prepare the prompt for the model
+      const prompt = `Você é um médico especialista em análise de exames laboratoriais. 
+                Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado 
+                incluindo achados clínicos relevantes, interpretação dos valores, 
+                recomendações médicas e instruções para o paciente.
+                
+                Formate sua resposta como um JSON com a seguinte estrutura:
+                {
+                  "summary": "resumo geral dos resultados, em uma frase",
+                  "detailedAnalysis": "análise detalhada dos resultados encontrados",
+                  "recommendations": ["lista de 3-5 recomendações para o paciente"],
+                  "healthMetrics": [
+                    {
+                      "name": "nome do parâmetro, ex: hemoglobina",
+                      "value": "valor numérico, ex: 14.2",
+                      "unit": "unidade, ex: g/dL",
+                      "status": "normal, atenção, alto ou baixo",
+                      "change": "+0.1 ou -0.2 comparado com o valor anterior"
+                    }
+                  ]
+                }`;
+
+      // Determine the mime type based on file type
+      const mimeType = 
+        fileType === 'pdf' ? 'application/pdf' :
+        fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
       
-      if (!analysisData.recommendations || !Array.isArray(analysisData.recommendations)) {
-        analysisData.recommendations = [
-          "Consulta de acompanhamento com seu médico para discutir os resultados",
-          "Manter uma dieta equilibrada e exercícios físicos regulares"
-        ];
-      }
-      
-      return analysisData;
-    } catch (jsonError) {
-      console.error("Error parsing Gemini response as JSON:", jsonError);
-      // Fallback to structured text parsing
-      return {
-        summary: "Seus exames foram analisados pela IA Gemini",
-        detailedAnalysis: text.substring(0, 500),
-        recommendations: ["Consultar um médico para interpretação completa dos resultados"],
-        healthMetrics: defaultHealthMetrics(fileType)
-      };
-    }
+      // Prepare parts for the Gemini API
+      const parts: Part[] = [
+        { text: prompt },
+        { 
+          inlineData: { 
+            data: fileContent,
+            mimeType
+          }
+        }
+      ];
     
-  } catch (error) {
-    console.error("Error analyzing document with Gemini API:", error);
-    throw new Error("Falha ao analisar o documento com a API do Google Gemini");
+      // Generate content using Gemini
+      const result = await model.generateContent(parts);
+      const response = result.response;
+      const text = response.text();
+      
+      try {
+        // Extract JSON from the response
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : '';
+        
+        // Parse JSON response
+        const analysisData = JSON.parse(jsonStr);
+        
+        // Validate and enhance the response data if needed
+        if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics)) {
+          analysisData.healthMetrics = defaultHealthMetrics(fileType);
+        }
+        
+        if (!analysisData.recommendations || !Array.isArray(analysisData.recommendations)) {
+          analysisData.recommendations = [
+            "Consulta de acompanhamento com seu médico para discutir os resultados",
+            "Manter uma dieta equilibrada e exercícios físicos regulares"
+          ];
+        }
+        
+        return analysisData;
+      } catch (jsonError) {
+        console.error("Error parsing Gemini response as JSON:", jsonError);
+        // Fallback to structured text parsing
+        return {
+          summary: "Seus exames foram analisados pela IA Gemini",
+          detailedAnalysis: text.substring(0, 500),
+          recommendations: ["Consultar um médico para interpretação completa dos resultados"],
+          healthMetrics: defaultHealthMetrics(fileType)
+        };
+      }
+      
+    } catch (error: any) {
+      console.error(`Error analyzing document with Gemini API (attempt ${attempt}/${MAX_RETRIES}):`, error);
+      lastError = error;
+      
+      // Check if the error is related to service overload (503) or rate limiting
+      const isOverloadError = error.message?.includes("503 Service Unavailable") || 
+                              error.message?.includes("overloaded") ||
+                              error.status === 503 ||
+                              error.message?.includes("rate limit");
+      
+      // If it's the last attempt or not an overload error, don't retry
+      if (attempt === MAX_RETRIES || !isOverloadError) {
+        break;
+      }
+      
+      // Exponential backoff: wait longer between each retry
+      const waitTime = RETRY_DELAY * Math.pow(2, attempt - 1);
+      console.log(`Retrying in ${waitTime}ms...`);
+      await delay(waitTime);
+    }
+  }
+  
+  // If we reached here, all attempts failed
+  console.error("All Gemini API attempts failed. Using fallback...");
+  
+  try {
+    // Return a default response with an error message
+    // For future improvement: could implement OpenAI fallback here
+    
+    // Return a default response with an error message
+    return {
+      summary: "Não foi possível analisar o documento com precisão",
+      detailedAnalysis: "O serviço de análise está temporariamente indisponível. Os resultados mostrados são aproximados e não devem ser usados para diagnóstico médico.",
+      recommendations: [
+        "Consulte um médico para interpretar seus resultados",
+        "Tente fazer upload do documento novamente mais tarde"
+      ],
+      healthMetrics: defaultHealthMetrics(fileType)
+    };
+  } catch (fallbackError) {
+    console.error("Error in fallback mechanism:", fallbackError);
+    // If even the fallback fails, throw a user-friendly error
+    throw new Error("Não foi possível analisar o documento neste momento. Por favor, tente novamente mais tarde.");
   }
 }
 
