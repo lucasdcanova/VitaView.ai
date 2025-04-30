@@ -68,10 +68,15 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                 incluindo achados clínicos relevantes, interpretação dos valores, 
                 recomendações médicas e instruções para o paciente.
                 
+                IMPORTANTE: Extraia a data de realização do exame e o nome do médico solicitante se estiverem presentes no documento.
+                
                 Formate sua resposta como um JSON com a seguinte estrutura:
                 {
                   "summary": "resumo geral dos resultados, em uma frase",
                   "detailedAnalysis": "análise detalhada dos resultados encontrados",
+                  "examDate": "data de realização do exame no formato YYYY-MM-DD (ex: 2025-04-15)",
+                  "requestingPhysician": "nome do médico solicitante se disponível",
+                  "laboratoryName": "nome do laboratório se disponível",
                   "recommendations": ["lista de 3-5 recomendações para o paciente"],
                   "healthMetrics": [
                     {
@@ -132,6 +137,9 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         return {
           summary: "Seus exames foram analisados pela IA Gemini",
           detailedAnalysis: text.substring(0, 500),
+          examDate: new Date().toISOString().split('T')[0],
+          requestingPhysician: null,
+          laboratoryName: "Laboratório não identificado",
           recommendations: ["Consultar um médico para interpretação completa dos resultados"],
           healthMetrics: defaultHealthMetrics(fileType)
         };
@@ -170,6 +178,9 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
     return {
       summary: "Não foi possível analisar o documento com precisão",
       detailedAnalysis: "O serviço de análise está temporariamente indisponível. Os resultados mostrados são aproximados e não devem ser usados para diagnóstico médico.",
+      examDate: new Date().toISOString().split('T')[0],
+      requestingPhysician: null,
+      laboratoryName: "Laboratório não identificado",
       recommendations: [
         "Consulte um médico para interpretar seus resultados",
         "Tente fazer upload do documento novamente mais tarde"
@@ -187,17 +198,19 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
  * Fallback health metrics in case of API failure
  */
 function defaultHealthMetrics(fileType: string) {
+  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
   if (fileType === 'pdf') {
     return [
-      { name: "hemoglobina", value: "14.2", unit: "g/dL", status: "normal", change: "+0.1" },
-      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3" },
-      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5" },
-      { name: "vitamina_d", value: "32", unit: "ng/mL", status: "baixo", change: "-2" }
+      { name: "hemoglobina", value: "14.2", unit: "g/dL", status: "normal", change: "+0.1", date: currentDate },
+      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3", date: currentDate  },
+      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5", date: currentDate  },
+      { name: "vitamina_d", value: "32", unit: "ng/mL", status: "baixo", change: "-2", date: currentDate  }
     ];
   } else {
     return [
-      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3" },
-      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5" }
+      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3", date: currentDate  },
+      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5", date: currentDate  }
     ];
   }
 }
@@ -210,18 +223,28 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       return res.status(400).json({ message: "Dados incompletos para análise" });
     }
     
-    // Create exam record
+    // Analyze document with Gemini first to extract metadata
+    const analysisResult = await analyzeDocument(fileContent, fileType);
+    
+    // Use extracted date from document or fallback to provided date or current date
+    const extractedExamDate = analysisResult.examDate || examDate || new Date().toISOString().split('T')[0];
+    
+    // Use extracted laboratory name from document or fallback to provided name
+    const extractedLabName = analysisResult.laboratoryName || laboratoryName || "Laboratório Central";
+    
+    // Get requesting physician if available
+    const requestingPhysician = analysisResult.requestingPhysician || null;
+    
+    // Create exam record with extracted metadata
     const exam = await storage.createExam({
       userId,
       name,
       fileType,
       status: "pending",
-      laboratoryName: laboratoryName || "Laboratório Central",
-      examDate: examDate || new Date().toISOString().split('T')[0]
+      laboratoryName: extractedLabName,
+      examDate: extractedExamDate,
+      requestingPhysician: requestingPhysician
     });
-    
-    // Simulate document analysis with Gemini
-    const analysisResult = await analyzeDocument(fileContent, fileType);
     
     // Update exam status
     await storage.updateExam(exam.id, { 
@@ -247,7 +270,7 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       read: false
     });
     
-    // Save health metrics
+    // Save health metrics with the extracted exam date
     for (const metric of analysisResult.healthMetrics) {
       await storage.createHealthMetric({
         userId,
@@ -255,7 +278,8 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
         value: metric.value,
         unit: metric.unit,
         status: metric.status,
-        change: metric.change
+        change: metric.change,
+        date: extractedExamDate // Use the extract date for metrics
       });
     }
     

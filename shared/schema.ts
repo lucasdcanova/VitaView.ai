@@ -33,6 +33,7 @@ export const exams = pgTable("exams", {
   uploadDate: timestamp("upload_date").defaultNow().notNull(),
   laboratoryName: text("laboratory_name"),
   examDate: text("exam_date"),
+  requestingPhysician: text("requesting_physician"), // Nome do médico solicitante
   originalContent: text("original_content"), // Store the raw text from the exam
 });
 
@@ -43,6 +44,7 @@ export const insertExamSchema = createInsertSchema(exams).pick({
   status: true,
   laboratoryName: true,
   examDate: true,
+  requestingPhysician: true,
 });
 
 // Analysis results schema
@@ -85,6 +87,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
   unit: true,
   status: true,
   change: true,
+  date: true,
 });
 
 // Notifications schema
