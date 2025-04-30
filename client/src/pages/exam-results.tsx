@@ -132,9 +132,9 @@ export default function ExamResults() {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(metric => 
         metric.name.toLowerCase().includes(searchLower) ||
-        metric.status.toLowerCase().includes(searchLower) ||
+        (metric.status && metric.status.toLowerCase().includes(searchLower)) ||
         metric.value.toString().includes(searchLower) ||
-        metric.unit.toLowerCase().includes(searchLower)
+        (metric.unit && metric.unit.toLowerCase().includes(searchLower))
       );
     }
     
@@ -385,8 +385,10 @@ export default function ExamResults() {
                                   "w-full rounded-t",
                                   !metric.status ? "bg-gray-200" :
                                   metric.status === "normal" ? "bg-green-200" :
-                                  metric.status.toLowerCase().includes("alt") || metric.status.toLowerCase().includes("high") ? "bg-red-200" :
-                                  metric.status.toLowerCase().includes("baix") || metric.status.toLowerCase().includes("low") ? "bg-blue-200" :
+                                  (metric.status && metric.status.toLowerCase().includes("alt")) || 
+                                  (metric.status && metric.status.toLowerCase().includes("high")) ? "bg-red-200" :
+                                  (metric.status && metric.status.toLowerCase().includes("baix")) || 
+                                  (metric.status && metric.status.toLowerCase().includes("low")) ? "bg-blue-200" :
                                   "bg-amber-200"
                                 )}
                                 style={{ height: `${heightPercent}%` }}
@@ -427,10 +429,10 @@ export default function ExamResults() {
                         )}
                       </div>
                       <div className="col-span-2 text-center">{metric.value}</div>
-                      <div className="col-span-2 text-center text-gray-500">{metric.unit}</div>
+                      <div className="col-span-2 text-center text-gray-500">{metric.unit || ''}</div>
                       <div className="col-span-2 text-center">
-                        <Badge className={cn("px-2 py-0.5", getStatusColor(metric.status))}>
-                          {metric.status}
+                        <Badge className={cn("px-2 py-0.5", getStatusColor(metric.status || ''))}>
+                          {metric.status || 'N/A'}
                         </Badge>
                       </div>
                       <div className="col-span-2 text-center">
