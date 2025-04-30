@@ -47,10 +47,15 @@ export default function ExamHistory() {
           (searchTerm === "" || exam.name.toLowerCase().includes(searchTerm.toLowerCase()))
         )
         .sort((a, b) => {
+          // Usar a data do exame se disponível, ou a data de upload como fallback
+          const getExamDate = (exam: Exam) => {
+            return exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
+          };
+          
           if (sortBy === "newest") {
-            return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+            return getExamDate(b).getTime() - getExamDate(a).getTime();
           } else if (sortBy === "oldest") {
-            return new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime();
+            return getExamDate(a).getTime() - getExamDate(b).getTime();
           } else if (sortBy === "a-z") {
             return a.name.localeCompare(b.name);
           } else {
@@ -147,10 +152,10 @@ export default function ExamHistory() {
                         Exame
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Data
+                        Data do Exame
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tipo
+                        Médico Solicitante
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
@@ -177,7 +182,7 @@ export default function ExamHistory() {
                             <Skeleton className="h-4 w-20" />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-28" />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Skeleton className="h-5 w-16 rounded-full" />
@@ -210,10 +215,11 @@ export default function ExamHistory() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(exam.uploadDate.toString())}
+                            {exam.examDate ? formatDate(exam.examDate) : formatDate(exam.uploadDate.toString())}
+                            {!exam.examDate && <span className="ml-1 text-xs text-gray-400">(upload)</span>}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900 uppercase">{exam.fileType}</span>
+                            <span className="text-sm text-gray-700">{exam.requestingPhysician || <span className="text-gray-400">Não informado</span>}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={exam.status === 'analyzed' ? 'default' : 'outline'} className={exam.status === 'analyzed' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}>

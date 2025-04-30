@@ -385,8 +385,8 @@ export default function DiagnosisPage() {
                           </CardHeader>
                           <CardContent>
                             <div className="space-y-4">
-                              {insights?.possibleDiagnoses?.length > 0 ? (
-                                insights?.possibleDiagnoses?.map((diagnosis, index) => (
+                              {insights?.possibleDiagnoses && insights.possibleDiagnoses.length > 0 ? (
+                                insights.possibleDiagnoses.map((diagnosis, index) => (
                                   <Card key={index} className="border-l-4" style={{
                                     borderLeftColor: diagnosis.probability === 'alta' ? '#ef4444' : 
                                                    diagnosis.probability === 'média' ? '#f59e0b' : '#3b82f6'
@@ -510,14 +510,14 @@ export default function DiagnosisPage() {
                                   <Separator />
                                   <div>
                                     <dt className="font-medium text-gray-700">Sono</dt>
-                                    <dd className="text-gray-600 mt-1">{insights.lifestyle.sleep}</dd>
+                                    <dd className="text-gray-600 mt-1">{insights?.lifestyle?.sleep}</dd>
                                   </div>
-                                  {insights.lifestyle.stress_management && (
+                                  {insights?.lifestyle?.stress_management && (
                                     <>
                                       <Separator />
                                       <div>
                                         <dt className="font-medium text-gray-700">Gerenciamento de Estresse</dt>
-                                        <dd className="text-gray-600 mt-1">{insights.lifestyle.stress_management}</dd>
+                                        <dd className="text-gray-600 mt-1">{insights?.lifestyle?.stress_management}</dd>
                                       </div>
                                     </>
                                   )}
@@ -549,7 +549,7 @@ export default function DiagnosisPage() {
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
-                                {insights.evidenceBasedAssessment.clinicalGuidelines.map((guideline, idx) => (
+                                {insights?.evidenceBasedAssessment?.clinicalGuidelines?.map((guideline, idx) => (
                                   <li key={idx} className="bg-blue-50 p-3 rounded-lg text-gray-700">
                                     {guideline}
                                   </li>
@@ -567,7 +567,7 @@ export default function DiagnosisPage() {
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
-                                {insights.evidenceBasedAssessment.studyReferences.map((reference, idx) => (
+                                {insights?.evidenceBasedAssessment?.studyReferences?.map((reference, idx) => (
                                   <li key={idx} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
                                     <div className="flex">
                                       <div className="font-mono text-gray-500 mr-3">[{idx + 1}]</div>
@@ -592,14 +592,14 @@ export default function DiagnosisPage() {
                                   <div className="flex items-center mb-1">
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                       <div className={`h-3 rounded-full ${
-                                        insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
-                                        insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                        insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
+                                        insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
                                         'w-1/3 bg-red-500'
                                       }`}></div>
                                     </div>
                                     <span className="ml-3 text-gray-700 font-medium min-w-16">
-                                      {insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() + 
-                                      insights.evidenceBasedAssessment.confidenceLevel.slice(1)}
+                                      {insights?.evidenceBasedAssessment?.confidenceLevel?.charAt(0).toUpperCase() + 
+                                      insights?.evidenceBasedAssessment?.confidenceLevel?.slice(1)}
                                     </span>
                                   </div>
                                   
@@ -610,21 +610,21 @@ export default function DiagnosisPage() {
                                   </div>
                                 </div>
                                 
-                                {insights.evidenceBasedAssessment.confidenceLevel === 'baixo' && (
+                                {insights?.evidenceBasedAssessment?.confidenceLevel === 'baixo' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
                                     A confiança baixa indica que os dados disponíveis são limitados ou as evidências científicas 
                                     para estas conclusões são preliminares. Consulte um médico para avaliação completa.
                                   </p>
                                 )}
                                 
-                                {insights.evidenceBasedAssessment.confidenceLevel === 'médio' && (
+                                {insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
                                     A confiança média indica que há evidências científicas moderadas que suportam estas 
                                     conclusões, mas algumas áreas podem requerer mais dados ou confirmação clínica.
                                   </p>
                                 )}
                                 
-                                {insights.evidenceBasedAssessment.confidenceLevel === 'alto' && (
+                                {insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
                                     A confiança alta indica que as conclusões são baseadas em evidências científicas 
                                     consistentes e dados robustos. Ainda assim, sempre consulte um médico.
