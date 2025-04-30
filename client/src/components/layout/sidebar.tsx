@@ -28,6 +28,17 @@ export default function Sidebar(props: SidebarProps) {
   
   const handleLogout = () => {
     logoutMutation.mutate();
+    // Fecha a sidebar em dispositivos móveis após o logout
+    if (window.innerWidth < 768) {
+      sidebarContext.closeSidebar();
+    }
+  };
+  
+  // Função para fechar a sidebar em dispositivos móveis após a navegação
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) {
+      sidebarContext.closeSidebar();
+    }
   };
 
   return (
@@ -65,6 +76,7 @@ export default function Sidebar(props: SidebarProps) {
       
       <nav className="p-4 space-y-1">
         <Link href="/" 
+          onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/' 
               ? 'bg-primary-50 text-primary-700' 
@@ -76,6 +88,7 @@ export default function Sidebar(props: SidebarProps) {
         </Link>
         
         <Link href="/upload"
+          onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/upload' 
               ? 'bg-primary-50 text-primary-700' 
@@ -87,6 +100,7 @@ export default function Sidebar(props: SidebarProps) {
         </Link>
         
         <Link href="/history"
+          onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/history' 
               ? 'bg-primary-50 text-primary-700' 
@@ -98,6 +112,7 @@ export default function Sidebar(props: SidebarProps) {
         </Link>
         
         <Link href="/results"
+          onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/results' 
               ? 'bg-primary-50 text-primary-700' 
@@ -109,6 +124,7 @@ export default function Sidebar(props: SidebarProps) {
         </Link>
         
         <Link href="/profile"
+          onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/profile' 
               ? 'bg-primary-50 text-primary-700' 

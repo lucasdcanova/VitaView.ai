@@ -141,10 +141,8 @@ export default function ExamReport() {
         <main className="flex-1">
           <div className="p-4 md:p-6">
             <div className="flex items-center mb-6">
-              <Link href="/history">
-                <a className="mr-3 p-2 rounded-lg hover:bg-gray-100">
-                  <ArrowLeft className="h-5 w-5" />
-                </a>
+              <Link href="/history" className="mr-3 p-2 rounded-lg hover:bg-gray-100 inline-block">
+                <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Análise do Exame</h1>
