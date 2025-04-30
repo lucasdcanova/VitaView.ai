@@ -166,7 +166,7 @@ export default function ExamResults() {
   const isLoading = apiLoading || metricsLoading;
   
   // Helper function to map status to colors
-  const getStatusColor = (status: string | null) => {
+  const getStatusColor = (status: string | null | undefined) => {
     if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
     
     switch (status.toLowerCase()) {
@@ -188,7 +188,7 @@ export default function ExamResults() {
   };
   
   // Helper function to get trend icon and color
-  const getTrendData = (change: string | null) => {
+  const getTrendData = (change: string | null | undefined) => {
     if (!change) return { icon: null, color: "" };
     
     const num = parseFloat(change);
