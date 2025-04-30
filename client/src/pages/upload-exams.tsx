@@ -145,8 +145,6 @@ export default function UploadExams() {
           </div>
         </main>
       </div>
-      
-      <MobileNav />
     </div>
   );
 }

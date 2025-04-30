@@ -40,13 +40,13 @@ export default function HealthRecommendations() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-yellow-500';
+        return 'yellow';
       case 'medium':
-        return 'border-primary-500';
+        return 'primary';
       case 'low':
-        return 'border-green-500';
+        return 'green';
       default:
-        return 'border-gray-300';
+        return 'gray';
     }
   };
   
