@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { uploadAndAnalyzeDocument } from "./services/gemini";
+import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
 import { generateHealthInsights } from "./services/openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -11,6 +11,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API routes for exams
   app.post("/api/exams/upload", uploadAndAnalyzeDocument);
+  
+  // Direct Gemini analysis endpoint for PDF documents
+  app.post("/api/analyze/gemini", async (req, res) => {
+    try {
+      const { fileContent, fileType } = req.body;
+      
+      if (!fileContent || !fileType) {
+        return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
+      }
+      
+      const analysisResult = await analyzeDocument(fileContent, fileType);
+      res.json(analysisResult);
+    } catch (error) {
+      console.error("Error in direct Gemini analysis:", error);
+      res.status(500).json({ message: "Erro ao analisar o documento com Gemini API" });
+    }
+  });
   
   app.get("/api/exams", async (req, res) => {
     try {
