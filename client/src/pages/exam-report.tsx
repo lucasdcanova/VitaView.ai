@@ -45,15 +45,29 @@ type HealthInsights = {
     diet: string;
     exercise: string;
     sleep: string;
+    stress_management?: string;
   };
   riskFactors: string[];
+  contextualAnalysis: string;
+  healthParameters?: {
+    healthScore: number;
+    criticalAreas: string[];
+    stableAreas: string[];
+    improvementTrends: string[];
+    worseningTrends: string[];
+  };
+  evidenceBasedAssessment?: {
+    clinicalGuidelines: string[];
+    studyReferences: string[];
+    confidenceLevel: string;
+  };
 };
 
 export default function ExamReport() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("summary");
-  const [params] = useRoute("/report/:id");
-  const examId = params ? parseInt(params.id) : 0;
+  const [match, params] = useRoute<{ id: string }>("/report/:id");
+  const examId = match && params ? parseInt(params.id) : 0;
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -201,6 +215,12 @@ export default function ExamReport() {
                         >
                           Recomendações
                         </TabsTrigger>
+                        <TabsTrigger 
+                          value="evidence"
+                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                        >
+                          Evidências Científicas
+                        </TabsTrigger>
                       </TabsList>
                       
                       {/* Summary Tab */}
@@ -290,8 +310,11 @@ export default function ExamReport() {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <Badge variant={
-                                      metric.status === 'normal' ? 'success' :
-                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'warning' : 'destructive'
+                                      metric.status === 'normal' ? 'default' :
+                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'outline' : 'destructive'
+                                    } className={
+                                      metric.status === 'normal' ? 'bg-green-100 text-green-800' :
+                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'bg-yellow-100 text-yellow-800' : ''
                                     }>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
@@ -399,7 +422,161 @@ export default function ExamReport() {
                                   <span className="font-medium mr-2">Sono:</span>
                                   <span>{insights.lifestyle.sleep}</span>
                                 </li>
+                                {insights.lifestyle.stress_management && (
+                                  <li className="flex items-start">
+                                    <span className="font-medium mr-2">Gerenciamento de estresse:</span>
+                                    <span>{insights.lifestyle.stress_management}</span>
+                                  </li>
+                                )}
                               </ul>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                      
+                      {/* Evidências Científicas Tab */}
+                      <TabsContent value="evidence">
+                        <div className="mb-6">
+                          <h3 className="font-medium text-lg text-gray-800 mb-4">Parâmetros de Saúde Baseados em Evidências</h3>
+                          
+                          {insights?.healthParameters ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                              {/* Health Score */}
+                              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-gray-800 mb-3">Pontuação Global de Saúde</h4>
+                                <div className="flex justify-center items-center mb-3">
+                                  <div className="relative w-36 h-36 flex items-center justify-center">
+                                    <svg className="w-full h-full" viewBox="0 0 36 36">
+                                      <circle 
+                                        cx="18" cy="18" r="16" 
+                                        fill="none" 
+                                        stroke="#e5e7eb" 
+                                        strokeWidth="3" 
+                                      />
+                                      <circle 
+                                        cx="18" cy="18" r="16" 
+                                        fill="none" 
+                                        stroke={
+                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" : 
+                                          insights.healthParameters.healthScore >= 60 ? "#f59e0b" : 
+                                          "#ef4444"
+                                        } 
+                                        strokeWidth="3" 
+                                        strokeDasharray="100" 
+                                        strokeDashoffset={100 - insights.healthParameters.healthScore}
+                                        strokeLinecap="round"
+                                        transform="rotate(-90, 18, 18)"
+                                      />
+                                    </svg>
+                                    <div className="absolute text-2xl font-bold">{insights.healthParameters.healthScore}</div>
+                                  </div>
+                                </div>
+                                <p className="text-center text-sm text-gray-600">Pontuação baseada na análise de todos os parâmetros disponíveis</p>
+                              </div>
+                              
+                              {/* Parameters Areas */}
+                              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-gray-800 mb-3">Áreas de Saúde</h4>
+                                
+                                {insights.healthParameters.criticalAreas.length > 0 && (
+                                  <div className="mb-4">
+                                    <h5 className="text-sm font-medium text-red-600 mb-1">Áreas críticas</h5>
+                                    <ul className="space-y-1">
+                                      {insights.healthParameters.criticalAreas.map((area, idx) => (
+                                        <li key={idx} className="text-sm flex text-gray-700">
+                                          <span className="mr-2">•</span>
+                                          <span>{area}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                
+                                {insights.healthParameters.stableAreas.length > 0 && (
+                                  <div className="mb-4">
+                                    <h5 className="text-sm font-medium text-green-600 mb-1">Áreas estáveis</h5>
+                                    <ul className="space-y-1">
+                                      {insights.healthParameters.stableAreas.map((area, idx) => (
+                                        <li key={idx} className="text-sm flex text-gray-700">
+                                          <span className="mr-2">•</span>
+                                          <span>{area}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                
+                                {insights.healthParameters.improvementTrends.length > 0 && (
+                                  <div>
+                                    <h5 className="text-sm font-medium text-blue-600 mb-1">Tendências de melhoria</h5>
+                                    <ul className="space-y-1">
+                                      {insights.healthParameters.improvementTrends.map((trend, idx) => (
+                                        <li key={idx} className="text-sm flex text-gray-700">
+                                          <span className="mr-2">•</span>
+                                          <span>{trend}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-gray-50 p-6 rounded-lg mb-8">
+                              <p className="text-center text-gray-500">Parâmetros de saúde não disponíveis para este exame</p>
+                            </div>
+                          )}
+                          
+                          {insights?.evidenceBasedAssessment ? (
+                            <div className="space-y-6">
+                              <div>
+                                <h3 className="font-medium text-lg text-gray-800 mb-3">Diretrizes Clínicas Relevantes</h3>
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                  <ul className="space-y-2">
+                                    {insights.evidenceBasedAssessment.clinicalGuidelines.map((guideline, idx) => (
+                                      <li key={idx} className="text-sm flex items-start">
+                                        <span className="text-blue-600 font-medium mr-2">›</span>
+                                        <span className="text-gray-700">{guideline}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <h3 className="font-medium text-lg text-gray-800 mb-3">Referências Científicas</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                  <ul className="space-y-2">
+                                    {insights.evidenceBasedAssessment.studyReferences.map((reference, idx) => (
+                                      <li key={idx} className="text-sm flex items-start">
+                                        <span className="text-gray-800 font-medium mr-2">[{idx + 1}]</span>
+                                        <span className="text-gray-700">{reference}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <h4 className="font-medium text-gray-800 mb-2">Nível de confiança na avaliação</h4>
+                                <div className="flex items-center">
+                                  <div className="w-full bg-gray-200 rounded-full h-2.5 mr-4">
+                                    <div className={`h-2.5 rounded-full ${
+                                      insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
+                                      insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                      'w-1/3 bg-red-500'
+                                    }`}></div>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700 w-16">{
+                                    insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() + 
+                                    insights.evidenceBasedAssessment.confidenceLevel.slice(1)
+                                  }</span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-gray-50 p-6 rounded-lg">
+                              <p className="text-center text-gray-500">Evidências científicas não disponíveis para este exame</p>
                             </div>
                           )}
                         </div>
