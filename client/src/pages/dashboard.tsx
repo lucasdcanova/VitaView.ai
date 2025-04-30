@@ -44,8 +44,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-      
-      <MobileNav />
     </div>
   );
 }

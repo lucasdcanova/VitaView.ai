@@ -701,8 +701,6 @@ export default function Profile() {
           </div>
         </main>
       </div>
-      
-      <MobileNav />
     </div>
   );
 }

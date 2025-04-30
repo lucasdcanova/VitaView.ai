@@ -552,8 +552,6 @@ export default function ExamReport() {
           </div>
         </main>
       </div>
-      
-      <MobileNav />
     </div>
   );
 }

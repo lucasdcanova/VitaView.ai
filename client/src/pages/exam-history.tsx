@@ -317,8 +317,6 @@ export default function ExamHistory() {
           </div>
         </main>
       </div>
-      
-      <MobileNav />
     </div>
   );
 }
