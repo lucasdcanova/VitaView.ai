@@ -6,8 +6,8 @@ import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
 import { eq, desc, asc } from "drizzle-orm";
 
-// Fix for type issues
-type SessionStore = ReturnType<typeof createMemoryStore> | ReturnType<typeof connectPg>;
+// Fix for type issues - use any to bypass complex type definitions
+type SessionStore = any;
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
@@ -93,7 +93,18 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const newUser: User = { ...user, id, createdAt: new Date() };
+    const newUser: User = { 
+      id,
+      username: user.username,
+      password: user.password, 
+      fullName: user.fullName || null,
+      email: user.email || null,
+      createdAt: new Date(),
+      birthDate: null,
+      gender: null,
+      phoneNumber: null,
+      address: null
+    };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -114,7 +125,9 @@ export class MemStorage implements IStorage {
       ...exam, 
       id, 
       uploadDate: new Date(),
-      originalContent: ""
+      originalContent: "",
+      laboratoryName: exam.laboratoryName || null,
+      examDate: exam.examDate || null
     };
     this.exams.set(id, newExam);
     return newExam;
@@ -146,7 +159,16 @@ export class MemStorage implements IStorage {
   // Exam results operations
   async createExamResult(result: InsertExamResult): Promise<ExamResult> {
     const id = this.examResultIdCounter++;
-    const newResult: ExamResult = { ...result, id, analysisDate: new Date() };
+    const newResult: ExamResult = { 
+      id,
+      examId: result.examId,
+      analysisDate: new Date(),
+      summary: result.summary || null,
+      detailedAnalysis: result.detailedAnalysis || null,
+      recommendations: result.recommendations || null,
+      healthMetrics: result.healthMetrics || null,
+      aiProvider: result.aiProvider
+    };
     this.examResults.set(id, newResult);
     return newResult;
   }
@@ -164,7 +186,16 @@ export class MemStorage implements IStorage {
   // Health metrics operations
   async createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric> {
     const id = this.healthMetricIdCounter++;
-    const newMetric: HealthMetric = { ...metric, id, date: new Date() };
+    const newMetric: HealthMetric = { 
+      id,
+      name: metric.name,
+      value: metric.value,
+      userId: metric.userId,
+      date: new Date(),
+      status: metric.status || null,
+      unit: metric.unit || null,
+      change: metric.change || null
+    };
     this.healthMetricsMap.set(id, newMetric);
     return newMetric;
   }
@@ -195,7 +226,14 @@ export class MemStorage implements IStorage {
   // Notification operations
   async createNotification(notification: InsertNotification): Promise<Notification> {
     const id = this.notificationIdCounter++;
-    const newNotification: Notification = { ...notification, id, date: new Date() };
+    const newNotification: Notification = { 
+      id, 
+      date: new Date(),
+      userId: notification.userId,
+      title: notification.title,
+      message: notification.message,
+      read: notification.read || false
+    };
     this.notificationsMap.set(id, newNotification);
     return newNotification;
   }
@@ -280,8 +318,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteExam(id: number): Promise<boolean> {
-    const result = await db.delete(exams).where(eq(exams.id, id));
-    return result.count > 0;
+    // First check if the exam exists
+    const examExists = await this.getExam(id);
+    if (!examExists) return false;
+    
+    // Delete the exam - we don't need to check the result since we already confirmed it exists
+    await db.delete(exams).where(eq(exams.id, id));
+    return true;
   }
 
   // Exam results operations
