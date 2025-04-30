@@ -178,9 +178,8 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
     
     // Prepara informações dos exames em ordem cronológica
     const examsInfo = examResults.map((result, index) => {
-      const examDate = result.createdAt || 
-                       (result as any).analysisDate || 
-                       new Date();
+      // Usamos analysisDate diretamente, que é uma propriedade garantida pelo modelo
+      const examDate = result.analysisDate || new Date();
       
       return `
         Exame #${index + 1} - Data: ${new Date(examDate).toLocaleDateString('pt-BR')}

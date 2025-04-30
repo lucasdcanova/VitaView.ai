@@ -69,7 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const examData = {
         ...req.body,
-        userId: req.user!.id
+        userId: req.user!.id,
+        uploadDate: new Date()
       };
       
       const newExam = await storage.createExam(examData);
@@ -77,6 +78,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating exam:", error);
       res.status(500).json({ message: "Erro ao criar exame" });
+    }
+  });
+  
+  // API para salvar resultados de exames
+  app.post("/api/exam-results", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      
+      const resultData = {
+        ...req.body,
+        analysisDate: new Date()
+      };
+      
+      // Verificar se o exame pertence ao usuário
+      const exam = await storage.getExam(resultData.examId);
+      if (!exam) {
+        return res.status(404).json({ message: "Exame não encontrado" });
+      }
+      
+      if (exam.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+      
+      const newResult = await storage.createExamResult(resultData);
+      res.status(201).json(newResult);
+    } catch (error) {
+      console.error("Error creating exam result:", error);
+      res.status(500).json({ message: "Erro ao salvar resultado do exame" });
+    }
+  });
+  
+  // API para salvar métricas de saúde
+  app.post("/api/health-metrics", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      
+      const metricData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      
+      const newMetric = await storage.createHealthMetric(metricData);
+      res.status(201).json(newMetric);
+    } catch (error) {
+      console.error("Error creating health metric:", error);
+      res.status(500).json({ message: "Erro ao salvar métrica de saúde" });
     }
   });
   

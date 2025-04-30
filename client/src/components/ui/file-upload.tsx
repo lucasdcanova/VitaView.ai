@@ -87,25 +87,53 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       return response.json();
     },
-    onSuccess: (data) => {
-      setUploadStep('complete');
+    onSuccess: (openaiInterpretation) => {
+      // Salvar o exame no banco de dados
+      const filename = document.querySelector('input[type=file]')?.files?.[0]?.name || 'Exame';
       
-      // Atualizar cache com novos dados
-      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      const examData = {
+        name: filename.split('.')[0],
+        userId: user?.id,
+        fileType: 'pdf', // assumindo PDF como padrão
+        laboratoryName: "Upload via Plataforma",
+        examDate: new Date().toISOString().split('T')[0],
+        geminiAnalysis: analyzedResult,
+        openaiInterpretation: openaiInterpretation
+      };
       
-      toast({
-        title: "Análise concluída",
-        description: "Seu exame foi analisado e interpretado com sucesso!",
+      // Salvar exame completo
+      saveExamMutation.mutate(examData, {
+        onSuccess: (savedExam) => {
+          setUploadStep('complete');
+          
+          // Atualizar cache com novos dados
+          queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          
+          toast({
+            title: "Análise concluída",
+            description: "Seu exame foi analisado, interpretado e salvo com sucesso!",
+          });
+          
+          if (onUploadComplete) {
+            onUploadComplete({
+              savedExam,
+              geminiAnalysis: analyzedResult,
+              openaiInterpretation
+            });
+          }
+        },
+        onError: (error) => {
+          console.error("Erro ao salvar exame:", error);
+          toast({
+            title: "Erro ao salvar",
+            description: "A análise foi concluída, mas houve um erro ao salvar o exame.",
+            variant: "destructive",
+          });
+          setUploadStep('error');
+        }
       });
-      
-      if (onUploadComplete) {
-        onUploadComplete({
-          geminiAnalysis: analyzedResult,
-          openaiInterpretation: data
-        });
-      }
     },
     onError: (error: Error) => {
       setUploadStep('error');
@@ -120,21 +148,78 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   // Salvar exame completo no banco de dados
   const saveExamMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/exams", {
+      // Adaptar dados para formato esperado pela API
+      const examData = {
+        name: data.name,
+        fileType: data.fileType,
+        laboratoryName: data.laboratoryName,
+        examDate: data.examDate,
+        status: "analyzed",
+        originalContent: data.geminiAnalysis ? JSON.stringify(data.geminiAnalysis) : null
+      };
+      
+      // 1. Criar exame básico
+      const examResponse = await fetch("/api/exams", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(examData),
         credentials: "include"
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || response.statusText);
+      if (!examResponse.ok) {
+        const errorText = await examResponse.text();
+        throw new Error(errorText || examResponse.statusText);
       }
       
-      return response.json();
+      const savedExam = await examResponse.json();
+      
+      // 2. Salvar resultados se houver análise do Gemini
+      if (data.geminiAnalysis) {
+        const resultData = {
+          examId: savedExam.id,
+          summary: data.geminiAnalysis.summary || null,
+          detailedAnalysis: data.geminiAnalysis.detailedAnalysis || null,
+          recommendations: Array.isArray(data.geminiAnalysis.recommendations) 
+            ? data.geminiAnalysis.recommendations.join('\n') 
+            : null,
+          healthMetrics: data.geminiAnalysis.healthMetrics || [],
+          aiProvider: "gemini"
+        };
+        
+        // Criar resultado do exame
+        await fetch("/api/exam-results", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(resultData),
+          credentials: "include"
+        });
+      }
+      
+      // 3. Salvar métricas de saúde individuais
+      if (data.geminiAnalysis?.healthMetrics && Array.isArray(data.geminiAnalysis.healthMetrics)) {
+        for (const metric of data.geminiAnalysis.healthMetrics) {
+          await fetch("/api/health-metrics", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: metric.name,
+              value: metric.value,
+              unit: metric.unit || '',
+              status: metric.status || 'normal',
+              change: metric.change || ''
+            }),
+            credentials: "include"
+          });
+        }
+      }
+      
+      return savedExam;
     }
   });
   
