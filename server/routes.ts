@@ -29,6 +29,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.post("/api/exams", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      
+      const examData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      
+      const newExam = await storage.createExam(examData);
+      res.status(201).json(newExam);
+    } catch (error) {
+      console.error("Error creating exam:", error);
+      res.status(500).json({ message: "Erro ao criar exame" });
+    }
+  });
+  
   app.get("/api/exams", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
