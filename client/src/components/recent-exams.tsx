@@ -6,21 +6,53 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react";
 
 export default function RecentExams() {
-  const { data: exams, isLoading } = useQuery<Exam[]>({
+  const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
     queryKey: ["/api/exams"],
     queryFn: async () => {
-      const res = await fetch("/api/exams", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch exams");
-      return res.json();
+      try {
+        const res = await fetch("/api/exams", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch exams");
+        return res.json();
+      } catch (error) {
+        console.error("Error fetching exams from API:", error);
+        return [];
+      }
     },
   });
   
+  // Use React state instead of direct localStorage access for SSR compatibility
+  const [localExams, setLocalExams] = useState<Exam[]>([]);
+  const isLoading = apiLoading;
+  
+  // Combine API and localStorage exams
+  useEffect(() => {
+    try {
+      const savedExamsString = localStorage.getItem('savedExams');
+      if (savedExamsString) {
+        const savedExams = JSON.parse(savedExamsString);
+        setLocalExams(savedExams);
+      }
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+    }
+  }, []);
+  
+  // Combine both sources of exams
+  const allExams = useMemo(() => {
+    const apiExamsArray = apiExams || [];
+    return [...apiExamsArray, ...localExams];
+  }, [apiExams, localExams]);
+  
   // Sort exams by upload date and limit to the most recent ones
-  const recentExams = exams?.sort((a, b) => 
-    new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
-  ).slice(0, 5);
+  const recentExams = useMemo(() => 
+    allExams
+      .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
+      .slice(0, 5), 
+    [allExams]
+  );
   
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
