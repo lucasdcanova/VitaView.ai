@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { 
   LayoutDashboard, 
   Upload, 
@@ -10,14 +11,20 @@ import {
   Filter
 } from "lucide-react";
 
+// Props são opcionais agora que estamos usando o contexto global
 type SidebarProps = {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
+  isSidebarOpen?: boolean;
+  toggleSidebar?: () => void;
 };
 
-export default function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
+export default function Sidebar(props: SidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  // Usar o contexto global, mas permitir override via props se necessário
+  const sidebarContext = useSidebar();
+  
+  const isSidebarOpen = props.isSidebarOpen !== undefined ? props.isSidebarOpen : sidebarContext.isSidebarOpen;
+  const toggleSidebar = props.toggleSidebar || sidebarContext.toggleSidebar;
   
   const handleLogout = () => {
     logoutMutation.mutate();
