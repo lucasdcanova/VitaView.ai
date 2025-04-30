@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Exam, HealthMetric } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
 import { 
   FileText, 
   Image, 
@@ -36,11 +39,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ExamResults() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExamType, setSelectedExamType] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [localExams, setLocalExams] = useState<Exam[]>([]);
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
+  
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
   
   // Fetch exams from API
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
@@ -213,242 +222,252 @@ export default function ExamResults() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Resultados de Exames</h1>
-          <p className="text-gray-500 mt-1">
-            Visualize e filtre todos os seus resultados de exames
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/upload">
-            <Button className="bg-primary-600 hover:bg-primary-700">
-              Novo Exame
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       
-      {/* Filters */}
-      <Card className="mb-8">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter size={18} />
-            Filtros
-          </CardTitle>
-          <CardDescription>
-            Refine os resultados por tipo de exame ou pesquise por termos específicos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="w-full sm:w-1/3">
-              <label className="text-sm font-medium mb-1 block text-gray-700">
-                Tipo de Exame
-              </label>
-              <Select
-                value={selectedExamType}
-                onValueChange={(value) => setSelectedExamType(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um tipo de exame" />
-                </SelectTrigger>
-                <SelectContent>
-                  {examTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type === "all" ? "Todos os Exames" : type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full sm:w-2/3">
-              <label className="text-sm font-medium mb-1 block text-gray-700">
-                Pesquisar
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <Input
-                  type="search"
-                  placeholder="Pesquisar por nome, status ou valor..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <MobileHeader toggleSidebar={toggleSidebar} />
+        
+        <main className="flex-1 overflow-y-auto">
+          <div className="container px-4 py-6 mx-auto max-w-7xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Resultados de Exames</h1>
+                <p className="text-gray-500 mt-1">
+                  Visualize e filtre todos os seus resultados de exames
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/upload">
+                  <Button className="bg-primary-600 hover:bg-primary-700">
+                    Novo Exame
+                  </Button>
+                </Link>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* View Tabs */}
-      <Tabs defaultValue="grid" className="mb-6" onValueChange={(value) => setViewMode(value as "list" | "grid")}>
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="grid">Grade</TabsTrigger>
-            <TabsTrigger value="list">Lista</TabsTrigger>
-          </TabsList>
-          <div className="text-sm text-gray-500">
-            {filteredMetrics.length} resultado(s) encontrado(s)
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, index) => (
-              <Card key={index} className="animate-pulse">
-                <CardHeader>
-                  <Skeleton className="h-5 w-1/2 mb-1" />
-                  <Skeleton className="h-4 w-1/3" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-12 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredMetrics.length === 0 ? (
-          <div className="border-2 border-dashed border-gray-200 rounded-lg p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-primary-50 flex items-center justify-center mb-4">
-              <AlertCircle className="h-8 w-8 text-primary-500" />
-            </div>
-            <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum resultado encontrado</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Não foi possível encontrar resultados com os filtros selecionados. Tente modificar seus filtros ou fazer upload de novos exames.
-            </p>
-            <Link href="/upload">
-              <Button className="bg-primary-600 hover:bg-primary-700">
-                Fazer upload de exame
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <>
-            <TabsContent value="grid" className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from(groupedMetrics.entries()).map(([name, metrics]) => (
-                  <Card key={name} className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-xl">{name}</CardTitle>
-                      <CardDescription>
-                        {metrics.length} resultado(s) • Último: {new Date(metrics[0]?.date || Date.now()).toLocaleDateString('pt-BR')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="text-3xl font-bold">
-                          {metrics[0]?.value}{' '}
-                          <span className="text-sm font-normal text-gray-500">{metrics[0]?.unit}</span>
-                        </div>
-                        <Badge className={cn("text-xs", getStatusColor(metrics[0]?.status))}>
-                          {metrics[0]?.status}
-                        </Badge>
+            
+            {/* Filters */}
+            <Card className="mb-8">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Filter size={18} />
+                  Filtros
+                </CardTitle>
+                <CardDescription>
+                  Refine os resultados por tipo de exame ou pesquise por termos específicos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="w-full sm:w-1/3">
+                    <label className="text-sm font-medium mb-1 block text-gray-700">
+                      Tipo de Exame
+                    </label>
+                    <Select
+                      value={selectedExamType}
+                      onValueChange={(value) => setSelectedExamType(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um tipo de exame" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {examTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type === "all" ? "Todos os Exames" : type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full sm:w-2/3">
+                    <label className="text-sm font-medium mb-1 block text-gray-700">
+                      Pesquisar
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <Input
+                        type="search"
+                        placeholder="Pesquisar por nome, status ou valor..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* View Tabs */}
+            <Tabs defaultValue="grid" className="mb-6" onValueChange={(value) => setViewMode(value as "list" | "grid")}>
+              <div className="flex justify-between items-center mb-4">
+                <TabsList>
+                  <TabsTrigger value="grid">Grade</TabsTrigger>
+                  <TabsTrigger value="list">Lista</TabsTrigger>
+                </TabsList>
+                <div className="text-sm text-gray-500">
+                  {filteredMetrics.length} resultado(s) encontrado(s)
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(6)].map((_, index) => (
+                    <Card key={index} className="animate-pulse">
+                      <CardHeader>
+                        <Skeleton className="h-5 w-1/2 mb-1" />
+                        <Skeleton className="h-4 w-1/3" />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className="h-12 w-full mb-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : filteredMetrics.length === 0 ? (
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-12 text-center">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-primary-50 flex items-center justify-center mb-4">
+                    <AlertCircle className="h-8 w-8 text-primary-500" />
+                  </div>
+                  <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum resultado encontrado</h3>
+                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                    Não foi possível encontrar resultados com os filtros selecionados. Tente modificar seus filtros ou fazer upload de novos exames.
+                  </p>
+                  <Link href="/upload">
+                    <Button className="bg-primary-600 hover:bg-primary-700">
+                      Fazer upload de exame
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="grid" className="mt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Array.from(groupedMetrics.entries()).map(([name, metrics]) => (
+                        <Card key={name} className="overflow-hidden">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-xl">{name}</CardTitle>
+                            <CardDescription>
+                              {metrics.length} resultado(s) • Último: {new Date(metrics[0]?.date || Date.now()).toLocaleDateString('pt-BR')}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex justify-between items-center mb-3">
+                              <div className="text-3xl font-bold">
+                                {metrics[0]?.value}{' '}
+                                <span className="text-sm font-normal text-gray-500">{metrics[0]?.unit}</span>
+                              </div>
+                              <Badge className={cn("text-xs", getStatusColor(metrics[0]?.status))}>
+                                {metrics[0]?.status}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center text-sm">
+                              <span className={cn("flex items-center gap-1", getTrendData(metrics[0]?.change).color)}>
+                                {getTrendData(metrics[0]?.change).icon}
+                                {metrics[0]?.change}
+                              </span>
+                              <span className="mx-2 text-gray-300">•</span>
+                              <span className="text-gray-500">
+                                {metrics.length > 1 
+                                  ? `Histórico de ${metrics.length} medições` 
+                                  : "Primeira medição"}
+                              </span>
+                            </div>
+                          </CardContent>
+                          {metrics.length > 1 && (
+                            <CardFooter className="pt-0 px-6 pb-4">
+                              <div className="w-full h-10 flex items-end space-x-1">
+                                {metrics.slice(0, 7).map((metric, i) => {
+                                  // Scale based on min/max in this set
+                                  const values = metrics.map(m => parseFloat(m.value));
+                                  const min = Math.min(...values);
+                                  const max = Math.max(...values);
+                                  const range = max - min;
+                                  
+                                  // Calculate height percentage (30% to 100%)
+                                  const valueNum = parseFloat(metric.value);
+                                  let heightPercent = 30; // default min height
+                                  
+                                  if (range > 0) {
+                                    heightPercent = 30 + ((valueNum - min) / range) * 70;
+                                  }
+                                  
+                                  return (
+                                    <div
+                                      key={i}
+                                      className={cn(
+                                        "w-full rounded-t",
+                                        !metric.status ? "bg-gray-200" :
+                                        metric.status === "normal" ? "bg-green-200" :
+                                        (metric.status && metric.status.toLowerCase().includes("alt")) || 
+                                        (metric.status && metric.status.toLowerCase().includes("high")) ? "bg-red-200" :
+                                        (metric.status && metric.status.toLowerCase().includes("baix")) || 
+                                        (metric.status && metric.status.toLowerCase().includes("low")) ? "bg-blue-200" :
+                                        "bg-amber-200"
+                                      )}
+                                      style={{ height: `${heightPercent}%` }}
+                                      title={`${metric.value} ${metric.unit || ''} - ${new Date(metric.date || Date.now()).toLocaleDateString()}`}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </CardFooter>
+                          )}
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="list" className="mt-0">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                      <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 py-3 px-4 text-sm font-medium text-gray-500">
+                        <div className="col-span-4">Nome do exame</div>
+                        <div className="col-span-2 text-center">Valor</div>
+                        <div className="col-span-2 text-center">Unidade</div>
+                        <div className="col-span-2 text-center">Status</div>
+                        <div className="col-span-2 text-center">Variação</div>
                       </div>
                       
-                      <div className="flex items-center text-sm">
-                        <span className={cn("flex items-center gap-1", getTrendData(metrics[0]?.change).color)}>
-                          {getTrendData(metrics[0]?.change).icon}
-                          {metrics[0]?.change}
-                        </span>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-gray-500">
-                          {metrics.length > 1 
-                            ? `Histórico de ${metrics.length} medições` 
-                            : "Primeira medição"}
-                        </span>
-                      </div>
-                    </CardContent>
-                    {metrics.length > 1 && (
-                      <CardFooter className="pt-0 px-6 pb-4">
-                        <div className="w-full h-10 flex items-end space-x-1">
-                          {metrics.slice(0, 7).map((metric, i) => {
-                            // Scale based on min/max in this set
-                            const values = metrics.map(m => parseFloat(m.value));
-                            const min = Math.min(...values);
-                            const max = Math.max(...values);
-                            const range = max - min;
-                            
-                            // Calculate height percentage (30% to 100%)
-                            const valueNum = parseFloat(metric.value);
-                            let heightPercent = 30; // default min height
-                            
-                            if (range > 0) {
-                              heightPercent = 30 + ((valueNum - min) / range) * 70;
-                            }
-                            
-                            return (
-                              <div
-                                key={i}
-                                className={cn(
-                                  "w-full rounded-t",
-                                  !metric.status ? "bg-gray-200" :
-                                  metric.status === "normal" ? "bg-green-200" :
-                                  (metric.status && metric.status.toLowerCase().includes("alt")) || 
-                                  (metric.status && metric.status.toLowerCase().includes("high")) ? "bg-red-200" :
-                                  (metric.status && metric.status.toLowerCase().includes("baix")) || 
-                                  (metric.status && metric.status.toLowerCase().includes("low")) ? "bg-blue-200" :
-                                  "bg-amber-200"
-                                )}
-                                style={{ height: `${heightPercent}%` }}
-                                title={`${metric.value} ${metric.unit || ''} - ${new Date(metric.date || Date.now()).toLocaleDateString()}`}
-                              />
-                            );
-                          })}
-                        </div>
-                      </CardFooter>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="list" className="mt-0">
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 py-3 px-4 text-sm font-medium text-gray-500">
-                  <div className="col-span-4">Nome do exame</div>
-                  <div className="col-span-2 text-center">Valor</div>
-                  <div className="col-span-2 text-center">Unidade</div>
-                  <div className="col-span-2 text-center">Status</div>
-                  <div className="col-span-2 text-center">Variação</div>
-                </div>
-                
-                {Array.from(groupedMetrics.entries()).flatMap(([name, metrics]) => 
-                  metrics.map((metric, index) => (
-                    <div 
-                      key={`${name}-${index}`} 
-                      className="grid grid-cols-12 py-3 px-4 border-b border-gray-100 items-center hover:bg-gray-50"
-                    >
-                      <div className="col-span-4 font-medium text-gray-800">
-                        {metric.name}
-                        {index === 0 && (
-                          <span className="ml-2 text-xs bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded-full">
-                            Recente
-                          </span>
-                        )}
-                      </div>
-                      <div className="col-span-2 text-center">{metric.value}</div>
-                      <div className="col-span-2 text-center text-gray-500">{metric.unit || ''}</div>
-                      <div className="col-span-2 text-center">
-                        <Badge className={cn("px-2 py-0.5", getStatusColor(metric.status || ''))}>
-                          {metric.status || 'N/A'}
-                        </Badge>
-                      </div>
-                      <div className="col-span-2 text-center">
-                        <span className={cn("flex items-center justify-center gap-1", getTrendData(metric.change).color)}>
-                          {getTrendData(metric.change).icon}
-                          {metric.change}
-                        </span>
-                      </div>
+                      {Array.from(groupedMetrics.entries()).flatMap(([name, metrics]) => 
+                        metrics.map((metric, index) => (
+                          <div 
+                            key={`${name}-${index}`} 
+                            className="grid grid-cols-12 py-3 px-4 border-b border-gray-100 items-center hover:bg-gray-50"
+                          >
+                            <div className="col-span-4 font-medium text-gray-800">
+                              {metric.name}
+                              {index === 0 && (
+                                <span className="ml-2 text-xs bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded-full">
+                                  Recente
+                                </span>
+                              )}
+                            </div>
+                            <div className="col-span-2 text-center">{metric.value}</div>
+                            <div className="col-span-2 text-center text-gray-500">{metric.unit || ''}</div>
+                            <div className="col-span-2 text-center">
+                              <Badge className={cn("px-2 py-0.5", getStatusColor(metric.status || ''))}>
+                                {metric.status || 'N/A'}
+                              </Badge>
+                            </div>
+                            <div className="col-span-2 text-center">
+                              <span className={cn("flex items-center justify-center gap-1", getTrendData(metric.change).color)}>
+                                {getTrendData(metric.change).icon}
+                                {metric.change}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
