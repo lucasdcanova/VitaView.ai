@@ -1,0 +1,559 @@
+import { useState, useEffect } from "react";
+import { useRoute, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
+import MobileNav from "@/components/layout/mobile-nav";
+import { Exam, ExamResult } from "@shared/schema";
+import { getExamDetails, getExamInsights } from "@/lib/api";
+import {
+  ArrowLeft,
+  FileText,
+  Image,
+  Share2,
+  Download,
+  Printer,
+  Calendar,
+  Building,
+  UserRound,
+  CheckCircle2,
+  ArrowDown,
+  ArrowUp,
+  Minus
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+
+type HealthInsights = {
+  recommendations: string[];
+  specialists: string[];
+  lifestyle: {
+    diet: string;
+    exercise: string;
+    sleep: string;
+  };
+  riskFactors: string[];
+};
+
+export default function ExamReport() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState("summary");
+  const [params] = useRoute("/report/:id");
+  const examId = params ? parseInt(params.id) : 0;
+  
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+  
+  const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
+    queryKey: [`/api/exams/${examId}`],
+    queryFn: () => getExamDetails(examId),
+    enabled: !!examId,
+  });
+  
+  const { data: insights, isLoading: isLoadingInsights } = useQuery<HealthInsights>({
+    queryKey: [`/api/exams/${examId}/insights`],
+    queryFn: () => getExamInsights(examId),
+    enabled: !!examId && !!data?.result,
+  });
+  
+  const getFileIcon = (fileType?: string) => {
+    switch (fileType) {
+      case 'pdf':
+        return <FileText className="text-gray-500" size={16} />;
+      case 'jpeg':
+      case 'png':
+        return <Image className="text-gray-500" size={16} />;
+      default:
+        return <FileText className="text-gray-500" size={16} />;
+    }
+  };
+  
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+  
+  const getMetricStatus = (status?: string) => {
+    switch (status) {
+      case 'normal':
+        return { color: 'bg-green-600', width: '60%' };
+      case 'atenção':
+        return { color: 'bg-yellow-500', width: '95%' };
+      case 'baixo':
+        return { color: 'bg-yellow-500', width: '40%' };
+      case 'alto':
+        return { color: 'bg-red-500', width: '85%' };
+      default:
+        return { color: 'bg-green-600', width: '60%' };
+    }
+  };
+  
+  const getChangeIcon = (change?: string) => {
+    if (!change) return <Minus className="h-3 w-3 text-gray-600" />;
+    
+    if (change.startsWith('-')) {
+      return <ArrowDown className="h-3 w-3 text-green-600" />;
+    } else if (change.startsWith('+')) {
+      return <ArrowUp className="h-3 w-3 text-red-600" />;
+    }
+    return <Minus className="h-3 w-3 text-gray-600" />;
+  };
+  
+  // Extract sample health metrics from the exam result
+  const healthMetrics = data?.result?.healthMetrics as any[] || [];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <MobileHeader toggleSidebar={toggleSidebar} />
+      
+      <div className="flex flex-1 relative">
+        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        
+        <main className="flex-1">
+          <div className="p-4 md:p-6">
+            <div className="flex items-center mb-6">
+              <Link href="/history">
+                <a className="mr-3 p-2 rounded-lg hover:bg-gray-100">
+                  <ArrowLeft className="h-5 w-5" />
+                </a>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">Análise do Exame</h1>
+                <p className="text-gray-600">Relatório detalhado e recomendações</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Report Details */}
+              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
+                {isLoading ? (
+                  <>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <Skeleton className="h-7 w-64 mb-2" />
+                        <Skeleton className="h-5 w-40" />
+                      </div>
+                      <div className="flex space-x-2">
+                        <Skeleton className="h-9 w-9 rounded-lg" />
+                        <Skeleton className="h-9 w-9 rounded-lg" />
+                        <Skeleton className="h-9 w-9 rounded-lg" />
+                      </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <Skeleton className="h-10 w-full mb-6" />
+                      <Skeleton className="h-32 w-full mb-4" />
+                      <Skeleton className="h-32 w-full" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-800">{data?.exam.name}</h2>
+                        <p className="text-gray-500">Analisado em {formatDate(data?.result.analysisDate.toString())}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                          <Download className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                          <Share2 className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                          <Printer className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+                      <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                        <TabsTrigger 
+                          value="summary"
+                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
+                        >
+                          Resumo
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="detailed"
+                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                        >
+                          Análise Detalhada
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="recommendations"
+                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                        >
+                          Recomendações
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      {/* Summary Tab */}
+                      <TabsContent value="summary" className="mt-6">
+                        <p className="text-gray-600 mb-4">
+                          {data?.result.summary}
+                        </p>
+                        
+                        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg mb-4">
+                          <div className="flex">
+                            <CheckCircle2 className="text-green-600 mr-3 flex-shrink-0" size={20} />
+                            <div>
+                              <h4 className="font-medium text-green-800">Resultado geral positivo</h4>
+                              <p className="text-sm text-green-700 mt-1">Seus resultados estão majoritariamente dentro dos intervalos de referência, indicando boa saúde geral.</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                          <div className="flex">
+                            <CheckCircle2 className="text-yellow-600 mr-3 flex-shrink-0" size={20} />
+                            <div>
+                              <h4 className="font-medium text-yellow-800">Pontos de atenção</h4>
+                              <p className="text-sm text-yellow-700 mt-1">
+                                {healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo' || m.status === 'alto')
+                                  ? `${healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo')?.name || 'Alguns parâmetros'} em nível de atenção.`
+                                  : 'Alguns parâmetros merecem atenção e acompanhamento.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <h3 className="font-medium text-lg text-gray-800 mt-6 mb-3">Principais parâmetros</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {healthMetrics.slice(0, 4).map((metric, index) => (
+                            <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-700">
+                                  {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
+                                </span>
+                                <span className="text-sm text-gray-500">{metric.value} {metric.unit}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`${getMetricStatus(metric.status).color} h-2 rounded-full`} 
+                                  style={{ width: getMetricStatus(metric.status).width }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {metric.name === 'hemoglobina' && 'Referência: 12.0-16.0 g/dL'}
+                                {metric.name === 'glicemia' && 'Referência: 70-99 mg/dL'}
+                                {metric.name === 'colesterol' && 'Referência: 150-199 mg/dL'}
+                                {metric.name === 'vitamina_d' && 'Referência: 30-100 ng/mL'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </TabsContent>
+                      
+                      {/* Detailed Analysis Tab */}
+                      <TabsContent value="detailed">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parâmetro</th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resultado</th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referência</th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {healthMetrics.map((metric, index) => (
+                                <tr key={index} className={index % 2 === 0 ? '' : 'bg-gray-50'}>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {metric.value} {metric.unit}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {metric.name === 'hemoglobina' && '12.0-16.0 g/dL'}
+                                    {metric.name === 'glicemia' && '70-99 mg/dL'}
+                                    {metric.name === 'colesterol' && '150-199 mg/dL'}
+                                    {metric.name === 'vitamina_d' && '30-100 ng/mL'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <Badge variant={
+                                      metric.status === 'normal' ? 'success' :
+                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'warning' : 'destructive'
+                                    }>
+                                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        <div className="mt-6">
+                          <h3 className="font-medium text-lg text-gray-800 mb-3">Interpretação detalhada</h3>
+                          <div className="space-y-3">
+                            <p className="text-gray-600">
+                              {data?.result.detailedAnalysis}
+                            </p>
+                          </div>
+                        </div>
+                      </TabsContent>
+                      
+                      {/* Recommendations Tab */}
+                      <TabsContent value="recommendations">
+                        <div className="mb-6">
+                          <h3 className="font-medium text-lg text-gray-800 mb-3">Recomendações principais</h3>
+                          
+                          <div className="space-y-4">
+                            {isLoadingInsights ? (
+                              [...Array(3)].map((_, i) => (
+                                <div key={i} className="bg-primary-50 p-4 rounded-lg">
+                                  <div className="flex">
+                                    <Skeleton className="h-6 w-6 mr-4" />
+                                    <div className="w-full">
+                                      <Skeleton className="h-5 w-48 mb-2" />
+                                      <Skeleton className="h-4 w-full" />
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              insights?.recommendations.map((recommendation, index) => (
+                                <div key={index} className="bg-primary-50 p-4 rounded-lg">
+                                  <div className="flex">
+                                    <div className="flex-shrink-0">
+                                      {index === 0 && <UserRound className="text-primary-600" size={20} />}
+                                      {index === 1 && <Calendar className="text-primary-600" size={20} />}
+                                      {index > 1 && <CheckCircle2 className="text-primary-600" size={20} />}
+                                    </div>
+                                    <div className="ml-4">
+                                      <h4 className="text-base font-medium text-gray-900">
+                                        {index === 0 && 'Consulta de acompanhamento'}
+                                        {index === 1 && 'Próximos exames'}
+                                        {index === 2 && 'Cuidados de saúde'}
+                                        {index > 2 && `Recomendação ${index + 1}`}
+                                      </h4>
+                                      <p className="mt-1 text-sm text-gray-600">{recommendation}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-medium text-lg text-gray-800 mb-3">Especialistas sugeridos</h3>
+                          
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <ul className="space-y-2">
+                              {isLoadingInsights ? (
+                                [...Array(3)].map((_, i) => (
+                                  <li key={i} className="flex items-start">
+                                    <Skeleton className="h-5 w-5 mt-0.5 mr-2" />
+                                    <div className="w-full">
+                                      <Skeleton className="h-5 w-40 mb-1" />
+                                      <Skeleton className="h-4 w-full" />
+                                    </div>
+                                  </li>
+                                ))
+                              ) : (
+                                insights?.specialists.map((specialist, index) => (
+                                  <li key={index} className="flex items-start">
+                                    <CheckCircle2 className="text-primary-600 mt-0.5 mr-2 flex-shrink-0" size={18} />
+                                    <div>
+                                      <h4 className="font-medium text-gray-800">{specialist}</h4>
+                                    </div>
+                                  </li>
+                                ))
+                              )}
+                            </ul>
+                          </div>
+                          
+                          {insights?.lifestyle && (
+                            <div className="mt-4 p-4 bg-primary-50 rounded-lg">
+                              <h4 className="font-medium text-gray-800 mb-2">Recomendações de estilo de vida</h4>
+                              <ul className="space-y-2 text-sm text-gray-700">
+                                <li className="flex items-start">
+                                  <span className="font-medium mr-2">Alimentação:</span>
+                                  <span>{insights.lifestyle.diet}</span>
+                                </li>
+                                <li className="flex items-start">
+                                  <span className="font-medium mr-2">Exercícios:</span>
+                                  <span>{insights.lifestyle.exercise}</span>
+                                </li>
+                                <li className="flex items-start">
+                                  <span className="font-medium mr-2">Sono:</span>
+                                  <span>{insights.lifestyle.sleep}</span>
+                                </li>
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </>
+                )}
+              </div>
+              
+              {/* Additional Information */}
+              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
+                {isLoading ? (
+                  <>
+                    <Skeleton className="h-6 w-48 mb-4" />
+                    
+                    <div className="space-y-4 mb-6">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="flex items-center">
+                          <Skeleton className="h-5 w-5 mr-3" />
+                          <div>
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Skeleton className="h-px w-full my-4" />
+                    
+                    <Skeleton className="h-6 w-36 mb-4" />
+                    
+                    <div className="space-y-4 mb-6">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center">
+                          <Skeleton className="h-5 w-5 mr-3" />
+                          <div>
+                            <Skeleton className="h-4 w-32 mb-1" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Skeleton className="h-px w-full my-4" />
+                    
+                    <Skeleton className="h-6 w-24 mb-4" />
+                    
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-full" />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações do Exame</h2>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center">
+                        <Calendar className="text-primary-500 mr-3" size={18} />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Data do exame</h3>
+                          <p className="text-sm text-gray-600">
+                            {data?.exam.examDate ? formatDate(data?.exam.examDate) : formatDate(data?.exam.uploadDate.toString())}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Building className="text-primary-500 mr-3" size={18} />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Laboratório</h3>
+                          <p className="text-sm text-gray-600">{data?.exam.laboratoryName || "Laboratório Central"}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <UserRound className="text-primary-500 mr-3" size={18} />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Solicitante</h3>
+                          <p className="text-sm text-gray-600">Médico(a) responsável</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="mr-3 text-primary-500">
+                          {getFileIcon(data?.exam.fileType)}
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Tipo de arquivo</h3>
+                          <p className="text-sm text-gray-600">{data?.exam.fileType.toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <hr className="my-4 border-gray-200" />
+                    
+                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Análise por IA</h2>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center">
+                        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Gemini" className="w-6 h-6 mr-3" />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Análise de documento</h3>
+                          <p className="text-sm text-gray-600">Google Gemini AI</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <img src="https://img.icons8.com/color/48/000000/openai-logo.png" alt="OpenAI" className="w-6 h-6 mr-3" />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Recomendações</h3>
+                          <p className="text-sm text-gray-600">OpenAI GPT-4o</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Calendar className="text-primary-500 mr-3" size={18} />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700">Tempo de análise</h3>
+                          <p className="text-sm text-gray-600">~2 minutos</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <hr className="my-4 border-gray-200" />
+                    
+                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Ações</h2>
+                    
+                    <div className="space-y-3">
+                      <Button variant="outline" className="w-full justify-start">
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Compartilhar com médico
+                      </Button>
+                      
+                      <Button variant="outline" className="w-full justify-start">
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar relatório
+                      </Button>
+                      
+                      <Button variant="outline" className="w-full justify-start">
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      <MobileNav />
+    </div>
+  );
+}
