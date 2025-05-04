@@ -205,8 +205,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           credentials: "include"
         });
         
+        // Log detalhado da resposta para debugging
+        console.log(`Resposta da API exams: ${examResponse.status} ${examResponse.statusText}`);
+        
         if (!examResponse.ok) {
           const errorText = await examResponse.text();
+          console.error("Erro detalhado ao salvar exame:", errorText);
           throw new Error(`Erro ao salvar exame: ${errorText}`);
         }
         
@@ -237,9 +241,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             credentials: "include"
           });
           
+          // Log detalhado da resposta para debugging
+          console.log(`Resposta da API exam-results: ${resultResponse.status} ${resultResponse.statusText}`);
+          
           if (!resultResponse.ok) {
             const errorText = await resultResponse.text();
-            console.error("Erro ao salvar resultado:", errorText);
+            console.error("Erro detalhado ao salvar resultado:", errorText);
+            
+            // Mesmo com erro na criação do resultado, continuamos (não interrompemos)
+            // - isso garante que ao menos o exame seja registrado
           } else {
             const savedResult = await resultResponse.json();
             console.log("Resultado salvo com sucesso:", savedResult);
@@ -288,9 +298,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           exam: savedExam,
           result: data.openaiInterpretation
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao processar exame:", error);
-        throw new Error("Falha ao processar e salvar exame: " + (error.message || "Erro desconhecido"));
+        throw new Error("Falha ao processar e salvar exame: " + (error?.message || "Erro desconhecido"));
       }
     }
   });
@@ -460,13 +470,32 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-700">Erro na análise</h3>
-          <p className="text-sm text-gray-600 mb-4">Ocorreu um erro durante o processamento. Por favor tente novamente.</p>
-          <Button 
-            onClick={() => setUploadStep('idle')}
-            variant="outline"
-          >
-            Tentar novamente
-          </Button>
+          <p className="text-sm text-gray-600 mb-2">Ocorreu um erro durante o processamento.</p>
+          <div className="text-xs text-left p-2 bg-gray-50 rounded-lg border border-gray-200 mb-4 overflow-auto max-h-36">
+            <p className="text-gray-600">Possíveis causas:</p>
+            <ul className="list-disc pl-5 text-gray-500 mt-1">
+              <li>Sessão expirada (tente fazer login novamente)</li>
+              <li>API do Google ou OpenAI indisponível</li>
+              <li>Formato do arquivo não suportado</li>
+              <li>Tamanho do arquivo excede o limite</li>
+            </ul>
+          </div>
+          <div className="flex space-x-3">
+            <Button 
+              onClick={() => window.location.href = '/auth'}
+              variant="default"
+              className="flex-1"
+            >
+              Ir para login
+            </Button>
+            <Button 
+              onClick={() => setUploadStep('idle')}
+              variant="outline"
+              className="flex-1"
+            >
+              Tentar novamente
+            </Button>
+          </div>
         </div>
       )}
     </div>
