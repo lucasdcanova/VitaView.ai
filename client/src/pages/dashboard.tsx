@@ -908,7 +908,7 @@ export default function Dashboard() {
                       </Link>
                       <Link href="/history">
                         <Button className="w-full flex flex-col h-auto py-3 text-xs gap-1 justify-center items-center" variant="outline">
-                          <ClipboardList className="h-5 w-5 mb-1" />
+                          <Clipboard className="h-5 w-5 mb-1" />
                           Histórico
                         </Button>
                       </Link>
