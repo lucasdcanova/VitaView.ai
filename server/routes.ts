@@ -7,9 +7,14 @@ import { generateHealthInsights, generateChronologicalReport } from "./services/
 
 // Middleware para verificar autenticação
 function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+  console.log(`[Auth Check] Path: ${req.path}, Method: ${req.method}, Auth: ${req.isAuthenticated()}, Session ID: ${req.sessionID || 'undefined'}`);
+  
   if (req.isAuthenticated()) {
+    console.log(`[Auth Success] User ID: ${req.user!.id}, Username: ${req.user!.username}`);
     return next();
   }
+  
+  console.log(`[Auth Failed] Session cookie: ${req.headers.cookie ? 'presente' : 'ausente'}`);
   return res.status(401).json({ message: "Não autenticado" });
 }
 
