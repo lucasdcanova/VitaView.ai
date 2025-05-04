@@ -22,6 +22,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   // Gemini análise do documento
   const analyzeWithGeminiMutation = useMutation({
     mutationFn: async (data: { fileContent: string, fileType: string }) => {
+      console.log(`Enviando requisição para /api/analyze/gemini (tamanho: ${data.fileContent.length} chars)`);
+      
       const response = await fetch("/api/analyze/gemini", {
         method: "POST",
         headers: {
@@ -33,10 +35,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`Erro na resposta da API Gemini: ${response.status}`, errorText);
         throw new Error(errorText || response.statusText);
       }
       
-      return response.json();
+      const resultData = await response.json();
+      console.log("Recebido resultado da análise Gemini:", resultData ? "dados recebidos" : "null");
+      return resultData;
     },
     onSuccess: (data) => {
       setAnalyzedResult(data);
@@ -71,6 +76,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   // OpenAI interpretação dos resultados
   const interpretWithOpenAIMutation = useMutation({
     mutationFn: async (data: { analysisResult: any, patientData: any }) => {
+      console.log("Enviando dados para interpretação com OpenAI:", data);
+      
       const response = await fetch("/api/analyze/interpretation", {
         method: "POST",
         headers: {
@@ -82,10 +89,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`Erro na resposta da API OpenAI: ${response.status}`, errorText);
         throw new Error(errorText || response.statusText);
       }
       
-      return response.json();
+      const interpretationData = await response.json();
+      console.log("Recebido resultado da interpretação OpenAI:", interpretationData ? "dados recebidos" : "null");
+      return interpretationData;
     },
     onSuccess: (openaiInterpretation) => {
       // Verificar se usuário está autenticado
@@ -166,6 +176,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const saveExamMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
+        // Verificar autenticação novamente
+        if (!user || !user.id) {
+          console.error("Usuário não está autenticado ao tentar salvar exame");
+          throw new Error("Você precisa estar autenticado para salvar exames");
+        }
+        
         // Adaptar dados para formato esperado pela API
         const examData = {
           name: data.name,
@@ -173,7 +189,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           laboratoryName: data.laboratoryName,
           examDate: data.examDate,
           status: "analyzed",
-          userId: user?.id,
+          userId: user.id,
           requestingPhysician: data.geminiAnalysis?.requestingPhysician || "Não informado",
           originalContent: data.geminiAnalysis ? JSON.stringify(data.geminiAnalysis) : null
         };
@@ -231,10 +247,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           
           // Salvar métricas de saúde individuais, se disponíveis
           if (data.geminiAnalysis?.healthMetrics && Array.isArray(data.geminiAnalysis.healthMetrics)) {
+            console.log("Salvando métricas de saúde individuais:", data.geminiAnalysis.healthMetrics.length);
             for (const metric of data.geminiAnalysis.healthMetrics) {
               try {
                 const metricData = {
-                  userId: user?.id,
+                  userId: user.id, // Garantir que user.id existe (já verificado acima)
                   name: metric.name,
                   value: metric.value,
                   unit: metric.unit || '',
@@ -243,7 +260,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   date: new Date()
                 };
                 
-                await fetch("/api/health-metrics", {
+                console.log(`Enviando métrica ${metric.name} para a API:`, metricData);
+                const metricResponse = await fetch("/api/health-metrics", {
                   method: "POST",
                   headers: {
                     'Content-Type': 'application/json',
@@ -251,6 +269,14 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   body: JSON.stringify(metricData),
                   credentials: "include"
                 });
+                
+                if (!metricResponse.ok) {
+                  const errorText = await metricResponse.text();
+                  console.error(`Erro ao salvar métrica ${metric.name}:`, errorText);
+                } else {
+                  const savedMetric = await metricResponse.json();
+                  console.log(`Métrica ${metric.name} salva com sucesso:`, savedMetric);
+                }
               } catch (metricError) {
                 console.error("Erro ao salvar métrica:", metricError);
               }
@@ -301,6 +327,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           ? 'jpeg'
           : 'png';
       
+      console.log(`Iniciando análise de arquivo ${file.name} (${fileType})`);
+      
       // Ler o arquivo como base64
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -309,7 +337,20 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           ? String(e.target.result).split(',')[1]
           : '';
           
+        // Verificar se o usuário está autenticado
+        if (!user || !user.id) {
+          console.error("Usuário não autenticado ao tentar analisar arquivo");
+          toast({
+            title: "Erro de autenticação",
+            description: "Por favor, faça login novamente para continuar.",
+            variant: "destructive"
+          });
+          setUploadStep('error');
+          return;
+        }
+          
         // Chamar API para análise com o Gemini
+        console.log(`Enviando arquivo para análise com Gemini (tamanho: ${base64Content.length} caracteres)`);
         analyzeWithGeminiMutation.mutate({
           fileContent: base64Content,
           fileType: fileType
