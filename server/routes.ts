@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/exams/upload", ensureAuthenticated, uploadAndAnalyzeDocument);
   
   // Rota para análise de documentos - etapa 1: análise com Gemini
-  app.post("/api/analyze/gemini", async (req, res) => {
+  app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
     try {
       const { fileContent, fileType } = req.body;
       
@@ -38,7 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
       }
       
+      console.log(`Usuário ${req.user!.id} enviou documento para análise com Gemini`);
       const analysisResult = await analyzeDocument(fileContent, fileType);
+      console.log("Análise Gemini concluída com sucesso");
       res.json(analysisResult);
     } catch (error) {
       console.error("Error in direct Gemini analysis:", error);
@@ -47,13 +49,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
-  app.post("/api/analyze/interpretation", async (req, res) => {
+  app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
     try {
       const { analysisResult, patientData } = req.body;
       
       if (!analysisResult) {
         return res.status(400).json({ message: "Resultado da análise é obrigatório" });
       }
+      
+      console.log(`Usuário ${req.user!.id} enviou dados para interpretação com OpenAI`);
       
       // Formatar como ExamResult para passar para o OpenAI
       const formattedResult = {
