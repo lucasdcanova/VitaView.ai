@@ -33,12 +33,13 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "healthanalytics-secret-key",
     resave: true,
     saveUninitialized: true,
+    rolling: true, // Renova o cookie a cada requisição
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true,
       secure: false, // Desativado para desenvolvimento
-      sameSite: "lax",
+      sameSite: "none", // Permite cookies em requisições cross-site
       path: '/'
     }
   };

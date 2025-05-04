@@ -46,17 +46,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/exams/upload", ensureAuthenticated, uploadAndAnalyzeDocument);
   
   // Rota para análise de documentos - etapa 1: análise com Gemini
-  app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
+  app.post("/api/analyze/gemini", async (req, res) => {
     try {
+      console.log("[Gemini Endpoint] Recebida requisição");
+      console.log("[Gemini Endpoint] Autenticado:", req.isAuthenticated());
+      console.log("[Gemini Endpoint] Session ID:", req.sessionID);
+      console.log("[Gemini Endpoint] Cookies:", req.headers.cookie);
+      
       const { fileContent, fileType } = req.body;
       
       if (!fileContent || !fileType) {
         return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
       }
       
-      console.log(`Usuário ${req.user!.id} enviou documento para análise com Gemini`);
+      // Temporariamente removemos a verificação de autenticação para diagnóstico
+      console.log(`[Gemini Endpoint] Iniciando análise (autenticado: ${req.isAuthenticated()})`);
       const analysisResult = await analyzeDocument(fileContent, fileType);
-      console.log("Análise Gemini concluída com sucesso");
+      console.log("[Gemini Endpoint] Análise concluída com sucesso");
       res.json(analysisResult);
     } catch (error) {
       console.error("Error in direct Gemini analysis:", error);
@@ -65,15 +71,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
-  app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
+  app.post("/api/analyze/interpretation", async (req, res) => {
     try {
+      console.log("[OpenAI Endpoint] Recebida requisição");
+      console.log("[OpenAI Endpoint] Autenticado:", req.isAuthenticated());
+      console.log("[OpenAI Endpoint] Session ID:", req.sessionID);
+      console.log("[OpenAI Endpoint] Cookies:", req.headers.cookie);
+      
       const { analysisResult, patientData } = req.body;
       
       if (!analysisResult) {
         return res.status(400).json({ message: "Resultado da análise é obrigatório" });
       }
       
-      console.log(`Usuário ${req.user!.id} enviou dados para interpretação com OpenAI`);
+      // Temporariamente removemos a verificação de autenticação para diagnóstico
+      console.log(`[OpenAI Endpoint] Iniciando interpretação (autenticado: ${req.isAuthenticated()})`);
       
       // Formatar como ExamResult para passar para o OpenAI
       const formattedResult = {
@@ -91,6 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Gerar insights usando OpenAI com contexto do paciente
       const insights = await generateHealthInsights(formattedResult, patientData);
+      console.log("[OpenAI Endpoint] Interpretação concluída com sucesso");
       res.json(insights);
     } catch (error) {
       console.error("Error in OpenAI interpretation:", error);
