@@ -348,6 +348,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           setUploadStep('error');
           return;
         }
+        
+        // Verificação adicional dos cookies de sessão
+        console.log("Cookie disponível:", document.cookie ? "Sim" : "Não");
+        console.log("Usuário autenticado com ID:", user.id);
           
         // Chamar API para análise com o Gemini
         console.log(`Enviando arquivo para análise com Gemini (tamanho: ${base64Content.length} caracteres)`);
