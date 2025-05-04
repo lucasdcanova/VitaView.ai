@@ -22,6 +22,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/upload" component={UploadExams} />
+      <ProtectedRoute path="/upload-exams" component={UploadExams} />
       <ProtectedRoute path="/history" component={ExamHistory} />
       <ProtectedRoute path="/report/:id" component={ExamReport} />
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />

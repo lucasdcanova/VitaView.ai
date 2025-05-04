@@ -900,7 +900,7 @@ export default function Dashboard() {
                   
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3 mb-4">
-                      <Link href="/upload-exams">
+                      <Link href="/upload">
                         <Button className="w-full flex flex-col h-auto py-3 text-xs gap-1 justify-center items-center" variant="outline">
                           <FileUp className="h-5 w-5 mb-1" />
                           Enviar Exame
