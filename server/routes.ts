@@ -137,10 +137,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Não autenticado" });
       }
       
-      const exams = await storage.getExamsByUserId(req.user!.id);
-      res.json(exams);
+      // Adicionar mais logs para debug
+      console.log("Buscando exames para o usuário:", req.user!.id);
+      try {
+        const exams = await storage.getExamsByUserId(req.user!.id);
+        console.log("Exames encontrados:", exams);
+        res.json(exams);
+      } catch (dbError) {
+        console.error("Erro na função getExamsByUserId:", dbError);
+        throw dbError;
+      }
     } catch (error) {
-      res.status(500).json({ message: "Erro ao buscar exames" });
+      console.error("Erro detalhado ao buscar exames:", error);
+      res.status(500).json({ message: "Erro ao buscar exames", error: error.message });
     }
   });
   
