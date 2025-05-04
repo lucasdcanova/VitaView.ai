@@ -147,9 +147,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Erro na função getExamsByUserId:", dbError);
         throw dbError;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro detalhado ao buscar exames:", error);
-      res.status(500).json({ message: "Erro ao buscar exames", error: error.message });
+      res.status(500).json({ message: "Erro ao buscar exames", error: error?.message || 'Erro desconhecido' });
     }
   });
   

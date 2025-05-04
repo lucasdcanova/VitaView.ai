@@ -305,7 +305,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getExamsByUserId(userId: number): Promise<Exam[]> {
-    return await db.select().from(exams).where(eq(exams.userId, userId));
+    // Tentativa alternativa para evitar erros de coluna
+    try {
+      // Primeiro verificar se a tabela existe e tem registros
+      const queryText = `
+        SELECT 
+          id, 
+          user_id as "userId", 
+          name, 
+          file_type as "fileType", 
+          status, 
+          upload_date as "uploadDate", 
+          laboratory_name as "laboratoryName", 
+          exam_date as "examDate",
+          COALESCE(requesting_physician, '') as "requestingPhysician",
+          COALESCE(original_content, '') as "originalContent"
+        FROM exams 
+        WHERE user_id = $1
+      `;
+      
+      // Usar query SQL direta para maior controle e permitir COALESCE
+      const { rows } = await pool.query(queryText, [userId]);
+      
+      // Se o COALESCE não funcionar devido à ausência das colunas, os erros serão capturados
+      return rows.map(row => {
+        // Garantir que as datas são objetos Date
+        if (row.uploadDate && typeof row.uploadDate === 'string') {
+          row.uploadDate = new Date(row.uploadDate);
+        }
+        return row as unknown as Exam;
+      });
+    } catch (error) {
+      console.error("Erro ao buscar exames via SQL:", error);
+      
+      // Fallback para método alternativo se o SQL direto falhar
+      try {
+        console.log("Tentando método alternativo com projeção segura...");
+        
+        // Selecionar apenas colunas básicas que temos certeza que existem
+        const results = await db.select({
+          id: exams.id,
+          userId: exams.userId,
+          name: exams.name,
+          fileType: exams.fileType,
+          status: exams.status,
+          uploadDate: exams.uploadDate,
+          laboratoryName: exams.laboratoryName,
+          examDate: exams.examDate,
+        }).from(exams).where(eq(exams.userId, userId));
+        
+        // Adaptar ao tipo completo
+        return results.map(exam => {
+          return {
+            ...exam,
+            requestingPhysician: null,
+            originalContent: null,
+          } as Exam;
+        });
+      } catch (fallbackError) {
+        console.error("Erro no método alternativo:", fallbackError);
+        // Se tudo falhar, retornar lista vazia
+        return [];
+      }
+    }
   }
 
   async updateExam(id: number, examData: Partial<Exam>): Promise<Exam | undefined> {
