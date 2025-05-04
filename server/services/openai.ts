@@ -103,9 +103,8 @@ async function callOpenAIApi(prompt: string) {
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
       temperature: 0.3,
-      max_tokens: 1000
+      max_tokens: 1500
     });
     
     const content = response.choices[0].message.content;
@@ -114,7 +113,41 @@ async function callOpenAIApi(prompt: string) {
     }
     
     console.log("OpenAI API response received successfully");
-    return JSON.parse(content);
+    
+    try {
+      // Tentar analisar a resposta como JSON
+      return JSON.parse(content);
+    } catch (parseError) {
+      console.warn("Error parsing OpenAI response as JSON:", parseError);
+      console.log("Raw response content:", content);
+      
+      // Se não for um JSON válido, tente extrair um JSON válido do conteúdo
+      try {
+        // Tentar localizar um objeto JSON na resposta
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0];
+          console.log("Extracted JSON string:", jsonStr);
+          return JSON.parse(jsonStr);
+        }
+      } catch (extractError) {
+        console.error("Failed to extract JSON from response:", extractError);
+      }
+      
+      // Se ainda falhar, retorne um objeto estruturado básico
+      return {
+        contextualAnalysis: "Não foi possível analisar a resposta da IA. Por favor, tente novamente.",
+        possibleDiagnoses: [],
+        recommendations: ["Consulte um médico para uma análise profissional."],
+        specialists: ["Clínico Geral"],
+        lifestyle: {
+          diet: "Mantenha uma alimentação balanceada.",
+          exercise: "Pratique exercícios regularmente.",
+          sleep: "Mantenha um sono de qualidade."
+        },
+        riskFactors: []
+      };
+    }
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
     throw error;

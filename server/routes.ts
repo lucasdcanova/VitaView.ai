@@ -1,16 +1,33 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 
+// Middleware para verificar autenticação
+function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Não autenticado" });
+}
+
+// Middleware de logs para depuração
+function logRequest(req: Request, res: Response, next: NextFunction) {
+  console.log(`${new Date().toISOString()} [${req.method}] ${req.path} - User: ${req.isAuthenticated() ? req.user?.id : 'não autenticado'}`);
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
 
+  // Aplicar middleware de log para todas as rotas
+  app.use(logRequest);
+
   // API routes for exams
-  app.post("/api/exams/upload", uploadAndAnalyzeDocument);
+  app.post("/api/exams/upload", ensureAuthenticated, uploadAndAnalyzeDocument);
   
   // Rota para análise de documentos - etapa 1: análise com Gemini
   app.post("/api/analyze/gemini", async (req, res) => {
@@ -61,19 +78,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/exams", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+  app.post("/api/exams", ensureAuthenticated, async (req, res) => {
+    try {      
       const examData = {
         ...req.body,
         userId: req.user!.id,
         uploadDate: new Date()
       };
       
+      console.log("Creating exam with data:", examData);
       const newExam = await storage.createExam(examData);
+      console.log("Exam created successfully:", newExam);
       res.status(201).json(newExam);
     } catch (error) {
       console.error("Error creating exam:", error);
@@ -82,16 +97,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API para salvar resultados de exames
-  app.post("/api/exam-results", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+  app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
+    try {      
       const resultData = {
         ...req.body,
         analysisDate: new Date()
       };
+      
+      console.log("Creating exam result with data:", resultData);
       
       // Verificar se o exame pertence ao usuário
       const exam = await storage.getExam(resultData.examId);
@@ -104,6 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const newResult = await storage.createExamResult(resultData);
+      console.log("Exam result created successfully:", newResult);
       res.status(201).json(newResult);
     } catch (error) {
       console.error("Error creating exam result:", error);
@@ -112,18 +126,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API para salvar métricas de saúde
-  app.post("/api/health-metrics", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+  app.post("/api/health-metrics", ensureAuthenticated, async (req, res) => {
+    try {      
       const metricData = {
         ...req.body,
-        userId: req.user!.id
+        userId: req.user!.id,
+        date: req.body.date || new Date()
       };
       
+      console.log("Creating health metric with data:", metricData);
       const newMetric = await storage.createHealthMetric(metricData);
+      console.log("Health metric created successfully:", newMetric);
       res.status(201).json(newMetric);
     } catch (error) {
       console.error("Error creating health metric:", error);
@@ -131,18 +144,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+  app.get("/api/exams", ensureAuthenticated, async (req, res) => {
+    try {      
       // Adicionar mais logs para debug
       console.log("Buscando exames para o usuário:", req.user!.id);
       try {
         const exams = await storage.getExamsByUserId(req.user!.id);
-        console.log("Exames encontrados:", exams);
-        res.json(exams);
+        console.log("Exames encontrados:", exams?.length || 0);
+        res.json(exams || []);
       } catch (dbError) {
         console.error("Erro na função getExamsByUserId:", dbError);
         throw dbError;
@@ -153,13 +162,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams/:id", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+  app.get("/api/exams/:id", ensureAuthenticated, async (req, res) => {
+    try {      
       const examId = parseInt(req.params.id);
+      console.log(`Buscando exame ID ${examId} para usuário ${req.user!.id}`);
+      
       const exam = await storage.getExam(examId);
       
       if (!exam) {
@@ -171,21 +178,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const examResult = await storage.getExamResultByExamId(examId);
+      console.log(`Exame encontrado:`, exam);
+      console.log(`Resultado do exame:`, examResult);
       
       res.json({ exam, result: examResult });
     } catch (error) {
+      console.error("Erro ao buscar exame:", error);
       res.status(500).json({ message: "Erro ao buscar exame" });
     }
   });
   
   // API route for health insights
-  app.get("/api/exams/:id/insights", async (req, res) => {
+  app.get("/api/exams/:id/insights", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
       const examId = parseInt(req.params.id);
+      console.log(`Gerando insights para exame ID ${examId} (usuário ${req.user!.id})`);
+      
       const exam = await storage.getExam(examId);
       
       if (!exam) {
@@ -226,6 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Chamada à OpenAI com contexto do paciente
       const insights = await generateHealthInsights(examResult, patientData);
+      console.log("Insights gerados com sucesso");
       res.json(insights);
     } catch (error) {
       console.error("Error generating health insights:", error);
@@ -234,54 +243,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API routes for health metrics
-  app.get("/api/health-metrics", async (req, res) => {
+  app.get("/api/health-metrics", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+      console.log(`Buscando métricas de saúde para usuário ${req.user!.id}`);
       const metrics = await storage.getHealthMetricsByUserId(req.user!.id);
-      res.json(metrics);
+      console.log(`Métricas encontradas: ${metrics?.length || 0}`);
+      res.json(metrics || []);
     } catch (error) {
+      console.error("Erro ao buscar métricas de saúde:", error);
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
   
-  app.get("/api/health-metrics/latest", async (req, res) => {
+  app.get("/api/health-metrics/latest", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
       const limit = parseInt(req.query.limit as string) || 10;
+      console.log(`Buscando ${limit} métricas mais recentes para usuário ${req.user!.id}`);
       const metrics = await storage.getLatestHealthMetrics(req.user!.id, limit);
-      res.json(metrics);
+      console.log(`Métricas encontradas: ${metrics?.length || 0}`);
+      res.json(metrics || []);
     } catch (error) {
+      console.error("Erro ao buscar métricas de saúde:", error);
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
   
   // API routes for notifications
-  app.get("/api/notifications", async (req, res) => {
+  app.get("/api/notifications", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+      console.log(`Buscando notificações para usuário ${req.user!.id}`);
       const notifications = await storage.getNotificationsByUserId(req.user!.id);
-      res.json(notifications);
+      console.log(`Notificações encontradas: ${notifications?.length || 0}`);
+      res.json(notifications || []);
     } catch (error) {
+      console.error("Erro ao buscar notificações:", error);
       res.status(500).json({ message: "Erro ao buscar notificações" });
     }
   });
   
-  app.post("/api/notifications/:id/read", async (req, res) => {
+  app.post("/api/notifications/:id/read", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
       const notificationId = parseInt(req.params.id);
+      console.log(`Marcando notificação ${notificationId} como lida para usuário ${req.user!.id}`);
       const notification = await storage.markNotificationAsRead(notificationId);
       
       if (!notification) {
@@ -290,17 +293,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(notification);
     } catch (error) {
+      console.error("Erro ao marcar notificação como lida:", error);
       res.status(500).json({ message: "Erro ao marcar notificação como lida" });
     }
   });
   
   // API routes for user profile
-  app.put("/api/user/profile", async (req, res) => {
+  app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+      console.log(`Atualizando perfil do usuário ${req.user!.id}`);
       const updatedUser = await storage.updateUser(req.user!.id, req.body);
       
       if (!updatedUser) {
@@ -310,17 +311,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
       res.status(500).json({ message: "Erro ao atualizar perfil" });
     }
   });
   
   // Rota para gerar relatório cronológico contextual com OpenAI
-  app.get("/api/reports/chronological", async (req, res) => {
+  app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-      
+      console.log(`Gerando relatório cronológico para usuário ${req.user!.id}`);
       // Buscar todos os resultados de exames do usuário
       const exams = await storage.getExamsByUserId(req.user!.id);
       

@@ -166,31 +166,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const saveExamMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
-        // Verificar se o usuário está autenticado
-        const userCheckResponse = await fetch("/api/user", {
-          credentials: "include",
-        });
-        
-        if (userCheckResponse.status === 401) {
-          // Se não estiver autenticado, tentar login
-          toast({
-            title: "Sessão expirada",
-            description: "Tentando reconectar automaticamente...",
-          });
-          
-          await fetch("/api/login", {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              username: user?.username,
-              password: "senha_temporaria" // Isso será substituído pela autenticação real
-            }),
-            credentials: "include"
-          });
-        }
-        
         // Adaptar dados para formato esperado pela API
         const examData = {
           name: data.name,
@@ -198,54 +173,98 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           laboratoryName: data.laboratoryName,
           examDate: data.examDate,
           status: "analyzed",
+          userId: user?.id,
+          requestingPhysician: data.geminiAnalysis?.requestingPhysician || "Não informado",
           originalContent: data.geminiAnalysis ? JSON.stringify(data.geminiAnalysis) : null
         };
         
-        // 1. Criar exame diretamente no banco de dados usando o armazenamento local
-        // para evitar problemas de autenticação
-        // Vamos simular que o exame foi salvo e retornar um ID temporário
-        const savedExam = {
-          id: Math.floor(Math.random() * 1000) + 1,
-          name: data.name,
-          fileType: data.fileType,
-          status: "analyzed",
-          userId: user?.id || 0,
-          laboratoryName: data.laboratoryName,
-          examDate: data.examDate,
-          uploadDate: new Date()
-        };
+        // Criar o exame no banco de dados
+        console.log("Enviando dados do exame para a API:", examData);
+        const examResponse = await fetch("/api/exams", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(examData),
+          credentials: "include"
+        });
         
-        // Armazenar os dados localmente para mostrar no dashboard
-        const examsFromStorage = localStorage.getItem('savedExams');
-        const savedExams = examsFromStorage ? JSON.parse(examsFromStorage) : [];
-        savedExams.push(savedExam);
-        localStorage.setItem('savedExams', JSON.stringify(savedExams));
-        
-        // Salvar métricas de saúde no localStorage também
-        if (data.geminiAnalysis?.healthMetrics && Array.isArray(data.geminiAnalysis.healthMetrics)) {
-          const metricsFromStorage = localStorage.getItem('healthMetrics');
-          const healthMetrics = metricsFromStorage ? JSON.parse(metricsFromStorage) : [];
-          
-          for (const metric of data.geminiAnalysis.healthMetrics) {
-            healthMetrics.push({
-              id: Math.floor(Math.random() * 1000) + 1,
-              userId: user?.id || 0,
-              name: metric.name,
-              value: metric.value,
-              unit: metric.unit || '',
-              status: metric.status || 'normal',
-              change: metric.change || ''
-            });
-          }
-          
-          localStorage.setItem('healthMetrics', JSON.stringify(healthMetrics));
+        if (!examResponse.ok) {
+          const errorText = await examResponse.text();
+          throw new Error(`Erro ao salvar exame: ${errorText}`);
         }
         
-        // Retornar o exame sem fazer chamada API que está falhando
-        return savedExam;
+        const savedExam = await examResponse.json();
+        console.log("Exame salvo com sucesso:", savedExam);
+        
+        // Salvar o resultado da análise
+        if (savedExam && savedExam.id) {
+          // Preparar dados do resultado da análise
+          const resultData = {
+            examId: savedExam.id,
+            summary: data.geminiAnalysis?.summary || "Análise não disponível",
+            detailedAnalysis: data.geminiAnalysis?.detailedAnalysis || "",
+            recommendations: Array.isArray(data.geminiAnalysis?.recommendations) 
+              ? data.geminiAnalysis.recommendations.join('\n') 
+              : data.geminiAnalysis?.recommendations || "",
+            healthMetrics: data.geminiAnalysis?.healthMetrics || [],
+            aiProvider: "gemini+openai"
+          };
+          
+          console.log("Enviando resultado da análise para a API:", resultData);
+          const resultResponse = await fetch("/api/exam-results", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(resultData),
+            credentials: "include"
+          });
+          
+          if (!resultResponse.ok) {
+            const errorText = await resultResponse.text();
+            console.error("Erro ao salvar resultado:", errorText);
+          } else {
+            const savedResult = await resultResponse.json();
+            console.log("Resultado salvo com sucesso:", savedResult);
+          }
+          
+          // Salvar métricas de saúde individuais, se disponíveis
+          if (data.geminiAnalysis?.healthMetrics && Array.isArray(data.geminiAnalysis.healthMetrics)) {
+            for (const metric of data.geminiAnalysis.healthMetrics) {
+              try {
+                const metricData = {
+                  userId: user?.id,
+                  name: metric.name,
+                  value: metric.value,
+                  unit: metric.unit || '',
+                  status: metric.status || 'normal',
+                  change: metric.change || '',
+                  date: new Date()
+                };
+                
+                await fetch("/api/health-metrics", {
+                  method: "POST",
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(metricData),
+                  credentials: "include"
+                });
+              } catch (metricError) {
+                console.error("Erro ao salvar métrica:", metricError);
+              }
+            }
+          }
+        }
+        
+        return {
+          exam: savedExam,
+          result: data.openaiInterpretation
+        };
       } catch (error) {
         console.error("Erro ao processar exame:", error);
-        throw new Error("Falha ao processar e salvar exame");
+        throw new Error("Falha ao processar e salvar exame: " + (error.message || "Erro desconhecido"));
       }
     }
   });
