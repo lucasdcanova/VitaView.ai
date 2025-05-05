@@ -75,6 +75,11 @@ export default function ExamHistory() {
     },
   });
   
+  // Helper function to get date value (defined once here)
+  const getExamDate = (exam: Exam) => {
+    return exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
+  };
+
   // Apply filters and sorting
   const filteredAndSortedExams = exams
     ? exams
@@ -121,13 +126,14 @@ export default function ExamHistory() {
             return (
               exam.name.toLowerCase().includes(searchLower) ||
               (exam.laboratoryName && exam.laboratoryName.toLowerCase().includes(searchLower)) ||
-              (exam.requestingPhysician && exam.requestingPhysician.toLowerCase().includes(searchLower))
+              (exam.requestingPhysician && exam.requestingPhysician?.toLowerCase().includes(searchLower))
             );
           }
           
           return true;
         })
         .sort((a, b) => {
+          // Helper function to get time value for sorting
           const getDateValue = (exam: Exam) => {
             return getExamDate(exam).getTime();
           };
@@ -177,10 +183,6 @@ export default function ExamHistory() {
       default:
         return <FileText className="text-gray-600" size={iconSize} />;
     }
-  };
-  
-  const getExamDate = (exam: Exam) => {
-    return exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
   };
   
   const formatDate = (dateString: string) => {
@@ -404,12 +406,11 @@ export default function ExamHistory() {
                               <SelectContent>
                                 <SelectItem value="all">Todos os status</SelectItem>
                                 <SelectItem value="analyzed">Analisados</SelectItem>
+                                <SelectItem value="processing">Processando</SelectItem>
                                 <SelectItem value="pending">Pendentes</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                          
-                          <DropdownMenuSeparator />
                           
                           <div className="p-2">
                             <label className="text-xs text-gray-500 font-medium mb-1 block">Ordenar por</label>
@@ -418,81 +419,40 @@ export default function ExamHistory() {
                               onValueChange={(value) => setFilterOptions({...filterOptions, sortBy: value})}
                             >
                               <SelectTrigger className="w-full h-8 text-xs">
-                                <SelectValue placeholder="Data do exame (recente)" />
+                                <SelectValue placeholder="Data (mais recente)" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="examDate">Data do exame (recente)</SelectItem>
-                                <SelectItem value="examDateAsc">Data do exame (antigo)</SelectItem>
+                                <SelectItem value="examDate">Data (mais recente)</SelectItem>
+                                <SelectItem value="examDateAsc">Data (mais antiga)</SelectItem>
                                 <SelectItem value="name">Nome (A-Z)</SelectItem>
                                 <SelectItem value="nameDesc">Nome (Z-A)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                          
-                          <DropdownMenuSeparator />
-                          
-                          <div className="p-2 flex justify-end">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 text-xs mr-2"
-                              onClick={() => {
-                                setFilterOptions({
-                                  fileType: "all",
-                                  dateRange: "all",
-                                  status: "all",
-                                  sortBy: "examDate"
-                                });
-                              }}
-                            >
-                              Limpar Filtros
-                            </Button>
-                          </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       
-                      {/* View toggle */}
                       <div className="flex border rounded-md overflow-hidden">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant={activeView === "grid" ? "default" : "ghost"} 
-                                size="icon" 
-                                className="h-9 w-9 rounded-none border-0"
-                                onClick={() => setActiveView("grid")}
-                              >
-                                <div className="grid grid-cols-2 gap-0.5">
-                                  <div className="w-1.5 h-1.5 bg-current opacity-70 rounded-sm"></div>
-                                  <div className="w-1.5 h-1.5 bg-current opacity-70 rounded-sm"></div>
-                                  <div className="w-1.5 h-1.5 bg-current opacity-70 rounded-sm"></div>
-                                  <div className="w-1.5 h-1.5 bg-current opacity-70 rounded-sm"></div>
-                                </div>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Visualização em Grade</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant={activeView === "list" ? "default" : "ghost"} 
-                                size="icon" 
-                                className="h-9 w-9 rounded-none border-0"
-                                onClick={() => setActiveView("list")}
-                              >
-                                <div className="flex flex-col gap-0.5 items-center justify-center">
-                                  <div className="w-3.5 h-0.5 bg-current opacity-70 rounded-full"></div>
-                                  <div className="w-3.5 h-0.5 bg-current opacity-70 rounded-full"></div>
-                                  <div className="w-3.5 h-0.5 bg-current opacity-70 rounded-full"></div>
-                                </div>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Visualização em Lista</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Button
+                          variant={activeView === "grid" ? "secondary" : "ghost"} 
+                          size="icon"
+                          className="h-10 w-10 rounded-none"
+                          onClick={() => setActiveView("grid")}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
+                            <path d="M3.5 2C2.67157 2 2 2.67157 2 3.5V7.5C2 8.32843 2.67157 9 3.5 9H7.5C8.32843 9 9 8.32843 9 7.5V3.5C9 2.67157 8.32843 2 7.5 2H3.5ZM3.5 3H7.5C7.77614 3 8 3.22386 8 3.5V7.5C8 7.77614 7.77614 8 7.5 8H3.5C3.22386 8 3 7.77614 3 7.5V3.5C3 3.22386 3.22386 3 3.5 3ZM3.5 10C2.67157 10 2 10.6716 2 11.5V12.5C2 13.3284 2.67157 14 3.5 14H7.5C8.32843 14 9 13.3284 9 12.5V11.5C9 10.6716 8.32843 10 7.5 10H3.5ZM3.5 11H7.5C7.77614 11 8 11.2239 8 11.5V12.5C8 12.7761 7.77614 13 7.5 13H3.5C3.22386 13 3 12.7761 3 12.5V11.5C3 11.2239 3.22386 11 3.5 11ZM10.5 2C9.67157 2 9 2.67157 9 3.5V4.5C9 5.32843 9.67157 6 10.5 6H11.5C12.3284 6 13 5.32843 13 4.5V3.5C13 2.67157 12.3284 2 11.5 2H10.5ZM10.5 3H11.5C11.7761 3 12 3.22386 12 3.5V4.5C12 4.77614 11.7761 5 11.5 5H10.5C10.2239 5 10 4.77614 10 4.5V3.5C10 3.22386 10.2239 3 10.5 3ZM10.5 10C9.67157 10 9 10.6716 9 11.5V12.5C9 13.3284 9.67157 14 10.5 14H11.5C12.3284 14 13 13.3284 13 12.5V11.5C13 10.6716 12.3284 10 11.5 10H10.5ZM10.5 11H11.5C11.7761 11 12 11.2239 12 11.5V12.5C12 12.7761 11.7761 13 11.5 13H10.5C10.2239 13 10 12.7761 10 12.5V11.5C10 11.2239 10.2239 11 10.5 11ZM9 7.5C9 6.67157 9.67157 6 10.5 6H11.5C12.3284 6 13 6.67157 13 7.5V8.5C13 9.32843 12.3284 10 11.5 10H10.5C9.67157 10 9 9.32843 9 8.5V7.5ZM10.5 7H11.5C11.7761 7 12 7.22386 12 7.5V8.5C12 8.77614 11.7761 9 11.5 9H10.5C10.2239 9 10 8.77614 10 8.5V7.5C10 7.22386 10.2239 7 10.5 7Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                          </svg>
+                        </Button>
+                        <Button
+                          variant={activeView === "list" ? "secondary" : "ghost"} 
+                          size="icon"
+                          className="h-10 w-10 rounded-none"
+                          onClick={() => setActiveView("list")}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
+                            <path d="M2 3C2 2.44772 2.44772 2 3 2H12C12.5523 2 13 2.44772 13 3C13 3.55228 12.5523 4 12 4H3C2.44772 4 2 3.55228 2 3ZM2 7.5C2 6.94772 2.44772 6.5 3 6.5H12C12.5523 6.5 13 6.94772 13 7.5C13 8.05228 12.5523 8.5 12 8.5H3C2.44772 8.5 2 8.05228 2 7.5ZM2 12C2 11.4477 2.44772 11 3 11H12C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13H3C2.44772 13 2 12.5523 2 12Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                          </svg>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -500,165 +460,56 @@ export default function ExamHistory() {
               </Card>
             </div>
             
-            {/* Applied filters indicators */}
-            {(filterOptions.fileType !== "all" || 
-              filterOptions.dateRange !== "all" || 
-              filterOptions.status !== "all" || 
-              searchTerm) && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {searchTerm && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 px-2 py-1">
-                    <Search className="w-3 h-3 mr-1" />
-                    Busca: {searchTerm}
-                    <button className="ml-1 hover:text-blue-900" onClick={() => setSearchTerm("")}>×</button>
-                  </Badge>
-                )}
-                
-                {filterOptions.fileType !== "all" && (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 px-2 py-1">
-                    <Tag className="w-3 h-3 mr-1" />
-                    Tipo: {filterOptions.fileType.toUpperCase()}
-                    <button 
-                      className="ml-1 hover:text-purple-900" 
-                      onClick={() => setFilterOptions({...filterOptions, fileType: "all"})}
-                    >×</button>
-                  </Badge>
-                )}
-                
-                {filterOptions.dateRange !== "all" && (
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2 py-1">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Período: {
-                      filterOptions.dateRange === "last7days" ? "Últimos 7 dias" :
-                      filterOptions.dateRange === "last30days" ? "Últimos 30 dias" :
-                      "Últimos 3 meses"
-                    }
-                    <button 
-                      className="ml-1 hover:text-emerald-900" 
-                      onClick={() => setFilterOptions({...filterOptions, dateRange: "all"})}
-                    >×</button>
-                  </Badge>
-                )}
-                
-                {filterOptions.status !== "all" && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-2 py-1">
-                    <Activity className="w-3 h-3 mr-1" />
-                    Status: {
-                      filterOptions.status === "analyzed" ? "Analisados" : "Pendentes"
-                    }
-                    <button 
-                      className="ml-1 hover:text-amber-900" 
-                      onClick={() => setFilterOptions({...filterOptions, status: "all"})}
-                    >×</button>
-                  </Badge>
-                )}
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 text-xs p-0 px-2 ml-1 hover:bg-gray-100"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterOptions({
-                      fileType: "all",
-                      dateRange: "all",
-                      status: "all",
-                      sortBy: "examDate"
-                    });
-                  }}
-                >
-                  Limpar todos os filtros
-                </Button>
-              </div>
-            )}
-            
-            {/* Content area */}
-            {isLoading ? (
-              activeView === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {[...Array(8)].map((_, idx) => (
-                    <Card key={idx} className="h-full">
+            <div className="mb-6">
+              {isLoading ? (
+                // Show loading skeletons
+                <div className={activeView === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" : "space-y-4"}>
+                  {Array(4).fill(0).map((_, index) => (
+                    <Card key={index} className={activeView === "list" ? "overflow-hidden" : "h-full"}>
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
-                            <Skeleton className="h-10 w-10 rounded-md" />
+                            <Skeleton className="h-12 w-12 rounded-md" />
                             <div>
-                              <Skeleton className="h-4 w-32 mb-1" />
-                              <Skeleton className="h-3 w-20" />
+                              <Skeleton className="h-5 w-32 mb-1" />
+                              <Skeleton className="h-3 w-24" />
                             </div>
                           </div>
-                          <Skeleton className="h-5 w-20 rounded-full" />
+                          <Skeleton className="h-6 w-20" />
                         </div>
                       </CardHeader>
                       <CardContent className="pb-2">
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <Skeleton className="h-4 w-full" />
                           <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-2/3" />
+                          <Skeleton className="h-4 w-full" />
                         </div>
                       </CardContent>
-                      <CardFooter className="pt-3 flex justify-between items-center border-t border-gray-100">
-                        <Skeleton className="h-3 w-20" />
-                        <Skeleton className="h-8 w-24" />
+                      <CardFooter className="pt-3 flex justify-between items-center">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-8 w-32" />
                       </CardFooter>
                     </Card>
                   ))}
                 </div>
-              ) : (
-                <Card>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500 uppercase">
-                          <th className="px-4 py-3 text-left">Exame</th>
-                          <th className="px-4 py-3 text-left">Data do Exame</th>
-                          <th className="px-4 py-3 text-left">Médico Solicitante</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3 text-right">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...Array(5)].map((_, idx) => (
-                          <tr key={idx} className="border-b border-gray-100">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center">
-                                <Skeleton className="h-8 w-8 rounded-md mr-3" />
-                                <div>
-                                  <Skeleton className="h-4 w-32 mb-1" />
-                                  <Skeleton className="h-3 w-20" />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <Skeleton className="h-4 w-24" />
-                            </td>
-                            <td className="px-4 py-3">
-                              <Skeleton className="h-4 w-28" />
-                            </td>
-                            <td className="px-4 py-3">
-                              <Skeleton className="h-5 w-20 rounded-full" />
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <Skeleton className="h-8 w-24 ml-auto" />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              ) : filteredAndSortedExams.length === 0 ? (
+                // Show empty state
+                <Card className="flex flex-col items-center justify-center p-8 text-center">
+                  <div className="bg-gray-100 h-16 w-16 rounded-full flex items-center justify-center mb-4">
+                    <FileText className="h-8 w-8 text-gray-400" />
                   </div>
-                </Card>
-              )
-            ) : filteredAndSortedExams.length === 0 ? (
-              <Card className="py-10">
-                <div className="text-center">
-                  <AlertCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum exame encontrado</h3>
-                  <p className="text-gray-500 max-w-md mx-auto mb-6">
-                    {searchTerm || filterOptions.fileType !== "all" || filterOptions.dateRange !== "all" || filterOptions.status !== "all"
-                      ? "Não encontramos nenhum exame com os filtros selecionados. Tente ajustar os critérios de busca."
-                      : "Você ainda não tem nenhum exame cadastrado. Comece enviando seu primeiro exame para análise."}
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    {exams && exams.length > 0 
+                      ? "Nenhum exame encontrado para os filtros selecionados" 
+                      : "Nenhum exame encontrado"}
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md">
+                    {exams && exams.length > 0 
+                      ? "Tente ajustar os filtros ou a busca para visualizar seus exames."
+                      : "Comece enviando seu primeiro exame para análise e obtenha insights valiosos sobre sua saúde."}
                   </p>
-                  {(searchTerm || filterOptions.fileType !== "all" || filterOptions.dateRange !== "all" || filterOptions.status !== "all") ? (
+                  
+                  {exams && exams.length > 0 ? (
                     <Button 
                       variant="outline" 
                       onClick={() => {
@@ -671,146 +522,131 @@ export default function ExamHistory() {
                         });
                       }}
                     >
-                      Limpar Filtros
+                      Limpar filtros
                     </Button>
                   ) : (
                     <Link href="/upload-exams">
-                      <Button>Enviar Exame</Button>
+                      <Button>Enviar exame</Button>
                     </Link>
                   )}
-                </div>
-              </Card>
-            ) : (
-              <>
-                {/* Grid view */}
-                {activeView === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {paginatedExams.map(exam => (
-                      <ExamCard key={exam.id} exam={exam} />
-                    ))}
-                  </div>
-                ) : (
-                  /* List view */
-                  <Card>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500 uppercase">
-                            <th className="px-4 py-3 text-left">Exame</th>
-                            <th className="px-4 py-3 text-left">Data do Exame</th>
-                            <th className="px-4 py-3 text-left">Médico Solicitante</th>
-                            <th className="px-4 py-3 text-left">Status</th>
-                            <th className="px-4 py-3 text-right">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedExams.map((exam, idx) => (
-                            <tr key={exam.id} className={`border-b border-gray-100 hover:bg-gray-50/50 transition-colors ${idx % 2 === 0 ? '' : 'bg-gray-50/30'}`}>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center">
-                                  <div className={`p-2 rounded-md mr-3 ${getExamTypeColor(exam.fileType)}`}>
-                                    {getFileIcon(exam.fileType)}
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{exam.name}</div>
-                                    <div className="text-xs text-gray-500">{exam.laboratoryName || "Lab. não informado"}</div>
+                </Card>
+              ) : (
+                // Show grid or list of exams
+                <>
+                  {activeView === "grid" ? (
+                    // Grid view
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {paginatedExams.map((exam) => (
+                        <ExamCard key={exam.id} exam={exam} />
+                      ))}
+                    </div>
+                  ) : (
+                    // List view
+                    <div className="space-y-3">
+                      {paginatedExams.map((exam) => (
+                        <Card key={exam.id} className="overflow-hidden hover:shadow-md transition-all duration-200">
+                          <div className="flex flex-col md:flex-row">
+                            <div className={`${getExamTypeColor(exam.fileType)} p-6 flex items-center justify-center md:w-16`}>
+                              {getFileIcon(exam.fileType, 24)}
+                            </div>
+                            <div className="flex-1 p-4">
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-y-2">
+                                <div>
+                                  <div className="font-medium text-gray-800">{exam.name}</div>
+                                  <div className="text-sm text-gray-500">
+                                    {exam.laboratoryName || "Laboratório não informado"}
+                                    {exam.requestingPhysician ? ` • Dr. ${exam.requestingPhysician}` : ""}
                                   </div>
                                 </div>
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {exam.examDate ? (
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{formatDate(exam.examDate)}</span>
-                                    <span className="text-xs text-gray-500">{formatRelativeDate(exam.examDate)}</span>
+                                
+                                <div className="flex items-center gap-3 mt-1">
+                                  {getStatusBadge(exam.status)}
+                                  <div className="text-xs text-gray-500 ml-3 hidden md:block">
+                                    {exam.examDate ? formatDate(exam.examDate) : "Data não informada"}
                                   </div>
-                                ) : (
-                                  <span className="text-gray-400 text-xs">Não informada</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {exam.requestingPhysician || (
-                                  <span className="text-gray-400 text-xs">Não informado</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3">
-                                {getStatusBadge(exam.status)}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {exam.status === 'analyzed' ? (
-                                  <div className="inline-flex gap-2">
-                                    <Link href={`/diagnosis/${exam.id}`}>
-                                      <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
-                                        <FileBarChart className="mr-1 h-3.5 w-3.5" />
-                                        Diagnóstico
-                                      </Button>
-                                    </Link>
-                                    <Link href={`/report/${exam.id}`}>
-                                      <Button size="sm" className="h-8 px-3 text-xs">
-                                        <Activity className="mr-1 h-3.5 w-3.5" />
-                                        Detalhes
-                                      </Button>
-                                    </Link>
-                                  </div>
-                                ) : (
-                                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
-                                    <Clock className="mr-1 h-3.5 w-3.5" />
-                                    Processando...
-                                  </Button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Card>
-                )}
-              
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-6 flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredAndSortedExams.length)}</span> de <span className="font-medium">{filteredAndSortedExams.length}</span> exames
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 flex items-center justify-center"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          className={`h-8 w-8 p-0 ${
-                            currentPage === page ? 'text-white' : 'text-gray-600'
-                          }`}
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </Button>
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mt-3">
+                                <div className="flex items-center gap-2 text-xs text-gray-500 md:hidden">
+                                  <Calendar className="h-3 w-3 opacity-70" />
+                                  {exam.examDate ? formatDate(exam.examDate) : "Data não informada"}
+                                </div>
+                                
+                                <div className="text-xs text-gray-500">
+                                  Enviado {formatRelativeDate(exam.uploadDate.toString())}
+                                </div>
+                                
+                                <div className="flex gap-2 mt-2 md:mt-0">
+                                  {exam.status === 'analyzed' ? (
+                                    <>
+                                      <Link href={`/diagnosis/${exam.id}`}>
+                                        <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                                          <FileBarChart className="mr-1 h-3.5 w-3.5" />
+                                          Diagnóstico
+                                        </Button>
+                                      </Link>
+                                      <Link href={`/report/${exam.id}`}>
+                                        <Button size="sm" className="h-8 px-3 text-xs">
+                                          <Activity className="mr-1 h-3.5 w-3.5" />
+                                          Detalhes
+                                        </Button>
+                                      </Link>
+                                    </>
+                                  ) : (
+                                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
+                                      <Clock className="mr-1 h-3.5 w-3.5" />
+                                      Processando...
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
                       ))}
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 flex items-center justify-center"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                )}
-              </>
-            )}
+                  )}
+                  
+                  {/* Pagination controls */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center mt-6">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        {[...Array(totalPages)].map((_, i) => (
+                          <Button
+                            key={i}
+                            variant={currentPage === i + 1 ? "default" : "outline"}
+                            size="sm"
+                            className="w-8 h-8"
+                            onClick={() => setCurrentPage(i + 1)}
+                          >
+                            {i + 1}
+                          </Button>
+                        ))}
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </main>
       </div>

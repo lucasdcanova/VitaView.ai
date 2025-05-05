@@ -91,8 +91,15 @@ export default function Dashboard() {
   const processChartData = (metricList: HealthMetric[] = []) => {
     if (!metricList || metricList.length === 0) return [];
     
-    // Group by date (month) and calculate averages
+    // Group by date (month) and calculate averages for common metrics
     const dataByMonth: Record<string, any> = {};
+    
+    const commonMetrics = {
+      "Glicose": { key: "glucose", count: 0, sum: 0 },
+      "Colesterol Total": { key: "cholesterol", count: 0, sum: 0 },
+      "Hemoglobina": { key: "hemoglobin", count: 0, sum: 0 },
+      "Leucócitos": { key: "whiteCells", count: 0, sum: 0 }
+    };
     
     metricList.forEach(metric => {
       const date = new Date(metric.date);
@@ -101,19 +108,30 @@ export default function Dashboard() {
       if (!dataByMonth[monthKey]) {
         dataByMonth[monthKey] = {
           month: new Date(date.getFullYear(), date.getMonth(), 1),
-          healthScore: 0,
-          cholesterol: 0,
-          bloodPressure: 0,
-          glucose: 0,
-          count: 0
+          healthScore: 75, // Default health score if not available
+          count: 0,
+          ...Object.keys(commonMetrics).reduce((acc, metricName) => {
+            acc[commonMetrics[metricName].key] = 0;
+            return acc;
+          }, {} as Record<string, number>)
         };
       }
       
-      dataByMonth[monthKey].healthScore += metric.healthScore || 0;
-      dataByMonth[monthKey].cholesterol += metric.cholesterol || 0;
-      dataByMonth[monthKey].bloodPressure += metric.bloodPressureSystolic ? 
-        metric.bloodPressureSystolic / metric.bloodPressureDiastolic : 0;
-      dataByMonth[monthKey].glucose += metric.glucose || 0;
+      // Try to extract data from metric name
+      if (metric.name in commonMetrics) {
+        const metricKey = commonMetrics[metric.name].key;
+        try {
+          const value = parseFloat(metric.value);
+          if (!isNaN(value)) {
+            dataByMonth[monthKey][metricKey] += value;
+            commonMetrics[metric.name].sum += value;
+            commonMetrics[metric.name].count += 1;
+          }
+        } catch (e) {
+          console.warn(`Error parsing value for ${metric.name}:`, e);
+        }
+      }
+      
       dataByMonth[monthKey].count += 1;
     });
     
@@ -121,10 +139,13 @@ export default function Dashboard() {
     return Object.values(dataByMonth)
       .map(item => ({
         month: new Date(item.month).toLocaleDateString('pt-BR', { month: 'short' }),
-        healthScore: Math.round(item.healthScore / item.count),
-        cholesterol: Math.round(item.cholesterol / item.count),
-        bloodPressure: parseFloat((item.bloodPressure / item.count).toFixed(1)),
-        glucose: Math.round(item.glucose / item.count)
+        healthScore: 75, // Default health score
+        // Add only metrics that have data
+        ...Object.keys(commonMetrics).reduce((acc, metricName) => {
+          const metricKey = commonMetrics[metricName].key;
+          acc[metricKey] = item.count > 0 ? Math.round(item[metricKey] / item.count) : 0;
+          return acc;
+        }, {} as Record<string, number>)
       }))
       .sort((a, b) => {
         const months = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
@@ -193,7 +214,7 @@ export default function Dashboard() {
   // Calculate health stats
   const calcHealthStats = () => {
     if (!metrics || metrics.length === 0) {
-      return { averageScore: 0, trend: 'stable', recentMetrics: [] };
+      return { averageScore: 75, trend: 'stable', recentMetrics: [] };
     }
     
     // Sort by date, most recent first
@@ -201,21 +222,36 @@ export default function Dashboard() {
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
+    // Extract top 5 most recent metrics
+    const recentMetrics = sortedMetrics.slice(0, 5);
+    
+    // Calculate a health score based on status
+    const calculateMetricScore = (metric: HealthMetric) => {
+      switch(metric.status?.toLowerCase()) {
+        case 'normal':
+          return 85;
+        case 'atenção':
+        case 'atencao':
+          return 70;
+        case 'alto':
+        case 'baixo':
+          return 60;
+        default:
+          return 75; // Default score
+      }
+    };
+    
     // Calculate average from most recent metrics
-    const recentMetrics = sortedMetrics.slice(0, 3);
-    const averageScore = Math.round(
-      recentMetrics.reduce((sum, metric) => sum + (metric.healthScore || 0), 0) / recentMetrics.length
-    );
+    const metricsWithScores = recentMetrics.map(calculateMetricScore);
+    const averageScore = metricsWithScores.length > 0 
+      ? Math.round(metricsWithScores.reduce((sum, score) => sum + score, 0) / metricsWithScores.length)
+      : 75; // Default if no metrics
     
     // Determine trend (if we have enough data)
     let trend: 'improving' | 'declining' | 'stable' = 'stable';
-    if (sortedMetrics.length >= 2) {
-      const latestAvg = sortedMetrics.slice(0, 2).reduce((sum, m) => sum + (m.healthScore || 0), 0) / 2;
-      const previousAvg = sortedMetrics.slice(2, 4).reduce((sum, m) => sum + (m.healthScore || 0), 0) / 2;
-      
-      if (latestAvg > previousAvg + 3) trend = 'improving';
-      else if (latestAvg < previousAvg - 3) trend = 'declining';
-    }
+    
+    // We don't have enough historical data for trend analysis,
+    // so keep it stable for now
     
     return { averageScore, trend, recentMetrics };
   };
