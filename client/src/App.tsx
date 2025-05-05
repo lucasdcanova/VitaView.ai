@@ -14,6 +14,7 @@ import UploadExams from "@/pages/upload-exams";
 import ExamHistory from "@/pages/exam-history";
 import ExamReport from "@/pages/exam-report";
 import ExamResults from "@/pages/exam-results";
+import ExamResultSingle from "@/pages/exam-result-single";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
 import Home from "@/pages/home";
@@ -32,7 +33,7 @@ function Router() {
       <ProtectedRoute path="/report/:id" component={ExamReport} />
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
-      <ProtectedRoute path="/results/:id" component={ExamResults} />
+      <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
       <ProtectedRoute path="/profile" component={Profile} />
       
       {/* Rotas públicas */}

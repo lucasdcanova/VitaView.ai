@@ -2,18 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Exam, HealthMetric } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { 
-  FileText, 
-  Image, 
   AlertCircle, 
-  ArrowUpRight, 
   Filter, 
   Search,
-  RefreshCcw 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +29,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -46,6 +42,18 @@ export default function ExamResults() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [localExams, setLocalExams] = useState<Exam[]>([]);
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
+  const [, setLocation] = useLocation();
+  
+  // Verificar se estamos na rota individual
+  const [match] = useRoute("/results/:id");
+  
+  // Se estamos na rota individual, redirecionar para o componente específico
+  useEffect(() => {
+    if (match) {
+      // Não fazemos nada aqui, a rota já está configurada em App.tsx para mostrar 
+      // o componente ExamResultSingle quando estamos em /results/:id
+    }
+  }, [match]);
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
