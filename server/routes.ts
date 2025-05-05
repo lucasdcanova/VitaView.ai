@@ -6,13 +6,48 @@ import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 
 // Middleware para verificar autenticação
-function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
   console.log(`[Auth Check] Path: ${req.path}, Method: ${req.method}, Auth: ${req.isAuthenticated()}, Session ID: ${req.sessionID || 'undefined'}`);
   
   // Verifica a autenticação padrão pelo Passport
   if (req.isAuthenticated()) {
     console.log(`[Auth Success] User ID: ${req.user!.id}, Username: ${req.user!.username}`);
     return next();
+  }
+  
+  // Tenta recuperar a autenticação pelo cookie auxiliar
+  try {
+    const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>) || {};
+    
+    // Verifica se temos o cookie auth_token
+    if (cookies['auth_token']) {
+      const authData = JSON.parse(decodeURIComponent(cookies['auth_token']));
+      if (authData && authData.id) {
+        console.log(`[Auth Alternative] Encontrado token auxiliar para user ID: ${authData.id}`);
+        // Recupera o usuário pelo ID
+        const user = await storage.getUser(authData.id);
+        
+        if (user) {
+          console.log(`[Auth Alternative] Usuário recuperado: ${user.username}`);
+          // Define o usuário na sessão
+          req.login(user, (err) => {
+            if (err) {
+              console.error("[Auth Alternative] Erro ao fazer login:", err);
+              return res.status(401).json({ message: "Erro de autenticação" });
+            }
+            // Continua o fluxo
+            return next();
+          });
+          return; // Retorna para evitar resposta prematura
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[Auth Error] Erro ao processar autenticação alternativa:", error);
   }
   
   // Debug dos cookies
