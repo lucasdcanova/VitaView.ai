@@ -120,7 +120,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       // Alguns campos são extraídos da análise Gemini se disponíveis
       // como data do exame, médico solicitante, etc.
       const examDate = analyzedResult?.examDate || new Date().toISOString().split('T')[0];
-      const requestingPhysician = analyzedResult?.requestingPhysician || "DESCONHECIDO";
+      
+      // IMPORTANTE: Removendo campos não presentes no banco de dados
+      // Removendo requestingPhysician pois não existe na tabela
       
       // Para debug: vamos garantir que o userId é enviado mesmo se a sessão estiver com problemas
       console.log("Usuário autenticado:", user);
@@ -133,7 +135,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         laboratoryName: "Upload via Plataforma",
         examDate: examDate,
         status: "analyzed", // definir status como analisado
-        requestingPhysician: requestingPhysician,
+        // Removido requestingPhysician pois este campo não existe no banco de dados
         originalContent: JSON.stringify(analyzedResult).substring(0, 5000) // Limitando tamanho para evitar problemas
       };
       
@@ -201,7 +203,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           examDate: data.examDate,
           status: "analyzed",
           userId: data.userId, // Usar o userId que foi enviado originalmente
-          requestingPhysician: data.requestingPhysician || "Não informado",
+          // Removido requestingPhysician pois não existe no banco de dados
           originalContent: data.originalContent || null
         };
         

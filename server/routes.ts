@@ -127,8 +127,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Erro: userId é obrigatório" });
       }
       
+      // Remover campo requestingPhysician que pode vir do cliente mas não existe no DB
+      const { requestingPhysician, ...bodyWithoutRequestingPhysician } = req.body;
+      
       const examData = {
-        ...req.body,
+        ...bodyWithoutRequestingPhysician,
         userId: userId,
         uploadDate: new Date()
       };
