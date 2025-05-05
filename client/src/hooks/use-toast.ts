@@ -142,17 +142,30 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  // Garante que title e description sejam sempre strings válidas
+  const safeProps = {
+    ...props,
+    title: props.title && typeof props.title === 'object' ? JSON.stringify(props.title) : props.title,
+    description: props.description && typeof props.description === 'object' ? JSON.stringify(props.description) : props.description
+  };
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
-      toast: { ...props, id },
+      toast: { 
+        ...props,
+        // Garante que title e description sejam sempre strings válidas na atualização
+        title: props.title && typeof props.title === 'object' ? JSON.stringify(props.title) : props.title,
+        description: props.description && typeof props.description === 'object' ? JSON.stringify(props.description) : props.description,
+        id 
+      },
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...safeProps,
       id,
       open: true,
       onOpenChange: (open) => {
