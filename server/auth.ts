@@ -37,8 +37,8 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      httpOnly: false, // Alterado para permitir acesso via JavaScript 
-      secure: false,
+      httpOnly: true, // Cookies de sessão devem ser httpOnly para segurança
+      secure: false, // Mudar para true em produção
       sameSite: 'lax',
       path: '/'
     }
@@ -122,7 +122,16 @@ export function setupAuth(app: Express) {
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
     const { password, ...userWithoutPassword } = req.user as SelectUser;
     
-    // Definir um cookie adicional que pode ser acessado pelo cliente
+    // Definir um cookie auxiliar simplificado para autenticação
+    res.cookie('auth_user_id', req.user!.id.toString(), {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+      httpOnly: false, // Acessível via JavaScript
+      secure: false,
+      sameSite: 'lax',
+      path: '/'
+    });
+    
+    // Manter o cookie original também por compatibilidade
     res.cookie('auth_token', JSON.stringify({id: req.user!.id}), {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
       httpOnly: false, // Acessível via JavaScript
@@ -138,8 +147,13 @@ export function setupAuth(app: Express) {
     req.logout((err) => {
       if (err) return next(err);
       
-      // Limpar o cookie auxiliar
+      // Limpar os cookies auxiliares
       res.clearCookie('auth_token', {
+        path: '/',
+        sameSite: 'lax'
+      });
+      
+      res.clearCookie('auth_user_id', {
         path: '/',
         sameSite: 'lax'
       });

@@ -8,6 +8,7 @@ import { generateHealthInsights, generateChronologicalReport } from "./services/
 // Middleware para verificar autenticação
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
   console.log(`[Auth Check] Path: ${req.path}, Method: ${req.method}, Auth: ${req.isAuthenticated()}, Session ID: ${req.sessionID || 'undefined'}`);
+  console.log(`[Auth Headers] ${JSON.stringify(req.headers)}`);
   
   // Verifica a autenticação padrão pelo Passport
   if (req.isAuthenticated()) {
@@ -17,34 +18,89 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   
   // Tenta recuperar a autenticação pelo cookie auxiliar
   try {
+    console.log(`[Auth Debug] Cookie Header: ${req.headers.cookie}`);
+    
     const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      acc[key] = value;
+      const parts = cookie.trim().split('=');
+      if (parts.length >= 2) {
+        const key = parts[0];
+        const value = parts.slice(1).join('='); // Caso o valor contenha =
+        acc[key] = value;
+      }
       return acc;
     }, {} as Record<string, string>) || {};
     
-    // Verifica se temos o cookie auth_token
-    if (cookies['auth_token']) {
-      const authData = JSON.parse(decodeURIComponent(cookies['auth_token']));
-      if (authData && authData.id) {
-        console.log(`[Auth Alternative] Encontrado token auxiliar para user ID: ${authData.id}`);
-        // Recupera o usuário pelo ID
-        const user = await storage.getUser(authData.id);
+    console.log(`[Auth Debug] Parsed Cookies: ${JSON.stringify(cookies)}`);
+    
+    // Verifica o cookie simplificado auth_user_id
+    if (cookies['auth_user_id']) {
+      try {
+        console.log(`[Auth Debug] Found auth_user_id: ${cookies['auth_user_id']}`);
+        const userId = parseInt(cookies['auth_user_id']);
         
-        if (user) {
-          console.log(`[Auth Alternative] Usuário recuperado: ${user.username}`);
-          // Define o usuário na sessão
-          req.login(user, (err) => {
-            if (err) {
-              console.error("[Auth Alternative] Erro ao fazer login:", err);
-              return res.status(401).json({ message: "Erro de autenticação" });
-            }
-            // Continua o fluxo
-            return next();
-          });
-          return; // Retorna para evitar resposta prematura
+        if (!isNaN(userId)) {
+          console.log(`[Auth Alternative] Usando auth_user_id para user ID: ${userId}`);
+          // Recupera o usuário pelo ID
+          const user = await storage.getUser(userId);
+          
+          if (user) {
+            console.log(`[Auth Alternative] Usuário recuperado via auth_user_id: ${user.username}`);
+            // Define o usuário na sessão
+            return req.login(user, (err) => {
+              if (err) {
+                console.error("[Auth Alternative] Erro ao fazer login:", err);
+                return res.status(401).json({ message: "Erro de autenticação" });
+              }
+              // Continua o fluxo
+              console.log(`[Auth Alternative] Login bem-sucedido para ${user.username}`);
+              return next();
+            });
+          } else {
+            console.log(`[Auth Alternative] Usuário não encontrado para auth_user_id: ${userId}`);
+          }
+        } else {
+          console.log(`[Auth Alternative] auth_user_id inválido: ${cookies['auth_user_id']}`);
         }
+      } catch (error) {
+        console.error("[Auth Error] Erro ao processar auth_user_id:", error);
       }
+    }
+    // Também tenta o cookie auth_token para compatibilidade com versões anteriores
+    else if (cookies['auth_token']) {
+      try {
+        console.log(`[Auth Debug] Raw auth_token: ${cookies['auth_token']}`);
+        const decodedToken = decodeURIComponent(cookies['auth_token']);
+        console.log(`[Auth Debug] Decoded auth_token: ${decodedToken}`);
+        const authData = JSON.parse(decodedToken);
+        
+        if (authData && authData.id) {
+          console.log(`[Auth Alternative] Encontrado token auxiliar para user ID: ${authData.id}`);
+          // Recupera o usuário pelo ID
+          const user = await storage.getUser(authData.id);
+          
+          if (user) {
+            console.log(`[Auth Alternative] Usuário recuperado: ${user.username}`);
+            // Define o usuário na sessão
+            return req.login(user, (err) => {
+              if (err) {
+                console.error("[Auth Alternative] Erro ao fazer login:", err);
+                return res.status(401).json({ message: "Erro de autenticação" });
+              }
+              // Continua o fluxo
+              console.log(`[Auth Alternative] Login bem-sucedido para ${user.username}`);
+              return next();
+            });
+          } else {
+            console.log(`[Auth Alternative] Usuário não encontrado: ID ${authData.id}`);
+          }
+        } else {
+          console.log(`[Auth Alternative] Token sem ID válido: ${JSON.stringify(authData)}`);
+        }
+      } catch (parseError) {
+        console.error("[Auth Error] Erro ao parsear token JSON:", parseError);
+      }
+    } else {
+      console.log(`[Auth Debug] Nenhum cookie de autenticação alternativa encontrado`);
     }
   } catch (error) {
     console.error("[Auth Error] Erro ao processar autenticação alternativa:", error);
