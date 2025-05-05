@@ -400,6 +400,10 @@ interface UserInfo {
   email?: string | null;
   birthDate?: string | null;
   gender?: string | null;
+  phoneNumber?: string | null;
+  address?: string | null;
+  password?: string;
+  createdAt?: Date;
 }
 
 export async function generateChronologicalReport(examResults: ExamResult[], user: UserInfo) {
@@ -509,7 +513,7 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
 /**
  * Resposta de fallback para o relatório cronológico quando a API da OpenAI não está disponível
  */
-function getFallbackChronologicalReport(examResults: ExamResult[], user: User) {
+function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInfo) {
   console.log("Using fallback chronological report");
   
   // Calcula algumas tendências básicas baseadas nos dados disponíveis
