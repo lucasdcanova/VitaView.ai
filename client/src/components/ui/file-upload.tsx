@@ -140,8 +140,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       };
       
       // Salvar exame completo
-      saveExamMutation.mutate(examData, {
-        onSuccess: (savedExam) => {
+      saveExamMutation.mutate({
+        examData,
+        geminiAnalysis: analyzedResult,
+        openaiInterpretation
+      }, {
+        onSuccess: (savedData) => {
           setUploadStep('complete');
           
           // Atualizar cache com novos dados
@@ -156,9 +160,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           
           if (onUploadComplete) {
             onUploadComplete({
-              savedExam,
+              savedExam: savedData.exam,
               geminiAnalysis: analyzedResult,
-              openaiInterpretation
+              openaiInterpretation: savedData.result
             });
           }
         },
@@ -194,17 +198,22 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           throw new Error("Você precisa estar autenticado para salvar exames");
         }
         
+        console.log("Dados recebidos para salvar:", data);
+        
+        // Extrair dados do exame do novo formato
+        const { examData: rawExamData, geminiAnalysis, openaiInterpretation } = data;
+        
         // Adaptar dados para formato esperado pela API
         // Manter o userId que foi enviado no objeto original (que pode ter um fallback)
         const examData = {
-          name: data.name,
-          fileType: data.fileType,
-          laboratoryName: data.laboratoryName,
-          examDate: data.examDate,
+          name: rawExamData.name,
+          fileType: rawExamData.fileType,
+          laboratoryName: rawExamData.laboratoryName,
+          examDate: rawExamData.examDate,
           status: "analyzed",
-          userId: data.userId, // Usar o userId que foi enviado originalmente
+          userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
           // Removido requestingPhysician pois não existe no banco de dados
-          originalContent: data.originalContent || null
+          originalContent: rawExamData.originalContent || null
         };
         
         // Criar o exame no banco de dados
@@ -233,14 +242,19 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         // Salvar o resultado da análise
         if (savedExam && savedExam.id) {
           // Preparar dados do resultado da análise
+          // Usando tanto os dados da análise Gemini quando a interpretação do OpenAI
           const resultData = {
             examId: savedExam.id,
-            summary: data.geminiAnalysis?.summary || "Análise não disponível",
-            detailedAnalysis: data.geminiAnalysis?.detailedAnalysis || "",
-            recommendations: Array.isArray(data.geminiAnalysis?.recommendations) 
-              ? data.geminiAnalysis.recommendations.join('\n') 
-              : data.geminiAnalysis?.recommendations || "",
-            healthMetrics: data.geminiAnalysis?.healthMetrics || [],
+            summary: openaiInterpretation?.contextualAnalysis || geminiAnalysis?.summary || "Análise não disponível",
+            detailedAnalysis: geminiAnalysis?.detailedAnalysis || "",
+            recommendations: openaiInterpretation?.recommendations 
+              ? Array.isArray(openaiInterpretation.recommendations)
+                ? openaiInterpretation.recommendations.join('\n')
+                : openaiInterpretation.recommendations
+              : Array.isArray(geminiAnalysis?.recommendations)
+                ? geminiAnalysis.recommendations.join('\n')
+                : geminiAnalysis?.recommendations || "",
+            healthMetrics: geminiAnalysis?.healthMetrics || [],
             aiProvider: "gemini+openai"
           };
           
@@ -269,12 +283,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           }
           
           // Salvar métricas de saúde individuais, se disponíveis
-          if (data.geminiAnalysis?.healthMetrics && Array.isArray(data.geminiAnalysis.healthMetrics)) {
-            console.log("Salvando métricas de saúde individuais:", data.geminiAnalysis.healthMetrics.length);
-            for (const metric of data.geminiAnalysis.healthMetrics) {
+          if (geminiAnalysis?.healthMetrics && Array.isArray(geminiAnalysis.healthMetrics)) {
+            console.log("Salvando métricas de saúde individuais:", geminiAnalysis.healthMetrics.length);
+            for (const metric of geminiAnalysis.healthMetrics) {
               try {
                 const metricData = {
-                  userId: data.userId, // Usar mesmo userId que foi usado para o exame
+                  userId: rawExamData.userId, // Usar mesmo userId que foi usado para o exame
                   name: metric.name,
                   value: metric.value,
                   unit: metric.unit || '',
