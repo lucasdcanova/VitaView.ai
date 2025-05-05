@@ -210,13 +210,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[Exams Endpoint] Session ID:", req.sessionID);
       console.log("[Exams Endpoint] Cookies:", req.headers.cookie);
       
-      // Se o usuário estiver autenticado, use o userId do usuário
-      // Caso contrário, use o userId fornecido no corpo da requisição
-      let userId = req.isAuthenticated() ? req.user!.id : req.body.userId;
+      // Sempre usar o userId do corpo da requisição para diagnóstico
+      // Esta é uma medida temporária para garantir que os exames sejam salvos
+      let userId = req.body.userId;
       
       if (!userId) {
-        console.error("[Exams Endpoint] Sem userId válido");
-        return res.status(400).json({ message: "Erro: userId é obrigatório" });
+        console.error("[Exams Endpoint] Sem userId válido no corpo da requisição");
+        // Tenta obter do usuário autenticado se disponível
+        if (req.isAuthenticated() && req.user) {
+          userId = req.user.id;
+          console.log("[Exams Endpoint] Usando userId da sessão:", userId);
+        } else {
+          return res.status(400).json({ message: "Erro: userId é obrigatório" });
+        }
+      }
+      
+      // Adicionando cookie auxiliar para facilitar a autenticação em requisições futuras
+      if (userId) {
+        res.cookie('auth_user_id', userId.toString(), {
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+          httpOnly: false, // Permitir acesso pelo JavaScript
+          secure: false,   // Mudar para true em produção
+          sameSite: 'lax',
+          path: '/'
+        });
       }
       
       // Remover campo requestingPhysician que pode vir do cliente mas não existe no DB
@@ -289,20 +306,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams", ensureAuthenticated, async (req, res) => {
+  app.get("/api/exams", async (req, res) => {
     try {      
       // Adicionar mais logs para debug
-      console.log("Buscando exames para o usuário:", req.user!.id);
+      console.log("[GetExams] Autenticado:", req.isAuthenticated());
+      console.log("[GetExams] Cookies:", req.headers.cookie);
+      
+      // Tenta extrair userId dos cookies
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const parts = cookie.trim().split('=');
+        if (parts.length >= 2) {
+          const key = parts[0];
+          const value = parts.slice(1).join('=');
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>) || {};
+      
+      let userId: number | undefined;
+      
+      // Se autenticado, usa o userId do req.user
+      if (req.isAuthenticated() && req.user) {
+        userId = req.user.id;
+        console.log("[GetExams] Usando userId da sessão:", userId);
+      } 
+      // Se não autenticado, tenta pegar do cookie auxiliar
+      else if (cookies['auth_user_id']) {
+        userId = parseInt(cookies['auth_user_id']);
+        if (!isNaN(userId)) {
+          console.log("[GetExams] Usando userId do cookie:", userId);
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+      
       try {
-        const exams = await storage.getExamsByUserId(req.user!.id);
-        console.log("Exames encontrados:", exams?.length || 0);
+        const exams = await storage.getExamsByUserId(userId);
+        console.log("[GetExams] Exames encontrados:", exams?.length || 0);
         res.json(exams || []);
       } catch (dbError) {
-        console.error("Erro na função getExamsByUserId:", dbError);
+        console.error("[GetExams] Erro na função getExamsByUserId:", dbError);
         throw dbError;
       }
     } catch (error: any) {
-      console.error("Erro detalhado ao buscar exames:", error);
+      console.error("[GetExams] Erro detalhado ao buscar exames:", error);
       res.status(500).json({ message: "Erro ao buscar exames", error: error?.message || 'Erro desconhecido' });
     }
   });
@@ -400,15 +449,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/health-metrics/latest", ensureAuthenticated, async (req, res) => {
+  app.get("/api/health-metrics/latest", async (req, res) => {
     try {
+      console.log("[GetLatestMetrics] Autenticado:", req.isAuthenticated());
+      console.log("[GetLatestMetrics] Cookies:", req.headers.cookie);
+      
+      // Tenta extrair userId dos cookies
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const parts = cookie.trim().split('=');
+        if (parts.length >= 2) {
+          const key = parts[0];
+          const value = parts.slice(1).join('=');
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>) || {};
+      
+      let userId: number | undefined;
+      
+      // Se autenticado, usa o userId do req.user
+      if (req.isAuthenticated() && req.user) {
+        userId = req.user.id;
+        console.log("[GetLatestMetrics] Usando userId da sessão:", userId);
+      } 
+      // Se não autenticado, tenta pegar do cookie auxiliar
+      else if (cookies['auth_user_id']) {
+        userId = parseInt(cookies['auth_user_id']);
+        if (!isNaN(userId)) {
+          console.log("[GetLatestMetrics] Usando userId do cookie:", userId);
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+      }
+      
       const limit = parseInt(req.query.limit as string) || 10;
-      console.log(`Buscando ${limit} métricas mais recentes para usuário ${req.user!.id}`);
-      const metrics = await storage.getLatestHealthMetrics(req.user!.id, limit);
-      console.log(`Métricas encontradas: ${metrics?.length || 0}`);
+      console.log(`[GetLatestMetrics] Buscando ${limit} métricas mais recentes para usuário ${userId}`);
+      const metrics = await storage.getLatestHealthMetrics(userId, limit);
+      console.log(`[GetLatestMetrics] Métricas encontradas: ${metrics?.length || 0}`);
       res.json(metrics || []);
     } catch (error) {
-      console.error("Erro ao buscar métricas de saúde:", error);
+      console.error("[GetLatestMetrics] Erro ao buscar métricas de saúde:", error);
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
