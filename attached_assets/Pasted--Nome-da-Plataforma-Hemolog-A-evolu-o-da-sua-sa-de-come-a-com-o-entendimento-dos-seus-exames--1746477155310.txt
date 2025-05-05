@@ -1,0 +1,62 @@
+💡 Nome da Plataforma
+Hemolog
+A evolução da sua saúde começa com o entendimento dos seus exames.
+
+🌐 Copy Completa para a Landing Page
+Seção 1 – Hero (Cabeçalho Principal)
+
+Título:
+Hemolog: seu histórico de exames, interpretado e visualizado com inteligência.
+
+Subtítulo:
+Carregue seus exames em PDF ou imagem e receba análises automáticas, alertas personalizados e gráficos evolutivos com apoio de IA.
+
+CTA principal:
+[ Criar minha conta gratuita ]
+
+Seção 2 – Dor do Usuário
+
+Você já recebeu um exame e ficou sem saber o que ele realmente significava?
+A interpretação de exames ainda é um mistério para muitas pessoas. Com o Hemolog, você transforma números e siglas em informações compreensíveis e ações de saúde claras.
+
+Seção 3 – Como Funciona o Hemolog?
+
+📥 1. Envio Simples:
+Faça upload de exames em PDF, JPEG ou PNG — até uma foto funciona.
+
+🧠 2. Leitura com IA:
+Nosso sistema usa inteligência artificial para identificar os exames, extrair os dados e interpretá-los com base em sexo, idade e histórico.
+
+📈 3. Acompanhamento Evolutivo:
+Veja gráficos, alertas automáticos e receba insights práticos com base nos seus resultados anteriores.
+
+🔒 4. Segurança Médica:
+Seus dados são criptografados e seguem padrões internacionais de proteção.
+
+Seção 4 – Benefícios Reais
+
+✅ Histórico cronológico automático de todos os seus exames
+✅ Alertas inteligentes para valores fora do ideal
+✅ Relatórios de saúde gerados com linguagem clara
+✅ Comparação entre exames ao longo dos anos
+✅ Compatível com clínicas e planos de saúde
+
+Seção 5 – Para Quem é o Hemolog?
+
+📌 Pacientes crônicos: monitoramento contínuo e organizado
+👨‍👩‍👧‍👦 Famílias: histórico de saúde centralizado
+🧑‍⚕️ Profissionais de saúde: relatórios prontos para consultas
+🏥 Clínicas e planos de saúde: ferramenta para engajar e cuidar melhor dos pacientes
+Seção 6 – Depoimentos (Simulados)
+
+“O Hemolog me ajudou a entender como meus exames evoluíram nos últimos anos. Hoje, me sinto no controle da minha saúde.”
+— Ana Tavares, 59 anos
+“Uso com meus pacientes e ganho tempo nas consultas. Os gráficos ajudam muito na explicação.”
+— Dr. Marcos Henrique, Geriatra
+Seção 7 – CTA Final
+
+Transforme seus exames em decisões inteligentes.
+Comece a usar o Hemolog agora mesmo.
+
+[ Criar conta gratuita ]  [ Ver exemplo de relatório ]
+

@@ -16,11 +16,16 @@ import ExamReport from "@/pages/exam-report";
 import ExamResults from "@/pages/exam-results";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
+import LandingPage from "@/pages/landing-page";
 
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
+      {/* Landing Page como página inicial pública */}
+      <Route path="/" component={LandingPage} />
+      
+      {/* Área autenticada */}
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/upload" component={UploadExams} />
       <ProtectedRoute path="/upload-exams" component={UploadExams} />
       <ProtectedRoute path="/history" component={ExamHistory} />
@@ -28,6 +33,8 @@ function Router() {
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/profile" component={Profile} />
+      
+      {/* Rotas públicas */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

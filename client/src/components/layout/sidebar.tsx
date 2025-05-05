@@ -48,17 +48,11 @@ export default function Sidebar(props: SidebarProps) {
       }`}
     >
       <div className="p-4 flex items-center border-b border-gray-100">
-        <svg 
-          viewBox="0 0 24 24" 
-          className="w-8 h-8 rounded-md mr-2 text-primary-600 fill-current"
-        >
-          <path d="M19 5.5h-4.5V1H9v4.5H4.5V19c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5.5zm-9-3h3V7h4.5v10.5c0 .55-.45 1-1 1h-10c-.55 0-1-.45-1-1V7H11V2.5z"/>
-          <path d="M11 11h2v6h-2z"/>
-          <path d="M11 9h2v1h-2z"/>
-        </svg>
+        <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center mr-3">
+          <Activity className="w-6 h-6" />
+        </div>
         <div>
-          <span className="font-semibold text-gray-800">Health</span>
-          <span className="font-semibold text-primary-500">Analytics</span>
+          <span className="font-semibold text-primary-600 text-xl">Hemolog</span>
         </div>
       </div>
       
@@ -75,10 +69,10 @@ export default function Sidebar(props: SidebarProps) {
       </div>
       
       <nav className="p-4 space-y-1">
-        <Link href="/" 
+        <Link href="/dashboard" 
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-            location === '/' 
+            location === '/dashboard' 
               ? 'bg-primary-50 text-primary-700' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
