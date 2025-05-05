@@ -78,6 +78,19 @@ export const markNotificationAsRead = async (notificationId: number): Promise<No
 
 // User Profile API
 export const updateUserProfile = async (profileData: any) => {
-  const res = await apiRequest("PUT", "/api/user/profile", profileData);
-  return await res.json();
+  const res = await fetch("/api/user/profile", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(profileData),
+    credentials: "include"
+  });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || res.statusText);
+  }
+  
+  return res.json();
 };

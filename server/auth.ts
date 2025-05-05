@@ -38,8 +38,10 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true,
-      secure: false, // Desativado para desenvolvimento
-      sameSite: "none", // Permite cookies em requisições cross-site
+      // Importante: secure deve ser false para desenvolvimento sem HTTPS
+      secure: false,
+      // Importante: sameSite deve ser 'lax' para desenvolvimento
+      sameSite: 'lax',
       path: '/'
     }
   };
