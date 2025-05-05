@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API para salvar resultados de exames
-  app.post("/api/exam-results", async (req, res) => {
+  app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
     try {      
       console.log("[ExamResults Endpoint] Recebida requisição para criar resultado de exame");
       console.log("[ExamResults Endpoint] Autenticado:", req.isAuthenticated());
