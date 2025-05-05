@@ -53,7 +53,7 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   // Debug dos cookies
   console.log(`[Auth Failed] Cookies: ${req.headers.cookie}`);
   console.log(`[Auth Failed] Session Data: ${JSON.stringify(req.session || {})}`);
-  console.log(`[Auth Failed] PassportJS: ${JSON.stringify(req.session?.passport || {})}`);
+  console.log(`[Auth Failed] PassportJS: ${JSON.stringify(req.session && 'passport' in req.session ? req.session.passport : {})}`);
   
   // Bypass para análise Gemini para diagnóstico
   if (req.path === '/api/analyze/gemini' && req.headers.cookie && req.headers.cookie.includes('connect.sid')) {

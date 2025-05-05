@@ -94,9 +94,10 @@ export default function Profile() {
       });
     },
     onError: (error: Error) => {
+      console.error("Mutation error during profile update:", error);
       toast({
         title: "Erro ao atualizar perfil",
-        description: error.message || "Ocorreu um erro ao atualizar o perfil.",
+        description: error.message || "Ocorreu um erro ao atualizar o perfil. Tente novamente.",
         variant: "destructive",
       });
     },

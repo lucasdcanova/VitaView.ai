@@ -219,7 +219,11 @@ export default function AuthPage() {
                           <FormControl>
                             <Input
                               placeholder="Digite seu nome completo"
-                              {...field}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                               autoComplete="name"
                             />
                           </FormControl>
@@ -238,7 +242,11 @@ export default function AuthPage() {
                             <Input
                               type="email"
                               placeholder="Digite seu email"
-                              {...field}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                               autoComplete="email"
                             />
                           </FormControl>

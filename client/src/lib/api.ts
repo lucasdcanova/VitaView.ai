@@ -79,6 +79,7 @@ export const markNotificationAsRead = async (notificationId: number): Promise<No
 // User Profile API
 export const updateUserProfile = async (profileData: any) => {
   try {
+    // Usar apiRequest para garantir que 'credentials: include' seja enviado
     const res = await apiRequest("PUT", "/api/user/profile", profileData);
     return await res.json();
   } catch (error) {
