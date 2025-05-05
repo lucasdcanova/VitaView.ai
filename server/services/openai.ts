@@ -392,7 +392,17 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
   }
 }
 
-export async function generateChronologicalReport(examResults: ExamResult[], user: User) {
+// Interface específica para o usuário requerido na função
+interface UserInfo {
+  id: number;
+  username: string; 
+  fullName?: string | null;
+  email?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
+}
+
+export async function generateChronologicalReport(examResults: ExamResult[], user: UserInfo) {
   try {
     console.log("Generating chronological report with OpenAI API");
     

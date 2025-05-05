@@ -9,23 +9,24 @@ import { generateHealthInsights, generateChronologicalReport } from "./services/
 function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
   console.log(`[Auth Check] Path: ${req.path}, Method: ${req.method}, Auth: ${req.isAuthenticated()}, Session ID: ${req.sessionID || 'undefined'}`);
   
+  // Verifica a autenticação padrão pelo Passport
   if (req.isAuthenticated()) {
     console.log(`[Auth Success] User ID: ${req.user!.id}, Username: ${req.user!.username}`);
     return next();
   }
   
-  // Análise detalhada do cookie e sessão para diagnóstico
+  // Debug dos cookies
   console.log(`[Auth Failed] Cookies: ${req.headers.cookie}`);
   console.log(`[Auth Failed] Session Data: ${JSON.stringify(req.session || {})}`);
   console.log(`[Auth Failed] PassportJS: ${JSON.stringify(req.session?.passport || {})}`);
   
-  // Para solucionar problema temporariamente no endpoint específico de análise Gemini
-  // Essa é uma solução temporária de diagnóstico
+  // Bypass para análise Gemini para diagnóstico
   if (req.path === '/api/analyze/gemini' && req.headers.cookie && req.headers.cookie.includes('connect.sid')) {
     console.log(`[Auth Bypass] Permitindo requisição para análise Gemini para diagnóstico`);
     return next();
   }
   
+  // Se não estiver autenticado, retorna 401
   return res.status(401).json({ message: "Não autenticado" });
 }
 
@@ -264,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Obter dados do paciente para contextualização
-      const user = req.user;
+      const user = req.user!;
       
       // Obter dados de histórico médico (se fornecidos via query params)
       let patientData = null;
@@ -277,8 +278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Se não fornecido, criar dados básicos do perfil do usuário
         patientData = {
-          gender: user.gender,
-          age: user.birthDate ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+          gender: user?.gender || null,
+          age: user?.birthDate ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null,
           diseases: [],
           surgeries: [],
           allergies: []
@@ -401,7 +402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       examResults.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       
       // Buscar dados do usuário para contextualização
-      const user = req.user;
+      const user = req.user!;
       
       // Obter parâmetros adicionais do paciente (se fornecidos)
       const patientData = req.query.patientData ? JSON.parse(req.query.patientData as string) : null;
