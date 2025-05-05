@@ -318,7 +318,6 @@ export class DatabaseStorage implements IStorage {
           upload_date as "uploadDate", 
           laboratory_name as "laboratoryName", 
           exam_date as "examDate",
-          COALESCE(requesting_physician, '') as "requestingPhysician",
           COALESCE(original_content, '') as "originalContent"
         FROM exams 
         WHERE user_id = $1
@@ -354,11 +353,10 @@ export class DatabaseStorage implements IStorage {
           examDate: exams.examDate,
         }).from(exams).where(eq(exams.userId, userId));
         
-        // Adaptar ao tipo completo
+        // Adaptar ao tipo completo - sem incluir requestingPhysician
         return results.map(exam => {
           return {
             ...exam,
-            requestingPhysician: null,
             originalContent: null,
           } as Exam;
         });
