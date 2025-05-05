@@ -14,7 +14,14 @@ import {
   BarChart4,
   Sparkles,
   Play,
-  FlaskConical
+  FlaskConical,
+  Zap,
+  Search,
+  List,
+  ScrollText,
+  BarChart,
+  TrendingUp,
+  FileBarChart
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -306,14 +313,202 @@ export default function LandingPage() {
       </section>
 
       {/* Pain Point Section */}
-      <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Você já recebeu um exame e ficou sem saber o que ele realmente significava?
-          </h2>
-          <p className="text-xl max-w-3xl mx-auto">
-            A interpretação de exames ainda é um mistério para muitas pessoas. Com o Hemolog, você transforma números e siglas em informações compreensíveis e ações de saúde claras.
-          </p>
+      <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-16 relative overflow-hidden">
+        {/* Elementos decorativos de fundo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5" opacity="0.3"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#smallGrid)" />
+          </svg>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Você já recebeu um exame e ficou sem saber o que ele realmente significava?
+            </h2>
+            <p className="text-xl max-w-3xl mx-auto mb-10">
+              A interpretação de exames ainda é um mistério para muitas pessoas. Com o Hemolog, você transforma números e siglas em informações compreensíveis e ações de saúde claras.
+            </p>
+            
+            {/* Ícones animados */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mt-12">
+              {[
+                { icon: <Search className="w-8 h-8 text-white" />, text: "Busca inteligente em exames" },
+                { icon: <FileBarChart className="w-8 h-8 text-white" />, text: "Análise detalhada de valores" },
+                { icon: <TrendingUp className="w-8 h-8 text-white" />, text: "Acompanhamento de tendências" },
+                { icon: <Zap className="w-8 h-8 text-white" />, text: "Alertas em tempo real" }
+              ].map((item, index) => (
+                <motion.div 
+                  key={index}
+                  className="flex flex-col items-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                >
+                  <motion.div 
+                    className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3"
+                    whileHover={{ 
+                      scale: 1.1,
+                      backgroundColor: "rgba(255,255,255,0.2)"
+                    }}
+                  >
+                    {item.icon}
+                  </motion.div>
+                  <p className="text-sm font-medium">{item.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      
+      {/* Feature Showcase Section */}
+      <section className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute left-0 right-0 top-0 h-24 bg-gradient-to-b from-gray-50 to-transparent"></div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">
+                Recursos inteligentes
+              </span> para sua saúde
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Oferecemos uma plataforma completa para que você compreenda e acompanhe seus exames com facilidade.
+            </p>
+          </motion.div>
+          
+          {/* Features Alternating */}
+          <div className="space-y-24">
+            {[
+              {
+                title: "Visualização intuitiva de dados de saúde",
+                description: "Gráficos interativos transformam números complexos em informações visuais de fácil compreensão, mostrando tendências e comparando valores com referências de normalidade.",
+                icon: <BarChart className="w-12 h-12 text-primary-500" />,
+                image: "https://placehold.co/800x500/e6f2ff/0066cc?text=Grafico+Interativo",
+                features: [
+                  "Gráficos evolutivos de valores",
+                  "Comparação com referências médicas",
+                  "Exportação de relatórios visuais"
+                ],
+                reverse: false
+              },
+              {
+                title: "Armazenamento seguro e organizado",
+                description: "Mantenha todos os seus exames em um único local, organizados cronologicamente e por tipo, com acesso fácil a todo o seu histórico médico sempre que precisar.",
+                icon: <ScrollText className="w-12 h-12 text-primary-500" />,
+                image: "https://placehold.co/800x500/e6f2ff/0066cc?text=Historico+Organizado",
+                features: [
+                  "Ordenação inteligente por data",
+                  "Categorização automática por tipo",
+                  "Busca avançada por valores e parâmetros"
+                ],
+                reverse: true
+              }
+            ].map((feature, index) => (
+              <motion.div 
+                key={index}
+                className={`flex flex-col ${feature.reverse ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12`}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.7 }}
+              >
+                {/* Texto */}
+                <div className="md:w-1/2 space-y-6">
+                  <motion.div 
+                    className="inline-block p-3 rounded-2xl bg-primary-50"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    {feature.icon}
+                  </motion.div>
+                  
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {feature.title}
+                  </h3>
+                  
+                  <p className="text-lg text-gray-600">
+                    {feature.description}
+                  </p>
+                  
+                  <ul className="space-y-3">
+                    {feature.features.map((item, idx) => (
+                      <motion.li 
+                        key={idx} 
+                        className="flex items-center space-x-3"
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.3, delay: 0.4 + (idx * 0.1) }}
+                      >
+                        <div className="p-1 rounded-full bg-green-100">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        </div>
+                        <span className="text-gray-700">{item}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Imagem */}
+                <motion.div 
+                  className="md:w-1/2 relative"
+                  initial={{ opacity: 0, ...(feature.reverse ? { x: -30 } : { x: 30 }) }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  {/* Elemento decorativo */}
+                  <div className="absolute -z-10 inset-0 bg-gradient-to-tr from-primary-50 to-transparent rounded-3xl transform translate-x-4 translate-y-4"></div>
+                  
+                  <img 
+                    src={feature.image} 
+                    alt={feature.title} 
+                    className="w-full h-auto rounded-xl shadow-lg relative z-10"
+                  />
+                  
+                  {/* Badge */}
+                  <motion.div 
+                    className={`absolute ${feature.reverse ? 'left-0' : 'right-0'} -bottom-4 bg-white shadow-lg p-4 rounded-lg z-20`}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                    whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Zap className="w-5 h-5 text-amber-500" />
+                      <span className="text-sm font-medium">{
+                        feature.reverse 
+                          ? "Seu histórico completo em um só lugar" 
+                          : "Visualização simples e objetiva"
+                      }</span>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
