@@ -291,9 +291,10 @@ export class DatabaseStorage implements IStorage {
 
   // Exam operations
   async createExam(exam: InsertExam): Promise<Exam> {
+    // Garantir valores default e remover propriedades que não existem no schema
     const examWithDefaults = {
       ...exam,
-      originalContent: "",
+      originalContent: exam.originalContent || "",
     };
     const [newExam] = await db.insert(exams).values(examWithDefaults).returning();
     return newExam;

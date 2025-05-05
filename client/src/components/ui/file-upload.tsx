@@ -189,7 +189,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       try {
         // Verificação de autenticação desativada temporariamente para debug
         // (permitir salvamento com userId direto do objeto data)
-        if (false && (!user || !user.id)) {
+        if (false && user === null) {
           console.error("Usuário não está autenticado ao tentar salvar exame");
           throw new Error("Você precisa estar autenticado para salvar exames");
         }

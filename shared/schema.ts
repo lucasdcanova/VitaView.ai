@@ -44,7 +44,7 @@ export const insertExamSchema = createInsertSchema(exams).pick({
   status: true,
   laboratoryName: true,
   examDate: true,
-  // requestingPhysician removido pois não existe no banco
+  originalContent: true
 });
 
 // Analysis results schema
