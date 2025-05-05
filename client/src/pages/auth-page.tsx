@@ -49,7 +49,7 @@ export default function AuthPage() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [user, navigate]);
   
@@ -101,10 +101,10 @@ export default function AuthPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-gray-800">
-              Bem-vindo ao HealthAnalytics
+              Bem-vindo ao <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>
             </CardTitle>
             <CardDescription className="text-gray-500">
-              Análise inteligente dos seus exames médicos
+              A evolução da sua saúde começa com o entendimento dos seus exames
             </CardDescription>
           </CardHeader>
         
@@ -346,10 +346,10 @@ export default function AuthPage() {
           </div>
           
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Análise de Exames com Inteligência Artificial
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>: Análise de Exames com Inteligência Artificial
           </h2>
           <p className="text-lg text-gray-600 mb-6">
-            Transforme seus exames médicos em informações valiosas para melhorar sua saúde com análise AI avançada.
+            A evolução da sua saúde começa com o entendimento dos seus exames. Transforme dados em ações com nossa análise AI avançada.
           </p>
           <div className="flex justify-center space-x-4">
             <div className="flex items-center">
