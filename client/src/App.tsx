@@ -32,6 +32,7 @@ function Router() {
       <ProtectedRoute path="/report/:id" component={ExamReport} />
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
+      <ProtectedRoute path="/results/:id" component={ExamResults} />
       <ProtectedRoute path="/profile" component={Profile} />
       
       {/* Rotas públicas */}
