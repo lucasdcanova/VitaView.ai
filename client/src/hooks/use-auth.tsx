@@ -37,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      console.log("[Auth] Login success, setting user data:", user);
+      // Configurar o cookie auxiliar para autenticação
+      document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
       // Popup de login bem-sucedido removido conforme solicitado
     },
@@ -55,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      console.log("[Auth] Register success, setting user data:", user);
+      // Configurar o cookie auxiliar para autenticação
+      document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
       // Popup de registro bem-sucedido removido conforme solicitado
     },
@@ -72,6 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      console.log("[Auth] Logout success, clearing user data");
+      // Remover o cookie auxiliar
+      document.cookie = "auth_user_id=; max-age=0; path=/; SameSite=Lax";
       queryClient.setQueryData(["/api/user"], null);
       // Popup de logout removido conforme solicitado
     },
