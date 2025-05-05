@@ -285,15 +285,32 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
     
     // Save health metrics with the extracted exam date
     for (const metric of analysisResult.healthMetrics) {
-      await storage.createHealthMetric({
-        userId,
-        name: metric.name,
-        value: metric.value,
-        unit: metric.unit,
-        status: metric.status,
-        change: metric.change,
-        date: extractedExamDate // Use the extract date for metrics
-      });
+      try {
+        console.log("Salvando métrica:", {
+          userId,
+          name: metric.name,
+          value: String(metric.value || "0"),
+          unit: metric.unit || "",
+          status: metric.status || "normal",
+          change: metric.change || "",
+          date: extractedExamDate
+        });
+        
+        await storage.createHealthMetric({
+          userId: Number(userId),
+          name: metric.name || "desconhecido",
+          value: String(metric.value || "0"),
+          unit: metric.unit || "",
+          status: metric.status || "normal",
+          change: metric.change || "",
+          date: extractedExamDate // Use the extract date for metrics
+        });
+        
+        console.log(`Métrica ${metric.name} salva com sucesso!`);
+      } catch (metricError) {
+        console.error(`Erro ao salvar métrica ${metric.name}:`, metricError);
+        // Continua com a próxima métrica mesmo se essa falhar
+      }
     }
     
     res.status(200).json({ 
