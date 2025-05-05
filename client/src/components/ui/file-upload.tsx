@@ -294,7 +294,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   unit: metric.unit || '',
                   status: metric.status || 'normal',
                   change: metric.change || '',
-                  date: new Date()
+                  date: examData.examDate || new Date() // Usar mesma data do exame
                 };
                 
                 console.log(`Enviando métrica ${metric.name} para a API:`, metricData);

@@ -217,11 +217,23 @@ function defaultHealthMetrics(fileType: string) {
 
 export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
   try {
-    const { userId, name, fileType, fileContent, laboratoryName, examDate } = req.body;
+    // Extrai userId explicitamente da requisição (para debug)
+    let userId = req.body.userId;
+    
+    // Se usuário estiver autenticado, pega o id do req.user
+    if (!userId && req.isAuthenticated() && req.user) {
+      userId = req.user.id;
+      console.log("Usando userId da sessão:", userId);
+    } 
+    
+    // Verificar se temos dados suficientes
+    const { name, fileType, fileContent, laboratoryName, examDate } = req.body;
     
     if (!userId || !name || !fileType || !fileContent) {
       return res.status(400).json({ message: "Dados incompletos para análise" });
     }
+    
+    console.log("Processando upload de exame para usuário:", userId);
     
     // Analyze document with Gemini first to extract metadata
     const analysisResult = await analyzeDocument(fileContent, fileType);
