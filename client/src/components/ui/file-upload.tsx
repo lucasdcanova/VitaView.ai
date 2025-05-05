@@ -288,7 +288,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             for (const metric of geminiAnalysis.healthMetrics) {
               try {
                 const metricData = {
-                  userId: rawExamData.userId, // Usar mesmo userId que foi usado para o exame
+                  userId: savedExam.userId, // Usar userId do exame salvo que já foi confirmado
                   name: metric.name,
                   value: metric.value,
                   unit: metric.unit || '',
@@ -323,7 +323,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         
         return {
           exam: savedExam,
-          result: data.openaiInterpretation
+          result: openaiInterpretation || {}
         };
       } catch (error: any) {
         console.error("Erro ao processar exame:", error);
