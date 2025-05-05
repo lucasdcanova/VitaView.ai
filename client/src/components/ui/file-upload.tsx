@@ -287,14 +287,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             console.log("Salvando métricas de saúde individuais:", geminiAnalysis.healthMetrics.length);
             for (const metric of geminiAnalysis.healthMetrics) {
               try {
+                // Garantir que os dados estão no formato esperado pelo backend
                 const metricData = {
-                  userId: savedExam.userId, // Usar userId do exame salvo que já foi confirmado
-                  name: metric.name,
-                  value: metric.value,
+                  userId: Number(savedExam.userId), // Usar userId do exame salvo que já foi confirmado
+                  name: metric.name || "desconhecido",
+                  value: String(metric.value || "0"),
                   unit: metric.unit || '',
                   status: metric.status || 'normal',
                   change: metric.change || '',
-                  date: examData.examDate || new Date() // Usar mesma data do exame
+                  date: examData.examDate || new Date().toISOString() // Usar mesma data do exame
                 };
                 
                 console.log(`Enviando métrica ${metric.name} para a API:`, metricData);
