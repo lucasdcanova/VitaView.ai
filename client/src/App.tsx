@@ -16,13 +16,13 @@ import ExamReport from "@/pages/exam-report";
 import ExamResults from "@/pages/exam-results";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
-import LandingPage from "@/pages/landing-page";
+import Home from "@/pages/home";
 
 function Router() {
   return (
     <Switch>
       {/* Landing Page como página inicial pública */}
-      <Route path="/" component={LandingPage} />
+      <Route path="/" component={Home} />
       
       {/* Área autenticada */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />

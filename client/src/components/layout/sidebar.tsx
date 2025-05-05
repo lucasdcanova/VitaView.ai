@@ -8,7 +8,8 @@ import {
   UserCog, 
   LogOut,
   LineChart,
-  Filter
+  Filter,
+  Activity
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
