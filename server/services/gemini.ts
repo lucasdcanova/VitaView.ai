@@ -65,18 +65,22 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       // Prepare the prompt for the model
       const prompt = `Você é um especialista médico em análise de exames laboratoriais e documentos médicos, treinado para extrair dados estruturados com máxima precisão.
                 
-                TAREFA PRINCIPAL: Analise cuidadosamente este exame ${fileType.toUpperCase()} e extraia todos os dados solicitados no formato específico abaixo.
+                TAREFA PRINCIPAL: Analise cuidadosamente este documento ${fileType.toUpperCase()} que pode conter MÚLTIPLOS EXAMES de um mesmo paciente e extraia todos os dados solicitados no formato específico abaixo.
                 
                 EXTRAÇÃO DE METADADOS CRÍTICOS (PRIORIDADE MÁXIMA):
                 1. Data de realização do exame:
+                   - Esta informação é CRÍTICA! Examine o documento completo com máxima atenção
                    - Busque em todo o documento, incluindo cabeçalho, rodapé e corpo do texto
-                   - Procure por padrões como "Data: xx/xx/xxxx", "Realizado em: xx/xx/xxxx", "Data da coleta" 
-                   - Examine também datas próximas a palavras como "emissão", "coleta", "realização"
+                   - Procure por todos os padrões possíveis: "Data: xx/xx/xxxx", "Realizado em: xx/xx/xxxx", "Data da coleta", "Emitido em", "Data do Exame" 
+                   - Examine datas próximas a palavras como "emissão", "coleta", "realização", "exame", "amostra"
+                   - Se encontrar múltiplas datas, priorize a data de coleta/realização do exame, não a data de emissão do laudo
                 
-                2. Nome do médico solicitante:
-                   - Procure especificamente por "médico solicitante", "solicitado por", "médico", "Dr.", "Dra."
+                2. Nome do médico solicitante (CRÍTICO):
+                   - Procure exaustivamente por "médico solicitante", "solicitado por", "médico", "Dr.", "Dra."
+                   - Busque por campos como "Solicitante:", "Médico requisitante:", "Solicitação médica:"
                    - Busque por padrões de texto próximos a CRM (número de registro médico)
                    - Não confunda com médico responsável pelo laboratório ou médico executor
+                   - Tente extrair o nome completo, removendo títulos como Dr./Dra.
                 
                 3. Nome do laboratório:
                    - Identifique o nome da instituição, clínica ou laboratório que realizou o exame
@@ -84,14 +88,15 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                    - Pode estar associado a um logotipo ou marca registrada
                 
                 4. Valores de referência e significância clínica:
-                   - Para cada parâmetro médico, identifique os valores de referência (mínimo e máximo)
+                   - Para CADA parâmetro médico, identifique os valores de referência (mínimo e máximo)
                    - Geralmente mostrados como "Valores de referência", "VR", "Intervalo de referência", "Valores normais"
                    - Observe bem a formatação: pode aparecer como "12-45 mg/dL", "VR: 3.5-5.0", "Referência: entre 70 e 99"
                    - Entenda a significância clínica de cada parâmetro (o que ele indica, qual sua importância diagnóstica)
                 
                 EXTRAÇÃO DE MÉTRICAS DE SAÚDE (ABRANGENTE E PRECISA):
                 - Identifique TODOS os parâmetros médicos com seus valores numéricos e unidades exatas
-                - Para cada parâmetro:
+                - O documento pode conter MÚLTIPLOS EXAMES (hemograma, glicemia, lipidograma, etc.) no mesmo arquivo
+                - Para cada parâmetro de cada exame:
                   * Determine o status (normal, alto, baixo ou atenção) baseado nos valores de referência
                   * Registre OBRIGATORIAMENTE os valores de referência (mínimo e máximo) para cada parâmetro
                   * Explique a significância clínica do parâmetro (ex: "Indica função renal", "Marcador de inflamação")
@@ -99,7 +104,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                   * Classifique a gravidade de qualquer anormalidade (leve, moderada, severa)
                   * Identifique tendências temporais se múltiplos resultados forem apresentados
                 
-                DEPOIS da extração completa, forneça uma análise médica profissional baseada nos dados.
+                DEPOIS da extração completa, forneça uma análise médica profissional integrando todos os exames encontrados no documento.
                 
                 RESPONDA EXCLUSIVAMENTE NO SEGUINTE FORMATO JSON (sem texto adicional):
                 {
@@ -107,7 +112,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                   "requestingPhysician": "Nome completo do médico solicitante (sem títulos como Dr./Dra.)",
                   "laboratoryName": "Nome completo do laboratório ou clínica que realizou o exame",
                   "summary": "Resumo objetivo dos resultados principais em até duas frases, destacando anormalidades significativas",
-                  "detailedAnalysis": "Análise médica detalhada (200-300 palavras) dos resultados e suas implicações clínicas, incluindo correlações entre diferentes parâmetros",
+                  "detailedAnalysis": "Análise médica detalhada (200-300 palavras) dos resultados e suas implicações clínicas, incluindo correlações entre diferentes parâmetros dos vários exames encontrados",
                   "recommendations": [
                     "Recomendação específica e acionável baseada nos resultados anormais",
                     "Sugestão de acompanhamento ou exames adicionais se necessário",
@@ -130,7 +135,8 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                 RESTRIÇÕES CRÍTICAS:
                 - NUNCA invente dados. Se um campo não puder ser determinado com certeza, deixe-o vazio ("").
                 - Formate a data SEMPRE como YYYY-MM-DD, convertendo de qualquer outro formato encontrado.
-                - Inclua ABSOLUTAMENTE TODOS os parâmetros médicos encontrados, mesmo os que estejam normais.
+                - O documento pode conter MÚLTIPLOS EXAMES em um único arquivo - identifique TODOS eles.
+                - Inclua ABSOLUTAMENTE TODOS os parâmetros médicos encontrados de TODOS os exames, mesmo os que estejam normais.
                 - Priorize a extração precisa sobre interpretações ou análises subjetivas.
                 - O JSON DEVE ser válido, sem erros de formatação, escapes incorretos ou campos duplicados.
                 - Se houver múltiplos resultados para o mesmo parâmetro, inclua todos como métricas separadas.
