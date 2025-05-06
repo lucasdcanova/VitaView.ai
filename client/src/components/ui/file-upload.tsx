@@ -212,7 +212,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           examDate: rawExamData.examDate,
           status: "analyzed",
           userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
-          // Removido requestingPhysician pois não existe no banco de dados
+          requestingPhysician: rawExamData.requestingPhysician || null,
           originalContent: rawExamData.originalContent || null
         };
         
