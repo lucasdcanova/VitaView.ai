@@ -175,11 +175,23 @@ export default function ExamResultSingle() {
                         <p className="text-sm text-gray-700 mb-4">{examData.result.summary}</p>
                         
                         <h4 className="font-medium text-gray-700 mb-2">Recomendações</h4>
-                        <div className="bg-amber-50 border border-amber-100 rounded-md p-3 text-sm text-amber-800">
-                          <p className="mb-2">Com base nos resultados, recomendamos:</p>
-                          <div className="pl-4" dangerouslySetInnerHTML={{ 
-                            __html: examData.result.recommendations ? examData.result.recommendations.replace(/\n/g, '<br/>') : ''
-                          }} />
+                        <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-sm">
+                          <div className="flex items-start gap-3">
+                            <svg className="w-6 h-6 text-amber-600 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                              <p className="font-medium mb-2 text-amber-800">Com base nos resultados, recomendamos:</p>
+                              <ul className="space-y-1.5 list-disc pl-5 text-amber-800">
+                                {examData.result.recommendations ? 
+                                  examData.result.recommendations.split('\n').filter(line => line.trim()).map((line, i) => (
+                                    <li key={i}>{line}</li>
+                                  )) 
+                                  : <li>Nenhuma recomendação específica disponível.</li>
+                                }
+                              </ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -190,23 +202,83 @@ export default function ExamResultSingle() {
                 {examData.result.healthMetrics && examData.result.healthMetrics.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     {examData.result.healthMetrics.map((metric: any, index: number) => (
-                      <Card key={index} className="overflow-hidden">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-xl">{metric.name}</CardTitle>
+                      <Card key={index} className="overflow-hidden group hover:shadow-md transition-shadow duration-300">
+                        <CardHeader className={cn("pb-3", metric.status && metric.status.toLowerCase() === 'normal' ? 'border-l-4 border-green-400' : metric.status && (metric.status.toLowerCase().includes('alt') || metric.status.toLowerCase().includes('high')) ? 'border-l-4 border-red-400' : metric.status && (metric.status.toLowerCase().includes('baix') || metric.status.toLowerCase().includes('low')) ? 'border-l-4 border-blue-400' : '')}>
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-xl">
+                              {metric.name}
+                              {metric.referenceRange && (
+                                <span className="block text-xs text-gray-500 font-normal mt-1">
+                                  Referência: {metric.referenceRange}
+                                </span>
+                              )}
+                            </CardTitle>
+                            
+                            <Badge className={cn("text-xs", getStatusColor(metric.status))}>
+                              {metric.status}
+                            </Badge>
+                          </div>
                           <CardDescription>
                             {metric.unit ? `Medido em ${metric.unit}` : 'Sem unidade de medida'}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="flex justify-between items-center">
-                            <div className="text-3xl font-bold">
+                          <div className="mb-4">
+                            <div className="text-3xl font-bold text-center">
                               {metric.value}{' '}
                               <span className="text-sm font-normal text-gray-500">{metric.unit}</span>
                             </div>
-                            <Badge className={cn("text-xs", getStatusColor(metric.status))}>
-                              {metric.status}
-                            </Badge>
                           </div>
+                          
+                          {/* Visualização de faixa de referência */}
+                          {metric.referenceMin && metric.referenceMax && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden mb-1">
+                                <div className="absolute inset-y-0 bg-green-200 rounded-full" style={{ 
+                                  left: '10%', 
+                                  right: '10%' 
+                                }} />
+                                
+                                {/* Posição do valor atual */}
+                                {(() => {
+                                  const min = parseFloat(metric.referenceMin);
+                                  const max = parseFloat(metric.referenceMax);
+                                  const value = parseFloat(metric.value);
+                                  
+                                  if (!isNaN(min) && !isNaN(max) && !isNaN(value)) {
+                                    const range = max - min;
+                                    const valuePosition = Math.min(Math.max((value - min) / range, 0), 1);
+                                    const positionPercent = 10 + (valuePosition * 80);
+                                    
+                                    return (
+                                      <div 
+                                        className={cn(
+                                          "absolute top-0 w-1 h-6 -mt-1.5 shadow-sm", 
+                                          value < min ? "bg-blue-500" : 
+                                          value > max ? "bg-red-500" : 
+                                          "bg-green-600"
+                                        )} 
+                                        style={{ left: `${positionPercent}%` }}
+                                      />
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                              
+                              <div className="flex justify-between text-xs text-gray-500">
+                                <span>{metric.referenceMin}</span>
+                                <span>Faixa de Referência</span>
+                                <span>{metric.referenceMax}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {metric.description && (
+                            <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
+                              {metric.description}
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}

@@ -182,19 +182,89 @@ export default function ExamReport() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
   
-  const getMetricStatus = (status?: string) => {
-    switch (status) {
+  const getMetricStatus = (status?: string, value?: string, referenceMin?: string, referenceMax?: string) => {
+    // Base status com base na classificação textual
+    let baseStatus = {
+      color: 'bg-green-600',
+      width: '60%',
+      position: '50%',
+      indicatorClass: 'bg-green-600'
+    };
+    
+    // Ajuste por status
+    switch (status?.toLowerCase()) {
       case 'normal':
-        return { color: 'bg-green-600', width: '60%' };
+        baseStatus = { 
+          color: 'bg-green-600', 
+          width: '60%',
+          position: '50%', 
+          indicatorClass: 'bg-green-600'
+        };
+        break;
       case 'atenção':
-        return { color: 'bg-yellow-500', width: '95%' };
+        baseStatus = { 
+          color: 'bg-yellow-500', 
+          width: '95%',
+          position: '90%', 
+          indicatorClass: 'bg-yellow-500'
+        };
+        break;
       case 'baixo':
-        return { color: 'bg-yellow-500', width: '40%' };
+      case 'low':
+        baseStatus = { 
+          color: 'bg-blue-500', 
+          width: '40%',
+          position: '20%', 
+          indicatorClass: 'bg-blue-500'
+        };
+        break;
       case 'alto':
-        return { color: 'bg-red-500', width: '85%' };
-      default:
-        return { color: 'bg-green-600', width: '60%' };
+      case 'high':
+      case 'elevado':
+        baseStatus = { 
+          color: 'bg-red-500', 
+          width: '85%',
+          position: '80%', 
+          indicatorClass: 'bg-red-500'
+        };
+        break;
     }
+    
+    // Se tivermos valor e referências, podemos calcular uma posição mais precisa
+    if (value && referenceMin && referenceMax) {
+      const val = parseFloat(value);
+      const min = parseFloat(referenceMin);
+      const max = parseFloat(referenceMax);
+      
+      if (!isNaN(val) && !isNaN(min) && !isNaN(max) && max > min) {
+        const range = max - min;
+        const padding = range * 0.2; // 20% de margem para visualização
+        const displayMin = min - padding;
+        const displayMax = max + padding;
+        const displayRange = displayMax - displayMin;
+        
+        // Calcular posição dentro da faixa expandida
+        const position = Math.max(0, Math.min(100, ((val - displayMin) / displayRange) * 100));
+        
+        // Determinar cor com base na posição em relação à faixa de referência
+        let color = 'bg-green-600';
+        if (val < min) color = 'bg-blue-500';
+        else if (val > max) color = 'bg-red-500';
+        
+        return {
+          color: baseStatus.color,
+          width: '60%', // Largura fixa para a faixa de referência
+          position: `${position}%`,
+          indicatorClass: color,
+          showRange: true,
+          referenceMin: min,
+          referenceMax: max,
+          value: val
+        };
+      }
+    }
+    
+    return baseStatus;
   };
   
   const getChangeIcon = (change?: string) => {
