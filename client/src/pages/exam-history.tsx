@@ -51,6 +51,7 @@ import {
 export default function ExamHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeView, setActiveView] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"chronological" | "category">("chronological");
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     fileType: "all",
@@ -59,6 +60,7 @@ export default function ExamHistory() {
     sortBy: "examDate"
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const itemsPerPage = activeView === "grid" ? 8 : 10;
   
   // Reset to page 1 when filters change
@@ -78,6 +80,37 @@ export default function ExamHistory() {
   // Helper function to get date value (defined once here)
   const getExamDate = (exam: Exam) => {
     return exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
+  };
+
+  // Função para extrair a categoria do nome do exame
+  const getCategoryFromName = (name: string): string => {
+    name = name.toLowerCase();
+    if (name.includes('hemograma') || name.includes('sanguíneo') || name.includes('sangue')) 
+      return 'Sangue';
+    if (name.includes('glicemia') || name.includes('diabetes') || name.includes('glicose')) 
+      return 'Glicemia';
+    if (name.includes('colesterol') || name.includes('triglicerídeos') || name.includes('lipídico')) 
+      return 'Perfil Lipídico';
+    if (name.includes('tireoide') || name.includes('tsh') || name.includes('t4') || name.includes('t3')) 
+      return 'Tireoide';
+    if (name.includes('vitamina') || name.includes('mineral') || name.includes('ferro')) 
+      return 'Vitaminas e Minerais';
+    if (name.includes('urina') || name.includes('renal') || name.includes('uréia') || name.includes('creatinina')) 
+      return 'Renal';
+    if (name.includes('fígado') || name.includes('hepático') || name.includes('tgo') || name.includes('tgp')) 
+      return 'Hepático';
+    if (name.includes('cardíaco') || name.includes('coração') || name.includes('troponina')) 
+      return 'Cardíaco';
+    
+    // Tente extrair a categoria do nome do arquivo
+    if (name.includes('hemoglobin')) return 'Sangue';
+    if (name.includes('glic')) return 'Glicemia';
+    if (name.includes('colest')) return 'Perfil Lipídico';
+    if (name.includes('renal')) return 'Renal';
+    if (name.includes('hepat')) return 'Hepático';
+    if (name.includes('cardi')) return 'Cardíaco';
+    
+    return 'Outros';
   };
 
   // Apply filters and sorting
@@ -153,9 +186,39 @@ export default function ExamHistory() {
         })
     : [];
   
+  // Agrupar exames por categoria
+  const groupedExams = useMemo(() => {
+    // Agrupar exames por categoria
+    const categories: Record<string, Exam[]> = {};
+    
+    filteredAndSortedExams.forEach(exam => {
+      const category = getCategoryFromName(exam.name);
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(exam);
+    });
+    
+    return { 
+      categories, 
+      chronological: filteredAndSortedExams,
+      categoryList: Object.keys(categories).sort() 
+    };
+  }, [filteredAndSortedExams]);
+  
+  // Filtrar exames por categoria ativa se necessário
+  const examsToDisplay = useMemo(() => {
+    if (viewMode === 'category' && activeCategory !== 'all') {
+      return filteredAndSortedExams.filter(exam => 
+        getCategoryFromName(exam.name) === activeCategory
+      );
+    }
+    return filteredAndSortedExams;
+  }, [filteredAndSortedExams, viewMode, activeCategory]);
+  
   // Pagination
-  const totalPages = Math.ceil((filteredAndSortedExams?.length || 0) / itemsPerPage);
-  const paginatedExams = filteredAndSortedExams.slice(
+  const totalPages = Math.ceil((examsToDisplay?.length || 0) / itemsPerPage);
+  const paginatedExams = examsToDisplay.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
