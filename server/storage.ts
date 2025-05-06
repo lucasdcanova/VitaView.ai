@@ -125,9 +125,10 @@ export class MemStorage implements IStorage {
       ...exam, 
       id, 
       uploadDate: new Date(),
-      originalContent: "",
+      originalContent: exam.originalContent || null,
       laboratoryName: exam.laboratoryName || null,
-      examDate: exam.examDate || null
+      examDate: exam.examDate || null,
+      requestingPhysician: exam.requestingPhysician || null
     };
     this.exams.set(id, newExam);
     return newExam;
@@ -295,6 +296,7 @@ export class DatabaseStorage implements IStorage {
     const examWithDefaults = {
       ...exam,
       originalContent: exam.originalContent || "",
+      requestingPhysician: exam.requestingPhysician || null
     };
     const [newExam] = await db.insert(exams).values(examWithDefaults).returning();
     return newExam;
@@ -319,6 +321,7 @@ export class DatabaseStorage implements IStorage {
           upload_date as "uploadDate", 
           laboratory_name as "laboratoryName", 
           exam_date as "examDate",
+          requesting_physician as "requestingPhysician",
           COALESCE(original_content, '') as "originalContent"
         FROM exams 
         WHERE user_id = $1
@@ -342,7 +345,7 @@ export class DatabaseStorage implements IStorage {
       try {
         console.log("Tentando método alternativo com projeção segura...");
         
-        // Selecionar apenas colunas básicas que temos certeza que existem
+        // Selecionar todas as colunas incluindo a nova
         const results = await db.select({
           id: exams.id,
           userId: exams.userId,
@@ -352,13 +355,15 @@ export class DatabaseStorage implements IStorage {
           uploadDate: exams.uploadDate,
           laboratoryName: exams.laboratoryName,
           examDate: exams.examDate,
+          requestingPhysician: exams.requestingPhysician,
         }).from(exams).where(eq(exams.userId, userId));
         
-        // Adaptar ao tipo completo - sem incluir requestingPhysician
+        // Adaptar ao tipo completo - incluindo campos que podem faltar
         return results.map(exam => {
           return {
             ...exam,
             originalContent: null,
+            requestingPhysician: null
           } as Exam;
         });
       } catch (fallbackError) {

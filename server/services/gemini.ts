@@ -63,31 +63,52 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       });
       
       // Prepare the prompt for the model
-      const prompt = `Você é um médico especialista em análise de exames laboratoriais. 
-                Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado 
-                incluindo achados clínicos relevantes, interpretação dos valores, 
-                recomendações médicas e instruções para o paciente.
+      const prompt = `Você é um especialista médico em análise de exames laboratoriais, altamente treinado para extrair dados estruturados de documentos médicos.
                 
-                IMPORTANTE: Extraia a data de realização do exame e o nome do médico solicitante se estiverem presentes no documento.
+                TAREFA: Analise cuidadosamente este exame ${fileType.toUpperCase()} e extraia todos os dados solicitados no formato específico abaixo.
                 
-                Formate sua resposta como um JSON com a seguinte estrutura:
+                EXTRAÇÃO DE METADADOS CRÍTICOS (prioridade máxima):
+                1. Data de realização do exame - busque em todo o documento (geralmente perto do cabeçalho ou rodapé)
+                2. Nome do médico solicitante - procure por "médico solicitante", "solicitado por", "Dr.", etc.
+                3. Nome do laboratório - busque pelo nome da instituição ou clínica
+                
+                EXTRAÇÃO DE MÉTRICAS DE SAÚDE:
+                - Identifique TODOS os parâmetros médicos com seus valores e unidades
+                - Para cada parâmetro, determine se está normal, alto, baixo ou requer atenção
+                - Se houver valores de referência, use-os para classificar o status
+                - Estime a variação em relação a valores anteriores se mencionado
+                
+                DEPOIS da extração, forneça uma análise médica profissional baseada nesses dados.
+                
+                RESPONDA APENAS NO SEGUINTE FORMATO JSON:
                 {
-                  "summary": "resumo geral dos resultados, em uma frase",
-                  "detailedAnalysis": "análise detalhada dos resultados encontrados",
-                  "examDate": "data de realização do exame no formato YYYY-MM-DD (ex: 2025-04-15)",
-                  "requestingPhysician": "nome do médico solicitante se disponível",
-                  "laboratoryName": "nome do laboratório se disponível",
-                  "recommendations": ["lista de 3-5 recomendações para o paciente"],
+                  "examDate": "YYYY-MM-DD (extraia a data precisa, é CRÍTICO. Se não encontrada, deixe VAZIO, não invente)",
+                  "requestingPhysician": "Nome completo do médico, se disponível (sem Dr./Dra.)",
+                  "laboratoryName": "Nome do laboratório ou clínica",
+                  "summary": "Resumo conciso dos resultados principais em uma frase",
+                  "detailedAnalysis": "Análise médica detalhada dos resultados e suas implicações",
+                  "recommendations": [
+                    "Recomendação específica 1",
+                    "Recomendação específica 2",
+                    "Recomendação específica 3"
+                  ],
                   "healthMetrics": [
                     {
-                      "name": "nome do parâmetro, ex: hemoglobina",
-                      "value": "valor numérico, ex: 14.2",
-                      "unit": "unidade, ex: g/dL",
-                      "status": "normal, atenção, alto ou baixo",
-                      "change": "+0.1 ou -0.2 comparado com o valor anterior"
+                      "name": "Nome do parâmetro (ex: hemoglobina, colesterol, etc)",
+                      "value": "Valor numérico exato",
+                      "unit": "Unidade de medida (ex: g/dL, mg/dL)",
+                      "status": "normal, alto, baixo ou atenção",
+                      "change": "Variação em relação ao anterior (+2, -1.5, etc) ou vazio se não mencionado"
                     }
                   ]
-                }`;
+                }
+                
+                RESTRIÇÕES IMPORTANTES:
+                - Nunca invente dados. Se um campo não puder ser determinado, deixe-o vazio ("").
+                - Formate a data SEMPRE como YYYY-MM-DD, nunca outro formato.
+                - Inclua TODOS os parâmetros médicos encontrados, mesmo os que estejam normais.
+                - Extração precisa é mais importante que análise detalhada.
+                - Certifique-se que o JSON seja válido e sem erros de formatação.`;
 
       // Determine the mime type based on file type
       const mimeType = 
@@ -119,14 +140,27 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         const analysisData = JSON.parse(jsonStr);
         
         // Validate and enhance the response data if needed
-        if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics)) {
+        if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
+          console.log("Sem métricas extraídas do documento. Usando fallback.");
           analysisData.healthMetrics = defaultHealthMetrics(fileType);
         }
         
-        if (!analysisData.recommendations || !Array.isArray(analysisData.recommendations)) {
+        // Checagem adicional para valores nulos
+        if (analysisData.healthMetrics) {
+          analysisData.healthMetrics = analysisData.healthMetrics.map(metric => ({
+            name: metric.name || "desconhecido",
+            value: String(metric.value || "0"),
+            unit: metric.unit || "",
+            status: metric.status || "normal",
+            change: metric.change || "",
+          }));
+        }
+        
+        if (!analysisData.recommendations || !Array.isArray(analysisData.recommendations) || analysisData.recommendations.length === 0) {
           analysisData.recommendations = [
             "Consulta de acompanhamento com seu médico para discutir os resultados",
-            "Manter uma dieta equilibrada e exercícios físicos regulares"
+            "Manter uma dieta equilibrada e exercícios físicos regulares",
+            "Monitorar seus valores regularmente conforme recomendação médica"
           ];
         }
         
