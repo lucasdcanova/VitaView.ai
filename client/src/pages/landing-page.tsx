@@ -84,53 +84,57 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white overflow-hidden">
       {/* Background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary-100 rounded-full opacity-30 blur-3xl"></div>
-        <div className="absolute top-1/3 -left-32 w-96 h-96 bg-blue-100 rounded-full opacity-30 blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-indigo-100 rounded-full opacity-20 blur-3xl"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Gradient shapes with reduced opacity and controlled positioning */}
+        <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute top-1/3 -left-32 w-80 h-80 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-indigo-100 rounded-full opacity-15 blur-3xl"></div>
         
-        {/* Animated floating elements */}
+        {/* Subtle animated elements with reduced size and opacity */}
         <motion.div 
-          className="absolute top-20 left-1/4 w-8 h-8 bg-primary-400 rounded-full opacity-20"
+          className="absolute top-[15%] left-[25%] w-6 h-6 bg-primary-300 rounded-full opacity-15"
           animate={{ 
             y: [0, 15, 0],
             x: [0, 10, 0]
           }}
           transition={{ 
-            duration: 5,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        ></motion.div>
-        <motion.div 
-          className="absolute top-40 right-1/3 w-5 h-5 bg-blue-400 rounded-md opacity-20"
-          animate={{ 
-            y: [0, -20, 0],
-            x: [0, -15, 0]
-          }}
-          transition={{ 
-            duration: 7,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        ></motion.div>
-        <motion.div 
-          className="absolute bottom-40 left-1/3 w-6 h-6 bg-indigo-400 rounded-full opacity-20"
-          animate={{ 
-            y: [0, 25, 0],
-            x: [0, -10, 0]
-          }}
-          transition={{ 
             duration: 8,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        ></motion.div>
+        <motion.div 
+          className="absolute top-[28%] right-[30%] w-4 h-4 bg-blue-300 rounded-md opacity-15"
+          animate={{ 
+            y: [0, -12, 0],
+            x: [0, -8, 0]
+          }}
+          transition={{ 
+            duration: 10,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        ></motion.div>
+        <motion.div 
+          className="absolute bottom-[35%] left-[35%] w-5 h-5 bg-indigo-300 rounded-full opacity-15"
+          animate={{ 
+            y: [0, 15, 0],
+            x: [0, -6, 0]
+          }}
+          transition={{ 
+            duration: 12,
+            ease: "easeInOut",
             repeat: Infinity,
             repeatType: "reverse"
           }}
         ></motion.div>
       </div>
       
-      {/* Navbar */}
+      {/* Navbar - improved with backdrop filter and better shadow */}
       <motion.nav 
-        className={`${isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-4'} sticky top-0 z-50 transition-all duration-300`}
+        className={`${isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-lg py-3' : 'bg-transparent py-4'} sticky top-0 z-50 transition-all duration-300`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
@@ -142,16 +146,18 @@ export default function LandingPage() {
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
-              <Activity className="w-6 h-6" />
+              <Activity className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold text-primary-800">Hemolog</span>
           </motion.div>
-          <div className="hidden md:flex space-x-8 text-gray-600">
-            {["como-funciona", "beneficios", "para-quem", "depoimentos"].map((id, index) => (
+          
+          {/* Desktop navigation with enhanced hover effects */}
+          <div className="hidden md:flex space-x-10 text-gray-700">
+            {["demonstracoes", "como-funciona", "beneficios", "para-quem", "depoimentos"].map((id, index) => (
               <motion.a 
                 key={id}
                 href={`#${id}`} 
-                className="hover:text-primary-600 transition-colors relative group"
+                className="hover:text-primary-600 transition-colors relative group py-2"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
@@ -160,13 +166,15 @@ export default function LandingPage() {
               </motion.a>
             ))}
           </div>
+          
+          {/* Login/Access button with improved animation */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Link href="/auth">
-              <Button variant="default" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-md text-white">
-                Acessar
+              <Button variant="default" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg text-white px-6">
+                Acessar <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           </motion.div>
