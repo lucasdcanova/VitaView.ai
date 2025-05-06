@@ -33,7 +33,7 @@ export const exams = pgTable("exams", {
   uploadDate: timestamp("upload_date").defaultNow().notNull(),
   laboratoryName: text("laboratory_name"),
   examDate: text("exam_date"),
-  // Campo requestingPhysician removido porque não existe no banco de dados
+  requestingPhysician: text("requesting_physician"),
   originalContent: text("original_content"), // Store the raw text from the exam
 });
 
@@ -44,6 +44,7 @@ export const insertExamSchema = createInsertSchema(exams).pick({
   status: true,
   laboratoryName: true,
   examDate: true,
+  requestingPhysician: true,
   originalContent: true
 });
 

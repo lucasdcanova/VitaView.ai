@@ -248,15 +248,14 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
     const requestingPhysician = analysisResult.requestingPhysician || null;
     
     // Create exam record with extracted metadata
-    // Removendo field requestingPhysician pois não existe no banco de dados
     const exam = await storage.createExam({
       userId,
       name,
       fileType,
       status: "pending",
       laboratoryName: extractedLabName,
-      examDate: extractedExamDate
-      // requestingPhysician removido pois não existe no BD
+      examDate: extractedExamDate,
+      requestingPhysician: requestingPhysician
     });
     
     // Update exam status
