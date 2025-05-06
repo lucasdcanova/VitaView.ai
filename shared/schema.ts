@@ -82,6 +82,7 @@ export const healthMetrics = pgTable("health_metrics", {
   referenceMax: text("reference_max"), // valor máximo de referência
   clinical_significance: text("clinical_significance"), // significado clínico do parâmetro
   date: timestamp("date").defaultNow().notNull(),
+  category: text("category"), // hemograma, lipidograma, função hepática, etc
 });
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
@@ -95,6 +96,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
   referenceMax: true,
   clinical_significance: true,
   date: true,
+  category: true,
 });
 
 // Notifications schema

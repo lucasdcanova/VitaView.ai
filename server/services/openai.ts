@@ -1,6 +1,7 @@
 import OpenAI from "openai";
-import type { ExamResult, User } from "@shared/schema";
+import type { ExamResult, User, Exam } from "@shared/schema";
 import type { HealthMetric } from "@shared/schema";
+import type { IStorage } from "../storage";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const OPENAI_MODEL = "gpt-4o";

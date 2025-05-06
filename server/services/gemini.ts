@@ -62,85 +62,78 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         safetySettings
       });
       
-      // Prepare the prompt for the model
-      const prompt = `Você é um especialista médico em análise de exames laboratoriais e documentos médicos, treinado para extrair dados estruturados com máxima precisão.
+      // Prepare the prompt for the model - FOCO NA EXTRAÇÃO PRECISA
+      const prompt = `Você é um especialista médico com foco específico na EXTRAÇÃO PRECISA de dados de exames laboratoriais, sem analisar ou interpretar resultados.
                 
-                TAREFA PRINCIPAL: Analise cuidadosamente este documento ${fileType.toUpperCase()} que pode conter MÚLTIPLOS EXAMES de um mesmo paciente e extraia todos os dados solicitados no formato específico abaixo.
+                TAREFA PRINCIPAL: EXTRAIA DADOS ESTRUTURADOS deste documento ${fileType.toUpperCase()} que contém um ou MÚLTIPLOS EXAMES médicos. 
                 
-                EXTRAÇÃO DE METADADOS CRÍTICOS (PRIORIDADE MÁXIMA):
+                FOCO EXCLUSIVO NA EXTRAÇÃO:
+                - Sua única função é EXTRAIR dados e metadados, NÃO fazer análises médicas
+                - Organize todos os parâmetros encontrados no formato estruturado JSON solicitado
+                - Identifique TODOS os exames diferentes presentes no documento (hemograma, glicemia, lipidograma, etc.)
+                - Extraia TODOS os parâmetros de CADA exame com precisão máxima
+                
+                EXTRAÇÃO DE METADADOS (PRIORIDADE MÁXIMA):
                 1. Data de realização do exame:
-                   - Esta informação é CRÍTICA! Examine o documento completo com máxima atenção
-                   - Busque em todo o documento, incluindo cabeçalho, rodapé e corpo do texto
-                   - Procure por todos os padrões possíveis: "Data: xx/xx/xxxx", "Realizado em: xx/xx/xxxx", "Data da coleta", "Emitido em", "Data do Exame" 
-                   - Examine datas próximas a palavras como "emissão", "coleta", "realização", "exame", "amostra"
-                   - Se encontrar múltiplas datas, priorize a data de coleta/realização do exame, não a data de emissão do laudo
+                   - EXAMINE O DOCUMENTO COMPLETO em busca desta data CRÍTICA
+                   - Procure diferentes formatos: "Data: xx/xx/xxxx", "Realizado em", "Data da coleta", "Data do Exame", etc.
+                   - Examine o contexto de cada data (cabeçalho, rodapé, próximo ao nome do paciente)
+                   - Priorize datas de coleta/realização do exame, não a data de emissão do laudo
+                   - Se houver múltiplas datas para exames diferentes, escolha a mais recente
                 
                 2. Nome do médico solicitante (CRÍTICO):
-                   - Procure exaustivamente por "médico solicitante", "solicitado por", "médico", "Dr.", "Dra."
-                   - Busque por campos como "Solicitante:", "Médico requisitante:", "Solicitação médica:"
-                   - Busque por padrões de texto próximos a CRM (número de registro médico)
-                   - Não confunda com médico responsável pelo laboratório ou médico executor
-                   - Tente extrair o nome completo, removendo títulos como Dr./Dra.
+                   - Busque EXAUSTIVAMENTE por "médico solicitante", "solicitado por", "solicitante", "médico requisitante"
+                   - Procure por padrões como "Dr.", "Dra.", "Médico:", "Solicitante:", ou nomes próximos a CRM
+                   - Não confunda com médico responsável pelo laboratório ou médico executor do exame
+                   - Remova prefixos como "Dr./Dra." e extraia apenas o nome completo
                 
                 3. Nome do laboratório:
-                   - Identifique o nome da instituição, clínica ou laboratório que realizou o exame
-                   - Geralmente está presente no cabeçalho ou rodapé do documento
-                   - Pode estar associado a um logotipo ou marca registrada
+                   - Identifique o laboratório/clínica que realizou o exame (geralmente no cabeçalho/rodapé)
+                   - Pode estar próximo a um logotipo, CNPJ ou informações de contato
                 
-                4. Valores de referência e significância clínica:
-                   - Para CADA parâmetro médico, identifique os valores de referência (mínimo e máximo)
-                   - Geralmente mostrados como "Valores de referência", "VR", "Intervalo de referência", "Valores normais"
-                   - Observe bem a formatação: pode aparecer como "12-45 mg/dL", "VR: 3.5-5.0", "Referência: entre 70 e 99"
-                   - Entenda a significância clínica de cada parâmetro (o que ele indica, qual sua importância diagnóstica)
+                EXTRAÇÃO DE DADOS DOS EXAMES (PRECISÃO ESSENCIAL):
+                Para CADA parâmetro médico de CADA exame encontrado:
+                1. Nome exato do parâmetro (ex: "Hemoglobina", "Glicose", "Colesterol Total")
+                2. Valor numérico preciso (mantenha dígitos exatos, sem arredondamentos)
+                3. Unidade de medida completa (mg/dL, g/L, U/L, etc.)
+                4. Valores de referência:
+                   - Identifique limites mínimo e máximo para cada parâmetro
+                   - Procure por "Valores de referência", "VR", "Referência", "Valores normais"
+                   - Extraia em formato numérico (converta intervalos como "entre 70 e 99" para "70" e "99")
+                5. Status do resultado (normal, alto, baixo, atenção) baseado estritamente nos valores de referência
+                6. Significância clínica do parâmetro (o que ele mede ou indica clinicamente)
+                7. Variações explícitas em relação a resultados anteriores, se mencionadas
                 
-                EXTRAÇÃO DE MÉTRICAS DE SAÚDE (ABRANGENTE E PRECISA):
-                - Identifique TODOS os parâmetros médicos com seus valores numéricos e unidades exatas
-                - O documento pode conter MÚLTIPLOS EXAMES (hemograma, glicemia, lipidograma, etc.) no mesmo arquivo
-                - Para cada parâmetro de cada exame:
-                  * Determine o status (normal, alto, baixo ou atenção) baseado nos valores de referência
-                  * Registre OBRIGATORIAMENTE os valores de referência (mínimo e máximo) para cada parâmetro
-                  * Explique a significância clínica do parâmetro (ex: "Indica função renal", "Marcador de inflamação")
-                  * Capture a variação explícita em relação a resultados anteriores, se mencionada
-                  * Classifique a gravidade de qualquer anormalidade (leve, moderada, severa)
-                  * Identifique tendências temporais se múltiplos resultados forem apresentados
-                
-                DEPOIS da extração completa, forneça uma análise médica profissional integrando todos os exames encontrados no documento.
-                
-                RESPONDA EXCLUSIVAMENTE NO SEGUINTE FORMATO JSON (sem texto adicional):
+                RESPONDA APENAS NO SEGUINTE FORMATO JSON (sem textos adicionais):
                 {
-                  "examDate": "YYYY-MM-DD (extraia a data exata, campo CRÍTICO, deixe vazio se não encontrada, NUNCA invente)",
-                  "requestingPhysician": "Nome completo do médico solicitante (sem títulos como Dr./Dra.)",
-                  "laboratoryName": "Nome completo do laboratório ou clínica que realizou o exame",
-                  "summary": "Resumo objetivo dos resultados principais em até duas frases, destacando anormalidades significativas",
-                  "detailedAnalysis": "Análise médica detalhada (200-300 palavras) dos resultados e suas implicações clínicas, incluindo correlações entre diferentes parâmetros dos vários exames encontrados",
-                  "recommendations": [
-                    "Recomendação específica e acionável baseada nos resultados anormais",
-                    "Sugestão de acompanhamento ou exames adicionais se necessário",
-                    "Orientação sobre modificações de estilo de vida relevantes"
-                  ],
+                  "examDate": "YYYY-MM-DD",
+                  "requestingPhysician": "Nome completo sem prefixos Dr./Dra.",
+                  "laboratoryName": "Nome do laboratório ou clínica",
+                  "examType": "Tipo principal de exame (ex: Hemograma, Glicemia, Checkup Completo)",
                   "healthMetrics": [
                     {
-                      "name": "Nome preciso do parâmetro (ex: hemoglobina, glicose em jejum, colesterol LDL)",
-                      "value": "Valor numérico exato, sem arredondamentos",
-                      "unit": "Unidade de medida precisa (ex: g/dL, mg/dL, U/L)",
-                      "referenceMin": "Valor mínimo de referência, se disponível",
-                      "referenceMax": "Valor máximo de referência, se disponível",
-                      "status": "normal, alto, baixo ou atenção (baseado estritamente nos valores de referência)",
-                      "change": "Variação quantitativa em relação a exames anteriores (+10%, -5 mg/dL, etc)",
-                      "clinical_significance": "Breve interpretação clínica deste parâmetro específico"
+                      "name": "Nome exato do parâmetro",
+                      "value": "Valor numérico preciso",
+                      "unit": "Unidade de medida",
+                      "referenceMin": "Valor mínimo de referência ou null",
+                      "referenceMax": "Valor máximo de referência ou null", 
+                      "status": "normal, alto, baixo ou atenção (baseado nos valores de referência)",
+                      "change": "Variação em relação a exames anteriores ou vazio",
+                      "clinical_significance": "O que este parâmetro indica clinicamente",
+                      "category": "Categoria do exame (ex: Hemograma, Lipidograma, Função hepática)"
                     }
                   ]
                 }
                 
                 RESTRIÇÕES CRÍTICAS:
-                - NUNCA invente dados. Se um campo não puder ser determinado com certeza, deixe-o vazio ("").
-                - Formate a data SEMPRE como YYYY-MM-DD, convertendo de qualquer outro formato encontrado.
-                - O documento pode conter MÚLTIPLOS EXAMES em um único arquivo - identifique TODOS eles.
-                - Inclua ABSOLUTAMENTE TODOS os parâmetros médicos encontrados de TODOS os exames, mesmo os que estejam normais.
-                - Priorize a extração precisa sobre interpretações ou análises subjetivas.
-                - O JSON DEVE ser válido, sem erros de formatação, escapes incorretos ou campos duplicados.
-                - Se houver múltiplos resultados para o mesmo parâmetro, inclua todos como métricas separadas.
-                - Para valores fora dos intervalos de referência, certifique-se de classificá-los corretamente.`;
+                - NUNCA faça recomendações ou análises - sua função é APENAS EXTRAIR dados
+                - NUNCA invente dados. Se um campo não puder ser determinado, deixe-o vazio ("") ou null
+                - Formate a data SEMPRE como YYYY-MM-DD, convertendo de qualquer formato encontrado
+                - Identifique TODOS os exames presentes no documento, mesmo que sejam de tipos diferentes
+                - Extraia TODOS os parâmetros encontrados, mesmo os normais
+                - Se houver múltiplos valores para o mesmo parâmetro, inclua-os como métricas separadas
+                - Cada parâmetro deve ter o campo "category" indicando a qual tipo de exame pertence
+                - O JSON DEVE ser válido, sem erros de formatação ou campos duplicados`;
 
       // Determine the mime type based on file type
       const mimeType = 
@@ -364,19 +357,20 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
     
     console.log("Processando upload de exame para usuário:", userId);
     
-    // Analyze document with Gemini first to extract metadata
-    const analysisResult = await analyzeDocument(fileContent, fileType);
+    // ETAPA 1: EXTRAÇÃO com Gemini (sem análise)
+    console.log("ETAPA 1: Iniciando extração de dados com Gemini");
+    const extractionResult = await analyzeDocument(fileContent, fileType);
     
     // Use extracted date from document or fallback to provided date or current date
-    const extractedExamDate = analysisResult.examDate || examDate || new Date().toISOString().split('T')[0];
+    const extractedExamDate = extractionResult.examDate || examDate || new Date().toISOString().split('T')[0];
     console.log(`Data de exame extraída: ${extractedExamDate}`);
     
     // Use extracted laboratory name from document or fallback to provided name
-    const extractedLabName = analysisResult.laboratoryName || laboratoryName || "Laboratório não identificado";
+    const extractedLabName = extractionResult.laboratoryName || laboratoryName || "Laboratório não identificado";
     console.log(`Laboratório extraído: ${extractedLabName}`);
     
     // Get requesting physician if available
-    let requestingPhysician = analysisResult.requestingPhysician || null;
+    let requestingPhysician = extractionResult.requestingPhysician || null;
     
     // Sanitiza o nome do médico requisitante para remover prefixos Dr/Dra se existirem
     if (requestingPhysician) {
@@ -390,57 +384,63 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       console.log('Médico requisitante não encontrado no documento');
     }
     
-    // Create exam record with extracted metadata
+    // ETAPA 2: CRIAÇÃO E CLASSIFICAÇÃO DO EXAME
+    console.log("ETAPA 2: Criando registro do exame com metadados extraídos");
     const exam = await storage.createExam({
       userId,
-      name,
+      name: extractionResult.examType ? `${extractionResult.examType} - ${name}` : name,
       fileType,
-      status: "pending",
+      status: "extracted", // Novo status: apenas extraído, ainda não analisado
       laboratoryName: extractedLabName,
       examDate: extractedExamDate,
-      requestingPhysician: requestingPhysician
+      requestingPhysician: requestingPhysician,
+      originalContent: fileContent // Guardar conteúdo original direto durante criação
     });
     
-    // Update exam status
-    await storage.updateExam(exam.id, { 
-      status: "analyzed",
-      originalContent: fileContent
-    });
+    console.log(`Exame criado com sucesso. ID: ${exam.id}`);
     
-    // Save analysis results
+    // ETAPA 3: SALVAMENTO DAS MÉTRICAS EXTRAÍDAS
+    console.log("ETAPA 3: Salvando métricas extraídas");
+    
+    // Salvamos apenas o resultado da extração, sem análise completa ainda
+    // A análise acontecerá posteriormente com OpenAI
     const examResult = await storage.createExamResult({
       examId: exam.id,
-      summary: analysisResult.summary,
-      detailedAnalysis: analysisResult.detailedAnalysis,
-      recommendations: analysisResult.recommendations.join('\n'),
-      healthMetrics: analysisResult.healthMetrics,
-      aiProvider: "gemini"
+      summary: `Exame extraído com ${extractionResult.healthMetrics?.length || 0} parâmetros`,
+      detailedAnalysis: null, // Será preenchido posteriormente pela OpenAI
+      recommendations: null, // Será preenchido posteriormente pela OpenAI
+      healthMetrics: extractionResult.healthMetrics,
+      aiProvider: "gemini:extraction-only"
     });
     
-    // Create notification
+    console.log(`Resultado inicial do exame salvo. ID: ${examResult.id}`);
+    
+    // Notificação mais específica sobre a extração
     await storage.createNotification({
       userId,
-      title: "Análise concluída",
-      message: `Seu exame "${name}" foi analisado com sucesso`,
+      title: "Exame processado",
+      message: `${name} foi processado com sucesso. Vá para a página de diagnóstico para análise detalhada.`,
       read: false
     });
     
-    // Save health metrics with the extracted exam date and enhanced data
-    for (const metric of analysisResult.healthMetrics) {
+    // Contagem para log de métricas salvas
+    let savedMetricsCount = 0;
+    let failedMetricsCount = 0;
+    
+    // Organizar métricas por categoria para melhor visualização
+    const metricsByCategory = new Map();
+    
+    // Salvar métricas com informações de categoria
+    for (const metric of extractionResult.healthMetrics || []) {
       try {
-        console.log("Salvando métrica aprimorada:", {
-          userId,
-          name: metric.name,
-          value: String(metric.value || "0"),
-          unit: metric.unit || "",
-          status: metric.status || "normal",
-          change: metric.change || "",
-          referenceMin: metric.referenceMin || null,
-          referenceMax: metric.referenceMax || null,
-          clinical_significance: metric.clinical_significance || null,
-          date: extractedExamDate
-        });
+        // Adicionar métrica à categoria para estatísticas
+        const category = metric.category || "Geral";
+        if (!metricsByCategory.has(category)) {
+          metricsByCategory.set(category, []);
+        }
+        metricsByCategory.get(category).push(metric.name);
         
+        // Criar uma nova métrica de saúde
         await storage.createHealthMetric({
           userId: Number(userId),
           name: metric.name || "desconhecido",
@@ -451,22 +451,39 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
           referenceMin: metric.referenceMin || null,
           referenceMax: metric.referenceMax || null, 
           clinical_significance: metric.clinical_significance || null,
-          date: extractedExamDate // Use the extract date for metrics
+          date: extractedExamDate,
+          category: metric.category || "Geral" // Adicionando categoria para melhor organização
         });
         
-        console.log(`Métrica ${metric.name} salva com sucesso com valores de referência!`);
+        savedMetricsCount++;
       } catch (metricError) {
+        failedMetricsCount++;
         console.error(`Erro ao salvar métrica ${metric.name}:`, metricError);
         // Continua com a próxima métrica mesmo se essa falhar
       }
     }
     
+    // Log do resumo das métricas salvas
+    console.log(`RESUMO: Salvas ${savedMetricsCount} métricas, falhas: ${failedMetricsCount}`);
+    metricsByCategory.forEach((metrics, category) => {
+      console.log(`- Categoria '${category}': ${metrics.length} métricas (${metrics.join(', ')})`);
+    });
+    
+    // Após a extração, atualizamos o status do exame
+    await storage.updateExam(exam.id, { 
+      status: "ready_for_analysis" // Pronto para ser analisado pela OpenAI em etapa separada
+    });
+    
     res.status(200).json({ 
       exam,
-      result: examResult
+      result: {
+        ...examResult,
+        extractedCategories: Array.from(metricsByCategory.keys()),
+        metricsCount: savedMetricsCount
+      }
     });
   } catch (error) {
     console.error("Error in upload and analyze document:", error);
-    res.status(500).json({ message: "Erro ao analisar o documento" });
+    res.status(500).json({ message: "Erro ao processar o documento", error: String(error) });
   }
 }
