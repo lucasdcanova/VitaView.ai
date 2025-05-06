@@ -112,11 +112,8 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   console.log(`[Auth Failed] Session Data: ${JSON.stringify(req.session || {})}`);
   console.log(`[Auth Failed] PassportJS: ${JSON.stringify(req.session && 'passport' in req.session ? req.session.passport : {})}`);
   
-  // Bypass para análise Gemini para diagnóstico
-  if (req.path === '/api/analyze/gemini' && req.headers.cookie && req.headers.cookie.includes('connect.sid')) {
-    console.log(`[Auth Bypass] Permitindo requisição para análise Gemini para diagnóstico`);
-    return next();
-  }
+  // Removido o bypass para análise Gemini
+  // Todas as requisições devem ser autenticadas
   
   // Se não estiver autenticado, retorna 401
   return res.status(401).json({ message: "Não autenticado" });
@@ -135,11 +132,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Aplicar middleware de log para todas as rotas
   app.use(logRequest);
 
-  // API routes for exams - removendo requisito de autenticação para diagnóstico
-  app.post("/api/exams/upload", uploadAndAnalyzeDocument);
+  // API routes for exams - com requisito de autenticação
+  app.post("/api/exams/upload", ensureAuthenticated, uploadAndAnalyzeDocument);
   
   // Rota para análise de documentos - etapa 1: análise com Gemini
-  app.post("/api/analyze/gemini", async (req, res) => {
+  app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
     try {
       console.log("[Gemini Endpoint] Recebida requisição");
       console.log("[Gemini Endpoint] Autenticado:", req.isAuthenticated());
@@ -164,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
-  app.post("/api/analyze/interpretation", async (req, res) => {
+  app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
     try {
       console.log("[OpenAI Endpoint] Recebida requisição");
       console.log("[OpenAI Endpoint] Autenticado:", req.isAuthenticated());
@@ -204,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/exams", async (req, res) => {
+  app.post("/api/exams", ensureAuthenticated, async (req, res) => {
     try {  
       console.log("[Exams Endpoint] Recebida requisição para criar exame");
       console.log("[Exams Endpoint] Autenticado:", req.isAuthenticated());
@@ -256,8 +253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API para salvar resultados de exames - removendo requisito de autenticação para diagnóstico
-  app.post("/api/exam-results", async (req, res) => {
+  // API para salvar resultados de exames - com requisito de autenticação
+  app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
     try {      
       console.log("[ExamResults Endpoint] Recebida requisição para criar resultado de exame");
       console.log("[ExamResults Endpoint] Autenticado:", req.isAuthenticated());
@@ -288,8 +285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API para salvar métricas de saúde - removendo requisito de autenticação para diagnóstico
-  app.post("/api/health-metrics", async (req, res) => {
+  // API para salvar métricas de saúde - com requisito de autenticação
+  app.post("/api/health-metrics", ensureAuthenticated, async (req, res) => {
     try {      
       // Permitir que userId venha do corpo da requisição
       let userId = req.body.userId;
@@ -328,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams", async (req, res) => {
+  app.get("/api/exams", ensureAuthenticated, async (req, res) => {
     try {      
       // Adicionar mais logs para debug
       console.log("[GetExams] Autenticado:", req.isAuthenticated());
@@ -385,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams/:id", async (req, res) => {
+  app.get("/api/exams/:id", ensureAuthenticated, async (req, res) => {
     try {      
       const examId = parseInt(req.params.id);
       
@@ -464,7 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/exams/:id/insights", async (req, res) => {
+  app.get("/api/exams/:id/insights", ensureAuthenticated, async (req, res) => {
     try {
       const examId = parseInt(req.params.id);
       
@@ -548,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/health-metrics/latest", async (req, res) => {
+  app.get("/api/health-metrics/latest", ensureAuthenticated, async (req, res) => {
     try {
       console.log("[GetLatestMetrics] Autenticado:", req.isAuthenticated());
       console.log("[GetLatestMetrics] Cookies:", req.headers.cookie);
