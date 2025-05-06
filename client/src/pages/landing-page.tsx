@@ -1466,6 +1466,292 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Nova seção de demonstrações interativas */}
+      <section id="demonstracoes" className="py-20 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center max-w-3xl mx-auto mb-16"
+          >
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-800 mb-4">
+              <Play className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Demonstrações interativas</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Explore exemplos reais de como o Hemolog funciona
+            </h2>
+            <p className="text-xl text-gray-600">
+              Veja simulações de exames reais e como nossa plataforma fornece insights valiosos.
+            </p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+            {/* Demo 1: Upload e extração */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-1 bg-gradient-to-r from-primary-500 to-primary-700"></div>
+              <div className="p-6">
+                <div className="rounded-full bg-primary-100 w-12 h-12 flex items-center justify-center mb-4">
+                  <Upload className="h-6 w-6 text-primary-700" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">1. Upload e extração inteligente</h3>
+                <p className="text-gray-600 mb-4">A IA analisa seu exame e extrai automaticamente todos os dados relevantes.</p>
+                
+                {/* Demonstração animada de upload e extração */}
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200 overflow-hidden">
+                  <div className="mb-2 text-sm font-medium text-gray-700">Simulação de extração:</div>
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    whileInView={{ width: "100%" }}
+                    viewport={{ once: true }}
+                    transition={{ 
+                      duration: 2,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      repeatDelay: 1
+                    }}
+                    className="h-2 bg-gradient-to-r from-primary-500 to-primary-300 rounded-full mb-3"
+                  ></motion.div>
+                  
+                  <div className="space-y-2">
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.5 }}
+                      className="flex justify-between text-xs"
+                    >
+                      <span className="text-gray-500">Hemoglobina:</span>
+                      <span className="font-medium text-gray-800">14.2 g/dL</span>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.8 }}
+                      className="flex justify-between text-xs"
+                    >
+                      <span className="text-gray-500">Glicemia:</span>
+                      <span className="font-medium text-gray-800">92 mg/dL</span>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.1 }}
+                      className="flex justify-between text-xs"
+                    >
+                      <span className="text-gray-500">Colesterol total:</span>
+                      <span className="font-medium text-gray-800">198 mg/dL</span>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.4 }}
+                      className="flex justify-between text-xs"
+                    >
+                      <span className="text-gray-500">Triglicérides:</span>
+                      <span className="font-medium text-gray-800">120 mg/dL</span>
+                    </motion.div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center">
+                  <Button variant="outline" size="sm" className="text-xs">
+                    Ver mais detalhes <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Demo 2: Análise e contexto */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              <div className="p-6">
+                <div className="rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center mb-4">
+                  <Brain className="h-6 w-6 text-blue-700" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">2. Análise contextualizada</h3>
+                <p className="text-gray-600 mb-4">Nossa IA analisa seus resultados considerando seu histórico e perfil médico.</p>
+                
+                {/* Demonstração de análise contextualizada */}
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200">
+                  <div className="mb-2 text-sm font-medium text-gray-700">Interpretação inteligente:</div>
+                  
+                  <div className="rounded-lg bg-white p-3 border border-gray-200 mb-3">
+                    <div className="flex items-start mb-2">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2 flex-shrink-0">
+                        <Brain className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-gray-800">Análise da Glicemia</div>
+                        <motion.div 
+                          initial={{ width: 0, opacity: 0 }}
+                          whileInView={{ width: "100%", opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.5 }}
+                          className="text-xs text-gray-600 mt-1"
+                        >
+                          Seu nível de glicose está dentro da faixa normal (70-99 mg/dL), indicando controle glicêmico adequado.
+                        </motion.div>
+                      </div>
+                    </div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      whileInView={{ opacity: 1, height: "auto" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 1 }}
+                    >
+                      <div className="ml-10 pl-2 border-l border-dashed border-gray-300">
+                        <div className="text-xs text-gray-500 italic mb-1">Comparação com exames anteriores:</div>
+                        <div className="flex items-center">
+                          <div className="h-2 bg-gradient-to-r from-green-200 to-green-500 rounded-full w-full">
+                            <div className="relative">
+                              <div className="absolute bottom-2 left-1/4 h-3 w-0.5 bg-gray-400"></div>
+                              <div className="absolute bottom-3 left-1/4 text-xs text-gray-600 -ml-4">90</div>
+                              
+                              <div className="absolute bottom-2 left-1/2 h-3 w-0.5 bg-gray-400"></div>
+                              <div className="absolute bottom-3 left-1/2 text-xs text-gray-600 -ml-4">95</div>
+                              
+                              <div className="absolute bottom-2 left-3/4 h-3 w-0.5 bg-gray-400"></div>
+                              <div className="absolute bottom-3 left-3/4 text-xs text-gray-600 -ml-4">92</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 2 }}
+                    className="mt-2 text-xs text-gray-600 italic"
+                  >
+                    <span className="text-primary-600 font-medium">IA sugere:</span> Manter alimentação equilibrada e atividade física regular.
+                  </motion.div>
+                </div>
+                
+                <div className="flex justify-center">
+                  <Button variant="outline" size="sm" className="text-xs">
+                    Ver mais análises <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Demo 3: Visualização histórica */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+              <div className="p-6">
+                <div className="rounded-full bg-amber-100 w-12 h-12 flex items-center justify-center mb-4">
+                  <LineChart className="h-6 w-6 text-amber-700" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">3. Visualização histórica</h3>
+                <p className="text-gray-600 mb-4">Acompanhe a evolução dos seus exames ao longo do tempo com gráficos interativos.</p>
+                
+                {/* Demonstração de visualização histórica */}
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200">
+                  <div className="mb-2 text-sm font-medium text-gray-700">Timeline de exames:</div>
+                  
+                  <div className="relative">
+                    {/* Linha de tempo vertical */}
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+                    
+                    <div className="space-y-4 relative z-10">
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                        className="flex items-start"
+                      >
+                        <div className="rounded-full w-8 h-8 bg-amber-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                          3
+                        </div>
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
+                          <div className="text-xs font-medium">Mai 2025</div>
+                          <div className="text-xs text-gray-600">Hemograma completo</div>
+                        </div>
+                      </motion.div>
+                      
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="flex items-start"
+                      >
+                        <div className="rounded-full w-8 h-8 bg-primary-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                          2
+                        </div>
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
+                          <div className="text-xs font-medium">Mar 2025</div>
+                          <div className="text-xs text-gray-600">Perfil lipídico</div>
+                        </div>
+                      </motion.div>
+                      
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        className="flex items-start"
+                      >
+                        <div className="rounded-full w-8 h-8 bg-blue-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                          1
+                        </div>
+                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
+                          <div className="text-xs font-medium">Jan 2025</div>
+                          <div className="text-xs text-gray-600">Glicemia em jejum</div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center">
+                  <Button variant="outline" size="sm" className="text-xs">
+                    Ver histórico completo <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+          <div className="flex justify-center">
+            <Link href="/auth?tab=register">
+              <Button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800">
+                Experimente grátis <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section id="depoimentos" className="py-20 bg-gray-50 relative overflow-hidden">
         {/* Elementos decorativos */}
