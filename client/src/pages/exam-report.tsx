@@ -405,25 +405,85 @@ export default function ExamReport() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {healthMetrics.slice(0, 4).map((metric, index) => (
-                            <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                            <div key={index} className={`p-4 rounded-lg ${
+                              metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 border border-red-100' :
+                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
+                              metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
+                            }`}>
                               <div className="flex justify-between mb-1">
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-gray-700 flex items-center">
                                   {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
+                                  {metric.status !== 'normal' && (
+                                    <Badge variant="outline" className={`ml-2 ${
+                                      metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                      'bg-amber-100 text-amber-800 border-amber-200'
+                                    }`}>
+                                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                                    </Badge>
+                                  )}
                                 </span>
-                                <span className="text-sm text-gray-500">{metric.value} {metric.unit}</span>
+                                <div className="flex items-center">
+                                  <span className="text-sm text-gray-700 font-medium">{metric.value} {metric.unit}</span>
+                                  {metric.change && (
+                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${
+                                      metric.change.startsWith('+') ? 'bg-red-50 text-red-700' : 
+                                      metric.change.startsWith('-') ? 'bg-green-50 text-green-700' : 
+                                      'bg-gray-50 text-gray-700'
+                                    }`}>
+                                      {metric.change}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              
+                              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 mb-1 relative">
+                                {/* Referência visual (área "normal") */}
+                                {(metric.referenceMin && metric.referenceMax) && (
+                                  <div className="absolute h-full bg-green-100 rounded-full opacity-40"
+                                    style={{ 
+                                      left: '30%', 
+                                      width: '40%'
+                                    }}>
+                                  </div>
+                                )}
+                                
+                                {/* Indicador de valor */}
                                 <div 
-                                  className={`${getMetricStatus(metric.status).color} h-2 rounded-full`} 
-                                  style={{ width: getMetricStatus(metric.status).width }}
-                                ></div>
+                                  className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-sm ${
+                                    metric.status === 'alto' || metric.status === 'high' ? 'bg-red-500' :
+                                    metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-500' :
+                                    metric.status === 'atenção' ? 'bg-amber-500' : 'bg-green-500'
+                                  }`}
+                                  style={{ 
+                                    left: metric.status === 'alto' || metric.status === 'high' ? '80%' :
+                                          metric.status === 'baixo' || metric.status === 'low' ? '20%' :
+                                          metric.status === 'atenção' ? '65%' : '50%',
+                                    marginLeft: '-4px'
+                                  }}>
+                                </div>
                               </div>
-                              <span className="text-xs text-gray-500">
-                                {metric.name === 'hemoglobina' && 'Referência: 12.0-16.0 g/dL'}
-                                {metric.name === 'glicemia' && 'Referência: 70-99 mg/dL'}
-                                {metric.name === 'colesterol' && 'Referência: 150-199 mg/dL'}
-                                {metric.name === 'vitamina_d' && 'Referência: 30-100 ng/mL'}
-                              </span>
+                              
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>
+                                  Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
+                                </span>
+                                {metric.clinical_significance && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="text-primary-600 cursor-help flex items-center">
+                                          <Info className="h-3 w-3 mr-1" />
+                                          Info
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        <p>{metric.clinical_significance}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -451,10 +511,14 @@ export default function ExamReport() {
                                     {metric.value} {metric.unit}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {metric.name === 'hemoglobina' && '12.0-16.0 g/dL'}
-                                    {metric.name === 'glicemia' && '70-99 mg/dL'}
-                                    {metric.name === 'colesterol' && '150-199 mg/dL'}
-                                    {metric.name === 'vitamina_d' && '30-100 ng/mL'}
+                                    {metric.referenceMin && metric.referenceMax ? 
+                                      `${metric.referenceMin}-${metric.referenceMax} ${metric.unit}` : 
+                                      (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
+                                      (metric.name === 'glicemia' && '70-99 mg/dL') ||
+                                      (metric.name === 'colesterol' && '150-199 mg/dL') ||
+                                      (metric.name === 'vitamina_d' && '30-100 ng/mL') ||
+                                      'Não disponível'
+                                    }
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <Badge variant={
