@@ -1,6 +1,17 @@
 import { apiRequest } from "./queryClient";
 import { ExamResult, Exam, HealthMetric, Notification } from "@shared/schema";
 
+// Tipo para dados do paciente usados na análise
+export interface PatientData {
+  gender?: string;
+  age?: number;
+  diseases?: string[];
+  surgeries?: string[];
+  allergies?: string[];
+  familyHistory?: string;
+  [key: string]: any;
+}
+
 // Exams API
 export const uploadExam = async (examData: FormData) => {
   const res = await fetch("/api/exams/upload", {
@@ -41,6 +52,26 @@ export const getExamInsights = async (examId: number) => {
   }
   
   return res.json();
+};
+
+// Nova função: Analisa um exame já extraído usando OpenAI
+export const analyzeExtractedExam = async (examId: number, patientData?: PatientData) => {
+  console.log(`Solicitando análise OpenAI para exame ID ${examId}`);
+  
+  try {
+    const res = await apiRequest("POST", `/api/exams/${examId}/analyze`, { patientData });
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Erro na análise do exame ${examId}:`, errorText);
+      throw new Error(errorText || res.statusText);
+    }
+    
+    return await res.json();
+  } catch (error) {
+    console.error("Erro ao analisar exame com OpenAI:", error);
+    throw error;
+  }
 };
 
 // Health Metrics API

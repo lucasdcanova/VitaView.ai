@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Exam, ExamResult } from "@shared/schema";
-import { getExamDetails, getExamInsights } from "@/lib/api";
+import { getExamDetails, getExamInsights, analyzeExtractedExam, PatientData } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -84,6 +86,16 @@ export default function DiagnosisPage() {
   const [activeTab, setActiveTab] = useState("analysis");
   const [match, params] = useRoute<{ id: string }>("/diagnosis/:id");
   const examId = match && params ? parseInt(params.id) : 0;
+  const { toast } = useToast();
+  
+  // Dados do paciente para contextualização
+  const [patientData, setPatientData] = useState<PatientData>({
+    gender: "masculino",
+    age: 35,
+    diseases: [],
+    surgeries: [],
+    allergies: []
+  });
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -99,6 +111,30 @@ export default function DiagnosisPage() {
     queryKey: [`/api/exams/${examId}/insights`],
     queryFn: () => getExamInsights(examId),
     enabled: !!examId && !!data?.result,
+  });
+  
+  // Mutação para analisar exame com OpenAI
+  const analyzeMutation = useMutation({
+    mutationFn: async () => {
+      return await analyzeExtractedExam(examId, patientData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Análise concluída com sucesso",
+        description: "O exame foi analisado utilizando IA avançada (OpenAI)",
+        variant: "default",
+      });
+      // Após a análise, atualizamos os insights
+      queryClient.invalidateQueries({ queryKey: [`/api/exams/${examId}/insights`] });
+    },
+    onError: (error) => {
+      console.error("Erro na análise com OpenAI:", error);
+      toast({
+        title: "Falha na análise",
+        description: error instanceof Error ? error.message : "Ocorreu um erro na análise do exame",
+        variant: "destructive",
+      });
+    }
   });
   
   const formatDate = (dateString?: string) => {
@@ -174,6 +210,28 @@ export default function DiagnosisPage() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Ver exame original</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => analyzeMutation.mutate()}
+                              disabled={analyzeMutation.isPending}
+                            >
+                              {analyzeMutation.isPending ? (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+                              ) : (
+                                <Sparkles className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Analisar com OpenAI</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
