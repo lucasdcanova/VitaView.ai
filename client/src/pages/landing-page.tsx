@@ -21,7 +21,22 @@ import {
   ScrollText,
   BarChart,
   TrendingUp,
-  FileBarChart
+  FileBarChart,
+  Bell,
+  Settings,
+  UserCircle,
+  Calendar,
+  Dumbbell,
+  BookOpen,
+  GraduationCap,
+  FileHeart,
+  Medal,
+  Timer,
+  Upload,
+  Download,
+  ExternalLink,
+  BarChart3,
+  PieChart
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -231,10 +246,10 @@ export default function LandingPage() {
             
             {/* Imagem principal com sobreposição de elementos */}
             <div className="relative">
-              <motion.img 
-                src="https://placehold.co/600x400/e6f2ff/0066cc?text=Hemolog+Dashboard" 
-                alt="Dashboard do Hemolog" 
-                className="rounded-xl shadow-2xl max-w-full h-auto object-cover relative z-10"
+              {/* Dashboard mockup simulado - design mais próximo do real */}
+              <motion.div 
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden"
+                style={{ width: '600px', height: '380px' }}
                 whileHover={{ 
                   rotate: 2,
                   transition: { duration: 0.3 }
@@ -242,7 +257,180 @@ export default function LandingPage() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-              />
+              >
+                {/* Header do dashboard */}
+                <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
+                  <Activity className="h-5 w-5 mr-2" />
+                  <span className="font-medium">Dashboard de Saúde - Maria Silva</span>
+                  <div className="ml-auto flex space-x-2">
+                    <Bell className="h-4 w-4" />
+                    <Settings className="h-4 w-4" />
+                    <UserCircle className="h-4 w-4" />
+                  </div>
+                </div>
+                
+                {/* Conteúdo do dashboard */}
+                <div className="p-4 bg-gray-50 h-full">
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-xs font-medium text-gray-600">Índice de Saúde</h4>
+                        <Heart className="h-4 w-4 text-red-500" />
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-700 font-bold text-xl mr-3">
+                          87
+                        </div>
+                        <div className="text-xs">
+                          <div className="text-green-600 font-medium">Excelente</div>
+                          <div className="text-gray-500">+3 desde o último mês</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-xs font-medium text-gray-600">Exames</h4>
+                        <FileText className="h-4 w-4 text-primary-500" />
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-xl mr-3">
+                          12
+                        </div>
+                        <div className="text-xs">
+                          <div className="text-blue-600 font-medium">Digitalizados</div>
+                          <div className="text-gray-500">3 pendentes de análise</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-xs font-medium text-gray-600">Alertas</h4>
+                        <Bell className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-100 text-amber-700 font-bold text-xl mr-3">
+                          2
+                        </div>
+                        <div className="text-xs">
+                          <div className="text-amber-600 font-medium">Verificar</div>
+                          <div className="text-gray-500">Glicemia e Triglicerídeos</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Gráfico principal */}
+                  <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 mb-4 relative h-28">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-xs font-medium text-gray-600">Evolução dos Principais Parâmetros</h4>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="h-2 w-2 rounded-full bg-primary-500"></span>
+                        <span className="text-gray-500 mr-2">Glicemia</span>
+                        <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                        <span className="text-gray-500 mr-2">Colesterol</span>
+                        <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                        <span className="text-gray-500">Hemoglobina</span>
+                      </div>
+                    </div>
+                    
+                    {/* Gráfico simulado com CSS */}
+                    <div className="relative h-16 mt-1 border-b border-gray-200 flex items-end pb-1">
+                      {/* Linha de base e horizontal */}
+                      <div className="absolute bottom-0 left-0 w-full h-px bg-gray-200"></div>
+                      
+                      {/* Pontos representando valores do gráfico para Glicemia */}
+                      <div className="absolute bottom-0 left-0 h-full w-full flex justify-between items-end">
+                        <div style={{ height: '30%' }} className="w-px bg-primary-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-primary-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '45%' }} className="w-px bg-primary-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-primary-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '35%' }} className="w-px bg-primary-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-primary-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '60%' }} className="w-px bg-primary-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-primary-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '50%' }} className="w-px bg-primary-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-primary-500 -ml-0.5"></div>
+                        </div>
+                      </div>
+                      
+                      {/* Pontos representando valores do gráfico para Colesterol */}
+                      <div className="absolute bottom-0 left-0 h-full w-full flex justify-between items-end" style={{ transform: 'translateX(3px)' }}>
+                        <div style={{ height: '60%' }} className="w-px bg-red-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-red-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '55%' }} className="w-px bg-red-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-red-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '40%' }} className="w-px bg-red-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-red-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '35%' }} className="w-px bg-red-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-red-500 -ml-0.5"></div>
+                        </div>
+                        <div style={{ height: '25%' }} className="w-px bg-red-500 relative">
+                          <div className="absolute bottom-full h-1.5 w-1.5 rounded-full bg-red-500 -ml-0.5"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>Mar</span>
+                      <span>Abr</span>
+                      <span>Mai</span>
+                      <span>Jun</span>
+                      <span>Jul</span>
+                    </div>
+                  </div>
+                  
+                  {/* Miniaturas de exames recentes */}
+                  <div className="flex space-x-2 overflow-x-auto">
+                    <div className="flex-shrink-0 bg-white p-2 rounded-lg shadow-sm border border-gray-100 w-40">
+                      <div className="flex items-center mb-2">
+                        <FileText className="h-3 w-3 text-primary-500 mr-1" />
+                        <h5 className="text-xs font-medium text-gray-700 truncate">Hemograma Completo</h5>
+                      </div>
+                      <div className="h-5 flex items-center">
+                        <div className="h-1.5 rounded-full bg-green-100 w-full overflow-hidden">
+                          <div className="h-full bg-green-500 rounded-full" style={{ width: '85%' }}></div>
+                        </div>
+                        <span className="text-xs text-green-700 ml-2">85%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 bg-white p-2 rounded-lg shadow-sm border border-gray-100 w-40">
+                      <div className="flex items-center mb-2">
+                        <FileText className="h-3 w-3 text-primary-500 mr-1" />
+                        <h5 className="text-xs font-medium text-gray-700 truncate">Perfil Lipídico</h5>
+                      </div>
+                      <div className="h-5 flex items-center">
+                        <div className="h-1.5 rounded-full bg-amber-100 w-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full" style={{ width: '63%' }}></div>
+                        </div>
+                        <span className="text-xs text-amber-700 ml-2">63%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 bg-white p-2 rounded-lg shadow-sm border border-gray-100 w-40">
+                      <div className="flex items-center mb-2">
+                        <FileText className="h-3 w-3 text-primary-500 mr-1" />
+                        <h5 className="text-xs font-medium text-gray-700 truncate">Glicemia</h5>
+                      </div>
+                      <div className="h-5 flex items-center">
+                        <div className="h-1.5 rounded-full bg-red-100 w-full overflow-hidden">
+                          <div className="h-full bg-red-500 rounded-full" style={{ width: '42%' }}></div>
+                        </div>
+                        <span className="text-xs text-red-700 ml-2">42%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
               
               {/* Elementos decorativos flutuantes */}
               <motion.div 
@@ -373,9 +561,416 @@ export default function LandingPage() {
         </div>
       </section>
       
+      {/* Simulação de Relatórios Section */}
+      <section className="py-16 bg-gray-50 relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Relatórios Detalhados e Análises Precisas</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Visualize seus exames com clareza e obtenha insights que vão além dos números, com apresentação intuitiva e contexto clínico completo.
+            </p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Relatório de Exame Simulado */}
+            <motion.div 
+              className="rounded-xl shadow-xl bg-white overflow-hidden"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              whileHover={{ y: -5, boxShadow: "0 20px 30px -10px rgba(0, 0, 0, 0.1)" }}
+            >
+              {/* Header do relatório */}
+              <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 text-white">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-semibold">Hemograma Completo</h3>
+                    <p className="text-sm opacity-90">Data: 15/04/2025</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className="p-1.5 bg-white bg-opacity-20 rounded-md">
+                      <Download className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="p-1.5 bg-white bg-opacity-20 rounded-md">
+                      <ExternalLink className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Índice de saúde para este exame */}
+              <div className="p-4 bg-green-50 border-b border-green-100">
+                <div className="flex items-center">
+                  <div className="mr-3">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center bg-green-100 border-4 border-green-200">
+                      <span className="text-xl font-bold text-green-700">92</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-800">Índice de Saúde Excelente</h4>
+                    <p className="text-sm text-green-700">
+                      Seus resultados indicam um ótimo estado de saúde. Continue assim!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Conteúdo principal do relatório */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <h4 className="text-md font-semibold text-gray-800 mb-3">Principais Parâmetros</h4>
+                  
+                  {/* Lista de métricas */}
+                  <div className="space-y-4">
+                    {/* Métrica 1 */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-gray-700">Hemoglobina</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700">14.2 g/dL</span>
+                          <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Normal</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="relative w-full h-full">
+                          {/* Faixa de referência */}
+                          <div className="absolute h-full w-1/2 bg-green-200 left-1/4"></div>
+                          {/* Posição do valor atual */}
+                          <div className="absolute h-4 w-4 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '55%' }}></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>12.0</span>
+                        <span>Referência: 12.0-16.0 g/dL</span>
+                        <span>16.0</span>
+                      </div>
+                    </div>
+                    
+                    {/* Métrica 2 */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-gray-700">Glicose</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700">100 mg/dL</span>
+                          <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">Atenção</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="relative w-full h-full">
+                          {/* Faixa de referência */}
+                          <div className="absolute h-full w-1/3 bg-green-200 left-1/4"></div>
+                          {/* Posição do valor atual */}
+                          <div className="absolute h-4 w-4 bg-yellow-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '60%' }}></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>70</span>
+                        <span>Referência: 70-99 mg/dL</span>
+                        <span>120</span>
+                      </div>
+                    </div>
+                    
+                    {/* Métrica 3 */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-gray-700">Colesterol Total</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700">165 mg/dL</span>
+                          <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Normal</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="relative w-full h-full">
+                          {/* Faixa de referência */}
+                          <div className="absolute h-full w-1/2 bg-green-200 left-1/5"></div>
+                          {/* Posição do valor atual */}
+                          <div className="absolute h-4 w-4 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '40%' }}></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>120</span>
+                        <span>Referência: 150-199 mg/dL</span>
+                        <span>260</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Resumo da IA */}
+                <div className="bg-primary-50 p-4 rounded-lg border border-primary-100">
+                  <div className="flex items-start">
+                    <div className="p-2 bg-primary-100 rounded-full mr-3">
+                      <Brain className="h-5 w-5 text-primary-500" />
+                    </div>
+                    <div>
+                      <h5 className="font-medium text-primary-800 mb-1">Análise da IA</h5>
+                      <p className="text-sm text-gray-700">
+                        Seus exames mostram resultados dentro dos parâmetros normais. A glicose está no limite superior da faixa de referência, recomendamos monitoramento e atenção à dieta.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            <div className="space-y-6">
+              <motion.div 
+                className="text-left"
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <h3 className="text-2xl font-bold text-gray-800 mb-3">Entenda seus exames como nunca antes</h3>
+                <p className="text-lg text-gray-600 mb-6">
+                  Nossos relatórios transformam dados técnicos em informações compreensíveis, ajudando você a entender:
+                </p>
+                
+                <ul className="space-y-4">
+                  {[
+                    {
+                      icon: <GraduationCap className="h-5 w-5 text-primary-600" />,
+                      title: "Contexto Clínico",
+                      description: "Cada métrica vem acompanhada de uma explicação sobre o que ela significa para sua saúde."
+                    },
+                    {
+                      icon: <LineChart className="h-5 w-5 text-primary-600" />,
+                      title: "Análise de Tendências",
+                      description: "Acompanhe a evolução dos seus resultados ao longo do tempo e identifique padrões."
+                    },
+                    {
+                      icon: <Bell className="h-5 w-5 text-primary-600" />,
+                      title: "Alertas Inteligentes",
+                      description: "Receba notificações contextualizadas quando algum parâmetro necessitar atenção."
+                    },
+                    {
+                      icon: <FileHeart className="h-5 w-5 text-primary-600" />,
+                      title: "Recomendações Personalizadas",
+                      description: "Sugestões customizadas com base em seu histórico e perfil de saúde."
+                    }
+                  ].map((item, index) => (
+                    <motion.li 
+                      key={index}
+                      className="flex items-start"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.3, delay: 0.1 * index }}
+                    >
+                      <div className="p-2 bg-primary-100 rounded-full mr-3 mt-0.5">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{item.title}</h4>
+                        <p className="text-gray-600">{item.description}</p>
+                      </div>
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Simulação de Histórico de Exames */}
+      <section className="py-16 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Histórico Completo e Acessível</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Organize todos os seus exames em um só lugar, com acesso rápido e categorização automática.
+            </p>
+          </motion.div>
+          
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Sidebar de filtros */}
+            <motion.div 
+              className="lg:w-1/4 bg-white p-5 rounded-xl shadow-md border border-gray-100"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h3 className="font-medium text-lg text-gray-800 mb-4">Filtros</h3>
+              
+              <div className="space-y-5">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tipo de Exame</h4>
+                  <div className="space-y-2">
+                    {["Hemograma", "Glicemia", "Colesterol", "Tireoide", "Vitaminas", "Outros"].map((type, i) => (
+                      <div key={i} className="flex items-center">
+                        <div className={`w-4 h-4 rounded border ${i < 3 ? 'bg-primary-100 border-primary-300' : 'border-gray-300'}`}>
+                          {i < 3 && <CheckCircle2 className="h-3 w-3 text-primary-500" />}
+                        </div>
+                        <span className="ml-2 text-sm text-gray-700">{type}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Período</h4>
+                  <div className="flex items-center p-2 bg-primary-50 rounded-md border border-primary-100 text-sm text-primary-700">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <span>Últimos 12 meses</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
+                  <div className="space-y-2">
+                    {[
+                      { name: "Normal", color: "bg-green-100 border-green-300" },
+                      { name: "Atenção", color: "bg-yellow-100 border-yellow-300" },
+                      { name: "Alterado", color: "bg-red-100 border-red-300" }
+                    ].map((status, i) => (
+                      <div key={i} className="flex items-center">
+                        <div className={`w-4 h-4 rounded border ${status.color}`}></div>
+                        <span className="ml-2 text-sm text-gray-700">{status.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <button className="w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    Aplicar Filtros
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Lista de exames */}
+            <motion.div 
+              className="lg:w-3/4 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 className="font-medium text-gray-800">Seus Exames (12)</h3>
+                <div className="flex items-center text-sm text-gray-500">
+                  <span>Ordenar por:</span>
+                  <select className="ml-2 p-1 border border-gray-200 rounded bg-white">
+                    <option>Data (recente)</option>
+                    <option>Tipo</option>
+                    <option>Status</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="divide-y divide-gray-100">
+                {[
+                  { 
+                    name: "Hemograma Completo",
+                    date: "15/04/2025",
+                    lab: "Laboratório Central",
+                    status: "Normal",
+                    statusColor: "bg-green-100 text-green-800 border-green-200",
+                    highlight: true
+                  },
+                  { 
+                    name: "Perfil Lipídico",
+                    date: "15/04/2025",
+                    lab: "Laboratório Central",
+                    status: "Atenção",
+                    statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
+                    highlight: true
+                  },
+                  { 
+                    name: "Glicemia em Jejum",
+                    date: "15/04/2025",
+                    lab: "Laboratório Central",
+                    status: "Atenção",
+                    statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
+                    highlight: true
+                  },
+                  { 
+                    name: "TSH e T4 Livre",
+                    date: "10/02/2025",
+                    lab: "Laboratório QualiVida",
+                    status: "Normal",
+                    statusColor: "bg-green-100 text-green-800 border-green-200"
+                  },
+                  { 
+                    name: "Vitamina D",
+                    date: "10/02/2025",
+                    lab: "Laboratório QualiVida",
+                    status: "Alterado",
+                    statusColor: "bg-red-100 text-red-800 border-red-200"
+                  }
+                ].map((exam, i) => (
+                  <motion.div 
+                    key={i}
+                    className={`p-4 flex items-center justify-between transition-colors ${exam.highlight ? 'hover:bg-primary-50' : 'hover:bg-gray-50'}`}
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="flex items-center">
+                      <div className={`p-2.5 rounded-lg mr-3 ${
+                        exam.name.includes("Hemograma") ? "bg-blue-100" :
+                        exam.name.includes("Lipídico") ? "bg-purple-100" :
+                        exam.name.includes("Glicemia") ? "bg-amber-100" :
+                        exam.name.includes("TSH") ? "bg-cyan-100" : "bg-emerald-100"
+                      }`}>
+                        <FileText className={`h-6 w-6 ${
+                          exam.name.includes("Hemograma") ? "text-blue-600" :
+                          exam.name.includes("Lipídico") ? "text-purple-600" :
+                          exam.name.includes("Glicemia") ? "text-amber-600" :
+                          exam.name.includes("TSH") ? "text-cyan-600" : "text-emerald-600"
+                        }`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{exam.name}</h4>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-3.5 w-3.5 mr-1" />
+                          <span>{exam.date}</span>
+                          <span className="mx-2">•</span>
+                          <Building className="h-3.5 w-3.5 mr-1" />
+                          <span>{exam.lab}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${exam.statusColor}`}>
+                        {exam.status}
+                      </span>
+                      <button className="ml-4 p-2 text-gray-400 hover:text-primary-600 rounded-full hover:bg-primary-50">
+                        <ExternalLink className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-center">
+                <button className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center">
+                  Ver todos os exames
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
       {/* Feature Showcase Section */}
-      <section className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute left-0 right-0 top-0 h-24 bg-gradient-to-b from-gray-50 to-transparent"></div>
+      <section className="py-20 bg-primary-50 relative overflow-hidden">
+        <div className="absolute left-0 right-0 top-0 h-24 bg-gradient-to-b from-white to-transparent"></div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
