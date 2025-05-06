@@ -284,23 +284,101 @@ export default function ExamReport() {
   const healthMetrics = data?.result?.healthMetrics as any[] || [];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <MobileHeader />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="md:hidden">
+        <MobileHeader />
+      </div>
       
       <div className="flex flex-1 relative">
-        <Sidebar />
+        <Sidebar className="hidden md:flex" />
         
         <main className="flex-1">
-          <div className="p-4 md:p-6">
-            <div className="flex items-center mb-6">
-              <Link href="/history" className="mr-3 p-2 rounded-lg hover:bg-gray-100 inline-block">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Análise do Exame</h1>
-                <p className="text-gray-600">Relatório detalhado e recomendações</p>
+          {/* Cabeçalho */}
+          <div className="border-b bg-white shadow-sm">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Link to="/exams">
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900 flex items-center">
+                    {isLoading ? (
+                      <Skeleton className="h-6 w-32" />
+                    ) : (
+                      <>
+                        {data?.exam?.name || "Resultado do Exame"}
+                        {data?.exam?.status === "analyzed" && (
+                          <Badge className="ml-3 bg-green-100 text-green-800 hover:bg-green-100 border border-green-200">
+                            Analisado
+                          </Badge>
+                        )}
+                      </>
+                    )}
+                  </h1>
+                  {!isLoading && data?.exam && (
+                    <div className="flex items-center text-sm text-gray-500 space-x-3">
+                      <span>Enviado {formatRelativeDate(data.exam?.uploadDate?.toString())}</span>
+                      <span>•</span>
+                      <span className="flex items-center">
+                        {getFileIcon(data.exam?.fileType)}{' '}
+                        <span className="ml-1">{data.exam?.fileType?.toUpperCase()}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" className="hidden md:flex">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Compartilhar
+                </Button>
+                <Button variant="outline" size="sm" className="hidden md:flex">
+                  <Download className="mr-2 h-4 w-4" />
+                  Baixar
+                </Button>
+                <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                  <Printer className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+            
+            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-y-2 border-t border-gray-100 bg-gray-50">
+              {!isLoading && data?.exam && (
+                <>
+                  <div className="flex items-center text-sm text-gray-600 mr-6">
+                    <Calendar className="mr-2 h-4 w-4 text-primary-500" />
+                    <span className="font-medium">
+                      {formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
+                    </span>
+                  </div>
+                  
+                  {data.exam.laboratoryName && (
+                    <div className="flex items-center text-sm text-gray-600 mr-6">
+                      <Building className="mr-2 h-4 w-4 text-primary-500" />
+                      <span className="font-medium">{data.exam.laboratoryName}</span>
+                    </div>
+                  )}
+                  
+                  {data.exam.requestingPhysician && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <UserRound className="mr-2 h-4 w-4 text-primary-500" />
+                      <span className="font-medium">Dr. {data.exam.requestingPhysician}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-4 md:p-6">
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Report Details */}

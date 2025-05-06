@@ -369,12 +369,26 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
     
     // Use extracted date from document or fallback to provided date or current date
     const extractedExamDate = analysisResult.examDate || examDate || new Date().toISOString().split('T')[0];
+    console.log(`Data de exame extraída: ${extractedExamDate}`);
     
     // Use extracted laboratory name from document or fallback to provided name
-    const extractedLabName = analysisResult.laboratoryName || laboratoryName || "Laboratório Central";
+    const extractedLabName = analysisResult.laboratoryName || laboratoryName || "Laboratório não identificado";
+    console.log(`Laboratório extraído: ${extractedLabName}`);
     
     // Get requesting physician if available
-    const requestingPhysician = analysisResult.requestingPhysician || null;
+    let requestingPhysician = analysisResult.requestingPhysician || null;
+    
+    // Sanitiza o nome do médico requisitante para remover prefixos Dr/Dra se existirem
+    if (requestingPhysician) {
+      requestingPhysician = requestingPhysician
+        .replace(/^Dr\.\s*/i, '')
+        .replace(/^Dra\.\s*/i, '')
+        .replace(/^Dr\s*/i, '')
+        .replace(/^Dra\s*/i, '');
+      console.log(`Médico requisitante extraído e sanitizado: ${requestingPhysician}`);
+    } else {
+      console.log('Médico requisitante não encontrado no documento');
+    }
     
     // Create exam record with extracted metadata
     const exam = await storage.createExam({
