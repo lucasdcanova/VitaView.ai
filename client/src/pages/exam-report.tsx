@@ -804,8 +804,8 @@ export default function ExamReport() {
                       <div className="flex items-center">
                         <UserRound className="text-primary-500 mr-3" size={18} />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Solicitante</h3>
-                          <p className="text-sm text-gray-600">Médico(a) responsável</p>
+                          <h3 className="text-sm font-medium text-gray-700">Médico Solicitante</h3>
+                          <p className="text-sm text-gray-600">{data?.exam.requestingPhysician || "Não informado"}</p>
                         </div>
                       </div>
                       
