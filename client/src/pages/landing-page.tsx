@@ -36,11 +36,23 @@ import {
   Download,
   ExternalLink,
   BarChart3,
-  PieChart
+  PieChart,
+  ArrowUp,
+  X,
+  ChevronDown,
+  HelpCircle,
+  Mail,
+  Phone,
+  Lock,
+  MessageSquare,
+  Lightbulb,
+  LifeBuoy,
+  AlertCircle,
+  InfoIcon
 } from "lucide-react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 
 export default function LandingPage() {
   // Estado para animações e elementos interativos
