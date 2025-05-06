@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
@@ -18,6 +18,8 @@ import {
   ArrowUpDown,
   User,
   Microscope,
+  BarChart4,
+  ListFilter,
   FileBarChart,
   ChevronDown,
   AlertCircle
@@ -407,8 +409,36 @@ export default function ExamHistory() {
                       </div>
                     </div>
                     
-                    {/* Filters and View toggle */}
+                    {/* Visualization mode toggle */}
                     <div className="flex gap-3 ml-auto">
+                      <div className="flex rounded-md overflow-hidden border border-gray-200">
+                        <Button 
+                          variant={viewMode === "chronological" ? "default" : "outline"}
+                          className={cn(
+                            "rounded-none border-0 h-9 px-3",
+                            viewMode === "chronological" ? "bg-primary-600 hover:bg-primary-700" : "bg-white"
+                          )}
+                          onClick={() => {
+                            setViewMode("chronological");
+                            setActiveCategory("all");
+                          }}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Cronológico
+                        </Button>
+                        <Button 
+                          variant={viewMode === "category" ? "default" : "outline"}
+                          className={cn(
+                            "rounded-none border-0 h-9 px-3", 
+                            viewMode === "category" ? "bg-primary-600 hover:bg-primary-700" : "bg-white"
+                          )}
+                          onClick={() => setViewMode("category")}
+                        >
+                          <Tag className="h-4 w-4 mr-2" />
+                          Categorias
+                        </Button>
+                      </div>
+                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="gap-1">
@@ -596,6 +626,54 @@ export default function ExamHistory() {
               ) : (
                 // Show grid or list of exams
                 <>
+                  {/* Visualização por categoria se o modo categoria estiver ativo */}
+                  {viewMode === "category" && (
+                    <div className="mb-6">
+                      <div className="flex items-center mb-2">
+                        <Tag className="h-4 w-4 mr-2 text-primary" />
+                        <h2 className="text-lg font-medium text-gray-700">Categorias de Exames</h2>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <Badge 
+                          variant={activeCategory === "all" ? "default" : "outline"}
+                          className={cn(
+                            "px-2.5 py-1 cursor-pointer hover:bg-primary-50",
+                            activeCategory === "all" ? "bg-primary hover:bg-primary" : ""
+                          )}
+                          onClick={() => setActiveCategory("all")}
+                        >
+                          Todas as Categorias
+                        </Badge>
+                        
+                        {groupedExams.categoryList.map(category => (
+                          <Badge 
+                            key={category}
+                            variant={activeCategory === category ? "default" : "outline"}
+                            className={cn(
+                              "px-2.5 py-1 cursor-pointer hover:bg-primary-50",
+                              activeCategory === category ? "bg-primary hover:bg-primary" : ""
+                            )}
+                            onClick={() => setActiveCategory(category)}
+                          >
+                            {category} ({groupedExams.categories[category].length})
+                          </Badge>
+                        ))}
+                      </div>
+                      
+                      {activeCategory !== "all" && (
+                        <div className="mb-4">
+                          <h3 className="text-md font-medium text-primary-700 mb-1">
+                            Exames na categoria: {activeCategory}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Mostrando {examsToDisplay.length} exame(s) nesta categoria
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {activeView === "grid" ? (
                     // Grid view
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
