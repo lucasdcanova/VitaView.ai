@@ -458,46 +458,88 @@ export default function ExamReport() {
                               </div>
                               
                               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 mb-1 relative">
-                                {/* Referência visual (área "normal") */}
-                                {(metric.referenceMin && metric.referenceMax) && (
-                                  <div className="absolute h-full bg-green-100 rounded-full opacity-40"
+                                {/* Área de referência "normal" */}
+                                {(metric.referenceMin && metric.referenceMax) ? (
+                                  <div className="absolute h-full bg-green-100 rounded-full opacity-60"
                                     style={{ 
                                       left: '30%', 
                                       width: '40%'
                                     }}>
                                   </div>
+                                ) : (
+                                  <div className="absolute h-full bg-gray-300 rounded-full opacity-40"
+                                    style={{ 
+                                      left: '25%', 
+                                      width: '50%'
+                                    }}>
+                                  </div>
                                 )}
                                 
-                                {/* Indicador de valor */}
-                                <div 
-                                  className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-sm ${
-                                    metric.status === 'alto' || metric.status === 'high' ? 'bg-red-500' :
-                                    metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-500' :
-                                    metric.status === 'atenção' ? 'bg-amber-500' : 'bg-green-500'
-                                  }`}
-                                  style={{ 
-                                    left: metric.status === 'alto' || metric.status === 'high' ? '80%' :
-                                          metric.status === 'baixo' || metric.status === 'low' ? '20%' :
-                                          metric.status === 'atenção' ? '65%' : '50%',
-                                    marginLeft: '-4px'
-                                  }}>
-                                </div>
+                                {/* Marcadores de limite para valores de referência */}
+                                {(metric.referenceMin && metric.referenceMax) && (
+                                  <>
+                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50" 
+                                      style={{ left: '30%' }} 
+                                      title={`Valor mínimo de referência: ${metric.referenceMin}`}>
+                                    </div>
+                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50" 
+                                      style={{ left: '70%' }}
+                                      title={`Valor máximo de referência: ${metric.referenceMax}`}>
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {/* Indicador de valor com posição calculada pelos valores reais */}
+                                {(() => {
+                                  const status = getMetricStatus(
+                                    metric.status, 
+                                    metric.value, 
+                                    metric.referenceMin, 
+                                    metric.referenceMax
+                                  );
+                                  
+                                  return (
+                                    <div 
+                                      className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
+                                      style={{ 
+                                        left: status.position,
+                                        marginLeft: '-4px',
+                                        transition: 'left 0.3s ease-in-out'
+                                      }}
+                                      title={`Valor: ${metric.value} ${metric.unit}`}>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                               
                               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>
-                                  Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
-                                </span>
+                                <div className="flex items-center">
+                                  <span>
+                                    Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
+                                  </span>
+                                  
+                                  {metric.change && (
+                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${
+                                      metric.change.startsWith('+') ? 'text-red-700' : 
+                                      metric.change.startsWith('-') ? 'text-green-700' : 
+                                      'text-gray-700'
+                                    }`}>
+                                      {getChangeIcon(metric.change)}
+                                      <span className="ml-0.5">{metric.change}</span>
+                                    </span>
+                                  )}
+                                </div>
+                                
                                 {metric.clinical_significance && (
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className="text-primary-600 cursor-help flex items-center">
                                           <Info className="h-3 w-3 mr-1" />
-                                          Info
+                                          <span className="text-xs">Significado clínico</span>
                                         </span>
                                       </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs">
+                                      <TooltipContent className="max-w-xs p-3">
                                         <p>{metric.clinical_significance}</p>
                                       </TooltipContent>
                                     </Tooltip>
@@ -519,6 +561,7 @@ export default function ExamReport() {
                                 <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resultado</th>
                                 <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referência</th>
                                 <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Significado Clínico</th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -528,11 +571,23 @@ export default function ExamReport() {
                                     {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {metric.value} {metric.unit}
+                                    <span className="font-medium">{metric.value}</span> {metric.unit}
+                                    {metric.change && (
+                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${
+                                        metric.change.startsWith('+') ? 'bg-red-50 text-red-700' : 
+                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' : 
+                                        'bg-gray-50 text-gray-700'
+                                      }`}>
+                                        {getChangeIcon(metric.change)}
+                                        <span className="ml-0.5">{metric.change}</span>
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {metric.referenceMin && metric.referenceMax ? 
-                                      `${metric.referenceMin}-${metric.referenceMax} ${metric.unit}` : 
+                                      <span className="bg-green-50 px-2 py-0.5 rounded text-green-700">
+                                        {metric.referenceMin}-{metric.referenceMax} {metric.unit}
+                                      </span> : 
                                       (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
                                       (metric.name === 'glicemia' && '70-99 mg/dL') ||
                                       (metric.name === 'colesterol' && '150-199 mg/dL') ||
@@ -543,13 +598,33 @@ export default function ExamReport() {
                                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <Badge variant={
                                       metric.status === 'normal' ? 'default' :
-                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'outline' : 'destructive'
+                                      metric.status === 'atenção' ? 'outline' :
+                                      metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
                                     } className={
-                                      metric.status === 'normal' ? 'bg-green-100 text-green-800' :
-                                      metric.status === 'atenção' || metric.status === 'baixo' ? 'bg-yellow-100 text-yellow-800' : ''
+                                      metric.status === 'normal' ? 'bg-green-100 text-green-800 border-green-200' :
+                                      metric.status === 'atenção' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''
                                     }>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                                    {metric.clinical_significance ? (
+                                      <div className="truncate">
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <p className="cursor-help truncate">
+                                                {metric.clinical_significance}
+                                              </p>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-md p-3">
+                                              <p>{metric.clinical_significance}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      </div>
+                                    ) : 'Sem informações adicionais'}
                                   </td>
                                 </tr>
                               ))}

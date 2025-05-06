@@ -192,10 +192,13 @@ export class MemStorage implements IStorage {
       name: metric.name,
       value: metric.value,
       userId: metric.userId,
-      date: new Date(),
+      date: metric.date || new Date(),
       status: metric.status || null,
       unit: metric.unit || null,
-      change: metric.change || null
+      change: metric.change || null,
+      referenceMin: metric.referenceMin || null,
+      referenceMax: metric.referenceMax || null,
+      clinical_significance: metric.clinical_significance || null
     };
     this.healthMetricsMap.set(id, newMetric);
     return newMetric;
