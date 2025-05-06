@@ -7,6 +7,8 @@ import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, analyzeExtractedExam, PatientData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import PatientContextForm from "@/components/patient-context-form";
+import AnalysisComparison from "@/components/analysis-comparison";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -214,27 +216,14 @@ export default function DiagnosisPage() {
                         </Tooltip>
                       </TooltipProvider>
                       
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              onClick={() => analyzeMutation.mutate()}
-                              disabled={analyzeMutation.isPending}
-                            >
-                              {analyzeMutation.isPending ? (
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
-                              ) : (
-                                <Sparkles className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Analisar com OpenAI</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <PatientContextForm 
+                        initialData={patientData}
+                        onSubmit={(data) => {
+                          setPatientData(data);
+                          analyzeMutation.mutate();
+                        }}
+                        isLoading={analyzeMutation.isPending}
+                      />
                       
                       <TooltipProvider>
                         <Tooltip>
@@ -283,6 +272,15 @@ export default function DiagnosisPage() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="md:col-span-2">
+                          {/* Componente de comparação entre extração e análise */}
+                          {data?.result && (
+                            <AnalysisComparison 
+                              initialExtraction={data.result}
+                              aiAnalysis={insights}
+                              isAnalysisLoading={analyzeMutation.isPending}
+                            />
+                          )}
+                          
                           <Card>
                             <CardHeader>
                               <CardTitle className="flex items-center text-lg">
