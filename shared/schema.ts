@@ -78,6 +78,9 @@ export const healthMetrics = pgTable("health_metrics", {
   unit: text("unit"), // mg/dL, etc
   status: text("status"), // normal, atenção, alto
   change: text("change"), // +2, -3, etc (change from previous)
+  referenceMin: text("reference_min"), // valor mínimo de referência
+  referenceMax: text("reference_max"), // valor máximo de referência
+  clinical_significance: text("clinical_significance"), // significado clínico do parâmetro
   date: timestamp("date").defaultNow().notNull(),
 });
 
@@ -88,6 +91,9 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
   unit: true,
   status: true,
   change: true,
+  referenceMin: true,
+  referenceMax: true,
+  clinical_significance: true,
   date: true,
 });
 

@@ -341,16 +341,19 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       read: false
     });
     
-    // Save health metrics with the extracted exam date
+    // Save health metrics with the extracted exam date and enhanced data
     for (const metric of analysisResult.healthMetrics) {
       try {
-        console.log("Salvando métrica:", {
+        console.log("Salvando métrica aprimorada:", {
           userId,
           name: metric.name,
           value: String(metric.value || "0"),
           unit: metric.unit || "",
           status: metric.status || "normal",
           change: metric.change || "",
+          referenceMin: metric.referenceMin || null,
+          referenceMax: metric.referenceMax || null,
+          clinical_significance: metric.clinical_significance || null,
           date: extractedExamDate
         });
         
@@ -361,10 +364,13 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
           unit: metric.unit || "",
           status: metric.status || "normal",
           change: metric.change || "",
+          referenceMin: metric.referenceMin || null,
+          referenceMax: metric.referenceMax || null, 
+          clinical_significance: metric.clinical_significance || null,
           date: extractedExamDate // Use the extract date for metrics
         });
         
-        console.log(`Métrica ${metric.name} salva com sucesso!`);
+        console.log(`Métrica ${metric.name} salva com sucesso com valores de referência!`);
       } catch (metricError) {
         console.error(`Erro ao salvar métrica ${metric.name}:`, metricError);
         // Continua com a próxima métrica mesmo se essa falhar

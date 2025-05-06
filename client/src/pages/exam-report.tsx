@@ -182,13 +182,14 @@ export default function ExamReport() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
   
-  const getMetricStatus = (status?: string, value?: string, referenceMin?: string, referenceMax?: string) => {
+  const getMetricStatus = (status?: string, value?: string, referenceMin?: string | null, referenceMax?: string | null) => {
     // Base status com base na classificação textual
     let baseStatus = {
       color: 'bg-green-600',
       width: '60%',
       position: '50%',
-      indicatorClass: 'bg-green-600'
+      indicatorClass: 'bg-green-600',
+      showRange: false
     };
     
     // Ajuste por status
@@ -198,24 +199,27 @@ export default function ExamReport() {
           color: 'bg-green-600', 
           width: '60%',
           position: '50%', 
-          indicatorClass: 'bg-green-600'
+          indicatorClass: 'bg-green-600',
+          showRange: true
         };
         break;
       case 'atenção':
         baseStatus = { 
           color: 'bg-yellow-500', 
-          width: '95%',
-          position: '90%', 
-          indicatorClass: 'bg-yellow-500'
+          width: '75%',
+          position: '65%', 
+          indicatorClass: 'bg-yellow-500',
+          showRange: true
         };
         break;
       case 'baixo':
       case 'low':
         baseStatus = { 
           color: 'bg-blue-500', 
-          width: '40%',
+          width: '30%',
           position: '20%', 
-          indicatorClass: 'bg-blue-500'
+          indicatorClass: 'bg-blue-500',
+          showRange: true
         };
         break;
       case 'alto':
@@ -225,42 +229,58 @@ export default function ExamReport() {
           color: 'bg-red-500', 
           width: '85%',
           position: '80%', 
-          indicatorClass: 'bg-red-500'
+          indicatorClass: 'bg-red-500',
+          showRange: true
         };
         break;
     }
     
     // Se tivermos valor e referências, podemos calcular uma posição mais precisa
     if (value && referenceMin && referenceMax) {
-      const val = parseFloat(value);
-      const min = parseFloat(referenceMin);
-      const max = parseFloat(referenceMax);
-      
-      if (!isNaN(val) && !isNaN(min) && !isNaN(max) && max > min) {
-        const range = max - min;
-        const padding = range * 0.2; // 20% de margem para visualização
-        const displayMin = min - padding;
-        const displayMax = max + padding;
-        const displayRange = displayMax - displayMin;
+      try {
+        const val = parseFloat(value);
+        const min = parseFloat(referenceMin);
+        const max = parseFloat(referenceMax);
         
-        // Calcular posição dentro da faixa expandida
-        const position = Math.max(0, Math.min(100, ((val - displayMin) / displayRange) * 100));
-        
-        // Determinar cor com base na posição em relação à faixa de referência
-        let color = 'bg-green-600';
-        if (val < min) color = 'bg-blue-500';
-        else if (val > max) color = 'bg-red-500';
-        
-        return {
-          color: baseStatus.color,
-          width: '60%', // Largura fixa para a faixa de referência
-          position: `${position}%`,
-          indicatorClass: color,
-          showRange: true,
-          referenceMin: min,
-          referenceMax: max,
-          value: val
-        };
+        if (!isNaN(val) && !isNaN(min) && !isNaN(max) && max > min) {
+          const range = max - min;
+          const padding = range * 0.5; // 50% de margem para visualização para valores extremos
+          const displayMin = min - padding;
+          const displayMax = max + padding;
+          const displayRange = displayMax - displayMin;
+          
+          // Calcular posição dentro da faixa expandida
+          const position = Math.max(0, Math.min(100, ((val - displayMin) / displayRange) * 100));
+          
+          // Determinar cor com base na posição em relação à faixa de referência
+          let color = 'bg-green-600';
+          let severity = 'normal';
+          
+          if (val < min) {
+            color = 'bg-blue-500';
+            severity = val < min * 0.7 ? 'grave' : 'leve';
+          } else if (val > max) {
+            color = 'bg-red-500';
+            severity = val > max * 1.3 ? 'grave' : 'leve';
+          } else if (val > max * 0.9) {
+            color = 'bg-yellow-500';
+            severity = 'limítrofe';
+          }
+          
+          return {
+            color: baseStatus.color,
+            width: '40%', // Largura da faixa de referência - área normal
+            position: `${position}%`,
+            indicatorClass: color,
+            showRange: true,
+            referenceMin: min,
+            referenceMax: max,
+            value: val,
+            severity: severity
+          };
+        }
+      } catch (e) {
+        console.error("Erro ao processar valores numéricos", e);
       }
     }
     
