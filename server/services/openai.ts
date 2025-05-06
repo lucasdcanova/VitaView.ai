@@ -326,6 +326,219 @@ function getFallbackInsights(patientData?: any) {
  */
 
 /**
+ * Analisa exames extraídos pelo Gemini (sem análise prévia) usando a OpenAI
+ * @param examId ID do exame que já foi processado pelo Gemini e está pronto para análise
+ * @param userId ID do usuário dono do exame
+ * @param storage Interface de armazenamento para acessar dados
+ * @param patientData Dados adicionais do paciente para contextualização
+ */
+export async function analyzeExtractedExam(examId: number, userId: number, storage: IStorage, patientData?: any) {
+  try {
+    console.log(`Iniciando análise do exame ID ${examId} com OpenAI`);
+    
+    // 1. Obter o exame e resultado da extração feita pelo Gemini
+    const exam = await storage.getExam(examId);
+    if (!exam || exam.userId !== userId) {
+      throw new Error("Exame não encontrado ou acesso não autorizado");
+    }
+    
+    if (exam.status !== "ready_for_analysis" && exam.status !== "extracted") {
+      throw new Error(`Exame com status inválido para análise: ${exam.status}`);
+    }
+    
+    // 2. Obter resultado da extração prévia feita pelo Gemini
+    const extractionResult = await storage.getExamResultByExamId(examId);
+    if (!extractionResult) {
+      throw new Error("Resultado da extração não encontrado");
+    }
+    
+    // 3. Obter métricas de saúde extraídas do exame
+    const healthMetrics = await storage.getHealthMetricsByUserId(userId);
+    const examDateStr = exam.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
+                        exam.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
+    
+    // Filtrar métricas desta data de exame específica
+    let metricsFromThisExam;
+    if (examDateStr) {
+      metricsFromThisExam = healthMetrics.filter(metric => {
+        const metricDateStr = metric.date ? new Date(metric.date).toISOString().split('T')[0] : null;
+        return metricDateStr === examDateStr;
+      });
+    } else {
+      // Se não houver data, pega as 20 métricas mais recentes
+      metricsFromThisExam = healthMetrics.slice(0, 20);
+    }
+    
+    console.log(`Analisando ${metricsFromThisExam.length} métricas do exame`);
+    
+    // 4. Organizar métricas por categoria para uma análise mais estruturada
+    const metricsByCategory = new Map();
+    metricsFromThisExam.forEach(metric => {
+      const category = metric.category || "Geral";
+      if (!metricsByCategory.has(category)) {
+        metricsByCategory.set(category, []);
+      }
+      metricsByCategory.get(category).push(metric);
+    });
+    
+    // Prepare patient context if available
+    let patientContext = "";
+    if (patientData) {
+      patientContext = `
+      Dados do paciente:
+      - Sexo: ${patientData.gender || 'Não informado'}
+      - Idade: ${patientData.age || 'Não informada'}
+      - Doenças preexistentes: ${patientData.diseases?.join(", ") || 'Nenhuma informada'}
+      - Cirurgias prévias: ${patientData.surgeries?.join(", ") || 'Nenhuma informada'}
+      - Alergias: ${patientData.allergies?.join(", ") || 'Nenhuma informada'}
+      - Histórico familiar: ${patientData.familyHistory || 'Não informado'}
+      `;
+    }
+    
+    // Criar prompt mais estruturado para a OpenAI com base nas categorias de exames
+    let metricsDescriptionByCategory = "";
+    metricsByCategory.forEach((metrics, category) => {
+      metricsDescriptionByCategory += `\n### ${category.toUpperCase()} (${metrics.length} parâmetros):\n`;
+      metrics.forEach(metric => {
+        const status = metric.status ? ` (${metric.status.toUpperCase()})` : '';
+        const reference = metric.referenceMin && metric.referenceMax 
+          ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ''}]` 
+          : '';
+        metricsDescriptionByCategory += `- ${metric.name}: ${metric.value} ${metric.unit || ''}${status}${reference}\n`;
+        if (metric.clinical_significance) {
+          metricsDescriptionByCategory += `  Significado clínico: ${metric.clinical_significance}\n`;
+        }
+      });
+    });
+    
+    // 5. Criar prompt para OpenAI com análise holística e categorizada
+    const prompt = `
+      Você é um especialista médico altamente qualificado em medicina laboratorial e diagnóstico clínico.
+      Agora você vai realizar uma ANÁLISE GLOBAL E HOLÍSTICA dos resultados de exames que já foram processados e extraídos previamente.
+      
+      ### TAREFA PRINCIPAL:
+      Analise detalhadamente os seguintes resultados de exames médicos e forneça uma avaliação médica integrativa,
+      correlacionando os diferentes parâmetros entre si e com o contexto do paciente quando disponível.
+      
+      ### DADOS DO PACIENTE:
+      ${patientContext}
+      
+      ### DADOS DO EXAME:
+      - Nome: ${exam.name}
+      - Tipo de documento: ${exam.fileType}
+      - Data do exame: ${examDateStr || 'Não informada'}
+      - Laboratório: ${exam.laboratoryName || 'Não informado'}
+      - Médico solicitante: ${exam.requestingPhysician ? `Dr. ${exam.requestingPhysician}` : 'Não informado'}
+      
+      ### MÉTRICAS DE SAÚDE ORGANIZADAS POR CATEGORIA:
+      ${metricsDescriptionByCategory}
+      
+      ### INSTRUÇÕES ESPECÍFICAS:
+      1. INTEGRE todos os resultados em uma análise clínica compreensiva.
+      2. Identifique CORRELAÇÕES e PADRÕES entre diferentes marcadores de diferentes categorias.
+      3. Destaque ALTERAÇÕES SIGNIFICATIVAS e explique sua importância clínica.
+      4. Considere o CONTEXTO COMPLETO, incluindo exames de diferentes categorias.
+      5. Sugira possíveis diagnósticos com diferentes níveis de probabilidade.
+      6. Forneça recomendações específicas e personalizadas.
+      7. Identifique especialidades médicas relevantes para acompanhamento.
+      8. Inclua sugestões de estilo de vida baseadas nos resultados.
+      9. Avalie fatores de risco evidenciados pelos exames.
+      10. Calcule um "health score" estimado (0-100) baseado nos resultados.
+      
+      ### FORMATO DA RESPOSTA (responda EXATAMENTE neste formato JSON):
+      {
+        "contextualAnalysis": "Análise contextualizada dos resultados, integrando diferentes categorias de exames (2-3 parágrafos)",
+        "possibleDiagnoses": [
+          {
+            "condition": "Nome da possível condição",
+            "probability": "alta|média|baixa",
+            "description": "Breve descrição da condição",
+            "indicativeMarkers": ["Marcador 1", "Marcador 2"]
+          }
+        ],
+        "recommendations": [
+          "Recomendação específica 1",
+          "Recomendação específica 2"
+        ],
+        "specialists": [
+          "Especialidade médica 1 para acompanhamento",
+          "Especialidade médica 2 para acompanhamento"
+        ],
+        "lifestyle": {
+          "diet": "Recomendações nutricionais específicas",
+          "exercise": "Recomendações de atividade física",
+          "sleep": "Recomendações sobre sono",
+          "stress_management": "Recomendações sobre gestão do estresse"
+        },
+        "riskFactors": [
+          "Fator de risco 1 identificado nos resultados",
+          "Fator de risco 2 identificado nos resultados"
+        ],
+        "healthParameters": {
+          "healthScore": 85,
+          "criticalAreas": ["Área 1", "Área 2"],
+          "stableAreas": ["Área 3", "Área 4"],
+          "improvementTrends": ["Tendência 1", "Tendência 2"],
+          "worseningTrends": ["Tendência 3", "Tendência 4"]
+        },
+        "evidenceBasedAssessment": {
+          "clinicalGuidelines": ["Diretriz 1", "Diretriz 2"],
+          "studyReferences": ["Referência 1", "Referência 2"],
+          "confidenceLevel": "Alta|Média|Baixa"
+        }
+      }
+      
+      Importante: Respeite RIGOROSAMENTE o formato JSON acima. Sua análise deve ser integrada e holística, considerando TODAS as categorias de exames em conjunto.
+    `;
+    
+    // 6. Chamar a API da OpenAI
+    console.log("Enviando prompt para OpenAI...");
+    const insightsResponse = await callOpenAIApi(prompt);
+    
+    // 7. Atualizar o exame para refletir a análise completa
+    console.log("Atualizando exame com análise OpenAI");
+    await storage.updateExam(examId, { 
+      status: "analyzed" 
+    });
+    
+    // 8. Criar um novo resultado com a análise completa
+    const analysisResult = await storage.createExamResult({
+      examId: examId,
+      summary: insightsResponse.contextualAnalysis?.substring(0, 150) + "...",
+      detailedAnalysis: JSON.stringify(insightsResponse),
+      recommendations: insightsResponse.recommendations?.join("\n"),
+      healthMetrics: extractionResult.healthMetrics, // Mantém as métricas da extração
+      aiProvider: "openai:analysis"
+    });
+    
+    // 9. Notificar o usuário
+    await storage.createNotification({
+      userId,
+      title: "Análise completa disponível",
+      message: `A análise detalhada do exame "${exam.name}" está pronta para visualização`,
+      read: false
+    });
+    
+    return {
+      exam,
+      extractionResult,
+      analysisResult,
+      insights: insightsResponse
+    };
+    
+  } catch (error) {
+    console.error('Erro ao analisar exame com OpenAI:', error);
+    
+    // Em caso de falha, retornar um erro estruturado
+    return {
+      error: true,
+      message: `Falha ao analisar o exame: ${error.message}`,
+      details: String(error)
+    };
+  }
+}
+
+/**
  * Analisa um documento médico usando a OpenAI como fallback quando o Gemini falha
  * @param fileContent - Conteúdo do arquivo codificado em Base64
  * @param fileType - Tipo do arquivo (pdf, jpeg, png)

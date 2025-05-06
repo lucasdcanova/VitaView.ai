@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
+import { analyzeExtractedExam } from "./services/openai";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 
 // Middleware para verificar autenticação
@@ -416,6 +417,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API route for health insights
+  // Nova rota para analisar um exame já extraído com a OpenAI
+  app.post("/api/exams/:id/analyze", ensureAuthenticated, async (req, res) => {
+    try {
+      const examId = parseInt(req.params.id, 10);
+      const userId = req.user.id;
+      
+      if (isNaN(examId)) {
+        return res.status(400).json({ message: "ID de exame inválido" });
+      }
+      
+      // Verificar se o exame existe e pertence ao usuário
+      const exam = await storage.getExam(examId);
+      if (!exam) {
+        return res.status(404).json({ message: "Exame não encontrado" });
+      }
+      
+      if (exam.userId !== userId) {
+        return res.status(403).json({ message: "Acesso não autorizado a este exame" });
+      }
+      
+      console.log(`Iniciando análise do exame ${examId} com OpenAI para usuário ${userId}`);
+      
+      // Extrair dados do paciente do corpo da requisição, se disponíveis
+      const patientData = req.body.patientData || {};
+      
+      // Chamar o serviço de análise da OpenAI
+      const result = await analyzeExtractedExam(examId, userId, storage, patientData);
+      
+      if (result.error) {
+        console.error(`Erro na análise do exame ${examId}:`, result.message);
+        return res.status(400).json(result);
+      }
+      
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Erro ao analisar exame com OpenAI:", error);
+      res.status(500).json({ 
+        message: "Erro ao analisar o exame",
+        error: String(error)
+      });
+    }
+  });
+  
   app.get("/api/exams/:id/insights", async (req, res) => {
     try {
       const examId = parseInt(req.params.id);
