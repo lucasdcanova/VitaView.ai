@@ -149,6 +149,9 @@ export default function ExamResultSingle() {
                           <dt className="font-medium text-gray-500">Laboratório:</dt>
                           <dd>{examData.exam.laboratoryName || 'Não informado'}</dd>
                           
+                          <dt className="font-medium text-gray-500">Médico Solicitante:</dt>
+                          <dd>{examData.exam.requestingPhysician || 'Não informado'}</dd>
+                          
                           <dt className="font-medium text-gray-500">Status:</dt>
                           <dd>
                             <Badge className={
