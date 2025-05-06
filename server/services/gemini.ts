@@ -83,14 +83,18 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                    - Geralmente está presente no cabeçalho ou rodapé do documento
                    - Pode estar associado a um logotipo ou marca registrada
                 
-                4. Valores de referência:
+                4. Valores de referência e significância clínica:
                    - Para cada parâmetro médico, identifique os valores de referência (mínimo e máximo)
-                   - Geralmente mostrados como "Valores de referência", "VR", "Intervalo de referência"
+                   - Geralmente mostrados como "Valores de referência", "VR", "Intervalo de referência", "Valores normais"
+                   - Observe bem a formatação: pode aparecer como "12-45 mg/dL", "VR: 3.5-5.0", "Referência: entre 70 e 99"
+                   - Entenda a significância clínica de cada parâmetro (o que ele indica, qual sua importância diagnóstica)
                 
                 EXTRAÇÃO DE MÉTRICAS DE SAÚDE (ABRANGENTE E PRECISA):
                 - Identifique TODOS os parâmetros médicos com seus valores numéricos e unidades exatas
                 - Para cada parâmetro:
                   * Determine o status (normal, alto, baixo ou atenção) baseado nos valores de referência
+                  * Registre OBRIGATORIAMENTE os valores de referência (mínimo e máximo) para cada parâmetro
+                  * Explique a significância clínica do parâmetro (ex: "Indica função renal", "Marcador de inflamação")
                   * Capture a variação explícita em relação a resultados anteriores, se mencionada
                   * Classifique a gravidade de qualquer anormalidade (leve, moderada, severa)
                   * Identifique tendências temporais se múltiplos resultados forem apresentados
@@ -261,15 +265,75 @@ function defaultHealthMetrics(fileType: string) {
 
   if (fileType === 'pdf') {
     return [
-      { name: "hemoglobina", value: "14.2", unit: "g/dL", status: "normal", change: "+0.1", date: currentDate },
-      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3", date: currentDate  },
-      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5", date: currentDate  },
-      { name: "vitamina_d", value: "32", unit: "ng/mL", status: "baixo", change: "-2", date: currentDate  }
+      { 
+        name: "hemoglobina", 
+        value: "14.2", 
+        unit: "g/dL", 
+        status: "normal", 
+        change: "+0.1", 
+        date: currentDate,
+        referenceMin: "12.0",
+        referenceMax: "16.0",
+        clinical_significance: "A hemoglobina é responsável pelo transporte de oxigênio no sangue. Valores baixos podem indicar anemia."
+      },
+      { 
+        name: "glicemia", 
+        value: "95", 
+        unit: "mg/dL", 
+        status: "atenção", 
+        change: "+3", 
+        date: currentDate,
+        referenceMin: "70",
+        referenceMax: "99",
+        clinical_significance: "Medida de glicose no sangue em jejum. Valores entre 100-125 mg/dL indicam pré-diabetes."
+      },
+      { 
+        name: "colesterol", 
+        value: "180", 
+        unit: "mg/dL", 
+        status: "normal", 
+        change: "-5", 
+        date: currentDate,
+        referenceMin: "150",
+        referenceMax: "199",
+        clinical_significance: "O colesterol total é importante para avaliar o risco cardiovascular junto com suas frações HDL e LDL."
+      },
+      { 
+        name: "vitamina_d", 
+        value: "32", 
+        unit: "ng/mL", 
+        status: "baixo", 
+        change: "-2", 
+        date: currentDate,
+        referenceMin: "30",
+        referenceMax: "100",
+        clinical_significance: "Essencial para saúde óssea e imunológica. Níveis baixos são comuns e podem requerer suplementação."
+      }
     ];
   } else {
     return [
-      { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3", date: currentDate  },
-      { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5", date: currentDate  }
+      { 
+        name: "glicemia", 
+        value: "95", 
+        unit: "mg/dL", 
+        status: "atenção", 
+        change: "+3", 
+        date: currentDate,
+        referenceMin: "70",
+        referenceMax: "99",
+        clinical_significance: "Medida de glicose no sangue em jejum. Valores entre 100-125 mg/dL indicam pré-diabetes."
+      },
+      { 
+        name: "colesterol", 
+        value: "180", 
+        unit: "mg/dL", 
+        status: "normal", 
+        change: "-5", 
+        date: currentDate,
+        referenceMin: "150",
+        referenceMax: "199",
+        clinical_significance: "O colesterol total é importante para avaliar o risco cardiovascular junto com suas frações HDL e LDL."
+      }
     ];
   }
 }

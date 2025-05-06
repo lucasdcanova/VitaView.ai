@@ -36,6 +36,87 @@ import {
   LineChart,
   Clock
 } from "lucide-react";
+
+// Função para calcular a posição e a classe do indicador de métrica
+function calculateMetricPosition(
+  status: string | null,
+  value: string,
+  minReference: string | null,
+  maxReference: string | null
+): { position: string, indicatorClass: string } {
+  // Valores padrão
+  let position = '50%';
+  let indicatorClass = 'bg-green-500';
+  
+  // Se tem valores de referência, calcula posição com base neles
+  if (minReference && maxReference) {
+    const min = parseFloat(minReference);
+    const max = parseFloat(maxReference);
+    const val = parseFloat(value);
+    
+    if (!isNaN(min) && !isNaN(max) && !isNaN(val)) {
+      // Normalização para visualização
+      const range = max - min;
+      const padding = range * 0.2; // 20% de margem visual
+      const visualMin = min - padding;
+      const visualMax = max + padding;
+      const visualRange = visualMax - visualMin;
+      
+      // Porcentagem entre 10 e 90% para melhor visibilidade
+      let percentage = ((val - visualMin) / visualRange) * 100;
+      percentage = Math.max(10, Math.min(90, percentage));
+      
+      position = `${percentage}%`;
+      
+      // Cores baseadas na relação com os valores de referência
+      if (val > max) {
+        indicatorClass = 'bg-red-500';
+      } else if (val < min) {
+        indicatorClass = 'bg-blue-500';
+      } else if (val >= max * 0.9) {
+        indicatorClass = 'bg-amber-500';
+      } else {
+        indicatorClass = 'bg-green-500';
+      }
+    }
+  } else {
+    // Sem referências, usa apenas o status
+    switch (status) {
+      case 'alto':
+      case 'high':
+        position = '80%';
+        indicatorClass = 'bg-red-500';
+        break;
+      case 'atenção':
+        position = '65%';
+        indicatorClass = 'bg-amber-500';
+        break;
+      case 'baixo':
+      case 'low':
+        position = '20%';
+        indicatorClass = 'bg-blue-500';
+        break;
+      default:
+        position = '50%';
+        indicatorClass = 'bg-green-500';
+    }
+  }
+  
+  return { position, indicatorClass };
+}
+
+// Função para mostrar ícone de variação baseado no valor
+function getChangeIconForMetric(change: string | null): JSX.Element {
+  if (!change) return <Minus className="h-3 w-3" />;
+  
+  if (change.startsWith('+')) {
+    return <ArrowUp className="h-3 w-3" />;
+  } else if (change.startsWith('-')) {
+    return <ArrowDown className="h-3 w-3" />;
+  } else {
+    return <Minus className="h-3 w-3" />;
+  }
+}
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -182,109 +263,28 @@ export default function ExamReport() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
   
-  const getMetricStatus = (status?: string, value?: string, referenceMin?: string | null, referenceMax?: string | null) => {
-    // Base status com base na classificação textual
-    let baseStatus = {
-      color: 'bg-green-600',
-      width: '60%',
-      position: '50%',
-      indicatorClass: 'bg-green-600',
-      showRange: false
+  // Função para obter o status da métrica e posicionamento do indicador usando a função auxiliar do topo do arquivo
+  const getMetricStatusForUI = (status?: string, value?: string, referenceMin?: string | null, referenceMax?: string | null) => {
+    // A função no topo do arquivo é getMetricStatus
+    // Chamamos ela passando os valores convertidos para o formato que ela espera
+    const result = getMetricStatus(
+      status || null, 
+      value || '0', 
+      referenceMin || null, 
+      referenceMax || null
+    );
+    
+    // Adicionamos propriedades adicionais para compatibilidade com o código existente
+    return {
+      ...result,
+      color: `bg-${result.indicatorClass.split('-')[1]}-500`,
+      width: '40%',
+      showRange: !!referenceMin && !!referenceMax,
+      referenceMin: referenceMin ? parseFloat(referenceMin) : null,
+      referenceMax: referenceMax ? parseFloat(referenceMax) : null,
+      value: value ? parseFloat(value) : 0,
+      severity: 'normal'
     };
-    
-    // Ajuste por status
-    switch (status?.toLowerCase()) {
-      case 'normal':
-        baseStatus = { 
-          color: 'bg-green-600', 
-          width: '60%',
-          position: '50%', 
-          indicatorClass: 'bg-green-600',
-          showRange: true
-        };
-        break;
-      case 'atenção':
-        baseStatus = { 
-          color: 'bg-yellow-500', 
-          width: '75%',
-          position: '65%', 
-          indicatorClass: 'bg-yellow-500',
-          showRange: true
-        };
-        break;
-      case 'baixo':
-      case 'low':
-        baseStatus = { 
-          color: 'bg-blue-500', 
-          width: '30%',
-          position: '20%', 
-          indicatorClass: 'bg-blue-500',
-          showRange: true
-        };
-        break;
-      case 'alto':
-      case 'high':
-      case 'elevado':
-        baseStatus = { 
-          color: 'bg-red-500', 
-          width: '85%',
-          position: '80%', 
-          indicatorClass: 'bg-red-500',
-          showRange: true
-        };
-        break;
-    }
-    
-    // Se tivermos valor e referências, podemos calcular uma posição mais precisa
-    if (value && referenceMin && referenceMax) {
-      try {
-        const val = parseFloat(value);
-        const min = parseFloat(referenceMin);
-        const max = parseFloat(referenceMax);
-        
-        if (!isNaN(val) && !isNaN(min) && !isNaN(max) && max > min) {
-          const range = max - min;
-          const padding = range * 0.5; // 50% de margem para visualização para valores extremos
-          const displayMin = min - padding;
-          const displayMax = max + padding;
-          const displayRange = displayMax - displayMin;
-          
-          // Calcular posição dentro da faixa expandida
-          const position = Math.max(0, Math.min(100, ((val - displayMin) / displayRange) * 100));
-          
-          // Determinar cor com base na posição em relação à faixa de referência
-          let color = 'bg-green-600';
-          let severity = 'normal';
-          
-          if (val < min) {
-            color = 'bg-blue-500';
-            severity = val < min * 0.7 ? 'grave' : 'leve';
-          } else if (val > max) {
-            color = 'bg-red-500';
-            severity = val > max * 1.3 ? 'grave' : 'leve';
-          } else if (val > max * 0.9) {
-            color = 'bg-yellow-500';
-            severity = 'limítrofe';
-          }
-          
-          return {
-            color: baseStatus.color,
-            width: '40%', // Largura da faixa de referência - área normal
-            position: `${position}%`,
-            indicatorClass: color,
-            showRange: true,
-            referenceMin: min,
-            referenceMax: max,
-            value: val,
-            severity: severity
-          };
-        }
-      } catch (e) {
-        console.error("Erro ao processar valores numéricos", e);
-      }
-    }
-    
-    return baseStatus;
   };
   
   const getChangeIcon = (change?: string) => {
