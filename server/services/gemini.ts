@@ -63,52 +63,74 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       });
       
       // Prepare the prompt for the model
-      const prompt = `Você é um especialista médico em análise de exames laboratoriais, altamente treinado para extrair dados estruturados de documentos médicos.
+      const prompt = `Você é um especialista médico em análise de exames laboratoriais e documentos médicos, treinado para extrair dados estruturados com máxima precisão.
                 
-                TAREFA: Analise cuidadosamente este exame ${fileType.toUpperCase()} e extraia todos os dados solicitados no formato específico abaixo.
+                TAREFA PRINCIPAL: Analise cuidadosamente este exame ${fileType.toUpperCase()} e extraia todos os dados solicitados no formato específico abaixo.
                 
-                EXTRAÇÃO DE METADADOS CRÍTICOS (prioridade máxima):
-                1. Data de realização do exame - busque em todo o documento (geralmente perto do cabeçalho ou rodapé)
-                2. Nome do médico solicitante - procure por "médico solicitante", "solicitado por", "Dr.", etc.
-                3. Nome do laboratório - busque pelo nome da instituição ou clínica
+                EXTRAÇÃO DE METADADOS CRÍTICOS (PRIORIDADE MÁXIMA):
+                1. Data de realização do exame:
+                   - Busque em todo o documento, incluindo cabeçalho, rodapé e corpo do texto
+                   - Procure por padrões como "Data: xx/xx/xxxx", "Realizado em: xx/xx/xxxx", "Data da coleta" 
+                   - Examine também datas próximas a palavras como "emissão", "coleta", "realização"
                 
-                EXTRAÇÃO DE MÉTRICAS DE SAÚDE:
-                - Identifique TODOS os parâmetros médicos com seus valores e unidades
-                - Para cada parâmetro, determine se está normal, alto, baixo ou requer atenção
-                - Se houver valores de referência, use-os para classificar o status
-                - Estime a variação em relação a valores anteriores se mencionado
+                2. Nome do médico solicitante:
+                   - Procure especificamente por "médico solicitante", "solicitado por", "médico", "Dr.", "Dra."
+                   - Busque por padrões de texto próximos a CRM (número de registro médico)
+                   - Não confunda com médico responsável pelo laboratório ou médico executor
                 
-                DEPOIS da extração, forneça uma análise médica profissional baseada nesses dados.
+                3. Nome do laboratório:
+                   - Identifique o nome da instituição, clínica ou laboratório que realizou o exame
+                   - Geralmente está presente no cabeçalho ou rodapé do documento
+                   - Pode estar associado a um logotipo ou marca registrada
                 
-                RESPONDA APENAS NO SEGUINTE FORMATO JSON:
+                4. Valores de referência:
+                   - Para cada parâmetro médico, identifique os valores de referência (mínimo e máximo)
+                   - Geralmente mostrados como "Valores de referência", "VR", "Intervalo de referência"
+                
+                EXTRAÇÃO DE MÉTRICAS DE SAÚDE (ABRANGENTE E PRECISA):
+                - Identifique TODOS os parâmetros médicos com seus valores numéricos e unidades exatas
+                - Para cada parâmetro:
+                  * Determine o status (normal, alto, baixo ou atenção) baseado nos valores de referência
+                  * Capture a variação explícita em relação a resultados anteriores, se mencionada
+                  * Classifique a gravidade de qualquer anormalidade (leve, moderada, severa)
+                  * Identifique tendências temporais se múltiplos resultados forem apresentados
+                
+                DEPOIS da extração completa, forneça uma análise médica profissional baseada nos dados.
+                
+                RESPONDA EXCLUSIVAMENTE NO SEGUINTE FORMATO JSON (sem texto adicional):
                 {
-                  "examDate": "YYYY-MM-DD (extraia a data precisa, é CRÍTICO. Se não encontrada, deixe VAZIO, não invente)",
-                  "requestingPhysician": "Nome completo do médico, se disponível (sem Dr./Dra.)",
-                  "laboratoryName": "Nome do laboratório ou clínica",
-                  "summary": "Resumo conciso dos resultados principais em uma frase",
-                  "detailedAnalysis": "Análise médica detalhada dos resultados e suas implicações",
+                  "examDate": "YYYY-MM-DD (extraia a data exata, campo CRÍTICO, deixe vazio se não encontrada, NUNCA invente)",
+                  "requestingPhysician": "Nome completo do médico solicitante (sem títulos como Dr./Dra.)",
+                  "laboratoryName": "Nome completo do laboratório ou clínica que realizou o exame",
+                  "summary": "Resumo objetivo dos resultados principais em até duas frases, destacando anormalidades significativas",
+                  "detailedAnalysis": "Análise médica detalhada (200-300 palavras) dos resultados e suas implicações clínicas, incluindo correlações entre diferentes parâmetros",
                   "recommendations": [
-                    "Recomendação específica 1",
-                    "Recomendação específica 2",
-                    "Recomendação específica 3"
+                    "Recomendação específica e acionável baseada nos resultados anormais",
+                    "Sugestão de acompanhamento ou exames adicionais se necessário",
+                    "Orientação sobre modificações de estilo de vida relevantes"
                   ],
                   "healthMetrics": [
                     {
-                      "name": "Nome do parâmetro (ex: hemoglobina, colesterol, etc)",
-                      "value": "Valor numérico exato",
-                      "unit": "Unidade de medida (ex: g/dL, mg/dL)",
-                      "status": "normal, alto, baixo ou atenção",
-                      "change": "Variação em relação ao anterior (+2, -1.5, etc) ou vazio se não mencionado"
+                      "name": "Nome preciso do parâmetro (ex: hemoglobina, glicose em jejum, colesterol LDL)",
+                      "value": "Valor numérico exato, sem arredondamentos",
+                      "unit": "Unidade de medida precisa (ex: g/dL, mg/dL, U/L)",
+                      "referenceMin": "Valor mínimo de referência, se disponível",
+                      "referenceMax": "Valor máximo de referência, se disponível",
+                      "status": "normal, alto, baixo ou atenção (baseado estritamente nos valores de referência)",
+                      "change": "Variação quantitativa em relação a exames anteriores (+10%, -5 mg/dL, etc)",
+                      "clinical_significance": "Breve interpretação clínica deste parâmetro específico"
                     }
                   ]
                 }
                 
-                RESTRIÇÕES IMPORTANTES:
-                - Nunca invente dados. Se um campo não puder ser determinado, deixe-o vazio ("").
-                - Formate a data SEMPRE como YYYY-MM-DD, nunca outro formato.
-                - Inclua TODOS os parâmetros médicos encontrados, mesmo os que estejam normais.
-                - Extração precisa é mais importante que análise detalhada.
-                - Certifique-se que o JSON seja válido e sem erros de formatação.`;
+                RESTRIÇÕES CRÍTICAS:
+                - NUNCA invente dados. Se um campo não puder ser determinado com certeza, deixe-o vazio ("").
+                - Formate a data SEMPRE como YYYY-MM-DD, convertendo de qualquer outro formato encontrado.
+                - Inclua ABSOLUTAMENTE TODOS os parâmetros médicos encontrados, mesmo os que estejam normais.
+                - Priorize a extração precisa sobre interpretações ou análises subjetivas.
+                - O JSON DEVE ser válido, sem erros de formatação, escapes incorretos ou campos duplicados.
+                - Se houver múltiplos resultados para o mesmo parâmetro, inclua todos como métricas separadas.
+                - Para valores fora dos intervalos de referência, certifique-se de classificá-los corretamente.`;
 
       // Determine the mime type based on file type
       const mimeType = 
@@ -145,7 +167,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
           analysisData.healthMetrics = defaultHealthMetrics(fileType);
         }
         
-        // Checagem adicional para valores nulos
+        // Processamento aprimorado e validação dos dados de métricas
         if (analysisData.healthMetrics) {
           analysisData.healthMetrics = analysisData.healthMetrics.map(metric => ({
             name: metric.name || "desconhecido",
@@ -153,6 +175,9 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
             unit: metric.unit || "",
             status: metric.status || "normal",
             change: metric.change || "",
+            referenceMin: metric.referenceMin || null,
+            referenceMax: metric.referenceMax || null,
+            clinical_significance: metric.clinical_significance || null
           }));
         }
         

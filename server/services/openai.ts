@@ -28,53 +28,109 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       `;
     }
     
-    // Prompt aprimorado para OpenAI com ênfase em diagnósticos possíveis e análise baseada em evidências
+    // Prompt aprimorado para OpenAI com análise holística e personalizada
     const prompt = `
-      Você é um médico especialista em interpretação de exames laboratoriais e diagnóstico clínico.
-      Sua análise é baseada em evidências científicas atualizadas e diretrizes médicas de 2024.
+      Você é um especialista médico altamente qualificado em medicina laboratorial, diagnóstico clínico e medicina preventiva.
+      Sua análise integra as evidências científicas mais atualizadas (2024) com diretrizes médicas internacionais e abordagem de medicina personalizada.
       
-      Analise detalhadamente os seguintes resultados de exames médicos e forneça possíveis diagnósticos
-      e recomendações personalizadas de saúde, considerando todos os dados disponíveis.
+      ### TAREFA PRINCIPAL:
+      Analise detalhadamente os seguintes resultados de exames médicos e forneça uma avaliação médica completa, 
+      integrando os dados laboratoriais com o contexto específico do paciente para uma análise verdadeiramente personalizada.
       
+      ### DADOS DO PACIENTE:
       ${patientContext}
       
-      Resumo do exame: ${examResult.summary}
+      ### DADOS DO EXAME:
+      - Resumo: ${examResult.summary}
+      - Análise detalhada: ${examResult.detailedAnalysis}
+      - Recomendações preliminares: ${examResult.recommendations}
+      - Médico solicitante: ${examResult.requestingPhysician || 'Não informado'}
+      - Laboratório: ${examResult.laboratoryName || 'Não informado'}
+      - Data do exame: ${examResult.examDate || 'Não informada'}
       
-      Análise detalhada: ${examResult.detailedAnalysis}
+      ### MÉTRICAS DE SAÚDE DETALHADAS:
+      ${JSON.stringify(examResult.healthMetrics, null, 2)}
       
-      Recomendações do profissional: ${examResult.recommendations}
+      ### INSTRUÇÕES ESPECÍFICAS:
+      1. Faça correlações entre diferentes marcadores/parâmetros e integre-os no contexto do perfil do paciente
+      2. Identifique padrões que possam indicar condições subclínicas ou riscos emergentes
+      3. Priorize a detecção de fatores de risco modificáveis e ofereça intervenções específicas
+      4. Forneça uma análise de tendências temporais quando houver dados históricos disponíveis
+      5. Sugira monitoramento personalizado baseado no perfil de risco específico
+      6. Inclua recomendações nutricionais específicas por nutriente baseadas nos resultados 
+      7. Ofereça uma interpretação integrada que considere potenciais interações entre medicamentos, suplementos e resultados
       
-      Métricas de saúde: ${JSON.stringify(examResult.healthMetrics)}
+      ### RESPONDA ESTRITAMENTE NO SEGUINTE FORMATO JSON:
+      {
+        "contextualAnalysis": "Análise holística detalhada (250-350 palavras) integrando todos os marcadores relevantes com o contexto do paciente, perfil de risco individual e fatores demográficos. Destaque correlações entre diferentes parâmetros e suas implicações clínicas.",
+        
+        "possibleDiagnoses": [
+          {
+            "condition": "Nome preciso da condição médica potencial",
+            "probability": "alta/média/baixa (baseado na correlação específica dos marcadores)",
+            "description": "Descrição concisa da condição com foco no mecanismo fisiopatológico relevante para este paciente",
+            "indicativeMarkers": ["Lista precisa de marcadores específicos que sugerem esta condição", "Com valores exatos e status (alto/baixo)"]
+          }
+        ],
+        
+        "recommendations": [
+          "Recomendação 1: ação específica, mensurável e personalizada",
+          "Recomendação 2: prioridade baseada no risco individual",
+          "Recomendação 3: intervenção diretamente relacionada aos achados laboratoriais",
+          "Recomendação 4: seguimento específico com prazos sugeridos",
+          "Recomendação 5: exames complementares se necessário, com justificativa"
+        ],
+        
+        "specialists": [
+          "Especialista 1: especialidade médica com justificativa específica baseada nos achados",
+          "Especialista 2: especialidade médica com prioridade sugerida (urgente/rotina)",
+          "Especialista 3: especialidade médica com foco preventivo baseado no perfil de risco"
+        ],
+        
+        "lifestyle": {
+          "diet": "Recomendações nutricionais detalhadas, personalizadas e orientadas pelos resultados, incluindo nutrientes específicos a aumentar/reduzir com quantidades sugeridas e fontes alimentares",
+          "exercise": "Recomendações de exercícios específicas (tipo, intensidade, frequência, duração) baseadas nos resultados, incluindo precauções particulares",
+          "sleep": "Recomendações de sono baseadas nos parâmetros metabólicos e hormonais, incluindo duração ideal e práticas de higiene do sono",
+          "stress_management": "Técnicas específicas de gerenciamento de estresse com relevância particular para o perfil metabólico do paciente"
+        },
+        
+        "riskFactors": [
+          "Fator de risco 1: descrição com grau de risco e impacto potencial",
+          "Fator de risco 2: estratégias específicas de modificação",
+          "Fator de risco 3: relevância particular baseada no perfil individual",
+          "Fator de risco 4: conexão com achados laboratoriais específicos"
+        ],
+        
+        "healthParameters": {
+          "healthScore": "Pontuação numérica (0-100) com método de cálculo transparente baseado nos principais marcadores",
+          "criticalAreas": ["Parâmetros específicos que requerem atenção imediata", "Com valores exatos e desvio do ideal"],
+          "stableAreas": ["Parâmetros que estão em níveis saudáveis", "Com valores exatos"],
+          "improvementTrends": ["Parâmetros que mostram melhorias", "Se dados históricos disponíveis"],
+          "worseningTrends": ["Parâmetros que mostram deterioração", "Se dados históricos disponíveis"]
+        },
+        
+        "evidenceBasedAssessment": {
+          "clinicalGuidelines": [
+            "Diretriz clínica 1: referência específica à diretriz atual (2023-2024) relacionada aos achados-chave",
+            "Diretriz clínica 2: ponto específico da diretriz relevante para este caso"
+          ],
+          "studyReferences": [
+            "Estudo 1: citação em formato científico de estudo relevante e recente",
+            "Estudo 2: conexão específica entre o estudo e os achados do paciente",
+            "Estudo 3: significância clínica do estudo para o manejo deste paciente"
+          ],
+          "confidenceLevel": "alto/médio/baixo com justificativa específica baseada na qualidade e completude dos dados"
+        }
+      }
       
-      Responda em formato JSON com EXATAMENTE as seguintes propriedades:
-      1. contextualAnalysis: uma análise contextualizada considerando o perfil do paciente e resultados dos exames
-      2. possibleDiagnoses: array de diagnósticos possíveis com:
-         - condition: nome da condição diagnosticada
-         - probability: probabilidade (alta/média/baixa)
-         - description: descrição breve da condição
-         - indicativeMarkers: array de marcadores nos exames que indicam esta condição
-      3. recommendations: array de recomendações de saúde personalizadas baseadas em evidências (5-6 itens)
-      4. specialists: array de especialistas recomendados para consulta com justificativa (3-4 itens)
-      5. lifestyle: objeto com sugestões detalhadas de estilo de vida:
-         - diet: recomendações alimentares específicas
-         - exercise: tipo, frequência e intensidade de exercícios recomendados
-         - sleep: hábitos de sono e recomendações
-         - stress_management: técnicas e práticas para gerenciamento do estresse
-      6. riskFactors: array de potenciais fatores de risco identificados com níveis de evidência (3-5 itens)
-      7. healthParameters: objeto com os seguintes parâmetros de saúde:
-         - healthScore: pontuação global de saúde (0-100)
-         - criticalAreas: áreas que precisam de atenção imediata
-         - stableAreas: áreas com parâmetros estáveis ou saudáveis
-         - improvementTrends: tendências de melhoria identificadas
-         - worseningTrends: tendências de piora identificadas
-      8. evidenceBasedAssessment: objeto com:
-         - clinicalGuidelines: diretrizes clínicas oficiais relevantes para os resultados (2-3 itens)
-         - studyReferences: referências de estudos científicos relevantes em formato de citação (2-4 itens)
-         - confidenceLevel: nível de confiança na avaliação (alto, médio, baixo)
-    
-      Certifique-se de incluir diagnósticos possíveis baseados nos valores dos exames, mesmo que 
-      a probabilidade seja baixa. Para cada possível diagnóstico, liste os marcadores dos exames
-      que sustentam essa possibilidade.
+      ### DIRETRIZES CRÍTICAS:
+      - Adapte sua análise ao perfil demográfico exato do paciente (idade, sexo, histórico)
+      - Priorize a identificação de condições subclínicas e fatores de risco modificáveis
+      - Baseie todas as recomendações em evidências científicas sólidas e atualizadas
+      - Mantenha um equilíbrio entre sensibilidade diagnóstica e especificidade
+      - Evite alarmismo desnecessário, mas não subestime achados potencialmente significativos
+      - Considere sempre a integração de múltiplos marcadores em vez de análise isolada
+      - O JSON DEVE ser válido, sem erros de formatação ou campos duplicados
     `;
     
     // Check if OpenAI API key is available
