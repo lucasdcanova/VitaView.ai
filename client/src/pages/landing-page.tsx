@@ -1495,19 +1495,22 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="p-1 bg-gradient-to-r from-primary-500 to-primary-700"></div>
+              <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-700"></div>
               <div className="p-6">
-                <div className="rounded-full bg-primary-100 w-12 h-12 flex items-center justify-center mb-4">
-                  <Upload className="h-6 w-6 text-primary-700" />
+                <div className="rounded-full bg-primary-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+                  <Upload className="h-5 w-5 text-primary-700" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">1. Upload e extração inteligente</h3>
-                <p className="text-gray-600 mb-4">A IA analisa seu exame e extrai automaticamente todos os dados relevantes.</p>
+                <p className="text-gray-600 mb-5">A IA analisa seu exame e extrai automaticamente todos os dados relevantes.</p>
                 
                 {/* Demonstração animada de upload e extração */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200 overflow-hidden">
-                  <div className="mb-2 text-sm font-medium text-gray-700">Simulação de extração:</div>
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200 overflow-hidden">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-sm font-medium text-gray-700">Simulação de extração:</div>
+                    <div className="text-xs text-gray-400">processando...</div>
+                  </div>
                   <motion.div
                     initial={{ width: "0%" }}
                     whileInView={{ width: "100%" }}
@@ -1518,55 +1521,55 @@ export default function LandingPage() {
                       repeat: Infinity,
                       repeatDelay: 1
                     }}
-                    className="h-2 bg-gradient-to-r from-primary-500 to-primary-300 rounded-full mb-3"
+                    className="h-2 bg-gradient-to-r from-primary-500 to-primary-300 rounded-full mb-4"
                   ></motion.div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <motion.div 
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 }}
-                      className="flex justify-between text-xs"
+                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
                     >
-                      <span className="text-gray-500">Hemoglobina:</span>
-                      <span className="font-medium text-gray-800">14.2 g/dL</span>
+                      <span className="text-gray-700 font-medium">Hemoglobina:</span>
+                      <span className="font-semibold text-primary-700">14.2 g/dL</span>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.8 }}
-                      className="flex justify-between text-xs"
+                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
                     >
-                      <span className="text-gray-500">Glicemia:</span>
-                      <span className="font-medium text-gray-800">92 mg/dL</span>
+                      <span className="text-gray-700 font-medium">Glicemia:</span>
+                      <span className="font-semibold text-primary-700">92 mg/dL</span>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: 1.1 }}
-                      className="flex justify-between text-xs"
+                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
                     >
-                      <span className="text-gray-500">Colesterol total:</span>
-                      <span className="font-medium text-gray-800">198 mg/dL</span>
+                      <span className="text-gray-700 font-medium">Colesterol total:</span>
+                      <span className="font-semibold text-primary-700">198 mg/dL</span>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: 1.4 }}
-                      className="flex justify-between text-xs"
+                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
                     >
-                      <span className="text-gray-500">Triglicérides:</span>
-                      <span className="font-medium text-gray-800">120 mg/dL</span>
+                      <span className="text-gray-700 font-medium">Triglicérides:</span>
+                      <span className="font-semibold text-primary-700">120 mg/dL</span>
                     </motion.div>
                   </div>
                 </div>
                 
                 <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs">
+                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
                     Ver mais detalhes <ChevronRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
@@ -1579,23 +1582,26 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="p-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
               <div className="p-6">
-                <div className="rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center mb-4">
-                  <Brain className="h-6 w-6 text-blue-700" />
+                <div className="rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+                  <Brain className="h-5 w-5 text-blue-700" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">2. Análise contextualizada</h3>
-                <p className="text-gray-600 mb-4">Nossa IA analisa seus resultados considerando seu histórico e perfil médico.</p>
+                <p className="text-gray-600 mb-5">Nossa IA analisa seus resultados considerando seu histórico e perfil médico.</p>
                 
                 {/* Demonstração de análise contextualizada */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200">
-                  <div className="mb-2 text-sm font-medium text-gray-700">Interpretação inteligente:</div>
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-sm font-medium text-gray-700">Interpretação inteligente:</div>
+                    <div className="text-xs text-blue-600 font-medium">IA Avançada</div>
+                  </div>
                   
-                  <div className="rounded-lg bg-white p-3 border border-gray-200 mb-3">
+                  <div className="rounded-lg bg-white p-3 border border-gray-200 mb-3 shadow-sm">
                     <div className="flex items-start mb-2">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2 flex-shrink-0 shadow-sm">
                         <Brain className="h-4 w-4 text-indigo-600" />
                       </div>
                       <div>
@@ -1618,22 +1624,23 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: 1 }}
                     >
-                      <div className="ml-10 pl-2 border-l border-dashed border-gray-300">
-                        <div className="text-xs text-gray-500 italic mb-1">Comparação com exames anteriores:</div>
+                      <div className="ml-10 pl-2 border-l border-dashed border-indigo-200 mt-2">
+                        <div className="text-xs text-indigo-700 font-medium mb-2">Comparação com exames anteriores:</div>
                         <div className="flex items-center">
-                          <div className="h-2 bg-gradient-to-r from-green-200 to-green-500 rounded-full w-full">
+                          <div className="h-3 bg-gradient-to-r from-indigo-200 to-indigo-500 rounded-full w-full">
                             <div className="relative">
-                              <div className="absolute bottom-2 left-1/4 h-3 w-0.5 bg-gray-400"></div>
-                              <div className="absolute bottom-3 left-1/4 text-xs text-gray-600 -ml-4">90</div>
+                              <div className="absolute top-3 left-1/4 h-3 w-0.5 bg-indigo-700"></div>
+                              <div className="absolute top-7 left-1/4 text-xs text-indigo-800 -ml-3 font-medium">90</div>
                               
-                              <div className="absolute bottom-2 left-1/2 h-3 w-0.5 bg-gray-400"></div>
-                              <div className="absolute bottom-3 left-1/2 text-xs text-gray-600 -ml-4">95</div>
+                              <div className="absolute top-3 left-1/2 h-3 w-0.5 bg-indigo-700"></div>
+                              <div className="absolute top-7 left-1/2 text-xs text-indigo-800 -ml-3 font-medium">95</div>
                               
-                              <div className="absolute bottom-2 left-3/4 h-3 w-0.5 bg-gray-400"></div>
-                              <div className="absolute bottom-3 left-3/4 text-xs text-gray-600 -ml-4">92</div>
+                              <div className="absolute top-3 left-3/4 h-3 w-0.5 bg-indigo-700"></div>
+                              <div className="absolute top-7 left-3/4 text-xs text-indigo-800 -ml-3 font-medium">92</div>
                             </div>
                           </div>
                         </div>
+                        <div className="h-8"></div> {/* Espaço para acomodar os rótulos */}
                       </div>
                     </motion.div>
                   </div>
@@ -1643,14 +1650,20 @@ export default function LandingPage() {
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: 2 }}
-                    className="mt-2 text-xs text-gray-600 italic"
+                    className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-100"
                   >
-                    <span className="text-primary-600 font-medium">IA sugere:</span> Manter alimentação equilibrada e atividade física regular.
+                    <div className="flex items-center">
+                      <Sparkles className="h-3 w-3 text-blue-700 mr-1" />
+                      <span className="text-xs font-medium text-blue-800">IA sugere:</span>
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Manter alimentação equilibrada e atividade física regular.
+                    </div>
                   </motion.div>
                 </div>
                 
                 <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs">
+                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
                     Ver mais análises <ChevronRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
@@ -1663,69 +1676,72 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="p-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+              <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-500"></div>
               <div className="p-6">
-                <div className="rounded-full bg-amber-100 w-12 h-12 flex items-center justify-center mb-4">
-                  <LineChart className="h-6 w-6 text-amber-700" />
+                <div className="rounded-full bg-amber-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+                  <LineChart className="h-5 w-5 text-amber-700" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">3. Visualização histórica</h3>
-                <p className="text-gray-600 mb-4">Acompanhe a evolução dos seus exames ao longo do tempo com gráficos interativos.</p>
+                <p className="text-gray-600 mb-5">Acompanhe a evolução dos seus exames ao longo do tempo com gráficos interativos.</p>
                 
                 {/* Demonstração de visualização histórica */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-4 border border-gray-200">
-                  <div className="mb-2 text-sm font-medium text-gray-700">Timeline de exames:</div>
+                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-sm font-medium text-gray-700">Timeline de exames:</div>
+                    <div className="text-xs text-amber-600 font-medium">Histórico Completo</div>
+                  </div>
                   
-                  <div className="relative">
-                    {/* Linha de tempo vertical */}
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+                  <div className="relative pl-2">
+                    {/* Linha de tempo vertical mais espessa e colorida */}
+                    <div className="absolute left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-300 via-primary-300 to-blue-300 rounded-full z-0"></div>
                     
-                    <div className="space-y-4 relative z-10">
+                    <div className="space-y-4 relative z-10 pl-4">
                       <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, x: -10, y: 10 }}
+                        whileInView={{ opacity: 1, x: 0, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
-                        className="flex items-start"
+                        className="relative"
                       >
-                        <div className="rounded-full w-8 h-8 bg-amber-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-amber-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
                           3
                         </div>
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
-                          <div className="text-xs font-medium">Mai 2025</div>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border border-amber-100 ml-2">
+                          <div className="text-xs font-semibold text-amber-800">Mai 2025</div>
                           <div className="text-xs text-gray-600">Hemograma completo</div>
                         </div>
                       </motion.div>
                       
                       <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, x: -10, y: 10 }}
+                        whileInView={{ opacity: 1, x: 0, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.2 }}
-                        className="flex items-start"
+                        className="relative"
                       >
-                        <div className="rounded-full w-8 h-8 bg-primary-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-primary-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
                           2
                         </div>
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
-                          <div className="text-xs font-medium">Mar 2025</div>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border border-primary-100 ml-2">
+                          <div className="text-xs font-semibold text-primary-800">Mar 2025</div>
                           <div className="text-xs text-gray-600">Perfil lipídico</div>
                         </div>
                       </motion.div>
                       
                       <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, x: -10, y: 10 }}
+                        whileInView={{ opacity: 1, x: 0, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="flex items-start"
+                        className="relative"
                       >
-                        <div className="rounded-full w-8 h-8 bg-blue-500 flex items-center justify-center text-white text-xs font-bold mr-3">
+                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-blue-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
                           1
                         </div>
-                        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 flex-1">
-                          <div className="text-xs font-medium">Jan 2025</div>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border border-blue-100 ml-2">
+                          <div className="text-xs font-semibold text-blue-800">Jan 2025</div>
                           <div className="text-xs text-gray-600">Glicemia em jejum</div>
                         </div>
                       </motion.div>
@@ -1734,7 +1750,7 @@ export default function LandingPage() {
                 </div>
                 
                 <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs">
+                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
                     Ver histórico completo <ChevronRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
@@ -2030,11 +2046,11 @@ export default function LandingPage() {
       </section>
 
       {/* Pré-footer com dados e gráficos */}
-      <section className="py-16 bg-gradient-to-r from-primary-900 to-indigo-900 text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-b from-primary-900 via-primary-800 to-indigo-900 text-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div 
-            className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full opacity-5 blur-3xl"
+            className="absolute top-10 right-10 w-96 h-96 bg-white rounded-full opacity-3 blur-3xl"
             animate={{
               y: [0, 10, 0],
               x: [0, -5, 0],
@@ -2047,7 +2063,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div 
-            className="absolute bottom-0 left-0 w-80 h-80 bg-white rounded-full opacity-5 blur-3xl"
+            className="absolute bottom-0 left-20 w-80 h-80 bg-white rounded-full opacity-3 blur-3xl"
             animate={{
               y: [0, -15, 0],
               x: [0, 8, 0],
@@ -2060,67 +2076,57 @@ export default function LandingPage() {
             }}
           />
           
-          {/* Gráficos decorativos no fundo */}
-          <div className="absolute right-10 top-10 opacity-10">
-            <svg width="200" height="100" viewBox="0 0 200 100">
-              <polyline
-                points="0,80 20,70 40,85 60,60 80,78 100,45 120,63 140,40 160,55 180,30 200,40"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-              />
-            </svg>
-          </div>
-          <div className="absolute left-20 bottom-10 opacity-10">
-            <svg width="150" height="100" viewBox="0 0 150 100">
-              <polyline
-                points="0,40 25,30 50,45 75,25 100,50 125,35 150,55"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-              />
-            </svg>
-          </div>
+          {/* Padrões decorativos no fundo */}
+          <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-white/50 to-transparent"></div>
         </div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white mb-4">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Visualização de Dados</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-5">
               Compreenda seus dados de saúde com clareza
             </h2>
-            <p className="text-lg text-primary-100">
+            <p className="text-lg text-white/80">
               Nossa plataforma analisa seus exames ao longo do tempo, extraindo métricas importantes e fornecendo insights contextualizados.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {/* Gráfico simulado 1 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/15 transition-all duration-300"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Glicemia</h3>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-                  <span className="text-xs">Últimos 6 meses</span>
+              <div className="flex justify-between items-center mb-5">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-teal-400/20 flex items-center justify-center mr-2">
+                    <Activity className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <h3 className="text-lg font-medium">Glicemia</h3>
+                </div>
+                <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-400/10">
+                  <div className="w-2 h-2 rounded-full bg-teal-400"></div>
+                  <span className="text-xs text-teal-300">Últimos 6 meses</span>
                 </div>
               </div>
               
-              <div className="h-40 relative">
-                {/* Linhas de grade */}
-                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
+              <div className="h-40 relative bg-gradient-to-b from-transparent via-transparent to-teal-900/10 rounded-lg p-4">
+                {/* Linhas de grade horizontais */}
+                <div className="absolute inset-x-10 inset-y-0 flex flex-col justify-between">
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
                 </div>
                 
                 {/* Eixo Y - Valores */}
-                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-white/70">
                   <span>120</span>
                   <span>100</span>
                   <span>80</span>
@@ -2128,7 +2134,7 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Gráfico simulado */}
-                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                <div className="absolute left-10 right-0 inset-y-0 flex items-end">
                   <svg viewBox="0 0 300 120" className="w-full h-32">
                     <defs>
                       <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -2157,12 +2163,62 @@ export default function LandingPage() {
                       d="M0,60 C20,75 40,50 60,55 C80,60 100,40 120,45 C140,50 160,30 180,25 C200,20 220,35 240,30 C260,25 280,35 300,30 L300,120 L0,120 Z"
                       fill="url(#gradient1)"
                     />
+                    
+                    {/* Pontos de dados */}
+                    <motion.circle 
+                      cx="0" cy="60" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1 }}
+                    />
+                    <motion.circle 
+                      cx="60" cy="55" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.2 }}
+                    />
+                    <motion.circle 
+                      cx="120" cy="45" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.4 }}
+                    />
+                    <motion.circle 
+                      cx="180" cy="25" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.6 }}
+                    />
+                    <motion.circle 
+                      cx="240" cy="30" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.8 }}
+                    />
+                    <motion.circle 
+                      cx="300" cy="30" r="4" 
+                      fill="#2DD4BF"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 2 }}
+                    />
                   </svg>
                 </div>
               </div>
               
-              <div className="mt-2">
-                <div className="flex justify-between text-xs text-primary-100">
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-white/70 px-8">
                   <span>JAN</span>
                   <span>FEV</span>
                   <span>MAR</span>
@@ -2172,16 +2228,14 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-5 flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <div>
-                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xs text-white/70">Valor atual</div>
                   <div className="text-xl font-bold text-teal-400">92 mg/dL</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-primary-100">Tendência</div>
-                  <div className="text-green-400 flex items-center text-sm font-medium">
-                    <TrendingUp className="h-4 w-4 mr-1" /> Estável
-                  </div>
+                <div className="px-3 py-1 bg-green-500/20 rounded-full flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-400" /> 
+                  <span className="text-xs font-medium text-green-400">Estável</span>
                 </div>
               </div>
             </motion.div>
@@ -2192,27 +2246,32 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/15 transition-all duration-300"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Colesterol</h3>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-400"></div>
-                  <span className="text-xs">Últimos 6 meses</span>
+              <div className="flex justify-between items-center mb-5">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-rose-400/20 flex items-center justify-center mr-2">
+                    <Activity className="h-4 w-4 text-rose-400" />
+                  </div>
+                  <h3 className="text-lg font-medium">Colesterol</h3>
+                </div>
+                <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-rose-400/10">
+                  <div className="w-2 h-2 rounded-full bg-rose-400"></div>
+                  <span className="text-xs text-rose-300">Últimos 6 meses</span>
                 </div>
               </div>
               
-              <div className="h-40 relative">
-                {/* Linhas de grade */}
-                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
+              <div className="h-40 relative bg-gradient-to-b from-transparent via-transparent to-rose-900/10 rounded-lg p-4">
+                {/* Linhas de grade horizontais */}
+                <div className="absolute inset-x-10 inset-y-0 flex flex-col justify-between">
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
                 </div>
                 
                 {/* Eixo Y - Valores */}
-                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-white/70">
                   <span>240</span>
                   <span>200</span>
                   <span>160</span>
@@ -2220,7 +2279,7 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Gráfico simulado */}
-                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                <div className="absolute left-10 right-0 inset-y-0 flex items-end">
                   <svg viewBox="0 0 300 120" className="w-full h-32">
                     <defs>
                       <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -2249,12 +2308,62 @@ export default function LandingPage() {
                       d="M0,80 C20,85 40,75 60,70 C80,65 100,75 120,65 C140,55 160,60 180,50 C200,40 220,45 240,40 C260,35 280,30 300,25 L300,120 L0,120 Z"
                       fill="url(#gradient2)"
                     />
+                    
+                    {/* Pontos de dados */}
+                    <motion.circle 
+                      cx="0" cy="80" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1 }}
+                    />
+                    <motion.circle 
+                      cx="60" cy="70" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.2 }}
+                    />
+                    <motion.circle 
+                      cx="120" cy="65" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.4 }}
+                    />
+                    <motion.circle 
+                      cx="180" cy="50" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.6 }}
+                    />
+                    <motion.circle 
+                      cx="240" cy="40" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.8 }}
+                    />
+                    <motion.circle 
+                      cx="300" cy="25" r="4" 
+                      fill="#FB7185"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 2 }}
+                    />
                   </svg>
                 </div>
               </div>
               
-              <div className="mt-2">
-                <div className="flex justify-between text-xs text-primary-100">
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-white/70 px-8">
                   <span>JAN</span>
                   <span>FEV</span>
                   <span>MAR</span>
@@ -2264,16 +2373,14 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-5 flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <div>
-                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xs text-white/70">Valor atual</div>
                   <div className="text-xl font-bold text-rose-400">198 mg/dL</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-primary-100">Tendência</div>
-                  <div className="text-amber-400 flex items-center text-sm font-medium">
-                    <ArrowRight className="h-4 w-4 mr-1" /> Melhorando
-                  </div>
+                <div className="px-3 py-1 bg-amber-500/20 rounded-full flex items-center">
+                  <ArrowRight className="h-3 w-3 mr-1 text-amber-400" /> 
+                  <span className="text-xs font-medium text-amber-400">Melhorando</span>
                 </div>
               </div>
             </motion.div>
@@ -2284,27 +2391,32 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/15 transition-all duration-300"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Hemoglobina</h3>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-violet-400"></div>
-                  <span className="text-xs">Últimos 6 meses</span>
+              <div className="flex justify-between items-center mb-5">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-violet-400/20 flex items-center justify-center mr-2">
+                    <Activity className="h-4 w-4 text-violet-400" />
+                  </div>
+                  <h3 className="text-lg font-medium">Hemoglobina</h3>
+                </div>
+                <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-400/10">
+                  <div className="w-2 h-2 rounded-full bg-violet-400"></div>
+                  <span className="text-xs text-violet-300">Últimos 6 meses</span>
                 </div>
               </div>
               
-              <div className="h-40 relative">
-                {/* Linhas de grade */}
-                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
-                  <div className="w-full h-px bg-white"></div>
+              <div className="h-40 relative bg-gradient-to-b from-transparent via-transparent to-violet-900/10 rounded-lg p-4">
+                {/* Linhas de grade horizontais */}
+                <div className="absolute inset-x-10 inset-y-0 flex flex-col justify-between">
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
+                  <div className="w-full h-px bg-white/10"></div>
                 </div>
                 
                 {/* Eixo Y - Valores */}
-                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-white/70">
                   <span>16</span>
                   <span>14</span>
                   <span>12</span>
@@ -2312,7 +2424,7 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Gráfico simulado */}
-                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                <div className="absolute left-10 right-0 inset-y-0 flex items-end">
                   <svg viewBox="0 0 300 120" className="w-full h-32">
                     <defs>
                       <linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -2341,12 +2453,62 @@ export default function LandingPage() {
                       d="M0,60 C20,65 40,60 60,55 C80,50 100,53 120,50 C140,47 160,50 180,55 C200,60 220,55 240,50 C260,45 280,47 300,45 L300,120 L0,120 Z"
                       fill="url(#gradient3)"
                     />
+                    
+                    {/* Pontos de dados */}
+                    <motion.circle 
+                      cx="0" cy="60" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1 }}
+                    />
+                    <motion.circle 
+                      cx="60" cy="55" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.2 }}
+                    />
+                    <motion.circle 
+                      cx="120" cy="50" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.4 }}
+                    />
+                    <motion.circle 
+                      cx="180" cy="55" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.6 }}
+                    />
+                    <motion.circle 
+                      cx="240" cy="50" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 1.8 }}
+                    />
+                    <motion.circle 
+                      cx="300" cy="45" r="4" 
+                      fill="#A78BFA"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 2 }}
+                    />
                   </svg>
                 </div>
               </div>
               
-              <div className="mt-2">
-                <div className="flex justify-between text-xs text-primary-100">
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-white/70 px-8">
                   <span>JAN</span>
                   <span>FEV</span>
                   <span>MAR</span>
@@ -2356,16 +2518,14 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-5 flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <div>
-                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xs text-white/70">Valor atual</div>
                   <div className="text-xl font-bold text-violet-400">14.2 g/dL</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-primary-100">Tendência</div>
-                  <div className="text-green-400 flex items-center text-sm font-medium">
-                    <TrendingUp className="h-4 w-4 mr-1" /> Excelente
-                  </div>
+                <div className="px-3 py-1 bg-green-500/20 rounded-full flex items-center">
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-400" /> 
+                  <span className="text-xs font-medium text-green-400">Excelente</span>
                 </div>
               </div>
             </motion.div>
@@ -2373,7 +2533,7 @@ export default function LandingPage() {
           
           <div className="flex justify-center">
             <Link href="/auth?tab=register">
-              <Button size="lg" className="bg-white text-primary-800 hover:bg-primary-50">
+              <Button size="lg" className="bg-white text-primary-800 hover:bg-primary-50 shadow-xl hover:shadow-2xl transition-all duration-300 px-8">
                 Comece agora <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
