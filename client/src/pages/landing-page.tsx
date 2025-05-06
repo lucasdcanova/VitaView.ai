@@ -2029,6 +2029,358 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pré-footer com dados e gráficos */}
+      <section className="py-16 bg-gradient-to-r from-primary-900 to-indigo-900 text-white relative overflow-hidden">
+        {/* Elementos decorativos */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div 
+            className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full opacity-5 blur-3xl"
+            animate={{
+              y: [0, 10, 0],
+              x: [0, -5, 0],
+              scale: [1, 1.05, 1]
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-0 left-0 w-80 h-80 bg-white rounded-full opacity-5 blur-3xl"
+            animate={{
+              y: [0, -15, 0],
+              x: [0, 8, 0],
+              scale: [1, 1.08, 1]
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+          
+          {/* Gráficos decorativos no fundo */}
+          <div className="absolute right-10 top-10 opacity-10">
+            <svg width="200" height="100" viewBox="0 0 200 100">
+              <polyline
+                points="0,80 20,70 40,85 60,60 80,78 100,45 120,63 140,40 160,55 180,30 200,40"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+              />
+            </svg>
+          </div>
+          <div className="absolute left-20 bottom-10 opacity-10">
+            <svg width="150" height="100" viewBox="0 0 150 100">
+              <polyline
+                points="0,40 25,30 50,45 75,25 100,50 125,35 150,55"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+              />
+            </svg>
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Compreenda seus dados de saúde com clareza
+            </h2>
+            <p className="text-lg text-primary-100">
+              Nossa plataforma analisa seus exames ao longo do tempo, extraindo métricas importantes e fornecendo insights contextualizados.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {/* Gráfico simulado 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Glicemia</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-teal-400"></div>
+                  <span className="text-xs">Últimos 6 meses</span>
+                </div>
+              </div>
+              
+              <div className="h-40 relative">
+                {/* Linhas de grade */}
+                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                </div>
+                
+                {/* Eixo Y - Valores */}
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                  <span>120</span>
+                  <span>100</span>
+                  <span>80</span>
+                  <span>60</span>
+                </div>
+                
+                {/* Gráfico simulado */}
+                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                  <svg viewBox="0 0 300 120" className="w-full h-32">
+                    <defs>
+                      <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(45, 212, 191, 0.5)" />
+                        <stop offset="100%" stopColor="rgba(45, 212, 191, 0)" />
+                      </linearGradient>
+                    </defs>
+                    
+                    <motion.path
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, ease: "easeInOut" }}
+                      d="M0,60 C20,75 40,50 60,55 C80,60 100,40 120,45 C140,50 160,30 180,25 C200,20 220,35 240,30 C260,25 280,35 300,30"
+                      fill="none"
+                      stroke="#2DD4BF"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    
+                    <motion.path
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: 0.8 }}
+                      d="M0,60 C20,75 40,50 60,55 C80,60 100,40 120,45 C140,50 160,30 180,25 C200,20 220,35 240,30 C260,25 280,35 300,30 L300,120 L0,120 Z"
+                      fill="url(#gradient1)"
+                    />
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-primary-100">
+                  <span>JAN</span>
+                  <span>FEV</span>
+                  <span>MAR</span>
+                  <span>ABR</span>
+                  <span>MAI</span>
+                  <span>JUN</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xl font-bold text-teal-400">92 mg/dL</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-primary-100">Tendência</div>
+                  <div className="text-green-400 flex items-center text-sm font-medium">
+                    <TrendingUp className="h-4 w-4 mr-1" /> Estável
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Gráfico simulado 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Colesterol</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-rose-400"></div>
+                  <span className="text-xs">Últimos 6 meses</span>
+                </div>
+              </div>
+              
+              <div className="h-40 relative">
+                {/* Linhas de grade */}
+                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                </div>
+                
+                {/* Eixo Y - Valores */}
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                  <span>240</span>
+                  <span>200</span>
+                  <span>160</span>
+                  <span>120</span>
+                </div>
+                
+                {/* Gráfico simulado */}
+                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                  <svg viewBox="0 0 300 120" className="w-full h-32">
+                    <defs>
+                      <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(251, 113, 133, 0.5)" />
+                        <stop offset="100%" stopColor="rgba(251, 113, 133, 0)" />
+                      </linearGradient>
+                    </defs>
+                    
+                    <motion.path
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, ease: "easeInOut" }}
+                      d="M0,80 C20,85 40,75 60,70 C80,65 100,75 120,65 C140,55 160,60 180,50 C200,40 220,45 240,40 C260,35 280,30 300,25"
+                      fill="none"
+                      stroke="#FB7185"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    
+                    <motion.path
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: 0.8 }}
+                      d="M0,80 C20,85 40,75 60,70 C80,65 100,75 120,65 C140,55 160,60 180,50 C200,40 220,45 240,40 C260,35 280,30 300,25 L300,120 L0,120 Z"
+                      fill="url(#gradient2)"
+                    />
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-primary-100">
+                  <span>JAN</span>
+                  <span>FEV</span>
+                  <span>MAR</span>
+                  <span>ABR</span>
+                  <span>MAI</span>
+                  <span>JUN</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xl font-bold text-rose-400">198 mg/dL</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-primary-100">Tendência</div>
+                  <div className="text-amber-400 flex items-center text-sm font-medium">
+                    <ArrowRight className="h-4 w-4 mr-1" /> Melhorando
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Gráfico simulado 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Hemoglobina</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-violet-400"></div>
+                  <span className="text-xs">Últimos 6 meses</span>
+                </div>
+              </div>
+              
+              <div className="h-40 relative">
+                {/* Linhas de grade */}
+                <div className="absolute inset-0 flex flex-col justify-between opacity-30">
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                  <div className="w-full h-px bg-white"></div>
+                </div>
+                
+                {/* Eixo Y - Valores */}
+                <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs">
+                  <span>16</span>
+                  <span>14</span>
+                  <span>12</span>
+                  <span>10</span>
+                </div>
+                
+                {/* Gráfico simulado */}
+                <div className="absolute left-8 right-0 inset-y-0 flex items-end">
+                  <svg viewBox="0 0 300 120" className="w-full h-32">
+                    <defs>
+                      <linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(167, 139, 250, 0.5)" />
+                        <stop offset="100%" stopColor="rgba(167, 139, 250, 0)" />
+                      </linearGradient>
+                    </defs>
+                    
+                    <motion.path
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, ease: "easeInOut" }}
+                      d="M0,60 C20,65 40,60 60,55 C80,50 100,53 120,50 C140,47 160,50 180,55 C200,60 220,55 240,50 C260,45 280,47 300,45"
+                      fill="none"
+                      stroke="#A78BFA"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    
+                    <motion.path
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: 0.8 }}
+                      d="M0,60 C20,65 40,60 60,55 C80,50 100,53 120,50 C140,47 160,50 180,55 C200,60 220,55 240,50 C260,45 280,47 300,45 L300,120 L0,120 Z"
+                      fill="url(#gradient3)"
+                    />
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-primary-100">
+                  <span>JAN</span>
+                  <span>FEV</span>
+                  <span>MAR</span>
+                  <span>ABR</span>
+                  <span>MAI</span>
+                  <span>JUN</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-primary-100">Valor atual</div>
+                  <div className="text-xl font-bold text-violet-400">14.2 g/dL</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-primary-100">Tendência</div>
+                  <div className="text-green-400 flex items-center text-sm font-medium">
+                    <TrendingUp className="h-4 w-4 mr-1" /> Excelente
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+          <div className="flex justify-center">
+            <Link href="/auth?tab=register">
+              <Button size="lg" className="bg-white text-primary-800 hover:bg-primary-50">
+                Comece agora <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+      
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
