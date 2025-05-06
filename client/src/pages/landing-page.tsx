@@ -57,6 +57,9 @@ import { useState, useEffect, useRef } from "react";
 export default function LandingPage() {
   // Estado para animações e elementos interativos
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [showCookieConsent, setShowCookieConsent] = useState(true);
   
   // Efeito para detectar scroll
   useEffect(() => {
@@ -66,11 +69,35 @@ export default function LandingPage() {
       } else {
         setIsScrolled(false);
       }
+      
+      // Mostrar botão de voltar ao topo apenas quando rolar mais para baixo
+      if (window.scrollY > 500) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
     };
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  // Função para rolar suavemente até o topo
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+  
+  // Função para alternar o estado de perguntas/respostas do FAQ
+  const toggleFaq = (index: number) => {
+    if (activeFaq === index) {
+      setActiveFaq(null);
+    } else {
+      setActiveFaq(index);
+    }
+  };
   
   // Variáveis de animação
   const containerVariants = {
@@ -1925,6 +1952,124 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Seção FAQ Accordions */}
+      <section id="faq" className="py-20 bg-white relative overflow-hidden">
+        {/* Elementos decorativos */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute right-0 top-20 w-64 h-64 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute left-20 bottom-10 w-72 h-72 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
+          
+          {/* Elementos decorativos minimalistas */}
+          <div className="absolute top-1/4 left-[10%] w-3 h-3 bg-primary-300 rounded-full opacity-70"></div>
+          <div className="absolute bottom-1/3 right-[15%] w-4 h-4 bg-blue-300 rounded-full opacity-70"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Perguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Frequentes</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Tire suas dúvidas sobre o Hemolog e como nossa plataforma pode ajudar você a entender melhor sua saúde.
+            </p>
+          </motion.div>
+          
+          <div className="max-w-3xl mx-auto">
+            {[
+              {
+                question: "Como o Hemolog analisa meus exames de sangue?",
+                answer: "O Hemolog utiliza inteligência artificial avançada para analisar seus exames. Nosso sistema extrai automaticamente os valores dos documentos, compara com as referências médicas, identifica tendências históricas e fornece interpretações em linguagem simples para você entender o significado dos resultados."
+              },
+              {
+                question: "Meus dados médicos estão seguros na plataforma?",
+                answer: "Absolutamente. Implementamos as mais rigorosas medidas de segurança digital. Todos os dados são criptografados em trânsito e em repouso, seguimos as normas LGPD/HIPAA, nossos servidores possuem certificação de segurança e você sempre mantém total controle sobre quem pode acessar suas informações."
+              },
+              {
+                question: "Posso compartilhar meus resultados com meu médico?",
+                answer: "Sim! O Hemolog permite que você compartilhe facilmente relatórios e gráficos com seus médicos. Você pode gerar um link temporário de acesso ou exportar relatórios em PDF para levar à consulta, facilitando a comunicação com profissionais de saúde."
+              },
+              {
+                question: "Como o Hemolog me ajuda a acompanhar minha saúde ao longo do tempo?",
+                answer: "Nossa plataforma cria automaticamente gráficos de tendência para todos os seus biomarcadores importantes. Você receberá alertas sobre mudanças significativas, e nosso sistema sugerirá correlações entre diferentes parâmetros, criando uma visão holística da sua saúde que evolui com o tempo."
+              },
+              {
+                question: "Que tipos de arquivos posso carregar no Hemolog?",
+                answer: "O Hemolog suporta arquivos em formato PDF, JPG, PNG e TIFF. Você pode carregar exames digitalizados, fotografias de resultados impressos ou arquivos digitais fornecidos diretamente pelos laboratórios. Nosso sistema é treinado para reconhecer formatos de diversos laboratórios."
+              }
+            ].map((faq, index) => (
+              <motion.div 
+                key={index}
+                className="mb-4"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <motion.div 
+                  className={`p-5 rounded-lg border ${activeFaq === index ? 'bg-primary-50 border-primary-200' : 'bg-white border-gray-200'} cursor-pointer transition-all duration-300 hover:shadow-md`}
+                  onClick={() => toggleFaq(index)}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className={`font-semibold ${activeFaq === index ? 'text-primary-700' : 'text-gray-800'}`}>
+                      {faq.question}
+                    </h3>
+                    <motion.div
+                      animate={{ rotate: activeFaq === index ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`flex items-center justify-center w-8 h-8 rounded-full ${activeFaq === index ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      <ChevronDown className="w-5 h-5" />
+                    </motion.div>
+                  </div>
+                  
+                  <AnimatePresence>
+                    {activeFaq === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                        animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-gray-600">{faq.answer}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+          
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <p className="text-lg text-gray-600 mb-6">
+              Ainda tem dúvidas? Entre em contato com nossa equipe de suporte.
+            </p>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white">
+                <MessageSquare className="mr-2 h-5 w-5" /> Fale Conosco
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </section>
