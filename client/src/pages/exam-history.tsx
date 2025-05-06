@@ -692,7 +692,7 @@ export default function ExamHistory() {
                         <ExamCard key={exam.id} exam={exam} />
                       ))}
                     </div>
-                  ) : (
+                  ) : activeView === "list" ? (
                     // List view
                     <div className="space-y-3">
                       {paginatedExams.map((exam) => (
@@ -757,6 +757,70 @@ export default function ExamHistory() {
                           </div>
                         </Card>
                       ))}
+                    </div>
+                  ) : (
+                    // Timeline view
+                    <div className="relative px-4 py-6 bg-white rounded-md shadow-sm">
+                      <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gray-200"></div>
+                      
+                      {paginatedExams.map((exam, index) => {
+                        const examDate = exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
+                        const formattedDate = formatDate(examDate.toString());
+                        
+                        return (
+                          <div key={exam.id} className="relative pl-8 mb-8 last:mb-0">
+                            <div className="absolute left-0 w-3 h-3 rounded-full bg-primary border-4 border-white z-10 mt-1.5"></div>
+                            
+                            <div className="text-sm text-gray-500 mb-1">{formattedDate}</div>
+                            
+                            <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border-l-4 border-l-primary">
+                              <CardHeader className="p-4 pb-2">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`p-2 rounded-md ${getExamTypeColor(exam.fileType)}`}>
+                                      {getFileIcon(exam.fileType, 18)}
+                                    </div>
+                                    <div>
+                                      <CardTitle className="text-base font-medium">{exam.name}</CardTitle>
+                                      <CardDescription className="text-xs">
+                                        {exam.laboratoryName || "Laboratório não informado"}
+                                        {exam.requestingPhysician ? ` • Dr. ${exam.requestingPhysician}` : ""}
+                                      </CardDescription>
+                                    </div>
+                                  </div>
+                                  {getStatusBadge(exam.status)}
+                                </div>
+                              </CardHeader>
+                              
+                              <CardContent className="p-4 pt-2">
+                                <div className="mt-2 flex flex-wrap justify-between gap-2">
+                                  {exam.status === 'analyzed' ? (
+                                    <div className="flex gap-2">
+                                      <Link href={`/diagnosis/${exam.id}`}>
+                                        <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                                          <FileBarChart className="mr-1 h-3.5 w-3.5" />
+                                          Diagnóstico
+                                        </Button>
+                                      </Link>
+                                      <Link href={`/report/${exam.id}`}>
+                                        <Button size="sm" className="h-8 px-3 text-xs">
+                                          <Activity className="mr-1 h-3.5 w-3.5" />
+                                          Detalhes
+                                        </Button>
+                                      </Link>
+                                    </div>
+                                  ) : (
+                                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
+                                      <Clock className="mr-1 h-3.5 w-3.5" />
+                                      Processando...
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   
