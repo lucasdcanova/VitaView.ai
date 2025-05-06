@@ -52,7 +52,7 @@ import {
 
 export default function ExamHistory() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeView, setActiveView] = useState<"grid" | "list">("grid");
+  const [activeView, setActiveView] = useState<"grid" | "list" | "timeline">("grid");
   const [viewMode, setViewMode] = useState<"chronological" | "category">("chronological");
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
@@ -544,6 +544,17 @@ export default function ExamHistory() {
                         >
                           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
                             <path d="M2 3C2 2.44772 2.44772 2 3 2H12C12.5523 2 13 2.44772 13 3C13 3.55228 12.5523 4 12 4H3C2.44772 4 2 3.55228 2 3ZM2 7.5C2 6.94772 2.44772 6.5 3 6.5H12C12.5523 6.5 13 6.94772 13 7.5C13 8.05228 12.5523 8.5 12 8.5H3C2.44772 8.5 2 8.05228 2 7.5ZM2 12C2 11.4477 2.44772 11 3 11H12C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13H3C2.44772 13 2 12.5523 2 12Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                          </svg>
+                        </Button>
+                        <Button
+                          variant={activeView === "timeline" ? "secondary" : "ghost"} 
+                          size="icon"
+                          className="h-10 w-10 rounded-none"
+                          onClick={() => setActiveView("timeline")}
+                          title="Visualização em Linha do Tempo"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
+                            <path d="M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2 7.5C2 4.46243 4.46243 2 7.5 2C10.5376 2 13 4.46243 13 7.5C13 10.5376 10.5376 13 7.5 13C4.46243 13 2 10.5376 2 7.5ZM7.5 3C5.01472 3 3 5.01472 3 7.5C3 9.98528 5.01472 12 7.5 12C9.98528 12 12 9.98528 12 7.5C12 5.01472 9.98528 3 7.5 3ZM7.5 5C7.77614 5 8 5.22386 8 5.5V7.5C8 7.77614 7.77614 8 7.5 8C7.22386 8 7 7.77614 7 7.5V5.5C7 5.22386 7.22386 5 7.5 5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
                           </svg>
                         </Button>
                       </div>
