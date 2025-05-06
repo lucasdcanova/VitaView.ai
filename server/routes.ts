@@ -299,8 +299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId = req.user.id;
       }
       
-      // IMPORTANTE: Vamos aceitar qualquer userId para diagnóstico
-      userId = userId || 2; // Fallback para usuário 2 (Lucas Canova)
+      // Verificar se temos userId válido
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
+      }
       
       // Converte para formato correto e ajusta os dados
       const date = req.body.date ? new Date(req.body.date) : new Date();
@@ -358,16 +360,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Para diagnóstico, permitimos qualquer userId
+      // Verificar se temos userId válido
       if (!userId) {
-        // Permitir query param userId para testes
-        if (req.query.userId) {
+        // Permitir query param userId para testes em ambiente de desenvolvimento
+        if (process.env.NODE_ENV === 'development' && req.query.userId) {
           userId = parseInt(req.query.userId as string);
-          console.log("[GetExams] Usando userId do query param:", userId);
+          console.log("[GetExams] Usando userId do query param (modo desenvolvimento):", userId);
         } else {
-          // Usar ID 2 (Lucas Canova) como fallback para diagnóstico
-          userId = 2;
-          console.log("[GetExams] Usando userId de fallback:", userId);
+          return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
       }
       
@@ -390,7 +390,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const examId = parseInt(req.params.id);
       
       // Verificar autenticação
-      let userId = req.isAuthenticated() && req.user ? req.user.id : 2;
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
+      }
+      let userId = req.user.id;
       console.log(`Buscando exame ID ${examId}, autenticado: ${req.isAuthenticated()}, userId: ${userId}`);
       
       const exam = await storage.getExam(examId);
@@ -420,8 +423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova rota para analisar um exame já extraído com a OpenAI
   app.post("/api/exams/:id/analyze", ensureAuthenticated, async (req, res) => {
     try {
+      // ensureAuthenticated garante que req.user não será undefined
       const examId = parseInt(req.params.id, 10);
-      const userId = req.user.id;
+      const userId = req.user!.id;
       
       if (isNaN(examId)) {
         return res.status(400).json({ message: "ID de exame inválido" });
@@ -465,7 +469,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const examId = parseInt(req.params.id);
       
       // Verificar autenticação
-      let userId = req.isAuthenticated() && req.user ? req.user.id : 2;
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
+      }
+      let userId = req.user.id;
       console.log(`Gerando insights para exame ID ${examId}, autenticado: ${req.isAuthenticated()}, userId: ${userId}`);
       
       const exam = await storage.getExam(examId);
@@ -572,16 +579,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Para diagnóstico, permitimos qualquer userId
+      // Verificar se temos userId válido
       if (!userId) {
-        // Permitir query param userId para testes
-        if (req.query.userId) {
+        // Permitir query param userId para testes em ambiente de desenvolvimento
+        if (process.env.NODE_ENV === 'development' && req.query.userId) {
           userId = parseInt(req.query.userId as string);
-          console.log("[GetLatestMetrics] Usando userId do query param:", userId);
+          console.log("[GetLatestMetrics] Usando userId do query param (modo desenvolvimento):", userId);
         } else {
-          // Usar ID 2 (Lucas Canova) como fallback para diagnóstico
-          userId = 2;
-          console.log("[GetLatestMetrics] Usando userId de fallback:", userId);
+          return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
       }
       

@@ -128,9 +128,21 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       console.log("Usuário autenticado:", user);
       console.log("Preparando dados do exame com ID do usuário:", user?.id);
       
+      // Verificamos se o usuário está autenticado
+      if (!user || !user.id) {
+        console.error("Erro: Usuário não autenticado ao tentar criar exame");
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para enviar exames. Por favor, faça login novamente.",
+          variant: "destructive"
+        });
+        setUploadStep('error');
+        return;
+      }
+      
       const examData = {
         name: filename.split('.')[0],
-        userId: user?.id || 1, // Fallback para usuário ID 1 se não estiver logado (temporário para debug)
+        userId: user.id, // Sempre usar o ID do usuário autenticado
         fileType: fileType,
         laboratoryName: "Upload via Plataforma",
         examDate: examDate,
@@ -191,9 +203,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const saveExamMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
-        // Verificação de autenticação desativada temporariamente para debug
-        // (permitir salvamento com userId direto do objeto data)
-        if (false && user === null) {
+        // Verificação de autenticação
+        if (user === null) {
           console.error("Usuário não está autenticado ao tentar salvar exame");
           throw new Error("Você precisa estar autenticado para salvar exames");
         }
