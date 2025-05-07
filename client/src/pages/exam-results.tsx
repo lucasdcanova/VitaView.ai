@@ -26,6 +26,15 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -344,6 +353,56 @@ export default function ExamResults() {
               </CardContent>
             </Card>
             
+            {/* Alerta quando existem métricas sem exames */}
+            {allHealthMetrics.length > 0 && (allExams.length === 0) && (
+              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-yellow-800">Dados desconectados detectados</h3>
+                    <p className="text-sm text-yellow-600 mt-1 mb-3">
+                      Existem {allHealthMetrics.length} métricas de saúde em seu perfil, mas nenhum exame encontrado. 
+                      Isso pode acontecer quando exames foram excluídos mas as métricas permaneceram no sistema.
+                    </p>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="destructive" 
+                          size="sm"
+                          className="flex items-center gap-1.5"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Limpar todas as métricas
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Excluir todas as métricas de saúde</DialogTitle>
+                          <DialogDescription>
+                            Tem certeza que deseja excluir todas as {allHealthMetrics.length} métricas de saúde do seu perfil? 
+                            Esta ação não pode ser desfeita.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="sm:justify-start flex gap-3 mt-2">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={clearMetricsMutation.isPending}
+                            onClick={() => clearMetricsMutation.mutate()}
+                          >
+                            {clearMetricsMutation.isPending ? "Excluindo..." : "Sim, excluir todas as métricas"}
+                          </Button>
+                          <Button type="button" variant="secondary" className="mt-0">
+                            Cancelar
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* View Tabs */}
             <Tabs defaultValue="grid" className="mb-6" onValueChange={(value) => setViewMode(value as "list" | "grid")}>
               <div className="flex justify-between items-center mb-4">
@@ -381,7 +440,7 @@ export default function ExamResults() {
                     Não foi possível encontrar resultados com os filtros selecionados. Tente modificar seus filtros ou fazer upload de novos exames.
                   </p>
                   <Link href="/upload">
-                    <Button className="bg-primary-600 hover:bg-primary-700">
+                    <Button className="bg-primary-600 hover:bg-primary-700 mr-3">
                       Fazer upload de exame
                     </Button>
                   </Link>
