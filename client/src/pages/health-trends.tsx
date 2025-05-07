@@ -14,6 +14,7 @@ import { getRandomColor } from "@/lib/utils";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { normalizeExamName } from "@shared/exam-normalizer";
 
 // Helpers para o gráfico
 const formatDateToBR = (dateString: string) => {
@@ -75,14 +76,25 @@ export default function HealthTrendsPage() {
       );
       setMetricCategories(categories);
 
-      // Organizar métricas por nome para seleção
+      // Organizar métricas por nome para seleção (normalizando os nomes)
       const metricsByName: Record<string, ExamMetric[]> = {};
       healthMetrics.forEach((metric) => {
-        if (!metricsByName[metric.name]) {
-          metricsByName[metric.name] = [];
+        // Normalizar o nome da métrica para unificar variações do mesmo exame
+        const normalizedName = normalizeExamName(metric.name);
+        
+        if (!metricsByName[normalizedName]) {
+          metricsByName[normalizedName] = [];
         }
-        metricsByName[metric.name].push(metric);
+        
+        // Adicionar com o nome normalizado
+        const normalizedMetric = { 
+          ...metric, 
+          name: normalizedName 
+        };
+        
+        metricsByName[normalizedName].push(normalizedMetric);
       });
+      
       setAvailableMetrics(metricsByName);
     }
   }, [healthMetrics]);
@@ -101,21 +113,29 @@ export default function HealthTrendsPage() {
     .flatMap((exam) => {
       return healthMetrics
         ?.filter(
-          (metric) => 
-            metric.examId === exam.id && 
-            selectedMetrics.includes(metric.name)
+          (metric) => {
+            // Normalizar o nome da métrica para comparação
+            const normalizedMetricName = normalizeExamName(metric.name);
+            return metric.examId === exam.id && 
+                   selectedMetrics.includes(normalizedMetricName);
+          }
         )
-        .map((metric) => ({
-          date: formatDateToBR(exam.examDate || exam.createdAt),
-          examDate: new Date(exam.examDate || exam.createdAt).getTime(),
-          examId: exam.id,
-          examName: exam.name,
-          [metric.name]: metric.value,
-          [`${metric.name}_min`]: metric.referenceMin,
-          [`${metric.name}_max`]: metric.referenceMax,
-          [`${metric.name}_status`]: metric.status,
-          [`${metric.name}_unit`]: metric.unit,
-        })) || [];
+        .map((metric) => {
+          // Normalizar o nome da métrica para unificar visualização
+          const normalizedName = normalizeExamName(metric.name);
+          
+          return {
+            date: formatDateToBR(exam.examDate || exam.createdAt),
+            examDate: new Date(exam.examDate || exam.createdAt).getTime(),
+            examId: exam.id,
+            examName: exam.name,
+            [normalizedName]: metric.value,
+            [`${normalizedName}_min`]: metric.referenceMin,
+            [`${normalizedName}_max`]: metric.referenceMax,
+            [`${normalizedName}_status`]: metric.status,
+            [`${normalizedName}_unit`]: metric.unit,
+          };
+        }) || [];
     })
     .sort((a, b) => a.examDate - b.examDate);
 
