@@ -1836,80 +1836,157 @@ export default function LandingPage() {
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                iconComponent: <Heart className="w-6 h-6 text-white" />,
-                title: "Pacientes crônicos",
-                description: "Monitoramento contínuo e organizado de seus exames recorrentes",
-                delay: 0,
-                gradient: "from-primary-500 to-primary-600",
-                color: "bg-primary-500"
-              },
-              {
-                iconComponent: <Users className="w-6 h-6 text-white" />,
-                title: "Famílias",
-                description: "Histórico de saúde centralizado para gerenciar a saúde familiar",
-                delay: 0.1,
-                gradient: "from-primary-600 to-indigo-600",
-                color: "bg-indigo-500"
-              },
-              {
-                iconComponent: <FileHeart className="w-6 h-6 text-white" />,
-                title: "Profissionais de saúde",
-                description: "Relatórios prontos para consultas mais eficientes e focadas",
-                delay: 0.2,
-                gradient: "from-indigo-600 to-blue-600",
-                color: "bg-blue-600"
-              },
-              {
-                iconComponent: <Building className="w-6 h-6 text-white" />,
-                title: "Clínicas e planos de saúde",
-                description: "Ferramenta para engajar e cuidar melhor dos pacientes",
-                delay: 0.3,
-                gradient: "from-blue-600 to-primary-500",
-                color: "bg-primary-600"
-              }
-            ].map((item, index) => (
+            {/* Item 1: Pacientes crônicos */}
+            <motion.div 
+              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0 }}
+              whileHover={{ 
+                y: -10, 
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                transition: { duration: 0.3 }
+              }}
+            >
               <motion.div 
-                key={index}
-                className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: item.delay }}
+                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
                 whileHover={{ 
-                  y: -10, 
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                  transition: { duration: 0.3 }
+                  scale: 1.1,
+                  rotate: [0, 5, -5, 0],
+                  transition: { duration: 0.5 }
                 }}
               >
-                <motion.div 
-                  className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
-                  whileHover={{ 
-                    scale: 1.1,
-                    rotate: [0, 5, -5, 0],
-                    transition: { duration: 0.5 }
-                  }}
-                >
-                  <div className={`w-16 h-16 bg-gradient-to-br ${item.gradient} rounded-full flex items-center justify-center shadow-lg`}>
-                      {item.iconComponent}
-                  </div>
-                </motion.div>
-                
-                {/* Decoração de fundo */}
-                <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
-                
-                <div className="mt-10 relative z-10">
-                  <h3 className="text-xl font-semibold mb-3 text-gray-800">{item.title}</h3>
-                  <p className="text-gray-600">
-                    {item.description}
-                  </p>
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg">
+                  <Heart className="w-6 h-6 text-white" />
                 </div>
-                
-                {/* Decoração de fundo circular */}
-                <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
               </motion.div>
-            ))}
+              
+              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
+              
+              <div className="mt-10 relative z-10">
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Pacientes crônicos</h3>
+                <p className="text-gray-600">
+                  Monitoramento contínuo e organizado de seus exames recorrentes
+                </p>
+              </div>
+              
+              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
+            </motion.div>
+
+            {/* Item 2: Famílias */}
+            <motion.div 
+              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              whileHover={{ 
+                y: -10, 
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                transition: { duration: 0.3 }
+              }}
+            >
+              <motion.div 
+                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: [0, 5, -5, 0],
+                  transition: { duration: 0.5 }
+                }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+              </motion.div>
+              
+              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
+              
+              <div className="mt-10 relative z-10">
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Famílias</h3>
+                <p className="text-gray-600">
+                  Histórico de saúde centralizado para gerenciar a saúde familiar
+                </p>
+              </div>
+              
+              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
+            </motion.div>
+
+            {/* Item 3: Profissionais de saúde */}
+            <motion.div 
+              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ 
+                y: -10, 
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                transition: { duration: 0.3 }
+              }}
+            >
+              <motion.div 
+                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: [0, 5, -5, 0],
+                  transition: { duration: 0.5 }
+                }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                  <FileHeart className="w-6 h-6 text-white" />
+                </div>
+              </motion.div>
+              
+              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
+              
+              <div className="mt-10 relative z-10">
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Profissionais de saúde</h3>
+                <p className="text-gray-600">
+                  Relatórios prontos para consultas mais eficientes e focadas
+                </p>
+              </div>
+              
+              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
+            </motion.div>
+
+            {/* Item 4: Clínicas e planos de saúde */}
+            <motion.div 
+              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              whileHover={{ 
+                y: -10, 
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                transition: { duration: 0.3 }
+              }}
+            >
+              <motion.div 
+                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: [0, 5, -5, 0],
+                  transition: { duration: 0.5 }
+                }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-primary-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Building className="w-6 h-6 text-white" />
+                </div>
+              </motion.div>
+              
+              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
+              
+              <div className="mt-10 relative z-10">
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Clínicas e planos de saúde</h3>
+                <p className="text-gray-600">
+                  Ferramenta para engajar e cuidar melhor dos pacientes
+                </p>
+              </div>
+              
+              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
+            </motion.div>
           </div>
           
           {/* Info cards adicionais */}
