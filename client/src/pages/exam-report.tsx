@@ -119,13 +119,26 @@ type HealthInsights = {
 };
 
 export default function ExamReport() {
-  const [activeTab, setActiveTab] = useState("metrics");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [match, params] = useRoute<{ id: string }>("/report/:id");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const examId = match && params ? parseInt(params.id) : 0;
+  
+  // Verificar se existe um parâmetro 'tab' na URL para definir a aba ativa inicialmente
+  const getInitialTab = () => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam && ['summary', 'metrics', 'insights', 'details'].includes(tabParam)) {
+        return tabParam;
+      }
+    }
+    return "metrics"; // Tab padrão se não houver parâmetro válido
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   
   const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
     queryKey: [`/api/exams/${examId}`],
