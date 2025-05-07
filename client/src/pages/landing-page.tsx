@@ -10,7 +10,6 @@ import {
   Users,
   Activity,
   Building,
-  Building2,
   ChevronRight,
   Heart,
   HeartPulse,
@@ -18,8 +17,6 @@ import {
   Clock,
   Eye,
   Filter,
-  FolderKanban,
-  History,
   RefreshCw,
   BarChart4,
   Sparkles,
@@ -1369,7 +1366,7 @@ export default function LandingPage() {
                       {/* Cabeçalho do histórico */}
                       <div className="p-4 bg-white border-b border-gray-100 flex justify-between items-center">
                         <div className="flex items-center">
-                          <FolderKanban className="h-5 w-5 text-primary-500 mr-2" />
+                          <ScrollText className="h-5 w-5 text-primary-500 mr-2" />
                           <span className="font-medium text-primary-700">Histórico Organizado</span>
                         </div>
                         <div className="flex space-x-2">
@@ -1436,7 +1433,7 @@ export default function LandingPage() {
                                 <div className="flex items-center text-xs text-gray-500">
                                   <Calendar className="h-3 w-3 mr-1" />
                                   <span>{exam.date}</span>
-                                  <Building2 className="h-3 w-3 ml-2 mr-1" />
+                                  <Building className="h-3 w-3 ml-2 mr-1" />
                                   <span>{exam.lab}</span>
                                 </div>
                               </div>
@@ -1669,7 +1666,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                icon: <History className="w-6 h-6 text-primary-600" />,
+                icon: <Clock className="w-6 h-6 text-primary-600" />,
                 title: "Histórico cronológico",
                 description: "Seus exames organizados automaticamente por data, com categorização inteligente para fácil acesso.",
                 delay: 0
