@@ -54,7 +54,8 @@ import {
   AlertCircle,
   InfoIcon,
   History,
-  Share
+  Share,
+  Check
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2401,6 +2402,270 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Recursos principais */}
+      <section className="py-20 bg-gradient-to-b from-white to-primary-50 relative overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <motion.span
+              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              Funcionalidades Principais
+            </motion.span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5">
+              Transforme números em <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">informações úteis</span>
+            </h2>
+            <p className="text-lg text-gray-600">
+              Organize seu histórico médico e visualize tendências em gráficos intuitivos
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            {/* Bloco 1: Visualização intuitiva de dados */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="order-2 md:order-1"
+            >
+              <div className="mb-3">
+                <BarChart3 className="w-9 h-9 text-primary-600 mb-3" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Visualização intuitiva de dados de saúde</h3>
+              </div>
+              <p className="text-gray-600 mb-5">
+                Gráficos interativos transformam números complexos em informações visuais de fácil compreensão, mostrando tendências e comparando valores com referências de normalidade.
+              </p>
+              
+              <ul className="space-y-3 mb-5">
+                {[
+                  "Gráficos evolutivos de valores",
+                  "Comparação com referências médicas",
+                  "Exportação de relatórios visuais"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start"
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + (index * 0.1) }}
+                  >
+                    <div className="mt-1 bg-green-100 p-1 rounded-full mr-3">
+                      <Check className="h-4 w-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">{item}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
+            
+            {/* Demo Gráfico Interativo */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="order-1 md:order-2"
+            >
+              <div className="bg-blue-50 rounded-xl p-6 shadow-lg relative overflow-hidden">
+                <div className="absolute right-3 top-3 px-3 py-1.5 bg-white rounded-full text-xs text-primary-700 font-medium shadow-sm flex items-center">
+                  <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                  Visualização simples e objetiva
+                </div>
+                
+                <h3 className="text-2xl text-center font-bold text-primary-700 mb-6">Gráfico Interativo</h3>
+                
+                {/* Gráfico simulado */}
+                <div className="h-60 relative">
+                  {/* Eixos */}
+                  <div className="absolute left-0 bottom-0 w-full h-px bg-gray-300"></div>
+                  <div className="absolute left-0 bottom-0 h-full w-px bg-gray-300"></div>
+                  
+                  {/* Pontos de dados */}
+                  {[
+                    { x: 0, y: 30, label: "Jan", value: 120 },
+                    { x: 20, y: 45, label: "Fev", value: 115 },
+                    { x: 40, y: 25, label: "Mar", value: 125 },
+                    { x: 60, y: 60, label: "Abr", value: 110 },
+                    { x: 80, y: 50, label: "Mai", value: 112 },
+                    { x: 100, y: 30, label: "Jun", value: 120 }
+                  ].map((point, index) => (
+                    <motion.div
+                      key={index}
+                      className="absolute"
+                      style={{ 
+                        left: `${point.x}%`, 
+                        bottom: `${point.y}%` 
+                      }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ 
+                        delay: 0.5 + (index * 0.1),
+                        type: "spring"
+                      }}
+                    >
+                      <div className="relative">
+                        <div className="w-4 h-4 bg-primary-500 rounded-full shadow-md"></div>
+                        <div className="absolute -top-10 left-50 transform -translate-x-1/2 bg-white px-2 py-1 rounded shadow-sm text-xs">
+                          {point.value} mg/dL
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                  
+                  {/* Linhas entre pontos */}
+                  <svg className="absolute inset-0 w-full h-full">
+                    <motion.path
+                      d="M 0,70 L 20,55 L 40,75 L 60,40 L 80,50 L 100,70"
+                      fill="none"
+                      stroke="#0284C7"
+                      strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: 0.5 }}
+                    />
+                    <motion.path
+                      d="M 0,70 L 20,55 L 40,75 L 60,40 L 80,50 L 100,70"
+                      fill="none"
+                      stroke="#0284C7"
+                      strokeWidth="8"
+                      strokeOpacity="0.2"
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: 0.5 }}
+                    />
+                  </svg>
+                  
+                  {/* Rótulos do eixo X */}
+                  <div className="absolute bottom-0 left-0 w-full flex justify-between px-3 -mb-6">
+                    {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"].map((month, index) => (
+                      <div key={index} className="text-xs text-gray-500">{month}</div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="flex justify-center mt-12">
+                  <div className="bg-white rounded-lg shadow-sm py-2 px-4 text-sm text-gray-700 flex items-center">
+                    <div className="w-3 h-3 bg-primary-500 rounded-full mr-2"></div>
+                    <span>Glicemia em jejum</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+          <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            {/* Demo Histórico Organizado */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="bg-blue-50 rounded-xl p-6 shadow-lg relative overflow-hidden">
+                <div className="absolute right-3 top-3 px-3 py-1.5 bg-white rounded-full text-xs text-primary-700 font-medium shadow-sm flex items-center">
+                  <Zap className="w-3 h-3 mr-1 text-amber-500" />
+                  Seu histórico completo em um só lugar
+                </div>
+                
+                <h3 className="text-2xl text-center font-bold text-primary-700 mb-8">Histórico Organizado</h3>
+                
+                {/* Lista de exames simulada */}
+                <div className="space-y-3">
+                  {[
+                    { date: "15/04/2025", title: "Hemograma Completo", lab: "Laboratório Central", status: "normal" },
+                    { date: "22/03/2025", title: "Perfil Lipídico", lab: "Clínica São Paulo", status: "attention" },
+                    { date: "10/02/2025", title: "Glicemia em Jejum", lab: "Laboratório Central", status: "normal" },
+                    { date: "05/01/2025", title: "Função Renal", lab: "Hospital Aurora", status: "normal" },
+                    { date: "12/12/2024", title: "Função Hepática", lab: "Clínica São Paulo", status: "warning" }
+                  ].map((exam, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex items-center justify-between"
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + (index * 0.1) }}
+                      whileHover={{ y: -2, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2 h-10 ${
+                          exam.status === "normal" ? "bg-green-500" : 
+                          exam.status === "attention" ? "bg-amber-500" : "bg-red-500"
+                        } rounded-full`}></div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{exam.title}</div>
+                          <div className="text-xs text-gray-500">{exam.lab}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">{exam.date}</div>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <motion.div 
+                  className="mt-6 flex justify-center"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <button className="text-primary-600 text-sm flex items-center">
+                    Ver todos os exames
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+            
+            {/* Bloco 2: Armazenamento seguro */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <div className="mb-3">
+                <ScrollText className="w-9 h-9 text-primary-600 mb-3" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Armazenamento seguro e organizado</h3>
+              </div>
+              <p className="text-gray-600 mb-5">
+                Mantenha todos os seus exames em um único local, organizados cronologicamente e por tipo, com acesso fácil a todo o seu histórico médico sempre que precisar.
+              </p>
+              
+              <ul className="space-y-3 mb-5">
+                {[
+                  "Ordenação inteligente por data",
+                  "Categorização automática por tipo",
+                  "Busca avançada por valores e parâmetros"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start"
+                    initial={{ opacity: 0, x: 10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + (index * 0.1) }}
+                  >
+                    <div className="mt-1 bg-green-100 p-1 rounded-full mr-3">
+                      <Check className="h-4 w-4 text-green-600" />
+                    </div>
+                    <span className="text-gray-700">{item}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
       {/* Pré-footer com dados e gráficos */}
       <section className="py-20 bg-gradient-to-b from-primary-900 via-primary-800 to-indigo-900 text-white relative overflow-hidden">
         {/* Elementos decorativos */}
