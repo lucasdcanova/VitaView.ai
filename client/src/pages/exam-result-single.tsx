@@ -40,6 +40,9 @@ export default function ExamResultSingle() {
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Pegar o ID do exame da URL
   const [match, params] = useRoute<{ id: string }>("/results/:id");
@@ -52,8 +55,40 @@ export default function ExamResultSingle() {
     enabled: !!examId,
   });
   
+  // Mutação para excluir o exame
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteExam(examId!),
+    onSuccess: () => {
+      toast({
+        title: "Exame excluído com sucesso",
+        description: "O exame e todos os dados associados foram removidos.",
+        variant: "default",
+      });
+      // Redirecionando para a página de resultados
+      setLocation("/results");
+      // Invalidar a consulta para atualizar a lista de exames
+      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir exame",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao excluir o exame.",
+        variant: "destructive",
+      });
+    },
+  });
+  
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+  
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteDialogOpen(false);
   };
   
   // Helper function to map status to colors
@@ -305,6 +340,19 @@ export default function ExamResultSingle() {
                     </CardContent>
                   </Card>
                 )}
+                
+                {/* Botão de Exclusão */}
+                <div className="mt-8 border-t pt-6 flex justify-end">
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteClick}
+                    className="gap-2"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 size={16} />
+                    {deleteMutation.isPending ? "Excluindo..." : "Excluir Exame"}
+                  </Button>
+                </div>
               </div>
             ) : (
               <Card>
@@ -321,6 +369,34 @@ export default function ExamResultSingle() {
           </div>
         </main>
       </div>
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir exame</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este exame? Esta ação não pode ser desfeita e todos os dados associados, incluindo métricas de saúde, serão permanentemente removidos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
