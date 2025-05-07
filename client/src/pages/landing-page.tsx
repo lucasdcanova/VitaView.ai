@@ -2967,23 +2967,23 @@ export default function LandingPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-3">
-                  <motion.button
+                <div className="flex space-x-3 flex-shrink-0">
+                  <Button
                     onClick={() => setShowCookieConsent(false)}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    variant="outline"
+                    size="sm"
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg"
                   >
                     Rejeitar
-                  </motion.button>
-                  <motion.button
+                  </Button>
+                  <Button
                     onClick={() => setShowCookieConsent(false)}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    variant="default"
+                    size="sm"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg"
                   >
                     Aceitar
-                  </motion.button>
+                  </Button>
                 </div>
               </div>
             </div>
