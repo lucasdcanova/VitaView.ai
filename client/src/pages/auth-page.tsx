@@ -148,27 +148,37 @@ export default function AuthPage() {
       
       {/* Left side - Form */}
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
-        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative">
-          {/* Botão ENTRAR grande e evidente quando os campos estão preenchidos */}
-          {/* Removemos o botão flutuante para evitar confusão */}
-          
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <motion.div 
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                whileHover={{ rotate: 5, scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="w-20 h-20 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg"
-              >
-                <div className="text-white font-bold text-3xl tracking-wider">H</div>
-              </motion.div>
+        {/* Cabeçalho com logo HEMOLOG acima do card */}
+        <div className="w-full max-w-md mb-6 flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-3 mb-2"
+          >
+            <div className="bg-primary-600 text-white font-bold text-3xl w-12 h-12 rounded-lg flex items-center justify-center shadow-lg">
+              H
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-800 tracking-wide">HEMOLOG</span>
+            <div className="text-4xl font-extrabold tracking-tighter">
+              <span className="text-primary-600">HEMO</span>
+              <span className="text-primary-800">LOG</span>
+            </div>
+          </motion.div>
+          <div className="text-sm text-gray-500 italic">Análise Inteligente de Exames Laboratoriais</div>
+        </div>
+
+        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-primary-600 border border-gray-100 relative">
+          {/* Banner de branding no topo do card */}
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 py-2 px-4 text-center">
+            <span className="text-white font-medium text-sm">Sua plataforma de saúde inteligente</span>
+          </div>
+          
+          <CardHeader className="text-center pt-6">
+            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+              <span>Acesse sua conta</span>
             </CardTitle>
             <CardDescription className="text-gray-600 text-center">
-              A evolução da sua saúde começa com o entendimento dos seus exames
+              Faça login para gerenciar seus exames de saúde
             </CardDescription>
           </CardHeader>
         
@@ -391,15 +401,40 @@ export default function AuthPage() {
       </div>
       
       {/* Right side - Hero with interactive graphics */}
-      <div className="md:w-1/2 w-full bg-primary-50 md:flex flex-col justify-center items-center p-8 hidden">
+      <div className="md:w-1/2 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden">
         <div className="max-w-lg">
+          {/* Logo Grande no Topo */}
+          <div className="flex justify-center mb-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-col items-center"
+            >
+              <div className="bg-white p-5 rounded-2xl shadow-lg mb-4 flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="bg-primary-600 text-white font-bold text-4xl w-16 h-16 rounded-xl flex items-center justify-center shadow-md">
+                    H
+                  </div>
+                  <div className="text-5xl font-black ml-3 tracking-tighter">
+                    <span className="text-primary-600">HEMO</span>
+                    <span className="text-primary-800">LOG</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-primary-600 text-white text-sm px-6 py-2 rounded-full shadow-md uppercase tracking-wider font-medium">
+                Análise Inteligente de Exames
+              </div>
+            </motion.div>
+          </div>
+          
           {/* Title section */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-800 tracking-wide">HEMOLOG</span>: Análise de Exames com Inteligência Artificial
+              <span className="text-primary-600">Sua saúde,</span> <span className="text-primary-800">nosso foco</span>
             </h2>
-            <p className="text-lg text-gray-600 mb-6">
-              A evolução da sua saúde começa com o entendimento dos seus exames. Transforme dados em ações com nossa análise AI avançada.
+            <p className="text-lg text-gray-600 mb-2">
+              Transforme dados em ações com nossa análise avançada de exames laboratoriais.
             </p>
           </div>
           
