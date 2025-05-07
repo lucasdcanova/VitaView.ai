@@ -604,13 +604,6 @@ export default function AuthPage() {
                   </div>
                 </div>
                 
-                {/* Análise simulada */}
-                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 mt-2">
-                  <p className="text-xs text-blue-800">
-                    <span className="font-medium">Análise preliminar:</span> Seus resultados indicam saúde geral boa, com atenção ao perfil lipídico.
-                  </p>
-                </div>
-                
 
               </div>
             </motion.div>
