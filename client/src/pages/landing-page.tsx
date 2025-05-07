@@ -1814,213 +1814,249 @@ export default function LandingPage() {
       </section>
 
       {/* For Whom Section */}
-      <section id="para-quem" className="py-20 bg-white relative overflow-hidden">
-        {/* Elementos decorativos */}
+      {/* Seção: Para quem é o Hemolog */}
+      <section id="para-quem" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+        {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute left-0 bottom-0 w-80 h-80 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute -left-20 bottom-0 w-96 h-96 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute right-0 top-1/4 w-80 h-80 bg-indigo-50 rounded-full opacity-20 blur-3xl"></div>
+          <motion.div 
+            className="absolute top-1/2 left-1/3 w-8 h-8 bg-primary-100 rounded-full opacity-50"
+            animate={{ y: [0, 30, 0], x: [0, 15, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
         </div>
       
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Título da seção */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              Para Quem é o <span className="text-primary-600">Hemolog</span>?
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-700 mb-4">
+              <Users className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Conheça nosso público</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              O <span className="text-primary-600">Hemolog</span> é para você
             </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Nossa plataforma atende diferentes necessidades e perfis, criando valor em cada etapa da jornada de saúde.
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Nossa plataforma foi desenvolvida para atender diferentes necessidades,
+              criando valor em cada etapa da jornada de saúde.
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Item 1: Pacientes crônicos */}
+          {/* Cards de público-alvo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            {/* Card 1: Pacientes Crônicos */}
             <motion.div 
-              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
-              initial={{ opacity: 0, y: 30 }}
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.5, delay: 0 }}
-              whileHover={{ 
-                y: -10, 
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                transition: { duration: 0.3 }
-              }}
-            >
-              <motion.div 
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, 5, -5, 0],
-                  transition: { duration: 0.5 }
-                }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Heart className="w-6 h-6 text-white" />
-                </div>
-              </motion.div>
-              
-              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
-              
-              <div className="mt-10 relative z-10">
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">Pacientes crônicos</h3>
-                <p className="text-gray-600">
-                  Monitoramento contínuo e organizado de seus exames recorrentes
-                </p>
-              </div>
-              
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
-            </motion.div>
-
-            {/* Item 2: Famílias */}
-            <motion.div 
-              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              whileHover={{ 
-                y: -10, 
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                transition: { duration: 0.3 }
-              }}
+              whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
-              <motion.div 
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, 5, -5, 0],
-                  transition: { duration: 0.5 }
-                }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Users className="w-6 h-6 text-white" />
+              {/* Barra superior colorida */}
+              <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-600"></div>
+              
+              <div className="p-6">
+                {/* Ícone com fundo */}
+                <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="h-7 w-7 text-primary-600" />
                 </div>
-              </motion.div>
-              
-              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
-              
-              <div className="mt-10 relative z-10">
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">Famílias</h3>
-                <p className="text-gray-600">
-                  Histórico de saúde centralizado para gerenciar a saúde familiar
-                </p>
+                
+                {/* Título do card */}
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Pacientes Crônicos</h3>
+                
+                {/* Lista de benefícios */}
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Acompanhamento detalhado de exames periódicos</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Monitoramento de valores e tendências</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Alertas para resultados fora do padrão</span>
+                  </li>
+                </ul>
               </div>
-              
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
             </motion.div>
-
-            {/* Item 3: Profissionais de saúde */}
+            
+            {/* Card 2: Famílias */}
             <motion.div 
-              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
-              initial={{ opacity: 0, y: 30 }}
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              whileHover={{ 
-                y: -10, 
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                transition: { duration: 0.3 }
-              }}
+              whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
-              <motion.div 
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, 5, -5, 0],
-                  transition: { duration: 0.5 }
-                }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                  <FileHeart className="w-6 h-6 text-white" />
+              {/* Barra superior colorida */}
+              <div className="h-2 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
+              
+              <div className="p-6">
+                {/* Ícone com fundo */}
+                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-7 w-7 text-indigo-600" />
                 </div>
-              </motion.div>
-              
-              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
-              
-              <div className="mt-10 relative z-10">
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">Profissionais de saúde</h3>
-                <p className="text-gray-600">
-                  Relatórios prontos para consultas mais eficientes e focadas
-                </p>
+                
+                {/* Título do card */}
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Famílias</h3>
+                
+                {/* Lista de benefícios */}
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Histórico familiar centralizado em um só lugar</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Compartilhamento seguro de resultados</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Gerenciamento de saúde de dependentes</span>
+                  </li>
+                </ul>
               </div>
-              
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
             </motion.div>
-
-            {/* Item 4: Clínicas e planos de saúde */}
+            
+            {/* Card 3: Profissionais de Saúde */}
             <motion.div 
-              className="relative bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center"
-              initial={{ opacity: 0, y: 30 }}
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              whileHover={{ 
-                y: -10, 
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                transition: { duration: 0.3 }
-              }}
+              whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
-              <motion.div 
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, 5, -5, 0],
-                  transition: { duration: 0.5 }
-                }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-primary-500 rounded-full flex items-center justify-center shadow-lg">
-                  <Building className="w-6 h-6 text-white" />
+              {/* Barra superior colorida */}
+              <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+              
+              <div className="p-6">
+                {/* Ícone com fundo */}
+                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <FileHeart className="h-7 w-7 text-blue-600" />
                 </div>
-              </motion.div>
-              
-              <div className="absolute top-0 left-0 right-0 h-24 bg-primary-50 opacity-50 rounded-t-xl"></div>
-              
-              <div className="mt-10 relative z-10">
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">Clínicas e planos de saúde</h3>
-                <p className="text-gray-600">
-                  Ferramenta para engajar e cuidar melhor dos pacientes
-                </p>
+                
+                {/* Título do card */}
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Profissionais de Saúde</h3>
+                
+                {/* Lista de benefícios */}
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Visão completa do histórico do paciente</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Análises comparativas entre exames</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Consultas mais eficientes e focadas</span>
+                  </li>
+                </ul>
               </div>
+            </motion.div>
+            
+            {/* Card 4: Clínicas e Planos de Saúde */}
+            <motion.div 
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+            >
+              {/* Barra superior colorida */}
+              <div className="h-2 bg-gradient-to-r from-sky-500 to-sky-600"></div>
               
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-50 rounded-full opacity-20"></div>
+              <div className="p-6">
+                {/* Ícone com fundo */}
+                <div className="w-16 h-16 rounded-full bg-sky-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Building className="h-7 w-7 text-sky-600" />
+                </div>
+                
+                {/* Título do card */}
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Clínicas e Planos</h3>
+                
+                {/* Lista de benefícios */}
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Ferramenta para engajamento de pacientes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Melhoria na experiência do usuário</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-600 text-sm">Acompanhamento preventivo eficiente</span>
+                  </li>
+                </ul>
+              </div>
             </motion.div>
           </div>
           
-          {/* Info cards adicionais */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                number: "9/10",
-                text: "usuários conseguem entender melhor seus exames",
-                color: "text-primary-600"
-              },
-              {
-                number: "5min",
-                text: "tempo médio para obter interpretação completa",
-                color: "text-indigo-600"
-              },
-              {
-                number: "100%",
-                text: "seguro e confidencial seguindo normas LGPD",
-                color: "text-blue-600"
-              }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                className="bg-white p-5 rounded-xl shadow-sm text-center"
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: 0.2 + (index * 0.1) }}
-                whileHover={{ y: -5 }}
-              >
-                <h3 className={`text-3xl font-bold ${stat.color} mb-2`}>{stat.number}</h3>
-                <p className="text-gray-600">{stat.text}</p>
-              </motion.div>
-            ))}
+          {/* Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Estatística 1 */}
+            <motion.div
+              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+            >
+              <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-6 h-6 text-primary-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-primary-600 mb-2">9/10</h3>
+              <p className="text-gray-700 font-medium">usuários entendem melhor seus exames</p>
+            </motion.div>
+            
+            {/* Estatística 2 */}
+            <motion.div
+              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+            >
+              <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-indigo-600 mb-2">5min</h3>
+              <p className="text-gray-700 font-medium">tempo médio para obter interpretação</p>
+            </motion.div>
+            
+            {/* Estatística 3 */}
+            <motion.div
+              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+            >
+              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-blue-600 mb-2">100%</h3>
+              <p className="text-gray-700 font-medium">seguro e em conformidade com a LGPD</p>
+            </motion.div>
           </div>
         </div>
       </section>
