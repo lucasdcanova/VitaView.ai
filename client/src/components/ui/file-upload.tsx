@@ -462,7 +462,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       {uploadStep === 'analyzing' && (
         <div className="space-y-4">
           <BrainCircuit className="mx-auto h-12 w-12 text-primary-500" />
-          <h3 className="text-lg font-medium text-gray-700">Analisando documento com IA Gemini</h3>
+          <h3 className="text-lg font-medium text-gray-700">Analisando documento</h3>
           <div className="flex justify-center">
             <svg className="animate-spin h-8 w-8 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
