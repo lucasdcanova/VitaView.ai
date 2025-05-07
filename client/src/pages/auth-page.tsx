@@ -86,7 +86,7 @@ export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
-  const [showQuickLogin, setShowQuickLogin] = useState(false);
+  // Removemos a variável showQuickLogin que não é mais necessária
   const submitButtonRef = useRef<HTMLButtonElement>(null);
   
   // Redirect if user is already logged in
@@ -115,21 +115,7 @@ export default function AuthPage() {
     name: "password",
   });
   
-  // Atualizar o estado de exibição do botão rápido de login
-  useEffect(() => {
-    if (username && username.length >= 3 && password && password.length >= 6) {
-      setShowQuickLogin(true);
-    } else {
-      setShowQuickLogin(false);
-    }
-  }, [username, password]);
-  
-  // Função para submeter o formulário quando o botão rápido é clicado
-  const handleQuickLogin = () => {
-    if (submitButtonRef.current) {
-      submitButtonRef.current.click();
-    }
-  };
+  // Removemos a lógica do botão rápido para simplificar a interface
   
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -164,34 +150,7 @@ export default function AuthPage() {
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
         <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative">
           {/* Botão ENTRAR grande e evidente quando os campos estão preenchidos */}
-          {showQuickLogin && (
-            <>
-              {/* Overlay escuro semitransparente */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                className="fixed inset-0 bg-black z-30"
-                onClick={handleQuickLogin}
-              />
-              
-              {/* Botão ENTRAR */}
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1.05 }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40"
-              >
-                <Button 
-                  variant="secondary" 
-                  className="rounded-full h-16 px-8 bg-green-600 text-white hover:bg-green-700 shadow-2xl font-bold text-xl border-2 border-white"
-                  onClick={handleQuickLogin}
-                >
-                  ENTRAR <ChevronRight className="h-6 w-6 ml-2" />
-                </Button>
-              </motion.div>
-            </>
-          )}
+          {/* Removemos o botão flutuante para evitar confusão */}
           
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -277,16 +236,16 @@ export default function AuthPage() {
                       ref={submitButtonRef}
                       type="submit"
                       size="lg"
-                      className="w-full bg-primary-600 hover:bg-primary-700 font-medium text-white"
+                      className="w-full h-14 bg-green-600 hover:bg-green-700 font-bold text-lg text-white shadow-md rounded-lg"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                           Entrando...
                         </>
                       ) : (
-                        "Entrar"
+                        "ENTRAR"
                       )}
                     </Button>
                   </form>
