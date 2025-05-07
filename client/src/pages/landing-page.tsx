@@ -1861,12 +1861,12 @@ export default function LandingPage() {
               whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
               {/* Barra superior colorida */}
-              <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-600"></div>
+              <div className="h-2 bg-red-500"></div>
               
               <div className="p-6">
                 {/* Ícone com fundo */}
-                <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Heart className="h-7 w-7 text-primary-600" />
+                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="h-7 w-7 text-red-600" />
                 </div>
                 
                 {/* Título do card */}
@@ -1875,15 +1875,15 @@ export default function LandingPage() {
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
                     <span className="text-gray-600 text-sm">Acompanhamento detalhado de exames periódicos</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
                     <span className="text-gray-600 text-sm">Monitoramento de valores e tendências</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
                     <span className="text-gray-600 text-sm">Alertas para resultados fora do padrão</span>
                   </li>
                 </ul>
