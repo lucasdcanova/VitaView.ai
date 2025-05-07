@@ -159,22 +159,15 @@ export default function AuthPage() {
                 animate={{ scale: 1 }}
                 whileHover={{ rotate: 5, scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 300 }}
-                className="w-16 h-16 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-md"
+                className="w-20 h-20 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg"
               >
-                <svg 
-                  viewBox="0 0 24 24" 
-                  className="w-10 h-10 fill-current"
-                >
-                  <path d="M19 5.5h-4.5V1H9v4.5H4.5V19c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5.5zm-9-3h3V7h4.5v10.5c0 .55-.45 1-1 1h-10c-.55 0-1-.45-1-1V7H11V2.5z"/>
-                  <path d="M11 11h2v6h-2z"/>
-                  <path d="M11 9h2v1h-2z"/>
-                </svg>
+                <div className="text-white font-bold text-3xl tracking-wider">H</div>
               </motion.div>
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-800">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>
+            <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-800 tracking-wide">HEMOLOG</span>
             </CardTitle>
-            <CardDescription className="text-gray-500">
+            <CardDescription className="text-gray-600 text-center">
               A evolução da sua saúde começa com o entendimento dos seus exames
             </CardDescription>
           </CardHeader>
@@ -403,7 +396,7 @@ export default function AuthPage() {
           {/* Title section */}
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>: Análise de Exames com Inteligência Artificial
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-800 tracking-wide">HEMOLOG</span>: Análise de Exames com Inteligência Artificial
             </h2>
             <p className="text-lg text-gray-600 mb-6">
               A evolução da sua saúde começa com o entendimento dos seus exames. Transforme dados em ações com nossa análise AI avançada.
@@ -608,10 +601,7 @@ export default function AuthPage() {
                   </p>
                 </div>
                 
-                <div className="bg-primary-50 p-3 rounded-lg mt-1 text-center border border-primary-100 flex flex-col gap-1">
-                  <span className="text-primary-700 font-medium text-sm">Faça login para análise completa</span>
-                  <span className="text-xs text-gray-600">Receba recomendações personalizadas com base em seus exames</span>
-                </div>
+
               </div>
             </motion.div>
           </div>
