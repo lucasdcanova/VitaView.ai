@@ -129,3 +129,14 @@ export const deleteExam = async (examId: number): Promise<{ message: string }> =
     throw new Error(error instanceof Error ? error.message : "Erro ao excluir o exame");
   }
 };
+
+// Função para excluir todas as métricas de saúde de um usuário
+export const deleteAllHealthMetrics = async (userId: number): Promise<{ message: string, count: number }> => {
+  try {
+    const res = await apiRequest("DELETE", `/api/health-metrics/user/${userId}`);
+    return await res.json();
+  } catch (error) {
+    console.error("Erro ao excluir métricas de saúde:", error);
+    throw new Error(error instanceof Error ? error.message : "Erro ao excluir métricas de saúde");
+  }
+};

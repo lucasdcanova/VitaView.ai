@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, HealthMetric } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { 
   AlertCircle, 
   Filter, 
   Search,
+  Trash2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ExamResults() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +47,40 @@ export default function ExamResults() {
   const [localExams, setLocalExams] = useState<Exam[]>([]);
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
   const [, setLocation] = useLocation();
+  
+  // Mutação para excluir todas as métricas de saúde
+  const clearMetricsMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !user.id) {
+        throw new Error("Usuário não autenticado");
+      }
+      return await fetch(`/api/health-metrics/user/${user.id}`, {
+        method: "DELETE", 
+        credentials: "include"
+      }).then(res => {
+        if (!res.ok) throw new Error("Falha ao excluir métricas");
+        return res.json();
+      });
+    },
+    onSuccess: (data) => {
+      // Invalidar a consulta de métricas de saúde
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
+      
+      toast({
+        title: "Métricas excluídas",
+        description: `${data.count} métricas de saúde foram removidas com sucesso.`,
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao excluir métricas de saúde",
+        variant: "destructive",
+      });
+    }
+  });
   
   // Verificar se estamos na rota individual
   const [match] = useRoute("/results/:id");

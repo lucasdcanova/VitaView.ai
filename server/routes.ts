@@ -707,6 +707,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para excluir todas as métricas de saúde de um usuário
+  app.delete("/api/health-metrics/user/:userId", ensureAuthenticated, async (req, res) => {
+    try {
+      // Verificar se o usuário tem permissão adequada
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
+      }
+      
+      // Verificar se o usuário está tentando excluir suas próprias métricas
+      // Em um ambiente real, você poderia adicionar verificação de admin aqui
+      const targetUserId = parseInt(req.params.userId);
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+      
+      if (targetUserId !== req.user.id) {
+        return res.status(403).json({ message: "Você não tem permissão para excluir métricas de outro usuário" });
+      }
+      
+      console.log(`[DeleteAllHealthMetrics] Requisição para excluir todas as métricas do usuário ${targetUserId}`);
+      
+      // Executar a exclusão
+      const count = await storage.deleteAllHealthMetricsByUserId(targetUserId);
+      
+      console.log(`[DeleteAllHealthMetrics] Excluídas ${count} métricas de saúde do usuário ${targetUserId}`);
+      
+      res.status(200).json({ 
+        message: `${count} métricas de saúde excluídas com sucesso`, 
+        count 
+      });
+    } catch (error) {
+      console.error(`[DeleteAllHealthMetrics] Erro ao excluir métricas de saúde:`, error);
+      res.status(500).json({ message: "Erro ao excluir métricas de saúde" });
+    }
+  });
+  
   // API routes for notifications
   app.get("/api/notifications", ensureAuthenticated, async (req, res) => {
     try {
