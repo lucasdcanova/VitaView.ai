@@ -170,6 +170,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             description: "Seu exame foi analisado, interpretado e salvo com sucesso!",
           });
           
+          // Redirecionar para a página de detalhes do exame com a aba de resumo selecionada
+          setTimeout(() => {
+            window.location.href = `/report/${savedData.exam.id}?tab=summary`;
+          }, 1500); // Aguardar 1.5 segundos antes de redirecionar para dar tempo de ver a mensagem
+          
           if (onUploadComplete) {
             onUploadComplete({
               savedExam: savedData.exam,
