@@ -955,6 +955,34 @@ export default function ExamHistory() {
           </div>
         </main>
       </div>
+
+      {/* Diálogo de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir exame</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir {examToDelete ? `"${examToDelete.name}"` : "este exame"}? Esta ação não pode ser desfeita e todos os dados associados, incluindo métricas de saúde, serão permanentemente removidos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
