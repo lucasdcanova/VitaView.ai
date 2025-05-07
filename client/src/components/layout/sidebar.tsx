@@ -9,7 +9,8 @@ import {
   LogOut,
   LineChart,
   Filter,
-  Activity
+  Activity,
+  TrendingUp
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
@@ -92,6 +93,18 @@ export default function Sidebar(props: SidebarProps) {
         >
           <Upload className="mr-3 h-5 w-5" />
           <span>Enviar Exames</span>
+        </Link>
+        
+        <Link href="/health-trends"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/health-trends' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <TrendingUp className="mr-3 h-5 w-5" />
+          <span>Tendências de Saúde</span>
         </Link>
         
         <Link href="/history"
