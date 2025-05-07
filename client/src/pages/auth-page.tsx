@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, ChevronRight, Activity, Heart, BarChart2, User } from "lucide-react";
 import { 
   Card, 
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip 
+} from "recharts";
 
 const loginSchema = z.object({
   username: z.string().min(3, { message: "Usuário deve ter pelo menos 3 caracteres" }),
@@ -41,10 +58,36 @@ const registerSchema = insertUserSchema.extend({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Dados de exemplo para gráficos interativos
+const healthData = [
+  { name: 'Jan', value: 135, status: 'normal' },
+  { name: 'Fev', value: 128, status: 'normal' },
+  { name: 'Mar', value: 146, status: 'alto' },
+  { name: 'Abr', value: 142, status: 'alto' },
+  { name: 'Mai', value: 138, status: 'normal' },
+  { name: 'Jun', value: 130, status: 'normal' },
+];
+
+const cholesterolData = [
+  { name: 'HDL', value: 55 },
+  { name: 'LDL', value: 120 },
+  { name: 'Triglicerídeos', value: 150 },
+];
+
+const COLORS = ['#4F46E5', '#8884d8', '#0088FE', '#00C49F', '#FFBB28'];
+const HEALTH_COLORS = {
+  normal: '#10B981',
+  alto: '#EF4444',
+  baixo: '#3B82F6',
+  atenção: '#F59E0B'
+};
+
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
+  const [showQuickLogin, setShowQuickLogin] = useState(false);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   
   // Redirect if user is already logged in
   useEffect(() => {
@@ -60,6 +103,33 @@ export default function AuthPage() {
       password: "",
     },
   });
+  
+  // Monitorar os campos do formulário de login 
+  const username = useWatch({
+    control: loginForm.control,
+    name: "username",
+  });
+  
+  const password = useWatch({
+    control: loginForm.control,
+    name: "password",
+  });
+  
+  // Atualizar o estado de exibição do botão rápido de login
+  useEffect(() => {
+    if (username && username.length >= 3 && password && password.length >= 6) {
+      setShowQuickLogin(true);
+    } else {
+      setShowQuickLogin(false);
+    }
+  }, [username, password]);
+  
+  // Função para submeter o formulário quando o botão rápido é clicado
+  const handleQuickLogin = () => {
+    if (submitButtonRef.current) {
+      submitButtonRef.current.click();
+    }
+  };
   
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -82,14 +152,44 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex md:flex-row flex-col bg-gradient-to-br from-primary-50 to-white">
+    <div className="min-h-screen flex md:flex-row flex-col bg-gradient-to-br from-primary-50 to-white relative">
+      {/* Botão para voltar para a landing page */}
+      <Link href="/" className="absolute top-4 left-4 z-10">
+        <Button variant="outline" className="rounded-full w-10 h-10 p-0 flex items-center justify-center">
+          <ArrowLeft size={18} />
+        </Button>
+      </Link>
       
       {/* Left side - Form */}
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
-        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative">
+          {/* Botão de login rápido flutuante quando os campos estão preenchidos */}
+          {showQuickLogin && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
+            >
+              <Button 
+                variant="secondary" 
+                size="icon" 
+                className="rounded-full w-12 h-12 bg-primary-600 text-white hover:bg-primary-700 shadow-md"
+                onClick={handleQuickLogin}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </motion.div>
+          )}
+          
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-md">
+              <motion.div 
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                whileHover={{ rotate: 5, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="w-16 h-16 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-md"
+              >
                 <svg 
                   viewBox="0 0 24 24" 
                   className="w-10 h-10 fill-current"
@@ -98,7 +198,7 @@ export default function AuthPage() {
                   <path d="M11 11h2v6h-2z"/>
                   <path d="M11 9h2v1h-2z"/>
                 </svg>
-              </div>
+              </motion.div>
             </div>
             <CardTitle className="text-2xl font-bold text-gray-800">
               Bem-vindo ao <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>
@@ -162,6 +262,7 @@ export default function AuthPage() {
                     </div>
                     
                     <Button
+                      ref={submitButtonRef}
                       type="submit"
                       size="lg"
                       className="w-full bg-primary-600 hover:bg-primary-700 font-medium text-white"
@@ -325,57 +426,224 @@ export default function AuthPage() {
         </Card>
       </div>
       
-      {/* Right side - Hero with illustration */}
+      {/* Right side - Hero with interactive graphics */}
       <div className="md:w-1/2 w-full bg-primary-50 md:flex flex-col justify-center items-center p-8 hidden">
-        <div className="max-w-md text-center">
-          <div className="relative w-full h-64 mb-8">
-            {/* Hero illustration */}
-            <div className="absolute inset-0 transform transition-all duration-700 hover:rotate-1 hover:scale-105">
-              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="filter drop-shadow-lg">
-                <path fill="#4F46E5" d="M43.2,-68.1C54.7,-58.1,62,-44.5,69.2,-30.7C76.5,-16.9,83.6,-2.9,81.1,9.6C78.6,22,66.4,32.9,56.1,42.9C45.8,52.9,37.3,62,26.6,70.5C15.9,79,8,87,-2.9,91.5C-13.8,96,-27.7,97,-38.7,90.3C-49.7,83.6,-57.8,69.2,-63.8,55.4C-69.8,41.6,-73.6,28.4,-76.1,14.6C-78.6,0.7,-79.7,-13.7,-76.2,-27.2C-72.8,-40.7,-64.7,-53.2,-53.1,-63.1C-41.6,-73,-20.8,-80.2,-2.1,-77.3C16.6,-74.4,33.2,-61.4,43.2,-68.1Z" transform="translate(100 125) scale(1.1)" />
-              </svg>
-            </div>
-            
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-white shadow-xl rounded-2xl p-6 w-48 h-48 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-xl mx-auto flex items-center justify-center mb-3">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-                      <path d="M19 5.5h-4.5V1H9v4.5H4.5V19c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5.5zm-9-3h3V7h4.5v10.5c0 .55-.45 1-1 1h-10c-.55 0-1-.45-1-1V7H11V2.5z"/>
-                      <path d="M11 11h2v6h-2z"/>
-                      <path d="M11 9h2v1h-2z"/>
-                    </svg>
-                  </div>
-                  <p className="font-medium text-gray-700">Seus exames</p>
-                  <p className="text-sm text-gray-500">analisados por IA</p>
-                </div>
-              </div>
-            </div>
+        <div className="max-w-lg">
+          {/* Title section */}
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>: Análise de Exames com Inteligência Artificial
+            </h2>
+            <p className="text-lg text-gray-600 mb-6">
+              A evolução da sua saúde começa com o entendimento dos seus exames. Transforme dados em ações com nossa análise AI avançada.
+            </p>
           </div>
           
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>: Análise de Exames com Inteligência Artificial
-          </h2>
-          <p className="text-lg text-gray-600 mb-6">
-            A evolução da sua saúde começa com o entendimento dos seus exames. Transforme dados em ações com nossa análise AI avançada.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <div className="flex items-center">
+          {/* Interactive graphics with 2 rows of charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Interactive Chart 1: Line Chart with animation */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary-500" />
+                  <h3 className="font-medium text-gray-800">Glicemia</h3>
+                </div>
+                <span className="text-xs bg-primary-50 text-primary-700 px-2 py-1 rounded-full">
+                  Últimos 6 meses
+                </span>
+              </div>
+              
+              <div className="h-[160px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={healthData}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                  >
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-white p-2 border border-gray-200 shadow-sm rounded-md text-xs">
+                              <p className="font-medium">{`${payload[0].payload.name}: ${payload[0].value}`}</p>
+                              <p className="text-xs capitalize">{`Status: ${payload[0].payload.status}`}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#4F46E5"
+                      strokeWidth={2}
+                      activeDot={{ r: 6, fill: "#4F46E5", stroke: "white", strokeWidth: 2 }}
+                      dot={{ r: 4, fill: "white", stroke: "#4F46E5", strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+            
+            {/* Interactive Chart 2: Area Chart with animation */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  <h3 className="font-medium text-gray-800">Perfil Lipídico</h3>
+                </div>
+                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                  Análise recente
+                </span>
+              </div>
+              
+              <div className="h-[160px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={cholesterolData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={60}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={false}
+                    >
+                      {cholesterolData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+            
+            {/* Interactive Chart 3: Bar Chart with animation */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart2 className="h-5 w-5 text-amber-500" />
+                  <h3 className="font-medium text-gray-800">Status de Resultados</h3>
+                </div>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                  Último exame
+                </span>
+              </div>
+              
+              <div className="h-[160px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Normal', value: 12 },
+                      { name: 'Alto', value: 3 },
+                      { name: 'Baixo', value: 2 },
+                    ]}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                  >
+                    <XAxis dataKey="name" />
+                    <YAxis hide />
+                    <Tooltip />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {[
+                        { name: 'Normal', fill: HEALTH_COLORS.normal },
+                        { name: 'Alto', fill: HEALTH_COLORS.alto },
+                        { name: 'Baixo', fill: HEALTH_COLORS.baixo },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+            
+            {/* Interactive element 4: Health Card */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white rounded-xl shadow-md p-4"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-green-600" />
+                  <h3 className="font-medium text-gray-800">Seu Perfil de Saúde</h3>
+                </div>
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                  Personalizado
+                </span>
+              </div>
+              
+              <div className="flex flex-col gap-2 mt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 text-sm">Índice de Saúde</span>
+                  <div className="flex items-center">
+                    <span className="text-primary-600 font-medium">87</span>
+                    <span className="text-xs text-gray-500 ml-1">/100</span>
+                  </div>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: "87%" }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                    className="h-full bg-primary-500 rounded-full"
+                  />
+                </div>
+                <div className="mt-4 text-center text-sm text-gray-600">
+                  Faça login para ver sua análise completa
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Features section */}
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center"
+            >
               <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                 </svg>
               </div>
               <span className="ml-2 text-gray-700">Seguro e privado</span>
-            </div>
-            <div className="flex items-center">
+            </motion.div>
+            
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex items-center"
+            >
               <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
                   <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
                 </svg>
               </div>
               <span className="ml-2 text-gray-700">Alertas de saúde</span>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
