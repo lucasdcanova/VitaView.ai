@@ -163,22 +163,34 @@ export default function AuthPage() {
       {/* Left side - Form */}
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
         <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative">
-          {/* Botão de login rápido flutuante quando os campos estão preenchidos */}
+          {/* Botão ENTRAR grande e evidente quando os campos estão preenchidos */}
           {showQuickLogin && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
-            >
-              <Button 
-                variant="secondary" 
-                size="icon" 
-                className="rounded-full w-12 h-12 bg-primary-600 text-white hover:bg-primary-700 shadow-md"
+            <>
+              {/* Overlay escuro semitransparente */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                className="fixed inset-0 bg-black z-30"
                 onClick={handleQuickLogin}
+              />
+              
+              {/* Botão ENTRAR */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1.05 }}
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40"
               >
-                <ChevronRight className="h-6 w-6" />
-              </Button>
-            </motion.div>
+                <Button 
+                  variant="secondary" 
+                  className="rounded-full h-16 px-8 bg-green-600 text-white hover:bg-green-700 shadow-2xl font-bold text-xl border-2 border-white"
+                  onClick={handleQuickLogin}
+                >
+                  ENTRAR <ChevronRight className="h-6 w-6 ml-2" />
+                </Button>
+              </motion.div>
+            </>
           )}
           
           <CardHeader className="text-center">
