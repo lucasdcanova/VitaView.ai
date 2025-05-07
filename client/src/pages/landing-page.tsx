@@ -614,7 +614,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pain Point Section */}
-      <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-16 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-16 mt-[-3rem] relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -675,7 +675,7 @@ export default function LandingPage() {
       </section>
       
       {/* Simulação de Relatórios Section */}
-      <section id="demonstracoes" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      <section id="demonstracoes" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
