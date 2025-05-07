@@ -101,6 +101,14 @@ export default function Dashboard() {
       "Leucócitos": { key: "whiteCells", count: 0, sum: 0 }
     };
     
+    // Map alternate naming conventions for metrics
+    const metricNameMap: Record<string, string> = {
+      "Glicemia": "Glicose",
+      "Colesterol": "Colesterol Total",
+      "HDL": "HDL",
+      "LDL": "LDL"
+    };
+    
     metricList.forEach(metric => {
       const date = new Date(metric.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -108,7 +116,6 @@ export default function Dashboard() {
       if (!dataByMonth[monthKey]) {
         dataByMonth[monthKey] = {
           month: new Date(date.getFullYear(), date.getMonth(), 1),
-          healthScore: 75, // Default health score if not available
           count: 0,
           ...Object.keys(commonMetrics).reduce((acc, metricName) => {
             acc[commonMetrics[metricName].key] = 0;
@@ -117,15 +124,20 @@ export default function Dashboard() {
         };
       }
       
-      // Try to extract data from metric name
-      if (metric.name in commonMetrics) {
-        const metricKey = commonMetrics[metric.name].key;
+      // Try to match metric name with our common metrics or their aliases
+      const normalizedMetricName = metricNameMap[metric.name] || metric.name;
+      
+      if (normalizedMetricName in commonMetrics) {
+        const metricKey = commonMetrics[normalizedMetricName].key;
         try {
-          const value = parseFloat(metric.value);
+          // Parse the value, handling any formatting issues
+          let valueStr = metric.value.replace(',', '.'); // Handle comma decimal separators
+          const value = parseFloat(valueStr);
+          
           if (!isNaN(value)) {
             dataByMonth[monthKey][metricKey] += value;
-            commonMetrics[metric.name].sum += value;
-            commonMetrics[metric.name].count += 1;
+            commonMetrics[normalizedMetricName].sum += value;
+            commonMetrics[normalizedMetricName].count += 1;
           }
         } catch (e) {
           console.warn(`Error parsing value for ${metric.name}:`, e);
@@ -137,16 +149,24 @@ export default function Dashboard() {
     
     // Calculate averages and format for chart
     return Object.values(dataByMonth)
-      .map(item => ({
-        month: new Date(item.month).toLocaleDateString('pt-BR', { month: 'short' }),
-        healthScore: 75, // Default health score
-        // Add only metrics that have data
-        ...Object.keys(commonMetrics).reduce((acc, metricName) => {
+      .map(item => {
+        const result: Record<string, any> = {
+          month: new Date(item.month).toLocaleDateString('pt-BR', { month: 'short' }),
+        };
+        
+        // Only include metrics that have actual data
+        Object.keys(commonMetrics).forEach(metricName => {
           const metricKey = commonMetrics[metricName].key;
-          acc[metricKey] = item.count > 0 ? Math.round(item[metricKey] / item.count) : 0;
-          return acc;
-        }, {} as Record<string, number>)
-      }))
+          const count = commonMetrics[metricName].count;
+          
+          // Only add this metric if we have data for it
+          if (count > 0) {
+            result[metricKey] = item.count > 0 ? Math.round(item[metricKey] / item.count) : 0;
+          }
+        });
+        
+        return result;
+      })
       .sort((a, b) => {
         const months = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
         return months.indexOf(a.month) - months.indexOf(b.month);
@@ -214,7 +234,7 @@ export default function Dashboard() {
   // Calculate health stats
   const calcHealthStats = () => {
     if (!metrics || metrics.length === 0) {
-      return { averageScore: 75, trend: 'stable', recentMetrics: [] };
+      return { averageScore: null, trend: null, recentMetrics: [], hasData: false };
     }
     
     // Sort by date, most recent first
@@ -237,7 +257,7 @@ export default function Dashboard() {
         case 'baixo':
           return 60;
         default:
-          return 75; // Default score
+          return 75; // Default score for metrics that exist but don't have a clear status
       }
     };
     
@@ -245,15 +265,33 @@ export default function Dashboard() {
     const metricsWithScores = recentMetrics.map(calculateMetricScore);
     const averageScore = metricsWithScores.length > 0 
       ? Math.round(metricsWithScores.reduce((sum, score) => sum + score, 0) / metricsWithScores.length)
-      : 75; // Default if no metrics
+      : null; // Return null if no metrics to calculate score
     
     // Determine trend (if we have enough data)
-    let trend: 'improving' | 'declining' | 'stable' = 'stable';
+    let trend: 'improving' | 'declining' | 'stable' | null = null;
     
-    // We don't have enough historical data for trend analysis,
-    // so keep it stable for now
+    // Need at least two data points from different dates to calculate a trend
+    const uniqueDates = new Set(sortedMetrics.map(m => new Date(m.date).toDateString())).size;
+    if (uniqueDates >= 2) {
+      // Basic trend analysis - just checking if there are more normal metrics in recent data
+      const olderMetrics = sortedMetrics.slice(recentMetrics.length);
+      const recentNormalCount = recentMetrics.filter(m => 
+        m.status?.toLowerCase() === 'normal').length / (recentMetrics.length || 1);
+      const olderNormalCount = olderMetrics.filter(m => 
+        m.status?.toLowerCase() === 'normal').length / (olderMetrics.length || 1);
+      
+      if (recentNormalCount > olderNormalCount) {
+        trend = 'improving';
+      } else if (recentNormalCount < olderNormalCount) {
+        trend = 'declining';
+      } else {
+        trend = 'stable';
+      }
+    } else {
+      trend = 'stable'; // Default to stable if not enough data
+    }
     
-    return { averageScore, trend, recentMetrics };
+    return { averageScore, trend, recentMetrics, hasData: true };
   };
   
   const { averageScore, trend, recentMetrics } = calcHealthStats();
@@ -377,7 +415,7 @@ export default function Dashboard() {
                       <Skeleton className="h-32 w-32 rounded-full mb-4" />
                       <Skeleton className="h-5 w-32 mb-2" />
                     </div>
-                  ) : metrics && metrics.length > 0 ? (
+                  ) : metrics && metrics.length > 0 && averageScore !== null ? (
                     <div className="flex flex-col items-center">
                       <div className="relative mb-4">
                         <div className="w-32 h-32 rounded-full flex items-center justify-center border-8 border-gray-100">
@@ -391,19 +429,21 @@ export default function Dashboard() {
                             <span className="text-4xl font-bold">{averageScore}</span>
                           </div>
                         </div>
-                        <div className={`absolute -top-1 -right-1 rounded-full p-1.5 ${
-                          trend === 'improving' ? 'bg-green-100 text-green-700' :
-                          trend === 'declining' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          {trend === 'improving' ? (
-                            <TrendingUp className="h-5 w-5" />
-                          ) : trend === 'declining' ? (
-                            <TrendingUp className="h-5 w-5 transform rotate-180" />
-                          ) : (
-                            <Activity className="h-5 w-5" />
-                          )}
-                        </div>
+                        {trend && (
+                          <div className={`absolute -top-1 -right-1 rounded-full p-1.5 ${
+                            trend === 'improving' ? 'bg-green-100 text-green-700' :
+                            trend === 'declining' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {trend === 'improving' ? (
+                              <TrendingUp className="h-5 w-5" />
+                            ) : trend === 'declining' ? (
+                              <TrendingUp className="h-5 w-5 transform rotate-180" />
+                            ) : (
+                              <Activity className="h-5 w-5" />
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="text-center mb-3">
                         <p className="font-medium text-gray-800">
@@ -412,10 +452,12 @@ export default function Dashboard() {
                            averageScore >= 60 ? 'Bom' :
                            averageScore >= 50 ? 'Regular' : 'Requer Atenção'}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {trend === 'improving' ? 'Em melhora' : 
-                           trend === 'declining' ? 'Em declínio' : 'Estável'}
-                        </p>
+                        {trend && (
+                          <p className="text-sm text-gray-500">
+                            {trend === 'improving' ? 'Em melhora' : 
+                             trend === 'declining' ? 'Em declínio' : 'Estável'}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="w-full bg-gray-100 h-1 mb-4 rounded-full">
@@ -434,7 +476,14 @@ export default function Dashboard() {
                   ) : (
                     <div className="flex flex-col items-center justify-center py-6 text-center">
                       <AlertCircle className="h-10 w-10 text-gray-300 mb-2" />
-                      <p className="text-gray-500 mb-4">Sem dados de saúde disponíveis</p>
+                      <p className="text-gray-500 mb-1">Sem dados suficientes</p>
+                      <p className="text-xs text-gray-400 mb-3">Faça upload de exames para visualizar seu índice de saúde</p>
+                      <Link href="/upload-exams">
+                        <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs">
+                          <FileUp className="h-3 w-3" />
+                          Enviar Exame
+                        </Button>
+                      </Link>
                       <Link href="/upload-exams">
                         <Button variant="outline" size="sm">Enviar primeiro exame</Button>
                       </Link>
