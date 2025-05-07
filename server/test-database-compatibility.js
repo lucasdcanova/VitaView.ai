@@ -9,9 +9,9 @@
  * Usage: NODE_ENV=development node server/test-database-compatibility.js
  */
 
-const { storage } = require('./storage');
-const { db } = require('./db');
-const { examResults, exams, users, healthMetrics } = require('../shared/schema');
+import { storage } from './storage.js';
+import { db } from './db.js';
+import { examResults, exams, users, healthMetrics } from '../shared/schema.js';
 
 // Test constants
 const TEST_USER_ID = 1; // Make sure this user exists

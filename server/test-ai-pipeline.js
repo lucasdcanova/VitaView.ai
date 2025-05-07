@@ -10,11 +10,16 @@
  * Usage: NODE_ENV=development node server/test-ai-pipeline.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const { analyzeDocument } = require('./services/gemini');
-const { analyzeExtractedExam } = require('./services/openai');
-const { storage } = require('./storage');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { analyzeDocument } from './services/gemini.js';
+import { analyzeExtractedExam } from './services/openai.js';
+import { storage } from './storage.js';
+
+// Fix __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure test constants
 const TEST_USER_ID = 1; // Make sure this user exists in your database
