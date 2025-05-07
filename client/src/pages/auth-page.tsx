@@ -172,7 +172,7 @@ export default function AuthPage() {
               </motion.div>
             </div>
             <CardTitle className="text-2xl font-bold text-gray-800">
-              Bem-vindo ao <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>
             </CardTitle>
             <CardDescription className="text-gray-500">
               A evolução da sua saúde começa com o entendimento dos seus exames
