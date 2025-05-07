@@ -1110,7 +1110,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">
+              <span className="text-primary-600">
                 Recursos inteligentes
               </span> para sua saúde
             </h2>
@@ -1263,7 +1263,7 @@ export default function LandingPage() {
             </motion.span>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Como Funciona o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">HEMOLOG</span>
+              Como Funciona o <span className="text-primary-600">HEMOLOG</span>
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Nossa plataforma transforma documentos médicos complexos em informações claras e úteis para sua saúde
@@ -1421,7 +1421,7 @@ export default function LandingPage() {
             </motion.span>
           
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Benefícios <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Reais</span> para sua Saúde
+              Benefícios <span className="text-primary-600">Reais</span> para sua Saúde
             </h2>
             <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
               O HEMOLOG transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
@@ -1593,7 +1593,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              Para Quem é o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>?
+              Para Quem é o <span className="text-primary-600">Hemolog</span>?
             </h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
               Nossa plataforma atende diferentes necessidades e perfis, criando valor em cada etapa da jornada de saúde.
