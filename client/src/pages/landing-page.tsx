@@ -274,7 +274,7 @@ export default function LandingPage() {
             </motion.span>
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700 tracking-tight">HEMOLOG</span>: Entenda seus exames com clareza e precisão
+              <span className="text-primary-600 tracking-tight">HEMOLOG</span>: Entenda seus exames com clareza e precisão
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
@@ -2033,7 +2033,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              O Que Dizem Nossos <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Usuários</span>
+              O Que Dizem Nossos <span className="text-primary-600">Usuários</span>
             </h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
               Centenas de pessoas já transformaram sua relação com a saúde através do Hemolog.
@@ -2173,7 +2173,7 @@ export default function LandingPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Perguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Frequentes</span>
+              Perguntas <span className="text-primary-600">Frequentes</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Tire suas dúvidas sobre o Hemolog e como nossa plataforma pode ajudar você a entender melhor sua saúde.
@@ -2328,7 +2328,7 @@ export default function LandingPage() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
                 >
-                  Transforme seus exames em <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">decisões inteligentes</span>.
+                  Transforme seus exames em <span className="text-blue-100">decisões inteligentes</span>.
                 </motion.h2>
                 
                 <motion.p 
@@ -2420,7 +2420,7 @@ export default function LandingPage() {
               Funcionalidades Principais
             </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5">
-              Transforme números em <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">informações úteis</span>
+              Transforme números em <span className="text-primary-600">informações úteis</span>
             </h2>
             <p className="text-lg text-gray-600">
               Organize seu histórico médico e visualize tendências em gráficos intuitivos
