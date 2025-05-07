@@ -352,21 +352,19 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       throw new Error("Resultado da extração não encontrado");
     }
     
-    // 3. Obter métricas de saúde extraídas do exame
-    const healthMetrics = await storage.getHealthMetricsByUserId(userId);
+    // 3. Obter métricas diretamente do resultado da extração, não de health_metrics
     const examDateStr = exam.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
                         exam.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
     
-    // Filtrar métricas desta data de exame específica
-    let metricsFromThisExam;
-    if (examDateStr) {
-      metricsFromThisExam = healthMetrics.filter(metric => {
-        const metricDateStr = metric.date ? new Date(metric.date).toISOString().split('T')[0] : null;
-        return metricDateStr === examDateStr;
-      });
+    // Usar as métricas que já foram extraídas pelo Gemini e armazenadas em examResults
+    // em vez de tentar buscar da tabela health_metrics que está incompleta
+    let metricsFromThisExam = [];
+    
+    if (extractionResult.healthMetrics && Array.isArray(extractionResult.healthMetrics)) {
+      console.log(`Usando ${extractionResult.healthMetrics.length} métricas diretamente do resultado da extração`);
+      metricsFromThisExam = extractionResult.healthMetrics;
     } else {
-      // Se não houver data, pega as 20 métricas mais recentes
-      metricsFromThisExam = healthMetrics.slice(0, 20);
+      console.log("Nenhuma métrica encontrada no resultado da extração. Usando array vazio.");
     }
     
     console.log(`Analisando ${metricsFromThisExam.length} métricas do exame`);

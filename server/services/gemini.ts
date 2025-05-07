@@ -172,7 +172,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         
         // Processamento aprimorado e validação dos dados de métricas
         if (analysisData.healthMetrics) {
-          analysisData.healthMetrics = analysisData.healthMetrics.map(metric => ({
+          analysisData.healthMetrics = analysisData.healthMetrics.map((metric: any) => ({
             name: metric.name || "desconhecido",
             value: String(metric.value || "0"),
             unit: metric.unit || "",
@@ -180,7 +180,8 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
             change: metric.change || "",
             referenceMin: metric.referenceMin || null,
             referenceMax: metric.referenceMax || null,
-            clinical_significance: metric.clinical_significance || null
+            clinical_significance: metric.clinical_significance || null,
+            category: metric.category || "Geral"
           }));
         }
         

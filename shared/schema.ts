@@ -78,11 +78,13 @@ export const healthMetrics = pgTable("health_metrics", {
   unit: text("unit"), // mg/dL, etc
   status: text("status"), // normal, atenção, alto
   change: text("change"), // +2, -3, etc (change from previous)
-  referenceMin: text("reference_min"), // valor mínimo de referência
-  referenceMax: text("reference_max"), // valor máximo de referência
-  clinical_significance: text("clinical_significance"), // significado clínico do parâmetro
   date: timestamp("date").defaultNow().notNull(),
-  category: text("category"), // hemograma, lipidograma, função hepática, etc
+  // Nota: Os campos abaixo não existem na tabela real do banco de dados
+  // Foram removidos para compatibilidade com o schema real
+  // referenceMin: text("reference_min"), 
+  // referenceMax: text("reference_max"), 
+  // clinical_significance: text("clinical_significance"),
+  // category: text("category"),
 });
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
@@ -92,11 +94,12 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
   unit: true,
   status: true,
   change: true,
-  referenceMin: true,
-  referenceMax: true,
-  clinical_significance: true,
   date: true,
-  category: true,
+  // Removidos campos que não existem no banco de dados
+  // referenceMin: true,
+  // referenceMax: true,
+  // clinical_significance: true,
+  // category: true,
 });
 
 // Notifications schema
