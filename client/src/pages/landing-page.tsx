@@ -10,9 +10,17 @@ import {
   Users,
   Activity,
   Building,
+  Building2,
   ChevronRight,
   Heart,
   HeartPulse,
+  Circle,
+  Clock,
+  Eye,
+  Filter,
+  FolderKanban,
+  History,
+  RefreshCw,
   BarChart4,
   Sparkles,
   Play,
@@ -53,7 +61,6 @@ import {
   AlertCircle,
   InfoIcon,
   HelpCircle,
-  History,
   Share,
   Check,
   Stethoscope,
@@ -1126,7 +1133,7 @@ export default function LandingPage() {
                 title: "Visualização intuitiva de dados de saúde",
                 description: "Gráficos interativos transformam números complexos em informações visuais de fácil compreensão, mostrando tendências e comparando valores com referências de normalidade.",
                 icon: <BarChart className="w-12 h-12 text-primary-500" />,
-                image: "https://placehold.co/800x500/e6f2ff/0066cc?text=Grafico+Interativo",
+                image: "",  // Vamos substituir por um elemento personalizado JSX
                 features: [
                   "Gráficos evolutivos de valores",
                   "Comparação com referências médicas",
@@ -1138,7 +1145,7 @@ export default function LandingPage() {
                 title: "Armazenamento seguro e organizado",
                 description: "Mantenha todos os seus exames em um único local, organizados cronologicamente e por tipo, com acesso fácil a todo o seu histórico médico sempre que precisar.",
                 icon: <ScrollText className="w-12 h-12 text-primary-500" />,
-                image: "https://placehold.co/800x500/e6f2ff/0066cc?text=Historico+Organizado",
+                image: "",  // Vamos substituir por um elemento personalizado JSX
                 features: [
                   "Ordenação inteligente por data",
                   "Categorização automática por tipo",
@@ -1205,11 +1212,242 @@ export default function LandingPage() {
                   {/* Elemento decorativo */}
                   <div className="absolute -z-10 inset-0 bg-gradient-to-tr from-primary-50 to-transparent rounded-3xl transform translate-x-4 translate-y-4"></div>
                   
-                  <img 
-                    src={feature.image} 
-                    alt={feature.title} 
-                    className="w-full h-auto rounded-xl shadow-lg relative z-10"
-                  />
+                  {/* Conteúdo personalizado que substitui a imagem */}
+                  {index === 0 ? (
+                    // Gráfico Interativo
+                    <div className="w-full h-[340px] bg-blue-50 rounded-xl shadow-lg relative z-10 overflow-hidden">
+                      {/* Cabeçalho do gráfico */}
+                      <div className="p-4 bg-white border-b border-gray-100 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <LineChart className="h-5 w-5 text-primary-500 mr-2" />
+                          <span className="font-medium text-primary-700">Gráfico Interativo</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button className="p-1.5 rounded-md hover:bg-gray-100">
+                            <Download className="h-4 w-4 text-gray-500" />
+                          </button>
+                          <button className="p-1.5 rounded-md hover:bg-gray-100">
+                            <RefreshCw className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Área do gráfico */}
+                      <div className="p-4 h-[calc(100%-4rem)]">
+                        {/* Legendas na parte superior */}
+                        <div className="flex justify-end mb-2 space-x-4">
+                          <div className="flex items-center">
+                            <span className="h-3 w-3 rounded-full bg-primary-500 mr-2"></span>
+                            <span className="text-xs text-gray-600">Hemoglobina</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="h-3 w-3 rounded-full bg-amber-500 mr-2"></span>
+                            <span className="text-xs text-gray-600">Glicose</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
+                            <span className="text-xs text-gray-600">Colesterol</span>
+                          </div>
+                        </div>
+                        
+                        {/* Grid do gráfico */}
+                        <div className="relative h-[calc(100%-2rem)] border-l border-b border-gray-200">
+                          {/* Linhas horizontais do grid */}
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div key={i} className="absolute w-full h-px bg-gray-100" style={{ top: `${i * 25}%` }}></div>
+                          ))}
+                          
+                          {/* Pontos e linhas animadas */}
+                          <motion.div 
+                            className="absolute inset-0"
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                          >
+                            {/* Linha azul (Hemoglobina) */}
+                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                              <motion.path 
+                                d="M0,60 L20,50 L40,55 L60,40 L80,35 L100,45"
+                                fill="none" 
+                                stroke="rgb(59, 130, 246)" 
+                                strokeWidth="2"
+                                initial={{ pathLength: 0 }}
+                                whileInView={{ pathLength: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 0.8 }}
+                              />
+                            </svg>
+                            
+                            {/* Linha âmbar (Glicose) */}
+                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                              <motion.path 
+                                d="M0,50 L20,60 L40,70 L60,65 L80,55 L100,60"
+                                fill="none" 
+                                stroke="rgb(245, 158, 11)" 
+                                strokeWidth="2"
+                                initial={{ pathLength: 0 }}
+                                whileInView={{ pathLength: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 1 }}
+                              />
+                            </svg>
+                            
+                            {/* Linha vermelha (Colesterol) */}
+                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                              <motion.path 
+                                d="M0,65 L20,70 L40,60 L60,55 L80,45 L100,50"
+                                fill="none" 
+                                stroke="rgb(239, 68, 68)" 
+                                strokeWidth="2"
+                                initial={{ pathLength: 0 }}
+                                whileInView={{ pathLength: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 1.2 }}
+                              />
+                            </svg>
+                            
+                            {/* Pontos animados */}
+                            {[
+                              { left: '0%', top: '60%', color: 'bg-primary-500' },
+                              { left: '20%', top: '50%', color: 'bg-primary-500' },
+                              { left: '40%', top: '55%', color: 'bg-primary-500' },
+                              { left: '60%', top: '40%', color: 'bg-primary-500' },
+                              { left: '80%', top: '35%', color: 'bg-primary-500' },
+                              { left: '100%', top: '45%', color: 'bg-primary-500' },
+                              
+                              { left: '0%', top: '50%', color: 'bg-amber-500' },
+                              { left: '20%', top: '60%', color: 'bg-amber-500' },
+                              { left: '40%', top: '70%', color: 'bg-amber-500' },
+                              { left: '60%', top: '65%', color: 'bg-amber-500' },
+                              { left: '80%', top: '55%', color: 'bg-amber-500' },
+                              { left: '100%', top: '60%', color: 'bg-amber-500' },
+                              
+                              { left: '0%', top: '65%', color: 'bg-red-500' },
+                              { left: '20%', top: '70%', color: 'bg-red-500' },
+                              { left: '40%', top: '60%', color: 'bg-red-500' },
+                              { left: '60%', top: '55%', color: 'bg-red-500' },
+                              { left: '80%', top: '45%', color: 'bg-red-500' },
+                              { left: '100%', top: '50%', color: 'bg-red-500' }
+                            ].map((point, i) => (
+                              <motion.div 
+                                key={i}
+                                className={`absolute h-2 w-2 rounded-full ${point.color} transform -translate-x-1 -translate-y-1`}
+                                style={{ left: point.left, top: point.top }}
+                                initial={{ scale: 0, opacity: 0 }}
+                                whileInView={{ scale: 1, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.3, delay: 0.8 + (i * 0.05) }}
+                              />
+                            ))}
+                          </motion.div>
+                          
+                          {/* Datas no eixo X */}
+                          <div className="absolute -bottom-6 left-0 right-0 flex justify-between">
+                            <span className="text-xs text-gray-500">Jan</span>
+                            <span className="text-xs text-gray-500">Fev</span>
+                            <span className="text-xs text-gray-500">Mar</span>
+                            <span className="text-xs text-gray-500">Abr</span>
+                            <span className="text-xs text-gray-500">Mai</span>
+                            <span className="text-xs text-gray-500">Jun</span>
+                          </div>
+                          
+                          {/* Valores no eixo Y */}
+                          <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between py-1">
+                            <span className="text-xs text-gray-500">200</span>
+                            <span className="text-xs text-gray-500">150</span>
+                            <span className="text-xs text-gray-500">100</span>
+                            <span className="text-xs text-gray-500">50</span>
+                            <span className="text-xs text-gray-500">0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Histórico Organizado 
+                    <div className="w-full h-[340px] bg-blue-50 rounded-xl shadow-lg relative z-10 overflow-hidden">
+                      {/* Cabeçalho do histórico */}
+                      <div className="p-4 bg-white border-b border-gray-100 flex justify-between items-center">
+                        <div className="flex items-center">
+                          <FolderKanban className="h-5 w-5 text-primary-500 mr-2" />
+                          <span className="font-medium text-primary-700">Histórico Organizado</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button className="p-1.5 rounded-md hover:bg-gray-100">
+                            <Filter className="h-4 w-4 text-gray-500" />
+                          </button>
+                          <button className="p-1.5 rounded-md hover:bg-gray-100">
+                            <Search className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Lista de exames */}
+                      <div className="p-2 space-y-2 h-[calc(100%-4rem)] overflow-y-auto">
+                        {[
+                          { 
+                            title: "Hemograma Completo", 
+                            date: "15/04/2025", 
+                            lab: "Laboratório Central",
+                            status: "normal"
+                          },
+                          { 
+                            title: "Check-up Anual", 
+                            date: "10/03/2025", 
+                            lab: "ClínicaVida",
+                            status: "atencao" 
+                          },
+                          { 
+                            title: "Lipidograma", 
+                            date: "22/02/2025", 
+                            lab: "Laboratório Central",
+                            status: "normal" 
+                          },
+                          { 
+                            title: "Teste de Glicemia", 
+                            date: "05/02/2025", 
+                            lab: "Central Diagnósticos",
+                            status: "alerta" 
+                          },
+                          { 
+                            title: "Hormônios Tireoide", 
+                            date: "15/01/2025", 
+                            lab: "Laboratório Central",
+                            status: "normal" 
+                          },
+                        ].map((exam, i) => (
+                          <motion.div 
+                            key={i}
+                            className="bg-white rounded-lg p-3 border border-gray-100 flex items-center justify-between"
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.2, delay: 0.5 + (i * 0.1) }}
+                            whileHover={{ y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                          >
+                            <div className="flex items-center">
+                              <div className="mr-3">
+                                {exam.status === "normal" && <Circle className="h-3 w-3 text-green-500 fill-green-500" />}
+                                {exam.status === "atencao" && <Circle className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                                {exam.status === "alerta" && <Circle className="h-3 w-3 text-red-500 fill-red-500" />}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-800">{exam.title}</h4>
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  <span>{exam.date}</span>
+                                  <Building2 className="h-3 w-3 ml-2 mr-1" />
+                                  <span>{exam.lab}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   
                   {/* Badge */}
                   <motion.div 
