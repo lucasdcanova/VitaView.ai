@@ -285,18 +285,17 @@ export default function LandingPage() {
           </motion.div>
           
           <motion.div 
-            className="md:w-1/2 flex justify-center relative"
+            className="md:w-1/2 flex justify-center relative mt-10 md:mt-0"
             variants={itemVariants}
           >
             {/* Elemento decorativo */}
             <div className="absolute -z-10 w-64 h-64 bg-primary-100 rounded-full opacity-50 blur-xl -top-10 -right-10"></div>
             
             {/* Imagem principal com sobreposição de elementos */}
-            <div className="relative">
+            <div className="relative w-full max-w-[600px]">
               {/* Dashboard mockup simulado - design mais próximo do real */}
               <motion.div 
-                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden"
-                style={{ width: '600px', height: '380px' }}
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10]"
                 whileHover={{ 
                   rotate: 2,
                   transition: { duration: 0.3 }
@@ -2959,8 +2958,8 @@ export default function LandingPage() {
                   </div>
                   <div className="text-sm text-gray-600">
                     <p>
-                      Utilizamos cookies para melhorar sua experiência e fornecer recursos personalizados. 
-                      Ao continuar navegando, você concorda com nossa <a href="#" className="text-primary-600 hover:underline">Política de Privacidade</a> e 
+                      Utilizamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa 
+                      <a href="#" className="text-primary-600 hover:underline"> Política de Privacidade</a> e 
                       <a href="#" className="text-primary-600 hover:underline"> Termos de Uso</a>.
                     </p>
                   </div>
@@ -2972,7 +2971,7 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Personalizar
+                    Rejeitar
                   </motion.button>
                   <motion.button
                     onClick={() => setShowCookieConsent(false)}
@@ -2980,7 +2979,7 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Aceitar todos
+                    Aceitar
                   </motion.button>
                 </div>
               </div>
