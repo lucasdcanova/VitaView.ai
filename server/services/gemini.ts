@@ -44,13 +44,17 @@ const safetySettings = [
  * @returns Analysis result with health metrics and recommendations
  */
 export async function analyzeDocument(fileContent: string, fileType: string) {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 1000; // 1 segundo
+  const MAX_RETRIES = 5; // Aumentado para 5 tentativas
+  const RETRY_DELAY = 2000; // Aumentado para 2 segundos de base, com backoff exponencial
   
   let lastError: any = null;
   
   // Helper function to implement delay
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  // Log o tipo e tamanho do arquivo para diagnóstico 
+  const fileSizeKB = Math.round(fileContent.length * 0.75 / 1024); // aproximado para base64
+  console.log(`Processando documento ${fileType} de aproximadamente ${fileSizeKB}KB`);
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -62,47 +66,61 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         safetySettings
       });
       
-      // Prepare the prompt for the model - FOCO NA EXTRAÇÃO PRECISA
-      const prompt = `Você é um especialista médico com foco específico na EXTRAÇÃO PRECISA de dados de exames laboratoriais, sem analisar ou interpretar resultados.
+      // Prepare the prompt for the model - FOCO NA EXTRAÇÃO PRECISA COM ADAPTAÇÃO PARA EXAMES BRASILEIROS
+      const prompt = `Você é um especialista médico brasileiro com foco específico na EXTRAÇÃO PRECISA de dados de exames laboratoriais do Brasil, sem analisar ou interpretar resultados.
                 
-                TAREFA PRINCIPAL: EXTRAIA DADOS ESTRUTURADOS deste documento ${fileType.toUpperCase()} que contém um ou MÚLTIPLOS EXAMES médicos. 
+                TAREFA PRINCIPAL: EXTRAIA DADOS ESTRUTURADOS deste documento ${fileType.toUpperCase()} que contém um ou MÚLTIPLOS EXAMES médicos laboratoriais brasileiros. 
                 
                 FOCO EXCLUSIVO NA EXTRAÇÃO:
                 - Sua única função é EXTRAIR dados e metadados, NÃO fazer análises médicas
                 - Organize todos os parâmetros encontrados no formato estruturado JSON solicitado
                 - Identifique TODOS os exames diferentes presentes no documento (hemograma, glicemia, lipidograma, etc.)
                 - Extraia TODOS os parâmetros de CADA exame com precisão máxima
+                - Adapte-se para o padrão brasileiro de laboratórios como Dasa, Fleury, DB Diagnósticos, CDPI, etc.
                 
                 EXTRAÇÃO DE METADADOS (PRIORIDADE MÁXIMA):
                 1. Data de realização do exame:
                    - EXAMINE O DOCUMENTO COMPLETO em busca desta data CRÍTICA
                    - Procure diferentes formatos: "Data: xx/xx/xxxx", "Realizado em", "Data da coleta", "Data do Exame", etc.
+                   - Busque especialmente formato brasileiro de data (DD/MM/AAAA)
                    - Examine o contexto de cada data (cabeçalho, rodapé, próximo ao nome do paciente)
                    - Priorize datas de coleta/realização do exame, não a data de emissão do laudo
                    - Se houver múltiplas datas para exames diferentes, escolha a mais recente
                 
                 2. Nome do médico solicitante (CRÍTICO):
                    - Busque EXAUSTIVAMENTE por "médico solicitante", "solicitado por", "solicitante", "médico requisitante"
+                   - Busque por "médico", "solicitante" e outros termos próximos
                    - Procure por padrões como "Dr.", "Dra.", "Médico:", "Solicitante:", ou nomes próximos a CRM
                    - Não confunda com médico responsável pelo laboratório ou médico executor do exame
                    - Remova prefixos como "Dr./Dra." e extraia apenas o nome completo
                 
                 3. Nome do laboratório:
                    - Identifique o laboratório/clínica que realizou o exame (geralmente no cabeçalho/rodapé)
+                   - Laboratórios comuns no Brasil: Dasa, Fleury, Grupo Pardini, DB Diagnósticos, CDPI, etc.
+                   - Procure por termos como "Laboratório", "Laboratório de Análises Clínicas", etc.
                    - Pode estar próximo a um logotipo, CNPJ ou informações de contato
                 
                 EXTRAÇÃO DE DADOS DOS EXAMES (PRECISÃO ESSENCIAL):
                 Para CADA parâmetro médico de CADA exame encontrado:
-                1. Nome exato do parâmetro (ex: "Hemoglobina", "Glicose", "Colesterol Total")
+                1. Nome exato do parâmetro (ex: "Hemoglobina", "Glicose", "Colesterol Total", "TSH")
                 2. Valor numérico preciso (mantenha dígitos exatos, sem arredondamentos)
+                   - Atenção para o formato brasileiro que usa vírgula como separador decimal
+                   - Converta valores com vírgula (por exemplo, "9,5") para formato com ponto ("9.5")
                 3. Unidade de medida completa (mg/dL, g/L, U/L, etc.)
                 4. Valores de referência:
                    - Identifique limites mínimo e máximo para cada parâmetro
-                   - Procure por "Valores de referência", "VR", "Referência", "Valores normais"
+                   - Procure por "Valores de referência", "VR", "Referência", "Valores normais", "Valor de referência"
                    - Extraia em formato numérico (converta intervalos como "entre 70 e 99" para "70" e "99")
+                   - Se houver apenas um valor de referência (como "Até 200"), use null para o mínimo
                 5. Status do resultado (normal, alto, baixo, atenção) baseado estritamente nos valores de referência
+                   - Compare o valor do parâmetro com os valores de referência para determinar o status
+                   - Se o valor estiver acima do máximo de referência, classifique como "alto"
+                   - Se o valor estiver abaixo do mínimo de referência, classifique como "baixo"
+                   - Se estiver dentro da faixa de referência, classifique como "normal"
+                   - Se estiver próximo ao limite, classifique como "atenção"
                 6. Significância clínica do parâmetro (o que ele mede ou indica clinicamente)
                 7. Variações explícitas em relação a resultados anteriores, se mencionadas
+                8. Categoria do exame (ex: "Hemograma", "Lipidograma", "Função Hepática", etc.)
                 
                 RESPONDA APENAS NO SEGUINTE FORMATO JSON (sem textos adicionais):
                 {
@@ -129,6 +147,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                 - NUNCA faça recomendações ou análises - sua função é APENAS EXTRAIR dados
                 - NUNCA invente dados. Se um campo não puder ser determinado, deixe-o vazio ("") ou null
                 - Formate a data SEMPRE como YYYY-MM-DD, convertendo de qualquer formato encontrado
+                - Ao encontrar datas no formato brasileiro DD/MM/AAAA, converta para YYYY-MM-DD
                 - Identifique TODOS os exames presentes no documento, mesmo que sejam de tipos diferentes
                 - Extraia TODOS os parâmetros encontrados, mesmo os normais
                 - Se houver múltiplos valores para o mesmo parâmetro, inclua-os como métricas separadas
@@ -237,10 +256,32 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
   console.error("All Gemini API attempts failed. Using fallback...");
   
   try {
-    // Return a default response with an error message
-    // For future improvement: could implement OpenAI fallback here
+    // Try to use OpenAI as fallback if OPENAI_API_KEY is available
+    if (process.env.OPENAI_API_KEY) {
+      console.log("Tentando fallback com OpenAI...");
+      
+      try {
+        // Import analyzeDocumentWithOpenAI dynamically to avoid circular dependency
+        const { analyzeDocumentWithOpenAI } = await import("./openai");
+        
+        // Try to extract with OpenAI
+        const openAIResults = await analyzeDocumentWithOpenAI(fileContent, fileType);
+        
+        console.log("Fallback com OpenAI bem-sucedido!");
+        return {
+          ...openAIResults,
+          aiProvider: "openai:fallback",
+          summary: "Análise realizada pela OpenAI (fallback)",
+          fallbackUsed: true
+        };
+      } catch (openAIError) {
+        console.error("Erro no fallback com OpenAI:", openAIError);
+        // Continue to default fallback
+      }
+    }
     
-    // Return a default response with an error message
+    // If OpenAI fallback failed or API key not available, use default fallback
+    console.log("Usando fallback padrão com dados de exemplo");
     return {
       summary: "Não foi possível analisar o documento com precisão",
       detailedAnalysis: "O serviço de análise está temporariamente indisponível. Os resultados mostrados são aproximados e não devem ser usados para diagnóstico médico.",
@@ -251,10 +292,12 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         "Consulte um médico para interpretar seus resultados",
         "Tente fazer upload do documento novamente mais tarde"
       ],
-      healthMetrics: defaultHealthMetrics(fileType)
+      healthMetrics: defaultHealthMetrics(fileType),
+      aiProvider: "fallback:local",
+      fallbackUsed: true
     };
   } catch (fallbackError) {
-    console.error("Error in fallback mechanism:", fallbackError);
+    console.error("Error in all fallback mechanisms:", fallbackError);
     // If even the fallback fails, throw a user-friendly error
     throw new Error("Não foi possível analisar o documento neste momento. Por favor, tente novamente mais tarde.");
   }
