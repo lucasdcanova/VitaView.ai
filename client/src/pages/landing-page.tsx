@@ -1853,11 +1853,11 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button 
-                className="bg-white hover:bg-gray-50 text-primary-700 border-2 border-primary-600 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg"
+                className="bg-white hover:bg-primary-50 text-primary-700 border-2 border-primary-600 px-8 py-4 text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 size="lg"
               >
                 Comece Sua Jornada de Saúde
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </motion.div>
