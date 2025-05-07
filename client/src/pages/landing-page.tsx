@@ -44,7 +44,6 @@ import {
   ArrowUp,
   X,
   ChevronDown,
-  HelpCircle,
   Mail,
   Phone,
   Lock,
@@ -53,9 +52,14 @@ import {
   LifeBuoy,
   AlertCircle,
   InfoIcon,
+  HelpCircle,
   History,
   Share,
-  Check
+  Check,
+  Stethoscope,
+  Star,
+  MapPin,
+  Cookie
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
