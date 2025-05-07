@@ -8,7 +8,7 @@ This guide explains how to test the dual AI pipeline that powers Hemolog's exam 
    - `GEMINI_API_KEY` - Google's Gemini API
    - `OPENAI_API_KEY` - OpenAI API (GPT-4o model)
 
-2. Ensure these keys are set in your environment variables.
+2. These keys should already be set in your Replit environment.
 
 ## Testing Options
 
@@ -17,7 +17,7 @@ This guide explains how to test the dual AI pipeline that powers Hemolog's exam 
 This test verifies that the database can properly store all the data produced by the AI pipeline.
 
 ```bash
-NODE_ENV=development node server/test-database-compatibility.js
+npx tsx server/test-db.ts
 ```
 
 What this test checks:
@@ -33,8 +33,9 @@ What this test checks:
 This test verifies the complete integration between Gemini extraction and OpenAI analysis.
 
 ```bash
-# Requires a sample exam file (PDF, JPEG, PNG)
-NODE_ENV=development node server/test-ai-pipeline.js ./path/to/your/exam.pdf
+# First, place a medical exam file (PDF, JPEG, PNG) in the server/test-data directory
+# Then run:
+npx tsx server/test-ai.ts ./server/test-data/your-exam-file.pdf
 ```
 
 What this test checks:
@@ -52,7 +53,7 @@ You can also test the individual API endpoints:
 ```bash
 # Test Gemini extraction endpoint
 curl -X POST -H "Content-Type: multipart/form-data" \
-  -F "file=@./path/to/exam.pdf" \
+  -F "file=@./server/test-data/your-exam-file.pdf" \
   -F "userId=1" \
   http://localhost:5000/api/exams/upload
 

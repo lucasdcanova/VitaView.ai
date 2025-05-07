@@ -106,7 +106,8 @@ async function runDatabaseCompatibilityTest() {
       retrievedResult.healthMetrics.length === testHealthMetrics.length);
     
     // Check if the first health metric has all expected fields
-    const firstMetric = retrievedResult.healthMetrics[0];
+    const healthMetrics = retrievedResult.healthMetrics as Array<any>;
+    const firstMetric = healthMetrics[0];
     console.log('Sample health metric fields preserved:');
     console.log(`- name: ${firstMetric.name === testHealthMetrics[0].name ? 'YES' : 'NO'}`);
     console.log(`- value: ${firstMetric.value === testHealthMetrics[0].value ? 'YES' : 'NO'}`);
@@ -128,6 +129,9 @@ async function runDatabaseCompatibilityTest() {
     console.log('Updated exam status to "analyzed"');
     
     const updatedExam = await storage.getExam(testExam.id);
+    if (!updatedExam) {
+      throw new Error(`Failed to retrieve updated exam with ID ${testExam.id}`);
+    }
     console.log(`Verified exam status: ${updatedExam.status === 'analyzed' ? 'SUCCESS' : 'FAILED'}`);
     
     // Step 6: Test individual health metrics (separate from JSON in exam results)
