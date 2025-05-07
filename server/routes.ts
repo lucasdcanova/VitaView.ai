@@ -133,7 +133,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(logRequest);
 
   // API routes for exams - com requisito de autenticação
-  app.post("/api/exams/upload", ensureAuthenticated, uploadAndAnalyzeDocument);
+  // Atualizado para usar o novo pipeline de análise otimizado
+  app.post("/api/exams/upload", ensureAuthenticated, async (req, res) => {
+    try {
+      // Extrai userId da sessão autenticada
+      const userId = req.user.id;
+      
+      // Verificar se temos dados suficientes
+      const { name, fileType, fileContent, laboratoryName, examDate } = req.body;
+      
+      if (!name || !fileType || !fileContent) {
+        return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
+      }
+      
+      console.log(`Processando upload de exame ${name} para usuário ${userId}`);
+      
+      // Importamos o novo pipeline dinâmicamente para evitar dependência circular
+      const { runAnalysisPipeline } = await import('./services/analyze-pipeline');
+      
+      // Executar o pipeline completo
+      const result = await runAnalysisPipeline({
+        userId,
+        name,
+        fileType, 
+        fileContent,
+        laboratoryName,
+        examDate
+      });
+      
+      // Retornar resultado
+      res.status(200).json(result);
+      
+    } catch (error) {
+      console.error("Erro no processamento de exame:", error);
+      res.status(500).json({ 
+        message: "Erro ao processar o exame", 
+        error: String(error),
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
   
   // Rota para análise de documentos - etapa 1: análise com Gemini
   app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
