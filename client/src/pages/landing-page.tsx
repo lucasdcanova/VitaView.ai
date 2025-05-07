@@ -14,6 +14,7 @@ import {
   Heart,
   HeartPulse,
   Circle,
+  Stethoscope,
   Clock,
   Eye,
   Filter,
@@ -60,7 +61,6 @@ import {
   HelpCircle,
   Share,
   Check,
-  Stethoscope,
   Star,
   MapPin,
   Cookie
@@ -1802,7 +1802,7 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button 
-                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 text-lg font-medium rounded-lg shadow-lg"
+                className="bg-white hover:bg-gray-50 text-primary-700 border-2 border-primary-600 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg"
                 size="lg"
               >
                 Comece Sua Jornada de Saúde
@@ -1838,49 +1838,21 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: (
-                  <div className="relative flex items-center justify-center">
-                    <Activity className="w-7 h-7 text-white" />
-                    <motion.div 
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-1 -left-1 w-2 h-2 bg-green-400 rounded-full"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                    />
-                  </div>
-                ),
+                icon: <Heart className="w-7 h-7 text-white" />,
                 title: "Pacientes crônicos",
                 description: "Monitoramento contínuo e organizado de seus exames recorrentes",
                 delay: 0,
                 gradient: "from-primary-500 to-primary-600"
               },
               {
-                icon: (
-                  <div className="relative flex items-center justify-center">
-                    <Users className="w-7 h-7 text-white" />
-                    <motion.div 
-                      className="absolute -top-2 -right-2 w-3 h-3 bg-blue-300 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1.8, repeat: Infinity }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-2 -left-2 w-3 h-3 bg-indigo-300 rounded-full"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
-                    />
-                  </div>
-                ),
+                icon: <Users className="w-7 h-7 text-white" />,
                 title: "Famílias",
                 description: "Histórico de saúde centralizado para gerenciar a saúde familiar",
                 delay: 0.1,
                 gradient: "from-primary-600 to-indigo-600"
               },
               {
-                icon: <span className="text-white text-2xl font-bold">👨‍⚕️</span>,
+                icon: <FileHeart className="w-7 h-7 text-white" />,
                 title: "Profissionais de saúde",
                 description: "Relatórios prontos para consultas mais eficientes e focadas",
                 delay: 0.2,
