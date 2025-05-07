@@ -1661,11 +1661,11 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button 
-                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-6 rounded-lg shadow-lg text-lg"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-6 rounded-lg shadow-lg text-lg font-semibold transition-all duration-300"
                 size="lg"
               >
                 Comece agora gratuitamente
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </motion.div>
