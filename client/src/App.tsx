@@ -17,6 +17,7 @@ import ExamResults from "@/pages/exam-results";
 import ExamResultSingle from "@/pages/exam-result-single";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
+import HealthTrends from "@/pages/health-trends";
 import Home from "@/pages/home";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
+      <ProtectedRoute path="/health-trends" component={HealthTrends} />
       <ProtectedRoute path="/profile" component={Profile} />
       
       {/* Rotas públicas */}
