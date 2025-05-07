@@ -184,10 +184,13 @@ export default function LandingPage() {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
-              <Activity className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
+              <Activity className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold text-primary-800">Hemolog</span>
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-primary-800 tracking-tight">HEMOLOG</span>
+              <span className="text-xs text-primary-600 -mt-1">Análise Inteligente de Exames</span>
+            </div>
           </motion.div>
           
           {/* Desktop navigation with enhanced hover effects */}
@@ -230,7 +233,7 @@ export default function LandingPage() {
         >
           <motion.div className="md:w-1/2 mb-8 md:mb-0" variants={itemVariants}>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>: seu histórico de exames, interpretado e visualizado com inteligência.
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700 tracking-tight">HEMOLOG</span>: seu histórico de exames, interpretado e visualizado com inteligência.
             </h1>
             <p className="text-xl text-gray-600 mb-8">
               Carregue seus exames em PDF ou imagem e receba análises automáticas, alertas personalizados e gráficos evolutivos com apoio de IA.
