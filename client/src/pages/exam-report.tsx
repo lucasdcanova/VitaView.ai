@@ -81,6 +81,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -112,7 +120,11 @@ type HealthInsights = {
 
 export default function ExamReport() {
   const [activeTab, setActiveTab] = useState("metrics");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [match, params] = useRoute<{ id: string }>("/report/:id");
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const examId = match && params ? parseInt(params.id) : 0;
   
   const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
@@ -126,6 +138,43 @@ export default function ExamReport() {
     queryFn: () => getExamInsights(examId),
     enabled: !!examId && !!data?.result,
   });
+  
+  // Mutação para excluir o exame
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteExam(examId),
+    onSuccess: () => {
+      // Invalidar todas as queries relacionadas aos exames e métricas de saúde
+      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
+      
+      toast({
+        title: "Exame excluído com sucesso",
+        description: "O exame e todos os dados associados foram removidos.",
+        variant: "default",
+      });
+      
+      // Redirecionando para a página de resultados
+      setLocation("/results");
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir exame",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao excluir o exame.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteDialogOpen(false);
+  };
   
   // Format relative date
   const formatRelativeDate = (dateString?: string) => {
@@ -287,6 +336,31 @@ export default function ExamReport() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Diálogo de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que deseja excluir este exame? Esta ação não pode ser desfeita.
+              Todos os dados associados ao exame, incluindo resultados e métricas de saúde, serão removidos permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="md:hidden">
         <MobileHeader />
       </div>
@@ -340,11 +414,28 @@ export default function ExamReport() {
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </Button>
                 <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
                   <Download className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
                   <Share2 className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="md:hidden h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" className="h-9 w-9 p-0">
                   <Printer className="h-4 w-4" />
