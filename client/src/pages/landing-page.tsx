@@ -1660,13 +1660,12 @@ export default function LandingPage() {
             transition={{ delay: 0.6 }}
           >
             <Link href="/auth?tab=register">
-              <Button 
-                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-6 rounded-lg shadow-lg text-lg font-semibold transition-all duration-300"
-                size="lg"
+              <button 
+                className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-8 rounded-lg shadow-lg text-lg"
               >
                 Comece agora gratuitamente
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Button>
+                <ArrowRight className="ml-2 h-5 w-5 inline" />
+              </button>
             </Link>
           </motion.div>
         </div>
