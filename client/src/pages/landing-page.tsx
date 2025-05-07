@@ -1802,10 +1802,11 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button 
-                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-lg shadow-md"
+                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 text-lg font-medium rounded-lg shadow-lg"
+                size="lg"
               >
-                Experimente agora
-                <Sparkles className="ml-2 h-4 w-4" />
+                Comece Sua Jornada de Saúde
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </motion.div>
@@ -1837,14 +1838,42 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: <Activity className="w-7 h-7 text-white" />,
+                icon: (
+                  <div className="relative flex items-center justify-center">
+                    <Activity className="w-7 h-7 text-white" />
+                    <motion.div 
+                      className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                    <motion.div 
+                      className="absolute -bottom-1 -left-1 w-2 h-2 bg-green-400 rounded-full"
+                      animate={{ scale: [1, 1.3, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                    />
+                  </div>
+                ),
                 title: "Pacientes crônicos",
                 description: "Monitoramento contínuo e organizado de seus exames recorrentes",
                 delay: 0,
                 gradient: "from-primary-500 to-primary-600"
               },
               {
-                icon: <Users className="w-7 h-7 text-white" />,
+                icon: (
+                  <div className="relative flex items-center justify-center">
+                    <Users className="w-7 h-7 text-white" />
+                    <motion.div 
+                      className="absolute -top-2 -right-2 w-3 h-3 bg-blue-300 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1.8, repeat: Infinity }}
+                    />
+                    <motion.div 
+                      className="absolute -bottom-2 -left-2 w-3 h-3 bg-indigo-300 rounded-full"
+                      animate={{ scale: [1, 1.3, 1] }}
+                      transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}
+                    />
+                  </div>
+                ),
                 title: "Famílias",
                 description: "Histórico de saúde centralizado para gerenciar a saúde familiar",
                 delay: 0.1,
