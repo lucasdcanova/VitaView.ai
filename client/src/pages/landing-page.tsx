@@ -1229,133 +1229,184 @@ export default function LandingPage() {
                         </div>
                       </div>
                       
-                      {/* Área do gráfico */}
-                      <div className="p-4 h-[calc(100%-4rem)]">
-                        {/* Legendas na parte superior */}
-                        <div className="flex justify-end mb-2 space-x-4">
-                          <div className="flex items-center">
-                            <span className="h-3 w-3 rounded-full bg-primary-500 mr-2"></span>
-                            <span className="text-xs text-gray-600">Hemoglobina</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="h-3 w-3 rounded-full bg-amber-500 mr-2"></span>
-                            <span className="text-xs text-gray-600">Glicose</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
-                            <span className="text-xs text-gray-600">Colesterol</span>
+                      {/* Área do gráfico melhorada */}
+                      <div className="px-2 pt-3 pb-6 h-[calc(100%-4rem)]">
+                        {/* Cabeçalho com título e legendas */}
+                        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-4">
+                          <div className="text-sm font-medium text-gray-700 mb-2 sm:mb-0">Visualização simplificada e objetiva</div>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center">
+                              <span className="h-3 w-3 rounded-full bg-blue-500 mr-1.5"></span>
+                              <span className="text-xs text-gray-600">Hemoglobina</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="h-3 w-3 rounded-full bg-amber-500 mr-1.5"></span>
+                              <span className="text-xs text-gray-600">Glicose</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="h-3 w-3 rounded-full bg-red-500 mr-1.5"></span>
+                              <span className="text-xs text-gray-600">Colesterol</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Grid do gráfico */}
-                        <div className="relative h-[calc(100%-2rem)] border-l border-b border-gray-200">
+                        {/* Área do gráfico com barra de referência */}
+                        <div className="relative h-64 bg-blue-50 rounded-lg border border-blue-100 px-4 pt-2 pb-8">
+                          {/* Área de referência "normal" */}
+                          <div className="absolute left-10 right-4 h-16 top-16 bg-green-50/50 border-y border-green-100 z-0"></div>
+                          
                           {/* Linhas horizontais do grid */}
                           {[0, 1, 2, 3, 4].map((i) => (
-                            <div key={i} className="absolute w-full h-px bg-gray-100" style={{ top: `${i * 25}%` }}></div>
+                            <div 
+                              key={i} 
+                              className="absolute left-10 right-4 h-px bg-gray-200" 
+                              style={{ top: `${i * 64/4}px` }} 
+                            />
                           ))}
                           
-                          {/* Pontos e linhas animadas */}
-                          <motion.div 
-                            className="absolute inset-0"
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.5 }}
-                          >
-                            {/* Linha azul (Hemoglobina) */}
-                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                              <motion.path 
-                                d="M0,60 L20,50 L40,55 L60,40 L80,35 L100,45"
-                                fill="none" 
-                                stroke="rgb(59, 130, 246)" 
-                                strokeWidth="2"
-                                initial={{ pathLength: 0 }}
-                                whileInView={{ pathLength: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 0.8 }}
-                              />
-                            </svg>
-                            
-                            {/* Linha âmbar (Glicose) */}
-                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                              <motion.path 
-                                d="M0,50 L20,60 L40,70 L60,65 L80,55 L100,60"
-                                fill="none" 
-                                stroke="rgb(245, 158, 11)" 
-                                strokeWidth="2"
-                                initial={{ pathLength: 0 }}
-                                whileInView={{ pathLength: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 1 }}
-                              />
-                            </svg>
-                            
-                            {/* Linha vermelha (Colesterol) */}
-                            <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                              <motion.path 
-                                d="M0,65 L20,70 L40,60 L60,55 L80,45 L100,50"
-                                fill="none" 
-                                stroke="rgb(239, 68, 68)" 
-                                strokeWidth="2"
-                                initial={{ pathLength: 0 }}
-                                whileInView={{ pathLength: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 1.2 }}
-                              />
-                            </svg>
-                            
-                            {/* Pontos animados */}
-                            {[
-                              { left: '0%', top: '60%', color: 'bg-primary-500' },
-                              { left: '20%', top: '50%', color: 'bg-primary-500' },
-                              { left: '40%', top: '55%', color: 'bg-primary-500' },
-                              { left: '60%', top: '40%', color: 'bg-primary-500' },
-                              { left: '80%', top: '35%', color: 'bg-primary-500' },
-                              { left: '100%', top: '45%', color: 'bg-primary-500' },
-                              
-                              { left: '0%', top: '50%', color: 'bg-amber-500' },
-                              { left: '20%', top: '60%', color: 'bg-amber-500' },
-                              { left: '40%', top: '70%', color: 'bg-amber-500' },
-                              { left: '60%', top: '65%', color: 'bg-amber-500' },
-                              { left: '80%', top: '55%', color: 'bg-amber-500' },
-                              { left: '100%', top: '60%', color: 'bg-amber-500' },
-                              
-                              { left: '0%', top: '65%', color: 'bg-red-500' },
-                              { left: '20%', top: '70%', color: 'bg-red-500' },
-                              { left: '40%', top: '60%', color: 'bg-red-500' },
-                              { left: '60%', top: '55%', color: 'bg-red-500' },
-                              { left: '80%', top: '45%', color: 'bg-red-500' },
-                              { left: '100%', top: '50%', color: 'bg-red-500' }
-                            ].map((point, i) => (
-                              <motion.div 
-                                key={i}
-                                className={`absolute h-2 w-2 rounded-full ${point.color} transform -translate-x-1 -translate-y-1`}
-                                style={{ left: point.left, top: point.top }}
-                                initial={{ scale: 0, opacity: 0 }}
-                                whileInView={{ scale: 1, opacity: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.3, delay: 0.8 + (i * 0.05) }}
-                              />
-                            ))}
-                          </motion.div>
+                          {/* Linha vertical para cada mês */}
+                          {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <div 
+                              key={i} 
+                              className="absolute bottom-8 top-2 w-px bg-gray-200" 
+                              style={{ left: `${(i * (100/5)) + 10}%` }} 
+                            />
+                          ))}
                           
-                          {/* Datas no eixo X */}
-                          <div className="absolute -bottom-6 left-0 right-0 flex justify-between">
-                            <span className="text-xs text-gray-500">Jan</span>
-                            <span className="text-xs text-gray-500">Fev</span>
-                            <span className="text-xs text-gray-500">Mar</span>
-                            <span className="text-xs text-gray-500">Abr</span>
-                            <span className="text-xs text-gray-500">Mai</span>
-                            <span className="text-xs text-gray-500">Jun</span>
+                          {/* Pontos e linhas do gráfico */}
+                          <div className="absolute inset-0 z-10">
+                            {/* Container para as linhas do gráfico */}
+                            <div className="relative h-full w-full">
+                              {/* Linhas SVG */}
+                              <svg className="absolute bottom-8 top-2 left-10 right-4" 
+                                   preserveAspectRatio="none" 
+                                   viewBox="0 0 100 100" 
+                                   style={{width: 'calc(100% - 2.5rem)', height: 'calc(100% - 2rem)'}}>
+                                {/* Linha Hemoglobina */}
+                                <motion.path 
+                                  d="M0,40 L20,35 L40,45 L60,30 L80,25 L100,35"
+                                  fill="none" 
+                                  stroke="#3b82f6" 
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  initial={{ pathLength: 0 }}
+                                  whileInView={{ pathLength: 1 }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 1.5, ease: "easeInOut" }}
+                                />
+                                
+                                {/* Linha Glicose */}
+                                <motion.path 
+                                  d="M0,55 L20,65 L40,70 L60,60 L80,50 L100,55"
+                                  fill="none" 
+                                  stroke="#f59e0b" 
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  initial={{ pathLength: 0 }}
+                                  whileInView={{ pathLength: 1 }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 1.5, ease: "easeInOut", delay: 0.2 }}
+                                />
+                                
+                                {/* Linha Colesterol */}
+                                <motion.path 
+                                  d="M0,60 L20,75 L40,65 L60,55 L80,40 L100,45"
+                                  fill="none" 
+                                  stroke="#ef4444" 
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  initial={{ pathLength: 0 }}
+                                  whileInView={{ pathLength: 1 }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 1.5, ease: "easeInOut", delay: 0.4 }}
+                                />
+                              </svg>
+                              
+                              {/* Pontos das métricas */}
+                              {[
+                                // Hemoglobina (azul)
+                                { x: 0, y: 40, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                { x: 20, y: 35, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                { x: 40, y: 45, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                { x: 60, y: 30, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                { x: 80, y: 25, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                { x: 100, y: 35, color: 'bg-blue-500', ring: 'ring-blue-200' },
+                                
+                                // Glicose (âmbar)
+                                { x: 0, y: 55, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                { x: 20, y: 65, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                { x: 40, y: 70, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                { x: 60, y: 60, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                { x: 80, y: 50, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                { x: 100, y: 55, color: 'bg-amber-500', ring: 'ring-amber-200' },
+                                
+                                // Colesterol (vermelho)
+                                { x: 0, y: 60, color: 'bg-red-500', ring: 'ring-red-200' },
+                                { x: 20, y: 75, color: 'bg-red-500', ring: 'ring-red-200' },
+                                { x: 40, y: 65, color: 'bg-red-500', ring: 'ring-red-200' },
+                                { x: 60, y: 55, color: 'bg-red-500', ring: 'ring-red-200' },
+                                { x: 80, y: 40, color: 'bg-red-500', ring: 'ring-red-200' },
+                                { x: 100, y: 45, color: 'bg-red-500', ring: 'ring-red-200' }
+                              ].map((point, index) => (
+                                <motion.div
+                                  key={index}
+                                  className={`absolute h-3 w-3 rounded-full ${point.color} ring-2 ${point.ring} shadow-sm`}
+                                  style={{ 
+                                    left: `calc(${point.x}% * 0.9 + 10%)`, 
+                                    top: `${point.y}%`,
+                                    transform: 'translate(-50%, -50%)'
+                                  }}
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  whileInView={{ scale: 1, opacity: 1 }}
+                                  viewport={{ once: true }}
+                                  transition={{ duration: 0.4, delay: 0.6 + (index * 0.02) }}
+                                />
+                              ))}
+                            </div>
                           </div>
                           
-                          {/* Valores no eixo Y */}
-                          <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between py-1">
-                            <span className="text-xs text-gray-500">200</span>
-                            <span className="text-xs text-gray-500">150</span>
-                            <span className="text-xs text-gray-500">100</span>
-                            <span className="text-xs text-gray-500">50</span>
-                            <span className="text-xs text-gray-500">0</span>
+                          {/* Eixo Y com valores e rótulos */}
+                          <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between py-1 text-right">
+                            <div className="flex items-center">
+                              <span className="text-xs font-medium text-gray-500 pr-1">200</span>
+                              <div className="h-px w-2 bg-gray-300"></div>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-xs font-medium text-gray-500 pr-1">150</span>
+                              <div className="h-px w-2 bg-gray-300"></div>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-xs font-medium text-gray-500 pr-1">100</span>
+                              <div className="h-px w-2 bg-gray-300"></div>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-xs font-medium text-gray-500 pr-1">50</span>
+                              <div className="h-px w-2 bg-gray-300"></div>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-xs font-medium text-gray-500 pr-1">0</span>
+                              <div className="h-px w-2 bg-gray-300"></div>
+                            </div>
+                          </div>
+                          
+                          {/* Rótulo da faixa de referência */}
+                          <div className="absolute right-1 top-[38%] transform -translate-y-1/2">
+                            <span className="text-[10px] px-1 py-0.5 bg-green-100 text-green-800 rounded">
+                              Normal
+                            </span>
+                          </div>
+                          
+                          {/* Eixo X com meses */}
+                          <div className="absolute bottom-0 left-10 right-4 flex justify-between py-1">
+                            <div className="text-xs font-medium text-gray-600">Jan</div>
+                            <div className="text-xs font-medium text-gray-600">Fev</div>
+                            <div className="text-xs font-medium text-gray-600">Mar</div>
+                            <div className="text-xs font-medium text-gray-600">Abr</div>
+                            <div className="text-xs font-medium text-gray-600">Mai</div>
+                            <div className="text-xs font-medium text-gray-600">Jun</div>
                           </div>
                         </div>
                       </div>
