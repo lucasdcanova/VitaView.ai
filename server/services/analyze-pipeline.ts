@@ -127,8 +127,8 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         
         // Contar por status
         const status = metric.status?.toLowerCase() || "normal";
-        if (status in statusCounts) {
-          statusCounts[status] += 1;
+        if (status === "normal" || status === "alto" || status === "baixo" || status === "atencao") {
+          statusCounts[status as keyof typeof statusCounts] += 1;
         } else {
           statusCounts.normal += 1; // fallback para normal
         }

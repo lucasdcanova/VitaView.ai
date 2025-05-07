@@ -36,6 +36,7 @@ export interface IStorage {
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
   getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]>;
   getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]>;
+  deleteHealthMetric(id: number): Promise<boolean>;
   
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -224,6 +225,14 @@ export class MemStorage implements IStorage {
     return Array.from(metricsByName.values())
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, limit);
+  }
+  
+  async deleteHealthMetric(id: number): Promise<boolean> {
+    return this.healthMetricsMap.delete(id);
+  }
+  
+  async deleteExamResult(id: number): Promise<boolean> {
+    return this.examResults.delete(id);
   }
 
   // Notification operations
@@ -494,6 +503,27 @@ export class DatabaseStorage implements IStorage {
     return Array.from(metricsByName.values())
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, limit);
+  }
+  
+  async deleteHealthMetric(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(healthMetrics).where(eq(healthMetrics.id, id));
+      // Se ao menos uma linha for afetada, consideramos sucesso
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao excluir métrica de saúde com ID ${id}:`, error);
+      return false;
+    }
+  }
+  
+  async deleteExamResult(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(examResults).where(eq(examResults.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao excluir resultado de exame com ID ${id}:`, error);
+      return false;
+    }
   }
 
   // Notification operations

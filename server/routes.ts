@@ -136,6 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Atualizado para usar o novo pipeline de análise otimizado
   app.post("/api/exams/upload", ensureAuthenticated, async (req, res) => {
     try {
+      // Assegura que usuário está autenticado
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
+      }
+      
       // Extrai userId da sessão autenticada
       const userId = req.user.id;
       
@@ -164,12 +169,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Retornar resultado
       res.status(200).json(result);
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Erro no processamento de exame:", error);
       res.status(500).json({ 
         message: "Erro ao processar o exame", 
-        error: String(error),
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        error: error instanceof Error ? error.message : String(error),
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       });
     }
   });
@@ -361,6 +366,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating health metric:", error);
       res.status(500).json({ message: "Erro ao salvar métrica de saúde" });
+    }
+  });
+  
+  // Rota para excluir um exame
+  app.delete("/api/exams/:examId", ensureAuthenticated, async (req, res) => {
+    try {
+      // Verificar se o usuário está autenticado
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
+      }
+      
+      const examId = parseInt(req.params.examId);
+      if (isNaN(examId)) {
+        return res.status(400).json({ message: "ID do exame inválido" });
+      }
+      
+      // Buscar o exame para verificar a propriedade
+      const exam = await storage.getExam(examId);
+      if (!exam) {
+        return res.status(404).json({ message: "Exame não encontrado" });
+      }
+      
+      // Verificar se o usuário é dono do exame
+      if (exam.userId !== req.user.id) {
+        return res.status(403).json({ message: "Você não tem permissão para excluir este exame" });
+      }
+      
+      console.log(`[DeleteExam] Excluindo exame ${examId} do usuário ${req.user.id}`);
+      
+      // Primeiro excluir as métricas associadas a este exame
+      const examResult = await storage.getExamResultByExamId(examId);
+      
+      if (examResult) {
+        // Buscar IDs das métricas associadas ao exame (se houver)
+        let healthMetricsIds: number[] = [];
+        
+        if (examResult.healthMetrics && Array.isArray(examResult.healthMetrics)) {
+          // Extrair IDs de métricas que são objetos com um campo ID
+          healthMetricsIds = examResult.healthMetrics
+            .filter((metric: any) => metric && typeof metric === 'object' && 'id' in metric)
+            .map((metric: any) => metric.id);
+        }
+          
+        // Excluir as métricas associadas
+        for (const metricId of healthMetricsIds) {
+          if (metricId) {
+            await storage.deleteHealthMetric(metricId);
+          }
+        }
+        
+        // Excluir o resultado do exame
+        await storage.deleteExamResult(examResult.id);
+      }
+      
+      // Agora excluir o exame
+      const deleted = await storage.deleteExam(examId);
+      
+      if (deleted) {
+        res.status(200).json({ message: "Exame excluído com sucesso" });
+      } else {
+        res.status(500).json({ message: "Erro ao excluir o exame" });
+      }
+    } catch (error) {
+      console.error("[DeleteExam] Erro:", error);
+      res.status(500).json({ message: "Erro ao excluir o exame" });
     }
   });
   

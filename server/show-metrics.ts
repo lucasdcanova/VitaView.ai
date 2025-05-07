@@ -56,9 +56,9 @@ async function showHealthMetrics() {
           }
           
           // Mostrar por categoria
-          for (const [category, metrics] of metricsByCategory.entries()) {
+          metricsByCategory.forEach((metrics: any[], category: string): void => {
             console.log(`\n== ${category} (${metrics.length} métricas) ==`);
-            metrics.forEach((metric, i) => {
+            metrics.forEach((metric: any, i: number) => {
               console.log(`${i+1}. ${metric.name}: ${metric.value} ${metric.unit} (${metric.status})`);
               
               // Mostrar valores de referência
@@ -73,7 +73,7 @@ async function showHealthMetrics() {
                 console.log(`   Significado: ${metric.clinical_significance}`);
               }
             });
-          }
+          });
         } else {
           console.log('\nNenhuma métrica extraída neste exame.');
         }

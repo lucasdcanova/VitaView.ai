@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
@@ -11,6 +11,7 @@ import {
   AlertCircle, 
   ArrowUpRight,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,16 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { getExamDetails } from "@/lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getExamDetails, deleteExam } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ExamResultSingle() {
   const { user } = useAuth();

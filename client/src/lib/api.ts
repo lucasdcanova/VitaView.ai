@@ -118,3 +118,14 @@ export const updateUserProfile = async (profileData: any) => {
     throw new Error(error instanceof Error ? error.message : "Erro ao atualizar perfil");
   }
 };
+
+// Função para excluir um exame
+export const deleteExam = async (examId: number): Promise<{ message: string }> => {
+  try {
+    const res = await apiRequest("DELETE", `/api/exams/${examId}`);
+    return await res.json();
+  } catch (error) {
+    console.error("Erro ao excluir exame:", error);
+    throw new Error(error instanceof Error ? error.message : "Erro ao excluir o exame");
+  }
+};
