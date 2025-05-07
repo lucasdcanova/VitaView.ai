@@ -4,6 +4,7 @@ import {
   Brain, 
   LineChart, 
   Shield, 
+  ShieldCheck,
   ArrowRight, 
   CheckCircle2,
   Users,
@@ -11,6 +12,7 @@ import {
   Building,
   ChevronRight,
   Heart,
+  HeartPulse,
   BarChart4,
   Sparkles,
   Play,
@@ -22,7 +24,9 @@ import {
   BarChart,
   TrendingUp,
   FileBarChart,
+  AreaChart,
   Bell,
+  BellRing,
   Settings,
   UserCircle,
   Calendar,
@@ -48,7 +52,9 @@ import {
   Lightbulb,
   LifeBuoy,
   AlertCircle,
-  InfoIcon
+  InfoIcon,
+  History,
+  Share
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -173,49 +179,70 @@ export default function LandingPage() {
       
       {/* Navbar - improved with backdrop filter and better shadow */}
       <motion.nav 
-        className={`${isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-lg py-3' : 'bg-transparent py-4'} sticky top-0 z-50 transition-all duration-300`}
+        className={`${isScrolled ? 'bg-white/98 backdrop-blur-md shadow-md py-3' : 'bg-transparent py-5'} sticky top-0 z-50 transition-all duration-300`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <motion.div 
-            className="flex items-center"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
-              <Activity className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold text-primary-800 tracking-tight">HEMOLOG</span>
-              <span className="text-xs text-primary-600 -mt-1">Análise Inteligente de Exames</span>
-            </div>
-          </motion.div>
+          <Link href="/">
+            <motion.div 
+              className="flex items-center"
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-primary-800 tracking-tight">HEMOLOG</span>
+                <span className="text-xs text-primary-600 -mt-1">Análise Inteligente de Exames</span>
+              </div>
+            </motion.div>
+          </Link>
           
           {/* Desktop navigation with enhanced hover effects */}
-          <div className="hidden md:flex space-x-10 text-gray-700">
-            {["demonstracoes", "como-funciona", "beneficios", "para-quem", "depoimentos"].map((id, index) => (
+          <div className="hidden md:flex space-x-8 text-gray-700">
+            {[
+              {id: "demonstracoes", label: "Demonstrações"},
+              {id: "como-funciona", label: "Como Funciona"},
+              {id: "beneficios", label: "Benefícios"},
+              {id: "para-quem", label: "Para Quem"},
+              {id: "depoimentos", label: "Depoimentos"}
+            ].map((item) => (
               <motion.a 
-                key={id}
-                href={`#${id}`} 
-                className="hover:text-primary-600 transition-colors relative group py-2"
-                whileHover={{ scale: 1.05 }}
+                key={item.id}
+                href={`#${item.id}`} 
+                className="hover:text-primary-600 transition-colors relative group py-2 text-sm font-medium"
+                whileHover={{ scale: 1.03 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
-                {id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {item.label}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
               </motion.a>
             ))}
           </div>
           
+          {/* Mobile menu button - only visible on mobile */}
+          <div className="md:hidden">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-700"
+              onClick={() => alert('Menu mobile a ser implementado')}
+            >
+              <List className="h-5 w-5" />
+            </Button>
+          </div>
+          
           {/* Login/Access button with improved animation */}
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="hidden md:block"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
           >
             <Link href="/auth">
-              <Button variant="default" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg text-white px-6">
+              <Button variant="default" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-md text-white px-6 py-2">
                 Acessar <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
@@ -224,63 +251,95 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="py-12 md:py-20 container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <section className="py-12 md:py-24 container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div 
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
           animate="visible"
           variants={containerVariants}
         >
-          <motion.div className="md:w-1/2 mb-8 md:mb-0" variants={itemVariants}>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700 tracking-tight">HEMOLOG</span>: seu histórico de exames, interpretado e visualizado com inteligência.
+          <motion.div className="md:w-1/2 mb-10 md:mb-0 md:pr-8" variants={itemVariants}>
+            <motion.span
+              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Inteligência Artificial aplicada à saúde
+            </motion.span>
+            
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700 tracking-tight">HEMOLOG</span>: Entenda seus exames com clareza e precisão
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Carregue seus exames em PDF ou imagem e receba análises automáticas, alertas personalizados e gráficos evolutivos com apoio de IA.
+            
+            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
+              Transforme seus exames médicos em informações compreensíveis. Faça upload em PDF ou imagem e obtenha análises detalhadas, alertas personalizados e acompanhamento visual da sua saúde.
             </p>
+            
+            {/* Benefícios em lista */}
+            <div className="mb-8 space-y-3">
+              {[
+                { icon: <Shield className="h-5 w-5 text-green-500" />, text: "Tecnologia segura e com proteção de dados" },
+                { icon: <Brain className="h-5 w-5 text-purple-500" />, text: "Algoritmos de IA treinados com milhares de exames" },
+                { icon: <LineChart className="h-5 w-5 text-blue-500" />, text: "Visualize tendências dos seus indicadores de saúde" }
+              ].map((item, index) => (
+                <motion.div 
+                  key={index} 
+                  className="flex items-center space-x-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + (index * 0.1) }}
+                >
+                  <div className="flex-shrink-0 p-1.5 bg-white rounded-full shadow-sm">
+                    {item.icon}
+                  </div>
+                  <p className="text-gray-700">{item.text}</p>
+                </motion.div>
+              ))}
+            </div>
             
             {/* Estatísticas animadas */}
             <div className="grid grid-cols-3 gap-4 mb-8 hidden md:grid">
               <motion.div 
-                className="text-center p-3 bg-white rounded-lg shadow-sm"
+                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
                 whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
               >
                 <h3 className="text-2xl md:text-3xl font-bold text-primary-600">98%</h3>
-                <p className="text-sm text-gray-500">Precisão</p>
+                <p className="text-sm text-gray-600">Precisão</p>
               </motion.div>
               <motion.div 
-                className="text-center p-3 bg-white rounded-lg shadow-sm"
+                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
                 whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
               >
                 <h3 className="text-2xl md:text-3xl font-bold text-primary-600">10x</h3>
-                <p className="text-sm text-gray-500">Mais rápido</p>
+                <p className="text-sm text-gray-600">Mais rápido</p>
               </motion.div>
               <motion.div 
-                className="text-center p-3 bg-white rounded-lg shadow-sm"
+                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
                 whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
               >
                 <h3 className="text-2xl md:text-3xl font-bold text-primary-600">24/7</h3>
-                <p className="text-sm text-gray-500">Disponível</p>
+                <p className="text-sm text-gray-600">Disponível</p>
               </motion.div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/auth?tab=register">
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto">
-                    Criar minha conta gratuita
+                  <Button size="lg" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto font-medium">
+                    Criar conta gratuita
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </motion.div>
               </Link>
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center">
+                <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center font-medium">
                   <Play className="mr-2 h-5 w-5" /> Ver demonstração
                 </Button>
               </motion.div>
@@ -611,17 +670,33 @@ export default function LandingPage() {
       </section>
       
       {/* Simulação de Relatórios Section */}
-      <section className="py-16 bg-gray-50 relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="demonstracoes" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+        {/* Elementos decorativos */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Relatórios Detalhados e Análises Precisas</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <motion.span
+              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              Visualização Inteligente
+            </motion.span>
+            
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Relatórios Detalhados e Análises Precisas</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Visualize seus exames com clareza e obtenha insights que vão além dos números, com apresentação intuitiva e contexto clínico completo.
             </p>
           </motion.div>
@@ -1157,129 +1232,169 @@ export default function LandingPage() {
       </section>
 
       {/* How it Works Section */}
-      <section id="como-funciona" className="py-20 bg-white relative overflow-hidden">
+      <section id="como-funciona" className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute left-0 top-20 w-72 h-72 bg-blue-50 rounded-full opacity-40 blur-3xl"></div>
           <div className="absolute right-0 bottom-20 w-80 h-80 bg-primary-50 rounded-full opacity-40 blur-3xl"></div>
-          
-          {/* Decoração de fundo com divs simples */}
-          <div className="absolute top-[200px] left-[200px] right-[200px] h-[2px] bg-primary-100"></div>
-          <div className="absolute top-[400px] left-[300px] right-[300px] h-[2px] bg-primary-100"></div>
         </div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              Como Funciona o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Hemolog</span>?
+            <motion.span
+              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              Simples e Intuitivo
+            </motion.span>
+            
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Como Funciona o <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">HEMOLOG</span>
             </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Nossa plataforma combina tecnologia de ponta e interface intuitiva para tornar seus exames mais acessíveis e compreensíveis.
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+              Nossa plataforma transforma documentos médicos complexos em informações claras e úteis para sua saúde
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: <FileText className="w-7 h-7 text-primary-600" />,
-                title: "1. Envio Simples",
-                description: "Faça upload de exames em PDF, JPEG ou PNG — até uma foto funciona.",
-                animation: { x: -50, rotateY: -15 }
-              },
-              {
-                icon: <Brain className="w-7 h-7 text-primary-600" />,
-                title: "2. Leitura com IA",
-                description: "Nosso sistema usa inteligência artificial para identificar os exames, extrair os dados e interpretá-los.",
-                animation: { y: -30 }
-              },
-              {
-                icon: <LineChart className="w-7 h-7 text-primary-600" />,
-                title: "3. Acompanhamento Evolutivo",
-                description: "Veja gráficos, alertas automáticos e receba insights práticos com base nos seus resultados anteriores.",
-                animation: { y: 30 }
-              },
-              {
-                icon: <Shield className="w-7 h-7 text-primary-600" />,
-                title: "4. Segurança Médica",
-                description: "Seus dados são criptografados e seguem padrões internacionais de proteção.",
-                animation: { x: 50, rotateY: 15 }
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-md border border-gray-100 relative backdrop-blur-sm bg-white/80"
-                initial={{ opacity: 0, ...item.animation }}
-                whileInView={{ opacity: 1, x: 0, y: 0, rotateY: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ 
-                  y: -10,
-                  boxShadow: "0 15px 30px rgba(0,0,0,0.1)",
-                  borderColor: "#e0e7ff"
-                }}
-              >
-                {/* Número absoluto estilo design */}
-                <div className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center text-lg font-bold text-primary-600">
-                  {index + 1}
-                </div>
-                
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-50 to-primary-100 rounded-full flex items-center justify-center mb-5 shadow-inner">
-                  {item.icon}
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">
-                  {item.title.split('.')[1]}
-                </h3>
-                
-                <p className="text-gray-600">
-                  {item.description}
-                </p>
-                
-                {/* Indicador de seta entre os passos (exceto o último) */}
-                {index < 3 && (
-                  <div className="hidden lg:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
+          {/* Timeline visual do processo */}
+          <div className="relative max-w-5xl mx-auto pb-8">
+            {/* Linha do tempo conectando os passos */}
+            <div className="absolute hidden md:block top-24 left-0 right-0 h-1 bg-gradient-to-r from-primary-200 via-primary-400 to-primary-200 rounded-full"></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6 relative">
+              {[
+                {
+                  icon: <FileText className="w-6 h-6 text-primary-600" />,
+                  title: "Carregue seus Exames",
+                  description: "Faça upload de PDFs ou fotografias dos seus exames de laboratório diretamente através da plataforma.",
+                  badge: "Passo 1"
+                },
+                {
+                  icon: <Sparkles className="w-6 h-6 text-primary-600" />,
+                  title: "Processamento com IA",
+                  description: "Nossos algoritmos avançados extraem e organizam automaticamente todos os seus dados médicos.",
+                  badge: "Passo 2"
+                },
+                {
+                  icon: <BookOpen className="w-6 h-6 text-primary-600" />,
+                  title: "Análise Detalhada",
+                  description: "O sistema interpreta os valores com contexto médico e identifica alterações relevantes para sua saúde.",
+                  badge: "Passo 3"
+                },
+                {
+                  icon: <LineChart className="w-6 h-6 text-primary-600" />,
+                  title: "Visualização Inteligente",
+                  description: "Acesse gráficos, históricos e um panorama completo da evolução dos seus indicadores de saúde.",
+                  badge: "Passo 4"
+                }
+              ].map((step, index) => (
+                <motion.div
+                  key={index}
+                  className="relative"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  {/* Círculo na linha do tempo */}
+                  <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
                     <motion.div 
-                      className="w-8 h-8 rounded-full bg-primary-50 border border-primary-100 flex items-center justify-center"
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="w-12 h-12 rounded-full bg-white border-4 border-primary-400 flex items-center justify-center shadow-md"
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ type: "spring", delay: 0.3 + index * 0.1 }}
                     >
-                      <ChevronRight className="w-5 h-5 text-primary-500" />
+                      <span className="text-sm font-bold text-primary-700">{index + 1}</span>
                     </motion.div>
                   </div>
-                )}
-              </motion.div>
-            ))}
+                  
+                  {/* Card do passo */}
+                  <motion.div
+                    className="bg-white rounded-xl shadow-md p-6 flex flex-col h-full relative overflow-hidden border border-gray-100"
+                    whileHover={{ y: -8, boxShadow: "0 20px 30px -10px rgba(0, 0, 0, 0.1)" }}
+                  >
+                    {/* Badge do passo (visível apenas em mobile) */}
+                    <div className="md:hidden inline-block px-2.5 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-4">
+                      {step.badge}
+                    </div>
+                    
+                    <div className="rounded-full p-3 bg-primary-50 mb-5 w-14 h-14 flex items-center justify-center">
+                      {step.icon}
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">{step.title}</h3>
+                    <p className="text-gray-600 text-sm">{step.description}</p>
+                    
+                    {/* Seta indicando próximo passo (visível apenas em desktop) */}
+                    {index < 3 && (
+                      <motion.div 
+                        className="absolute hidden md:block"
+                        style={{
+                          top: '45%',
+                          right: -18,
+                          zIndex: 10
+                        }}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                      >
+                        <div className="bg-white rounded-full p-1 shadow-md">
+                          <ChevronRight className="w-5 h-5 text-primary-500" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              ))}
+            </div>
           </div>
           
-          {/* Botão CTA centralizado */}
+          {/* CTA após explicação dos passos */}
           <motion.div 
             className="mt-16 text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.6 }}
           >
             <Link href="/auth?tab=register">
-              <Button size="lg" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-5 rounded-lg shadow-lg">
-                Comece agora mesmo
+              <Button 
+                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-6 rounded-lg shadow-lg text-lg"
+                size="lg"
+              >
+                Comece agora gratuitamente
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+            <p className="text-sm text-gray-500 mt-4">Não é necessário cartão de crédito</p>
           </motion.div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section id="beneficios" className="py-20 bg-gray-50 relative overflow-hidden">
+      <section id="beneficios" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
           <div className="absolute left-1/3 -top-48 w-64 h-64 bg-green-50 rounded-full opacity-30 blur-3xl"></div>
+          
+          {/* Padrão geométrico sutil */}
+          <div className="hidden lg:block absolute left-10 top-40 w-32 h-32">
+            <div className="w-4 h-4 rounded-full bg-primary-100 absolute top-0 left-0"></div>
+            <div className="w-2 h-2 rounded-full bg-blue-100 absolute top-10 left-10"></div>
+            <div className="w-6 h-6 rounded-full bg-green-100 absolute top-20 left-20"></div>
+          </div>
         </div>
       
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -1288,98 +1403,172 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              Benefícios <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Reais</span>
+            <motion.span
+              className="inline-block px-4 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              Vantagens Exclusivas
+            </motion.span>
+          
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Benefícios <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Reais</span> para sua Saúde
             </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              O Hemolog transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
+            <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+              O HEMOLOG transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                title: "Histórico cronológico automático",
-                description: "Todos os seus exames organizados cronologicamente sem esforço.",
+                icon: <History className="w-6 h-6 text-primary-600" />,
+                title: "Histórico cronológico",
+                description: "Seus exames organizados automaticamente por data, com categorização inteligente para fácil acesso.",
                 delay: 0
               },
               {
+                icon: <BellRing className="w-6 h-6 text-amber-500" />,
                 title: "Alertas inteligentes",
-                description: "Notificações personalizadas para valores fora do ideal.",
+                description: "Receba notificações personalizadas quando houver valores que precisam de atenção especial.",
                 delay: 0.1
               },
               {
-                title: "Relatórios em linguagem clara",
-                description: "Informações médicas traduzidas para termos compreensíveis.",
+                icon: <BookOpen className="w-6 h-6 text-blue-600" />,
+                title: "Linguagem acessível",
+                description: "Exames médicos traduzidos para termos compreensíveis, facilitando o entendimento dos resultados.",
                 delay: 0.2
               },
               {
-                title: "Comparação ao longo do tempo",
-                description: "Acompanhe a evolução dos seus indicadores de saúde.",
+                icon: <AreaChart className="w-6 h-6 text-purple-600" />,
+                title: "Evolução visual",
+                description: "Visualize a progressão dos seus indicadores ao longo do tempo com gráficos interativos e claros.",
                 delay: 0.3
               },
               {
-                title: "Compatível com sistemas médicos",
-                description: "Integração fácil com clínicas e planos de saúde.",
+                icon: <HeartPulse className="w-6 h-6 text-red-500" />,
+                title: "Integração com médicos",
+                description: "Compartilhe seus históricos e relatórios diretamente com seus profissionais de saúde.",
                 delay: 0.4
               },
               {
-                title: "Compartilhamento seguro",
-                description: "Envie relatórios diretamente para seus médicos.",
+                icon: <ShieldCheck className="w-6 h-6 text-green-600" />,
+                title: "Privacidade garantida",
+                description: "Seus dados são protegidos por criptografia avançada e nunca são compartilhados sem permissão.",
                 delay: 0.5
               },
             ].map((benefit, index) => (
               <motion.div 
                 key={index}
-                className="relative bg-white p-6 rounded-xl shadow-md overflow-hidden group"
+                className="relative bg-white p-7 rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:border-primary-100 group"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: benefit.delay }}
-                whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.1)" }}
+                whileHover={{ 
+                  y: -8, 
+                  boxShadow: "0 20px 30px rgba(0,0,0,0.07)",
+                  transition: { duration: 0.3 }
+                }}
               >
-                {/* Elemento decorativo */}
-                <div className="absolute -left-4 -top-4 w-16 h-16 bg-primary-50 rounded-full opacity-70 group-hover:scale-150 transition-transform duration-700"></div>
-                
-                <div className="flex items-start relative z-10">
-                  <div className="bg-green-50 p-2 rounded-full mr-4 mt-1">
-                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">{benefit.title}</h3>
-                    <p className="text-gray-600">{benefit.description}</p>
+                {/* Ícone estilizado */}
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center mb-5 group-hover:from-primary-50 group-hover:to-primary-100 group-hover:border-primary-200 transition-colors duration-300">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white shadow-sm">
+                    {benefit.icon}
                   </div>
                 </div>
                 
-                {/* Indicador sutil de destaque */}
-                <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary-700 transition-colors duration-300">
+                  {benefit.title}
+                </h3>
+                
+                <p className="text-gray-600 mb-4 text-sm">
+                  {benefit.description}
+                </p>
+                
+                {/* Indicador de hover */}
+                <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-primary-400 to-primary-600 group-hover:w-full transition-all duration-300 ease-out"></div>
               </motion.div>
             ))}
           </div>
           
-          {/* Destaque estatístico */}
+          {/* Estatísticas de impacto */}
+          <div className="mt-24 max-w-5xl mx-auto">
+            <motion.h3 
+              className="text-2xl font-bold text-center text-gray-800 mb-12"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              Impacto comprovado na vida dos usuários
+            </motion.h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  number: "93%",
+                  text: "dos usuários relatam melhor entendimento de sua saúde",
+                  icon: <Brain className="w-10 h-10 text-primary-500" />,
+                  delay: 0
+                },
+                {
+                  number: "87%",
+                  text: "aumentaram a confiança durante consultas médicas",
+                  icon: <Users className="w-10 h-10 text-blue-500" />,
+                  delay: 0.2
+                },
+                {
+                  number: "78%",
+                  text: "compartilham regularmente seus relatórios com médicos",
+                  icon: <Share className="w-10 h-10 text-green-500" />,
+                  delay: 0.4
+                },
+              ].map((stat, index) => (
+                <motion.div 
+                  key={index}
+                  className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: stat.delay }}
+                  whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.1)" }}
+                >
+                  <div className="p-8">
+                    <div className="flex justify-center mb-4">
+                      <div className="p-3 bg-gray-50 rounded-full">
+                        {stat.icon}
+                      </div>
+                    </div>
+                    <h4 className="text-4xl font-bold text-center text-primary-600 mb-3">{stat.number}</h4>
+                    <p className="text-center text-gray-600">{stat.text}</p>
+                  </div>
+                  <div className="h-1.5 w-full bg-gradient-to-r from-primary-500 to-primary-300"></div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          
+          {/* CTA dentro da seção de benefícios */}
           <motion.div 
-            className="mt-16 bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+            className="text-center mt-16"
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ delay: 0.6 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-3">
-              <div className="p-8 text-center border-b md:border-b-0 md:border-r border-gray-100">
-                <h3 className="text-4xl font-bold text-primary-600 mb-2">93%</h3>
-                <p className="text-gray-600">dos usuários relatam melhor entendimento de sua saúde</p>
-              </div>
-              <div className="p-8 text-center border-b md:border-b-0 md:border-r border-gray-100">
-                <h3 className="text-4xl font-bold text-primary-600 mb-2">87%</h3>
-                <p className="text-gray-600">sentem mais confiança nas consultas médicas</p>
-              </div>
-              <div className="p-8 text-center">
-                <h3 className="text-4xl font-bold text-primary-600 mb-2">78%</h3>
-                <p className="text-gray-600">compartilham seus relatórios com médicos</p>
-              </div>
-            </div>
+            <Link href="/auth?tab=register">
+              <Button 
+                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-lg shadow-md"
+              >
+                Experimente agora
+                <Sparkles className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
