@@ -397,32 +397,7 @@ export default function AuthPage() {
       {/* Right side - Hero with interactive graphics */}
       <div className="md:w-1/2 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden">
         <div className="max-w-lg">
-          {/* Logo Grande no Topo */}
-          <div className="flex justify-center mb-8">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-col items-center"
-            >
-              <div className="bg-white p-5 rounded-2xl shadow-lg mb-4 flex items-center justify-center">
-                <div className="flex items-center">
-                  <div className="bg-primary-600 text-white font-bold text-4xl w-16 h-16 rounded-xl flex items-center justify-center shadow-md">
-                    H
-                  </div>
-                  <div className="text-5xl font-black ml-3 tracking-tighter">
-                    <span className="text-primary-600">HEMO</span>
-                    <span className="text-primary-800">LOG</span>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-primary-600 text-white text-sm px-6 py-2 rounded-full shadow-md uppercase tracking-wider font-medium">
-                Análise Inteligente de Exames
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* Title section */}
+          {/* Title section - Removido o logo grande do topo */}
           <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
               <span className="text-primary-600">Sua saúde,</span> <span className="text-primary-800">nosso foco</span>
