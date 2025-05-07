@@ -1838,40 +1838,36 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: <div className="bg-primary-500 w-12 h-12 rounded-full flex items-center justify-center">
-                        <Heart className="w-6 h-6 text-white" />
-                      </div>,
+                iconComponent: <Heart className="w-6 h-6 text-white" />,
                 title: "Pacientes crônicos",
                 description: "Monitoramento contínuo e organizado de seus exames recorrentes",
                 delay: 0,
-                gradient: "from-primary-500 to-primary-600"
+                gradient: "from-primary-500 to-primary-600",
+                color: "bg-primary-500"
               },
               {
-                icon: <div className="bg-indigo-500 w-12 h-12 rounded-full flex items-center justify-center">
-                        <Users className="w-6 h-6 text-white" />
-                      </div>,
+                iconComponent: <Users className="w-6 h-6 text-white" />,
                 title: "Famílias",
                 description: "Histórico de saúde centralizado para gerenciar a saúde familiar",
                 delay: 0.1,
-                gradient: "from-primary-600 to-indigo-600"
+                gradient: "from-primary-600 to-indigo-600",
+                color: "bg-indigo-500"
               },
               {
-                icon: <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center">
-                        <FileHeart className="w-6 h-6 text-white" />
-                      </div>,
+                iconComponent: <FileHeart className="w-6 h-6 text-white" />,
                 title: "Profissionais de saúde",
                 description: "Relatórios prontos para consultas mais eficientes e focadas",
                 delay: 0.2,
-                gradient: "from-indigo-600 to-blue-600"
+                gradient: "from-indigo-600 to-blue-600",
+                color: "bg-blue-600"
               },
               {
-                icon: <div className="bg-primary-600 w-12 h-12 rounded-full flex items-center justify-center">
-                        <Building className="w-6 h-6 text-white" />
-                      </div>,
+                iconComponent: <Building className="w-6 h-6 text-white" />,
                 title: "Clínicas e planos de saúde",
                 description: "Ferramenta para engajar e cuidar melhor dos pacientes",
                 delay: 0.3,
-                gradient: "from-blue-600 to-primary-500"
+                gradient: "from-blue-600 to-primary-500",
+                color: "bg-primary-600"
               }
             ].map((item, index) => (
               <motion.div 
@@ -1896,7 +1892,7 @@ export default function LandingPage() {
                   }}
                 >
                   <div className={`w-16 h-16 bg-gradient-to-br ${item.gradient} rounded-full flex items-center justify-center shadow-lg`}>
-                    {item.icon}
+                      {item.iconComponent}
                   </div>
                 </motion.div>
                 
