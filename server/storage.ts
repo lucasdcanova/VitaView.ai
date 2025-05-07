@@ -37,6 +37,7 @@ export interface IStorage {
   getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]>;
   getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]>;
   deleteHealthMetric(id: number): Promise<boolean>;
+  deleteAllHealthMetricsByUserId(userId: number): Promise<number>;
   
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -229,6 +230,19 @@ export class MemStorage implements IStorage {
   
   async deleteHealthMetric(id: number): Promise<boolean> {
     return this.healthMetricsMap.delete(id);
+  }
+  
+  async deleteAllHealthMetricsByUserId(userId: number): Promise<number> {
+    const metrics = await this.getHealthMetricsByUserId(userId);
+    let count = 0;
+    
+    for (const metric of metrics) {
+      if (await this.deleteHealthMetric(metric.id)) {
+        count++;
+      }
+    }
+    
+    return count;
   }
   
   async deleteExamResult(id: number): Promise<boolean> {
@@ -509,17 +523,28 @@ export class DatabaseStorage implements IStorage {
     try {
       const result = await db.delete(healthMetrics).where(eq(healthMetrics.id, id));
       // Se ao menos uma linha for afetada, consideramos sucesso
-      return result.rowCount > 0;
+      return result && result.rowCount ? result.rowCount > 0 : false;
     } catch (error) {
       console.error(`Erro ao excluir métrica de saúde com ID ${id}:`, error);
       return false;
     }
   }
   
+  async deleteAllHealthMetricsByUserId(userId: number): Promise<number> {
+    try {
+      console.log(`[DeleteAllHealthMetrics] Excluindo todas as métricas para o usuário ${userId}`);
+      const result = await db.delete(healthMetrics).where(eq(healthMetrics.userId, userId));
+      return result && result.rowCount ? result.rowCount : 0;
+    } catch (error) {
+      console.error(`Erro ao excluir métricas de saúde do usuário ${userId}:`, error);
+      return 0;
+    }
+  }
+  
   async deleteExamResult(id: number): Promise<boolean> {
     try {
       const result = await db.delete(examResults).where(eq(examResults.id, id));
-      return result.rowCount > 0;
+      return result && result.rowCount ? result.rowCount > 0 : false;
     } catch (error) {
       console.error(`Erro ao excluir resultado de exame com ID ${id}:`, error);
       return false;
