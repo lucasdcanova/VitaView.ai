@@ -152,9 +152,12 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       ];
     
       // Generate content using Gemini
+      console.log("Enviando documento para Gemini API...");
       const result = await model.generateContent(parts);
       const response = result.response;
       const text = response.text();
+      console.log("Resposta recebida da Gemini API. Tamanho da resposta:", text.length);
+      console.log("Amostra da resposta:", text.substring(0, 200));
       
       try {
         // Extract JSON from the response
@@ -266,73 +269,91 @@ function defaultHealthMetrics(fileType: string) {
   if (fileType === 'pdf') {
     return [
       { 
-        name: "hemoglobina", 
-        value: "14.2", 
+        name: "Hemoglobina", 
+        value: "9.0", 
         unit: "g/dL", 
-        status: "normal", 
-        change: "+0.1", 
+        status: "baixo", 
+        change: "-0.5", 
         date: currentDate,
-        referenceMin: "12.0",
-        referenceMax: "16.0",
-        clinical_significance: "A hemoglobina é responsável pelo transporte de oxigênio no sangue. Valores baixos podem indicar anemia."
+        referenceMin: "13.0",
+        referenceMax: "17.0",
+        category: "Hematologia",
+        clinical_significance: "Importante para transporte de oxigênio no sangue. Valores baixos indicam anemia."
       },
       { 
-        name: "glicemia", 
-        value: "95", 
+        name: "Glicose", 
+        value: "89.1", 
         unit: "mg/dL", 
-        status: "atenção", 
-        change: "+3", 
+        status: "normal", 
+        change: "0", 
         date: currentDate,
-        referenceMin: "70",
+        referenceMin: "65",
         referenceMax: "99",
-        clinical_significance: "Medida de glicose no sangue em jejum. Valores entre 100-125 mg/dL indicam pré-diabetes."
+        category: "Bioquímica",
+        clinical_significance: "Indicador de metabolismo de carboidratos e energia celular"
       },
       { 
-        name: "colesterol", 
-        value: "180", 
+        name: "Colesterol Total", 
+        value: "209.7", 
         unit: "mg/dL", 
-        status: "normal", 
-        change: "-5", 
+        status: "alto", 
+        change: "+10", 
         date: currentDate,
-        referenceMin: "150",
-        referenceMax: "199",
-        clinical_significance: "O colesterol total é importante para avaliar o risco cardiovascular junto com suas frações HDL e LDL."
+        referenceMin: null,
+        referenceMax: "200",
+        category: "Lipidograma",
+        clinical_significance: "Fator de risco para doenças cardiovasculares quando elevado"
       },
       { 
-        name: "vitamina_d", 
-        value: "32", 
-        unit: "ng/mL", 
+        name: "Colesterol HDL", 
+        value: "33.5", 
+        unit: "mg/dL", 
         status: "baixo", 
         change: "-2", 
         date: currentDate,
-        referenceMin: "30",
-        referenceMax: "100",
-        clinical_significance: "Essencial para saúde óssea e imunológica. Níveis baixos são comuns e podem requerer suplementação."
+        referenceMin: "40",
+        referenceMax: null,
+        category: "Lipidograma",
+        clinical_significance: "Colesterol 'bom' que ajuda a remover o LDL da corrente sanguínea"
       }
     ];
   } else {
     return [
       { 
-        name: "glicemia", 
-        value: "95", 
-        unit: "mg/dL", 
-        status: "atenção", 
-        change: "+3", 
-        date: currentDate,
-        referenceMin: "70",
-        referenceMax: "99",
-        clinical_significance: "Medida de glicose no sangue em jejum. Valores entre 100-125 mg/dL indicam pré-diabetes."
-      },
-      { 
-        name: "colesterol", 
-        value: "180", 
+        name: "Glicose", 
+        value: "89.1", 
         unit: "mg/dL", 
         status: "normal", 
-        change: "-5", 
+        change: "0", 
         date: currentDate,
-        referenceMin: "150",
-        referenceMax: "199",
-        clinical_significance: "O colesterol total é importante para avaliar o risco cardiovascular junto com suas frações HDL e LDL."
+        referenceMin: "65",
+        referenceMax: "99",
+        category: "Bioquímica",
+        clinical_significance: "Indicador de metabolismo de carboidratos e energia celular"
+      },
+      { 
+        name: "Colesterol Total", 
+        value: "209.7", 
+        unit: "mg/dL", 
+        status: "alto", 
+        change: "+10", 
+        date: currentDate,
+        referenceMin: null,
+        referenceMax: "200",
+        category: "Lipidograma",
+        clinical_significance: "Fator de risco para doenças cardiovasculares quando elevado"
+      },
+      { 
+        name: "Colesterol HDL", 
+        value: "33.5", 
+        unit: "mg/dL", 
+        status: "baixo", 
+        change: "-2", 
+        date: currentDate,
+        referenceMin: "40",
+        referenceMax: null,
+        category: "Lipidograma",
+        clinical_significance: "Colesterol 'bom' que ajuda a remover o LDL da corrente sanguínea"
       }
     ];
   }

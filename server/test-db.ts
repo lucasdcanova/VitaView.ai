@@ -54,29 +54,51 @@ async function runDatabaseCompatibilityTest() {
     // Step 3: Test exam result creation with various health metrics structures
     console.log('\n3. Testing exam result creation with health metrics...');
     
-    // Sample health metrics in the expected format from Gemini extraction
+    // Sample health metrics from the actual exam provided by the user
     const testHealthMetrics = [
       {
         name: 'Hemoglobina',
-        value: '14.5',
+        value: '9.0',
         unit: 'g/dL',
-        status: 'normal',
-        change: '+0.2',
-        category: 'Hematologia', // This field isn't in the DB schema
-        referenceMin: '13.0', // This field isn't in the DB schema
-        referenceMax: '17.0', // This field isn't in the DB schema
-        clinical_significance: 'Importante para transporte de oxigênio' // This field isn't in the DB schema
+        status: 'baixo',
+        change: '-0.5',
+        category: 'Hematologia',
+        referenceMin: '13.0',
+        referenceMax: '17.0',
+        clinical_significance: 'Importante para transporte de oxigênio no sangue. Valores baixos indicam anemia.'
       },
       {
         name: 'Glicose',
-        value: '105',
+        value: '89.1',
         unit: 'mg/dL',
-        status: 'atenção',
-        change: '+12',
+        status: 'normal',
+        change: '0',
         category: 'Bioquímica',
-        referenceMin: '70',
+        referenceMin: '65',
         referenceMax: '99',
-        clinical_significance: 'Indicador de metabolismo de carboidratos'
+        clinical_significance: 'Indicador de metabolismo de carboidratos e energia celular'
+      },
+      {
+        name: 'Colesterol Total',
+        value: '209.7',
+        unit: 'mg/dL',
+        status: 'alto',
+        change: '+10',
+        category: 'Lipidograma',
+        referenceMin: null,
+        referenceMax: '200',
+        clinical_significance: 'Fator de risco para doenças cardiovasculares quando elevado'
+      },
+      {
+        name: 'Colesterol HDL',
+        value: '33.5',
+        unit: 'mg/dL',
+        status: 'baixo',
+        change: '-2',
+        category: 'Lipidograma',
+        referenceMin: '40',
+        referenceMax: null,
+        clinical_significance: 'Colesterol "bom" que ajuda a remover o LDL da corrente sanguínea'
       }
     ];
     
