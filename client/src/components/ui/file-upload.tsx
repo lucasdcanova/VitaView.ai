@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { normalizeExamName, normalizeHealthMetrics } from "@shared/exam-normalizer";
 
 interface FileUploadProps {
   onUploadComplete?: (result: any) => void;
@@ -301,12 +302,34 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           // Salvar métricas de saúde individuais, se disponíveis
           if (geminiAnalysis?.healthMetrics && Array.isArray(geminiAnalysis.healthMetrics)) {
             console.log("Salvando métricas de saúde individuais:", geminiAnalysis.healthMetrics.length);
+            
+            // Pré-processamento para normalizar nomes e unificar métricas duplicadas
+            const processedMetrics = new Map<string, any>();
+            
+            // Primeiro passo: normalizar todos os nomes e agrupar métricas idênticas
             for (const metric of geminiAnalysis.healthMetrics) {
+              const normalizedName = normalizeExamName(metric.name || "desconhecido");
+              
+              // Se já temos uma métrica com esse nome normalizado, usamos a mais recente
+              // ou a que tem mais informações (assumindo que a ordem indica prioridade)
+              if (!processedMetrics.has(normalizedName)) {
+                processedMetrics.set(normalizedName, {
+                  ...metric,
+                  name: normalizedName // substituir pelo nome normalizado
+                });
+              }
+            }
+            
+            console.log(`Após normalização: ${processedMetrics.size} métricas únicas (original: ${geminiAnalysis.healthMetrics.length})`);
+            
+            // Segundo passo: salvar cada métrica unificada
+            const uniqueMetrics = Array.from(processedMetrics.values());
+            for (const metric of uniqueMetrics) {
               try {
                 // Garantir que os dados estão no formato esperado pelo backend
                 const metricData = {
                   userId: Number(savedExam.userId), // Usar userId do exame salvo que já foi confirmado
-                  name: metric.name || "desconhecido",
+                  name: metric.name, // Já normalizado
                   value: String(metric.value || "0"),
                   unit: metric.unit || '',
                   status: metric.status || 'normal',

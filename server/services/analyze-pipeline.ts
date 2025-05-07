@@ -15,6 +15,7 @@
 import { analyzeDocument } from './gemini';
 import { analyzeExtractedExam } from './openai';
 import { storage } from '../storage';
+import { normalizeExamName, normalizeHealthMetrics } from '../../shared/exam-normalizer';
 
 export interface AnalysisOptions {
   userId: number;
@@ -91,14 +92,19 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     
     console.log(`[Pipeline] Exame criado com ID: ${exam.id}`);
     
-    // SALVAR RESULTADO DA EXTRAÇÃO
-    console.log(`[Pipeline] ETAPA 3: Salvando métricas extraídas`);
+    // NORMALIZAR MÉTRICAS - Unificar nomes para evitar duplicatas com nomes ligeiramente diferentes
+    console.log(`[Pipeline] Normalizando métricas de saúde...`);
+    const normalizedMetrics = normalizeHealthMetrics(extractionResult.healthMetrics || []);
+    console.log(`[Pipeline] Normalização reduziu de ${extractionResult.healthMetrics?.length || 0} para ${normalizedMetrics.length} métricas únicas`);
+    
+    // SALVAR RESULTADO DA EXTRAÇÃO COM MÉTRICAS NORMALIZADAS
+    console.log(`[Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)`);
     const examResult = await storage.createExamResult({
       examId: exam.id,
-      summary: `Exame extraído com ${extractionResult.healthMetrics?.length || 0} parâmetros`,
+      summary: `Exame extraído com ${normalizedMetrics.length} parâmetros`,
       detailedAnalysis: null, // Será preenchido pela OpenAI posteriormente
       recommendations: null, // Será preenchido pela OpenAI posteriormente
-      healthMetrics: extractionResult.healthMetrics,
+      healthMetrics: normalizedMetrics,
       aiProvider: extractionResult.aiProvider || "gemini:extraction-only"
     });
     
@@ -115,8 +121,8 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       atencao: 0
     };
     
-    // Salvar métricas por categoria
-    for (const metric of extractionResult.healthMetrics || []) {
+    // Usar as métricas já normalizadas para salvar por categoria
+    for (const metric of normalizedMetrics) {
       try {
         // Categorizar métricas
         const category = metric.category || "Geral";
