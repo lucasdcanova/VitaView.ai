@@ -256,7 +256,7 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="py-12 md:py-24 container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <section className="py-12 md:py-20 container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div 
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
@@ -600,7 +600,7 @@ export default function LandingPage() {
         </motion.div>
         
         {/* Badges flutuantes na parte de baixo */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-3 px-6 bg-white bg-opacity-80 backdrop-blur-sm rounded-t-xl shadow-sm text-xs md:text-sm text-gray-600 hidden md:flex">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-2 px-6 bg-white bg-opacity-80 backdrop-blur-sm rounded-t-xl shadow-sm text-xs md:text-sm text-gray-600 hidden sm:flex">
           <span className="flex items-center">
             <Shield className="w-4 h-4 mr-1 text-primary-600" /> Dados protegidos
           </span>
@@ -675,7 +675,7 @@ export default function LandingPage() {
       </section>
       
       {/* Simulação de Relatórios Section */}
-      <section id="demonstracoes" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      <section id="demonstracoes" className="py-20 mt-[-8rem] bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
