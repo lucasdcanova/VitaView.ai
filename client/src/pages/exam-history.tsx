@@ -87,7 +87,12 @@ export default function ExamHistory() {
       return await deleteExam(examId);
     },
     onSuccess: () => {
+      // Invalidar todas as queries relacionadas aos exames e métricas de saúde
       queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
+      
       toast({
         title: "Exame excluído",
         description: "O exame foi removido com sucesso.",
