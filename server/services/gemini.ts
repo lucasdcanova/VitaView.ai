@@ -440,7 +440,7 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
         }
         metricsByCategory.get(category).push(metric.name);
         
-        // Criar uma nova métrica de saúde
+        // Criar uma nova métrica de saúde usando apenas os campos que existem na tabela
         await storage.createHealthMetric({
           userId: Number(userId),
           name: metric.name || "desconhecido",
@@ -448,11 +448,8 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
           unit: metric.unit || "",
           status: metric.status || "normal",
           change: metric.change || "",
-          referenceMin: metric.referenceMin || null,
-          referenceMax: metric.referenceMax || null, 
-          clinical_significance: metric.clinical_significance || null,
-          date: extractedExamDate,
-          category: metric.category || "Geral" // Adicionando categoria para melhor organização
+          date: new Date(extractedExamDate)
+          // Removi referenceMin, referenceMax, clinical_significance e category que não existem na tabela atual
         });
         
         savedMetricsCount++;
