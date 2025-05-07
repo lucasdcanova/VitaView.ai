@@ -100,12 +100,14 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
       console.log("Análise OpenAI concluída com sucesso");
       console.log("\nRecomendações geradas:");
       
-      if (analysisResult.recommendations && Array.isArray(analysisResult.recommendations)) {
-        analysisResult.recommendations.forEach((rec, i) => {
+      // Tratamento dos resultados da análise, com suporte a tipagem
+      const recommendations = (analysisResult as any).recommendations;
+      if (recommendations && Array.isArray(recommendations)) {
+        recommendations.forEach((rec: string, i: number) => {
           console.log(`[${i+1}] ${rec}`);
         });
-      } else if (typeof analysisResult.recommendations === 'string') {
-        console.log(analysisResult.recommendations);
+      } else if (typeof recommendations === 'string') {
+        console.log(recommendations);
       } else {
         console.log("Nenhuma recomendação gerada");
       }
