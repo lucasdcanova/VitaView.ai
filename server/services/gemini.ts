@@ -10,7 +10,7 @@ import {
 } from "@google/generative-ai";
 
 // Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY as string);
 
 // Gemini model configuration - usando modelo mais recente 
 // O gemini-pro-vision foi descontinuado em julho de 2024
