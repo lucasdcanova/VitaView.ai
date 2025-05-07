@@ -353,8 +353,8 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     }
     
     // 3. Obter métricas diretamente do resultado da extração, não de health_metrics
-    const examDateStr = exam.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
-                        exam.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
+    const examDateStr = exam?.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
+                        exam?.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
     
     // Usar as métricas que já foram extraídas pelo Gemini e armazenadas em examResults
     // em vez de tentar buscar da tabela health_metrics que está incompleta
