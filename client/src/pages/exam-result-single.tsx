@@ -59,15 +59,20 @@ export default function ExamResultSingle() {
   const deleteMutation = useMutation({
     mutationFn: () => deleteExam(examId!),
     onSuccess: () => {
+      // Invalidar todas as queries relacionadas aos exames e métricas de saúde
+      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
+      
       toast({
         title: "Exame excluído com sucesso",
         description: "O exame e todos os dados associados foram removidos.",
         variant: "default",
       });
+      
       // Redirecionando para a página de resultados
       setLocation("/results");
-      // Invalidar a consulta para atualizar a lista de exames
-      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
     },
     onError: (error) => {
       toast({

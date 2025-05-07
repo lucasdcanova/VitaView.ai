@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useRoute, Link, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Exam, ExamResult } from "@shared/schema";
-import { getExamDetails, getExamInsights } from "@/lib/api";
+import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   FileText,
@@ -34,7 +35,8 @@ import {
   FileText as FileMedical,
   Clipboard,
   LineChart,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 
 // Função para mostrar ícone de variação baseado no valor
