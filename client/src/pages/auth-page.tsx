@@ -551,36 +551,66 @@ export default function AuthPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl shadow-md p-4"
+              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <User className="h-5 w-5 text-green-600" />
                   <h3 className="font-medium text-gray-800">Seu Perfil de Saúde</h3>
                 </div>
-                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                   Personalizado
                 </span>
               </div>
               
-              <div className="flex flex-col gap-2 mt-4">
+              <div className="flex flex-col gap-3 mt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 text-sm">Índice de Saúde</span>
                   <div className="flex items-center">
-                    <span className="text-primary-600 font-medium">87</span>
+                    <span className="text-green-600 font-bold text-lg">87</span>
                     <span className="text-xs text-gray-500 ml-1">/100</span>
                   </div>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                
+                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: "87%" }}
                     transition={{ delay: 0.6, duration: 0.8 }}
-                    className="h-full bg-primary-500 rounded-full"
+                    className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
                   />
                 </div>
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  Faça login para ver sua análise completa
+                
+                {/* Categorias de exames - Simulação */}
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-gray-600">Glicemia: Normal</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                    <span className="text-gray-600">Colesterol: Atenção</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-gray-600">Hemoglobina: Normal</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-gray-600">Vitamina D: Normal</span>
+                  </div>
+                </div>
+                
+                {/* Análise simulada */}
+                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 mt-2">
+                  <p className="text-xs text-blue-800">
+                    <span className="font-medium">Análise preliminar:</span> Seus resultados indicam saúde geral boa, com atenção ao perfil lipídico.
+                  </p>
+                </div>
+                
+                <div className="bg-primary-50 p-3 rounded-lg mt-1 text-center border border-primary-100 flex flex-col gap-1">
+                  <span className="text-primary-700 font-medium text-sm">Faça login para análise completa</span>
+                  <span className="text-xs text-gray-600">Receba recomendações personalizadas com base em seus exames</span>
                 </div>
               </div>
             </motion.div>
