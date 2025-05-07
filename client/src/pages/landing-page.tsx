@@ -2691,168 +2691,137 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="order-1 md:order-2"
             >
-              <div className="bg-blue-50 rounded-xl p-6 shadow-lg relative overflow-hidden">
-                <div className="absolute right-3 top-3 px-3 py-1.5 bg-white rounded-full text-xs text-primary-700 font-medium shadow-sm flex items-center">
-                  <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
-                  Visualização simples e objetiva
-                </div>
-                
-                <h3 className="text-lg sm:text-xl md:text-2xl text-center font-bold text-primary-700 mb-4">Gráfico Interativo</h3>
-                
-                {/* Legenda */}
-                <div className="flex justify-center mb-6 space-x-6">
+              <div className="bg-blue-50 rounded-xl shadow-lg relative overflow-hidden flex flex-col">
+                {/* Cabeçalho em estilo de card com ícones */}
+                <div className="p-3 bg-white border-b border-gray-100 flex justify-between items-center">
                   <div className="flex items-center">
-                    <span className="h-3 w-3 rounded-full bg-blue-500 mr-2"></span>
-                    <span className="text-xs text-gray-600">Hemoglobina</span>
+                    <LineChart className="h-4 w-4 text-gray-700 mr-2" />
+                    <span className="font-medium text-gray-700">Gráfico Interativo</span>
                   </div>
-                  <div className="flex items-center">
-                    <span className="h-3 w-3 rounded-full bg-amber-500 mr-2"></span>
-                    <span className="text-xs text-gray-600">Glicose</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
-                    <span className="text-xs text-gray-600">Colesterol</span>
+                  <div className="flex space-x-1">
+                    <button className="p-1 rounded-md hover:bg-gray-100">
+                      <Download className="h-4 w-4 text-gray-500" />
+                    </button>
+                    <button className="p-1 rounded-md hover:bg-gray-100">
+                      <RefreshCw className="h-4 w-4 text-gray-500" />
+                    </button>
                   </div>
                 </div>
                 
-                {/* Gráfico simulado */}
-                <div className="h-60 px-4 relative">
-                  {/* Grid de fundo */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-full h-px bg-gray-200"></div>
-                    ))}
+                <div className="p-4">
+                  {/* Legenda no topo direito como na imagem */}
+                  <div className="flex justify-end mb-4 space-x-4">
+                    <div className="flex items-center">
+                      <span className="h-3 w-3 rounded-full bg-blue-500 mr-1"></span>
+                      <span className="text-xs text-gray-600">Hemoglobina</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="h-3 w-3 rounded-full bg-amber-500 mr-1"></span>
+                      <span className="text-xs text-gray-600">Glicose</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="h-3 w-3 rounded-full bg-red-500 mr-1"></span>
+                      <span className="text-xs text-gray-600">Colesterol</span>
+                    </div>
                   </div>
                   
-                  {/* Labels de valores no eixo Y */}
-                  <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-gray-500">
-                    <div>200</div>
-                    <div>150</div>
-                    <div>100</div>
-                    <div>50</div>
-                    <div>0</div>
-                  </div>
-                  
-                  {/* Eixos principais */}
-                  <div className="absolute left-10 bottom-0 right-0 h-px bg-gray-400"></div>
-                  <div className="absolute left-10 top-0 bottom-0 w-px bg-gray-400"></div>
-                  
-                  {/* Área do gráfico real */}
-                  <div className="absolute left-10 right-0 top-0 bottom-6 h-[calc(100%-24px)]">
-                    {/* Série 1: Hemoglobina */}
-                    <svg className="absolute inset-0 w-full h-full">
-                      <motion.path
-                        d="M 20,120 L 80,100 L 140,110 L 200,90 L 260,70 L 320,95"
-                        fill="none"
-                        stroke="rgb(59, 130, 246)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.5, delay: 0.3 }}
-                      />
-                    </svg>
-                    {/* Pontos da série 1 */}
-                    {[
-                      { x: 20, y: 120 },
-                      { x: 80, y: 100 },
-                      { x: 140, y: 110 },
-                      { x: 200, y: 90 },
-                      { x: 260, y: 70 },
-                      { x: 320, y: 95 }
-                    ].map((point, i) => (
-                      <motion.div
-                        key={`hemo-${i}`}
-                        className="absolute w-3 h-3 bg-blue-500 rounded-full -ml-1.5 -mt-1.5"
-                        style={{ left: point.x, top: point.y }}
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.5 + (i * 0.1) }}
-                      />
-                    ))}
+                  {/* Gráfico estático - sem animações */}
+                  <div className="h-48 relative">
+                    {/* Fundo branco para área do gráfico */}
+                    <div className="absolute inset-0 bg-white rounded-lg border border-gray-100"></div>
                     
-                    {/* Série 2: Glicose */}
-                    <svg className="absolute inset-0 w-full h-full">
-                      <motion.path
-                        d="M 20,70 L 80,90 L 140,60 L 200,85 L 260,95 L 320,80"
-                        fill="none"
-                        stroke="rgb(245, 158, 11)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.5, delay: 0.5 }}
-                      />
-                    </svg>
-                    {/* Pontos da série 2 */}
-                    {[
-                      { x: 20, y: 70 },
-                      { x: 80, y: 90 },
-                      { x: 140, y: 60 },
-                      { x: 200, y: 85 },
-                      { x: 260, y: 95 },
-                      { x: 320, y: 80 }
-                    ].map((point, i) => (
-                      <motion.div
-                        key={`gluc-${i}`}
-                        className="absolute w-3 h-3 bg-amber-500 rounded-full -ml-1.5 -mt-1.5"
-                        style={{ left: point.x, top: point.y }}
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.6 + (i * 0.1) }}
-                      />
-                    ))}
+                    {/* Linhas de grade horizontais */}
+                    <div className="absolute inset-8 flex flex-col justify-between">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="w-full h-px bg-gray-100"></div>
+                      ))}
+                    </div>
                     
-                    {/* Série 3: Colesterol */}
-                    <svg className="absolute inset-0 w-full h-full">
-                      <motion.path
-                        d="M 20,100 L 80,115 L 140,90 L 200,75 L 260,60 L 320,65"
-                        fill="none"
-                        stroke="rgb(239, 68, 68)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.5, delay: 0.7 }}
-                      />
-                    </svg>
-                    {/* Pontos da série 3 */}
-                    {[
-                      { x: 20, y: 100 },
-                      { x: 80, y: 115 },
-                      { x: 140, y: 90 },
-                      { x: 200, y: 75 },
-                      { x: 260, y: 60 },
-                      { x: 320, y: 65 }
-                    ].map((point, i) => (
-                      <motion.div
-                        key={`col-${i}`}
-                        className="absolute w-3 h-3 bg-red-500 rounded-full -ml-1.5 -mt-1.5"
-                        style={{ left: point.x, top: point.y }}
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.7 + (i * 0.1) }}
-                      />
-                    ))}
+                    {/* Valores do eixo Y - simplificados */}
+                    <div className="absolute left-2 top-8 bottom-8 flex flex-col justify-between text-[10px] text-gray-500">
+                      <div>200</div>
+                      <div>150</div>
+                      <div>100</div>
+                      <div>50</div>
+                      <div>0</div>
+                    </div>
+                    
+                    {/* Área de plotagem */}
+                    <div className="absolute left-8 right-4 top-8 bottom-12">
+                      {/* Pontos e linhas fixos (sem animação) */}
+                      
+                      {/* Hemoglobina */}
+                      <svg className="absolute inset-0">
+                        <path
+                          d="M 0,70 L 50,75 L 100,60 L 150,65 L 200,55 L 250,60"
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      
+                      {/* Pontos de Hemoglobina */}
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "0px", top: "70px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "50px", top: "75px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "100px", top: "60px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "150px", top: "65px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "200px", top: "55px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full" style={{left: "250px", top: "60px"}}></div>
+                      
+                      {/* Glicose */}
+                      <svg className="absolute inset-0">
+                        <path
+                          d="M 0,55 L 50,80 L 100,85 L 150,65 L 200,55 L 250,65"
+                          fill="none"
+                          stroke="#f59e0b"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      
+                      {/* Pontos de Glicose */}
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "0px", top: "55px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "50px", top: "80px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "100px", top: "85px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "150px", top: "65px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "200px", top: "55px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-amber-500 rounded-full" style={{left: "250px", top: "65px"}}></div>
+                      
+                      {/* Colesterol */}
+                      <svg className="absolute inset-0">
+                        <path
+                          d="M 0,75 L 50,90 L 100,85 L 150,70 L 200,40 L 250,45"
+                          fill="none"
+                          stroke="#ef4444"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      
+                      {/* Pontos de Colesterol */}
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "0px", top: "75px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "50px", top: "90px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "100px", top: "85px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "150px", top: "70px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "200px", top: "40px"}}></div>
+                      <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full" style={{left: "250px", top: "45px"}}></div>
+                    </div>
+                    
+                    {/* Rótulos do eixo X */}
+                    <div className="absolute left-8 right-4 flex justify-between bottom-4">
+                      <div className="text-[10px] text-gray-500">Jan</div>
+                      <div className="text-[10px] text-gray-500">Fev</div>
+                      <div className="text-[10px] text-gray-500">Mar</div>
+                      <div className="text-[10px] text-gray-500">Abr</div>
+                      <div className="text-[10px] text-gray-500">Mai</div>
+                      <div className="text-[10px] text-gray-500">Jun</div>
+                    </div>
                   </div>
                   
-                  {/* Rótulos do eixo X */}
-                  <div className="absolute left-10 right-0 bottom-0 flex justify-between text-xs text-gray-500">
-                    {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"].map((month, index) => (
-                      <div key={index} className="text-center -mb-6">{month}</div>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-6 bg-white rounded-lg py-2 px-3 shadow-sm max-w-max mx-auto">
-                  <div className="flex items-center text-xs text-primary-700">
-                    <Zap className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                    Visualização simples e objetiva
+                  {/* Badge informativa */}
+                  <div className="mt-2 flex justify-end">
+                    <div className="bg-white rounded-full py-1 px-3 shadow-sm text-xs flex items-center">
+                      <Zap className="h-3 w-3 mr-1 text-amber-500" />
+                      <span className="text-gray-700">Visualização simples e objetiva</span>
+                    </div>
                   </div>
                 </div>
               </div>
