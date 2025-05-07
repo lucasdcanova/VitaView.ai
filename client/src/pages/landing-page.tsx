@@ -1838,28 +1838,36 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: <Heart className="w-7 h-7 text-white" />,
+                icon: <div className="bg-primary-500 w-12 h-12 rounded-full flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-white" />
+                      </div>,
                 title: "Pacientes crônicos",
                 description: "Monitoramento contínuo e organizado de seus exames recorrentes",
                 delay: 0,
                 gradient: "from-primary-500 to-primary-600"
               },
               {
-                icon: <Users className="w-7 h-7 text-white" />,
+                icon: <div className="bg-indigo-500 w-12 h-12 rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>,
                 title: "Famílias",
                 description: "Histórico de saúde centralizado para gerenciar a saúde familiar",
                 delay: 0.1,
                 gradient: "from-primary-600 to-indigo-600"
               },
               {
-                icon: <FileHeart className="w-7 h-7 text-white" />,
+                icon: <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center">
+                        <FileHeart className="w-6 h-6 text-white" />
+                      </div>,
                 title: "Profissionais de saúde",
                 description: "Relatórios prontos para consultas mais eficientes e focadas",
                 delay: 0.2,
                 gradient: "from-indigo-600 to-blue-600"
               },
               {
-                icon: <Building className="w-7 h-7 text-white" />,
+                icon: <div className="bg-primary-600 w-12 h-12 rounded-full flex items-center justify-center">
+                        <Building className="w-6 h-6 text-white" />
+                      </div>,
                 title: "Clínicas e planos de saúde",
                 description: "Ferramenta para engajar e cuidar melhor dos pacientes",
                 delay: 0.3,
