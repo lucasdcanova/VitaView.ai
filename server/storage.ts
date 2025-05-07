@@ -195,10 +195,9 @@ export class MemStorage implements IStorage {
       date: metric.date || new Date(),
       status: metric.status || null,
       unit: metric.unit || null,
-      change: metric.change || null,
-      referenceMin: metric.referenceMin || null,
-      referenceMax: metric.referenceMax || null,
-      clinical_significance: metric.clinical_significance || null
+      change: metric.change || null
+      // Removidos campos que não existem no banco de dados real
+      // referenceMin, referenceMax, clinical_significance, category
     };
     this.healthMetricsMap.set(id, newMetric);
     return newMetric;
@@ -428,17 +427,11 @@ export class DatabaseStorage implements IStorage {
       
       const [newMetric] = await db.insert(healthMetrics).values(filteredMetric).returning();
       
-      // Adicionar campos que não existem na tabela ao objeto de retorno
-      return {
-        ...newMetric,
-        referenceMin: metric.referenceMin || null,
-        referenceMax: metric.referenceMax || null,
-        clinical_significance: metric.clinical_significance || null,
-        category: 'Geral'
-      };
+      // O schema já foi atualizado, então podemos retornar diretamente
+      return newMetric;
     } catch (error) {
       console.error("Erro ao criar métrica de saúde:", error);
-      // Criar um objeto simulado com os dados de entrada
+      // Criar um objeto simulado com os dados de entrada como fallback
       return {
         id: -1, // ID fictício para indicar que não foi salvo
         userId: metric.userId,
@@ -447,11 +440,7 @@ export class DatabaseStorage implements IStorage {
         unit: metric.unit || null,
         status: metric.status || null,
         change: metric.change || null,
-        date: metric.date || new Date(),
-        referenceMin: metric.referenceMin || null,
-        referenceMax: metric.referenceMax || null,
-        clinical_significance: metric.clinical_significance || null,
-        category: 'Geral'
+        date: metric.date || new Date()
       };
     }
   }
@@ -468,11 +457,7 @@ export class DatabaseStorage implements IStorage {
           unit, 
           status, 
           change, 
-          date,
-          null as "referenceMin",
-          null as "referenceMax",
-          null as "clinical_significance",
-          'Geral' as "category"
+          date
         FROM health_metrics 
         WHERE user_id = $1
       `;

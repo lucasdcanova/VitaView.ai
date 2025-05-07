@@ -45,9 +45,9 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       - Resumo: ${examResult.summary}
       - Análise detalhada: ${examResult.detailedAnalysis}
       - Recomendações preliminares: ${examResult.recommendations}
-      - Médico solicitante: ${examResult.requestingPhysician || 'Não informado'}
-      - Laboratório: ${examResult.laboratoryName || 'Não informado'}
-      - Data do exame: ${examResult.examDate || 'Não informada'}
+      - Médico solicitante: ${exam.requestingPhysician || 'Não informado'}
+      - Laboratório: ${exam.laboratoryName || 'Não informado'}
+      - Data do exame: ${exam.examDate || 'Não informada'}
       
       ### MÉTRICAS DE SAÚDE DETALHADAS:
       ${JSON.stringify(examResult.healthMetrics, null, 2)}
@@ -397,9 +397,9 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     let metricsDescriptionByCategory = "";
     metricsByCategory.forEach((metrics, category) => {
       metricsDescriptionByCategory += `\n### ${category.toUpperCase()} (${metrics.length} parâmetros):\n`;
-      metrics.forEach(metric => {
+      metrics.forEach((metric: any) => {
         const status = metric.status ? ` (${metric.status.toUpperCase()})` : '';
-        const reference = metric.referenceMin && metric.referenceMax 
+        const reference = (metric.referenceMin && metric.referenceMax)
           ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ''}]` 
           : '';
         metricsDescriptionByCategory += `- ${metric.name}: ${metric.value} ${metric.unit || ''}${status}${reference}\n`;
@@ -505,7 +505,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       summary: insightsResponse.contextualAnalysis?.substring(0, 150) + "...",
       detailedAnalysis: JSON.stringify(insightsResponse),
       recommendations: insightsResponse.recommendations?.join("\n"),
-      healthMetrics: extractionResult.healthMetrics, // Mantém as métricas da extração
+      healthMetrics: extractionResult.healthMetrics as any, // Mantém as métricas da extração
       aiProvider: "openai:analysis"
     });
     
@@ -524,13 +524,13 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       insights: insightsResponse
     };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao analisar exame com OpenAI:', error);
     
     // Em caso de falha, retornar um erro estruturado
     return {
       error: true,
-      message: `Falha ao analisar o exame: ${error.message}`,
+      message: `Falha ao analisar o exame: ${error.message || 'Erro desconhecido'}`,
       details: String(error)
     };
   }
