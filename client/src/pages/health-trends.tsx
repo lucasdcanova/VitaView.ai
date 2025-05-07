@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, BarChart3, ArrowUpDown, Info, TrendingUp, CalendarClock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { getRandomColor } from "@/lib/utils";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
 
 // Helpers para o gráfico
 const formatDateToBR = (dateString: string) => {
@@ -128,23 +130,29 @@ export default function HealthTrendsPage() {
   const isLoading = isLoadingExams || isLoadingMetrics;
 
   return (
-    <div className="container p-4 mx-auto space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="flex items-center mb-6">
-          <TrendingUp className="h-7 w-7 mr-3 text-primary-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Tendências de Saúde</h1>
-        </div>
-        <p className="text-gray-600 mb-6 max-w-4xl">
-          Compare a evolução de diferentes métricas de saúde ao longo do tempo para 
-          visualizar tendências e padrões nos seus exames.
-        </p>
-      </motion.div>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 flex flex-col">
+        <MobileHeader />
+        
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center mb-6">
+              <TrendingUp className="h-7 w-7 mr-3 text-primary-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Tendências de Saúde</h1>
+            </div>
+            <p className="text-gray-600 mb-6 max-w-4xl">
+              Compare a evolução de diferentes métricas de saúde ao longo do tempo para 
+              visualizar tendências e padrões nos seus exames.
+            </p>
+          </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Seleção de Exames */}
         <Card className="md:col-span-1">
           <CardHeader>
@@ -468,6 +476,8 @@ export default function HealthTrendsPage() {
           </CardContent>
         </Card>
       )}
+          </main>
+      </div>
     </div>
   );
 }
