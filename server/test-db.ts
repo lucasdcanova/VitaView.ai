@@ -5,13 +5,11 @@
  * 1. The database schema can store all the fields produced by the AI pipeline
  * 2. The health metrics structure is properly stored and retrieved
  * 3. The exam and exam results tables interact correctly
- * 
- * Usage: NODE_ENV=development node server/test-database-compatibility.js
  */
 
-import { storage } from './storage.ts';
-import { db } from './db.ts';
-import { examResults, exams, users, healthMetrics } from '../shared/schema.ts';
+import { storage } from './storage';
+import { db } from './db';
+import { examResults, exams, users, healthMetrics } from '../shared/schema';
 
 // Test constants
 const TEST_USER_ID = 1; // Make sure this user exists
@@ -160,13 +158,6 @@ async function runDatabaseCompatibilityTest() {
       console.log(`- unit: ${latestMetrics[0].unit}`);
       console.log(`- status: ${latestMetrics[0].status}`);
     }
-    
-    // Clean up test data (optional)
-    /*
-    console.log('\n7. Cleaning up test data...');
-    await storage.deleteExam(testExam.id);
-    console.log('Test data deleted');
-    */
     
     console.log('\n======= TEST SUMMARY =======');
     console.log('✓ User access verified');

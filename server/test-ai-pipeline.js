@@ -13,9 +13,9 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { analyzeDocument } from './services/gemini.js';
-import { analyzeExtractedExam } from './services/openai.js';
-import { storage } from './storage.js';
+import { analyzeDocument } from './services/gemini.ts';
+import { analyzeExtractedExam } from './services/openai.ts';
+import { storage } from './storage.ts';
 
 // Fix __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
