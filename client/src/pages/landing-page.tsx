@@ -2384,24 +2384,6 @@ export default function LandingPage() {
                 </motion.div>
               </div>
             </div>
-            
-            {/* Logotipos de confiabilidade */}
-            <motion.div 
-              className="mt-16 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <p className="text-sm uppercase text-blue-200 tracking-wider mb-6">Compatível com os principais sistemas</p>
-              <div className="flex flex-wrap justify-center gap-8 items-center">
-                {["Sistema A", "Sistema B", "Sistema C", "Sistema D"].map((system, index) => (
-                  <div key={index} className="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg">
-                    <span className="text-white font-semibold">{system}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
           </div>
         </div>
       </section>
