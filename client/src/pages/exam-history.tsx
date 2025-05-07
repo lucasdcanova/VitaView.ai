@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Exam } from "@shared/schema";
@@ -22,8 +22,12 @@ import {
   ListFilter,
   FileBarChart,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  MoreVertical,
+  Trash2
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
@@ -49,6 +53,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ExamHistory() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,6 +76,46 @@ export default function ExamHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const itemsPerPage = activeView === "grid" ? 8 : 10;
+  const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Mutation para excluir um exame
+  const deleteMutation = useMutation({
+    mutationFn: async (examId: number) => {
+      return await deleteExam(examId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+      toast({
+        title: "Exame excluído",
+        description: "O exame foi removido com sucesso.",
+        variant: "default",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir exame",
+        description: error.message || "Não foi possível excluir o exame. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Função para abrir diálogo de exclusão
+  const handleDeleteClick = (exam: Exam) => {
+    setExamToDelete(exam);
+    setDeleteDialogOpen(true);
+  };
+
+  // Função para confirmar exclusão
+  const confirmDelete = () => {
+    if (examToDelete) {
+      deleteMutation.mutate(examToDelete.id);
+    }
+  };
   
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -296,7 +348,44 @@ export default function ExamHistory() {
               <CardDescription className="text-xs">{exam.laboratoryName || "Laboratório não informado"}</CardDescription>
             </div>
           </div>
-          {getStatusBadge(exam.status)}
+          <div className="flex items-start gap-2">
+            {getStatusBadge(exam.status)}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {exam.status === 'analyzed' && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/diagnosis/${exam.id}`} className="cursor-pointer">
+                        <FileBarChart className="mr-2 h-4 w-4" />
+                        Ver diagnóstico
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/report/${exam.id}`} className="cursor-pointer">
+                        <Activity className="mr-2 h-4 w-4" />
+                        Ver análise detalhada
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  onClick={() => handleDeleteClick(exam)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir exame
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pb-2">
