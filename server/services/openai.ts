@@ -45,9 +45,9 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       - Resumo: ${examResult.summary}
       - Análise detalhada: ${examResult.detailedAnalysis}
       - Recomendações preliminares: ${examResult.recommendations}
-      - Médico solicitante: ${exam.requestingPhysician || 'Não informado'}
-      - Laboratório: ${exam.laboratoryName || 'Não informado'}
-      - Data do exame: ${exam.examDate || 'Não informada'}
+      - Médico solicitante: ${'Não informado'}
+      - Laboratório: ${'Não informado'}
+      - Data do exame: ${'Não informada'}
       
       ### MÉTRICAS DE SAÚDE DETALHADAS:
       ${JSON.stringify(examResult.healthMetrics, null, 2)}
@@ -422,11 +422,11 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       ${patientContext}
       
       ### DADOS DO EXAME:
-      - Nome: ${exam.name}
-      - Tipo de documento: ${exam.fileType}
+      - Nome: ${exam?.name || 'Não informado'}
+      - Tipo de documento: ${exam?.fileType || 'Não informado'}
       - Data do exame: ${examDateStr || 'Não informada'}
-      - Laboratório: ${exam.laboratoryName || 'Não informado'}
-      - Médico solicitante: ${exam.requestingPhysician ? `Dr. ${exam.requestingPhysician}` : 'Não informado'}
+      - Laboratório: ${exam?.laboratoryName || 'Não informado'}
+      - Médico solicitante: ${exam?.requestingPhysician ? `Dr. ${exam.requestingPhysician}` : 'Não informado'}
       
       ### MÉTRICAS DE SAÚDE ORGANIZADAS POR CATEGORIA:
       ${metricsDescriptionByCategory}
@@ -513,7 +513,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     await storage.createNotification({
       userId,
       title: "Análise completa disponível",
-      message: `A análise detalhada do exame "${exam.name}" está pronta para visualização`,
+      message: `A análise detalhada do exame "${exam?.name || 'sem nome'}" está pronta para visualização`,
       read: false
     });
     
