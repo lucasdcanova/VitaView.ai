@@ -2664,7 +2664,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
           
-          <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             {/* Demo Histórico Organizado */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -2713,18 +2713,20 @@ export default function LandingPage() {
                   ))}
                 </div>
                 
-                <motion.div 
-                  className="mt-6 flex justify-center"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <button className="text-primary-600 text-sm flex items-center">
-                    Ver todos os exames
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </button>
-                </motion.div>
+                <Link href="/auth?tab=register">
+                  <motion.div 
+                    className="mt-6 flex justify-center"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    <button className="text-primary-600 text-sm flex items-center">
+                      Ver todos os exames
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </button>
+                  </motion.div>
+                </Link>
               </div>
             </motion.div>
             
@@ -2765,80 +2767,6 @@ export default function LandingPage() {
                 ))}
               </ul>
             </motion.div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Pré-footer com dados e gráficos */}
-      <section className="py-20 bg-gradient-to-b from-primary-900 via-primary-800 to-indigo-900 text-white relative overflow-hidden">
-        {/* Elementos decorativos */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div 
-            className="absolute top-10 right-10 w-96 h-96 bg-white rounded-full opacity-3 blur-3xl"
-            animate={{
-              y: [0, 10, 0],
-              x: [0, -5, 0],
-              scale: [1, 1.05, 1]
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          />
-          <motion.div 
-            className="absolute bottom-0 left-20 w-80 h-80 bg-white rounded-full opacity-3 blur-3xl"
-            animate={{
-              y: [0, -15, 0],
-              x: [0, 8, 0],
-              scale: [1, 1.08, 1]
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          />
-          
-          {/* Padrões decorativos no fundo */}
-          <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-white/50 to-transparent"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white mb-4">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Visualização de Dados</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-5">
-              Compreenda seus dados de saúde com clareza
-            </h2>
-            <p className="text-lg text-white/80">
-              Nossa plataforma analisa seus exames ao longo do tempo, extraindo métricas importantes e fornecendo insights contextualizados.
-            </p>
-          </div>
-          
-          <div className="mb-16">
-            {/* Seção removida a pedido do usuário */}
-            <motion.div
-              className="h-20 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-center text-white/70">
-                <Activity className="w-6 h-6 mx-auto mb-2 text-primary-300" />
-                <p className="text-sm">Visualização personalizada com base nos seus exames</p>
-              </div>
-            </motion.div>
-          </div>
-          
-          <div className="flex justify-center">
-            <Link href="/auth?tab=register">
-              <Button size="lg" className="bg-white text-primary-800 hover:bg-primary-50 shadow-xl hover:shadow-2xl transition-all duration-300 px-8">
-                Comece agora <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
