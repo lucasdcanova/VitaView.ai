@@ -107,80 +107,122 @@ export default function HealthTrendsPage() {
     );
   });
 
-  // Vamos simplificar e melhorar a preparação dos dados para o gráfico
-  // Primeiro, vamos garantir que temos os dados necessários
+  // Adicionar debugging detalhado para identificar o problema
+  console.log("DASHBOARD DEBUG - Métricas disponíveis:", {
+    healthMetrics: healthMetrics?.slice(0, 5).map(m => ({
+      id: m.id,
+      examId: m.examId,
+      name: m.name,
+      value: m.value
+    }))
+  });
+
+  // Simplificamos radicalmente para identificar e corrigir o problema
   const chartData = React.useMemo(() => {
-    if (!exams || !healthMetrics || selectedExams.length === 0 || selectedMetrics.length === 0) {
+    // Verificações críticas de dados
+    if (!exams || !healthMetrics) {
+      console.log("ERRO: Dados de exames ou métricas nulos");
       return [];
     }
 
-    console.log("Preparando dados do gráfico para:", {
+    if (selectedExams.length === 0 || selectedMetrics.length === 0) {
+      console.log("ERRO: Nenhum exame ou métrica selecionada");
+      return [];
+    }
+
+    console.log("ANÁLISE DETALHADA:", {
       examesTotal: exams.length,
-      examsSelecionados: selectedExams.length,
+      examsSelecionados: selectedExams,
       metricasTotal: healthMetrics.length,
-      metricasSelecionadas: selectedMetrics
-    });
-
-    // Criar um dicionário de métricas por exame para facilitar acesso
-    const metricsByExam: Record<number, any[]> = {};
-    healthMetrics.forEach(metric => {
-      if (!metricsByExam[metric.examId]) {
-        metricsByExam[metric.examId] = [];
-      }
-      metricsByExam[metric.examId].push({
-        ...metric,
-        normalizedName: normalizeExamName(metric.name)
-      });
-    });
-
-    // Processar cada exame selecionado
-    return exams
-      .filter(exam => selectedExams.includes(exam.id))
-      .map(exam => {
-        // Dados básicos do ponto
-        const pointData: any = {
-          date: formatDateToBR(exam.examDate || exam.createdAt),
-          examDate: new Date(exam.examDate || exam.createdAt).getTime(),
-          examId: exam.id,
-          examName: exam.name
+      metricasSelecionadas: selectedMetrics,
+      
+      // Verificação de compatibilidade
+      metricasPorExame: selectedExams.map(examId => {
+        const metricas = healthMetrics.filter(m => m.examId === examId);
+        return {
+          examId,
+          total: metricas.length,
+          nomes: metricas.map(m => m.name),
+          nomesNormalizados: metricas.map(m => normalizeExamName(m.name)),
+          temMetricasSelecionadas: metricas.some(m => 
+            selectedMetrics.includes(normalizeExamName(m.name)))
         };
-
-        // Pegar métricas deste exame
-        const examMetrics = metricsByExam[exam.id] || [];
-        console.log(`Exame ${exam.id} (${exam.name}):`, {
-          totalMetricas: examMetrics.length,
-          metricas: examMetrics.map(m => m.normalizedName)
-        });
-
-        // Adicionar valores de métricas selecionadas
-        let hasSelectedMetrics = false;
-        selectedMetrics.forEach(metricName => {
-          // Buscar esta métrica no conjunto do exame
-          const metric = examMetrics.find(m => m.normalizedName === metricName);
-          
-          if (metric) {
-            hasSelectedMetrics = true;
-            // Adicionar valor principal
-            pointData[metricName] = parseFloat(metric.value.toString());
-            
-            // Adicionar valores de referência e informações extras
-            if (metric.referenceMin !== null && metric.referenceMin !== undefined) {
-              pointData[`${metricName}_min`] = parseFloat(metric.referenceMin.toString());
-            }
-            
-            if (metric.referenceMax !== null && metric.referenceMax !== undefined) {
-              pointData[`${metricName}_max`] = parseFloat(metric.referenceMax.toString());
-            }
-            
-            pointData[`${metricName}_unit`] = metric.unit;
-            pointData[`${metricName}_status`] = metric.status;
-          }
-        });
-
-        return hasSelectedMetrics ? pointData : null;
       })
-      .filter(point => point !== null) // Remover pontos sem métricas selecionadas
-      .sort((a, b) => a.examDate - b.examDate);
+    });
+
+    // Abordagem simplificada: criar ponto por ponto com informações de debug
+    const results = [];
+    
+    // Para cada exame selecionado
+    for (const examId of selectedExams) {
+      const exam = exams.find(e => e.id === examId);
+      if (!exam) continue;
+      
+      const pointData: any = {
+        date: formatDateToBR(exam.examDate || exam.createdAt),
+        examDate: new Date(exam.examDate || exam.createdAt).getTime(),
+        examId: exam.id,
+        examName: exam.name
+      };
+      
+      // Filtrar métricas deste exame
+      const examMetrics = healthMetrics.filter(m => m.examId === examId);
+      console.log(`DEBUG EXAME ${examId}:`, examMetrics.map(m => ({
+        nome: m.name, 
+        normalizado: normalizeExamName(m.name)
+      })));
+      
+      // Flag para verificar se temos pelo menos uma métrica selecionada neste exame
+      let hasAnySelectedMetric = false;
+      
+      // Para cada métrica selecionada, verificar se existe no exame
+      for (const metricName of selectedMetrics) {
+        // Procurar métrica entre as disponíveis para este exame
+        // Chave: precisamos fazer a normalização das métricas do exame para comparar
+        const metric = examMetrics.find(m => normalizeExamName(m.name) === metricName);
+        
+        if (metric) {
+          hasAnySelectedMetric = true;
+          
+          // Log específico para entender o que está acontecendo
+          console.log(`ENCONTRADO: Métrica ${metricName} no exame ${examId}`, {
+            nomeOriginal: metric.name,
+            valor: metric.value
+          });
+          
+          // Adicionar a métrica e seus dados ao ponto
+          pointData[metricName] = parseFloat(metric.value.toString());
+          
+          if (metric.referenceMin !== null && metric.referenceMin !== undefined) {
+            pointData[`${metricName}_min`] = parseFloat(metric.referenceMin.toString());
+          }
+          
+          if (metric.referenceMax !== null && metric.referenceMax !== undefined) {
+            pointData[`${metricName}_max`] = parseFloat(metric.referenceMax.toString());
+          }
+          
+          pointData[`${metricName}_unit`] = metric.unit;
+          pointData[`${metricName}_status`] = metric.status;
+        } else {
+          console.log(`NÃO ENCONTRADO: Métrica ${metricName} não está presente no exame ${examId}`);
+        }
+      }
+      
+      // Só adicionar o ponto se tiver pelo menos uma métrica selecionada
+      if (hasAnySelectedMetric) {
+        results.push(pointData);
+      }
+    }
+    
+    // Ordenar por data
+    results.sort((a, b) => a.examDate - b.examDate);
+    
+    console.log("DADOS FINAIS DO GRÁFICO:", {
+      pontos: results.length,
+      dados: results
+    });
+    
+    return results;
   }, [exams, healthMetrics, selectedExams, selectedMetrics]);
     
   console.log("Dados do gráfico:", { 
