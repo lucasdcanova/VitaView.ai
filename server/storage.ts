@@ -58,6 +58,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private profiles: Map<number, Profile>;
   private exams: Map<number, Exam>;
   private examResults: Map<number, ExamResult>;
   private healthMetricsMap: Map<number, HealthMetric>;
@@ -65,6 +66,7 @@ export class MemStorage implements IStorage {
   sessionStore: SessionStore;
   
   private userIdCounter: number = 1;
+  private profileIdCounter: number = 1;
   private examIdCounter: number = 1;
   private examResultIdCounter: number = 1;
   private healthMetricIdCounter: number = 1;
@@ -72,6 +74,7 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.users = new Map();
+    this.profiles = new Map();
     this.exams = new Map();
     this.examResults = new Map();
     this.healthMetricsMap = new Map();
@@ -113,10 +116,101 @@ export class MemStorage implements IStorage {
       birthDate: null,
       gender: null,
       phoneNumber: null,
-      address: null
+      address: null,
+      activeProfileId: null
     };
     this.users.set(id, newUser);
-    return newUser;
+    
+    // Create a default profile for the new user
+    const defaultProfile = await this.createProfile({
+      userId: id,
+      name: user.fullName || "Perfil Principal",
+      relationship: "Próprio",
+      birthDate: null,
+      gender: null,
+      bloodType: null,
+      isDefault: true
+    });
+    
+    // Set the default profile as the active profile
+    await this.updateUser(id, { activeProfileId: defaultProfile.id });
+    
+    return this.users.get(id)!;
+  }
+  
+  // Profile operations
+  async createProfile(profile: InsertProfile): Promise<Profile> {
+    const id = this.profileIdCounter++;
+    const newProfile: Profile = {
+      id,
+      userId: profile.userId,
+      name: profile.name,
+      relationship: profile.relationship || null,
+      birthDate: profile.birthDate || null,
+      gender: profile.gender || null,
+      bloodType: profile.bloodType || null,
+      isDefault: profile.isDefault || false,
+      createdAt: new Date()
+    };
+    
+    // If this is set as default, unset default on other profiles
+    if (newProfile.isDefault) {
+      const userProfiles = await this.getProfilesByUserId(profile.userId);
+      for (const p of userProfiles) {
+        if (p.isDefault) {
+          await this.updateProfile(p.id, { isDefault: false });
+        }
+      }
+    }
+    
+    this.profiles.set(id, newProfile);
+    return newProfile;
+  }
+  
+  async getProfile(id: number): Promise<Profile | undefined> {
+    return this.profiles.get(id);
+  }
+  
+  async getProfilesByUserId(userId: number): Promise<Profile[]> {
+    return Array.from(this.profiles.values()).filter(
+      (profile) => profile.userId === userId
+    );
+  }
+  
+  async updateProfile(id: number, profileData: Partial<Profile>): Promise<Profile | undefined> {
+    const profile = await this.getProfile(id);
+    if (!profile) return undefined;
+    
+    // If setting this as default, unset other defaults
+    if (profileData.isDefault) {
+      const userProfiles = await this.getProfilesByUserId(profile.userId);
+      for (const p of userProfiles) {
+        if (p.id !== id && p.isDefault) {
+          p.isDefault = false;
+          this.profiles.set(p.id, p);
+        }
+      }
+    }
+    
+    const updatedProfile = { ...profile, ...profileData };
+    this.profiles.set(id, updatedProfile);
+    return updatedProfile;
+  }
+  
+  async deleteProfile(id: number): Promise<boolean> {
+    const profile = await this.getProfile(id);
+    if (!profile) return false;
+    
+    // Don't delete the default profile
+    if (profile.isDefault) return false;
+    
+    return this.profiles.delete(id);
+  }
+  
+  async getDefaultProfileForUser(userId: number): Promise<Profile | undefined> {
+    return Array.from(this.profiles.values()).find(
+      (profile) => profile.userId === userId && profile.isDefault
+    );
   }
   
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
@@ -296,6 +390,73 @@ export class DatabaseStorage implements IStorage {
       pool,
       createTableIfMissing: true 
     });
+  }
+  
+  // Profile operations
+  async createProfile(profile: InsertProfile): Promise<Profile> {
+    // If this is set as default, unset default on other profiles
+    if (profile.isDefault) {
+      await db
+        .update(profiles)
+        .set({ isDefault: false })
+        .where(eq(profiles.userId, profile.userId))
+        .execute();
+    }
+    
+    const [newProfile] = await db.insert(profiles).values(profile).returning();
+    return newProfile;
+  }
+  
+  async getProfile(id: number): Promise<Profile | undefined> {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, id));
+    return profile;
+  }
+  
+  async getProfilesByUserId(userId: number): Promise<Profile[]> {
+    return db.select().from(profiles).where(eq(profiles.userId, userId));
+  }
+  
+  async updateProfile(id: number, profileData: Partial<Profile>): Promise<Profile | undefined> {
+    // If setting this as default, unset other defaults
+    if (profileData.isDefault) {
+      const profile = await this.getProfile(id);
+      if (profile) {
+        await db
+          .update(profiles)
+          .set({ isDefault: false })
+          .where(eq(profiles.userId, profile.userId))
+          .execute();
+      }
+    }
+    
+    const [updatedProfile] = await db
+      .update(profiles)
+      .set(profileData)
+      .where(eq(profiles.id, id))
+      .returning();
+      
+    return updatedProfile;
+  }
+  
+  async deleteProfile(id: number): Promise<boolean> {
+    const profile = await this.getProfile(id);
+    if (!profile) return false;
+    
+    // Don't delete the default profile
+    if (profile.isDefault) return false;
+    
+    await db.delete(profiles).where(eq(profiles.id, id));
+    return true;
+  }
+  
+  async getDefaultProfileForUser(userId: number): Promise<Profile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, userId))
+      .where(eq(profiles.isDefault, true));
+      
+    return profile;
   }
 
   // User operations

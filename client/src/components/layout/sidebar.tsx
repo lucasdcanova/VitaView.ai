@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
+import ProfileSwitcher from "@/components/profile-switcher";
 import { 
   LayoutDashboard, 
   Upload, 
@@ -67,6 +68,9 @@ export default function Sidebar(props: SidebarProps) {
             <h3 className="font-medium text-sm">{user?.fullName || user?.username}</h3>
             <p className="text-xs text-gray-500">Último exame: 2 dias atrás</p>
           </div>
+        </div>
+        <div className="mt-3">
+          <ProfileSwitcher />
         </div>
       </div>
       
