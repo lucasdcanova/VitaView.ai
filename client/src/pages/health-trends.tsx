@@ -111,33 +111,48 @@ export default function HealthTrendsPage() {
   const chartData = exams
     ?.filter((exam) => selectedExams.includes(exam.id))
     .flatMap((exam) => {
-      return healthMetrics
-        ?.filter(
-          (metric) => {
-            // Normalizar o nome da métrica para comparação
-            const normalizedMetricName = normalizeExamName(metric.name);
-            return metric.examId === exam.id && 
-                   selectedMetrics.includes(normalizedMetricName);
-          }
-        )
-        .map((metric) => {
-          // Normalizar o nome da métrica para unificar visualização
-          const normalizedName = normalizeExamName(metric.name);
-          
-          return {
-            date: formatDateToBR(exam.examDate || exam.createdAt),
-            examDate: new Date(exam.examDate || exam.createdAt).getTime(),
-            examId: exam.id,
-            examName: exam.name,
-            [normalizedName]: metric.value,
-            [`${normalizedName}_min`]: metric.referenceMin,
-            [`${normalizedName}_max`]: metric.referenceMax,
-            [`${normalizedName}_status`]: metric.status,
-            [`${normalizedName}_unit`]: metric.unit,
-          };
-        }) || [];
+      // Estrutura que vai agregar os dados por data
+      const examData: any = {
+        date: formatDateToBR(exam.examDate || exam.createdAt),
+        examDate: new Date(exam.examDate || exam.createdAt).getTime(),
+        examId: exam.id,
+        examName: exam.name,
+      };
+      
+      // Filtrar métricas relevantes para este exame
+      const relevantMetrics = healthMetrics?.filter(metric => {
+        // Normalizar o nome da métrica para comparação
+        const normalizedMetricName = normalizeExamName(metric.name);
+        return metric.examId === exam.id && selectedMetrics.includes(normalizedMetricName);
+      }) || [];
+      
+      // Se não temos métricas para este exame, retornar array vazio
+      if (relevantMetrics.length === 0) return [];
+      
+      // Adicionar cada métrica ao objeto de dados
+      relevantMetrics.forEach(metric => {
+        const normalizedName = normalizeExamName(metric.name);
+        examData[normalizedName] = parseFloat(metric.value.toString());
+        examData[`${normalizedName}_min`] = metric.referenceMin 
+          ? parseFloat(metric.referenceMin.toString()) 
+          : undefined;
+        examData[`${normalizedName}_max`] = metric.referenceMax 
+          ? parseFloat(metric.referenceMax.toString()) 
+          : undefined;
+        examData[`${normalizedName}_status`] = metric.status;
+        examData[`${normalizedName}_unit`] = metric.unit;
+      });
+      
+      return [examData]; // Retorna um array com um único objeto contendo todas as métricas
     })
     .sort((a, b) => a.examDate - b.examDate);
+    
+  console.log("Dados do gráfico:", { 
+    selectedMetrics, 
+    selectedExams, 
+    chartDataLength: chartData?.length || 0,
+    chartData
+  });
 
   // Cores aleatórias mas consistentes para cada métrica
   const metricColors = React.useMemo(() => {
@@ -322,7 +337,23 @@ export default function HealthTrendsPage() {
             <CardContent>
               {isLoading ? (
                 <Skeleton className="h-[400px] w-full" />
-              ) : selectedMetrics.length > 0 && selectedExams.length > 0 && chartData && chartData.length > 0 ? (
+              ) : selectedMetrics.length === 0 || selectedExams.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
+                  <Info className="h-12 w-12 mb-4 text-gray-300" />
+                  <p className="text-lg font-medium mb-2">Selecione exames e métricas para visualizar</p>
+                  <p className="text-sm max-w-md text-center">
+                    Escolha pelo menos um exame e uma métrica para visualizar a evolução dos valores ao longo do tempo.
+                  </p>
+                </div>
+              ) : !chartData || chartData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
+                  <AlertCircle className="h-12 w-12 mb-4 text-orange-300" />
+                  <p className="text-lg font-medium mb-2">Sem dados para exibir</p>
+                  <p className="text-sm max-w-md text-center">
+                    Os exames e métricas selecionados não possuem dados compatíveis para visualização.
+                  </p>
+                </div>
+              ) : (
                 <div className="h-[500px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
@@ -355,10 +386,10 @@ export default function HealthTrendsPage() {
                         // Verificando se existem valores de referência
                         const hasReferenceValues = chartData.some(
                           item => 
-                            item[`${metricName}_min`] !== undefined && 
-                            item[`${metricName}_min`] !== null || 
-                            item[`${metricName}_max`] !== undefined && 
-                            item[`${metricName}_max`] !== null
+                            (item[`${metricName}_min`] !== undefined && 
+                            item[`${metricName}_min`] !== null) || 
+                            (item[`${metricName}_max`] !== undefined && 
+                            item[`${metricName}_max`] !== null)
                         );
                         
                         // Encontrando valores mínimos e máximos de referência (pegando o primeiro que encontrar)
@@ -402,7 +433,6 @@ export default function HealthTrendsPage() {
                               activeDot={{ r: 8, stroke: metricColors[metricName], strokeWidth: 2 }}
                             />
                             
-                            {/* Linhas de referência (valores normais) */}
                             {refMin !== undefined && refMin !== null && (
                               <ReferenceLine 
                                 y={refMin} 
@@ -437,14 +467,6 @@ export default function HealthTrendsPage() {
                       })}
                     </LineChart>
                   </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
-                  <Info className="h-12 w-12 mb-4 text-gray-300" />
-                  <p className="text-lg font-medium mb-2">Selecione exames e métricas para visualizar</p>
-                  <p className="text-sm max-w-md text-center">
-                    Escolha pelo menos um exame e uma métrica para visualizar a evolução dos valores ao longo do tempo.
-                  </p>
                 </div>
               )}
             </CardContent>
