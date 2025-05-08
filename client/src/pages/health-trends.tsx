@@ -38,6 +38,7 @@ interface ExamMetric {
   unit?: string | null;
   category?: string | null;
   status?: "normal" | "alto" | "baixo" | "atencao" | null;
+  normalizedName?: string; // Adicionado para facilitar o debug
 }
 
 interface Exam {
@@ -69,34 +70,50 @@ export default function HealthTrendsPage() {
   });
 
   useEffect(() => {
-    if (healthMetrics) {
-      // Extrair categorias únicas
-      const categories = Array.from(
-        new Set(healthMetrics.map((metric) => metric.category || "Sem categoria"))
-      );
-      setMetricCategories(categories);
+    if (!healthMetrics) return;
+    
+    console.log("MÉTRICAS CARREGADAS:", healthMetrics.length);
+    
+    // Extrair categorias únicas
+    const categories = Array.from(
+      new Set(healthMetrics.map((metric) => metric.category || "Sem categoria"))
+    );
+    setMetricCategories(categories);
 
-      // Organizar métricas por nome para seleção (normalizando os nomes)
-      const metricsByName: Record<string, ExamMetric[]> = {};
-      healthMetrics.forEach((metric) => {
-        // Normalizar o nome da métrica para unificar variações do mesmo exame
-        const normalizedName = normalizeExamName(metric.name);
-        
-        if (!metricsByName[normalizedName]) {
-          metricsByName[normalizedName] = [];
-        }
-        
-        // Adicionar com o nome normalizado
-        const normalizedMetric = { 
-          ...metric, 
-          name: normalizedName 
-        };
-        
-        metricsByName[normalizedName].push(normalizedMetric);
-      });
+    // Organizar métricas por nome para seleção (normalizando os nomes)
+    const metricsByName: Record<string, ExamMetric[]> = {};
+    
+    // Para debugging - métricas por exame
+    const metricsByExamId: Record<number, string[]> = {};
+    
+    healthMetrics.forEach((metric) => {
+      // Normalizar o nome da métrica para unificar variações do mesmo exame
+      const normalizedName = normalizeExamName(metric.name);
       
-      setAvailableMetrics(metricsByName);
-    }
+      // Tracking de métricas por exame para debugging
+      if (!metricsByExamId[metric.examId]) {
+        metricsByExamId[metric.examId] = [];
+      }
+      metricsByExamId[metric.examId].push(`${metric.name} (${normalizedName})`);
+      
+      if (!metricsByName[normalizedName]) {
+        metricsByName[normalizedName] = [];
+      }
+      
+      // Importante: manter o nome original mas adicionar uma propriedade com o nome normalizado
+      metricsByName[normalizedName].push({
+        ...metric,
+        normalizedName // Adicionamos essa propriedade para facilitar o acesso
+      });
+    });
+    
+    console.log("MAPEAMENTO DE MÉTRICAS:", {
+      metricasPorExame: metricsByExamId,
+      totalMetricasUnicas: Object.keys(metricsByName).length,
+      metricasUnicas: Object.keys(metricsByName),
+    });
+    
+    setAvailableMetrics(metricsByName);
   }, [healthMetrics]);
 
   // Filtragem de métricas por categoria
@@ -106,6 +123,38 @@ export default function HealthTrendsPage() {
       (metric.category || "Sem categoria") === selectedCategory
     );
   });
+
+  // Esta é a parte mais crítica - vamos inicializar selectedExams com todos os IDs de exames
+  // e selecionar algumas métricas comuns automaticamente
+  useEffect(() => {
+    if (exams && exams.length > 0 && selectedExams.length === 0) {
+      console.log("Inicializando seleção automática de exames:", exams.map(e => e.id));
+      setSelectedExams(exams.map(e => e.id));
+    }
+  }, [exams, selectedExams]);
+
+  // Esta é a segunda parte crítica - vamos selecionar algumas métricas populares automaticamente
+  useEffect(() => {
+    if (Object.keys(availableMetrics).length > 0 && selectedMetrics.length === 0) {
+      // Métricas que vamos tentar selecionar automaticamente (por prioridade)
+      const popularMetrics = [
+        'glicose', 'eritrócitos', 'hemoglobina', 'hematócrito', 'leucócitos', 'plaquetas'
+      ];
+      
+      // Filtrar apenas as que realmente existem no conjunto de dados
+      const available = popularMetrics.filter(metric => 
+        Object.keys(availableMetrics).includes(metric)
+      );
+      
+      // Selecionar automaticamente as 2 primeiras métricas disponíveis
+      const initialSelection = available.slice(0, 2);
+      
+      if (initialSelection.length > 0) {
+        console.log("Selecionando métricas automaticamente:", initialSelection);
+        setSelectedMetrics(initialSelection);
+      }
+    }
+  }, [availableMetrics, selectedMetrics]);
 
   // Adicionar debugging detalhado para identificar o problema
   console.log("DASHBOARD DEBUG - Métricas disponíveis:", {

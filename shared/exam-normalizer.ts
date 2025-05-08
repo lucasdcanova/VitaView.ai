@@ -222,14 +222,21 @@ export function normalizeExamName(name: string): string {
   // Converter para minúsculo e remover espaços extras
   const normalized = name.toLowerCase().trim();
   
+  // Debug para entender o problema
+  console.log(`Normalizando: "${name}" -> "${normalized}"`);
+  
   // Verificar no mapeamento
   if (examNameMap[normalized]) {
-    return examNameMap[normalized];
+    const result = examNameMap[normalized];
+    console.log(`Mapeamento encontrado: "${normalized}" -> "${result}"`);
+    return result;
   }
   
   // Se não estiver no mapeamento, retorna o nome original com primeira letra maiúscula 
   // e resto minúscula para manter consistência
-  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  const result = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  console.log(`Sem mapeamento, usando padrão: "${name}" -> "${result}"`);
+  return result;
 }
 
 /**
