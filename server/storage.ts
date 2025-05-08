@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -52,6 +52,18 @@ export interface IStorage {
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
   
+  // Subscription operations
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  getUserSubscription(userId: number): Promise<Subscription | undefined>;
+  createUserSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateUserSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined>;
+  cancelUserSubscription(id: number): Promise<Subscription | undefined>;
+  incrementProfileCount(subscriptionId: number): Promise<number>;
+  incrementUploadCount(subscriptionId: number, profileId: number): Promise<number>;
+  canCreateProfile(userId: number): Promise<boolean>;
+  canUploadExam(userId: number, profileId: number): Promise<boolean>;
+  
   // Session store
   sessionStore: SessionStore;
 }
@@ -63,6 +75,8 @@ export class MemStorage implements IStorage {
   private examResults: Map<number, ExamResult>;
   private healthMetricsMap: Map<number, HealthMetric>;
   private notificationsMap: Map<number, Notification>;
+  private subscriptionPlansMap: Map<number, SubscriptionPlan>;
+  private subscriptionsMap: Map<number, Subscription>;
   sessionStore: SessionStore;
   
   private userIdCounter: number = 1;
@@ -71,6 +85,8 @@ export class MemStorage implements IStorage {
   private examResultIdCounter: number = 1;
   private healthMetricIdCounter: number = 1;
   private notificationIdCounter: number = 1;
+  private subscriptionPlanIdCounter: number = 1;
+  private subscriptionIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -79,6 +95,8 @@ export class MemStorage implements IStorage {
     this.examResults = new Map();
     this.healthMetricsMap = new Map();
     this.notificationsMap = new Map();
+    this.subscriptionPlansMap = new Map();
+    this.subscriptionsMap = new Map();
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -90,6 +108,71 @@ export class MemStorage implements IStorage {
       password: "password",
       fullName: "Demo User",
       email: "demo@example.com"
+    });
+    
+    // Add subscription plans
+    this._createDefaultSubscriptionPlans();
+  }
+  
+  private async _createDefaultSubscriptionPlans() {
+    // Plano Gratuito
+    await this.createSubscriptionPlan({
+      name: "Gratuito",
+      description: "Ideal para testes e uso esporádico",
+      maxProfiles: 1,
+      maxUploadsPerProfile: 1,
+      price: 0,
+      interval: "month",
+      features: ["1 perfil", "1 upload por perfil", "Análise de 1 página por PDF"],
+      isActive: true
+    });
+    
+    // Plano Individual
+    await this.createSubscriptionPlan({
+      name: "Individual",
+      description: "Perfeito para uso pessoal",
+      maxProfiles: 1,
+      maxUploadsPerProfile: -1, // ilimitado
+      price: 2900, // R$ 29,00
+      interval: "month",
+      features: ["1 perfil", "Uploads ilimitados", "Análises ilimitadas", "Suporte ao cliente"],
+      isActive: true
+    });
+    
+    // Plano Familiar
+    await this.createSubscriptionPlan({
+      name: "Familiar",
+      description: "Excelente para acompanhar a saúde de toda família",
+      maxProfiles: 5,
+      maxUploadsPerProfile: -1, // ilimitado
+      price: 4900, // R$ 49,00
+      interval: "month",
+      features: ["5 perfis", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte ao cliente prioritário"],
+      isActive: true
+    });
+    
+    // Plano Consultório Médico
+    await this.createSubscriptionPlan({
+      name: "Consultório Médico",
+      description: "Ideal para médicos e pequenas clínicas",
+      maxProfiles: 100,
+      maxUploadsPerProfile: -1, // ilimitado
+      price: 14900, // R$ 149,00
+      interval: "month",
+      features: ["100 perfis", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte dedicado", "Relatórios avançados"],
+      isActive: true
+    });
+    
+    // Plano Hospitalar/Plano de Saúde
+    await this.createSubscriptionPlan({
+      name: "Hospitalar/Plano de Saúde",
+      description: "Solução completa para hospitais e planos de saúde",
+      maxProfiles: -1, // ilimitado
+      maxUploadsPerProfile: -1, // ilimitado
+      price: 49900, // R$ 499,00
+      interval: "month",
+      features: ["Perfis ilimitados", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte premium 24/7", "Relatórios avançados", "APIs de integração"],
+      isActive: true
     });
   }
 
@@ -380,6 +463,158 @@ export class MemStorage implements IStorage {
     this.notificationsMap.set(id, updatedNotification);
     return updatedNotification;
   }
+  
+  // Subscription plans operations
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const id = this.subscriptionPlanIdCounter++;
+    const newPlan: SubscriptionPlan = {
+      id,
+      name: plan.name,
+      description: plan.description,
+      maxProfiles: plan.maxProfiles,
+      maxUploadsPerProfile: plan.maxUploadsPerProfile,
+      price: plan.price,
+      interval: plan.interval || "month",
+      stripePriceId: plan.stripePriceId || null,
+      features: plan.features || null,
+      isActive: plan.isActive !== undefined ? plan.isActive : true,
+      createdAt: new Date()
+    };
+    
+    this.subscriptionPlansMap.set(id, newPlan);
+    return newPlan;
+  }
+  
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return Array.from(this.subscriptionPlansMap.values())
+      .filter(plan => plan.isActive)
+      .sort((a, b) => a.price - b.price);
+  }
+  
+  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    return this.subscriptionPlansMap.get(id);
+  }
+  
+  // User subscriptions operations
+  async createUserSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const id = this.subscriptionIdCounter++;
+    const now = new Date();
+    
+    // Define period end (1 month from now by default)
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    
+    const newSubscription: Subscription = {
+      id,
+      userId: subscription.userId,
+      planId: subscription.planId,
+      status: subscription.status || "active",
+      currentPeriodStart: subscription.currentPeriodStart || now,
+      currentPeriodEnd: subscription.currentPeriodEnd || periodEnd,
+      stripeCustomerId: subscription.stripeCustomerId || null,
+      stripeSubscriptionId: subscription.stripeSubscriptionId || null,
+      createdAt: now,
+      canceledAt: null,
+      profilesCreated: 0,
+      uploadsCount: {}
+    };
+    
+    this.subscriptionsMap.set(id, newSubscription);
+    return newSubscription;
+  }
+  
+  async getUserSubscription(userId: number): Promise<Subscription | undefined> {
+    return Array.from(this.subscriptionsMap.values())
+      .find(sub => sub.userId === userId && sub.status === "active");
+  }
+  
+  async updateUserSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    const subscription = this.subscriptionsMap.get(id);
+    if (!subscription) return undefined;
+    
+    const updatedSubscription = { ...subscription, ...data };
+    this.subscriptionsMap.set(id, updatedSubscription);
+    return updatedSubscription;
+  }
+  
+  async cancelUserSubscription(id: number): Promise<Subscription | undefined> {
+    const subscription = this.subscriptionsMap.get(id);
+    if (!subscription) return undefined;
+    
+    const updatedSubscription = { 
+      ...subscription, 
+      status: "canceled",
+      canceledAt: new Date()
+    };
+    
+    this.subscriptionsMap.set(id, updatedSubscription);
+    return updatedSubscription;
+  }
+  
+  async incrementProfileCount(subscriptionId: number): Promise<number> {
+    const subscription = this.subscriptionsMap.get(subscriptionId);
+    if (!subscription) return 0;
+    
+    const updatedSubscription = { 
+      ...subscription, 
+      profilesCreated: subscription.profilesCreated + 1 
+    };
+    
+    this.subscriptionsMap.set(subscriptionId, updatedSubscription);
+    return updatedSubscription.profilesCreated;
+  }
+  
+  async incrementUploadCount(subscriptionId: number, profileId: number): Promise<number> {
+    const subscription = this.subscriptionsMap.get(subscriptionId);
+    if (!subscription) return 0;
+    
+    const profileIdStr = profileId.toString();
+    const uploadsCount = { ...subscription.uploadsCount };
+    
+    // Initialize count for profile if not exists
+    if (!uploadsCount[profileIdStr]) {
+      uploadsCount[profileIdStr] = 0;
+    }
+    
+    // Increment upload count
+    uploadsCount[profileIdStr]++;
+    
+    const updatedSubscription = { ...subscription, uploadsCount };
+    this.subscriptionsMap.set(subscriptionId, updatedSubscription);
+    
+    return uploadsCount[profileIdStr];
+  }
+  
+  async canCreateProfile(userId: number): Promise<boolean> {
+    const subscription = await this.getUserSubscription(userId);
+    if (!subscription) return false;
+    
+    const plan = await this.getSubscriptionPlan(subscription.planId);
+    if (!plan) return false;
+    
+    // Unlimited profiles
+    if (plan.maxProfiles === -1) return true;
+    
+    // Check profile count against limit
+    return subscription.profilesCreated < plan.maxProfiles;
+  }
+  
+  async canUploadExam(userId: number, profileId: number): Promise<boolean> {
+    const subscription = await this.getUserSubscription(userId);
+    if (!subscription) return false;
+    
+    const plan = await this.getSubscriptionPlan(subscription.planId);
+    if (!plan) return false;
+    
+    // Unlimited uploads
+    if (plan.maxUploadsPerProfile === -1) return true;
+    
+    // Check upload count for profile against limit
+    const profileIdStr = profileId.toString();
+    const profileUploads = subscription.uploadsCount[profileIdStr] || 0;
+    
+    return profileUploads < plan.maxUploadsPerProfile;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -390,6 +625,82 @@ export class DatabaseStorage implements IStorage {
       pool,
       createTableIfMissing: true 
     });
+    
+    // Ensure subscription plans exist
+    this.setupDefaultSubscriptionPlans();
+  }
+  
+  private async setupDefaultSubscriptionPlans() {
+    try {
+      // Check if plans already exist
+      const existingPlans = await this.getSubscriptionPlans();
+      
+      if (existingPlans.length === 0) {
+        console.log("Creating default subscription plans...");
+        
+        // Plano Gratuito
+        await this.createSubscriptionPlan({
+          name: "Gratuito",
+          description: "Ideal para testes e uso esporádico",
+          maxProfiles: 1,
+          maxUploadsPerProfile: 1,
+          price: 0,
+          interval: "month",
+          features: ["1 perfil", "1 upload por perfil", "Análise de 1 página por PDF"],
+          isActive: true
+        });
+        
+        // Plano Individual
+        await this.createSubscriptionPlan({
+          name: "Individual",
+          description: "Perfeito para uso pessoal",
+          maxProfiles: 1,
+          maxUploadsPerProfile: -1,
+          price: 2900,
+          interval: "month",
+          features: ["1 perfil", "Uploads ilimitados", "Análises ilimitadas", "Suporte ao cliente"],
+          isActive: true
+        });
+        
+        // Plano Familiar
+        await this.createSubscriptionPlan({
+          name: "Familiar",
+          description: "Excelente para acompanhar a saúde de toda família",
+          maxProfiles: 5,
+          maxUploadsPerProfile: -1,
+          price: 4900,
+          interval: "month",
+          features: ["5 perfis", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte ao cliente prioritário"],
+          isActive: true
+        });
+        
+        // Plano Consultório Médico
+        await this.createSubscriptionPlan({
+          name: "Consultório Médico",
+          description: "Ideal para médicos e pequenas clínicas",
+          maxProfiles: 100,
+          maxUploadsPerProfile: -1,
+          price: 14900,
+          interval: "month",
+          features: ["100 perfis", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte dedicado", "Relatórios avançados"],
+          isActive: true
+        });
+        
+        // Plano Hospitalar/Plano de Saúde
+        await this.createSubscriptionPlan({
+          name: "Hospitalar/Plano de Saúde",
+          description: "Solução completa para hospitais e planos de saúde",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 49900,
+          interval: "month",
+          features: ["Perfis ilimitados", "Uploads ilimitados por perfil", "Análises ilimitadas", "Suporte premium 24/7", "Relatórios avançados", "APIs de integração"],
+          isActive: true
+        });
+      }
+    } catch (error) {
+      console.error("Error setting up subscription plans:", error);
+    }
   }
   
   // Profile operations
@@ -741,6 +1052,237 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, id))
       .returning();
     return updatedNotification;
+  }
+  
+  // Subscription plans operations
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    try {
+      return await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.isActive, true))
+        .orderBy(asc(subscriptionPlans.price));
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      return [];
+    }
+  }
+  
+  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    try {
+      const [plan] = await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.id, id));
+      return plan;
+    } catch (error) {
+      console.error(`Error fetching subscription plan ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    try {
+      const [newPlan] = await db
+        .insert(subscriptionPlans)
+        .values({
+          ...plan,
+          createdAt: new Date()
+        })
+        .returning();
+      return newPlan;
+    } catch (error) {
+      console.error("Error creating subscription plan:", error);
+      throw error;
+    }
+  }
+  
+  // User subscriptions operations
+  async getUserSubscription(userId: number): Promise<Subscription | undefined> {
+    try {
+      const [subscription] = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.userId, userId))
+        .where(eq(subscriptions.status, "active"));
+      return subscription;
+    } catch (error) {
+      console.error(`Error fetching subscription for user ${userId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async createUserSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    try {
+      const now = new Date();
+      
+      // Define period end date (1 month from now by default)
+      const periodEnd = new Date(now);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      
+      const [newSubscription] = await db
+        .insert(subscriptions)
+        .values({
+          ...subscription,
+          status: subscription.status || "active",
+          currentPeriodStart: subscription.currentPeriodStart || now,
+          currentPeriodEnd: subscription.currentPeriodEnd || periodEnd,
+          createdAt: now,
+          profilesCreated: 0,
+          uploadsCount: {} as any
+        })
+        .returning();
+      
+      return newSubscription;
+    } catch (error) {
+      console.error("Error creating user subscription:", error);
+      throw error;
+    }
+  }
+  
+  async updateUserSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    try {
+      const [updatedSubscription] = await db
+        .update(subscriptions)
+        .set(data)
+        .where(eq(subscriptions.id, id))
+        .returning();
+      
+      return updatedSubscription;
+    } catch (error) {
+      console.error(`Error updating subscription ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async cancelUserSubscription(id: number): Promise<Subscription | undefined> {
+    try {
+      const [canceledSubscription] = await db
+        .update(subscriptions)
+        .set({
+          status: "canceled",
+          canceledAt: new Date()
+        })
+        .where(eq(subscriptions.id, id))
+        .returning();
+      
+      return canceledSubscription;
+    } catch (error) {
+      console.error(`Error canceling subscription ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async incrementProfileCount(subscriptionId: number): Promise<number> {
+    try {
+      // Get current subscription
+      const subscription = await this.getSubscriptionById(subscriptionId);
+      if (!subscription) return 0;
+      
+      // Increment profile count
+      const profilesCreated = (subscription.profilesCreated || 0) + 1;
+      
+      // Update subscription
+      await db
+        .update(subscriptions)
+        .set({ profilesCreated })
+        .where(eq(subscriptions.id, subscriptionId));
+      
+      return profilesCreated;
+    } catch (error) {
+      console.error(`Error incrementing profile count for subscription ${subscriptionId}:`, error);
+      return 0;
+    }
+  }
+  
+  async incrementUploadCount(subscriptionId: number, profileId: number): Promise<number> {
+    try {
+      // Get current subscription
+      const subscription = await this.getSubscriptionById(subscriptionId);
+      if (!subscription) return 0;
+      
+      // Get current uploadsCount or initialize if not exists
+      const uploadsCount = subscription.uploadsCount as Record<string, number> || {};
+      const profileIdStr = profileId.toString();
+      
+      // Initialize count for profile if not exists
+      if (!uploadsCount[profileIdStr]) {
+        uploadsCount[profileIdStr] = 0;
+      }
+      
+      // Increment upload count
+      uploadsCount[profileIdStr]++;
+      
+      // Update subscription
+      await db
+        .update(subscriptions)
+        .set({ uploadsCount })
+        .where(eq(subscriptions.id, subscriptionId));
+      
+      return uploadsCount[profileIdStr];
+    } catch (error) {
+      console.error(`Error incrementing upload count for subscription ${subscriptionId}, profile ${profileId}:`, error);
+      return 0;
+    }
+  }
+  
+  private async getSubscriptionById(id: number): Promise<Subscription | undefined> {
+    try {
+      const [subscription] = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.id, id));
+      return subscription;
+    } catch (error) {
+      console.error(`Error fetching subscription ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async canCreateProfile(userId: number): Promise<boolean> {
+    try {
+      // Get active subscription for user
+      const subscription = await this.getUserSubscription(userId);
+      if (!subscription) return false;
+      
+      // Get subscription plan
+      const plan = await this.getSubscriptionPlan(subscription.planId);
+      if (!plan) return false;
+      
+      // Unlimited profiles
+      if (plan.maxProfiles === -1) return true;
+      
+      // Check profile count against limit
+      return (subscription.profilesCreated || 0) < plan.maxProfiles;
+    } catch (error) {
+      console.error(`Error checking if user ${userId} can create profile:`, error);
+      return false;
+    }
+  }
+  
+  async canUploadExam(userId: number, profileId: number): Promise<boolean> {
+    try {
+      // Get active subscription for user
+      const subscription = await this.getUserSubscription(userId);
+      if (!subscription) return false;
+      
+      // Get subscription plan
+      const plan = await this.getSubscriptionPlan(subscription.planId);
+      if (!plan) return false;
+      
+      // Unlimited uploads
+      if (plan.maxUploadsPerProfile === -1) return true;
+      
+      // Check upload count for profile against limit
+      const profileIdStr = profileId.toString();
+      const uploadsCount = subscription.uploadsCount as Record<string, number> || {};
+      const profileUploads = uploadsCount[profileIdStr] || 0;
+      
+      return profileUploads < plan.maxUploadsPerProfile;
+    } catch (error) {
+      console.error(`Error checking if user ${userId} can upload exam for profile ${profileId}:`, error);
+      return false;
+    }
   }
 }
 
