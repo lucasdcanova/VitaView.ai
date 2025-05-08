@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -143,6 +143,59 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
   read: true,
 });
 
+// Subscription plans schema
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  maxProfiles: integer("max_profiles").notNull(),
+  maxUploadsPerProfile: integer("max_uploads_per_profile").notNull(), // -1 for unlimited
+  price: integer("price").notNull(), // in cents
+  interval: varchar("interval", { length: 20 }).notNull().default("month"), // month, year
+  stripePriceId: varchar("stripe_price_id", { length: 100 }),
+  features: json("features"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User subscriptions schema
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  planId: integer("plan_id").references(() => subscriptionPlans.id),
+  status: varchar("status", { length: 20 }).notNull().default("active"), // active, canceled, past_due
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 100 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  canceledAt: timestamp("canceled_at"),
+  profilesCreated: integer("profiles_created").default(0).notNull(),
+  uploadsCount: json("uploads_count").default("{}"), // JSON object storing uploads count per profile
+});
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).pick({
+  name: true,
+  description: true,
+  maxProfiles: true,
+  maxUploadsPerProfile: true,
+  price: true,
+  interval: true,
+  stripePriceId: true,
+  features: true,
+  isActive: true,
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
+  userId: true,
+  planId: true,
+  status: true,
+  currentPeriodStart: true,
+  currentPeriodEnd: true,
+  stripeCustomerId: true,
+  stripeSubscriptionId: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -160,3 +213,9 @@ export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
