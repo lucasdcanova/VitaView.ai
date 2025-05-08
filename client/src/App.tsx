@@ -17,7 +17,7 @@ import ExamResults from "@/pages/exam-results";
 import ExamResultSingle from "@/pages/exam-result-single";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
-import HealthTrends from "@/pages/health-trends";
+import HealthTrends from "@/pages/health-trends-new";
 import Home from "@/pages/home";
 
 function Router() {
