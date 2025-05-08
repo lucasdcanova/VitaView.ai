@@ -4,6 +4,7 @@ import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Profile } from "@shared/schema";
+import { z } from "zod";
 
 interface ProfileContextType {
   profiles: Profile[];
@@ -109,7 +110,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       
       // If active profile was deleted, select a different one
       if (activeProfile && activeProfile.id === deletedId) {
-        const defaultProfile = profiles.find(p => p.isDefault);
+        const defaultProfile = profiles.find((p: Profile) => p.isDefault);
         if (defaultProfile) {
           setActiveProfileState(defaultProfile);
         } else if (profiles.length > 0) {
