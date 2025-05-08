@@ -13,6 +13,20 @@ export const users = pgTable("users", {
   gender: text("gender"),
   phoneNumber: text("phone_number"),
   address: text("address"),
+  activeProfileId: integer("active_profile_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Profiles schema
+export const profiles = pgTable("profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  relationship: text("relationship"),
+  birthDate: text("birth_date"),
+  gender: text("gender"),
+  bloodType: text("blood_type"),
+  isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -21,6 +35,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   fullName: true,
   email: true,
+});
+
+export const insertProfileSchema = createInsertSchema(profiles).pick({
+  userId: true,
+  name: true,
+  relationship: true,
+  birthDate: true,
+  gender: true,
+  bloodType: true,
+  isDefault: true,
 });
 
 // Medical exam schema
@@ -121,6 +145,9 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Profile = typeof profiles.$inferSelect;
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
 
 export type Exam = typeof exams.$inferSelect;
 export type InsertExam = z.infer<typeof insertExamSchema>;

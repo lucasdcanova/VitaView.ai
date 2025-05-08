@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications } from "@shared/schema";
-import type { User, InsertUser, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -19,6 +19,14 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
+  
+  // Profile operations
+  createProfile(profile: InsertProfile): Promise<Profile>;
+  getProfile(id: number): Promise<Profile | undefined>;
+  getProfilesByUserId(userId: number): Promise<Profile[]>;
+  updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined>;
+  deleteProfile(id: number): Promise<boolean>;
+  getDefaultProfileForUser(userId: number): Promise<Profile | undefined>;
   
   // Exam operations
   createExam(exam: InsertExam): Promise<Exam>;
