@@ -1283,6 +1283,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para atualizar informações do Stripe no usuário
+  app.post("/api/update-stripe-info", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { stripeCustomerId, stripeSubscriptionId } = req.body;
+      
+      if (!stripeCustomerId && !stripeSubscriptionId) {
+        return res.status(400).json({ message: "Pelo menos um ID do Stripe deve ser fornecido" });
+      }
+      
+      // Atualizar informações do Stripe no usuário
+      const updatedUser = await storage.updateUserStripeInfo(userId, {
+        stripeCustomerId,
+        stripeSubscriptionId
+      });
+      
+      res.json({
+        success: true,
+        user: {
+          id: updatedUser?.id,
+          username: updatedUser?.username,
+          stripeCustomerId: updatedUser?.stripeCustomerId,
+          stripeSubscriptionId: updatedUser?.stripeSubscriptionId
+        }
+      });
+    } catch (error) {
+      console.error("Error updating Stripe info:", error);
+      res.status(500).json({ message: "Erro ao atualizar informações do Stripe" });
+    }
+  });
+  
   // Rota para verificar se o usuário pode fazer upload para um perfil específico
   app.get("/api/subscription/can-upload/:profileId", ensureAuthenticated, async (req, res) => {
     try {
