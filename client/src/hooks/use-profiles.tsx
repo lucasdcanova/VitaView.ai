@@ -160,7 +160,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // Initialize active profile
   useEffect(() => {
     if (profiles.length > 0 && !activeProfile) {
-      const defaultProfile = profiles.find(p => p.isDefault);
+      const defaultProfile = profiles.find((p: Profile) => p.isDefault);
       if (defaultProfile) {
         setActiveProfileState(defaultProfile);
       } else {
