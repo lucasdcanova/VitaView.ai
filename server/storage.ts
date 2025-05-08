@@ -201,7 +201,9 @@ export class MemStorage implements IStorage {
       gender: null,
       phoneNumber: null,
       address: null,
-      activeProfileId: null
+      activeProfileId: null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null
     };
     this.users.set(id, newUser);
     
@@ -800,6 +802,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+  
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User | undefined> {
+    return this.updateUser(userId, { stripeCustomerId });
+  }
+  
+  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User | undefined> {
+    return this.updateUser(userId, { 
+      stripeCustomerId: stripeInfo.stripeCustomerId,
+      stripeSubscriptionId: stripeInfo.stripeSubscriptionId
+    });
   }
 
   // Exam operations

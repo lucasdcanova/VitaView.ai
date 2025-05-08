@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   phoneNumber: text("phone_number"),
   address: text("address"),
   activeProfileId: integer("active_profile_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
