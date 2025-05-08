@@ -20,6 +20,8 @@ import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
 import HealthTrends from "@/pages/health-trends-new";
 import Home from "@/pages/home";
+import SubscriptionPlans from "@/pages/subscription-plans";
+import SubscriptionManagement from "@/pages/subscription-management";
 
 function Router() {
   return (
@@ -38,6 +40,8 @@ function Router() {
       <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
       <ProtectedRoute path="/health-trends" component={HealthTrends} />
       <ProtectedRoute path="/profile" component={Profile} />
+      <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
+      <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
       
       {/* Rotas públicas */}
       <Route path="/auth" component={AuthPage} />

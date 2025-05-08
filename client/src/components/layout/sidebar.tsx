@@ -11,7 +11,9 @@ import {
   LineChart,
   Filter,
   Activity,
-  TrendingUp
+  TrendingUp,
+  CreditCard,
+  Store
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
@@ -145,6 +147,30 @@ export default function Sidebar(props: SidebarProps) {
         >
           <UserCog className="mr-3 h-5 w-5" />
           <span>Perfil</span>
+        </Link>
+        
+        <Link href="/subscription"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/subscription' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <CreditCard className="mr-3 h-5 w-5" />
+          <span>Minha Assinatura</span>
+        </Link>
+        
+        <Link href="/subscription-plans"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/subscription-plans' 
+              ? 'bg-primary-50 text-primary-700' 
+              : 'hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <Store className="mr-3 h-5 w-5" />
+          <span>Planos</span>
         </Link>
         
         <button
