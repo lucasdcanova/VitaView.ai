@@ -970,8 +970,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const subscription = await storage.getUserSubscription(userId);
       
+      // Se não houver assinatura, retornar objeto vazio em vez de erro 404
       if (!subscription) {
-        return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
+        return res.json({ subscription: null, plan: null });
       }
       
       // Buscar detalhes do plano de assinatura
@@ -1234,7 +1235,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se tiver ID de assinatura do Stripe, cancelar no Stripe também
       if (subscription.stripeSubscriptionId) {
-        await stripe.subscriptions.del(subscription.stripeSubscriptionId);
+        try {
+          await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+            cancel_at_period_end: true
+          });
+        } catch (error: any) {
+          console.error('Erro ao cancelar assinatura no Stripe:', error);
+          // Continuar mesmo com erro no Stripe, para garantir cancelamento local
+        }
       }
       
       // Cancelar no banco de dados

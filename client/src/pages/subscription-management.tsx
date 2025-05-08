@@ -172,10 +172,10 @@ const SubscriptionManagement = () => {
       <h1 className="text-3xl font-bold mb-6">Gerenciar Assinatura</h1>
       
       {isExpiringSoon && (
-        <Alert variant="warning" className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Assinatura expirando em breve</AlertTitle>
-          <AlertDescription>
+        <Alert className="mb-6 border-amber-500 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-800">Assinatura expirando em breve</AlertTitle>
+          <AlertDescription className="text-amber-700">
             Sua assinatura expira em {daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}. A renovação será automática caso você não cancele.
           </AlertDescription>
         </Alert>
