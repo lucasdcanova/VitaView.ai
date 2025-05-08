@@ -63,6 +63,7 @@ export interface IStorage {
   incrementUploadCount(subscriptionId: number, profileId: number): Promise<number>;
   canCreateProfile(userId: number): Promise<boolean>;
   canUploadExam(userId: number, profileId: number): Promise<boolean>;
+  getAllSubscriptionsByStripeId(stripeSubscriptionId: string): Promise<Subscription[]>;
   
   // Session store
   sessionStore: SessionStore;
@@ -614,6 +615,12 @@ export class MemStorage implements IStorage {
     const profileUploads = subscription.uploadsCount[profileIdStr] || 0;
     
     return profileUploads < plan.maxUploadsPerProfile;
+  }
+  
+  async getAllSubscriptionsByStripeId(stripeSubscriptionId: string): Promise<Subscription[]> {
+    return Array.from(this.subscriptionsMap.values()).filter(
+      subscription => subscription.stripeSubscriptionId === stripeSubscriptionId
+    );
   }
 }
 
@@ -1282,6 +1289,18 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`Error checking if user ${userId} can upload exam for profile ${profileId}:`, error);
       return false;
+    }
+  }
+  
+  async getAllSubscriptionsByStripeId(stripeSubscriptionId: string): Promise<Subscription[]> {
+    try {
+      return await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
+    } catch (error) {
+      console.error(`Error fetching subscriptions by Stripe ID ${stripeSubscriptionId}:`, error);
+      return [];
     }
   }
 }

@@ -5,6 +5,16 @@ import { setupAuth } from "./auth";
 import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
 import { analyzeExtractedExam } from "./services/openai";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
+import Stripe from "stripe";
+
+// Configuração do Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
 
 // Middleware para verificar autenticação
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -941,6 +951,381 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error switching active profile:", error);
       res.status(500).json({ message: "Erro ao alterar perfil ativo" });
+    }
+  });
+
+  // API routes for subscription management
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Erro ao buscar planos de assinatura" });
+    }
+  });
+  
+  app.get("/api/user-subscription", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const subscription = await storage.getUserSubscription(userId);
+      
+      if (!subscription) {
+        return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
+      }
+      
+      // Buscar detalhes do plano de assinatura
+      const plan = await storage.getSubscriptionPlan(subscription.planId);
+      
+      res.json({
+        subscription,
+        plan
+      });
+    } catch (error) {
+      console.error("Error fetching user subscription:", error);
+      res.status(500).json({ message: "Erro ao buscar assinatura do usuário" });
+    }
+  });
+  
+  // Stripe payment route for one-time payments
+  app.post("/api/create-payment-intent", ensureAuthenticated, async (req, res) => {
+    try {
+      const { planId } = req.body;
+      if (!planId) {
+        return res.status(400).json({ message: "ID do plano é obrigatório" });
+      }
+      
+      // Buscar detalhes do plano
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plano não encontrado" });
+      }
+      
+      // Criar payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: plan.price, // Preço já está em centavos
+        currency: "brl",
+        metadata: {
+          userId: req.user!.id.toString(),
+          planId: planId.toString(),
+          planName: plan.name
+        }
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Erro ao criar intenção de pagamento: " + error.message });
+    }
+  });
+  
+  // Stripe subscription route
+  app.post("/api/create-subscription", ensureAuthenticated, async (req, res) => {
+    try {
+      const { planId } = req.body;
+      if (!planId) {
+        return res.status(400).json({ message: "ID do plano é obrigatório" });
+      }
+      
+      const userId = req.user!.id;
+      const user = req.user!;
+      
+      // Verificar se o usuário já tem uma assinatura ativa
+      const existingSubscription = await storage.getUserSubscription(userId);
+      if (existingSubscription && existingSubscription.status === "active") {
+        return res.status(400).json({ message: "Usuário já possui uma assinatura ativa" });
+      }
+      
+      // Buscar detalhes do plano
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plano não encontrado" });
+      }
+      
+      // Se é o plano gratuito, criar assinatura diretamente sem pagamento
+      if (plan.price === 0) {
+        const subscription = await storage.createUserSubscription({
+          userId,
+          planId,
+          status: "active",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+        });
+        
+        return res.json({ 
+          success: true, 
+          subscription,
+          plan,
+          type: "free"
+        });
+      }
+      
+      // Para planos pagos, criar um cliente no Stripe se não existir
+      let stripeCustomerId = user.stripeCustomerId;
+      
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          name: user.username,
+          metadata: {
+            userId: userId.toString()
+          }
+        });
+        
+        stripeCustomerId = customer.id;
+        
+        // Atualizar o usuário com o ID do cliente Stripe
+        await storage.updateUser(userId, { stripeCustomerId });
+      }
+      
+      // Criar SetupIntent para planos pagos (para configurar método de pagamento)
+      const setupIntent = await stripe.setupIntents.create({
+        customer: stripeCustomerId,
+        payment_method_types: ['card'],
+        metadata: {
+          userId: userId.toString(),
+          planId: planId.toString()
+        }
+      });
+      
+      res.json({
+        clientSecret: setupIntent.client_secret,
+        setupIntentId: setupIntent.id,
+        customerId: stripeCustomerId,
+        plan,
+        type: "paid"
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription setup:", error);
+      res.status(500).json({ message: "Erro ao configurar assinatura: " + error.message });
+    }
+  });
+  
+  // Webhook para eventos do Stripe
+  app.post("/api/webhook", async (req, res) => {
+    let event;
+    
+    try {
+      // Verificar assinatura do webhook, necessário configurar o webhook secret
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (webhookSecret) {
+        const signature = req.headers['stripe-signature'] as string;
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          signature,
+          webhookSecret
+        );
+      } else {
+        // Para ambiente de desenvolvimento
+        event = req.body;
+      }
+      
+      // Lidar com os eventos
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          const paymentIntent = event.data.object;
+          
+          // Extrair metadados
+          const { userId, planId } = paymentIntent.metadata;
+          
+          if (userId && planId) {
+            // Criar assinatura para o usuário
+            await storage.createUserSubscription({
+              userId: parseInt(userId),
+              planId: parseInt(planId),
+              status: "active",
+              stripeCustomerId: paymentIntent.customer,
+              stripeSubscriptionId: null,
+              currentPeriodStart: new Date(),
+              currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+            });
+          }
+          break;
+          
+        case 'setup_intent.succeeded':
+          // Quando o método de pagamento é configurado com sucesso
+          const setupIntent = event.data.object;
+          
+          // Extrair metadados
+          const setupMetadata = setupIntent.metadata;
+          
+          if (setupMetadata.userId && setupMetadata.planId) {
+            // Criar assinatura recorrente no Stripe
+            // Aqui precisaríamos do ID do preço no Stripe para o plano selecionado
+            const plan = await storage.getSubscriptionPlan(parseInt(setupMetadata.planId));
+            
+            if (plan && plan.stripePriceId) {
+              // Criar assinatura no Stripe
+              const stripeSubscription = await stripe.subscriptions.create({
+                customer: setupIntent.customer,
+                items: [{ price: plan.stripePriceId }],
+                default_payment_method: setupIntent.payment_method,
+                metadata: setupMetadata
+              });
+              
+              // Criar assinatura no banco de dados
+              await storage.createUserSubscription({
+                userId: parseInt(setupMetadata.userId),
+                planId: parseInt(setupMetadata.planId),
+                status: "active",
+                stripeCustomerId: setupIntent.customer,
+                stripeSubscriptionId: stripeSubscription.id,
+                currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
+              });
+            }
+          }
+          break;
+          
+        case 'invoice.payment_succeeded':
+          // Quando um pagamento recorrente é bem-sucedido
+          const invoice = event.data.object;
+          
+          if (invoice.subscription) {
+            // Atualizar período da assinatura
+            const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
+            
+            // Encontrar assinatura no banco de dados
+            const subscriptions = await storage.getAllSubscriptionsByStripeId(invoice.subscription);
+            
+            for (const subscription of subscriptions) {
+              // Atualizar período da assinatura
+              await storage.updateUserSubscription(subscription.id, {
+                currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
+              });
+            }
+          }
+          break;
+          
+        case 'customer.subscription.deleted':
+          // Quando uma assinatura é cancelada
+          const canceledSubscription = event.data.object;
+          
+          // Encontrar assinatura no banco de dados
+          const subscriptions = await storage.getAllSubscriptionsByStripeId(canceledSubscription.id);
+          
+          for (const subscription of subscriptions) {
+            // Cancelar assinatura no banco de dados
+            await storage.cancelUserSubscription(subscription.id);
+          }
+          break;
+      }
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  });
+  
+  // Rota para cancelar assinatura
+  app.post("/api/cancel-subscription", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Buscar assinatura do usuário
+      const subscription = await storage.getUserSubscription(userId);
+      
+      if (!subscription) {
+        return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
+      }
+      
+      // Se tiver ID de assinatura do Stripe, cancelar no Stripe também
+      if (subscription.stripeSubscriptionId) {
+        await stripe.subscriptions.del(subscription.stripeSubscriptionId);
+      }
+      
+      // Cancelar no banco de dados
+      const canceledSubscription = await storage.cancelUserSubscription(subscription.id);
+      
+      res.json({
+        success: true,
+        subscription: canceledSubscription
+      });
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      res.status(500).json({ message: "Erro ao cancelar assinatura" });
+    }
+  });
+  
+  // Rota para verificar limitações de perfil e uploads
+  app.get("/api/subscription/limits", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Verificar se o usuário pode criar mais perfis
+      const canCreateProfile = await storage.canCreateProfile(userId);
+      
+      // Buscar assinatura e plano do usuário para informações detalhadas
+      const subscription = await storage.getUserSubscription(userId);
+      let plan = null;
+      
+      if (subscription) {
+        plan = await storage.getSubscriptionPlan(subscription.planId);
+      }
+      
+      res.json({
+        canCreateProfile,
+        subscription,
+        plan,
+        limits: {
+          profiles: plan ? plan.maxProfiles : 0,
+          uploadsPerProfile: plan ? plan.maxUploadsPerProfile : 0,
+          profilesCreated: subscription ? subscription.profilesCreated : 0,
+          uploadsCount: subscription ? subscription.uploadsCount : {}
+        }
+      });
+    } catch (error) {
+      console.error("Error checking subscription limits:", error);
+      res.status(500).json({ message: "Erro ao verificar limites de assinatura" });
+    }
+  });
+  
+  // Rota para verificar se o usuário pode fazer upload para um perfil específico
+  app.get("/api/subscription/can-upload/:profileId", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const profileId = parseInt(req.params.profileId);
+      
+      // Verificar se o perfil existe e pertence ao usuário
+      const profile = await storage.getProfile(profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil não encontrado" });
+      }
+      
+      if (profile.userId !== userId) {
+        return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
+      }
+      
+      // Verificar se o usuário pode fazer upload para este perfil
+      const canUpload = await storage.canUploadExam(userId, profileId);
+      
+      // Buscar assinatura e plano para informações detalhadas
+      const subscription = await storage.getUserSubscription(userId);
+      let plan = null;
+      let uploadsUsed = 0;
+      
+      if (subscription) {
+        plan = await storage.getSubscriptionPlan(subscription.planId);
+        // Verificar quantos uploads já foram feitos para este perfil
+        const uploadsCount = subscription.uploadsCount as Record<string, number> || {};
+        uploadsUsed = uploadsCount[profileId.toString()] || 0;
+      }
+      
+      res.json({
+        canUpload,
+        subscription,
+        plan,
+        limits: {
+          maxUploads: plan ? plan.maxUploadsPerProfile : 0,
+          uploadsUsed
+        }
+      });
+    } catch (error) {
+      console.error("Error checking upload permission:", error);
+      res.status(500).json({ message: "Erro ao verificar permissão de upload" });
     }
   });
 
