@@ -838,6 +838,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API routes for profiles management
+  app.get("/api/profiles", ensureAuthenticated, async (req, res) => {
+    try {
+      const profiles = await storage.getProfilesByUserId(req.user!.id);
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error fetching user profiles:", error);
+      res.status(500).json({ message: "Erro ao buscar perfis do usuário" });
+    }
+  });
+  
+  app.post("/api/profiles", ensureAuthenticated, async (req, res) => {
+    try {
+      const profileData = {
+        ...req.body,
+        userId: req.user!.id,
+        createdAt: new Date()
+      };
+      
+      const newProfile = await storage.createProfile(profileData);
+      res.status(201).json(newProfile);
+    } catch (error) {
+      console.error("Error creating profile:", error);
+      res.status(500).json({ message: "Erro ao criar perfil" });
+    }
+  });
+  
+  app.put("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id);
+      
+      // Verificar se o perfil existe e pertence ao usuário
+      const profile = await storage.getProfile(profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil não encontrado" });
+      }
+      
+      if (profile.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
+      }
+      
+      const updatedProfile = await storage.updateProfile(profileId, req.body);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Erro ao atualizar perfil" });
+    }
+  });
+  
+  app.delete("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id);
+      
+      // Verificar se o perfil existe e pertence ao usuário
+      const profile = await storage.getProfile(profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil não encontrado" });
+      }
+      
+      if (profile.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
+      }
+      
+      // Não permitir a exclusão do perfil principal
+      if (profile.isDefault) {
+        return res.status(400).json({ message: "Não é possível excluir o perfil principal" });
+      }
+      
+      const success = await storage.deleteProfile(profileId);
+      if (success) {
+        res.status(200).json({ message: "Perfil excluído com sucesso" });
+      } else {
+        res.status(500).json({ message: "Erro ao excluir perfil" });
+      }
+    } catch (error) {
+      console.error("Error deleting profile:", error);
+      res.status(500).json({ message: "Erro ao excluir perfil" });
+    }
+  });
+  
+  // API routes for active profile switch
+  app.put("/api/users/active-profile", ensureAuthenticated, async (req, res) => {
+    try {
+      const { profileId } = req.body;
+      if (!profileId) {
+        return res.status(400).json({ message: "ID do perfil é obrigatório" });
+      }
+      
+      // Verificar se o perfil existe e pertence ao usuário
+      const profile = await storage.getProfile(profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil não encontrado" });
+      }
+      
+      if (profile.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
+      }
+      
+      // Responder com o perfil selecionado
+      res.json(profile);
+    } catch (error) {
+      console.error("Error switching active profile:", error);
+      res.status(500).json({ message: "Erro ao alterar perfil ativo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
