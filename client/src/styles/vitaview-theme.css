@@ -1,0 +1,123 @@
+/* VitaView AI - Paleta de Cores Principal */
+:root {
+  /* Cores Primárias */
+  --primary: #1E3A5F;          /* Azul Profundo - cor principal */
+  --primary-dark: #152D48;     /* Azul Profundo Escuro */  
+  --primary-light: #2A4F7C;    /* Azul Profundo Claro */
+  
+  /* Cores Secundárias */
+  --secondary: #448C9B;        /* Verde-Azulado */
+  --secondary-dark: #336D7A;   /* Verde-Azulado Escuro */
+  --secondary-light: #5AADBF;  /* Verde-Azulado Claro */
+  
+  /* Cores Complementares */
+  --accent-blue: #A0D8EF;      /* Azul Celeste */
+  --accent-green: #A5E1D2;     /* Verde Menta */
+  
+  /* Cores Neutras */
+  --background: #FFFFFF;       /* Branco - fundo principal */
+  --gray-light: #F5F5F5;       /* Cinza Claro */
+  --gray-medium: #E0E0E0;      /* Cinza Médio */
+  --gray-dark: #707070;        /* Cinza Escuro */
+  --text: #333333;             /* Preto Suave - texto principal */
+  
+  /* Cores de Alerta */
+  --error: #E74C3C;            /* Vermelho */
+  --warning: #F9A825;          /* Amarelo */
+  --success: #2ECC71;          /* Verde */
+  
+  /* Variáveis de Tema para o Tailwind */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+ 
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+ 
+  --primary: 212 47% 24.5%;
+  --primary-foreground: 210 40% 98%;
+ 
+  --secondary: 187 36% 44%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+ 
+  --accent: 187 36% 75%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+ 
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+ 
+  --radius: 0.5rem;
+}
+
+/* Classes de utilidade para uso direto nos componentes */
+.bg-vitaview-primary {
+  background-color: #1E3A5F;
+}
+
+.bg-vitaview-secondary {
+  background-color: #448C9B;
+}
+
+.text-vitaview-primary {
+  color: #1E3A5F;
+}
+
+.text-vitaview-secondary {
+  color: #448C9B;
+}
+
+.border-vitaview-primary {
+  border-color: #1E3A5F;
+}
+
+.border-vitaview-secondary {
+  border-color: #448C9B;
+}
+
+/* Botões estilizados */
+.btn-vitaview-primary {
+  background-color: #1E3A5F;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-vitaview-primary:hover {
+  background-color: #2A4F7C;
+}
+
+.btn-vitaview-secondary {
+  background-color: #448C9B;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-vitaview-secondary:hover {
+  background-color: #5AADBF;
+}
+
+/* Estilo para links */
+.link-vitaview {
+  color: #448C9B;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link-vitaview:hover {
+  color: #336D7A;
+  text-decoration: underline;
+}
