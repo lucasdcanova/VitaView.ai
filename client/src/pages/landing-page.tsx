@@ -263,8 +263,8 @@ export default function LandingPage() {
         </div>
       </motion.nav>
 
-      {/* Hero Section */}
-      <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5]">
+      {/* Hero Section - increased top padding to avoid header overlap */}
+      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5]">
         <motion.div 
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
