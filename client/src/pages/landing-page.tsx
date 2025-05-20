@@ -269,7 +269,7 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="py-8 md:py-12 container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5]">
         <motion.div 
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
@@ -923,7 +923,7 @@ export default function LandingPage() {
       </section>
       
       {/* Simulação de Histórico de Exames */}
-      <section className="py-16 bg-white relative overflow-hidden">
+      <section className="py-16 bg-[#448C9B] text-white relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
