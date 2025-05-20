@@ -189,6 +189,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API route for quick one-click document summary generation
+  app.post("/api/exams/quick-summary", ensureAuthenticated, async (req, res) => {
+    try {
+      // Assegura que usuário está autenticado
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
+      }
+      
+      // Extrai userId da sessão autenticada
+      const userId = req.user.id;
+      
+      // Verificar se temos dados suficientes
+      const { fileType, fileContent } = req.body;
+      
+      if (!fileType || !fileContent) {
+        return res.status(400).json({ message: "Dados incompletos para análise. Tipo de arquivo e conteúdo são obrigatórios." });
+      }
+      
+      console.log(`Processando geração rápida de resumo para usuário ${userId}`);
+      
+      // Primeiro step: utilizar Gemini para extrair informações básicas
+      const analysisResult = await analyzeDocument(fileContent, fileType);
+      
+      // Preparar o resumo final
+      const quickSummary = {
+        summary: analysisResult.summary || "Não foi possível gerar um resumo para este documento.",
+        healthMetrics: analysisResult.healthMetrics || [],
+        recommendations: analysisResult.recommendations || [],
+        laboratoryName: analysisResult.laboratoryName || "Não identificado",
+        examDate: analysisResult.examDate || new Date().toISOString().split('T')[0],
+        aiProvider: analysisResult.aiProvider || "gemini"
+      };
+      
+      // Retornar resultado
+      res.status(200).json(quickSummary);
+      
+    } catch (error: unknown) {
+      console.error("Erro na geração rápida de resumo:", error);
+      res.status(500).json({ 
+        message: "Erro ao gerar resumo rápido", 
+        error: error instanceof Error ? error.message : String(error),
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
+      });
+    }
+  });
+  
   // Rota para análise de documentos - etapa 1: análise com Gemini
   app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
     try {
