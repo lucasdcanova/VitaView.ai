@@ -188,7 +188,7 @@ export default function LandingPage() {
       
       {/* Navbar - improved with backdrop filter and better shadow */}
       <motion.nav 
-        className={`${isScrolled ? 'bg-white/98 backdrop-blur-md shadow-md py-3' : 'bg-transparent py-5'} sticky top-0 z-50 transition-all duration-300`}
+        className={`${isScrolled ? 'bg-white/98 backdrop-blur-md shadow-md py-3' : 'bg-transparent py-5'} fixed top-0 left-0 right-0 z-50 transition-all duration-300`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
