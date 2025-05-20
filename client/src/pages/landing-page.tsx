@@ -236,16 +236,17 @@ export default function LandingPage() {
             ))}
           </div>
           
-          {/* Mobile menu button - only visible on mobile */}
+          {/* Mobile access button - only visible on mobile */}
           <div className="md:hidden">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-gray-700"
-              onClick={() => alert('Menu mobile a ser implementado')}
-            >
-              <List className="h-5 w-5" />
-            </Button>
+            <Link href="/auth">
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] hover:from-[#152D48] hover:to-[#1E3A5F] shadow-md text-white"
+              >
+                Acessar <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
           
           {/* Login/Access button with improved animation */}
