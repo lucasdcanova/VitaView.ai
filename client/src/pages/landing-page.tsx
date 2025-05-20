@@ -335,7 +335,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto font-medium">
+                  <Button size="lg" className="bg-gradient-to-r from-primary-800 to-primary-900 hover:from-primary-900 hover:to-primary-950 text-white px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto font-medium">
                     Criar conta gratuita
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
