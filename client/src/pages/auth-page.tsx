@@ -148,7 +148,7 @@ export default function AuthPage() {
       
       {/* Left side - Form */}
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
-        {/* Cabeçalho com logo HEMOLOG acima do card */}
+        {/* Cabeçalho com logo VitaView acima do card */}
         <div className="w-full max-w-md mb-6 flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -156,20 +156,26 @@ export default function AuthPage() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="bg-primary-600 text-white font-bold text-3xl w-12 h-12 rounded-lg flex items-center justify-center shadow-lg">
-              H
+            <div className="w-12 h-12 flex items-center justify-center shadow-lg">
+              <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10,40 C30,20 70,20 90,40 C100,50 100,65 90,75 C70,95 30,95 10,75 C0,65 0,50 10,40 Z" fill="#1E3A5F"/>
+                <path d="M90,40 C100,50 100,65 90,75 C70,95 45,95 25,75 C45,50 65,35 90,40 Z" fill="#448C9B"/>
+                <circle cx="50" cy="55" r="20" fill="#1E3A5F"/>
+                <circle cx="50" cy="55" r="15" fill="#FFFFFF"/>
+              </svg>
             </div>
             <div className="text-4xl font-extrabold tracking-tighter">
-              <span className="text-primary-600">HEMO</span>
-              <span className="text-primary-800">LOG</span>
+              <span className="text-[#1E3A5F]">Vita</span>
+              <span className="text-[#448C9B]">View</span>
+              <span className="text-[#1E3A5F] text-2xl ml-1">AI</span>
             </div>
           </motion.div>
-          <div className="text-sm text-gray-500 italic">Análise Inteligente de Exames Laboratoriais</div>
+          <div className="text-sm text-gray-500 italic">Entendendo sua saúde através de seus exames</div>
         </div>
 
-        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-primary-600 border border-gray-100 relative">
+        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative">
           {/* Banner de branding no topo do card */}
-          <div className="bg-gradient-to-r from-primary-600 to-primary-700 py-2 px-4 text-center">
+          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-2 px-4 text-center">
             <span className="text-white font-medium text-sm">Sua plataforma de saúde inteligente</span>
           </div>
           
@@ -230,7 +236,7 @@ export default function AuthPage() {
                     />
                     
                     <div className="flex justify-end">
-                      <Button variant="link" className="text-sm text-primary-600 px-0">
+                      <Button variant="link" className="text-sm text-[#1E3A5F] px-0">
                         Esqueceu a senha?
                       </Button>
                     </div>
@@ -239,7 +245,7 @@ export default function AuthPage() {
                       ref={submitButtonRef}
                       type="submit"
                       size="lg"
-                      className="w-full h-14 bg-green-600 hover:bg-green-700 font-bold text-lg text-white shadow-md rounded-lg"
+                      className="w-full h-14 bg-[#448C9B] hover:bg-[#336D7A] font-bold text-lg text-white shadow-md rounded-lg"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -257,7 +263,7 @@ export default function AuthPage() {
                 <div className="mt-4 text-center">
                   <p className="text-gray-600 text-sm">
                     Não tem uma conta?{" "}
-                    <Button variant="link" className="p-0" onClick={() => setTab("register")}>
+                    <Button variant="link" className="p-0 text-[#448C9B] hover:text-[#336D7A]" onClick={() => setTab("register")}>
                       Cadastre-se
                     </Button>
                   </p>
@@ -371,7 +377,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-primary-600 hover:bg-primary-700 font-medium text-white"
+                      className="w-full bg-[#1E3A5F] hover:bg-[#152D48] font-medium text-white"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? (
