@@ -272,14 +272,7 @@ export default function LandingPage() {
           variants={containerVariants}
         >
           <motion.div className="md:w-1/2 mb-10 md:mb-0 md:pr-8" variants={itemVariants}>
-            <motion.span
-              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Inteligência Artificial aplicada à saúde
-            </motion.span>
+
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
               <span className="text-[#1E3A5F] tracking-tight">VitaView</span> <span className="text-[#448C9B]">AI</span>: Entenda seus exames com clareza e precisão
