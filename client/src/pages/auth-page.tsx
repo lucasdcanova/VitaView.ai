@@ -157,7 +157,16 @@ export default function AuthPage() {
             className="flex items-center gap-3 mb-2"
           >
             <div className="flex justify-center">
-              <img src="/assets/vitaview_ai_transparent_2k.png" alt="VitaView AI Logo" className="h-32 object-contain" />
+              <img 
+                src="/assets/vitaview_ai_transparent_2k.png" 
+                alt="VitaView AI Logo" 
+                className="h-32 object-contain" 
+                onError={(e) => {
+                  console.error("Erro ao carregar logo:", e);
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/vitaview-logo.svg";
+                }}
+              />
             </div>
           </motion.div>
         </div>
