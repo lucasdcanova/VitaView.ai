@@ -713,8 +713,8 @@ export default function LandingPage() {
               Visualização Inteligente
             </motion.span>
             
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Relatórios Detalhados e Análises Precisas</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Relatórios Detalhados e Análises Precisas</h2>
+            <p className="text-lg text-white text-opacity-90 max-w-3xl mx-auto">
               Visualize seus exames com clareza e obtenha insights que vão além dos números, com apresentação intuitiva e contexto clínico completo.
             </p>
           </motion.div>
@@ -1713,10 +1713,10 @@ export default function LandingPage() {
               Vantagens Exclusivas
             </motion.span>
           
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Benefícios <span className="text-primary-600">Reais</span> para sua Saúde
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              Benefícios <span className="text-[#A5E1D2]">Reais</span> para sua Saúde
             </h2>
-            <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg text-white text-opacity-90 mb-12 max-w-2xl mx-auto">
               O VitaView AI transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
             </p>
           </motion.div>
@@ -1899,10 +1899,10 @@ export default function LandingPage() {
               <Users className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Conheça nosso público</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              O <span className="text-[#1E3A5F]">VitaView AI</span> é para você
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              O <span className="text-white">VitaView AI</span> é para você
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-white text-opacity-90 max-w-2xl mx-auto">
               Nossa plataforma foi desenvolvida para atender diferentes necessidades,
               criando valor em cada etapa da jornada de saúde.
             </p>
@@ -2583,10 +2583,10 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Perguntas <span className="text-primary-600">Frequentes</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Perguntas <span className="text-[#A5E1D2]">Frequentes</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-white text-opacity-90 max-w-2xl mx-auto">
               Tire suas dúvidas sobre o VitaView AI e como nossa plataforma pode ajudar você a entender melhor sua saúde.
             </p>
           </motion.div>
