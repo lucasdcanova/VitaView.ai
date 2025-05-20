@@ -363,7 +363,7 @@ export default function LandingPage() {
             <div className="relative w-full max-w-[600px]">
               {/* Dashboard mockup simulado - design mais próximo do real */}
               <motion.div 
-                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10]"
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10] hidden md:block"
                 whileHover={{ 
                   rotate: 2,
                   transition: { duration: 0.3 }
