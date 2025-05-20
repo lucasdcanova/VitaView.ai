@@ -910,8 +910,8 @@ export default function LandingPage() {
                         {item.icon}
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">{item.title}</h4>
-                        <p className="text-gray-600">{item.description}</p>
+                        <h4 className="font-medium text-white">{item.title}</h4>
+                        <p className="text-white text-opacity-85">{item.description}</p>
                       </div>
                     </motion.li>
                   ))}
@@ -1797,7 +1797,7 @@ export default function LandingPage() {
           {/* Estatísticas de impacto */}
           <div className="mt-24 max-w-5xl mx-auto">
             <motion.h3 
-              className="text-2xl font-bold text-center text-gray-800 mb-12"
+              className="text-2xl font-bold text-center text-white mb-12"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -2666,7 +2666,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-lg text-white text-opacity-90 mb-6">
               Ainda tem dúvidas? Entre em contato com nossa equipe de suporte.
             </p>
             <motion.div
