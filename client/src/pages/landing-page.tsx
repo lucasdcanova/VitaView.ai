@@ -932,8 +932,8 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Histórico Completo e Acessível</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Histórico Completo e Acessível</h2>
+            <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
               Organize todos os seus exames em um só lugar, com acesso rápido e categorização automática.
             </p>
           </motion.div>
