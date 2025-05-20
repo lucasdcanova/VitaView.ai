@@ -156,21 +156,15 @@ export default function AuthPage() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="w-12 h-12 flex items-center justify-center shadow-lg">
-              <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10,40 C30,20 70,20 90,40 C100,50 100,65 90,75 C70,95 30,95 10,75 C0,65 0,50 10,40 Z" fill="#1E3A5F"/>
-                <path d="M90,40 C100,50 100,65 90,75 C70,95 45,95 25,75 C45,50 65,35 90,40 Z" fill="#448C9B"/>
-                <circle cx="50" cy="55" r="20" fill="#1E3A5F"/>
-                <circle cx="50" cy="55" r="15" fill="#FFFFFF"/>
-              </svg>
-            </div>
-            <div className="text-4xl font-extrabold tracking-tighter">
-              <span className="text-[#1E3A5F]">Vita</span>
-              <span className="text-[#448C9B]">View</span>
-              <span className="text-[#1E3A5F] text-2xl ml-1">AI</span>
+            <div className="flex items-center">
+              <img src="/assets/vitaview_logo_only_2k.png" alt="VitaView Logo" className="h-16 w-16 object-contain" />
+              <div className="text-4xl font-extrabold tracking-tighter">
+                <span className="text-[#1E3A5F]">Vita</span>
+                <span className="text-[#448C9B]">View</span>
+                <span className="text-[#1E3A5F] text-2xl ml-1">AI</span>
+              </div>
             </div>
           </motion.div>
-          <div className="text-sm text-gray-500 italic">Entendendo sua saúde através de seus exames</div>
         </div>
 
         <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative">
