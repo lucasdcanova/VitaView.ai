@@ -200,12 +200,21 @@ export default function LandingPage() {
               whileHover={{ scale: 1.03 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md">
-                <Activity className="w-6 h-6" />
+              <div className="w-12 h-12 flex items-center justify-center mr-3 shadow-md">
+                <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10,40 C30,20 70,20 90,40 C100,50 100,65 90,75 C70,95 30,95 10,75 C0,65 0,50 10,40 Z" fill="#1E3A5F"/>
+                  <path d="M90,40 C100,50 100,65 90,75 C70,95 45,95 25,75 C45,50 65,35 90,40 Z" fill="#448C9B"/>
+                  <circle cx="50" cy="55" r="20" fill="#1E3A5F"/>
+                  <circle cx="50" cy="55" r="15" fill="#FFFFFF"/>
+                </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-primary-800 tracking-tight">HEMOLOG</span>
-                <span className="text-xs text-primary-600 -mt-1">Análise Inteligente de Exames</span>
+                <span className="text-2xl font-bold tracking-tight">
+                  <span className="text-[#1E3A5F]">Vita</span>
+                  <span className="text-[#448C9B]">View</span>
+                  <span className="text-[#1E3A5F] text-xl ml-1">AI</span>
+                </span>
+                <span className="text-xs text-[#336D7A] -mt-1">Entendendo sua saúde através dos seus exames</span>
               </div>
             </motion.div>
           </Link>
@@ -222,12 +231,12 @@ export default function LandingPage() {
               <motion.a 
                 key={item.id}
                 href={`#${item.id}`} 
-                className="hover:text-primary-600 transition-colors relative group py-2 text-sm font-medium"
+                className="hover:text-[#448C9B] transition-colors relative group py-2 text-sm font-medium"
                 whileHover={{ scale: 1.03 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
                 {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#448C9B] group-hover:w-full transition-all duration-300"></span>
               </motion.a>
             ))}
           </div>
@@ -251,7 +260,7 @@ export default function LandingPage() {
             whileTap={{ scale: 0.97 }}
           >
             <Link href="/auth">
-              <Button variant="default" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-md text-white px-6 py-2">
+              <Button variant="default" className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] hover:from-[#152D48] hover:to-[#1E3A5F] shadow-md text-white px-6 py-2">
                 Acessar <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
@@ -642,7 +651,7 @@ export default function LandingPage() {
               Você já recebeu um exame e ficou sem saber o que ele realmente significava?
             </h2>
             <p className="text-xl max-w-3xl mx-auto mb-10">
-              A interpretação de exames ainda é um mistério para muitas pessoas. Com o Hemolog, você transforma números e siglas em informações compreensíveis e ações de saúde claras.
+              A interpretação de exames ainda é um mistério para muitas pessoas. Com o VitaView AI, você transforma números e siglas em informações compreensíveis e ações de saúde claras.
             </p>
             
             {/* Ícones animados */}
