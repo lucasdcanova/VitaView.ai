@@ -287,7 +287,7 @@ export default function LandingPage() {
             </motion.span>
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              <span className="text-primary-600 tracking-tight">HEMOLOG</span>: Entenda seus exames com clareza e precisão
+              <span className="text-[#1E3A5F] tracking-tight">VitaView</span> <span className="text-[#448C9B]">AI</span>: Entenda seus exames com clareza e precisão
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
