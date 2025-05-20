@@ -156,8 +156,8 @@ export default function AuthPage() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="flex items-center">
-              <img src="/assets/vitaview_logo_only_2k.png" alt="VitaView Logo" className="h-16 w-16 object-contain" />
+            <div className="flex items-center gap-1">
+              <img src="/assets/vitaview_logo_only_2k.png" alt="VitaView Logo" className="h-24 w-24 object-contain" />
               <div className="text-4xl font-extrabold tracking-tighter">
                 <span className="text-[#1E3A5F]">Vita</span>
                 <span className="text-[#448C9B]">View</span>
