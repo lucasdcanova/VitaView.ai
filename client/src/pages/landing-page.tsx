@@ -1558,7 +1558,7 @@ export default function LandingPage() {
             </motion.span>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Como Funciona o <span className="text-primary-600">HEMOLOG</span>
+              Como Funciona o <span className="text-[#1E3A5F]">VitaView</span> <span className="text-[#448C9B]">AI</span>
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Nossa plataforma transforma documentos médicos complexos em informações claras e úteis para sua saúde
@@ -1717,7 +1717,7 @@ export default function LandingPage() {
               Benefícios <span className="text-primary-600">Reais</span> para sua Saúde
             </h2>
             <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              O HEMOLOG transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
+              O VitaView AI transforma seus dados de saúde em informações valiosas e acionáveis para você e sua família.
             </p>
           </motion.div>
           
