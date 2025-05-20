@@ -1762,7 +1762,7 @@ export default function LandingPage() {
             ].map((benefit, index) => (
               <motion.div 
                 key={index}
-                className="relative bg-white p-7 rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:border-primary-100 group"
+                className="relative bg-white/95 p-7 rounded-xl shadow-sm overflow-hidden border border-white/20 hover:border-white/50 backdrop-blur-sm group"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -2134,10 +2134,10 @@ export default function LandingPage() {
               <Play className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Demonstrações interativas</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary-900 mb-4">
               Explore exemplos reais de como o VitaView AI funciona
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-primary-800">
               Veja simulações de exames reais e como nossa plataforma fornece insights valiosos.
             </p>
           </motion.div>
@@ -2623,7 +2623,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
                 <motion.div 
-                  className={`p-5 rounded-lg border ${activeFaq === index ? 'bg-primary-50 border-primary-200' : 'bg-white border-gray-200'} cursor-pointer transition-all duration-300 hover:shadow-md`}
+                  className={`p-5 rounded-lg border ${activeFaq === index ? 'bg-white/95 border-white/40' : 'bg-white/85 border-white/30'} cursor-pointer transition-all duration-300 hover:shadow-md backdrop-blur-sm`}
                   onClick={() => toggleFaq(index)}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
@@ -2650,7 +2650,7 @@ export default function LandingPage() {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                       >
-                        <p className="text-gray-600">{faq.answer}</p>
+                        <p className="text-gray-700">{faq.answer}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
