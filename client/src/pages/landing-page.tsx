@@ -870,8 +870,8 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">Entenda seus exames como nunca antes</h3>
-                <p className="text-lg text-gray-600 mb-6">
+                <h3 className="text-2xl font-bold text-white mb-3">Entenda seus exames como nunca antes</h3>
+                <p className="text-lg text-white text-opacity-90 mb-6">
                   Nossos relatórios transformam dados técnicos em informações compreensíveis, ajudando você a entender:
                 </p>
                 
