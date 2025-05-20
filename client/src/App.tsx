@@ -46,6 +46,7 @@ function Router() {
       
       {/* Rotas públicas */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/quick-summary" component={QuickSummaryPage} />
       <Route component={NotFound} />
     </Switch>
   );

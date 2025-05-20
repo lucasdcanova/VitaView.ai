@@ -13,7 +13,8 @@ import {
   Activity,
   TrendingUp,
   CreditCard,
-  Store
+  Store,
+  Zap
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
@@ -104,6 +105,18 @@ export default function Sidebar(props: SidebarProps) {
         >
           <Upload className="mr-3 h-5 w-5" />
           <span>Enviar Exames</span>
+        </Link>
+        
+        <Link href="/quick-summary"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+            location === '/quick-summary' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
+              : 'hover:bg-amber-50 text-amber-700'
+          }`}
+        >
+          <Zap className="mr-3 h-5 w-5 text-amber-500" />
+          <span>Resumo Rápido</span>
         </Link>
         
         <Link href="/health-trends"

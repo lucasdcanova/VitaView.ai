@@ -24,7 +24,7 @@ export default function QuickSummaryPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Button onClick={() => navigate("/auth")}>
+            <Button onClick={() => window.location.href = "/auth"}>
               Fazer Login
             </Button>
           </CardContent>
