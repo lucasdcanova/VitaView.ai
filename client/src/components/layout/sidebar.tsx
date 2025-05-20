@@ -53,22 +53,27 @@ export default function Sidebar(props: SidebarProps) {
       }`}
     >
       <div className="p-4 flex items-center border-b border-gray-100">
-        <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center mr-3">
-          <Activity className="w-6 h-6" />
+        <div className="w-10 h-10 text-white flex items-center justify-center mr-3">
+          <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10,40 C30,20 70,20 90,40 C100,50 100,65 90,75 C70,95 30,95 10,75 C0,65 0,50 10,40 Z" fill="#1E3A5F"/>
+            <path d="M90,40 C100,50 100,65 90,75 C70,95 45,95 25,75 C45,50 65,35 90,40 Z" fill="#448C9B"/>
+            <circle cx="50" cy="55" r="20" fill="#1E3A5F"/>
+            <circle cx="50" cy="55" r="15" fill="#FFFFFF"/>
+          </svg>
         </div>
         <div>
-          <span className="font-semibold text-primary-600 text-xl">Hemolog</span>
+          <span className="font-semibold text-[#1E3A5F] text-xl">VitaView AI</span>
         </div>
       </div>
       
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0E9F5] text-[#1E3A5F] flex items-center justify-center mr-3">
             {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div>
             <h3 className="font-medium text-sm">{user?.fullName || user?.username}</h3>
-            <p className="text-xs text-gray-500">Último exame: 2 dias atrás</p>
+            <p className="text-xs text-[#707070]">Último exame: 2 dias atrás</p>
           </div>
         </div>
         <div className="mt-3">
@@ -81,7 +86,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/dashboard' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -93,7 +98,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/upload' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -105,7 +110,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/health-trends' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -117,7 +122,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/history' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -129,7 +134,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/results' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -141,7 +146,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/profile' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -153,7 +158,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/subscription' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -165,7 +170,7 @@ export default function Sidebar(props: SidebarProps) {
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${
             location === '/subscription-plans' 
-              ? 'bg-primary-50 text-primary-700' 
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
@@ -175,7 +180,7 @@ export default function Sidebar(props: SidebarProps) {
         
         <button
           onClick={handleLogout}
-          className="w-full flex items-center p-3 rounded-lg text-gray-700 hover:bg-gray-50 mt-6"
+          className="w-full flex items-center p-3 rounded-lg text-[#1E3A5F] hover:bg-gray-50 mt-6"
         >
           <LogOut className="mr-3 h-5 w-5" />
           <span>Sair</span>
