@@ -214,7 +214,7 @@ export default function LandingPage() {
                   <span className="text-[#448C9B]">View</span>
                   <span className="text-[#1E3A5F] text-xl ml-1">AI</span>
                 </span>
-                <span className="text-xs text-[#336D7A] -mt-1">Entendendo sua saúde através dos seus exames</span>
+
               </div>
             </motion.div>
           </Link>
