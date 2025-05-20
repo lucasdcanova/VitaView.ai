@@ -156,11 +156,11 @@ export default function AuthPage() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-3 mb-2"
           >
-            <div className="flex justify-center">
+            <div className="flex justify-center w-full my-4">
               <img 
                 src="/assets/vitaview_ai_transparent_2k.png" 
                 alt="VitaView AI Logo" 
-                className="h-32 object-contain" 
+                className="h-48 object-contain" 
                 onError={(e) => {
                   console.error("Erro ao carregar logo:", e);
                   e.currentTarget.onerror = null;
