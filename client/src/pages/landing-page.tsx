@@ -1873,7 +1873,7 @@ export default function LandingPage() {
       </section>
 
       {/* For Whom Section */}
-      {/* Seção: Para quem é o Hemolog */}
+      {/* Seção: Para quem é o VitaView AI */}
       <section id="para-quem" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -1900,7 +1900,7 @@ export default function LandingPage() {
               <span className="text-sm font-medium">Conheça nosso público</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              O <span className="text-primary-600">Hemolog</span> é para você
+              O <span className="text-[#1E3A5F]">VitaView AI</span> é para você
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Nossa plataforma foi desenvolvida para atender diferentes necessidades,
@@ -2135,7 +2135,7 @@ export default function LandingPage() {
               <span className="text-sm font-medium">Demonstrações interativas</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Explore exemplos reais de como o Hemolog funciona
+              Explore exemplos reais de como o VitaView AI funciona
             </h2>
             <p className="text-xl text-gray-600">
               Veja simulações de exames reais e como nossa plataforma fornece insights valiosos.
@@ -2447,14 +2447,14 @@ export default function LandingPage() {
               O Que Dizem Nossos <span className="text-primary-600">Usuários</span>
             </h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Centenas de pessoas já transformaram sua relação com a saúde através do Hemolog.
+              Centenas de pessoas já transformaram sua relação com a saúde através do VitaView AI.
             </p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
             {[
               {
-                quote: "O Hemolog me ajudou a entender como meus exames evoluíram nos últimos anos. Hoje, me sinto no controle da minha saúde.",
+                quote: "O VitaView AI me ajudou a entender como meus exames evoluíram nos últimos anos. Hoje, me sinto no controle da minha saúde.",
                 name: "Ana Tavares",
                 role: "59 anos, Paciente com diabetes",
                 delay: 0,
@@ -2587,15 +2587,15 @@ export default function LandingPage() {
               Perguntas <span className="text-primary-600">Frequentes</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Tire suas dúvidas sobre o Hemolog e como nossa plataforma pode ajudar você a entender melhor sua saúde.
+              Tire suas dúvidas sobre o VitaView AI e como nossa plataforma pode ajudar você a entender melhor sua saúde.
             </p>
           </motion.div>
           
           <div className="max-w-3xl mx-auto">
             {[
               {
-                question: "Como o Hemolog analisa meus exames de sangue?",
-                answer: "O Hemolog utiliza inteligência artificial avançada para analisar seus exames. Nosso sistema extrai automaticamente os valores dos documentos, compara com as referências médicas, identifica tendências históricas e fornece interpretações em linguagem simples para você entender o significado dos resultados."
+                question: "Como o VitaView AI analisa meus exames de sangue?",
+                answer: "O VitaView AI utiliza inteligência artificial avançada para analisar seus exames. Nosso sistema extrai automaticamente os valores dos documentos, compara com as referências médicas, identifica tendências históricas e fornece interpretações em linguagem simples para você entender o significado dos resultados."
               },
               {
                 question: "Meus dados médicos estão seguros na plataforma?",
@@ -2603,15 +2603,15 @@ export default function LandingPage() {
               },
               {
                 question: "Posso compartilhar meus resultados com meu médico?",
-                answer: "Sim! O Hemolog permite que você compartilhe facilmente relatórios e gráficos com seus médicos. Você pode gerar um link temporário de acesso ou exportar relatórios em PDF para levar à consulta, facilitando a comunicação com profissionais de saúde."
+                answer: "Sim! O VitaView AI permite que você compartilhe facilmente relatórios e gráficos com seus médicos. Você pode gerar um link temporário de acesso ou exportar relatórios em PDF para levar à consulta, facilitando a comunicação com profissionais de saúde."
               },
               {
-                question: "Como o Hemolog me ajuda a acompanhar minha saúde ao longo do tempo?",
+                question: "Como o VitaView AI me ajuda a acompanhar minha saúde ao longo do tempo?",
                 answer: "Nossa plataforma cria automaticamente gráficos de tendência para todos os seus biomarcadores importantes. Você receberá alertas sobre mudanças significativas, e nosso sistema sugerirá correlações entre diferentes parâmetros, criando uma visão holística da sua saúde que evolui com o tempo."
               },
               {
-                question: "Que tipos de arquivos posso carregar no Hemolog?",
-                answer: "O Hemolog suporta arquivos em formato PDF, JPG, PNG e TIFF. Você pode carregar exames digitalizados, fotografias de resultados impressos ou arquivos digitais fornecidos diretamente pelos laboratórios. Nosso sistema é treinado para reconhecer formatos de diversos laboratórios."
+                question: "Que tipos de arquivos posso carregar no VitaView AI?",
+                answer: "O VitaView AI suporta arquivos em formato PDF, JPG, PNG e TIFF. Você pode carregar exames digitalizados, fotografias de resultados impressos ou arquivos digitais fornecidos diretamente pelos laboratórios. Nosso sistema é treinado para reconhecer formatos de diversos laboratórios."
               }
             ].map((faq, index) => (
               <motion.div 
