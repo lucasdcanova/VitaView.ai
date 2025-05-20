@@ -688,7 +688,7 @@ export default function LandingPage() {
       </section>
       
       {/* Simulação de Relatórios Section */}
-      <section id="demonstracoes" className="py-16 mt-[0] bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      <section id="demonstracoes" className="py-16 mt-[0] bg-gradient-to-br from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
@@ -1111,7 +1111,7 @@ export default function LandingPage() {
       </section>
       
       {/* Feature Showcase Section */}
-      <section className="py-20 bg-primary-50 relative overflow-hidden">
+      <section className="py-20 bg-[#A0D8EF] relative overflow-hidden">
         <div className="absolute left-0 right-0 top-0 h-24 bg-gradient-to-b from-white to-transparent"></div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -1532,7 +1532,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it Works Section */}
-      <section id="como-funciona" className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+      <section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute left-0 top-20 w-72 h-72 bg-blue-50 rounded-full opacity-40 blur-3xl"></div>
@@ -1681,7 +1681,7 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      <section id="beneficios" className="pt-12 pb-24 bg-[#152D48] text-white relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
@@ -1874,7 +1874,7 @@ export default function LandingPage() {
 
       {/* For Whom Section */}
       {/* Seção: Para quem é o VitaView AI */}
-      <section id="para-quem" className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#5AADBF] to-[#448C9B] text-white relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -left-20 bottom-0 w-96 h-96 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
@@ -2121,7 +2121,7 @@ export default function LandingPage() {
       </section>
 
       {/* Nova seção de demonstrações interativas */}
-      <section id="demonstracoes" className="py-20 bg-white relative overflow-hidden">
+      <section id="demonstracoes" className="py-20 bg-[#A0D8EF] relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -2423,7 +2423,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="depoimentos" className="py-20 bg-gray-50 relative overflow-hidden">
+      <section id="depoimentos" className="py-20 bg-[#A5E1D2] relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-10 w-72 h-72 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
@@ -2564,7 +2564,7 @@ export default function LandingPage() {
       </section>
 
       {/* Seção FAQ Accordions */}
-      <section id="faq" className="py-20 bg-white relative overflow-hidden">
+      <section id="faq" className="py-20 bg-gradient-to-b from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-20 w-64 h-64 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
