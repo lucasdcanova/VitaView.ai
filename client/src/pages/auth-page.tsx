@@ -149,18 +149,18 @@ export default function AuthPage() {
       {/* Left side - Form */}
       <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4">
         {/* Cabeçalho com logo VitaView acima do card */}
-        <div className="w-full max-w-md mb-6 flex flex-col items-center">
+        <div className="w-full max-w-md mb-0 flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 mb-2"
+            className="flex items-center gap-3 mb-0"
           >
-            <div className="flex justify-center w-full my-4">
+            <div className="flex justify-center w-full my-0">
               <img 
                 src="/assets/vitaview_ai_transparent_2k.png" 
                 alt="VitaView AI Logo" 
-                className="h-48 object-contain" 
+                className="h-44 object-contain mb-0" 
                 onError={(e) => {
                   console.error("Erro ao carregar logo:", e);
                   e.currentTarget.onerror = null;
