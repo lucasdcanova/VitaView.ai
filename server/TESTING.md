@@ -1,6 +1,6 @@
-# Testing the Hemolog AI Pipeline
+# Testing the VitaView AI Pipeline
 
-This guide explains how to test the dual AI pipeline that powers Hemolog's exam analysis.
+This guide explains how to test the dual AI pipeline that powers VitaView's exam analysis.
 
 ## Prerequisites
 

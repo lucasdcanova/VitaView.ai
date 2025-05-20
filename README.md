@@ -1,6 +1,6 @@
-# Hemolog - Plataforma de Análise Bioquímica com IA
+# VitaView AI - Plataforma de Análise Bioquímica com IA
 
-Hemolog é uma plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos, fornecendo insights personalizados e acompanhamento de tendências de saúde.
+VitaView AI é uma plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos, fornecendo insights personalizados e acompanhamento de tendências de saúde.
 
 ## Funcionalidades Principais
 
@@ -24,7 +24,7 @@ A aplicação utiliza um pipeline de IA de duas etapas:
 1. **Extração de dados (Gemini)**: Converte documentos médicos em dados estruturados
 2. **Análise contextual (OpenAI)**: Interpreta os dados extraídos para fornecer insights médicos
 
-## Pipeline de IA
+## Pipeline de IA do VitaView
 
 O pipeline de processamento opera em duas etapas:
 

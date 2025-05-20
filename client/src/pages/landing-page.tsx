@@ -2734,7 +2734,7 @@ export default function LandingPage() {
                 >
                   <Activity className="w-6 h-6" />
                 </motion.div>
-                <span className="text-xl font-bold text-white">Hemolog</span>
+                <span className="text-xl font-bold text-white">VitaView AI</span>
               </div>
               <p className="max-w-xs">
                 A evolução da sua saúde começa com o entendimento dos seus exames.
@@ -2857,7 +2857,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <p>&copy; {new Date().getFullYear()} Hemolog. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} VitaView AI. Todos os direitos reservados.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               {[
                 { 

@@ -1,10 +1,10 @@
-# Hemolog AI Processing Pipeline
+# VitaView AI Processing Pipeline
 
-This directory contains the implementation of Hemolog's dual AI processing pipeline for medical exam analysis.
+This directory contains the implementation of VitaView's dual AI processing pipeline for medical exam analysis.
 
 ## Architecture Overview
 
-The Hemolog AI pipeline uses a two-stage approach to maximize accuracy and comprehensive analysis:
+The VitaView AI pipeline uses a two-stage approach to maximize accuracy and comprehensive analysis:
 
 1. **Extraction Stage** (Gemini API)
    - Processes raw medical documents (PDFs, images)
