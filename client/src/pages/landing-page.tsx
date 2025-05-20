@@ -1681,7 +1681,7 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section id="beneficios" className="pt-12 pb-24 bg-[#152D48] text-white relative overflow-hidden">
+      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
