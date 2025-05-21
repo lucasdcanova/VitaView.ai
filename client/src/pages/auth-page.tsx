@@ -158,13 +158,13 @@ export default function AuthPage() {
           >
             <div className="flex justify-center w-full my-0">
               <img 
-                src="/assets/vitaview_ai_transparent_2k.png" 
+                src="/assets/vitaview_logo_only_2k.png" 
                 alt="VitaView AI Logo" 
-                className="h-44 object-contain mb-0" 
+                className="h-24 object-contain mb-0" 
                 onError={(e) => {
                   console.error("Erro ao carregar logo:", e);
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/vitaview-logo.svg";
+                  e.currentTarget.src = "/assets/vitaview_logo_only_2k.png";
                 }}
               />
             </div>
