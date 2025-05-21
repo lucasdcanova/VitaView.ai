@@ -410,10 +410,10 @@ export default function AuthPage() {
           {/* Title section - Removido o logo grande do topo */}
           <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              <span className="text-primary-600">Sua saúde,</span> <span className="text-primary-800">nosso foco</span>
+              <span className="text-primary-600">Mais controle,</span> <span className="text-primary-800">menos papel</span>
             </h2>
             <p className="text-lg text-gray-600 mb-2">
-              Mais controle, menos papel: sua saúde digital e integrada.
+              Todos os seus exames e informações de saúde reunidos em um só lugar, sempre ao seu alcance.
             </p>
           </div>
           
