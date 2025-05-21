@@ -413,7 +413,7 @@ export default function AuthPage() {
               <span className="text-primary-600">Sua saúde,</span> <span className="text-primary-800">nosso foco</span>
             </h2>
             <p className="text-lg text-gray-600 mb-2">
-              Transforme dados em ações com nossa análise avançada de exames laboratoriais.
+              Mais controle, menos papel: sua saúde digital e integrada.
             </p>
           </div>
           
