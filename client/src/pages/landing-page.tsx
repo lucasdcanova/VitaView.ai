@@ -205,9 +205,8 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold tracking-tight">
-                  <span className="text-[#1E3A5F]">Vita</span>
-                  <span className="text-[#448C9B]">View</span>
-                  <span className="text-[#1E3A5F] text-xl ml-1">AI</span>
+                  <span className="text-[#1E3A5F]">VitaView</span>
+                  <span className="text-[#448C9B] text-xl ml-1">AI</span>
                 </span>
 
               </div>
@@ -276,7 +275,7 @@ export default function LandingPage() {
 
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              <span className="text-[#1E3A5F] tracking-tight">VitaView</span> <span className="text-[#448C9B]">AI</span>: Entenda seus exames com clareza e precisão
+              <span className="text-[#1E3A5F] tracking-tight">VitaView</span><span className="text-[#448C9B] ml-1">AI</span>: Entenda seus exames com clareza e precisão
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
