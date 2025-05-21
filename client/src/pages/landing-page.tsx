@@ -279,7 +279,7 @@ export default function LandingPage() {
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
-              Transforme seus exames médicos em informações compreensíveis. Faça upload em PDF ou imagem e obtenha análises detalhadas, alertas personalizados e acompanhamento visual da sua saúde.
+              Mais controle, menos papel: sua saúde digital e integrada. Faça upload em PDF ou imagem e obtenha análises detalhadas, alertas personalizados e acompanhamento visual da sua saúde.
             </p>
             
             {/* Benefícios em lista */}
