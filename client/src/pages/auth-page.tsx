@@ -157,16 +157,21 @@ export default function AuthPage() {
             className="flex items-center gap-3 mb-0"
           >
             <div className="flex justify-center w-full my-0">
-              <img 
-                src="/assets/vitaview_logo_only_2k.png" 
-                alt="VitaView AI Logo" 
-                className="h-24 object-contain mb-0" 
-                onError={(e) => {
-                  console.error("Erro ao carregar logo:", e);
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/assets/vitaview_logo_only_2k.png";
-                }}
-              />
+              <div className="flex flex-col items-center">
+                <img 
+                  src="/assets/vitaview_logo_icon.png" 
+                  alt="VitaView AI Logo" 
+                  className="h-20 w-auto object-contain mb-2" 
+                  onError={(e) => {
+                    console.error("Erro ao carregar logo:", e);
+                    e.currentTarget.onerror = null;
+                  }}
+                />
+                <div className="text-center mt-2">
+                  <span className="font-semibold text-[#1E3A5F] text-2xl">VitaView</span>
+                  <span className="font-semibold text-[#448C9B] text-2xl">AI</span>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

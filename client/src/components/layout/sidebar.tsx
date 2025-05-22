@@ -54,11 +54,11 @@ export default function Sidebar(props: SidebarProps) {
       }`}
     >
       <div className="p-4 flex items-center border-b border-gray-100">
-        <div className="w-10 h-10 flex items-center justify-center mr-3">
+        <div className="w-12 h-12 flex items-center justify-center mr-3">
           <img 
-            src="/assets/vitaview_logo_new.png" 
+            src="/assets/vitaview_logo_icon.png" 
             alt="VitaView AI Logo" 
-            className="h-10 w-auto" 
+            className="w-12 h-auto" 
             onError={(e) => {
               console.error("Erro ao carregar logo:", e);
               e.currentTarget.onerror = null;
@@ -66,7 +66,8 @@ export default function Sidebar(props: SidebarProps) {
           />
         </div>
         <div>
-          <span className="font-semibold text-[#1E3A5F] text-xl">VitaView AI</span>
+          <span className="font-semibold text-[#1E3A5F] text-xl">VitaView</span>
+          <span className="font-semibold text-[#448C9B] text-xl">AI</span>
         </div>
       </div>
       
