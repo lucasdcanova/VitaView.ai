@@ -154,29 +154,29 @@ export default function AuthPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 mb-10"
+            className="flex items-center gap-3 mb-5"
           >
-            <div className="flex justify-center w-full my-8">
+            <div className="flex justify-center w-full my-4">
               <div className="flex flex-col items-center">
                 <img 
                   src="/assets/vitaview_logo_icon.png" 
                   alt="VitaView AI Logo" 
-                  className="h-24 w-auto object-contain mb-3" 
+                  className="h-20 w-auto object-contain mb-2" 
                   onError={(e) => {
                     console.error("Erro ao carregar logo:", e);
                     e.currentTarget.onerror = null;
                   }}
                 />
-                <div className="text-center mt-3 mb-3">
-                  <span className="font-semibold text-[#1E3A5F] text-3xl">VitaView</span>
-                  <span className="font-semibold text-[#448C9B] text-3xl">AI</span>
+                <div className="text-center mt-2 mb-2">
+                  <span className="font-semibold text-[#1E3A5F] text-2xl">VitaView</span>
+                  <span className="font-semibold text-[#448C9B] text-2xl">AI</span>
                 </div>
               </div>
             </div>
           </motion.div>
         </div>
 
-        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative mt-6">
+        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative mt-3">
           {/* Banner de branding no topo do card */}
           <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-2 px-4 text-center">
             <span className="text-white font-medium text-sm">Sua plataforma de saúde inteligente</span>
