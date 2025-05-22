@@ -147,7 +147,7 @@ export default function AuthPage() {
       </Link>
       
       {/* Left side - Form */}
-      <div className="md:w-1/2 w-full flex flex-col justify-center items-center p-4 md:min-h-screen">
+      <div className="md:w-3/5 w-full flex flex-col justify-center items-center p-6 min-h-screen">
         {/* Cabeçalho com logo VitaView acima do card */}
         <div className="w-full max-w-md mb-0 flex flex-col items-center">
           <motion.div
@@ -410,7 +410,7 @@ export default function AuthPage() {
       </div>
       
       {/* Right side - Hero with interactive graphics */}
-      <div className="md:w-1/2 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden md:min-h-screen">
+      <div className="md:w-2/5 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden min-h-screen">
         <div className="max-w-lg">
           {/* Title section - Removido o logo grande do topo */}
           <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
