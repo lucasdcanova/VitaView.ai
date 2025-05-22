@@ -54,13 +54,16 @@ export default function Sidebar(props: SidebarProps) {
       }`}
     >
       <div className="p-4 flex items-center border-b border-gray-100">
-        <div className="w-10 h-10 text-white flex items-center justify-center mr-3">
-          <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10,40 C30,20 70,20 90,40 C100,50 100,65 90,75 C70,95 30,95 10,75 C0,65 0,50 10,40 Z" fill="#1E3A5F"/>
-            <path d="M90,40 C100,50 100,65 90,75 C70,95 45,95 25,75 C45,50 65,35 90,40 Z" fill="#448C9B"/>
-            <circle cx="50" cy="55" r="20" fill="#1E3A5F"/>
-            <circle cx="50" cy="55" r="15" fill="#FFFFFF"/>
-          </svg>
+        <div className="w-10 h-10 flex items-center justify-center mr-3">
+          <img 
+            src="/assets/vitaview_logo_new.png" 
+            alt="VitaView AI Logo" 
+            className="h-10 w-auto" 
+            onError={(e) => {
+              console.error("Erro ao carregar logo:", e);
+              e.currentTarget.onerror = null;
+            }}
+          />
         </div>
         <div>
           <span className="font-semibold text-[#1E3A5F] text-xl">VitaView AI</span>
