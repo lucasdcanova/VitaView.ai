@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 
 // Componentes do Stripe
 import { loadStripe } from '@stripe/stripe-js';
@@ -319,7 +319,17 @@ const SubscriptionPlans = () => {
 
   return (
     <div className="container mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Planos de Assinatura</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar ao Dashboard
+        </Button>
+        <h1 className="text-3xl font-bold">Planos de Assinatura</h1>
+      </div>
       
       {hasActiveSubscription && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
