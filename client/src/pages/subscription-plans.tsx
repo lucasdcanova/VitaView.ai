@@ -185,11 +185,9 @@ export default function SubscriptionPlansPage() {
                 <CardContent className="flex-grow">
                   <div className="mb-4">
                     <span className="text-3xl font-bold">
-                      {plan.price === 0 ? 'Grátis' : 
-                       selectedCategory === 'clinic' || selectedCategory === 'hospital' ? 'Sob consulta' :
-                       `R$${(plan.price / 100).toFixed(2)}`}
+                      {plan.price === 0 ? 'Grátis' : `R$${(plan.price / 100).toFixed(2)}`}
                     </span>
-                    {plan.price > 0 && selectedCategory === 'individual' && (
+                    {plan.price > 0 && (
                       <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
                     )}
                   </div>
