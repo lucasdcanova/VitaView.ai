@@ -372,10 +372,10 @@ const SubscriptionPlans = () => {
               <div className="mb-4">
                 <span className="text-3xl font-bold">
                   {plan.price === 0 ? 'Grátis' : 
-                   plan.name === 'Consultório médico' || plan.name === 'Hospitalar' ? 'Sob consulta' :
+                   plan.name.includes('Consultório') || plan.name.includes('Hospitalar') || plan.name.includes('médico') ? 'Sob consulta' :
                    `R$${(plan.price / 100).toFixed(2)}`}
                 </span>
-                {plan.price > 0 && plan.name !== 'Consultório médico' && plan.name !== 'Hospitalar' && (
+                {plan.price > 0 && !plan.name.includes('Consultório') && !plan.name.includes('Hospitalar') && !plan.name.includes('médico') && (
                   <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
                 )}
               </div>
