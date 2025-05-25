@@ -84,82 +84,18 @@ export default function SubscriptionPlansPage() {
     }
   ];
 
-  // Category Selection View
-  if (!selectedCategory) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao Dashboard
-          </Button>
-          <h1 className="text-3xl font-bold">Escolha seu Plano</h1>
-        </div>
-        
-        {hasActiveSubscription && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-center">
-            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-            <p>
-              Você já possui uma assinatura ativa: <strong>{userSubscription?.plan?.name}</strong>.
-              Para trocar de plano, primeiro cancele sua assinatura atual.
-            </p>
-          </div>
-        )}
-
-        <p className="text-lg text-muted-foreground mb-8">
-          Selecione a categoria que melhor se adequa às suas necessidades:
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {categories.map((category) => {
-            const IconComponent = category.icon;
-            return (
-              <Card 
-                key={category.id}
-                className={`cursor-pointer transition-all duration-200 ${category.color}`}
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 p-3 rounded-full bg-white shadow-sm">
-                    <IconComponent className="h-8 w-8 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{category.title}</CardTitle>
-                  <CardDescription className="text-base">
-                    {category.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <Button className="w-full">
-                    Ver Planos
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Plans Display View
-  const selectedCategoryInfo = categories.find(cat => cat.id === selectedCategory);
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-8">
         <Button
           variant="ghost"
-          onClick={() => setSelectedCategory(null)}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar às Categorias
+          Voltar ao Dashboard
         </Button>
-        <h1 className="text-3xl font-bold">{selectedCategoryInfo?.title}</h1>
+        <h1 className="text-3xl font-bold">Escolha seu Plano</h1>
       </div>
       
       {hasActiveSubscription && (
@@ -171,65 +107,129 @@ export default function SubscriptionPlansPage() {
           </p>
         </div>
       )}
+
+      <p className="text-lg text-muted-foreground mb-8">
+        Selecione a categoria que melhor se adequa às suas necessidades:
+      </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <Card key={plan.id} className={`flex flex-col ${plan.name === 'Individual' ? 'border-primary' : ''}`}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>{plan.name}</CardTitle>
-                {plan.name === 'Individual' && (
-                  <Badge variant="outline" className="bg-primary text-primary-foreground">Popular</Badge>
-                )}
-              </div>
-              <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="mb-4">
-                <span className="text-3xl font-bold">
-                  {plan.price === 0 ? 'Grátis' : 
-                   selectedCategory === 'clinic' || selectedCategory === 'hospital' ? 'Sob consulta' :
-                   `R$${(plan.price / 100).toFixed(2)}`}
-                </span>
-                {plan.price > 0 && selectedCategory === 'individual' && (
-                  <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
-                )}
-              </div>
-              
-              <ul className="space-y-2">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardContent className="pt-0">
-              {plan.name === 'Gratuito' ? (
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  disabled={hasActiveSubscription}
-                >
-                  {hasActiveSubscription ? 'Plano Atual' : 'Plano Atual'}
-                </Button>
-              ) : selectedCategory === 'clinic' || selectedCategory === 'hospital' ? (
-                <Button className="w-full" variant="outline">
-                  Entrar em Contato
-                </Button>
-              ) : (
+      {/* Categories Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {categories.map((category) => {
+          const IconComponent = category.icon;
+          const isSelected = selectedCategory === category.id;
+          return (
+            <Card 
+              key={category.id}
+              className={`cursor-pointer transition-all duration-200 ${
+                isSelected 
+                  ? 'ring-2 ring-primary border-primary bg-primary/5' 
+                  : category.color
+              }`}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              <CardHeader className="text-center">
+                <div className={`mx-auto mb-4 p-3 rounded-full shadow-sm ${
+                  isSelected ? 'bg-primary/10' : 'bg-white'
+                }`}>
+                  <IconComponent className={`h-8 w-8 ${
+                    isSelected ? 'text-primary' : 'text-primary'
+                  }`} />
+                </div>
+                <CardTitle className="text-xl">{category.title}</CardTitle>
+                <CardDescription className="text-base">
+                  {category.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
                 <Button 
                   className="w-full"
-                  disabled={hasActiveSubscription}
+                  variant={isSelected ? "default" : "outline"}
                 >
-                  {hasActiveSubscription ? 'Indisponível' : 'Assinar Agora'}
+                  {isSelected ? 'Selecionado' : 'Ver Planos'}
                 </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Plans Section - Show when category is selected */}
+      {selectedCategory && (
+        <div className="border-t pt-8">
+          <div className="flex items-center gap-4 mb-6">
+            <h2 className="text-2xl font-bold">
+              Planos - {categories.find(cat => cat.id === selectedCategory)?.title}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedCategory(null)}
+              className="text-muted-foreground"
+            >
+              Limpar seleção
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {plans.map((plan) => (
+              <Card key={plan.id} className={`flex flex-col ${plan.name === 'Individual' ? 'border-primary' : ''}`}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle>{plan.name}</CardTitle>
+                    {plan.name === 'Individual' && (
+                      <Badge variant="outline" className="bg-primary text-primary-foreground">Popular</Badge>
+                    )}
+                  </div>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold">
+                      {plan.price === 0 ? 'Grátis' : 
+                       selectedCategory === 'clinic' || selectedCategory === 'hospital' ? 'Sob consulta' :
+                       `R$${(plan.price / 100).toFixed(2)}`}
+                    </span>
+                    {plan.price > 0 && selectedCategory === 'individual' && (
+                      <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                    )}
+                  </div>
+                  
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardContent className="pt-0">
+                  {plan.name === 'Gratuito' ? (
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      disabled={hasActiveSubscription}
+                    >
+                      {hasActiveSubscription ? 'Plano Atual' : 'Plano Atual'}
+                    </Button>
+                  ) : selectedCategory === 'clinic' || selectedCategory === 'hospital' ? (
+                    <Button className="w-full" variant="outline">
+                      Entrar em Contato
+                    </Button>
+                  ) : (
+                    <Button 
+                      className="w-full"
+                      disabled={hasActiveSubscription}
+                    >
+                      {hasActiveSubscription ? 'Indisponível' : 'Assinar Agora'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
