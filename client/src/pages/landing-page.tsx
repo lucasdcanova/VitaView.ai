@@ -1637,12 +1637,7 @@ export default function LandingPage() {
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
           <div className="absolute left-1/3 -top-48 w-64 h-64 bg-green-50 rounded-full opacity-30 blur-3xl"></div>
           
-          {/* Padrão geométrico sutil */}
-          <div className="hidden lg:block absolute left-10 top-40 w-32 h-32">
-            <div className="w-4 h-4 rounded-full bg-primary-100 absolute top-0 left-0"></div>
-            <div className="w-2 h-2 rounded-full bg-blue-100 absolute top-10 left-10"></div>
-            <div className="w-6 h-6 rounded-full bg-green-100 absolute top-20 left-20"></div>
-          </div>
+
         </div>
       
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
