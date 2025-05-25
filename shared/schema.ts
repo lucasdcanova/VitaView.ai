@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  role: text("role").default("user").notNull(), // 'user', 'admin'
 });
 
 // Profiles schema

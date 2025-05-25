@@ -22,6 +22,7 @@ import HealthTrends from "@/pages/health-trends-new";
 import Home from "@/pages/home";
 import SubscriptionPlans from "@/pages/subscription-plans";
 import SubscriptionManagement from "@/pages/subscription-management";
+import AdminPanel from "@/pages/admin-panel";
 import QuickSummaryPage from "@/pages/quick-summary-page";
 
 function Router() {
