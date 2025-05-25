@@ -84,11 +84,12 @@ export default function SubscriptionPlansPage() {
   const plans = selectedCategory ? getPlansForCategory(selectedCategory) : [];
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
-  const hasActiveSubscription = userSubscription && 
-    'subscription' in userSubscription && 
-    'plan' in userSubscription && 
+  // Verificar se o usuário tem uma assinatura ativa
+  const hasActiveSubscription = Boolean(
+    userSubscription && 
     userSubscription.subscription && 
-    userSubscription.plan;
+    userSubscription.plan
+  );
     
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
@@ -251,7 +252,7 @@ export default function SubscriptionPlansPage() {
                     <Button 
                       className="w-full" 
                       variant="outline"
-                      disabled={hasActiveSubscription}
+                      disabled={Boolean(hasActiveSubscription)}
                     >
                       {hasActiveSubscription ? 'Plano Atual' : 'Plano Atual'}
                     </Button>
@@ -262,7 +263,7 @@ export default function SubscriptionPlansPage() {
                   ) : (
                     <Button 
                       className="w-full bg-[#1E3A5F] hover:bg-[#48C9B0] text-white"
-                      disabled={hasActiveSubscription}
+                      disabled={Boolean(hasActiveSubscription)}
                       onClick={() => handleStartPayment(plan.id)}
                     >
                       {hasActiveSubscription ? 'Indisponível' : 'Assinar Agora'}
