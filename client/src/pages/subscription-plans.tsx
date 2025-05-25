@@ -253,10 +253,25 @@ const SubscriptionPlans = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   // Buscar planos de assinatura disponíveis
-  const { data: plans, isLoading } = useQuery<SubscriptionPlan[]>({
+  const { data: allPlans, isLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ['/api/subscription-plans'],
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
+
+  // Filtrar planos duplicados mantendo apenas um de cada nome
+  const plans = React.useMemo(() => {
+    if (!allPlans) return [];
+    
+    const uniquePlans = new Map<string, SubscriptionPlan>();
+    
+    allPlans.forEach(plan => {
+      if (!uniquePlans.has(plan.name) || uniquePlans.get(plan.name)!.id < plan.id) {
+        uniquePlans.set(plan.name, plan);
+      }
+    });
+    
+    return Array.from(uniquePlans.values());
+  }, [allPlans]);
 
   // Buscar assinatura atual do usuário
   const { data: userSubscription } = useQuery({
