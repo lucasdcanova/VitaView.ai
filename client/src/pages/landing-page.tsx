@@ -2588,17 +2588,118 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <p className="text-lg text-white text-opacity-90 mb-6">
+            <p className="text-lg text-white text-opacity-90 mb-8">
               Ainda tem dúvidas? Entre em contato com nossa equipe de suporte.
             </p>
+            
+            {/* Email contact card */}
             <motion.div
+              className="inline-flex items-center justify-center mb-8"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white">
-                <MessageSquare className="mr-2 h-5 w-5" /> Fale Conosco
-              </Button>
+              <a
+                href="mailto:contato@vitaview.ai"
+                className="group flex items-center space-x-4 bg-white bg-opacity-10 backdrop-blur-sm px-8 py-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300"
+              >
+                <div className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 rounded-full group-hover:bg-opacity-30 transition-colors">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="text-sm text-white text-opacity-80 group-hover:text-opacity-90 transition-colors">
+                    Envie-nos um email
+                  </div>
+                  <div className="text-lg font-semibold text-white group-hover:text-teal-200 transition-colors">
+                    contato@vitaview.ai
+                  </div>
+                </div>
+                <div className="ml-2">
+                  <svg
+                    className="w-5 h-5 text-white text-opacity-60 group-hover:text-teal-200 group-hover:translate-x-1 transition-all"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </div>
+              </a>
             </motion.div>
+
+            {/* Support information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-center"
+              >
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-white font-semibold mb-1">Resposta Rápida</h4>
+                <p className="text-white text-opacity-80 text-sm">
+                  Em até 24h nos dias úteis
+                </p>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-center"
+              >
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-white font-semibold mb-1">Equipe Especializada</h4>
+                <p className="text-white text-opacity-80 text-sm">
+                  Profissionais em saúde e tecnologia
+                </p>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 className="text-white font-semibold mb-1">Suporte Completo</h4>
+                <p className="text-white text-opacity-80 text-sm">
+                  Dúvidas técnicas e de uso
+                </p>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -2886,133 +2987,7 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Contact Section */}
-      <section className="bg-gradient-to-r from-primary-50 to-teal-50 py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Entre em Contato
-            </h2>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Tem dúvidas sobre nossos serviços ou precisa de suporte? Nossa equipe está pronta para ajudar você.
-            </p>
-            
-            <motion.div
-              className="inline-flex items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <a
-                href="mailto:contato@vitaview.ai"
-                className="group flex items-center space-x-3 bg-white px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
-              >
-                <div className="flex items-center justify-center w-12 h-12 bg-primary-100 rounded-full group-hover:bg-primary-200 transition-colors">
-                  <svg
-                    className="w-6 h-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <div className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">
-                    Envie-nos um email
-                  </div>
-                  <div className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                    contato@vitaview.ai
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </div>
-              </a>
-            </motion.div>
-            
-            {/* Additional contact info */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-center"
-              >
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Suporte Rápido</h3>
-                <p className="text-gray-600 text-sm">
-                  Respondemos em até 24 horas durante dias úteis
-                </p>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-center"
-              >
-                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Equipe Especializada</h3>
-                <p className="text-gray-600 text-sm">
-                  Profissionais qualificados em saúde e tecnologia
-                </p>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="text-center"
-              >
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Dúvidas Técnicas</h3>
-                <p className="text-gray-600 text-sm">
-                  Ajuda com integração e uso da plataforma
-                </p>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+
     </div>
   );
 }
