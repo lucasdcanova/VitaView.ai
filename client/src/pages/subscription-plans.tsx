@@ -96,10 +96,26 @@ export default function SubscriptionPlansPage() {
     window.location.href = '/subscription-management';
   };
   
+  // Referência para a seção de planos
+  const plansRef = React.useRef<HTMLDivElement>(null);
+  
   const handleStartPayment = (planId: number) => {
     setSelectedPlanId(planId);
     setIsPaymentDialogOpen(true);
   };
+  
+  // Função para rolar para a seção de planos quando uma categoria é selecionada
+  React.useEffect(() => {
+    if (selectedCategory && plansRef.current) {
+      // Aguardar um momento para permitir que a renderização dos planos ocorra
+      setTimeout(() => {
+        plansRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [selectedCategory]);
 
   const categories = [
     {
@@ -201,7 +217,7 @@ export default function SubscriptionPlansPage() {
 
       {/* Plans Section - Show when category is selected */}
       {selectedCategory && (
-        <div className="border-t pt-8">
+        <div className="border-t pt-8" ref={plansRef}>
           <div className="flex items-center gap-4 mb-6">
             <h2 className="text-2xl font-bold">
               Planos - {categories.find(cat => cat.id === selectedCategory)?.title}
