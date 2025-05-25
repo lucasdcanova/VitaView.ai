@@ -144,46 +144,8 @@ export default function LandingPage() {
         <div className="absolute top-1/3 -left-32 w-80 h-80 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
         <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-indigo-100 rounded-full opacity-15 blur-3xl"></div>
         
-        {/* Subtle animated elements with reduced size and opacity */}
-        <motion.div 
-          className="absolute top-[15%] left-[25%] w-6 h-6 bg-primary-300 rounded-full opacity-15"
-          animate={{ 
-            y: [0, 15, 0],
-            x: [0, 10, 0]
-          }}
-          transition={{ 
-            duration: 8,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        ></motion.div>
-        <motion.div 
-          className="absolute top-[28%] right-[30%] w-4 h-4 bg-blue-300 rounded-md opacity-15"
-          animate={{ 
-            y: [0, -12, 0],
-            x: [0, -8, 0]
-          }}
-          transition={{ 
-            duration: 10,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        ></motion.div>
-        <motion.div 
-          className="absolute bottom-[35%] left-[35%] w-5 h-5 bg-indigo-300 rounded-full opacity-15"
-          animate={{ 
-            y: [0, 15, 0],
-            x: [0, -6, 0]
-          }}
-          transition={{ 
-            duration: 12,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        ></motion.div>
+
+
       </div>
       
       {/* Navbar - improved with backdrop filter and better shadow */}
@@ -1712,7 +1674,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                icon: <Clock className="w-6 h-6 text-primary-600" />,
+                icon: <Clock className="w-6 h-6 text-[#1E3A5F]" />,
                 title: "Histórico cronológico",
                 description: "Seus exames organizados automaticamente por data, com categorização inteligente para fácil acesso.",
                 delay: 0
