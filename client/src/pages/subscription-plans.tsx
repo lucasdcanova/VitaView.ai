@@ -142,10 +142,15 @@ export default function SubscriptionPlansPage() {
               </CardHeader>
               <CardContent className="text-center">
                 <Button 
-                  className="w-full"
-                  variant={isSelected ? "default" : "outline"}
+                  className={`w-full transition-all duration-200 ${
+                    isSelected 
+                      ? 'bg-primary text-primary-foreground shadow-lg' 
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transform hover:scale-105'
+                  }`}
+                  variant={isSelected ? "default" : "default"}
+                  size="lg"
                 >
-                  {isSelected ? 'Selecionado' : 'Ver Planos'}
+                  {isSelected ? '✓ Selecionado' : 'Ver Planos'}
                 </Button>
               </CardContent>
             </Card>
