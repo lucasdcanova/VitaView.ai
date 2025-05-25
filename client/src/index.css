@@ -13,20 +13,20 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
   
-  /* Azul Profundo - cor principal */
-  --primary: 212 47% 24.5%;
-  --primary-foreground: 210 40% 98%;
+  /* Azul Profundo #1E3A5F - cor principal */
+  --primary: 216 55% 25%;
+  --primary-foreground: 0 0% 100%;
   
-  /* Verde-Azulado - cor secundária */
-  --secondary: 187 36% 44%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  /* Turquesa Suave #48C9B0 - cor secundária */
+  --secondary: 168 45% 54%;
+  --secondary-foreground: 216 55% 25%;
   
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
   
   /* Cores Complementares */
-  --accent: 187 36% 75%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 168 45% 75%;
+  --accent-foreground: 216 55% 25%;
   
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
@@ -40,9 +40,9 @@
   --vitaview-primary: #1E3A5F;
   --vitaview-primary-dark: #152D48;
   --vitaview-primary-light: #2A4F7C;
-  --vitaview-secondary: #448C9B;
-  --vitaview-secondary-dark: #336D7A;
-  --vitaview-secondary-light: #5AADBF;
+  --vitaview-secondary: #48C9B0;
+  --vitaview-secondary-dark: #3BA393;
+  --vitaview-secondary-light: #6BD4C1;
   --vitaview-accent-blue: #A0D8EF;
   --vitaview-accent-green: #A5E1D2;
 }
