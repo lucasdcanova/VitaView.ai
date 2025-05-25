@@ -1968,10 +1968,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-6 h-6 text-primary-600" />
+              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-6 h-6 text-[#1E3A5F]" />
               </div>
-              <h3 className="text-3xl font-bold text-primary-600 mb-2">9/10</h3>
+              <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">9/10</h3>
               <p className="text-gray-700 font-medium">usuários entendem melhor seus exames</p>
             </motion.div>
             
@@ -1984,10 +1984,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-indigo-600" />
+              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-6 h-6 text-[#48C9B0]" />
               </div>
-              <h3 className="text-3xl font-bold text-indigo-600 mb-2">5min</h3>
+              <h3 className="text-3xl font-bold text-[#48C9B0] mb-2">5min</h3>
               <p className="text-gray-700 font-medium">tempo médio para obter interpretação</p>
             </motion.div>
             
@@ -2000,10 +2000,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4, delay: 0.2 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShieldCheck className="w-6 h-6 text-blue-600" />
+              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-6 h-6 text-[#1E3A5F]" />
               </div>
-              <h3 className="text-3xl font-bold text-blue-600 mb-2">100%</h3>
+              <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">100%</h3>
               <p className="text-gray-700 font-medium">seguro e em conformidade com a LGPD</p>
             </motion.div>
           </div>
