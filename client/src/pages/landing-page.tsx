@@ -2348,34 +2348,50 @@ export default function LandingPage() {
                 name: "Ana Tavares",
                 role: "59 anos, Paciente com diabetes",
                 delay: 0,
-                gradient: "from-primary-600 to-primary-400"
+                gradient: "from-[#1E3A5F] to-[#48C9B0]",
+                avatarBg: "bg-[#E8F8F5]",
+                avatarText: "text-[#1E3A5F]",
+                avatarBorder: "border-[#48C9B0]",
+                image: true
               },
               {
                 quote: "Uso com meus pacientes e ganho tempo nas consultas. Os gráficos ajudam muito na explicação e o histórico evolutivo é um diferencial.",
                 name: "Dr. Marcos Henrique",
                 role: "Geriatra",
                 delay: 0.1,
-                gradient: "from-indigo-600 to-primary-500"
+                gradient: "from-[#48C9B0] to-[#1E3A5F]",
+                avatarBg: "bg-[#E8F8F5]",
+                avatarText: "text-[#1E3A5F]",
+                avatarBorder: "border-[#48C9B0]",
+                image: true
               }
             ].map((testimonial, index) => (
               <motion.div 
                 key={index}
-                className="bg-white rounded-xl shadow-lg overflow-hidden group"
+                className="bg-white rounded-xl shadow-xl overflow-hidden group relative"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: testimonial.delay }}
                 whileHover={{ 
                   y: -10,
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
                 }}
               >
-                {/* Barra gradiente superior */}
-                <div className={`h-2 w-full bg-gradient-to-r ${testimonial.gradient}`}></div>
+                {/* Elementos decorativos de fundo */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#48C9B0]/10 to-transparent rounded-bl-full z-0 opacity-70"></div>
+                {index === 0 ? (
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#1E3A5F]/10 to-transparent rounded-tr-full z-0"></div>
+                ) : (
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#48C9B0]/10 to-transparent rounded-tr-full z-0"></div>
+                )}
                 
-                <div className="p-8">
+                {/* Barra gradiente superior */}
+                <div className={`h-3 w-full bg-gradient-to-r ${testimonial.gradient}`}></div>
+                
+                <div className="p-8 relative z-10">
                   {/* Aspas decorativas */}
-                  <div className="flex justify-start mb-4">
+                  <div className="flex justify-start mb-4 relative">
                     <motion.svg 
                       width="48" 
                       height="48" 
@@ -2387,18 +2403,21 @@ export default function LandingPage() {
                       transition={{ duration: 0.5, delay: testimonial.delay + 0.2 }}
                     >
                       <path d="M14 24H6C6 18.5 7 11.9 14 11V17C11 17.5 10.5 19 10.5 21.5H14V24ZM28 24H20C20 18.5 21 11.9 28 11V17C25 17.5 24.5 19 24.5 21.5H28V24Z" 
-                        className="fill-primary-200"
+                        className={`fill-[${index === 0 ? '#48C9B0' : '#1E3A5F'}]`}
+                        style={{ opacity: 0.3 }}
                       />
                     </motion.svg>
+                    <div className={`absolute w-12 h-1 bg-gradient-to-r ${testimonial.gradient} rounded-full bottom-0 left-0`}></div>
                   </div>
                   
                   {/* Texto do depoimento */}
-                  <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+                  <p className="text-gray-700 mb-8 text-lg leading-relaxed relative">
                     {testimonial.quote}
+                    <span className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#48C9B0]/30 to-transparent rounded-full"></span>
                   </p>
                   
                   <div className="flex items-center">
-                    {/* Avatar gradiente com bordas animadas */}
+                    {/* Avatar com bordas animadas */}
                     <div className="relative">
                       {/* Círculo animado de fundo */}
                       <motion.div 
@@ -2412,13 +2431,26 @@ export default function LandingPage() {
                         }}
                       />
                       
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative z-10 border-2 border-white">
-                        <span className="text-lg font-bold text-gray-700">{testimonial.name.charAt(0)}</span>
-                      </div>
+                      {testimonial.image ? (
+                        <div className={`w-16 h-16 rounded-full ${testimonial.avatarBg} flex items-center justify-center relative z-10 border-3 ${testimonial.avatarBorder} overflow-hidden shadow-lg`}>
+                          {index === 0 ? (
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#48C9B0]/10 to-[#1E3A5F]/10"></div>
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A5F]/10 to-[#48C9B0]/10"></div>
+                          )}
+                          <div className={`w-full h-full rounded-full flex items-center justify-center ${testimonial.avatarText} font-bold text-xl bg-gradient-to-br from-white/90 to-white/70 z-10`}>
+                            {testimonial.name.charAt(0)}{testimonial.name.split(' ')[1]?.charAt(0)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative z-10 border-2 border-white">
+                          <span className="text-lg font-bold text-gray-700">{testimonial.name.charAt(0)}</span>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="ml-4">
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
+                    <div className="ml-5">
+                      <h4 className="font-bold text-[#1E3A5F] text-lg">{testimonial.name}</h4>
                       <p className="text-gray-600 text-sm">{testimonial.role}</p>
                     </div>
                   </div>
