@@ -1035,7 +1035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Stripe payment route for one-time payments
-  app.post("/api/create-payment-intent", ensureAuthenticated, async (req, res) => {
+  app.post("/api/create-payment-intent", async (req, res) => {
     try {
       const { planId } = req.body;
       if (!planId) {
@@ -1053,10 +1053,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: plan.price, // Preço já está em centavos
         currency: "brl",
         metadata: {
-          userId: req.user!.id.toString(),
           planId: planId.toString(),
           planName: plan.name
-        }
+        },
+        payment_method_types: ['card']
       });
       
       res.json({ clientSecret: paymentIntent.client_secret });
