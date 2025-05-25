@@ -50,14 +50,45 @@ import {
   Trash, 
   MoreVertical, 
   Shield, 
-  User
+  UserIcon
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
-import type { User, SubscriptionPlan } from '@shared/schema';
+
+// Interface para usuários
+interface AdminUser {
+  id: number;
+  username: string;
+  fullName: string | null;
+  email: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  phoneNumber: string | null;
+  address: string | null;
+  activeProfileId: number | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  createdAt: string;
+  role?: string;
+}
+
+// Interface para planos
+interface AdminPlan {
+  id: number;
+  name: string;
+  description: string;
+  maxProfiles: number;
+  maxUploadsPerProfile: number;
+  price: number;
+  interval: string;
+  stripePriceId: string | null;
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+}
 
 // Interface para exibição de usuário com detalhes do plano
-interface UserWithSubscription extends User {
+interface UserWithSubscription extends AdminUser {
   subscription?: {
     id: number;
     status: string;
@@ -89,7 +120,7 @@ export default function AdminPanel() {
   });
 
   // Consulta para obter a lista de planos de assinatura
-  const { data: subscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<SubscriptionPlan[]>({ 
+  const { data: subscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<AdminPlan[]>({ 
     queryKey: ['/api/subscription-plans'],
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
@@ -111,8 +142,10 @@ export default function AdminPanel() {
 
   // Filtrar usuários com base no termo de pesquisa
   const filteredUsers = users.filter(user => {
+    if (!user.username && !user.fullName && !user.email) return false;
+    
     const searchableFields = [
-      user.username,
+      user.username || '',
       user.fullName || '',
       user.email || '',
     ].map(field => field.toLowerCase());
@@ -121,7 +154,7 @@ export default function AdminPanel() {
   });
 
   // Função para editar usuário
-  const handleEditUser = async (userData: Partial<User>) => {
+  const handleEditUser = async (userData: Partial<AdminUser>) => {
     if (!selectedUser) return;
     
     try {
@@ -200,6 +233,8 @@ export default function AdminPanel() {
 
   // Função para conceder papel de administrador
   const handleToggleAdminRole = async (user: UserWithSubscription) => {
+    if (!user.role) return;
+    
     const newRole = user.role === 'admin' ? 'user' : 'admin';
     
     try {
@@ -357,7 +392,7 @@ export default function AdminPanel() {
                                 >
                                   {user.role === 'admin' ? (
                                     <>
-                                      <User className="mr-2 h-4 w-4" />
+                                      <UserIcon className="mr-2 h-4 w-4" />
                                       Remover admin
                                     </>
                                   ) : (

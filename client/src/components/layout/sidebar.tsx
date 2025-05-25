@@ -14,7 +14,8 @@ import {
   TrendingUp,
   CreditCard,
   Store,
-  Zap
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
@@ -194,6 +195,21 @@ export default function Sidebar(props: SidebarProps) {
           <Store className="mr-3 h-5 w-5" />
           <span>Planos</span>
         </Link>
+        
+        {/* Link para o painel administrativo - visível apenas para administradores */}
+        {user?.role === 'admin' && (
+          <Link href="/admin-panel"
+            onClick={handleNavClick}
+            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+              location === '/admin-panel' 
+                ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
+                : 'hover:bg-red-50 text-red-700'
+            }`}
+          >
+            <ShieldCheck className="mr-3 h-5 w-5" />
+            <span>Painel Admin</span>
+          </Link>
+        )}
         
         <button
           onClick={handleLogout}
