@@ -1712,7 +1712,7 @@ export default function LandingPage() {
             ].map((benefit, index) => (
               <motion.div 
                 key={index}
-                className="relative bg-white/95 p-7 rounded-xl shadow-sm overflow-hidden border border-white/20 hover:border-white/50 backdrop-blur-sm group"
+                className="relative bg-white p-7 rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:border-primary-300 group"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
