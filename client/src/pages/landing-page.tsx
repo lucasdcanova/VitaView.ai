@@ -1751,7 +1751,7 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button 
-                className="bg-white hover:bg-primary-50 text-primary-700 border-2 border-primary-600 px-8 py-4 text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                className="bg-[#1E3A5F] hover:bg-[#48C9B0] text-white border-2 border-white px-8 py-4 text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 size="lg"
               >
                 Comece Sua Jornada de Saúde
