@@ -120,10 +120,10 @@ export default function SubscriptionPlansPage() {
           return (
             <Card 
               key={category.id}
-              className={`cursor-pointer transition-all duration-200 ${
+              className={`cursor-pointer transition-all duration-300 ${
                 isSelected 
-                  ? 'ring-2 ring-primary border-primary bg-primary/5' 
-                  : category.color
+                  ? 'ring-2 ring-primary border-primary bg-primary/10 shadow-lg scale-105' 
+                  : `${category.color} opacity-70 hover:opacity-100`
               }`}
               onClick={() => setSelectedCategory(category.id)}
             >
