@@ -371,9 +371,11 @@ const SubscriptionPlans = () => {
             <CardContent className="flex-grow">
               <div className="mb-4">
                 <span className="text-3xl font-bold">
-                  {plan.price === 0 ? 'Grátis' : `R$${(plan.price / 100).toFixed(2)}`}
+                  {plan.price === 0 ? 'Grátis' : 
+                   plan.name === 'Consultório médico' || plan.name === 'Hospitalar' ? 'Sob consulta' :
+                   `R$${(plan.price / 100).toFixed(2)}`}
                 </span>
-                {plan.price > 0 && (
+                {plan.price > 0 && plan.name !== 'Consultório médico' && plan.name !== 'Hospitalar' && (
                   <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
                 )}
               </div>
