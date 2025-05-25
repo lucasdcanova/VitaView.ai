@@ -4,13 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, CheckCircle, ArrowLeft, Users, Building, Hospital } from 'lucide-react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import type { SubscriptionPlan } from '@shared/schema';
 
 type PlanCategory = 'individual' | 'clinic' | 'hospital' | null;
 
 export default function SubscriptionPlansPage() {
-  const navigate = useNavigate();
+  const [location, navigate] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<PlanCategory>(null);
   
   const { data: user } = useQuery({ queryKey: ['/api/user'] });
