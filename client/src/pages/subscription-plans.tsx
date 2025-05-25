@@ -3,19 +3,38 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CheckCircle, ArrowLeft, Users, Building, Hospital } from 'lucide-react';
+import { Check, CheckCircle, ArrowLeft, Users, Building, Hospital, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import type { SubscriptionPlan } from '@shared/schema';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { StripePayment } from '@/components/ui/stripe-payment';
+
+// Interfaces para as estruturas de dados
+interface UserSubscription {
+  subscription?: {
+    id: number;
+    status: string;
+    currentPeriodEnd: string;
+  };
+  plan?: {
+    id: number;
+    name: string;
+    price: number;
+    interval: string;
+  };
+}
 
 type PlanCategory = 'individual' | 'clinic' | 'hospital' | null;
 
 export default function SubscriptionPlansPage() {
   const [location, navigate] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<PlanCategory>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   
   const { data: user } = useQuery({ queryKey: ['/api/user'] });
   const { data: subscriptionPlans = [] } = useQuery<SubscriptionPlan[]>({ queryKey: ['/api/subscription-plans'] });
-  const { data: userSubscription } = useQuery({ queryKey: ['/api/user-subscription'] });
+  const { data: userSubscription = {} as UserSubscription } = useQuery<UserSubscription>({ queryKey: ['/api/user-subscription'] });
 
   // Filter out duplicate plans by name, keeping the most recent one
   const uniquePlans = subscriptionPlans.reduce((acc, plan) => {
@@ -27,8 +46,14 @@ export default function SubscriptionPlansPage() {
     }
     return acc;
   }, [] as SubscriptionPlan[]);
+  
+  // Garantir que features é um array
+  const plansWithFeaturesArray = uniquePlans.map(plan => ({
+    ...plan,
+    features: Array.isArray(plan.features) ? plan.features : []
+  }));
 
-  const allPlans = uniquePlans.filter(plan => plan.isActive);
+  const allPlans = plansWithFeaturesArray.filter(plan => plan.isActive);
 
   // Filter plans based on selected category
   const getPlansForCategory = (category: PlanCategory) => {
@@ -57,8 +82,23 @@ export default function SubscriptionPlansPage() {
   };
 
   const plans = selectedCategory ? getPlansForCategory(selectedCategory) : [];
+  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
-  const hasActiveSubscription = userSubscription?.subscription && userSubscription?.plan;
+  const hasActiveSubscription = userSubscription && 
+    'subscription' in userSubscription && 
+    'plan' in userSubscription && 
+    userSubscription.subscription && 
+    userSubscription.plan;
+    
+  const handlePaymentSuccess = () => {
+    setIsPaymentDialogOpen(false);
+    window.location.href = '/subscription-management';
+  };
+  
+  const handleStartPayment = (planId: number) => {
+    setSelectedPlanId(planId);
+    setIsPaymentDialogOpen(true);
+  };
 
   const categories = [
     {
@@ -198,7 +238,7 @@ export default function SubscriptionPlansPage() {
                   </div>
                   
                   <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
+                    {(plan.features as string[]).map((feature: string, index: number) => (
                       <li key={index} className="flex items-start">
                         <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -221,8 +261,9 @@ export default function SubscriptionPlansPage() {
                     </Button>
                   ) : (
                     <Button 
-                      className="w-full"
+                      className="w-full bg-[#1E3A5F] hover:bg-[#48C9B0] text-white"
                       disabled={hasActiveSubscription}
+                      onClick={() => handleStartPayment(plan.id)}
                     >
                       {hasActiveSubscription ? 'Indisponível' : 'Assinar Agora'}
                     </Button>
@@ -233,6 +274,38 @@ export default function SubscriptionPlansPage() {
           </div>
         </div>
       )}
+
+      {/* Diálogo de Pagamento do Stripe */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Finalizar Assinatura</DialogTitle>
+            <DialogDescription>
+              {selectedPlan && (
+                <div className="mt-2">
+                  <p className="font-medium text-lg">
+                    Plano: {selectedPlan.name}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {(selectedPlan.price === 0) 
+                      ? 'Grátis' 
+                      : `R$${(selectedPlan.price / 100).toFixed(2)}/${selectedPlan.interval === 'month' ? 'mês' : 'ano'}`
+                    }
+                  </p>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPlanId && (
+            <StripePayment 
+              planId={selectedPlanId} 
+              onSuccess={handlePaymentSuccess}
+              onCancel={() => setIsPaymentDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
