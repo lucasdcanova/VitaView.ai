@@ -1739,62 +1739,7 @@ export default function LandingPage() {
             ))}
           </div>
           
-          {/* Estatísticas de impacto */}
-          <div className="mt-24 max-w-5xl mx-auto">
-            <motion.h3 
-              className="text-2xl font-bold text-center text-white mb-12"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              Impacto comprovado na vida dos usuários
-            </motion.h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  number: "93%",
-                  text: "dos usuários relatam melhor entendimento de sua saúde",
-                  icon: <Brain className="w-10 h-10 text-primary-500" />,
-                  delay: 0
-                },
-                {
-                  number: "87%",
-                  text: "aumentaram a confiança durante consultas médicas",
-                  icon: <Users className="w-10 h-10 text-blue-500" />,
-                  delay: 0.2
-                },
-                {
-                  number: "78%",
-                  text: "compartilham regularmente seus relatórios com médicos",
-                  icon: <Share className="w-10 h-10 text-green-500" />,
-                  delay: 0.4
-                },
-              ].map((stat, index) => (
-                <motion.div 
-                  key={index}
-                  className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: stat.delay }}
-                  whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.1)" }}
-                >
-                  <div className="p-8">
-                    <div className="flex justify-center mb-4">
-                      <div className="p-3 bg-gray-50 rounded-full">
-                        {stat.icon}
-                      </div>
-                    </div>
-                    <h4 className="text-4xl font-bold text-center text-primary-600 mb-3">{stat.number}</h4>
-                    <p className="text-center text-gray-600">{stat.text}</p>
-                  </div>
-                  <div className="h-1.5 w-full bg-gradient-to-r from-primary-500 to-primary-300"></div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+
           
           {/* CTA dentro da seção de benefícios */}
           <motion.div 
