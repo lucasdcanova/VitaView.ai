@@ -507,13 +507,17 @@ export default function ExamHistory() {
                     <div className="flex gap-3 ml-auto">
                       <div className="flex rounded-md overflow-hidden border border-gray-200">
                         <Button 
-                          variant="outline"
-                          className={cn(
-                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center !important",
-                            viewMode === "chronological" 
-                              ? "!bg-[#48C9B0] hover:!bg-[#3bb39e] !text-white !border-[#48C9B0]" 
-                              : "!bg-white hover:!bg-gray-50 !text-gray-700 hover:!text-gray-900 !border-gray-200"
-                          )}
+                          variant="ghost"
+                          style={{
+                            backgroundColor: viewMode === "chronological" ? "#48C9B0" : "white",
+                            color: "#374151",
+                            borderRadius: "0",
+                            border: "none",
+                            height: "36px",
+                            padding: "0 16px",
+                            minWidth: "120px"
+                          }}
+                          className="flex items-center justify-center hover:opacity-80"
                           onClick={() => {
                             setViewMode("chronological");
                             setActiveCategory("all");
@@ -523,13 +527,17 @@ export default function ExamHistory() {
                           Cronológico
                         </Button>
                         <Button 
-                          variant="outline"
-                          className={cn(
-                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center !important", 
-                            viewMode === "category" 
-                              ? "!bg-[#48C9B0] hover:!bg-[#3bb39e] !text-white !border-[#48C9B0]" 
-                              : "!bg-white hover:!bg-gray-50 !text-gray-700 hover:!text-gray-900 !border-gray-200"
-                          )}
+                          variant="ghost"
+                          style={{
+                            backgroundColor: viewMode === "category" ? "#48C9B0" : "white",
+                            color: "#374151",
+                            borderRadius: "0",
+                            border: "none",
+                            height: "36px",
+                            padding: "0 16px",
+                            minWidth: "120px"
+                          }}
+                          className="flex items-center justify-center hover:opacity-80"
                           onClick={() => setViewMode("category")}
                         >
                           <Tag className="h-4 w-4 mr-2" />
