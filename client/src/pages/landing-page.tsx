@@ -1972,7 +1972,7 @@ export default function LandingPage() {
                 <Star className="w-6 h-6 text-[#1E3A5F]" />
               </div>
               <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">9/10</h3>
-              <p className="text-gray-700 font-medium">usuários entendem melhor seus exames</p>
+              <p className="text-gray-700 font-medium">Usuários entendem melhor seus exames</p>
             </motion.div>
             
             {/* Estatística 2 */}
@@ -1988,7 +1988,7 @@ export default function LandingPage() {
                 <Clock className="w-6 h-6 text-[#48C9B0]" />
               </div>
               <h3 className="text-3xl font-bold text-[#48C9B0] mb-2">5min</h3>
-              <p className="text-gray-700 font-medium">tempo médio para obter interpretação</p>
+              <p className="text-gray-700 font-medium">Tempo médio para obter interpretação</p>
             </motion.div>
             
             {/* Estatística 3 */}
@@ -2004,7 +2004,7 @@ export default function LandingPage() {
                 <ShieldCheck className="w-6 h-6 text-[#1E3A5F]" />
               </div>
               <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">100%</h3>
-              <p className="text-gray-700 font-medium">seguro e em conformidade com a LGPD</p>
+              <p className="text-gray-700 font-medium">Seguro e em conformidade com a LGPD</p>
             </motion.div>
           </div>
         </div>
