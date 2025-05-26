@@ -509,8 +509,8 @@ export default function ExamHistory() {
                         <Button 
                           variant={viewMode === "chronological" ? "default" : "outline"}
                           className={cn(
-                            "rounded-none border-0 h-9 px-3",
-                            viewMode === "chronological" ? "bg-primary-600 hover:bg-primary-700" : "bg-white"
+                            "rounded-none border-0 h-9 px-4",
+                            viewMode === "chronological" ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50"
                           )}
                           onClick={() => {
                             setViewMode("chronological");
@@ -523,8 +523,8 @@ export default function ExamHistory() {
                         <Button 
                           variant={viewMode === "category" ? "default" : "outline"}
                           className={cn(
-                            "rounded-none border-0 h-9 px-3", 
-                            viewMode === "category" ? "bg-primary-600 hover:bg-primary-700" : "bg-white"
+                            "rounded-none border-0 h-9 px-4", 
+                            viewMode === "category" ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50"
                           )}
                           onClick={() => setViewMode("category")}
                         >
