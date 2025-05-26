@@ -515,7 +515,8 @@ export default function ExamHistory() {
                             border: "none",
                             height: "40px",
                             padding: "0 16px",
-                            minWidth: "120px"
+                            minWidth: "120px",
+                            fontSize: "14px"
                           }}
                           className="flex items-center justify-center hover:opacity-80"
                           onClick={() => {
@@ -535,7 +536,8 @@ export default function ExamHistory() {
                             border: "none",
                             height: "40px",
                             padding: "0 16px",
-                            minWidth: "120px"
+                            minWidth: "120px",
+                            fontSize: "14px"
                           }}
                           className="flex items-center justify-center hover:opacity-80"
                           onClick={() => setViewMode("category")}
@@ -548,9 +550,17 @@ export default function ExamHistory() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button 
-                            variant="outline" 
-                            style={{ height: "40px" }}
-                            className="gap-1 flex items-center"
+                            variant="ghost"
+                            style={{
+                              backgroundColor: "white",
+                              color: "#374151",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              height: "40px",
+                              padding: "0 16px",
+                              fontSize: "14px"
+                            }}
+                            className="flex items-center justify-center hover:opacity-80"
                           >
                             <Filter className="h-4 w-4 mr-1" />
                             Filtros
