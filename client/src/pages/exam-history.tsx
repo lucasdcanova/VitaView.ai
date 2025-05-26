@@ -547,7 +547,11 @@ export default function ExamHistory() {
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="gap-1 h-[40px]">
+                          <Button 
+                            variant="outline" 
+                            style={{ height: "40px" }}
+                            className="gap-1 flex items-center"
+                          >
                             <Filter className="h-4 w-4 mr-1" />
                             Filtros
                             <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
