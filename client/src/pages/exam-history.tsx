@@ -518,7 +518,10 @@ export default function ExamHistory() {
                             setActiveCategory("all");
                           }}
                         >
-                          📅 Cronológico
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H13V1H12V2H4V1H3V2H2C1.45 2 1 2.45 1 3V14C1 14.55 1.45 15 2 15H14C14.55 15 15 14.55 15 14V3C15 2.45 14.55 2 14 2ZM14 14H2V5H14V14ZM3 6H5V8H3V6Z" fill="currentColor"/>
+                          </svg>
+                          Cronológico
                         </button>
                         <button 
                           className={`px-4 h-10 flex items-center gap-2 text-sm font-medium transition-colors ${
@@ -529,7 +532,10 @@ export default function ExamHistory() {
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => setViewMode("category")}
                         >
-                          🏷️ Categorias
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 4C1 2.9 1.9 2 3 2H11C11.55 2 12 2.45 12 3C12 3.55 11.55 4 11 4H3C2.45 4 2 4.45 2 5V13C2 13.55 1.55 14 1 14C0.45 14 0 13.55 0 13V4H1ZM15 6L11 10L7 6H15Z" fill="currentColor"/>
+                          </svg>
+                          Categorias
                         </button>
                       </div>
                       
