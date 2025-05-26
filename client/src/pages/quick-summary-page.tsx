@@ -2,12 +2,23 @@ import QuickSummary from "@/components/ui/quick-summary";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 export default function QuickSummaryPage() {
   const { user } = useAuth();
 
   return (
     <div className="container max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+      <div className="flex items-center justify-between mb-8">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600 hover:text-primary-600">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Dashboard
+          </Button>
+        </Link>
+      </div>
+      
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-primary-900">Gerador de Resumo Rápido</h1>
         <p className="text-lg text-gray-600 mt-2">
