@@ -509,10 +509,10 @@ export default function ExamHistory() {
                         <Button 
                           variant="outline"
                           className={cn(
-                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center",
+                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center !important",
                             viewMode === "chronological" 
-                              ? "bg-[#48C9B0] hover:bg-[#3bb39e] text-white border-[#48C9B0]" 
-                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
+                              ? "!bg-[#48C9B0] hover:!bg-[#3bb39e] !text-white !border-[#48C9B0]" 
+                              : "!bg-white hover:!bg-gray-50 !text-gray-700 hover:!text-gray-900 !border-gray-200"
                           )}
                           onClick={() => {
                             setViewMode("chronological");
@@ -525,10 +525,10 @@ export default function ExamHistory() {
                         <Button 
                           variant="outline"
                           className={cn(
-                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center", 
+                            "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center !important", 
                             viewMode === "category" 
-                              ? "bg-[#48C9B0] hover:bg-[#3bb39e] text-white border-[#48C9B0]" 
-                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
+                              ? "!bg-[#48C9B0] hover:!bg-[#3bb39e] !text-white !border-[#48C9B0]" 
+                              : "!bg-white hover:!bg-gray-50 !text-gray-700 hover:!text-gray-900 !border-gray-200"
                           )}
                           onClick={() => setViewMode("category")}
                         >
