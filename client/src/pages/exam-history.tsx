@@ -513,7 +513,7 @@ export default function ExamHistory() {
                             color: "#374151",
                             borderRadius: "0",
                             border: "none",
-                            height: "36px",
+                            height: "40px",
                             padding: "0 16px",
                             minWidth: "120px"
                           }}
@@ -533,7 +533,7 @@ export default function ExamHistory() {
                             color: "#374151",
                             borderRadius: "0",
                             border: "none",
-                            height: "36px",
+                            height: "40px",
                             padding: "0 16px",
                             minWidth: "120px"
                           }}
