@@ -559,6 +559,7 @@ export default function ExamHistory() {
                               borderRadius: "6px",
                               height: "40px",
                               padding: "0 16px",
+                              width: "120px",
                               fontSize: "14px",
                               display: "flex",
                               alignItems: "center",
