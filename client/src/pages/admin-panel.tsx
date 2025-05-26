@@ -617,17 +617,250 @@ export default function AdminPanel() {
         
         {/* Aba de Configurações */}
         <TabsContent value="settings" className="space-y-4">
+          {/* Configurações Gerais */}
           <Card>
             <CardHeader>
-              <CardTitle>Configurações do Sistema</CardTitle>
+              <CardTitle>Configurações Gerais da Plataforma</CardTitle>
               <CardDescription>
-                Gerencie configurações gerais da plataforma
+                Configure informações básicas e branding da aplicação
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-10">
-                Configurações do sistema serão implementadas em breve
-              </p>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nome da Aplicação</label>
+                  <Input defaultValue="VitaView AI" placeholder="Nome da aplicação" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email de Contato</label>
+                  <Input defaultValue="contato@vitaview.ai" placeholder="Email de contato" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Instagram</label>
+                  <Input defaultValue="@vitaview.ai" placeholder="Instagram handle" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">URL do Logo</label>
+                  <Input placeholder="URL da imagem do logo" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Mensagem de Boas-vindas</label>
+                <Input defaultValue="Bem-vindo ao VitaView AI - Sua plataforma de análise médica inteligente" placeholder="Mensagem exibida na página inicial" />
+              </div>
+              <Button>Salvar Configurações Gerais</Button>
+            </CardContent>
+          </Card>
+
+          {/* Configurações de Usuários */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Usuários</CardTitle>
+              <CardDescription>
+                Defina limites e políticas para usuários da plataforma
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Limite Global de Upload (MB)</label>
+                  <Input type="number" defaultValue="50" placeholder="50" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tamanho Máximo por Arquivo (MB)</label>
+                  <Input type="number" defaultValue="10" placeholder="10" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tempo de Sessão (minutos)</label>
+                  <Input type="number" defaultValue="30" placeholder="30" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tamanho Mínimo da Senha</label>
+                  <Input type="number" defaultValue="8" placeholder="8" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tentativas de Login</label>
+                  <Input type="number" defaultValue="5" placeholder="5" />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id="require-email-verification" defaultChecked className="rounded" />
+                <label htmlFor="require-email-verification" className="text-sm font-medium">
+                  Exigir verificação de email para novos usuários
+                </label>
+              </div>
+              <Button>Salvar Configurações de Usuários</Button>
+            </CardContent>
+          </Card>
+
+          {/* Configurações de IA */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de IA e Análise</CardTitle>
+              <CardDescription>
+                Configure provedores de IA e limites de processamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Provedor de IA Principal</label>
+                  <select className="w-full p-2 border rounded" defaultValue="openai">
+                    <option value="openai">OpenAI (GPT)</option>
+                    <option value="google">Google Gemini</option>
+                    <option value="anthropic">Claude (Anthropic)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Modelo de IA</label>
+                  <select className="w-full p-2 border rounded" defaultValue="gpt-4">
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gemini-pro">Gemini Pro</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Limite de Tokens por Análise</label>
+                  <Input type="number" defaultValue="4000" placeholder="4000" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Timeout de Análise (segundos)</label>
+                  <Input type="number" defaultValue="120" placeholder="120" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Máx. Páginas por PDF</label>
+                  <Input type="number" defaultValue="10" placeholder="10" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Chave da API OpenAI</label>
+                <Input type="password" placeholder="sk-..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Chave da API Google Gemini</label>
+                <Input type="password" placeholder="AI..." />
+              </div>
+              <Button>Salvar Configurações de IA</Button>
+            </CardContent>
+          </Card>
+
+          {/* Configurações de Email */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Email e Notificações</CardTitle>
+              <CardDescription>
+                Configure servidor SMTP e templates de email
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Servidor SMTP</label>
+                  <Input placeholder="smtp.gmail.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Porta SMTP</label>
+                  <Input type="number" defaultValue="587" placeholder="587" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email do Remetente</label>
+                  <Input placeholder="noreply@vitaview.ai" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nome do Remetente</label>
+                  <Input defaultValue="VitaView AI" placeholder="VitaView AI" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Usuário SMTP</label>
+                  <Input placeholder="usuario@gmail.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Senha SMTP</label>
+                  <Input type="password" placeholder="senha ou app password" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="enable-email-notifications" defaultChecked className="rounded" />
+                  <label htmlFor="enable-email-notifications" className="text-sm font-medium">
+                    Ativar notificações por email
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="enable-welcome-email" defaultChecked className="rounded" />
+                  <label htmlFor="enable-welcome-email" className="text-sm font-medium">
+                    Enviar email de boas-vindas para novos usuários
+                  </label>
+                </div>
+              </div>
+              <Button>Salvar Configurações de Email</Button>
+            </CardContent>
+          </Card>
+
+          {/* Configurações de Sistema */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Sistema</CardTitle>
+              <CardDescription>
+                Gerencie backup, logs e manutenção do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Frequência de Backup</label>
+                  <select className="w-full p-2 border rounded" defaultValue="daily">
+                    <option value="hourly">A cada hora</option>
+                    <option value="daily">Diariamente</option>
+                    <option value="weekly">Semanalmente</option>
+                    <option value="monthly">Mensalmente</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Retenção de Logs (dias)</label>
+                  <Input type="number" defaultValue="30" placeholder="30" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">URL de Backup (S3/Cloud)</label>
+                  <Input placeholder="s3://bucket/backup/" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nível de Log</label>
+                  <select className="w-full p-2 border rounded" defaultValue="info">
+                    <option value="error">Apenas Erros</option>
+                    <option value="warn">Avisos e Erros</option>
+                    <option value="info">Informativo</option>
+                    <option value="debug">Debug Completo</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="enable-maintenance-mode" className="rounded" />
+                  <label htmlFor="enable-maintenance-mode" className="text-sm font-medium">
+                    Ativar modo de manutenção
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="enable-auto-backup" defaultChecked className="rounded" />
+                  <label htmlFor="enable-auto-backup" className="text-sm font-medium">
+                    Ativar backup automático
+                  </label>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button>Salvar Configurações</Button>
+                <Button variant="outline">Executar Backup Agora</Button>
+                <Button variant="destructive">Limpar Logs Antigos</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
