@@ -479,7 +479,7 @@ export default function HealthTrendsPage() {
                               htmlFor={`metric-${metricName}`} 
                               className="cursor-pointer flex-1"
                             >
-                              {metricName}
+                              {formatMetricDisplayName(metricName)}
                             </Label>
                           </div>
                         ))}
