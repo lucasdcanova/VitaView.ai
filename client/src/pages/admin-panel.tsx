@@ -123,10 +123,28 @@ export default function AdminPanel() {
   });
 
   // Consulta para obter a lista de planos de assinatura
-  const { data: subscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<AdminPlan[]>({ 
+  const { data: allSubscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<AdminPlan[]>({ 
     queryKey: ['/api/subscription-plans'],
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
+
+  // Remover planos duplicados baseado no nome e configurações
+  const subscriptionPlans = allSubscriptionPlans.filter((plan, index, self) => 
+    index === self.findIndex(p => 
+      p.name === plan.name && 
+      p.maxProfiles === plan.maxProfiles && 
+      p.maxUploadsPerProfile === plan.maxUploadsPerProfile &&
+      p.price === plan.price
+    )
+  );
+
+  // Função para contar usuários ativos por plano
+  const getUserCountForPlan = (planId: number): number => {
+    return users.filter(user => 
+      user.subscription?.planId === planId && 
+      user.subscription?.status === 'active'
+    ).length;
+  };
 
   // Verificar se o usuário atual é um administrador
   const { data: currentUser } = useQuery({ queryKey: ['/api/user'] });
@@ -519,6 +537,7 @@ export default function AdminPanel() {
                         <TableHead>Preço</TableHead>
                         <TableHead>Perfis Máximos</TableHead>
                         <TableHead>Uploads por Perfil</TableHead>
+                        <TableHead>Usuários Ativos</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -535,6 +554,12 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell>{plan.maxProfiles}</TableCell>
                           <TableCell>{plan.maxUploadsPerProfile}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{getUserCountForPlan(plan.id)}</span>
+                              <span className="text-muted-foreground text-sm">usuários</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {plan.isActive ? (
                               <Badge variant="default" className="bg-green-600">Ativo</Badge>
