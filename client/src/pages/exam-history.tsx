@@ -507,49 +507,29 @@ export default function ExamHistory() {
                     <div className="flex gap-3 ml-auto items-center">
                       <div className="flex rounded-md overflow-hidden border border-gray-200" style={{ height: "40px" }}>
                         <button 
-                          style={{
-                            backgroundColor: viewMode === "chronological" ? "#48C9B0" : "white",
-                            color: "#374151",
-                            border: "none",
-                            height: "40px",
-                            padding: "0 16px",
-                            width: "120px",
-                            fontSize: "14px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer"
-                          }}
+                          className={`px-4 h-10 flex items-center gap-2 text-sm font-medium transition-colors ${
+                            viewMode === "chronological" 
+                              ? "bg-[#48C9B0] text-gray-700" 
+                              : "bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                          style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => {
                             setViewMode("chronological");
                             setActiveCategory("all");
                           }}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "8px" }}>
-                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" fill="currentColor"/>
-                          </svg>
-                          Cronológico
+                          📅 Cronológico
                         </button>
                         <button 
-                          style={{
-                            backgroundColor: viewMode === "category" ? "#48C9B0" : "white",
-                            color: "#374151",
-                            border: "none",
-                            height: "40px",
-                            padding: "0 16px",
-                            width: "120px",
-                            fontSize: "14px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer"
-                          }}
+                          className={`px-4 h-10 flex items-center gap-2 text-sm font-medium transition-colors ${
+                            viewMode === "category" 
+                              ? "bg-[#48C9B0] text-gray-700" 
+                              : "bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                          style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => setViewMode("category")}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "8px" }}>
-                            <path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z" fill="currentColor"/>
-                          </svg>
-                          Categorias
+                          🏷️ Categorias
                         </button>
                       </div>
                       
