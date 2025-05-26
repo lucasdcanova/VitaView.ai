@@ -650,38 +650,62 @@ export default function ExamHistory() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                       
-                      <div className="flex border rounded-md overflow-hidden">
-                        <Button
-                          variant={activeView === "grid" ? "secondary" : "ghost"} 
-                          size="icon"
-                          className="h-10 w-10 rounded-none"
+                      <div className="flex border rounded-md overflow-hidden" style={{ height: "40px" }}>
+                        <button
+                          style={{
+                            backgroundColor: activeView === "grid" ? "#f1f5f9" : "white",
+                            color: "#374151",
+                            border: "none",
+                            height: "40px",
+                            width: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
+                          }}
                           onClick={() => setActiveView("grid")}
                         >
                           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
                             <path d="M3.5 2C2.67157 2 2 2.67157 2 3.5V7.5C2 8.32843 2.67157 9 3.5 9H7.5C8.32843 9 9 8.32843 9 7.5V3.5C9 2.67157 8.32843 2 7.5 2H3.5ZM3.5 3H7.5C7.77614 3 8 3.22386 8 3.5V7.5C8 7.77614 7.77614 8 7.5 8H3.5C3.22386 8 3 7.77614 3 7.5V3.5C3 3.22386 3.22386 3 3.5 3ZM3.5 10C2.67157 10 2 10.6716 2 11.5V12.5C2 13.3284 2.67157 14 3.5 14H7.5C8.32843 14 9 13.3284 9 12.5V11.5C9 10.6716 8.32843 10 7.5 10H3.5ZM3.5 11H7.5C7.77614 11 8 11.2239 8 11.5V12.5C8 12.7761 7.77614 13 7.5 13H3.5C3.22386 13 3 12.7761 3 12.5V11.5C3 11.2239 3.22386 11 3.5 11ZM10.5 2C9.67157 2 9 2.67157 9 3.5V4.5C9 5.32843 9.67157 6 10.5 6H11.5C12.3284 6 13 5.32843 13 4.5V3.5C13 2.67157 12.3284 2 11.5 2H10.5ZM10.5 3H11.5C11.7761 3 12 3.22386 12 3.5V4.5C12 4.77614 11.7761 5 11.5 5H10.5C10.2239 5 10 4.77614 10 4.5V3.5C10 3.22386 10.2239 3 10.5 3ZM10.5 10C9.67157 10 9 10.6716 9 11.5V12.5C9 13.3284 9.67157 14 10.5 14H11.5C12.3284 14 13 13.3284 13 12.5V11.5C13 10.6716 12.3284 10 11.5 10H10.5ZM10.5 11H11.5C11.7761 11 12 11.2239 12 11.5V12.5C12 12.7761 11.7761 13 11.5 13H10.5C10.2239 13 10 12.7761 10 12.5V11.5C10 11.2239 10.2239 11 10.5 11ZM9 7.5C9 6.67157 9.67157 6 10.5 6H11.5C12.3284 6 13 6.67157 13 7.5V8.5C13 9.32843 12.3284 10 11.5 10H10.5C9.67157 10 9 9.32843 9 8.5V7.5ZM10.5 7H11.5C11.7761 7 12 7.22386 12 7.5V8.5C12 8.77614 11.7761 9 11.5 9H10.5C10.2239 9 10 8.77614 10 8.5V7.5C10 7.22386 10.2239 7 10.5 7Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
                           </svg>
-                        </Button>
-                        <Button
-                          variant={activeView === "list" ? "secondary" : "ghost"} 
-                          size="icon"
-                          className="h-10 w-10 rounded-none"
+                        </button>
+                        <button
+                          style={{
+                            backgroundColor: activeView === "list" ? "#f1f5f9" : "white",
+                            color: "#374151",
+                            border: "none",
+                            height: "40px",
+                            width: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
+                          }}
                           onClick={() => setActiveView("list")}
                         >
                           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
                             <path d="M2 3C2 2.44772 2.44772 2 3 2H12C12.5523 2 13 2.44772 13 3C13 3.55228 12.5523 4 12 4H3C2.44772 4 2 3.55228 2 3ZM2 7.5C2 6.94772 2.44772 6.5 3 6.5H12C12.5523 6.5 13 6.94772 13 7.5C13 8.05228 12.5523 8.5 12 8.5H3C2.44772 8.5 2 8.05228 2 7.5ZM2 12C2 11.4477 2.44772 11 3 11H12C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13H3C2.44772 13 2 12.5523 2 12Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
                           </svg>
-                        </Button>
-                        <Button
-                          variant={activeView === "timeline" ? "secondary" : "ghost"} 
-                          size="icon"
-                          className="h-10 w-10 rounded-none"
+                        </button>
+                        <button
+                          style={{
+                            backgroundColor: activeView === "timeline" ? "#f1f5f9" : "white",
+                            color: "#374151",
+                            border: "none",
+                            height: "40px",
+                            width: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
+                          }}
                           onClick={() => setActiveView("timeline")}
                           title="Visualização em Linha do Tempo"
                         >
                           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]">
                             <path d="M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2 7.5C2 4.46243 4.46243 2 7.5 2C10.5376 2 13 4.46243 13 7.5C13 10.5376 10.5376 13 7.5 13C4.46243 13 2 10.5376 2 7.5ZM7.5 3C5.01472 3 3 5.01472 3 7.5C3 9.98528 5.01472 12 7.5 12C9.98528 12 12 9.98528 12 7.5C12 5.01472 9.98528 3 7.5 3ZM7.5 5C7.77614 5 8 5.22386 8 5.5V7.5C8 7.77614 7.77614 8 7.5 8C7.22386 8 7 7.77614 7 7.5V5.5C7 5.22386 7.22386 5 7.5 5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
                           </svg>
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </div>
