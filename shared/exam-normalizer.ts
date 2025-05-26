@@ -270,3 +270,128 @@ export function normalizeHealthMetrics(metrics: any[]): any[] {
   // Converter de volta para array
   return Array.from(processedMetrics.values());
 }
+
+/**
+ * Formata o nome da métrica para exibição, corrigindo capitalização e siglas
+ * 
+ * @param name Nome da métrica para formatar
+ * @returns Nome formatado com capitalização correta
+ */
+export function formatMetricDisplayName(name: string): string {
+  if (!name) return "Desconhecido";
+  
+  // Remover underscores e substituir por espaços
+  let formatted = name.replace(/_/g, ' ');
+  
+  // Lista de siglas que devem ser todas maiúsculas
+  const acronyms = [
+    'vcm', 'hcm', 'chcm', 'rdw', 'tsh', 't3', 't4', 'ldl', 'hdl', 'vhs', 
+    'pcr', 'inr', 'ige', 'igg', 'iga', 'igm', 'hbsag', 'anti-hbs', 'psa', 
+    'ca', 'cea', 'afp', 'beta-hcg', 'ck', 'ck-mb', 'ldh', 'ggt', 'ast', 
+    'alt', 'tgo', 'tgp', 'fa', 'dhl', 'cpk', 'pt', 'ttpa', 'tp', 'ttp',
+    'ch50', 'c3', 'c4', 'dna', 'rna', 'hla', 'ana', 'anca', 'hiv', 'hcv',
+    'hbv', 'cmv', 'ebv', 'hsv', 'vzv', 'toxo', 'rubéola', 'citomegalovírus'
+  ];
+  
+  // Dividir em palavras
+  const words = formatted.toLowerCase().split(/\s+/);
+  
+  // Formatar cada palavra
+  const formattedWords = words.map(word => {
+    const cleanWord = word.trim();
+    
+    // Se for uma sigla conhecida, deixar toda maiúscula
+    if (acronyms.includes(cleanWord)) {
+      return cleanWord.toUpperCase();
+    }
+    
+    // Casos especiais para algumas palavras compostas
+    if (cleanWord.includes('-')) {
+      return cleanWord.split('-').map(part => {
+        if (acronyms.includes(part)) {
+          return part.toUpperCase();
+        }
+        return part.charAt(0).toUpperCase() + part.slice(1);
+      }).join('-');
+    }
+    
+    // Casos especiais para palavras específicas
+    switch (cleanWord) {
+      case 'vitamina':
+        return 'Vitamina';
+      case 'alfa':
+        return 'Alfa';
+      case 'beta':
+        return 'Beta';
+      case 'gama':
+        return 'Gama';
+      case 'globulina':
+        return 'Globulina';
+      case 'específico':
+        return 'Específico';
+      case 'inferior':
+        return 'Inferior';
+      case 'pólen':
+        return 'Pólen';
+      case 'ácaros':
+        return 'Ácaros';
+      case 'poeira':
+        return 'Poeira';
+      case 'fungos':
+        return 'Fungos';
+      case 'cão':
+        return 'Cão';
+      case 'gato':
+        return 'Gato';
+      case 'relação':
+        return 'Relação';
+      case 'proteína':
+        return 'Proteína';
+      case 'proteínas':
+        return 'Proteínas';
+      case 'monoclonal':
+        return 'Monoclonal';
+      case 'testosterona':
+        return 'Testosterona';
+      case 'total':
+        return 'Total';
+      case 'livre':
+        return 'Livre';
+      case 'complemento':
+        return 'Complemento';
+      case 'imunoglobulina':
+        return 'Imunoglobulina';
+      case 'fator':
+        return 'Fator';
+      case 'reumatóide':
+        return 'Reumatóide';
+      case 'núcleo':
+        return 'Núcleo';
+      case 'nucléolo':
+        return 'Nucléolo';
+      case 'citoplasma':
+        return 'Citoplasma';
+      case 'aparelho':
+        return 'Aparelho';
+      case 'mitótico':
+        return 'Mitótico';
+      case 'placa':
+        return 'Placa';
+      case 'metafásica':
+        return 'Metafásica';
+      case 'cromossômica':
+        return 'Cromossômica';
+      case 'hepatite':
+        return 'Hepatite';
+      case 'anti':
+        return 'Anti';
+      case 'triiodotironina':
+        return 'Triiodotironina';
+      default:
+        // Capitalizar primeira letra
+        return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
+    }
+  });
+  
+  return formattedWords.join(' ');
+}

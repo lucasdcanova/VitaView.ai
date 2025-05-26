@@ -34,7 +34,7 @@ import {
   AlertCircle,
   InfoIcon,
 } from "lucide-react";
-import { normalizeExamName } from "@shared/exam-normalizer";
+import { normalizeExamName, formatMetricDisplayName } from "@shared/exam-normalizer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Função auxiliar para formatação de data
