@@ -143,7 +143,7 @@ export default function SubscriptionPlansPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/dashboard')}
@@ -153,6 +153,27 @@ export default function SubscriptionPlansPage() {
           Voltar ao Dashboard
         </Button>
         <h1 className="text-3xl font-bold">Escolha seu Plano</h1>
+      </div>
+      
+      {/* Banner Promocional */}
+      <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg p-6 mb-8 shadow-lg">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-2xl">🚀</span>
+            <h2 className="text-2xl font-bold">PROMOÇÃO DE LANÇAMENTO</h2>
+            <span className="text-2xl">🚀</span>
+          </div>
+          <p className="text-lg font-medium mb-2">
+            Planos Individual e Familiar com <span className="text-yellow-300 font-bold text-xl">DESCONTO ESPECIAL</span>
+          </p>
+          <p className="text-sm opacity-90">
+            Aproveite os preços promocionais e comece sua jornada de saúde inteligente!
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+            <span className="bg-white/20 px-3 py-1 rounded-full">✨ Individual: R$19,00/mês</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">👨‍👩‍👧‍👦 Familiar: R$35,00/mês</span>
+          </div>
+        </div>
       </div>
       
       {hasActiveSubscription && (
@@ -246,11 +267,39 @@ export default function SubscriptionPlansPage() {
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <div className="mb-4">
-                    <span className="text-3xl font-bold">
-                      {plan.price === 0 ? 'Grátis' : `R$${(plan.price / 100).toFixed(2)}`}
-                    </span>
-                    {plan.price > 0 && (
-                      <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                    {/* Promoção de Lançamento para Individual e Familiar */}
+                    {(plan.name === 'Individual' || plan.name === 'Familiar') && plan.price > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-red-500 text-white animate-pulse">🚀 LANÇAMENTO</Badge>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-lg text-muted-foreground line-through">
+                            R${(plan.price / 100).toFixed(2)}
+                          </span>
+                          <span className="text-3xl font-bold text-green-600">
+                            R${plan.name === 'Individual' ? '19,00' : '35,00'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          /{plan.interval === 'month' ? 'mês' : 'ano'}
+                        </div>
+                        <div className="text-xs text-green-600 font-medium">
+                          Economize {plan.name === 'Individual' ? 
+                            `R$${((plan.price / 100) - 19).toFixed(2)}` : 
+                            `R$${((plan.price / 100) - 35).toFixed(2)}`
+                          } por mês!
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-3xl font-bold">
+                          {plan.price === 0 ? 'Grátis' : `R$${(plan.price / 100).toFixed(2)}`}
+                        </span>
+                        {plan.price > 0 && (
+                          <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   
