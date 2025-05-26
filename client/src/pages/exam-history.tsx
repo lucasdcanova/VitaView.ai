@@ -525,7 +525,7 @@ export default function ExamHistory() {
                             setActiveCategory("all");
                           }}
                         >
-                          <Calendar className="h-4 w-4 mr-2" />
+                          <Calendar className="h-[18px] w-[18px] mr-2" />
                           Cronológico
                         </button>
                         <button 
@@ -544,7 +544,7 @@ export default function ExamHistory() {
                           }}
                           onClick={() => setViewMode("category")}
                         >
-                          <Tag className="h-4 w-4 mr-2" />
+                          <Tag className="h-[18px] w-[18px] mr-2" />
                           Categorias
                         </button>
                       </div>
@@ -567,7 +567,7 @@ export default function ExamHistory() {
                               cursor: "pointer"
                             }}
                           >
-                            <Filter className="h-4 w-4 mr-1" />
+                            <Filter className="h-[18px] w-[18px] mr-1" />
                             Filtros
                             <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
                           </button>
