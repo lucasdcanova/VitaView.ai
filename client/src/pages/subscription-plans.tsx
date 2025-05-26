@@ -171,7 +171,7 @@ export default function SubscriptionPlansPage() {
           </p>
           <div className="mt-3 flex items-center justify-center gap-4 text-sm">
             <span className="bg-white/20 px-3 py-1 rounded-full">✨ Individual: R$19,00/mês</span>
-            <span className="bg-white/20 px-3 py-1 rounded-full">👨‍👩‍👧‍👦 Familiar: R$35,00/mês</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">👨‍👩‍👧‍👦 Familiar: R$34,00/mês</span>
           </div>
         </div>
       </div>
@@ -278,7 +278,7 @@ export default function SubscriptionPlansPage() {
                             R${(plan.price / 100).toFixed(2)}
                           </span>
                           <span className="text-3xl font-bold text-green-600">
-                            R${plan.name === 'Individual' ? '19,00' : '35,00'}
+                            R${plan.name === 'Individual' ? '19,00' : '34,00'}
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -287,7 +287,7 @@ export default function SubscriptionPlansPage() {
                         <div className="text-xs text-green-600 font-medium">
                           Economize {plan.name === 'Individual' ? 
                             `R$${((plan.price / 100) - 19).toFixed(2)}` : 
-                            `R$${((plan.price / 100) - 35).toFixed(2)}`
+                            `R$${((plan.price / 100) - 34).toFixed(2)}`
                           } por mês!
                         </div>
                       </div>
