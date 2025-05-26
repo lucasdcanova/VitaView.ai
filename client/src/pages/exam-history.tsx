@@ -510,7 +510,9 @@ export default function ExamHistory() {
                           variant={viewMode === "chronological" ? "default" : "outline"}
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center",
-                            viewMode === "chronological" ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50"
+                            viewMode === "chronological" 
+                              ? "bg-primary-600 hover:bg-primary-700 text-white" 
+                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900"
                           )}
                           onClick={() => {
                             setViewMode("chronological");
@@ -524,7 +526,9 @@ export default function ExamHistory() {
                           variant={viewMode === "category" ? "default" : "outline"}
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center", 
-                            viewMode === "category" ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50"
+                            viewMode === "category" 
+                              ? "bg-primary-600 hover:bg-primary-700 text-white" 
+                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900"
                           )}
                           onClick={() => setViewMode("category")}
                         >
