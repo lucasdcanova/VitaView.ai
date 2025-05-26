@@ -509,7 +509,7 @@ export default function ExamHistory() {
                         <button 
                           className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
                             viewMode === "chronological" 
-                              ? "bg-[#48C9B0] text-gray-700" 
+                              ? "bg-gray-100 text-gray-700" 
                               : "bg-white text-gray-700 hover:bg-gray-50"
                           }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
@@ -523,7 +523,7 @@ export default function ExamHistory() {
                         <button 
                           className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
                             viewMode === "category" 
-                              ? "bg-[#48C9B0] text-gray-700" 
+                              ? "bg-gray-100 text-gray-700" 
                               : "bg-white text-gray-700 hover:bg-gray-50"
                           }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
