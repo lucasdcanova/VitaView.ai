@@ -525,7 +525,7 @@ export default function ExamHistory() {
                             setActiveCategory("all");
                           }}
                         >
-                          <Calendar className="h-6 w-6 mr-2" />
+                          <Calendar style={{ width: "20px", height: "20px", marginRight: "8px" }} />
                           Cronológico
                         </button>
                         <button 
