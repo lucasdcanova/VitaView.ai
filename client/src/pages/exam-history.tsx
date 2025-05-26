@@ -507,12 +507,12 @@ export default function ExamHistory() {
                     <div className="flex gap-3 ml-auto">
                       <div className="flex rounded-md overflow-hidden border border-gray-200">
                         <Button 
-                          variant={viewMode === "chronological" ? "default" : "outline"}
+                          variant="outline"
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center",
                             viewMode === "chronological" 
-                              ? "bg-primary-600 hover:bg-primary-700 text-white" 
-                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900"
+                              ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
                           )}
                           onClick={() => {
                             setViewMode("chronological");
@@ -523,12 +523,12 @@ export default function ExamHistory() {
                           Cronológico
                         </Button>
                         <Button 
-                          variant={viewMode === "category" ? "default" : "outline"}
+                          variant="outline"
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center", 
                             viewMode === "category" 
-                              ? "bg-primary-600 hover:bg-primary-700 text-white" 
-                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900"
+                              ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                              : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
                           )}
                           onClick={() => setViewMode("category")}
                         >
