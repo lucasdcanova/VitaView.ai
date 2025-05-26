@@ -36,6 +36,7 @@ function Router() {
       <ProtectedRoute path="/upload" component={UploadExams} />
       <ProtectedRoute path="/upload-exams" component={UploadExams} />
       <ProtectedRoute path="/history" component={ExamHistory} />
+      <ProtectedRoute path="/exam-history" component={ExamHistory} />
       <ProtectedRoute path="/report/:id" component={ExamReport} />
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
