@@ -46,6 +46,7 @@ function Router() {
       <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
       <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
       <ProtectedRoute path="/admin-panel" component={AdminPanel} />
+      <ProtectedRoute path="/admin" component={AdminPanel} />
       
       {/* Rotas públicas */}
       <Route path="/auth" component={AuthPage} />

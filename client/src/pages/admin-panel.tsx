@@ -50,7 +50,8 @@ import {
   Trash, 
   MoreVertical, 
   Shield, 
-  UserIcon
+  UserIcon,
+  ArrowLeft
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
@@ -272,6 +273,17 @@ export default function AdminPanel() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar ao Dashboard
+        </Button>
+      </div>
       <h1 className="text-3xl font-bold mb-2">Painel de Administração</h1>
       <p className="text-muted-foreground mb-6">Gerencie usuários, planos e configurações do sistema</p>
       
