@@ -110,9 +110,11 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithSubscription | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<AdminPlan | null>(null);
   const [isUserEditOpen, setIsUserEditOpen] = useState(false);
   const [isUserDeleteOpen, setIsUserDeleteOpen] = useState(false);
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
+  const [isPlanEditOpen, setIsPlanEditOpen] = useState(false);
 
   // Consulta para obter a lista de usuários
   const { data: users = [], isLoading: isLoadingUsers } = useQuery<UserWithSubscription[]>({ 
@@ -254,6 +256,58 @@ export default function AdminPanel() {
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro ao alterar papel do usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para ativar/desativar plano
+  const handleTogglePlanStatus = async (plan: AdminPlan) => {
+    try {
+      const response = await apiRequest('PATCH', `/api/admin/plans/${plan.id}`, { 
+        isActive: !plan.isActive 
+      });
+      if (response.ok) {
+        toast({
+          title: plan.isActive ? "Plano desativado" : "Plano ativado",
+          description: `O plano ${plan.name} foi ${plan.isActive ? 'desativado' : 'ativado'} com sucesso.`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao alterar status do plano");
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao alterar status do plano",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para editar plano
+  const handleEditPlan = async (planData: Partial<AdminPlan>) => {
+    if (!selectedPlan) return;
+    
+    try {
+      const response = await apiRequest('PATCH', `/api/admin/plans/${selectedPlan.id}`, planData);
+      if (response.ok) {
+        toast({
+          title: "Plano atualizado",
+          description: "O plano foi atualizado com sucesso.",
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+        setIsPlanEditOpen(false);
+        setSelectedPlan(null);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao editar plano");
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao editar plano",
         variant: "destructive",
       });
     }
@@ -466,6 +520,7 @@ export default function AdminPanel() {
                         <TableHead>Perfis Máximos</TableHead>
                         <TableHead>Uploads por Perfil</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -486,6 +541,44 @@ export default function AdminPanel() {
                             ) : (
                               <Badge variant="secondary">Inativo</Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Abrir menu</span>
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedPlan(plan);
+                                    setIsPlanEditOpen(true);
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar plano
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleTogglePlanStatus(plan)}
+                                >
+                                  {plan.isActive ? (
+                                    <>
+                                      <Settings className="mr-2 h-4 w-4" />
+                                      Desativar plano
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Settings className="mr-2 h-4 w-4" />
+                                      Ativar plano
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -653,6 +746,95 @@ export default function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal de Edição de Plano */}
+      <Dialog open={isPlanEditOpen} onOpenChange={setIsPlanEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Plano</DialogTitle>
+            <DialogDescription>
+              Edite as informações do plano de assinatura
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPlan && (
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const planData = {
+                name: formData.get('name') as string,
+                description: formData.get('description') as string,
+                maxProfiles: parseInt(formData.get('maxProfiles') as string),
+                maxUploadsPerProfile: parseInt(formData.get('maxUploadsPerProfile') as string),
+                price: Math.round(parseFloat(formData.get('price') as string) * 100), // Converter para centavos
+              };
+              handleEditPlan(planData);
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="name" className="text-right">Nome</label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={selectedPlan.name}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="description" className="text-right">Descrição</label>
+                  <Input
+                    id="description"
+                    name="description"
+                    defaultValue={selectedPlan.description}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="maxProfiles" className="text-right">Max Perfis</label>
+                  <Input
+                    id="maxProfiles"
+                    name="maxProfiles"
+                    type="number"
+                    defaultValue={selectedPlan.maxProfiles}
+                    className="col-span-3"
+                    required
+                    min="1"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="maxUploadsPerProfile" className="text-right">Max Uploads</label>
+                  <Input
+                    id="maxUploadsPerProfile"
+                    name="maxUploadsPerProfile"
+                    type="number"
+                    defaultValue={selectedPlan.maxUploadsPerProfile}
+                    className="col-span-3"
+                    required
+                    min="1"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="price" className="text-right">Preço (R$)</label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={(selectedPlan.price / 100).toFixed(2)}
+                    className="col-span-3"
+                    required
+                    min="0"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Salvar Alterações</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
