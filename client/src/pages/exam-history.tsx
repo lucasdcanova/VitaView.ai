@@ -511,7 +511,7 @@ export default function ExamHistory() {
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center",
                             viewMode === "chronological" 
-                              ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
+                              ? "bg-[#48C9B0] hover:bg-[#3bb39e] text-white border-[#48C9B0]" 
                               : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
                           )}
                           onClick={() => {
@@ -527,7 +527,7 @@ export default function ExamHistory() {
                           className={cn(
                             "rounded-none border-0 h-9 px-4 min-w-[120px] flex items-center justify-center", 
                             viewMode === "category" 
-                              ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
+                              ? "bg-[#48C9B0] hover:bg-[#3bb39e] text-white border-[#48C9B0]" 
                               : "bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border-gray-200"
                           )}
                           onClick={() => setViewMode("category")}
