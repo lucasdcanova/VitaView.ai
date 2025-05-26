@@ -504,21 +504,22 @@ export default function ExamHistory() {
                     </div>
                     
                     {/* Visualization mode toggle */}
-                    <div className="flex gap-3 ml-auto">
-                      <div className="flex rounded-md overflow-hidden border border-gray-200">
-                        <Button 
-                          variant="ghost"
+                    <div className="flex gap-3 ml-auto items-center">
+                      <div className="flex rounded-md overflow-hidden border border-gray-200" style={{ height: "40px" }}>
+                        <button 
                           style={{
                             backgroundColor: viewMode === "chronological" ? "#48C9B0" : "white",
                             color: "#374151",
-                            borderRadius: "0",
                             border: "none",
                             height: "40px",
                             padding: "0 16px",
-                            minWidth: "120px",
-                            fontSize: "14px"
+                            width: "120px",
+                            fontSize: "14px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
                           }}
-                          className="flex items-center justify-center hover:opacity-80"
                           onClick={() => {
                             setViewMode("chronological");
                             setActiveCategory("all");
@@ -526,31 +527,31 @@ export default function ExamHistory() {
                         >
                           <Calendar className="h-4 w-4 mr-2" />
                           Cronológico
-                        </Button>
-                        <Button 
-                          variant="ghost"
+                        </button>
+                        <button 
                           style={{
                             backgroundColor: viewMode === "category" ? "#48C9B0" : "white",
                             color: "#374151",
-                            borderRadius: "0",
                             border: "none",
                             height: "40px",
                             padding: "0 16px",
-                            minWidth: "120px",
-                            fontSize: "14px"
+                            width: "120px",
+                            fontSize: "14px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer"
                           }}
-                          className="flex items-center justify-center hover:opacity-80"
                           onClick={() => setViewMode("category")}
                         >
                           <Tag className="h-4 w-4 mr-2" />
                           Categorias
-                        </Button>
+                        </button>
                       </div>
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost"
+                          <button 
                             style={{
                               backgroundColor: "white",
                               color: "#374151",
@@ -558,14 +559,17 @@ export default function ExamHistory() {
                               borderRadius: "6px",
                               height: "40px",
                               padding: "0 16px",
-                              fontSize: "14px"
+                              fontSize: "14px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer"
                             }}
-                            className="flex items-center justify-center hover:opacity-80"
                           >
                             <Filter className="h-4 w-4 mr-1" />
                             Filtros
                             <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
-                          </Button>
+                          </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[240px]">
                           <DropdownMenuLabel>Filtrar Exames</DropdownMenuLabel>
