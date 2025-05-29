@@ -81,14 +81,14 @@ export default function HealthTrendsNew() {
     <>
       <Sidebar />
       <MobileHeader />
-      <div className="flex flex-col min-h-screen lg:pl-64">
-        <main className="flex-1 p-4 lg:p-6 bg-gray-50 pt-4 lg:pt-6">
+      <div className="lg:pl-64">
+        <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-6">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+            <div className="mb-4">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
                 Tendências de Saúde
               </h1>
-              <p className="text-base lg:text-lg text-gray-600">
+              <p className="text-sm lg:text-base text-gray-600">
                 Acompanhe a evolução das suas principais métricas organizadas por categoria
               </p>
             </div>
@@ -211,7 +211,7 @@ export default function HealthTrendsNew() {
               </CardContent>
             </Card>
           </div>
-        </main>
+        </div>
       </div>
     </>
   );
