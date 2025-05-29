@@ -227,6 +227,11 @@ export default function HealthTrendsPage() {
       // Filtrar métricas apenas deste exame
       const examMetrics = healthMetrics.filter(m => m.examId === examId);
       
+      console.log(`[CHART-DEBUG] Exame ${examId}: ${examMetrics.length} métricas encontradas`);
+      if (examMetrics.length > 0) {
+        console.log(`[CHART-DEBUG] Primeiras métricas do exame ${examId}:`, examMetrics.slice(0, 3).map(m => `${m.name} (examId: ${m.examId})`));
+      }
+      
       // Flag para verificar se este exame tem pelo menos uma métrica selecionada
       let hasSelectedMetric = false;
       
