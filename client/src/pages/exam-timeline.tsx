@@ -47,9 +47,6 @@ function formatMetricDisplayName(name: string): string {
 }
 
 export default function ExamTimeline() {
-  // Estados para controle do gráfico
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['hemoglobina', 'glicose']);
-  
   // Buscar exames
   const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
     queryKey: ["/api/exams"],
@@ -62,25 +59,29 @@ export default function ExamTimeline() {
 
   const isLoading = isLoadingExams || isLoadingMetrics;
 
-  // Preparar dados do gráfico
-  const chartData = useMemo(() => {
-    if (!exams || !healthMetrics || exams.length === 0) return [];
+  // Preparar dados do gráfico - uma linha para cada métrica
+  const { chartData, availableMetrics } = useMemo(() => {
+    if (!exams || !healthMetrics || exams.length === 0) return { chartData: [], availableMetrics: [] };
 
-    // Agrupar métricas por exame e data
-    const examMap = new Map();
+    // Agrupar métricas por data de exame
+    const dataByDate = new Map();
     
     exams.forEach(exam => {
       const examMetrics = healthMetrics.filter(m => m.examId === exam.id);
       const examDate = exam.examDate || exam.uploadDate;
+      const formattedDate = formatDateToBR(examDate);
       
       if (examMetrics.length > 0) {
-        const dataPoint: any = {
-          date: formatDateToBR(examDate),
-          timestamp: new Date(examDate).getTime(),
-          examName: exam.name,
-          examId: exam.id
-        };
+        if (!dataByDate.has(formattedDate)) {
+          dataByDate.set(formattedDate, {
+            date: formattedDate,
+            timestamp: new Date(examDate).getTime(),
+            examName: exam.name,
+            examId: exam.id
+          });
+        }
 
+        const dataPoint = dataByDate.get(formattedDate);
         examMetrics.forEach(metric => {
           const normalizedName = normalizeExamName(metric.name);
           const value = parseFloat(metric.value);
@@ -90,25 +91,30 @@ export default function ExamTimeline() {
             dataPoint[`${normalizedName}_status`] = metric.status;
           }
         });
-
-        examMap.set(exam.id, dataPoint);
       }
     });
 
-    // Converter para array e ordenar por data
-    return Array.from(examMap.values())
+    // Ordenar por data
+    const sortedData = Array.from(dataByDate.values())
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [exams, healthMetrics]);
 
-  // Obter métricas disponíveis
-  const availableMetrics = useMemo(() => {
-    const metrics = new Set<string>();
+    // Obter todas as métricas disponíveis
+    const metricsSet = new Set<string>();
     healthMetrics.forEach(metric => {
       const normalizedName = normalizeExamName(metric.name);
-      metrics.add(normalizedName);
+      metricsSet.add(normalizedName);
     });
-    return Array.from(metrics);
-  }, [healthMetrics]);
+
+    // Filtrar métricas principais para exibir (máximo 8 linhas)
+    const mainMetrics = ['hemoglobina', 'glicose', 'colesterol total', 'hematócrito', 'leucócitos', 'plaquetas', 'vitamina d', 'albumina'];
+    const availableMainMetrics = mainMetrics.filter(m => metricsSet.has(m));
+    const otherMetrics = Array.from(metricsSet).filter(m => !mainMetrics.includes(m)).slice(0, 8 - availableMainMetrics.length);
+    
+    return { 
+      chartData: sortedData, 
+      availableMetrics: [...availableMainMetrics, ...otherMetrics] 
+    };
+  }, [exams, healthMetrics]);
 
   // Cores para as métricas
   const getMetricColor = (metric: string) => {
@@ -133,76 +139,38 @@ export default function ExamTimeline() {
           </p>
         </div>
 
-        {/* Seleção de Métricas */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-[#1E3A5F]" />
-              Selecionar Métricas
-            </CardTitle>
-            <CardDescription>
-              Escolha quais métricas deseja visualizar no gráfico
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {availableMetrics.slice(0, 12).map((metric) => (
-                <label
-                  key={metric}
-                  className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedMetrics.includes(metric)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedMetrics([...selectedMetrics, metric]);
-                      } else {
-                        setSelectedMetrics(selectedMetrics.filter(m => m !== metric));
-                      }
-                    }}
-                    className="rounded border-gray-300"
-                  />
-                  <span className="text-sm font-medium">
-                    {formatMetricDisplayName(metric)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico X e Y */}
+        {/* Gráfico X e Y - Sempre visível */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="h-5 w-5 mr-2 text-[#1E3A5F]" />
-              Gráfico de Evolução
+              Evolução dos Seus Exames
             </CardTitle>
             <CardDescription>
-              Eixo X: Data dos exames | Eixo Y: Valores das métricas
+              Eixo X: Data dos exames | Eixo Y: Valores das métricas • Uma linha para cada métrica
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="w-full h-[500px] flex items-center justify-center">
+              <div className="w-full h-[600px] flex items-center justify-center">
                 <Skeleton className="h-full w-full" />
               </div>
-            ) : chartData.length > 0 && selectedMetrics.length > 0 ? (
-              <div className="w-full h-[500px]">
+            ) : chartData.length > 0 && availableMetrics.length > 0 ? (
+              <div className="w-full h-[600px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis 
                       dataKey="date"
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 11 }}
                       angle={-45}
                       textAnchor="end"
-                      height={80}
+                      height={100}
+                      interval={0}
                     />
                     <YAxis 
-                      tick={{ fontSize: 12 }}
-                      width={60}
+                      tick={{ fontSize: 11 }}
+                      width={70}
                     />
                     <Tooltip 
                       formatter={(value: any, name: string, props: any) => {
@@ -218,23 +186,24 @@ export default function ExamTimeline() {
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
-                        fontSize: '14px'
+                        fontSize: '13px',
+                        maxWidth: '300px'
                       }}
                     />
                     <Legend 
                       formatter={(value) => formatMetricDisplayName(value)}
-                      wrapperStyle={{ fontSize: '14px' }}
+                      wrapperStyle={{ fontSize: '12px' }}
                     />
-                    {selectedMetrics.map((metric) => (
+                    {availableMetrics.map((metric) => (
                       <Line
                         key={metric}
                         type="monotone"
                         dataKey={metric}
                         name={metric}
                         stroke={getMetricColor(metric)}
-                        strokeWidth={3}
-                        dot={{ fill: getMetricColor(metric), strokeWidth: 2, r: 5 }}
-                        activeDot={{ r: 7, strokeWidth: 2 }}
+                        strokeWidth={2}
+                        dot={{ fill: getMetricColor(metric), strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, strokeWidth: 2 }}
                         connectNulls={false}
                       />
                     ))}
@@ -261,15 +230,48 @@ export default function ExamTimeline() {
               <div className="text-center py-16">
                 <Activity className="h-20 w-20 mx-auto mb-6 text-gray-300" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Selecione métricas para visualizar
+                  Processando dados dos exames
                 </h3>
                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Escolha pelo menos uma métrica na seção acima para ver o gráfico
+                  Aguarde enquanto preparamos a visualização dos seus resultados
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Resumo das métricas */}
+        {availableMetrics.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-[#1E3A5F]" />
+                Métricas Visualizadas
+              </CardTitle>
+              <CardDescription>
+                Total de {availableMetrics.length} métricas sendo acompanhadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {availableMetrics.map((metric) => (
+                  <div
+                    key={metric}
+                    className="flex items-center space-x-2 p-2 rounded-lg bg-gray-50"
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: getMetricColor(metric) }}
+                    ></div>
+                    <span className="text-sm font-medium">
+                      {formatMetricDisplayName(metric)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
