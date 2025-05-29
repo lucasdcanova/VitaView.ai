@@ -382,6 +382,7 @@ export class MemStorage implements IStorage {
       name: metric.name,
       value: metric.value,
       userId: metric.userId,
+      examId: metric.examId || null,
       date: metric.date || new Date(),
       status: metric.status || null,
       unit: metric.unit || null,
@@ -940,6 +941,7 @@ export class DatabaseStorage implements IStorage {
       // Filtrar apenas as colunas que existem na tabela
       const filteredMetric = {
         userId: metric.userId,
+        examId: metric.examId || null,
         name: metric.name,
         value: metric.value,
         unit: metric.unit || null,
@@ -958,6 +960,7 @@ export class DatabaseStorage implements IStorage {
       return {
         id: -1, // ID fictício para indicar que não foi salvo
         userId: metric.userId,
+        examId: metric.examId || null,
         name: metric.name,
         value: metric.value,
         unit: metric.unit || null,

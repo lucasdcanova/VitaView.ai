@@ -227,11 +227,6 @@ export default function HealthTrendsPage() {
       // Filtrar métricas apenas deste exame
       const examMetrics = healthMetrics.filter(m => m.examId === examId);
       
-      console.log(`[CHART-DEBUG] Exame ${examId}: ${examMetrics.length} métricas encontradas`);
-      if (examMetrics.length > 0) {
-        console.log(`[CHART-DEBUG] Primeiras métricas do exame ${examId}:`, examMetrics.slice(0, 3).map(m => `${m.name} (examId: ${m.examId})`));
-      }
-      
       // Flag para verificar se este exame tem pelo menos uma métrica selecionada
       let hasSelectedMetric = false;
       
@@ -239,13 +234,9 @@ export default function HealthTrendsPage() {
       selectedMetrics.forEach(metricName => {
         // Buscar esta métrica específica no exame
         // Importante: precisamos normalizar os nomes para comparação
-        const metric = examMetrics.find(m => {
-          const normalizedMetricName = normalizeExamName(m.name);
-          console.log(`[CHART-DEBUG] Comparando: "${normalizedMetricName}" === "${metricName}" (${normalizedMetricName === metricName})`);
-          return normalizedMetricName === metricName;
-        });
-        
-        console.log(`[CHART-DEBUG] Métrica "${metricName}" no exame ${examId}: ${metric ? 'ENCONTRADA' : 'NÃO ENCONTRADA'}`);
+        const metric = examMetrics.find(m => 
+          normalizeExamName(m.name) === metricName
+        );
         
         if (metric) {
           hasSelectedMetric = true;
