@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Calendar, Building, FileText } from "lucide-react";
+import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import type { Exam, HealthMetric } from "@shared/schema";
 import { normalizeExamName } from "@shared/exam-normalizer";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 // Função para formatar data no padrão brasileiro
 function formatDateToBR(dateString: string | Date): string {
@@ -46,6 +47,9 @@ function formatMetricDisplayName(name: string): string {
 }
 
 export default function ExamTimeline() {
+  // Estados para controle do gráfico
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['hemoglobina', 'glicose']);
+  
   // Buscar exames
   const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
     queryKey: ["/api/exams"],
@@ -58,170 +62,193 @@ export default function ExamTimeline() {
 
   const isLoading = isLoadingExams || isLoadingMetrics;
 
+  // Preparar dados do gráfico
+  const chartData = useMemo(() => {
+    if (!exams || !healthMetrics || exams.length === 0) return [];
+
+    // Agrupar métricas por exame e data
+    const examMap = new Map();
+    
+    exams.forEach(exam => {
+      const examMetrics = healthMetrics.filter(m => m.examId === exam.id);
+      const examDate = exam.examDate || exam.uploadDate;
+      
+      if (examMetrics.length > 0) {
+        const dataPoint: any = {
+          date: formatDateToBR(examDate),
+          timestamp: new Date(examDate).getTime(),
+          examName: exam.name,
+          examId: exam.id
+        };
+
+        examMetrics.forEach(metric => {
+          const normalizedName = normalizeExamName(metric.name);
+          const value = parseFloat(metric.value);
+          if (!isNaN(value)) {
+            dataPoint[normalizedName] = value;
+            dataPoint[`${normalizedName}_unit`] = metric.unit;
+            dataPoint[`${normalizedName}_status`] = metric.status;
+          }
+        });
+
+        examMap.set(exam.id, dataPoint);
+      }
+    });
+
+    // Converter para array e ordenar por data
+    return Array.from(examMap.values())
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [exams, healthMetrics]);
+
+  // Obter métricas disponíveis
+  const availableMetrics = useMemo(() => {
+    const metrics = new Set<string>();
+    healthMetrics.forEach(metric => {
+      const normalizedName = normalizeExamName(metric.name);
+      metrics.add(normalizedName);
+    });
+    return Array.from(metrics);
+  }, [healthMetrics]);
+
+  // Cores para as métricas
+  const getMetricColor = (metric: string) => {
+    const colors = [
+      '#1E3A5F', '#48C9B0', '#E74C3C', '#F39C12', '#9B59B6', 
+      '#2ECC71', '#3498DB', '#E67E22', '#1ABC9C', '#34495E'
+    ];
+    const index = availableMetrics.indexOf(metric) % colors.length;
+    return colors[index];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Cabeçalho */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Linha do Tempo dos Seus Exames
+            Evolução das Métricas de Saúde
           </h1>
           <p className="text-lg text-gray-600">
-            Acompanhe o histórico cronológico dos seus exames médicos
+            Acompanhe a evolução dos seus resultados ao longo do tempo
           </p>
         </div>
 
-        {/* Linha do Tempo */}
+        {/* Seleção de Métricas */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="h-5 w-5 mr-2 text-[#1E3A5F]" />
+              Selecionar Métricas
+            </CardTitle>
+            <CardDescription>
+              Escolha quais métricas deseja visualizar no gráfico
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {availableMetrics.slice(0, 12).map((metric) => (
+                <label
+                  key={metric}
+                  className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedMetrics.includes(metric)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedMetrics([...selectedMetrics, metric]);
+                      } else {
+                        setSelectedMetrics(selectedMetrics.filter(m => m !== metric));
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium">
+                    {formatMetricDisplayName(metric)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico X e Y */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-[#1E3A5F]" />
-              Histórico de Exames
+              <TrendingUp className="h-5 w-5 mr-2 text-[#1E3A5F]" />
+              Gráfico de Evolução
             </CardTitle>
             <CardDescription>
-              Visualize todos os seus exames organizados por data
+              Eixo X: Data dos exames | Eixo Y: Valores das métricas
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-4">
-                {Array(3).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
+              <div className="w-full h-[500px] flex items-center justify-center">
+                <Skeleton className="h-full w-full" />
               </div>
-            ) : exams && exams.length > 0 ? (
-              <div className="relative">
-                {/* Linha vertical central */}
-                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#1E3A5F] to-[#48C9B0]"></div>
-                
-                <div className="space-y-8">
-                  {exams
-                    .sort((a, b) => new Date(b.examDate || b.uploadDate).getTime() - new Date(a.examDate || a.uploadDate).getTime())
-                    .map((exam, index) => {
-                      const examMetrics = healthMetrics.filter(m => m.examId === exam.id);
-                      const examDate = exam.examDate || exam.uploadDate;
-                      
-                      return (
-                        <div key={exam.id} className="relative flex items-start">
-                          {/* Ponto na linha */}
-                          <div className="absolute left-4 top-6 w-5 h-5 bg-[#1E3A5F] rounded-full border-4 border-white shadow-lg z-10"></div>
-                          
-                          {/* Card do exame */}
-                          <div className="ml-16 bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 w-full group">
-                            {/* Cabeçalho do card */}
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-3">
-                                <FileText className="h-6 w-6 text-[#1E3A5F]" />
-                                <h3 className="text-xl font-semibold text-gray-900">
-                                  {exam.name}
-                                </h3>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-medium text-[#1E3A5F]">
-                                  {formatDateToBR(examDate)}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {index === 0 ? 'Mais recente' : `${index + 1}º exame`}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Informações do exame */}
-                            <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                              {exam.laboratoryName && (
-                                <span className="flex items-center bg-gray-50 px-3 py-1 rounded-full">
-                                  <Building className="h-4 w-4 mr-2" />
-                                  {exam.laboratoryName}
-                                </span>
-                              )}
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                exam.status === 'analyzed' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : exam.status === 'analyzing'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {exam.status === 'analyzed' ? 'Analisado' : 
-                                 exam.status === 'analyzing' ? 'Analisando' : 'Processado'}
-                              </span>
-                            </div>
-                            
-                            {/* Métricas identificadas */}
-                            {examMetrics.length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                                  Métricas identificadas ({examMetrics.length}):
-                                </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                  {examMetrics.slice(0, 9).map((metric) => (
-                                    <div
-                                      key={metric.id}
-                                      className={`p-2 rounded-lg border text-sm ${
-                                        metric.status === 'normal'
-                                          ? 'bg-green-50 border-green-200 text-green-800'
-                                          : metric.status === 'alto' || metric.status === 'elevado'
-                                          ? 'bg-red-50 border-red-200 text-red-800'
-                                          : metric.status === 'baixo'
-                                          ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
-                                          : 'bg-gray-50 border-gray-200 text-gray-800'
-                                      }`}
-                                    >
-                                      <div className="font-medium">
-                                        {formatMetricDisplayName(metric.name)}
-                                      </div>
-                                      <div className="text-xs opacity-75">
-                                        {metric.value} {metric.unit}
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {examMetrics.length > 9 && (
-                                    <div className="p-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-600 flex items-center justify-center">
-                                      +{examMetrics.length - 9} métricas
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Ações */}
-                            <div className="flex gap-3 pt-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                className="group-hover:border-[#1E3A5F] group-hover:text-[#1E3A5F]"
-                              >
-                                <a href={`/results?exam=${exam.id}`}>
-                                  Ver Análise Completa
-                                </a>
-                              </Button>
-                              {examMetrics.length > 0 && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                  className="group-hover:border-[#48C9B0] group-hover:text-[#48C9B0]"
-                                >
-                                  <a href={`/results?exam=${exam.id}#metrics`}>
-                                    Ver Métricas ({examMetrics.length})
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
+            ) : chartData.length > 0 && selectedMetrics.length > 0 ? (
+              <div className="w-full h-[500px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="date"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      width={60}
+                    />
+                    <Tooltip 
+                      formatter={(value: any, name: string, props: any) => {
+                        const unit = props.payload[`${name}_unit`] || '';
+                        const status = props.payload[`${name}_status`] || '';
+                        return [
+                          `${value} ${unit}`,
+                          `${formatMetricDisplayName(name)} (${status})`
+                        ];
+                      }}
+                      labelFormatter={(label) => `Data: ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '14px'
+                      }}
+                    />
+                    <Legend 
+                      formatter={(value) => formatMetricDisplayName(value)}
+                      wrapperStyle={{ fontSize: '14px' }}
+                    />
+                    {selectedMetrics.map((metric) => (
+                      <Line
+                        key={metric}
+                        type="monotone"
+                        dataKey={metric}
+                        name={metric}
+                        stroke={getMetricColor(metric)}
+                        strokeWidth={3}
+                        dot={{ fill: getMetricColor(metric), strokeWidth: 2, r: 5 }}
+                        activeDot={{ r: 7, strokeWidth: 2 }}
+                        connectNulls={false}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-            ) : (
+            ) : chartData.length === 0 ? (
               <div className="text-center py-16">
-                <Calendar className="h-20 w-20 mx-auto mb-6 text-gray-300" />
+                <BarChart3 className="h-20 w-20 mx-auto mb-6 text-gray-300" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   Nenhum exame encontrado
                 </h3>
                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Comece fazendo o upload de seus exames médicos para acompanhar sua evolução ao longo do tempo
+                  Faça o upload de seus exames para visualizar a evolução das métricas
                 </p>
                 <Button 
                   asChild
@@ -229,6 +256,16 @@ export default function ExamTimeline() {
                 >
                   <a href="/upload-exams">Enviar Primeiro Exame</a>
                 </Button>
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Activity className="h-20 w-20 mx-auto mb-6 text-gray-300" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Selecione métricas para visualizar
+                </h3>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  Escolha pelo menos uma métrica na seção acima para ver o gráfico
+                </p>
               </div>
             )}
           </CardContent>
