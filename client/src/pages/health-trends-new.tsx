@@ -9,7 +9,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 
 // Função para formatar data no padrão brasileiro
-function formatDateToBR(dateString) {
+function formatDateToBR(dateString: string | Date): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
@@ -18,97 +18,42 @@ function formatDateToBR(dateString) {
   }).format(date);
 }
 
-// Função de normalização simples
-function normalizeExamName(name) {
-  const normalizedName = name.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  
-  const metricMap = {
-    'glicemia': 'glicose',
-    'eritrócitos': 'eritrócitos',
-    'hemoglobina': 'hemoglobina',
-    'hematócrito': 'hematócrito',
-    'vcm': 'vcm',
-    'vitamina d': 'vitamina d',
-    'hcm': 'hcm',
-    'chcm': 'chcm',
-    'rdw': 'rdw',
-    'leucócitos': 'leucócitos',
-    'colesterol total': 'colesterol total',
-    'glicose': 'glicose',
-    'albumina': 'albumina'
-  };
-  
-  return metricMap[normalizedName] || normalizedName;
-}
-
-// Função para formatar nome das métricas para exibição
-function formatMetricDisplayName(name) {
-  const displayMap = {
-    'hemoglobina': 'Hemoglobina',
-    'glicose': 'Glicose',
-    'colesterol total': 'Colesterol Total',
-    'hematócrito': 'Hematócrito',
-    'leucócitos': 'Leucócitos',
-    'plaquetas': 'Plaquetas',
-    'vitamina d': 'Vitamina D',
-    'albumina': 'Albumina',
-    'eritrócitos': 'Eritrócitos',
-    'vcm': 'VCM',
-    'hcm': 'HCM',
-    'chcm': 'CHCM',
-    'rdw': 'RDW'
-  };
-  
-  return displayMap[name] || name;
-}
-
 export default function HealthTrendsNew() {
-  // Buscar exames
-  const { data: exams = [], isLoading: isLoadingExams } = useQuery({
-    queryKey: ["/api/exams"],
-  });
-
   // Buscar métricas de saúde
-  const { data: healthMetrics = [], isLoading: isLoadingMetrics } = useQuery({
+  const { data: healthMetrics = [], isLoading: isLoadingMetrics } = useQuery<any[]>({
     queryKey: ["/api/health-metrics"],
   });
 
-  const isLoading = isLoadingExams || isLoadingMetrics;
+  const isLoading = isLoadingMetrics;
 
-  // Preparar dados do gráfico - uma linha para cada métrica
+  // Preparar dados do gráfico diretamente das métricas
   const { chartData, availableMetrics } = useMemo(() => {
-    if (!exams || !healthMetrics || exams.length === 0) return { chartData: [], availableMetrics: [] };
+    if (!healthMetrics || healthMetrics.length === 0) {
+      return { chartData: [], availableMetrics: [] };
+    }
 
-    // Agrupar métricas por data de exame
-    const dataByDate = new Map();
+    // Agrupar métricas por data
+    const dataByDate = new Map<string, any>();
     
-    exams.forEach(exam => {
-      const examMetrics = healthMetrics.filter(m => m.examId === exam.id);
-      const examDate = exam.examDate || exam.uploadDate;
-      const formattedDate = formatDateToBR(examDate);
+    healthMetrics.forEach((metric: any) => {
+      const metricDate = metric.date;
+      const formattedDate = formatDateToBR(metricDate);
       
-      if (examMetrics.length > 0) {
-        if (!dataByDate.has(formattedDate)) {
-          dataByDate.set(formattedDate, {
-            date: formattedDate,
-            timestamp: new Date(examDate).getTime(),
-            examName: exam.name,
-            examId: exam.id
-          });
-        }
-
-        const dataPoint = dataByDate.get(formattedDate);
-        examMetrics.forEach(metric => {
-          const normalizedName = normalizeExamName(metric.name);
-          const value = parseFloat(metric.value);
-          if (!isNaN(value)) {
-            dataPoint[normalizedName] = value;
-            dataPoint[`${normalizedName}_unit`] = metric.unit;
-            dataPoint[`${normalizedName}_status`] = metric.status;
-          }
+      if (!dataByDate.has(formattedDate)) {
+        dataByDate.set(formattedDate, {
+          date: formattedDate,
+          timestamp: new Date(metricDate).getTime(),
         });
+      }
+
+      const dataPoint = dataByDate.get(formattedDate);
+      const metricName = metric.name.toLowerCase();
+      const value = parseFloat(metric.value);
+      
+      if (!isNaN(value)) {
+        dataPoint[metricName] = value;
+        dataPoint[`${metricName}_unit`] = metric.unit;
+        dataPoint[`${metricName}_status`] = metric.status;
       }
     });
 
@@ -116,32 +61,38 @@ export default function HealthTrendsNew() {
     const sortedData = Array.from(dataByDate.values())
       .sort((a, b) => a.timestamp - b.timestamp);
 
-    // Obter todas as métricas disponíveis
-    const metricsSet = new Set();
-    healthMetrics.forEach(metric => {
-      const normalizedName = normalizeExamName(metric.name);
-      metricsSet.add(normalizedName);
+    // Obter métricas disponíveis
+    const metricsSet = new Set<string>();
+    healthMetrics.forEach((metric: any) => {
+      metricsSet.add(metric.name.toLowerCase());
     });
 
-    // Filtrar métricas principais para exibir (máximo 8 linhas)
-    const mainMetrics = ['hemoglobina', 'glicose', 'colesterol total', 'hematócrito', 'leucócitos', 'plaquetas', 'vitamina d', 'albumina'];
+    // Filtrar métricas principais
+    const mainMetrics = ['hemoglobina', 'eritrócitos', 'hematócrito', 'vcm', 'hcm', 'chcm', 'rdw', 'leucócitos'];
     const availableMainMetrics = mainMetrics.filter(m => metricsSet.has(m));
-    const otherMetrics = Array.from(metricsSet).filter(m => !mainMetrics.includes(m)).slice(0, 8 - availableMainMetrics.length);
+    const otherMetrics = Array.from(metricsSet)
+      .filter(m => !mainMetrics.includes(m))
+      .slice(0, 8 - availableMainMetrics.length);
     
     return { 
       chartData: sortedData, 
       availableMetrics: [...availableMainMetrics, ...otherMetrics] 
     };
-  }, [exams, healthMetrics]);
+  }, [healthMetrics]);
 
   // Cores para as métricas
-  const getMetricColor = (metric) => {
+  const getMetricColor = (metric: string): string => {
     const colors = [
       '#1E3A5F', '#48C9B0', '#E74C3C', '#F39C12', '#9B59B6', 
       '#2ECC71', '#3498DB', '#E67E22', '#1ABC9C', '#34495E'
     ];
     const index = availableMetrics.indexOf(metric) % colors.length;
     return colors[index];
+  };
+
+  // Capitalizar primeira letra
+  const capitalizeFirst = (str: string): string => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   return (
@@ -161,12 +112,12 @@ export default function HealthTrendsNew() {
               </p>
             </div>
 
-            {/* Gráfico X e Y - Sempre visível */}
+            {/* Gráfico X e Y */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2 text-[#1E3A5F]" />
-                  Evolução dos Seus Exames
+                  Evolução das Métricas de Saúde
                 </CardTitle>
                 <CardDescription>
                   Eixo X: Data dos exames | Eixo Y: Valores das métricas • Uma linha para cada métrica
@@ -195,12 +146,12 @@ export default function HealthTrendsNew() {
                           width={70}
                         />
                         <Tooltip 
-                          formatter={(value, name, props) => {
+                          formatter={(value: any, name: string, props: any) => {
                             const unit = props.payload[`${name}_unit`] || '';
                             const status = props.payload[`${name}_status`] || '';
                             return [
                               `${value} ${unit}`,
-                              `${formatMetricDisplayName(name)} (${status})`
+                              `${capitalizeFirst(name)} (${status})`
                             ];
                           }}
                           labelFormatter={(label) => `Data: ${label}`}
@@ -213,7 +164,7 @@ export default function HealthTrendsNew() {
                           }}
                         />
                         <Legend 
-                          formatter={(value) => formatMetricDisplayName(value)}
+                          formatter={(value) => capitalizeFirst(value)}
                           wrapperStyle={{ fontSize: '12px' }}
                         />
                         {availableMetrics.map((metric) => (
@@ -236,7 +187,7 @@ export default function HealthTrendsNew() {
                   <div className="text-center py-16">
                     <BarChart3 className="h-20 w-20 mx-auto mb-6 text-gray-300" />
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Nenhum exame encontrado
+                      Nenhum dado encontrado
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
                       Faça o upload de seus exames para visualizar a evolução das métricas
@@ -252,10 +203,10 @@ export default function HealthTrendsNew() {
                   <div className="text-center py-16">
                     <Activity className="h-20 w-20 mx-auto mb-6 text-gray-300" />
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      Processando dados dos exames
+                      Processando dados
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      Aguarde enquanto preparamos a visualização dos seus resultados
+                      Aguarde enquanto preparamos a visualização
                     </p>
                   </div>
                 )}
@@ -286,11 +237,25 @@ export default function HealthTrendsNew() {
                           style={{ backgroundColor: getMetricColor(metric) }}
                         ></div>
                         <span className="text-sm font-medium">
-                          {formatMetricDisplayName(metric)}
+                          {capitalizeFirst(metric)}
                         </span>
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Debug info */}
+            {process.env.NODE_ENV === 'development' && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Debug Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Total métricas: {healthMetrics.length}</p>
+                  <p>Pontos no gráfico: {chartData.length}</p>
+                  <p>Métricas disponíveis: {availableMetrics.length}</p>
                 </CardContent>
               </Card>
             )}
