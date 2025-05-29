@@ -42,14 +42,7 @@ function Router() {
       <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
       <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
-      <ProtectedRoute path="/health-trends" component={() => {
-        const HealthTrendsSimple = React.lazy(() => import("@/pages/health-trends-simple"));
-        return (
-          <React.Suspense fallback={<div>Carregando...</div>}>
-            <HealthTrendsSimple />
-          </React.Suspense>
-        );
-      }} />
+      <ProtectedRoute path="/health-trends" component={HealthTrends} />
       <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
       <ProtectedRoute path="/profile" component={Profile} />
       <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
