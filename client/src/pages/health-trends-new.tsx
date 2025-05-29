@@ -487,12 +487,36 @@ export default function HealthTrendsPage() {
                     )}
                   </TabsContent>
                 </Tabs>
+                
+                {/* Botão para gerar gráfico */}
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    {selectedMetrics.length > 0 && selectedExams.length > 0 
+                      ? `${selectedMetrics.length} métrica(s) e ${selectedExams.length} exame(s) selecionados`
+                      : 'Selecione métricas e exames para visualizar'
+                    }
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      // Força a atualização do gráfico rolando até ele
+                      const chartElement = document.querySelector('#chart-section');
+                      if (chartElement) {
+                        chartElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    disabled={selectedMetrics.length === 0 || selectedExams.length === 0}
+                    className="bg-[#1E3A5F] hover:bg-[#48C9B0] text-white"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Gerar Gráfico
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Gráfico de Tendências */}
-          <Card className="mt-6">
+          <Card id="chart-section" className="mt-6">
             <CardHeader>
               <CardTitle>Evolução dos Resultados</CardTitle>
               <CardDescription>
