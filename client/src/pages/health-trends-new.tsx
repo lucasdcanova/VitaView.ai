@@ -4,14 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Activity, BarChart3 } from "lucide-react";
-import type { Exam, HealthMetric } from "@shared/schema";
-import { normalizeExamName } from "@shared/exam-normalizer";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 
 // Função para formatar data no padrão brasileiro
-function formatDateToBR(dateString: string | Date): string {
+function formatDateToBR(dateString) {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
@@ -20,11 +18,34 @@ function formatDateToBR(dateString: string | Date): string {
   }).format(date);
 }
 
-// Função para formatar nome das métricas para exibição
-function formatMetricDisplayName(name: string): string {
-  const normalizedName = normalizeExamName(name);
+// Função de normalização simples
+function normalizeExamName(name) {
+  const normalizedName = name.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
   
-  const displayMap: Record<string, string> = {
+  const metricMap = {
+    'glicemia': 'glicose',
+    'eritrócitos': 'eritrócitos',
+    'hemoglobina': 'hemoglobina',
+    'hematócrito': 'hematócrito',
+    'vcm': 'vcm',
+    'vitamina d': 'vitamina d',
+    'hcm': 'hcm',
+    'chcm': 'chcm',
+    'rdw': 'rdw',
+    'leucócitos': 'leucócitos',
+    'colesterol total': 'colesterol total',
+    'glicose': 'glicose',
+    'albumina': 'albumina'
+  };
+  
+  return metricMap[normalizedName] || normalizedName;
+}
+
+// Função para formatar nome das métricas para exibição
+function formatMetricDisplayName(name) {
+  const displayMap = {
     'hemoglobina': 'Hemoglobina',
     'glicose': 'Glicose',
     'colesterol total': 'Colesterol Total',
@@ -40,17 +61,17 @@ function formatMetricDisplayName(name: string): string {
     'rdw': 'RDW'
   };
   
-  return displayMap[normalizedName] || name;
+  return displayMap[name] || name;
 }
 
 export default function HealthTrendsNew() {
   // Buscar exames
-  const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
+  const { data: exams = [], isLoading: isLoadingExams } = useQuery({
     queryKey: ["/api/exams"],
   });
 
   // Buscar métricas de saúde
-  const { data: healthMetrics = [], isLoading: isLoadingMetrics } = useQuery<HealthMetric[]>({
+  const { data: healthMetrics = [], isLoading: isLoadingMetrics } = useQuery({
     queryKey: ["/api/health-metrics"],
   });
 
@@ -96,7 +117,7 @@ export default function HealthTrendsNew() {
       .sort((a, b) => a.timestamp - b.timestamp);
 
     // Obter todas as métricas disponíveis
-    const metricsSet = new Set<string>();
+    const metricsSet = new Set();
     healthMetrics.forEach(metric => {
       const normalizedName = normalizeExamName(metric.name);
       metricsSet.add(normalizedName);
@@ -114,7 +135,7 @@ export default function HealthTrendsNew() {
   }, [exams, healthMetrics]);
 
   // Cores para as métricas
-  const getMetricColor = (metric: string) => {
+  const getMetricColor = (metric) => {
     const colors = [
       '#1E3A5F', '#48C9B0', '#E74C3C', '#F39C12', '#9B59B6', 
       '#2ECC71', '#3498DB', '#E67E22', '#1ABC9C', '#34495E'
@@ -174,7 +195,7 @@ export default function HealthTrendsNew() {
                           width={70}
                         />
                         <Tooltip 
-                          formatter={(value: any, name: string, props: any) => {
+                          formatter={(value, name, props) => {
                             const unit = props.payload[`${name}_unit`] || '';
                             const status = props.payload[`${name}_status`] || '';
                             return [
