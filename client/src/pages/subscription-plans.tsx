@@ -158,20 +158,18 @@ export default function SubscriptionPlansPage() {
       {/* Banner Promocional */}
       <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg p-6 mb-8 shadow-lg">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="text-2xl">🚀</span>
+          <div className="mb-3">
             <h2 className="text-2xl font-bold">PROMOÇÃO DE LANÇAMENTO</h2>
-            <span className="text-2xl">🚀</span>
           </div>
           <p className="text-lg font-medium mb-2">
             Planos Individual e Familiar com <span className="text-yellow-300 font-bold text-xl">DESCONTO ESPECIAL</span>
           </p>
           <p className="text-sm opacity-90">
-            Aproveite os preços promocionais e comece sua jornada de saúde inteligente!
+            Aproveite os preços promocionais e comece sua jornada de saúde inteligente
           </p>
           <div className="mt-3 flex items-center justify-center gap-4 text-sm">
-            <span className="bg-white/20 px-3 py-1 rounded-full">✨ Individual: R$19,00/mês</span>
-            <span className="bg-white/20 px-3 py-1 rounded-full">👨‍👩‍👧‍👦 Familiar: R$34,00/mês</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">Individual: R$19,00/mês</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">Familiar: R$34,00/mês</span>
           </div>
         </div>
       </div>
@@ -271,7 +269,7 @@ export default function SubscriptionPlansPage() {
                     {(plan.name === 'Individual' || plan.name === 'Familiar') && plan.price > 0 ? (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-red-500 text-white animate-pulse">🚀 LANÇAMENTO</Badge>
+                          <Badge className="bg-red-500 text-white animate-pulse">LANÇAMENTO</Badge>
                         </div>
                         <div className="flex items-baseline gap-2">
                           <span className="text-lg text-muted-foreground line-through">
