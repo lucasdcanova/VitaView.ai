@@ -234,9 +234,13 @@ export default function HealthTrendsPage() {
       selectedMetrics.forEach(metricName => {
         // Buscar esta métrica específica no exame
         // Importante: precisamos normalizar os nomes para comparação
-        const metric = examMetrics.find(m => 
-          normalizeExamName(m.name) === metricName
-        );
+        const metric = examMetrics.find(m => {
+          const normalizedMetricName = normalizeExamName(m.name);
+          console.log(`[CHART-DEBUG] Comparando: "${normalizedMetricName}" === "${metricName}" (${normalizedMetricName === metricName})`);
+          return normalizedMetricName === metricName;
+        });
+        
+        console.log(`[CHART-DEBUG] Métrica "${metricName}" no exame ${examId}: ${metric ? 'ENCONTRADA' : 'NÃO ENCONTRADA'}`);
         
         if (metric) {
           hasSelectedMetric = true;
