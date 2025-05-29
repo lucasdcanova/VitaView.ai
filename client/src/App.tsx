@@ -19,6 +19,7 @@ import ExamResultSingle from "@/pages/exam-result-single";
 import Profile from "@/pages/profile";
 import DiagnosisPage from "@/pages/diagnosis-page";
 import HealthTrends from "@/pages/health-trends-new";
+import ExamTimeline from "@/pages/exam-timeline";
 import Home from "@/pages/home";
 import SubscriptionPlans from "@/pages/subscription-plans";
 import SubscriptionManagement from "@/pages/subscription-management";
@@ -42,6 +43,7 @@ function Router() {
       <ProtectedRoute path="/results" component={ExamResults} />
       <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
       <ProtectedRoute path="/health-trends" component={HealthTrends} />
+      <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
       <ProtectedRoute path="/profile" component={Profile} />
       <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
       <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
