@@ -100,6 +100,7 @@ export const insertExamResultSchema = createInsertSchema(examResults).pick({
 export const healthMetrics = pgTable("health_metrics", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  examId: integer("exam_id"), // vinculação com o exame específico
   name: text("name").notNull(), // colesterol, glicemia, etc
   value: text("value").notNull(),
   unit: text("unit"), // mg/dL, etc
@@ -116,6 +117,7 @@ export const healthMetrics = pgTable("health_metrics", {
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
   userId: true,
+  examId: true,
   name: true,
   value: true,
   unit: true,
