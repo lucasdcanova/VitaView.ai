@@ -174,14 +174,16 @@ export default function HealthTrendsNew() {
   };
 
   return (
-    <>
-      <Sidebar />
+    <div className="min-h-screen flex flex-col">
       <MobileHeader />
-      <div className="flex flex-col min-h-screen lg:pl-64">
-        <main className="flex-1 p-4 lg:p-8 bg-gray-50 pt-20 lg:pt-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Cabeçalho */}
-            <div className="flex justify-between items-start mb-6">
+      
+      <div className="flex flex-1 relative">
+        <Sidebar />
+        
+        <main className="flex-1 bg-gray-50">
+          <div className="p-4 md:p-6">
+              {/* Cabeçalho */}
+              <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                   Linha do Tempo da Saúde
@@ -456,6 +458,6 @@ export default function HealthTrendsNew() {
           </div>
         </main>
       </div>
-    </>
+    </div>
   );
 }
