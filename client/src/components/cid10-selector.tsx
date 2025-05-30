@@ -85,7 +85,16 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
     // Carregar base apenas para encontrar o código selecionado
     import("@/data/cid10-database").then(({ CID10_DATABASE }) => {
       const found = CID10_DATABASE.find((code) => code.code === value);
-      setSelectedCode(found || null);
+      if (found) {
+        setSelectedCode(found);
+      } else {
+        // Se não encontrou na base, criar um código personalizado
+        setSelectedCode({
+          code: value,
+          description: "Código Personalizado",
+          category: "Personalizado"
+        });
+      }
     });
   }, [value]);
 
