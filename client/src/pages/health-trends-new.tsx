@@ -356,30 +356,32 @@ export default function HealthTrendsNew() {
                     </div>
                   </Card>
                 ) : (
-                  <div className="relative pl-20">
+                  <div className="relative pl-32">
                     {/* Linha vertical */}
-                    <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#48C9B0] to-[#1E3A5F]"></div>
+                    <div className="absolute left-24 top-0 bottom-0 w-1 bg-gradient-to-b from-[#48C9B0] to-[#1E3A5F] rounded-full shadow-sm"></div>
                     
-                    <div className="space-y-8">
+                    <div className="space-y-12">
                       {timelineItems.map((item, index) => (
-                        <div key={`${item.type}-${item.id}`} className="relative flex items-start">
+                        <div key={`${item.type}-${item.id}`} className="relative flex items-start group">
                           {/* Data no lado esquerdo */}
-                          <div className="absolute -left-20 top-2 w-16 text-right">
-                            <div className="text-sm font-bold text-[#1E3A5F]">
-                              {format(parseISO(item.date), "yyyy", { locale: ptBR })}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {format(parseISO(item.date), "dd/MM", { locale: ptBR })}
+                          <div className="absolute -left-32 top-2 w-24 text-right cursor-pointer group-hover:scale-105 transition-transform duration-200">
+                            <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow duration-200 hover:border-[#48C9B0]">
+                              <div className="text-base font-bold text-[#1E3A5F] group-hover:text-[#48C9B0] transition-colors duration-200">
+                                {format(parseISO(item.date), "yyyy", { locale: ptBR })}
+                              </div>
+                              <div className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors duration-200">
+                                {format(parseISO(item.date), "dd MMM", { locale: ptBR })}
+                              </div>
                             </div>
                           </div>
                           
                           {/* Ponto na linha */}
-                          <div className={`absolute left-0 top-3 z-10 flex-shrink-0 w-3 h-3 rounded-full border-3 border-white ${
+                          <div className={`absolute left-0 top-4 z-10 flex-shrink-0 w-4 h-4 rounded-full border-4 border-white ${
                             item.type === "exam" ? "bg-blue-500" : "bg-green-500"
-                          } shadow-lg`}></div>
+                          } shadow-lg group-hover:scale-125 transition-transform duration-200`}></div>
                           
                           {/* Conteúdo no lado direito */}
-                          <div className="ml-8 flex-1">
+                          <div className="ml-12 flex-1">
                             <Card className="transition-shadow hover:shadow-md">
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between mb-2">
