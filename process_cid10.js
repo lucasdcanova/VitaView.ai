@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Função para processar o arquivo CID10-categorias.cnv do SUS
 function processCID10Data() {
@@ -10,12 +10,11 @@ function processCID10Data() {
     return;
   }
 
-  const data = fs.readFileSync(filePath, 'latin1'); // Usar latin1 para caracteres especiais
-  const lines = data.split('\n');
+  const data = fs.readFileSync(filePath, 'latin1');
+  const lines = data.split(/\r?\n/);
   
   const cid10Database = [];
   
-  // Mapear capítulos CID-10 para categorias em português
   const chapterMap = {
     'A': 'Infecciosas e Parasitárias',
     'B': 'Infecciosas e Parasitárias', 
@@ -44,40 +43,47 @@ function processCID10Data() {
     'Z': 'Fatores de Saúde'
   };
 
-  // Processar cada linha do arquivo (ignorar cabeçalho)
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Parse da linha: número, código, descrição
-    const match = line.match(/^\s*(\d+)\s+([A-Z]\d{2}(?:\.\d)?)\s+(.+?)\s+\1[A-Z]\d{2}/);
+    // Parse: "      1  A00   Colera                                       A00,"
+    const match = line.match(/^\s*(\d+)\s+([A-Z]\d{2}(?:\.\d)?)\s+(.+?)\s+\2,?\s*$/);
     if (match) {
       const [, , code, description] = match;
       const chapter = code.charAt(0);
       const category = chapterMap[chapter] || 'Outros';
       
-      // Limpar descrição
-      const cleanDescription = description
+      let cleanDescription = description
         .replace(/\s+/g, ' ')
         .replace(/NCOP/g, 'não classificado em outra parte')
         .replace(/NE/g, 'não especificado')
         .replace(/c\//g, 'com ')
         .replace(/s\//g, 'sem ')
         .replace(/p\//g, 'por ')
-        .replace(/outr/g, 'outras')
-        .replace(/doenc/g, 'doenças')
-        .replace(/infecc/g, 'infecções')
-        .replace(/bacter/g, 'bacterianas')
-        .replace(/orig/g, 'origem')
-        .replace(/presum/g, 'presumível')
-        .replace(/tuberc/g, 'tuberculose')
-        .replace(/respirat/g, 'respiratória')
-        .replace(/conf/g, 'confirmação')
-        .replace(/bacteriol/g, 'bacteriológica')
-        .replace(/histolog/g, 'histológica')
-        .replace(/sist/g, 'sistema')
-        .replace(/orgaos/g, 'órgãos')
+        .replace(/outr/gi, 'outras')
+        .replace(/doenc/gi, 'doenças')
+        .replace(/infecc/gi, 'infecções')
+        .replace(/bacter/gi, 'bacterianas')
+        .replace(/orig/gi, 'origem')
+        .replace(/presum/gi, 'presumível')
+        .replace(/tuberc/gi, 'tuberculose')
+        .replace(/respirat/gi, 'respiratória')
+        .replace(/conf/gi, 'confirmação')
+        .replace(/bacteriol/gi, 'bacteriológica')
+        .replace(/histolog/gi, 'histológica')
+        .replace(/sist/gi, 'sistema')
+        .replace(/orgaos/gi, 'órgãos')
+        .replace(/intestinais/gi, 'intestinais')
+        .replace(/alimentares/gi, 'alimentares')
+        .replace(/protozoarios/gi, 'protozoários')
+        .replace(/virais/gi, 'virais')
+        .replace(/gastroenterite/gi, 'gastroenterite')
+        .replace(/miliar/gi, 'miliar')
         .trim();
+
+      // Capitalizar primeira letra
+      cleanDescription = cleanDescription.charAt(0).toUpperCase() + cleanDescription.slice(1);
 
       cid10Database.push({
         code: code,
