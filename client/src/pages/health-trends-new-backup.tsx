@@ -35,8 +35,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar } from "@/components/layout/sidebar";
-import { MobileHeader } from "@/components/layout/mobile-header";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
 import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -48,8 +48,7 @@ import {
 } from "lucide-react";
 
 const diagnosisSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
-  cidCode: z.string().optional(),
+  cidCode: z.string().min(1, "Código CID-10 é obrigatório"),
   diagnosisDate: z.string().min(1, "Data é obrigatória"),
   status: z.enum(["ativo", "em_tratamento", "resolvido", "cronico"]).optional(),
   notes: z.string().optional(),
@@ -77,7 +76,6 @@ export default function HealthTrendsNew() {
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
-      description: "",
       cidCode: "",
       diagnosisDate: "",
       status: undefined,
@@ -85,15 +83,12 @@ export default function HealthTrendsNew() {
     },
   });
 
-  // Buscar exames do usuário
   const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
 
-  // Por enquanto, vou criar uma lista vazia para diagnósticos até implementarmos a funcionalidade completa
   const diagnoses: any[] = [];
 
-  // Mutation para adicionar diagnóstico
   const addDiagnosisMutation = useMutation({
     mutationFn: (data: DiagnosisForm) => apiRequest("POST", "/api/diagnoses", data),
     onSuccess: () => {
@@ -114,7 +109,6 @@ export default function HealthTrendsNew() {
     },
   });
 
-  // Combinar e ordenar itens da timeline
   const timelineItems: TimelineItem[] = [
     ...(Array.isArray(exams) ? exams.map((exam: any) => ({
       id: exam.id,
@@ -169,41 +163,44 @@ export default function HealthTrendsNew() {
 
   if (examsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        <main className="lg:pl-64">
-          <MobileHeader />
-          <div className="p-4 lg:p-8">
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 bg-gray-50">
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="lg:pl-64">
-        <MobileHeader />
+    <div className="min-h-screen flex flex-col">
+      <MobileHeader />
+      
+      <div className="flex flex-1 relative">
+        <Sidebar />
         
-        <div className="p-4 lg:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
-                <p className="text-gray-600 mt-2">
-                  Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
-                </p>
+        <main className="flex-1 bg-gray-50">
+          <div className="p-4 md:p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
+                  <p className="text-gray-600 mt-2">
+                    Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
+                  </p>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Registrar Diagnóstico
+                </Button>
               </div>
-              
-              <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Registrar Diagnóstico
-              </Button>
-            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent className="max-w-2xl">
@@ -213,30 +210,15 @@ export default function HealthTrendsNew() {
                     Adicione um diagnóstico médico à sua linha do tempo
                   </DialogDescription>
                 </DialogHeader>
-                
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Descrição do Diagnóstico</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Ex: Hipertensão arterial" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
                         name="cidCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Código CID-10 (opcional)</FormLabel>
+                            <FormLabel>Código CID-10 *</FormLabel>
                             <FormControl>
                               <CID10Selector
                                 value={field.value || ""}
@@ -248,7 +230,6 @@ export default function HealthTrendsNew() {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={form.control}
                         name="diagnosisDate"
@@ -262,7 +243,6 @@ export default function HealthTrendsNew() {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={form.control}
                         name="status"
@@ -286,7 +266,6 @@ export default function HealthTrendsNew() {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={form.control}
                         name="notes"
@@ -304,7 +283,6 @@ export default function HealthTrendsNew() {
                           </FormItem>
                         )}
                       />
-                      
                       <div className="flex justify-end gap-3 pt-4">
                         <Button
                           type="button"
@@ -326,7 +304,6 @@ export default function HealthTrendsNew() {
               </DialogContent>
             </Dialog>
 
-            {/* Estatísticas Resumidas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -337,7 +314,6 @@ export default function HealthTrendsNew() {
                   <div className="text-2xl font-bold">{Array.isArray(exams) ? exams.length : 0}</div>
                 </CardContent>
               </Card>
-              
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Diagnósticos Ativos</CardTitle>
@@ -347,7 +323,6 @@ export default function HealthTrendsNew() {
                   <div className="text-2xl font-bold">{diagnoses.filter(d => d.status === "ativo").length}</div>
                 </CardContent>
               </Card>
-              
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Última Atualização</CardTitle>
@@ -364,7 +339,6 @@ export default function HealthTrendsNew() {
               </Card>
             </div>
 
-            {/* Timeline */}
             <div className="space-y-4">
               {timelineItems.length === 0 ? (
                 <Card className="p-8 text-center">
@@ -390,7 +364,6 @@ export default function HealthTrendsNew() {
                             </div>
                           )}
                         </div>
-                        
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
@@ -400,7 +373,6 @@ export default function HealthTrendsNew() {
                               {item.type === "exam" ? "Exame" : "Diagnóstico"}
                             </span>
                           </div>
-                          
                           <p className="text-sm text-gray-600 mb-2">
                             {new Date(item.date).toLocaleDateString('pt-BR', {
                               year: 'numeric',
@@ -408,31 +380,26 @@ export default function HealthTrendsNew() {
                               day: 'numeric'
                             })}
                           </p>
-                          
                           {item.description && (
                             <p className="text-gray-700 mb-2">{item.description}</p>
                           )}
-                          
                           <div className="flex flex-wrap gap-2">
                             {item.cidCode && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                 CID-10: {item.cidCode}
                               </span>
                             )}
-                            
                             {item.status && (
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
                                 {getStatusLabel(item.status)}
                               </span>
                             )}
-                            
                             {item.examType && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                 {item.examType}
                               </span>
                             )}
                           </div>
-                          
                           {item.resultSummary && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                               <p className="text-sm text-gray-700">{item.resultSummary}</p>
@@ -445,8 +412,10 @@ export default function HealthTrendsNew() {
                 ))
               )}
             </div>
+            </div>
           </div>
         </main>
       </div>
-    );
+    </div>
+  );
 }

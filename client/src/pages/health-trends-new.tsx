@@ -3,13 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { format, parseISO, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -41,11 +36,15 @@ import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   FileText, 
-  PlusCircle, 
-  Calendar, 
+  Calendar,
+  Badge as BadgeIcon,
+  PlusCircle,
   ClipboardList,
   Activity
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const diagnosisSchema = z.object({
   cidCode: z.string().min(1, "Código CID-10 é obrigatório"),
@@ -87,8 +86,11 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/exams"],
   });
 
-  const diagnoses: any[] = [];
+  const { data: diagnoses = [], isLoading: diagnosesLoading } = useQuery({
+    queryKey: ["/api/diagnoses"],
+  });
 
+  // Mutation para adicionar diagnóstico
   const addDiagnosisMutation = useMutation({
     mutationFn: (data: DiagnosisForm) => apiRequest("POST", "/api/diagnoses", data),
     onSuccess: () => {
@@ -119,23 +121,16 @@ export default function HealthTrendsNew() {
       examType: exam.examType,
       resultSummary: exam.resultSummary,
     })) : []),
-    ...diagnoses.map((diagnosis: any) => ({
+    ...(Array.isArray(diagnoses) ? diagnoses.map((diagnosis: any) => ({
       id: diagnosis.id,
       type: "diagnosis" as const,
       date: diagnosis.diagnosisDate,
-      title: diagnosis.description,
+      title: diagnosis.cidCode || "Diagnóstico",
       description: diagnosis.notes,
       cidCode: diagnosis.cidCode,
       status: diagnosis.status,
-    })),
-  ].sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-      return 0;
-    }
-    return dateB.getTime() - dateA.getTime();
-  });
+    })) : [])
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const onSubmit = (data: DiagnosisForm) => {
     addDiagnosisMutation.mutate(data);
@@ -161,7 +156,7 @@ export default function HealthTrendsNew() {
     }
   };
 
-  if (examsLoading) {
+  if (examsLoading || diagnosesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <MobileHeader />
@@ -202,216 +197,170 @@ export default function HealthTrendsNew() {
                 </Button>
               </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
-                  <DialogDescription>
-                    Adicione um diagnóstico médico à sua linha do tempo
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="cidCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Código CID-10 *</FormLabel>
-                            <FormControl>
-                              <CID10Selector
-                                value={field.value || ""}
-                                onValueChange={field.onChange}
-                                placeholder="Buscar código CID-10..."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="diagnosisDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Data do Diagnóstico</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
+                    <DialogDescription>
+                      Adicione um diagnóstico médico à sua linha do tempo
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="cidCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Código CID-10 *</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
+                                <CID10Selector
+                                  value={field.value || ""}
+                                  onValueChange={field.onChange}
+                                  placeholder="Buscar código CID-10..."
+                                />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="ativo">Ativo</SelectItem>
-                                <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
-                                <SelectItem value="resolvido">Resolvido</SelectItem>
-                                <SelectItem value="cronico">Crônico</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Observações (opcional)</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Observações adicionais sobre o diagnóstico..."
-                                className="resize-none"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex justify-end gap-3 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsDialogOpen(false)}
-                        >
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="diagnosisDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Data do Diagnóstico</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="status"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ativo">Ativo</SelectItem>
+                                    <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                                    <SelectItem value="resolvido">Resolvido</SelectItem>
+                                    <SelectItem value="cronico">Crônico</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="notes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Observações (opcional)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Adicione observações sobre o diagnóstico..."
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                           Cancelar
                         </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={addDiagnosisMutation.isPending}
-                        >
-                          {addDiagnosisMutation.isPending ? "Salvando..." : "Salvar"}
+                        <Button type="submit" disabled={addDiagnosisMutation.isPending}>
+                          {addDiagnosisMutation.isPending ? "Registrando..." : "Registrar Diagnóstico"}
                         </Button>
                       </div>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total de Exames</CardTitle>
-                  <FileText className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{Array.isArray(exams) ? exams.length : 0}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Diagnósticos Ativos</CardTitle>
-                  <Activity className="h-4 w-4 text-red-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{diagnoses.filter(d => d.status === "ativo").length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Última Atualização</CardTitle>
-                  <Calendar className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {timelineItems.length > 0 ? 
-                      new Date(timelineItems[0].date).toLocaleDateString('pt-BR') : 
-                      "Nenhum"
-                    }
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-4">
-              {timelineItems.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <div className="text-gray-500">
-                    <ClipboardList className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-lg font-medium mb-2">Nenhum registro encontrado</h3>
-                    <p>Registre seu primeiro diagnóstico ou faça upload de um exame para começar.</p>
-                  </div>
-                </Card>
-              ) : (
-                timelineItems.map((item) => (
-                  <Card key={`${item.type}-${item.id}`} className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0">
-                          {item.type === "exam" ? (
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                            </div>
-                          ) : (
-                            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                              <Activity className="h-5 w-5 text-red-600" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              item.type === "exam" ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"
-                            }`}>
-                              {item.type === "exam" ? "Exame" : "Diagnóstico"}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {new Date(item.date).toLocaleDateString('pt-BR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </p>
-                          {item.description && (
-                            <p className="text-gray-700 mb-2">{item.description}</p>
-                          )}
-                          <div className="flex flex-wrap gap-2">
-                            {item.cidCode && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                CID-10: {item.cidCode}
-                              </span>
-                            )}
-                            {item.status && (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                                {getStatusLabel(item.status)}
-                              </span>
-                            )}
-                            {item.examType && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                {item.examType}
-                              </span>
-                            )}
-                          </div>
-                          {item.resultSummary && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm text-gray-700">{item.resultSummary}</p>
-                            </div>
-                          )}
-                        </div>
+              <div className="space-y-6">
+                {timelineItems.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <ClipboardList className="h-12 w-12 text-gray-400" />
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Nenhum evento registrado
+                        </h3>
+                        <p className="text-gray-600">
+                          Comece enviando um exame ou registrando um diagnóstico para criar sua linha do tempo de saúde.
+                        </p>
                       </div>
                     </div>
                   </Card>
-                ))
-              )}
-            </div>
+                ) : (
+                  timelineItems.map((item) => (
+                    <Card key={`${item.type}-${item.id}`} className="transition-shadow hover:shadow-md">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            {item.type === "exam" ? (
+                              <div className="p-2 bg-blue-50 rounded-lg">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              </div>
+                            ) : (
+                              <div className="p-2 bg-green-50 rounded-lg">
+                                <Activity className="h-5 w-5 text-green-600" />
+                              </div>
+                            )}
+                            <div>
+                              <CardTitle className="text-lg">{item.title}</CardTitle>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm text-gray-600">
+                                  {format(parseISO(item.date), "dd/MM/yyyy", { locale: ptBR })}
+                                </span>
+                                {item.type === "exam" && item.examType && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {item.examType}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {item.status && (
+                            <Badge className={getStatusColor(item.status)}>
+                              {getStatusLabel(item.status)}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {item.cidCode && (
+                          <div className="mb-3">
+                            <span className="text-sm font-medium text-gray-700">CID-10: </span>
+                            <span className="text-sm text-gray-600">{item.cidCode}</span>
+                          </div>
+                        )}
+                        {item.description && (
+                          <p className="text-gray-600 text-sm">{item.description}</p>
+                        )}
+                        {item.resultSummary && (
+                          <p className="text-gray-600 text-sm mt-2">{item.resultSummary}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </main>
