@@ -163,39 +163,44 @@ export default function HealthTrendsNew() {
 
   if (examsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        <main className="lg:pl-64">
-          <MobileHeader />
-          <div className="p-4 lg:p-8">
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 bg-gray-50">
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="lg:pl-64">
-        <MobileHeader />
-        <div className="p-4 lg:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
-                <p className="text-gray-600 mt-2">
-                  Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
-                </p>
+    <div className="min-h-screen flex flex-col">
+      <MobileHeader />
+      
+      <div className="flex flex-1 relative">
+        <Sidebar />
+        
+        <main className="flex-1 bg-gray-50">
+          <div className="p-4 md:p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
+                  <p className="text-gray-600 mt-2">
+                    Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
+                  </p>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Registrar Diagnóstico
+                </Button>
               </div>
-              <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Registrar Diagnóstico
-              </Button>
-            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent className="max-w-2xl">
@@ -407,9 +412,10 @@ export default function HealthTrendsNew() {
                 ))
               )}
             </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
