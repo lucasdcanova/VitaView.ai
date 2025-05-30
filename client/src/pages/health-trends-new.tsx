@@ -464,23 +464,21 @@ export default function HealthTrendsNew() {
                     Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
                   </p>
                 </div>
-                <div className="flex gap-2 flex-wrap items-center">
-                  <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+                  <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
                     <PlusCircle className="h-4 w-4" />
                     Medicamento
                   </Button>
-                  <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+                  <Button onClick={() => setIsDialogOpen(true)} className="flex items-center justify-center gap-2 h-12">
                     <PlusCircle className="h-4 w-4" />
                     Diagnóstico
                   </Button>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Exportar para arquivo PDF
-                    </Button>
-                    <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200">
-                      📋 Envie para seu médico!
-                    </div>
+                  <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center justify-center gap-2 h-12">
+                    <FileDown className="h-4 w-4" />
+                    Exportar arquivo PDF
+                  </Button>
+                  <div className="bg-blue-50 text-blue-700 px-3 py-3 rounded-lg text-sm font-medium border border-blue-200 flex items-center justify-center h-12">
+                    📋 Envie para seu médico!
                   </div>
                 </div>
               </div>
