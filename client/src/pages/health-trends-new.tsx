@@ -493,10 +493,7 @@ export default function HealthTrendsNew() {
                             </div>
                           </div>
                           
-                          {/* Ponto na linha */}
-                          <div className={`absolute left-0 top-5 z-10 flex-shrink-0 w-5 h-5 rounded-full border-4 border-white ${
-                            item.type === "exam" ? "bg-blue-500" : "bg-green-500"
-                          } shadow-xl group-hover:scale-125 transition-transform duration-200`}></div>
+
                           
                           {/* Conteúdo no lado direito */}
                           <div className="ml-16 flex-1">
