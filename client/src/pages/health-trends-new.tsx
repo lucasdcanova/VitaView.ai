@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import { CID10Selector } from "@/components/cid10-selector";
 import { 
   FileText, 
   Plus, 
@@ -231,7 +232,11 @@ export default function HealthTrendsNew() {
                           <FormItem>
                             <FormLabel>Código CID-10 (opcional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: I10" {...field} />
+                              <CID10Selector
+                                value={field.value || ""}
+                                onValueChange={field.onChange}
+                                placeholder="Buscar código CID-10..."
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
