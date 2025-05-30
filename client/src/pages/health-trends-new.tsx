@@ -478,7 +478,10 @@ export default function HealthTrendsNew() {
                     Exportar PDF
                   </Button>
                   <div className="bg-blue-50 text-blue-700 px-3 py-3 rounded-lg text-sm font-medium border border-blue-200 flex items-center justify-center h-12">
-                    📋 Envie para seu médico!
+                    <div className="text-center leading-tight">
+                      <div>📋 Compartilhe com</div>
+                      <div>seu médico</div>
+                    </div>
                   </div>
                 </div>
               </div>
