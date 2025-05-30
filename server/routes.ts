@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
 import { analyzeExtractedExam } from "./services/openai";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
+import { pool } from "./db";
 import Stripe from "stripe";
 
 // Configuração do Stripe
@@ -1492,11 +1493,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medications routes
   app.post("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
-      const user = req.user as User;
+      const user = req.user as any;
       const medicationData = { ...req.body, userId: user.id };
       
-      const [medication] = await db.insert(medications).values(medicationData).returning();
-      res.json(medication);
+      const result = await pool.query(`
+        INSERT INTO medications (user_id, name, format, dosage, frequency, notes, start_date, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `, [
+        medicationData.userId,
+        medicationData.name,
+        medicationData.format,
+        medicationData.dosage,
+        medicationData.frequency,
+        medicationData.notes || null,
+        medicationData.startDate,
+        medicationData.isActive !== false
+      ]);
+      
+      res.json(result.rows[0]);
     } catch (error) {
       console.error("Error creating medication:", error);
       res.status(500).json({ message: "Erro ao criar medicamento" });
@@ -1505,12 +1520,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
-      const user = req.user as User;
-      const userMedications = await db.select().from(medications)
-        .where(eq(medications.userId, user.id))
-        .orderBy(desc(medications.createdAt));
+      const user = req.user as any;
       
-      res.json(userMedications);
+      const result = await pool.query(`
+        SELECT * FROM medications 
+        WHERE user_id = $1 AND is_active = true
+        ORDER BY created_at DESC
+      `, [user.id]);
+      
+      res.json(result.rows);
     } catch (error) {
       console.error("Error fetching medications:", error);
       res.status(500).json({ message: "Erro ao buscar medicamentos" });
@@ -1519,19 +1537,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/medications/:id", ensureAuthenticated, async (req, res) => {
     try {
-      const user = req.user as User;
+      const user = req.user as any;
       const id = parseInt(req.params.id);
       
-      const [medication] = await db.update(medications)
-        .set(req.body)
-        .where(eq(medications.id, id) && eq(medications.userId, user.id))
-        .returning();
+      const result = await pool.query(`
+        UPDATE medications 
+        SET name = $1, format = $2, dosage = $3, frequency = $4, notes = $5, start_date = $6
+        WHERE id = $7 AND user_id = $8
+        RETURNING *
+      `, [
+        req.body.name,
+        req.body.format,
+        req.body.dosage,
+        req.body.frequency,
+        req.body.notes || null,
+        req.body.startDate,
+        id,
+        user.id
+      ]);
       
-      if (!medication) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ message: "Medicamento não encontrado" });
       }
       
-      res.json(medication);
+      res.json(result.rows[0]);
     } catch (error) {
       console.error("Error updating medication:", error);
       res.status(500).json({ message: "Erro ao atualizar medicamento" });
@@ -1540,11 +1569,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/medications/:id", ensureAuthenticated, async (req, res) => {
     try {
-      const user = req.user as User;
+      const user = req.user as any;
       const id = parseInt(req.params.id);
       
-      await db.delete(medications)
-        .where(eq(medications.id, id) && eq(medications.userId, user.id));
+      await pool.query(`
+        UPDATE medications SET is_active = false 
+        WHERE id = $1 AND user_id = $2
+      `, [id, user.id]);
       
       res.json({ message: "Medicamento excluído com sucesso" });
     } catch (error) {

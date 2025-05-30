@@ -53,7 +53,17 @@ const diagnosisSchema = z.object({
   notes: z.string().optional(),
 });
 
+const medicationSchema = z.object({
+  name: z.string().min(1, "Nome do medicamento é obrigatório"),
+  format: z.string().min(1, "Formato é obrigatório"),
+  dosage: z.string().min(1, "Dosagem é obrigatória"),
+  frequency: z.string().min(1, "Frequência é obrigatória"),
+  startDate: z.string().min(1, "Data de início é obrigatória"),
+  notes: z.string().optional(),
+});
+
 type DiagnosisForm = z.infer<typeof diagnosisSchema>;
+type MedicationForm = z.infer<typeof medicationSchema>;
 
 interface TimelineItem {
   id: number;
@@ -74,6 +84,9 @@ export default function HealthTrendsNew() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDiagnosis, setEditingDiagnosis] = useState<any>(null);
+  const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
+  const [isEditMedicationDialogOpen, setIsEditMedicationDialogOpen] = useState(false);
+  const [editingMedication, setEditingMedication] = useState<any>(null);
 
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
@@ -91,6 +104,30 @@ export default function HealthTrendsNew() {
       cidCode: "",
       diagnosisDate: "",
       status: undefined,
+      notes: "",
+    },
+  });
+
+  const medicationForm = useForm<MedicationForm>({
+    resolver: zodResolver(medicationSchema),
+    defaultValues: {
+      name: "",
+      format: "",
+      dosage: "",
+      frequency: "",
+      startDate: "",
+      notes: "",
+    },
+  });
+
+  const editMedicationForm = useForm<MedicationForm>({
+    resolver: zodResolver(medicationSchema),
+    defaultValues: {
+      name: "",
+      format: "",
+      dosage: "",
+      frequency: "",
+      startDate: "",
       notes: "",
     },
   });
