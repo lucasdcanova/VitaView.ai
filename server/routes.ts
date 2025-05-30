@@ -847,6 +847,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API routes for diagnoses
+  app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
+    try {
+      console.log(`Buscando diagnósticos para usuário ${req.user!.id}`);
+      const diagnoses = await storage.getDiagnosesByUserId(req.user!.id);
+      console.log(`Diagnósticos encontrados: ${diagnoses?.length || 0}`);
+      res.json(diagnoses || []);
+    } catch (error) {
+      console.error("Erro ao buscar diagnósticos:", error);
+      res.status(500).json({ message: "Erro ao buscar diagnósticos" });
+    }
+  });
+
+  app.post("/api/diagnoses", ensureAuthenticated, async (req, res) => {
+    try {
+      console.log(`Criando diagnóstico para usuário ${req.user!.id}`, req.body);
+      const diagnosisData = {
+        userId: req.user!.id,
+        cidCode: req.body.cidCode,
+        description: req.body.description,
+        diagnosisDate: req.body.diagnosisDate,
+        severity: req.body.severity,
+        status: req.body.status,
+        notes: req.body.notes || null,
+      };
+
+      const newDiagnosis = await storage.createDiagnosis(diagnosisData);
+      console.log("Diagnóstico criado com sucesso:", newDiagnosis);
+      res.status(201).json(newDiagnosis);
+    } catch (error) {
+      console.error("Erro ao criar diagnóstico:", error);
+      res.status(500).json({ message: "Erro ao criar diagnóstico" });
+    }
+  });
+
+  app.put("/api/diagnoses/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const diagnosisId = parseInt(req.params.id);
+      const diagnosis = await storage.getDiagnosis(diagnosisId);
+      
+      if (!diagnosis) {
+        return res.status(404).json({ message: "Diagnóstico não encontrado" });
+      }
+
+      if (diagnosis.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const updatedDiagnosis = await storage.updateDiagnosis(diagnosisId, req.body);
+      res.json(updatedDiagnosis);
+    } catch (error) {
+      console.error("Erro ao atualizar diagnóstico:", error);
+      res.status(500).json({ message: "Erro ao atualizar diagnóstico" });
+    }
+  });
+
+  app.delete("/api/diagnoses/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const diagnosisId = parseInt(req.params.id);
+      const diagnosis = await storage.getDiagnosis(diagnosisId);
+      
+      if (!diagnosis) {
+        return res.status(404).json({ message: "Diagnóstico não encontrado" });
+      }
+
+      if (diagnosis.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      await storage.deleteDiagnosis(diagnosisId);
+      res.json({ message: "Diagnóstico excluído com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir diagnóstico:", error);
+      res.status(500).json({ message: "Erro ao excluir diagnóstico" });
+    }
+  });
+
   // Rota para gerar relatório cronológico contextual com OpenAI
   app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {

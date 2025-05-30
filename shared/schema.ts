@@ -148,6 +148,29 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
   read: true,
 });
 
+// Diagnoses schema
+export const diagnoses = pgTable("diagnoses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  cidCode: text("cid_code").notNull(), // Código CID-10
+  description: text("description").notNull(),
+  diagnosisDate: text("diagnosis_date").notNull(),
+  severity: text("severity").notNull(), // leve, moderada, grave
+  status: text("status").notNull(), // ativo, resolvido, cronico
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDiagnosisSchema = createInsertSchema(diagnoses).pick({
+  userId: true,
+  cidCode: true,
+  description: true,
+  diagnosisDate: true,
+  severity: true,
+  status: true,
+  notes: true,
+});
+
 // Subscription plans schema
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),

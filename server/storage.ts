@@ -52,6 +52,13 @@ export interface IStorage {
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
   
+  // Diagnosis operations
+  createDiagnosis(diagnosis: any): Promise<any>;
+  getDiagnosis(id: number): Promise<any | undefined>;
+  getDiagnosesByUserId(userId: number): Promise<any[]>;
+  updateDiagnosis(id: number, data: Partial<any>): Promise<any | undefined>;
+  deleteDiagnosis(id: number): Promise<boolean>;
+  
   // Subscription operations
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
@@ -1317,6 +1324,72 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`Error fetching subscriptions by Stripe ID ${stripeSubscriptionId}:`, error);
       return [];
+    }
+  }
+
+  // Diagnosis operations
+  async createDiagnosis(diagnosis: any): Promise<any> {
+    try {
+      const [newDiagnosis] = await db
+        .insert(diagnoses)
+        .values(diagnosis)
+        .returning();
+      return newDiagnosis;
+    } catch (error) {
+      console.error("Error creating diagnosis:", error);
+      throw error;
+    }
+  }
+
+  async getDiagnosis(id: number): Promise<any | undefined> {
+    try {
+      const [diagnosis] = await db
+        .select()
+        .from(diagnoses)
+        .where(eq(diagnoses.id, id));
+      return diagnosis;
+    } catch (error) {
+      console.error(`Error fetching diagnosis ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getDiagnosesByUserId(userId: number): Promise<any[]> {
+    try {
+      return await db
+        .select()
+        .from(diagnoses)
+        .where(eq(diagnoses.userId, userId))
+        .orderBy(desc(diagnoses.diagnosisDate));
+    } catch (error) {
+      console.error(`Error fetching diagnoses for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async updateDiagnosis(id: number, data: Partial<any>): Promise<any | undefined> {
+    try {
+      const [updatedDiagnosis] = await db
+        .update(diagnoses)
+        .set(data)
+        .where(eq(diagnoses.id, id))
+        .returning();
+      return updatedDiagnosis;
+    } catch (error) {
+      console.error(`Error updating diagnosis ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteDiagnosis(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(diagnoses)
+        .where(eq(diagnoses.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting diagnosis ${id}:`, error);
+      return false;
     }
   }
 }
