@@ -112,15 +112,41 @@ export default function HealthTrendsNew() {
   });
 
   const timelineItems: TimelineItem[] = [
-    ...(Array.isArray(exams) ? exams.map((exam: any) => ({
-      id: exam.id,
-      type: "exam" as const,
-      date: exam.uploadDate || exam.uploadedAt || exam.createdAt,
-      title: exam.name || exam.title || "Exame",
-      description: exam.description,
-      examType: exam.examType,
-      resultSummary: exam.resultSummary,
-    })) : []),
+    ...(Array.isArray(exams) ? exams.map((exam: any) => {
+      const originalContent = exam.originalContent ? JSON.parse(exam.originalContent) : null;
+      const examType = originalContent?.examType || "Exame de laboratório";
+      const labName = originalContent?.laboratoryName || exam.laboratoryName || "laboratório";
+      
+      // Extrair informações das métricas para criar um resumo útil
+      let resultSummary = "";
+      if (originalContent?.healthMetrics?.length) {
+        const metrics = originalContent.healthMetrics;
+        const abnormalMetrics = metrics.filter((m: any) => m.status === "alto" || m.status === "baixo");
+        
+        if (abnormalMetrics.length > 0) {
+          const keyFindings = abnormalMetrics.slice(0, 2).map((m: any) => 
+            `${m.name}: ${m.value}${m.unit || ""} (${m.status})`
+          );
+          resultSummary = keyFindings.join(", ");
+          if (abnormalMetrics.length > 2) {
+            resultSummary += ` e mais ${abnormalMetrics.length - 2} alterações`;
+          }
+        } else {
+          const normalCount = metrics.filter((m: any) => m.status === "normal").length;
+          resultSummary = `${normalCount} parâmetros dentro da normalidade`;
+        }
+      }
+      
+      return {
+        id: exam.id,
+        type: "exam" as const,
+        date: exam.examDate || exam.uploadDate || exam.uploadedAt || exam.createdAt,
+        title: exam.name || exam.title || "Exame",
+        description: `${examType} realizado no ${labName}`,
+        examType: examType,
+        resultSummary: resultSummary || `${originalContent?.healthMetrics?.length || 0} métricas analisadas`,
+      };
+    }) : []),
     ...(Array.isArray(diagnoses) ? diagnoses.map((diagnosis: any) => ({
       id: diagnosis.id,
       type: "diagnosis" as const,
