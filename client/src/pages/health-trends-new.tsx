@@ -140,6 +140,10 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/diagnoses"],
   });
 
+  const { data: medications = [], isLoading: medicationsLoading } = useQuery({
+    queryKey: ["/api/medications"],
+  });
+
   // Mutation para adicionar diagnóstico
   const addDiagnosisMutation = useMutation({
     mutationFn: (data: DiagnosisForm) => apiRequest("POST", "/api/diagnoses", data),
@@ -199,6 +203,67 @@ export default function HealthTrendsNew() {
       toast({
         title: "Erro ao remover diagnóstico",
         description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutations para medicamentos
+  const addMedicationMutation = useMutation({
+    mutationFn: (data: MedicationForm) => apiRequest("POST", "/api/medications", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      medicationForm.reset();
+      setIsMedicationDialogOpen(false);
+      toast({
+        title: "Sucesso",
+        description: "Medicamento adicionado com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar medicamento. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editMedicationMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: MedicationForm }) => 
+      apiRequest("PUT", `/api/medications/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      editMedicationForm.reset();
+      setIsEditMedicationDialogOpen(false);
+      setEditingMedication(null);
+      toast({
+        title: "Sucesso",
+        description: "Medicamento atualizado com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar medicamento. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMedicationMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/medications/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      toast({
+        title: "Sucesso",
+        description: "Medicamento excluído com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir medicamento. Tente novamente.",
         variant: "destructive",
       });
     },
@@ -279,6 +344,36 @@ export default function HealthTrendsNew() {
     }
   };
 
+  // Handlers para medicamentos
+  const onMedicationSubmit = (data: MedicationForm) => {
+    addMedicationMutation.mutate(data);
+  };
+
+  const onEditMedicationSubmit = (data: MedicationForm) => {
+    if (editingMedication) {
+      editMedicationMutation.mutate({ id: editingMedication.id, data });
+    }
+  };
+
+  const openEditMedicationDialog = (medication: any) => {
+    setEditingMedication(medication);
+    editMedicationForm.reset({
+      name: medication.name || "",
+      format: medication.format || "",
+      dosage: medication.dosage || "",
+      frequency: medication.frequency || "",
+      startDate: medication.start_date || medication.startDate || "",
+      notes: medication.notes || "",
+    });
+    setIsEditMedicationDialogOpen(true);
+  };
+
+  const handleRemoveMedication = (id: number) => {
+    if (confirm("Deseja remover este medicamento?")) {
+      deleteMedicationMutation.mutate(id);
+    }
+  };
+
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "ativo": return "bg-red-100 text-red-800";
@@ -336,10 +431,16 @@ export default function HealthTrendsNew() {
                     Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
                   </p>
                 </div>
-                <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  Registrar Diagnóstico
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    Medicamento
+                  </Button>
+                  <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    Diagnóstico
+                  </Button>
+                </div>
               </div>
 
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -483,6 +584,54 @@ export default function HealthTrendsNew() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Medicamentos em Uso */}
+              {medications.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <svg className="h-5 w-5 text-[#48C9B0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 9.172V5L8 4z" />
+                      </svg>
+                      Medicamentos em Uso Contínuo ({medications.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3">
+                      {medications.map((medication: any) => (
+                        <div
+                          key={medication.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => openEditMedicationDialog(medication)}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-gray-900">{medication.name}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {medication.format}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              {medication.dosage} • {medication.frequency}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Desde {format(parseISO(medication.start_date || medication.startDate), "dd/MM/yyyy", { locale: ptBR })}
+                            </div>
+                            {medication.notes && (
+                              <div className="text-xs text-gray-600 mt-1 italic">
+                                {medication.notes}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-blue-500">
+                            Clique para editar
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Linha do Tempo */}
               <div className="relative">
@@ -696,6 +845,286 @@ export default function HealthTrendsNew() {
                     </Button>
                     <Button type="submit" disabled={editDiagnosisMutation.isPending}>
                       {editDiagnosisMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para adicionar medicamento */}
+        <Dialog open={isMedicationDialogOpen} onOpenChange={setIsMedicationDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Adicionar Medicamento de Uso Contínuo</DialogTitle>
+              <DialogDescription>
+                Registre um medicamento que você usa regularmente
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...medicationForm}>
+              <form onSubmit={medicationForm.handleSubmit(onMedicationSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={medicationForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Medicamento *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Losartana" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="format"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Formato *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o formato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="comprimido">Comprimido</SelectItem>
+                              <SelectItem value="capsula">Cápsula</SelectItem>
+                              <SelectItem value="solucao">Solução</SelectItem>
+                              <SelectItem value="xarope">Xarope</SelectItem>
+                              <SelectItem value="gotas">Gotas</SelectItem>
+                              <SelectItem value="injecao">Injeção</SelectItem>
+                              <SelectItem value="creme">Creme</SelectItem>
+                              <SelectItem value="pomada">Pomada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosagem *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 50mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="frequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Frequência *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a frequência" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
+                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
+                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
+                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
+                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
+                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
+                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
+                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Início *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={medicationForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Adicione observações sobre o medicamento..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3">
+                  <Button type="button" variant="outline" onClick={() => setIsMedicationDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addMedicationMutation.isPending}>
+                    {addMedicationMutation.isPending ? "Adicionando..." : "Adicionar Medicamento"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para editar medicamento */}
+        <Dialog open={isEditMedicationDialogOpen} onOpenChange={setIsEditMedicationDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Medicamento</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do medicamento
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editMedicationForm}>
+              <form onSubmit={editMedicationForm.handleSubmit(onEditMedicationSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Medicamento *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Losartana" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="format"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Formato *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o formato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="comprimido">Comprimido</SelectItem>
+                              <SelectItem value="capsula">Cápsula</SelectItem>
+                              <SelectItem value="solucao">Solução</SelectItem>
+                              <SelectItem value="xarope">Xarope</SelectItem>
+                              <SelectItem value="gotas">Gotas</SelectItem>
+                              <SelectItem value="injecao">Injeção</SelectItem>
+                              <SelectItem value="creme">Creme</SelectItem>
+                              <SelectItem value="pomada">Pomada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosagem *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 50mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="frequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Frequência *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a frequência" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
+                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
+                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
+                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
+                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
+                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
+                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
+                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Início *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={editMedicationForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Adicione observações sobre o medicamento..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-between gap-3">
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={() => editingMedication && handleRemoveMedication(editingMedication.id)}
+                    disabled={deleteMedicationMutation.isPending}
+                  >
+                    {deleteMedicationMutation.isPending ? "Removendo..." : "Remover Medicamento"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditMedicationDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editMedicationMutation.isPending}>
+                      {editMedicationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                     </Button>
                   </div>
                 </div>
