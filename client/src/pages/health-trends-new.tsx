@@ -56,7 +56,6 @@ const diagnosisSchema = z.object({
   description: z.string().min(1, "Descrição é obrigatória"),
   cidCode: z.string().optional(),
   diagnosisDate: z.string().min(1, "Data é obrigatória"),
-  severity: z.enum(["leve", "moderada", "grave"]).optional(),
   status: z.enum(["ativo", "em_tratamento", "resolvido", "cronico"]).optional(),
   notes: z.string().optional(),
 });
@@ -70,7 +69,6 @@ interface TimelineItem {
   title: string;
   description?: string;
   cidCode?: string;
-  severity?: string;
   status?: string;
   examType?: string;
   resultSummary?: string;
@@ -87,7 +85,6 @@ export default function HealthTrendsNew() {
       description: "",
       cidCode: "",
       diagnosisDate: "",
-      severity: undefined,
       status: undefined,
       notes: "",
     },
@@ -257,54 +254,163 @@ export default function HealthTrendsNew() {
                         )}
                       />
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="severity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Severidade</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="leve">Leve</SelectItem>
-                                  <SelectItem value="moderada">Moderada</SelectItem>
-                                  <SelectItem value="grave">Grave</SelectItem>
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="ativo">Ativo</SelectItem>
+                                <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                                <SelectItem value="resolvido">Resolvido</SelectItem>
+                                <SelectItem value="cronico">Crônico</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
-                        <FormField
-                          control={form.control}
-                          name="status"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Status</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="ativo">Ativo</SelectItem>
-                                  <SelectItem value="em_tratamento">Em tratamento</SelectItem>
-                                  <SelectItem value="resolvido">Resolvido</SelectItem>
-                                  <SelectItem value="cronico">Crônico</SelectItem>
+                      
+                      <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Observações (opcional)</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Notas adicionais..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <DialogFooter>
+                      <Button type="submit" disabled={addDiagnosisMutation.isPending}>
+                        {addDiagnosisMutation.isPending ? "Salvando..." : "Salvar Diagnóstico"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <main className="lg:pl-64">
+        <MobileHeader />
+        
+        <div className="p-4 lg:p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
+                <p className="text-gray-600 mt-2">
+                  Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
+                </p>
+              </div>
+              
+              <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Registrar Diagnóstico
+              </Button>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
+                  <DialogDescription>
+                    Adicione um diagnóstico médico à sua linha do tempo
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Descrição do Diagnóstico</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Hipertensão arterial" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="cidCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Código CID-10 (opcional)</FormLabel>
+                            <FormControl>
+                              <CID10Selector
+                                value={field.value || ""}
+                                onValueChange={field.onChange}
+                                placeholder="Buscar código CID-10..."
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="diagnosisDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data do Diagnóstico</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="ativo">Ativo</SelectItem>
+                                <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                                <SelectItem value="resolvido">Resolvido</SelectItem>
+                                <SelectItem value="cronico">Crônico</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                      </div>
                       
                       <FormField
                         control={form.control}
