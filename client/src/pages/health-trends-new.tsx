@@ -394,7 +394,7 @@ export default function HealthTrendsNew() {
     }
   };
 
-  if (examsLoading || diagnosesLoading) {
+  if (examsLoading || diagnosesLoading || medicationsLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <MobileHeader />
