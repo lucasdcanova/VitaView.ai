@@ -42,6 +42,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
 import { 
   FileText, 
   Plus, 
@@ -175,8 +176,9 @@ export default function HealthTrendsNew() {
   return (
     <>
       <Sidebar />
+      <MobileHeader />
       <div className="flex flex-col min-h-screen lg:pl-64">
-        <main className="flex-1 p-4 lg:p-8 bg-gray-50">
+        <main className="flex-1 p-4 lg:p-8 bg-gray-50 pt-16 lg:pt-4">
           <div className="max-w-7xl mx-auto">
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-6">
