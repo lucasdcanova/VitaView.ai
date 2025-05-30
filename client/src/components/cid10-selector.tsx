@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -123,8 +124,9 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
             <CommandEmpty>
               {isLoading ? "Carregando..." : searchValue.length < 2 ? "Digite pelo menos 2 caracteres" : "Nenhum código encontrado."}
             </CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {filteredCodes.map((code) => (
+            <ScrollArea className="h-64">
+              <CommandGroup>
+                {filteredCodes.map((code) => (
                 <CommandItem
                   key={code.code}
                   value={code.code}
@@ -152,8 +154,9 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                     <span className="text-sm text-left">{code.description}</span>
                   </div>
                 </CommandItem>
-              ))}
-            </CommandGroup>
+                ))}
+              </CommandGroup>
+            </ScrollArea>
           </Command>
         </PopoverContent>
       </Popover>
