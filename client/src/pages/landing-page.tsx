@@ -1060,30 +1060,8 @@ export default function LandingPage() {
         </div>
       </section>
       
-      {/* Feature Showcase Section */}
-      <section className="py-20 bg-[#A0D8EF] relative overflow-hidden">
-        <div className="absolute left-0 right-0 top-0 h-24 bg-gradient-to-b from-white to-transparent"></div>
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              <span className="text-primary-600">
-                Recursos inteligentes
-              </span> para sua saúde
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Oferecemos uma plataforma completa para que você compreenda e acompanhe seus exames com facilidade.
-            </p>
-          </motion.div>
-          
-          {/* Features Alternating */}
-          <div className="space-y-24">
+      {/* How it Works Section */}
+      <section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden">
             {[
               {
                 title: "Visualização intuitiva de dados de saúde",
