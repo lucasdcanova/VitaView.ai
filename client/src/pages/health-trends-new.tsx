@@ -464,7 +464,7 @@ export default function HealthTrendsNew() {
                     Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
                   </p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap items-center">
                   <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center gap-2">
                     <PlusCircle className="h-4 w-4" />
                     Medicamento
@@ -473,10 +473,15 @@ export default function HealthTrendsNew() {
                     <PlusCircle className="h-4 w-4" />
                     Diagnóstico
                   </Button>
-                  <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center gap-2">
-                    <FileDown className="h-4 w-4" />
-                    Exportar para Médico
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Exportar para arquivo PDF
+                    </Button>
+                    <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200">
+                      📋 Envie para seu médico!
+                    </div>
+                  </div>
                 </div>
               </div>
 
