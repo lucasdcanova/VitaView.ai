@@ -475,7 +475,7 @@ export default function HealthTrendsNew() {
                   </Button>
                   <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center justify-center gap-2 h-12">
                     <FileDown className="h-4 w-4" />
-                    Exportar arquivo PDF
+                    Exportar PDF
                   </Button>
                   <div className="bg-blue-50 text-blue-700 px-3 py-3 rounded-lg text-sm font-medium border border-blue-200 flex items-center justify-center h-12">
                     📋 Envie para seu médico!
