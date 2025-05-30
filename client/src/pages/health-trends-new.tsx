@@ -356,17 +356,17 @@ export default function HealthTrendsNew() {
                     </div>
                   </Card>
                 ) : (
-                  <div className="relative pl-32">
+                  <div className="relative pl-40">
                     {/* Linha vertical */}
-                    <div className="absolute left-24 top-0 bottom-0 w-1 bg-gradient-to-b from-[#48C9B0] to-[#1E3A5F] rounded-full shadow-sm"></div>
+                    <div className="absolute left-36 top-0 bottom-0 w-2 bg-gradient-to-b from-[#48C9B0] to-[#1E3A5F] rounded-full shadow-lg"></div>
                     
-                    <div className="space-y-12">
+                    <div className="space-y-16">
                       {timelineItems.map((item, index) => (
                         <div key={`${item.type}-${item.id}`} className="relative flex items-start group">
                           {/* Data no lado esquerdo */}
-                          <div className="absolute -left-32 top-2 w-24 text-right cursor-pointer group-hover:scale-105 transition-transform duration-200">
-                            <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow duration-200 hover:border-[#48C9B0]">
-                              <div className="text-base font-bold text-[#1E3A5F] group-hover:text-[#48C9B0] transition-colors duration-200">
+                          <div className="absolute -left-40 top-2 w-28 text-right cursor-pointer group-hover:scale-105 transition-transform duration-200">
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4">
+                              <div className="text-lg font-bold text-[#1E3A5F] group-hover:text-[#48C9B0] transition-colors duration-200">
                                 {format(parseISO(item.date), "yyyy", { locale: ptBR })}
                               </div>
                               <div className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors duration-200">
@@ -376,12 +376,12 @@ export default function HealthTrendsNew() {
                           </div>
                           
                           {/* Ponto na linha */}
-                          <div className={`absolute left-0 top-4 z-10 flex-shrink-0 w-4 h-4 rounded-full border-4 border-white ${
+                          <div className={`absolute left-0 top-5 z-10 flex-shrink-0 w-5 h-5 rounded-full border-4 border-white ${
                             item.type === "exam" ? "bg-blue-500" : "bg-green-500"
-                          } shadow-lg group-hover:scale-125 transition-transform duration-200`}></div>
+                          } shadow-xl group-hover:scale-125 transition-transform duration-200`}></div>
                           
                           {/* Conteúdo no lado direito */}
-                          <div className="ml-12 flex-1">
+                          <div className="ml-16 flex-1">
                             <Card className="transition-shadow hover:shadow-md">
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between mb-2">
