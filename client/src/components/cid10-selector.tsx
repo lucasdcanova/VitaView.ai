@@ -147,8 +147,27 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                 </div>
               )}
               {!isLoading && searchValue.length >= 2 && filteredCodes.length === 0 && (
-                <div className="p-4 text-center text-gray-500">
-                  Nenhum código encontrado
+                <div className="p-2">
+                  <div
+                    onClick={() => {
+                      onValueChange(searchValue.toUpperCase());
+                      setOpen(false);
+                    }}
+                    className="flex items-center p-2 cursor-pointer rounded hover:bg-gray-100 border border-dashed border-gray-300"
+                  >
+                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center">
+                        <span className="font-mono text-xs bg-gray-100 px-1 rounded mr-2">
+                          {searchValue.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-yellow-50 px-1 rounded">
+                          Código Personalizado
+                        </span>
+                      </div>
+                      <span className="text-sm text-left text-gray-600">Usar este código específico</span>
+                    </div>
+                  </div>
                 </div>
               )}
               {filteredCodes.map((code) => (
