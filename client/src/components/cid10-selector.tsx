@@ -90,8 +90,7 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
   }, [value]);
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="cid-selector">Código CID-10</Label>
+    <div className="w-full">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
