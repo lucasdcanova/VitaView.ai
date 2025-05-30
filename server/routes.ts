@@ -866,9 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const diagnosisData = {
         userId: req.user!.id,
         cidCode: req.body.cidCode,
-        description: req.body.description,
         diagnosisDate: req.body.diagnosisDate,
-        severity: req.body.severity,
         status: req.body.status,
         notes: req.body.notes || null,
       };
