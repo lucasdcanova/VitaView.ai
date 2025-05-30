@@ -40,7 +40,8 @@ import {
   Badge as BadgeIcon,
   PlusCircle,
   ClipboardList,
-  Activity
+  Activity,
+  FileDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -374,6 +375,38 @@ export default function HealthTrendsNew() {
     }
   };
 
+  // Função para exportar dados para PDF
+  const handleExportToPDF = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/export-health-report", {});
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `relatorio-saude-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Relatório exportado",
+          description: "Seu relatório de saúde foi gerado e baixado com sucesso!",
+        });
+      } else {
+        throw new Error("Erro ao gerar relatório");
+      }
+    } catch (error) {
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível gerar o relatório. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "ativo": return "bg-red-100 text-red-800";
@@ -431,7 +464,7 @@ export default function HealthTrendsNew() {
                     Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center gap-2">
                     <PlusCircle className="h-4 w-4" />
                     Medicamento
@@ -439,6 +472,10 @@ export default function HealthTrendsNew() {
                   <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
                     <PlusCircle className="h-4 w-4" />
                     Diagnóstico
+                  </Button>
+                  <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center gap-2">
+                    <FileDown className="h-4 w-4" />
+                    Exportar para Médico
                   </Button>
                 </div>
               </div>

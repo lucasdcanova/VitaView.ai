@@ -8,6 +8,210 @@ import { generateHealthInsights, generateChronologicalReport } from "./services/
 import { pool } from "./db";
 import Stripe from "stripe";
 
+// Função para gerar HTML do relatório de saúde
+function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics }: any) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "ativo": return "Ativo";
+      case "em_tratamento": return "Em Tratamento";
+      case "resolvido": return "Resolvido";
+      case "cronico": return "Crônico";
+      default: return status;
+    }
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Relatório de Saúde - ${user.fullName || user.username}</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+          color: #333;
+          background: white;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+          padding: 20px 0;
+          border-bottom: 2px solid #1E3A5F;
+        }
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+          color: #1E3A5F;
+          margin-bottom: 10px;
+        }
+        .subtitle {
+          color: #48C9B0;
+          font-size: 16px;
+        }
+        .patient-info {
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 30px;
+        }
+        .section {
+          margin-bottom: 30px;
+          page-break-inside: avoid;
+        }
+        .section-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #1E3A5F;
+          border-bottom: 2px solid #48C9B0;
+          padding-bottom: 10px;
+          margin-bottom: 20px;
+        }
+        .item {
+          background: white;
+          padding: 15px;
+          margin-bottom: 15px;
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .item-title {
+          font-weight: bold;
+          color: #1E3A5F;
+          margin-bottom: 5px;
+        }
+        .item-date {
+          color: #666;
+          font-size: 14px;
+          margin-bottom: 10px;
+        }
+        .status {
+          display: inline-block;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: bold;
+        }
+        .status-ativo { background: #fee; color: #c53030; }
+        .status-em_tratamento { background: #fff5e6; color: #d69e2e; }
+        .status-resolvido { background: #f0fff4; color: #38a169; }
+        .status-cronico { background: #ebf8ff; color: #3182ce; }
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+          margin-top: 15px;
+        }
+        .metric-item {
+          background: #f7fafc;
+          padding: 10px;
+          border-radius: 4px;
+          border-left: 4px solid #48C9B0;
+        }
+        .footer {
+          margin-top: 40px;
+          padding-top: 20px;
+          border-top: 1px solid #e0e0e0;
+          text-align: center;
+          color: #666;
+          font-size: 12px;
+        }
+        .page-break {
+          page-break-before: always;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">VitaView AI</div>
+        <div class="subtitle">Relatório Médico Completo</div>
+      </div>
+
+      <div class="patient-info">
+        <h2>Informações do Paciente</h2>
+        <p><strong>Nome:</strong> ${user.fullName || user.username}</p>
+        <p><strong>Email:</strong> ${user.email || 'Não informado'}</p>
+        <p><strong>Data do Relatório:</strong> ${formatDate(new Date().toISOString())}</p>
+        <p><strong>Gerado por:</strong> VitaView AI - Plataforma de Gestão de Saúde</p>
+      </div>
+
+      ${medications.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Medicamentos em Uso Contínuo (${medications.length})</div>
+        ${medications.map((med: any) => `
+          <div class="item">
+            <div class="item-title">${med.name}</div>
+            <div class="item-date">Iniciado em: ${formatDate(med.start_date)}</div>
+            <p><strong>Formato:</strong> ${med.format}</p>
+            <p><strong>Dosagem:</strong> ${med.dosage}</p>
+            <p><strong>Frequência:</strong> ${med.frequency}</p>
+            ${med.notes ? `<p><strong>Observações:</strong> ${med.notes}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ` : ''}
+
+      ${diagnoses.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Histórico de Diagnósticos (${diagnoses.length})</div>
+        ${diagnoses.map((diag: any) => `
+          <div class="item">
+            <div class="item-title">CID-10: ${diag.cid_code}</div>
+            <div class="item-date">Data: ${formatDate(diag.diagnosis_date)}</div>
+            ${diag.status ? `<span class="status status-${diag.status}">${getStatusLabel(diag.status)}</span>` : ''}
+            ${diag.notes ? `<p><strong>Observações:</strong> ${diag.notes}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ` : ''}
+
+      ${exams.length > 0 ? `
+      <div class="section page-break">
+        <div class="section-title">Histórico de Exames (${exams.length})</div>
+        ${exams.map((exam: any) => `
+          <div class="item">
+            <div class="item-title">${exam.exam_type || 'Exame Laboratorial'}</div>
+            <div class="item-date">Data: ${formatDate(exam.exam_date)}</div>
+            <p><strong>Laboratório:</strong> ${exam.laboratory_name || 'Não informado'}</p>
+            ${exam.summary ? `<p><strong>Resumo:</strong> ${exam.summary}</p>` : ''}
+            ${exam.ai_insights ? `<p><strong>Análise IA:</strong> ${exam.ai_insights}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ` : ''}
+
+      ${metrics.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Métricas de Saúde Recentes</div>
+        <div class="metrics-grid">
+          ${metrics.slice(0, 20).map((metric: any) => `
+            <div class="metric-item">
+              <strong>${metric.metric_name}:</strong><br>
+              ${metric.value} ${metric.unit || ''}<br>
+              <small>${formatDate(metric.exam_date)}</small>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
+
+      <div class="footer">
+        <p>Este relatório foi gerado automaticamente pela plataforma VitaView AI</p>
+        <p>Para mais informações, visite: vitaview.ai</p>
+        <p>Data de geração: ${formatDate(new Date().toISOString())} - ${new Date().toLocaleTimeString('pt-BR')}</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // Configuração do Stripe
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -1581,6 +1785,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting medication:", error);
       res.status(500).json({ message: "Erro ao excluir medicamento" });
+    }
+  });
+
+  // Rota para exportar relatório de saúde em PDF
+  app.post("/api/export-health-report", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Buscar dados do usuário
+      const examsResult = await pool.query(`
+        SELECT * FROM exams 
+        WHERE user_id = $1 
+        ORDER BY exam_date DESC
+      `, [user.id]);
+      
+      const diagnosesResult = await pool.query(`
+        SELECT * FROM diagnoses 
+        WHERE user_id = $1 
+        ORDER BY diagnosis_date DESC
+      `, [user.id]);
+      
+      const medicationsResult = await pool.query(`
+        SELECT * FROM medications 
+        WHERE user_id = $1 AND is_active = true
+        ORDER BY created_at DESC
+      `, [user.id]);
+
+      const metricsResult = await pool.query(`
+        SELECT * FROM health_metrics 
+        WHERE user_id = $1 
+        ORDER BY exam_date DESC
+      `, [user.id]);
+
+      // Gerar HTML do relatório
+      const htmlContent = generateHealthReportHTML({
+        user,
+        exams: examsResult.rows,
+        diagnoses: diagnosesResult.rows,
+        medications: medicationsResult.rows,
+        metrics: metricsResult.rows
+      });
+
+      // Configurações do PDF
+      const options = { 
+        format: 'A4',
+        margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
+        printBackground: true
+      };
+
+      // Gerar PDF usando html-pdf-node
+      const htmlPdf = require('html-pdf-node');
+      const file = { content: htmlContent };
+      
+      const pdfBuffer = await htmlPdf.generatePdf(file, options);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="relatorio-saude-${user.username}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating health report:", error);
+      res.status(500).json({ message: "Erro ao gerar relatório de saúde" });
     }
   });
 
