@@ -65,6 +65,7 @@ interface TimelineItem {
   status?: string;
   examType?: string;
   resultSummary?: string;
+  originalData?: any;
 }
 
 export default function HealthTrendsNew() {
@@ -105,6 +106,25 @@ export default function HealthTrendsNew() {
     onError: (error: any) => {
       toast({
         title: "Erro ao registrar diagnóstico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para remover diagnóstico
+  const removeDiagnosisMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/diagnoses/${id}`),
+    onSuccess: () => {
+      toast({
+        title: "Diagnóstico removido",
+        description: "O diagnóstico foi removido da sua linha do tempo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover diagnóstico",
         description: error.message || "Tente novamente.",
         variant: "destructive",
       });
@@ -155,6 +175,7 @@ export default function HealthTrendsNew() {
       description: diagnosis.notes,
       cidCode: diagnosis.cidCode,
       status: diagnosis.status,
+      originalData: diagnosis,
     })) : [])
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -327,9 +348,9 @@ export default function HealthTrendsNew() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-medium text-gray-900 mb-3">Diagnósticos Ativos</h4>
-                      {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento").length > 0 ? (
+                      {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
                         <div className="space-y-2">
-                          {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento").map((diagnosis: any) => (
+                          {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").map((diagnosis: any) => (
                             <div key={diagnosis.id} className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                               <span className="text-sm text-gray-700">{diagnosis.cidCode}</span>
@@ -391,13 +412,27 @@ export default function HealthTrendsNew() {
                         <div key={`${item.type}-${item.id}`} className="relative flex items-start group">
                           {/* Data no lado esquerdo */}
                           <div className="absolute -left-40 top-2 w-28 text-right cursor-pointer group-hover:scale-105 transition-transform duration-200">
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4">
+                            <div 
+                              className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4"
+                              onClick={() => {
+                                if (item.type === "diagnosis" && item.originalData) {
+                                  if (confirm("Deseja remover este diagnóstico?")) {
+                                    removeDiagnosisMutation.mutate(item.originalData.id);
+                                  }
+                                }
+                              }}
+                            >
                               <div className="text-lg font-bold text-[#1E3A5F] group-hover:text-[#48C9B0] transition-colors duration-200">
                                 {format(parseISO(item.date), "yyyy", { locale: ptBR })}
                               </div>
                               <div className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors duration-200">
                                 {format(parseISO(item.date), "dd MMM", { locale: ptBR })}
                               </div>
+                              {item.type === "diagnosis" && (
+                                <div className="text-xs text-red-500 mt-1">
+                                  Clique para remover
+                                </div>
+                              )}
                             </div>
                           </div>
                           
