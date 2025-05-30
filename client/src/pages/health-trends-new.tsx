@@ -470,9 +470,9 @@ export default function HealthTrendsNew() {
                       {timelineItems.map((item, index) => (
                         <div key={`${item.type}-${item.id}`} className="relative flex items-start group">
                           {/* Data no lado esquerdo */}
-                          <div className="absolute -left-40 top-2 w-28 text-right cursor-pointer group-hover:scale-105 transition-transform duration-200">
+                          <div className="absolute -left-40 top-2 w-28 cursor-pointer group-hover:scale-105 transition-transform duration-200">
                             <div 
-                              className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4"
+                              className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4 text-center"
                               onClick={() => {
                                 if (item.type === "diagnosis" && item.originalData) {
                                   openEditDialog(item.originalData);
