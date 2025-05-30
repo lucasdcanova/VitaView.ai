@@ -15,7 +15,9 @@ import {
   CreditCard,
   Store,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  User,
+  Heart
 } from "lucide-react";
 
 // Props são opcionais agora que estamos usando o contexto global
@@ -132,8 +134,10 @@ export default function Sidebar(props: SidebarProps) {
               : 'hover:bg-gray-50 text-gray-700'
           }`}
         >
-          <TrendingUp className="mr-3 h-5 w-5" />
-          <span>Tendências de Saúde</span>
+          <Heart className="mr-3 h-5 w-5" />
+          <span>
+            Meu <span className="text-[#1E3A5F] font-semibold">VitaView</span>
+          </span>
         </Link>
         
         <Link href="/history"
