@@ -1,30 +1,61 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Calendar, FileText, Activity, Plus, Stethoscope, ClipboardList } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
-import { apiRequest } from "@/lib/queryClient";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import Sidebar from "@/components/layout/sidebar";
+import { 
+  FileText, 
+  Plus, 
+  Calendar, 
+  ClipboardList,
+  Activity
+} from "lucide-react";
 
-// Schema para adicionar diagnóstico
 const diagnosisSchema = z.object({
-  cidCode: z.string().min(1, "Código CID-10 é obrigatório"),
   description: z.string().min(1, "Descrição é obrigatória"),
-  diagnosisDate: z.string().min(1, "Data do diagnóstico é obrigatória"),
-  severity: z.enum(["leve", "moderada", "grave"]),
-  status: z.enum(["ativo", "resolvido", "cronico"]),
+  cidCode: z.string().optional(),
+  diagnosisDate: z.string().min(1, "Data é obrigatória"),
+  severity: z.enum(["leve", "moderada", "grave"]).optional(),
+  status: z.enum(["ativo", "em_tratamento", "resolvido", "cronico"]).optional(),
   notes: z.string().optional(),
 });
 
@@ -44,18 +75,18 @@ interface TimelineItem {
 }
 
 export default function HealthTrendsNew() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
-      cidCode: "",
       description: "",
+      cidCode: "",
       diagnosisDate: "",
-      severity: "leve",
-      status: "ativo",
+      severity: undefined,
+      status: undefined,
       notes: "",
     },
   });
@@ -72,17 +103,17 @@ export default function HealthTrendsNew() {
   const addDiagnosisMutation = useMutation({
     mutationFn: (data: DiagnosisForm) => apiRequest("POST", "/api/diagnoses", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
-      setIsDialogOpen(false);
-      form.reset();
       toast({
         title: "Diagnóstico adicionado",
         description: "O diagnóstico foi registrado com sucesso.",
       });
+      setIsDialogOpen(false);
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
     },
     onError: () => {
       toast({
-        title: "Erro",
+        title: "Erro ao adicionar",
         description: "Não foi possível adicionar o diagnóstico.",
         variant: "destructive",
       });
@@ -142,10 +173,10 @@ export default function HealthTrendsNew() {
   };
 
   return (
-    <>
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="lg:pl-64">
-        <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="flex-1 lg:ml-64">
+        <div className="p-4 lg:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-6">
@@ -160,14 +191,14 @@ export default function HealthTrendsNew() {
               
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
+                  <Button className="gap-2">
                     <Plus className="h-4 w-4" />
                     Adicionar Diagnóstico
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>Novo Diagnóstico</DialogTitle>
+                    <DialogTitle>Adicionar Diagnóstico</DialogTitle>
                     <DialogDescription>
                       Registre um novo diagnóstico médico com código CID-10
                     </DialogDescription>
@@ -177,12 +208,12 @@ export default function HealthTrendsNew() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="cidCode"
+                        name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Código CID-10</FormLabel>
+                            <FormLabel>Descrição do Diagnóstico</FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: I10, E11.9, K30" {...field} />
+                              <Input placeholder="Ex: Hipertensão arterial" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -191,12 +222,12 @@ export default function HealthTrendsNew() {
                       
                       <FormField
                         control={form.control}
-                        name="description"
+                        name="cidCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Descrição do Diagnóstico</FormLabel>
+                            <FormLabel>Código CID-10 (opcional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: Hipertensão arterial" {...field} />
+                              <Input placeholder="Ex: I10" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -223,14 +254,19 @@ export default function HealthTrendsNew() {
                           name="severity"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Gravidade</FormLabel>
-                              <FormControl>
-                                <select className="w-full border rounded-md p-2" {...field}>
-                                  <option value="leve">Leve</option>
-                                  <option value="moderada">Moderada</option>
-                                  <option value="grave">Grave</option>
-                                </select>
-                              </FormControl>
+                              <FormLabel>Severidade</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="leve">Leve</SelectItem>
+                                  <SelectItem value="moderada">Moderada</SelectItem>
+                                  <SelectItem value="grave">Grave</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -242,13 +278,19 @@ export default function HealthTrendsNew() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Status</FormLabel>
-                              <FormControl>
-                                <select className="w-full border rounded-md p-2" {...field}>
-                                  <option value="ativo">Ativo</option>
-                                  <option value="resolvido">Resolvido</option>
-                                  <option value="cronico">Crônico</option>
-                                </select>
-                              </FormControl>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="ativo">Ativo</SelectItem>
+                                  <SelectItem value="em_tratamento">Em tratamento</SelectItem>
+                                  <SelectItem value="resolvido">Resolvido</SelectItem>
+                                  <SelectItem value="cronico">Crônico</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -260,10 +302,11 @@ export default function HealthTrendsNew() {
                         name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Observações (Opcional)</FormLabel>
+                            <FormLabel>Observações (opcional)</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Notas adicionais sobre o diagnóstico..."
+                                placeholder="Observações adicionais sobre o diagnóstico..."
+                                className="resize-none"
                                 {...field}
                               />
                             </FormControl>
@@ -272,7 +315,7 @@ export default function HealthTrendsNew() {
                         )}
                       />
                       
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-3 pt-4">
                         <Button
                           type="button"
                           variant="outline"
@@ -280,7 +323,10 @@ export default function HealthTrendsNew() {
                         >
                           Cancelar
                         </Button>
-                        <Button type="submit" disabled={addDiagnosisMutation.isPending}>
+                        <Button 
+                          type="submit" 
+                          disabled={addDiagnosisMutation.isPending}
+                        >
                           {addDiagnosisMutation.isPending ? "Salvando..." : "Salvar"}
                         </Button>
                       </div>
@@ -290,7 +336,7 @@ export default function HealthTrendsNew() {
               </Dialog>
             </div>
 
-            {/* Estatísticas */}
+            {/* Estatísticas Resumidas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -305,12 +351,10 @@ export default function HealthTrendsNew() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Diagnósticos Ativos</CardTitle>
-                  <Stethoscope className="h-4 w-4 text-red-600" />
+                  <Activity className="h-4 w-4 text-red-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {diagnoses.filter((d: any) => d.status === "ativo").length}
-                  </div>
+                  <div className="text-2xl font-bold">{diagnoses.filter(d => d.status === "ativo").length}</div>
                 </CardContent>
               </Card>
               
@@ -327,30 +371,17 @@ export default function HealthTrendsNew() {
 
             {/* Timeline */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Histórico Médico</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Histórico Médico
+              </h2>
               
               {timelineItems.length > 0 ? (
-                <div className="relative">
-                  {/* Linha vertical da timeline */}
-                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                  
-                  <div className="space-y-6">
-                    {timelineItems.map((item, index) => (
-                      <div key={`${item.type}-${item.id}`} className="relative flex items-start">
-                        {/* Ponto da timeline */}
-                        <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${
-                          item.type === "exam" ? "bg-blue-100" : "bg-red-100"
-                        }`}>
-                          {item.type === "exam" ? (
-                            <Activity className="h-4 w-4 text-blue-600" />
-                          ) : (
-                            <Stethoscope className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                        
-                        {/* Conteúdo */}
-                        <div className="ml-6 flex-1">
-                          <Card>
+                <div className="space-y-4">
+                  {timelineItems.map((item) => (
+                    <Card key={`${item.type}-${item.id}`} className="transition-shadow hover:shadow-md">
+                      <CardContent className="p-0">
+                        <div className="p-6">
+                          <div className="flex items-start justify-between">
                             <CardHeader className="pb-3">
                               <div className="flex items-start justify-between">
                                 <div>
@@ -368,37 +399,41 @@ export default function HealthTrendsNew() {
                                 </Badge>
                               </div>
                             </CardHeader>
-                            
-                            <CardContent className="pt-0">
-                              {item.type === "diagnosis" && (
-                                <div className="space-y-2 mb-3">
-                                  <div className="flex gap-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      CID-10: {item.cidCode}
-                                    </Badge>
-                                    <Badge className={`text-xs ${getSeverityColor(item.severity)}`}>
-                                      {item.severity}
-                                    </Badge>
-                                    <Badge className={`text-xs ${getStatusColor(item.status)}`}>
-                                      {item.status}
-                                    </Badge>
-                                  </div>
-                                </div>
+                          </div>
+                          
+                          {item.description && (
+                            <p className="text-sm text-gray-600 mt-3">
+                              {item.description}
+                            </p>
+                          )}
+                          
+                          {item.type === "diagnosis" && (
+                            <div className="flex gap-2 mt-3">
+                              {item.cidCode && (
+                                <Badge variant="outline">{item.cidCode}</Badge>
                               )}
-                              
-                              {item.description && (
-                                <p className="text-sm text-gray-600">{item.description}</p>
+                              {item.severity && (
+                                <Badge className={getSeverityColor(item.severity)}>
+                                  {item.severity}
+                                </Badge>
                               )}
-                              
-                              {item.resultSummary && (
-                                <p className="text-sm text-gray-600 mt-2">{item.resultSummary}</p>
+                              {item.status && (
+                                <Badge className={getStatusColor(item.status)}>
+                                  {item.status}
+                                </Badge>
                               )}
-                            </CardContent>
-                          </Card>
+                            </div>
+                          )}
+                          
+                          {item.type === "exam" && item.examType && (
+                            <div className="mt-3">
+                              <Badge variant="outline">{item.examType}</Badge>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : (
                 <Card>
@@ -419,6 +454,6 @@ export default function HealthTrendsNew() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
