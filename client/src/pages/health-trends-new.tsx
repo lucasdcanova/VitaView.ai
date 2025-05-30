@@ -144,9 +144,8 @@ export default function HealthTrendsNew() {
   return (
     <>
       <Sidebar />
-      <MobileHeader />
       <div className="lg:pl-64">
-        <div className="min-h-screen bg-gray-50 pt-16 lg:pt-4 px-4 lg:px-6 pb-4 lg:pb-6">
+        <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-6">
