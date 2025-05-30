@@ -173,11 +173,11 @@ export default function HealthTrendsNew() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <>
       <Sidebar />
-      <div className="flex-1 lg:pl-64">
-        <div className="p-4 lg:p-6">
-          <div className="max-w-4xl mx-auto">
+      <div className="flex flex-col min-h-screen lg:pl-64">
+        <main className="flex-1 p-4 lg:p-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -452,8 +452,8 @@ export default function HealthTrendsNew() {
               )}
             </div>
           </div>
-        </div>
+        </main>
       </div>
-    </div>
+    </>
   );
 }
