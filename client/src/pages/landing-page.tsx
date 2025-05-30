@@ -2963,7 +2963,7 @@ export default function LandingPage() {
                     onClick={() => setShowCookieConsent(false)}
                     variant="default"
                     size="sm"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg"
+                    className="px-4 py-2 bg-[#48C9B0] hover:bg-[#3BB59A] text-white rounded-lg font-medium"
                   >
                     Aceitar
                   </Button>
