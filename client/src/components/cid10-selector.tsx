@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,6 @@ import {
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CID10_DATABASE } from "@/data/cid10-database";
 
 interface CID10Code {
   code: string;
@@ -24,32 +23,70 @@ interface CID10SelectorProps {
   placeholder?: string;
 }
 
-
-
 export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-10..." }: CID10SelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [filteredCodes, setFilteredCodes] = useState<CID10Code[]>(CID10_DATABASE);
+  const [filteredCodes, setFilteredCodes] = useState<CID10Code[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar base apenas quando necessário
+  const searchCodes = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    return (term: string) => {
+      clearTimeout(timeoutId);
+      
+      timeoutId = setTimeout(async () => {
+        if (!term.trim() || term.length < 2) {
+          setFilteredCodes([]);
+          return;
+        }
+
+        setIsLoading(true);
+        
+        try {
+          // Importação dinâmica para carregar apenas quando necessário
+          const { CID10_DATABASE } = await import("@/data/cid10-database");
+          
+          const searchTerm = term.toLowerCase();
+          const filtered = CID10_DATABASE.filter((item) => {
+            return (
+              item.code.toLowerCase().includes(searchTerm) ||
+              item.description.toLowerCase().includes(searchTerm) ||
+              item.category.toLowerCase().includes(searchTerm)
+            );
+          });
+
+          setFilteredCodes(filtered.slice(0, 15)); // Reduzir para 15 resultados
+        } catch (error) {
+          console.error('Erro ao carregar base CID-10:', error);
+          setFilteredCodes([]);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 300); // Debounce de 300ms
+    };
+  }, []);
 
   useEffect(() => {
-    if (!searchValue) {
-      setFilteredCodes(CID10_DATABASE);
+    searchCodes(searchValue);
+  }, [searchValue, searchCodes]);
+
+  // Buscar código selecionado dinamicamente quando necessário
+  const [selectedCode, setSelectedCode] = useState<CID10Code | null>(null);
+  
+  useEffect(() => {
+    if (!value) {
+      setSelectedCode(null);
       return;
     }
-
-    const filtered = CID10_DATABASE.filter((item) => {
-      const searchTerm = searchValue.toLowerCase();
-      return (
-        item.code.toLowerCase().includes(searchTerm) ||
-        item.description.toLowerCase().includes(searchTerm) ||
-        item.category.toLowerCase().includes(searchTerm)
-      );
+    
+    // Carregar base apenas para encontrar o código selecionado
+    import("@/data/cid10-database").then(({ CID10_DATABASE }) => {
+      const found = CID10_DATABASE.find((code) => code.code === value);
+      setSelectedCode(found || null);
     });
-
-    setFilteredCodes(filtered.slice(0, 20)); // Limitar a 20 resultados
-  }, [searchValue]);
-
-  const selectedCode = CID10_DATABASE.find((code) => code.code === value);
+  }, [value]);
 
   return (
     <div className="space-y-2">
@@ -83,7 +120,9 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
               value={searchValue}
               onValueChange={setSearchValue}
             />
-            <CommandEmpty>Nenhum código encontrado.</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? "Carregando..." : searchValue.length < 2 ? "Digite pelo menos 2 caracteres" : "Nenhum código encontrado."}
+            </CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
               {filteredCodes.map((code) => (
                 <CommandItem
