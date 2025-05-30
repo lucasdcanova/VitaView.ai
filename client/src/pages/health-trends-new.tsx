@@ -477,8 +477,8 @@ export default function HealthTrendsNew() {
                     <FileDown className="h-4 w-4" />
                     Exportar PDF
                   </Button>
-                  <div className="bg-blue-50 text-blue-700 px-2 py-2 rounded-lg text-xs font-medium border border-blue-200 flex items-center justify-center h-12">
-                    <div className="text-center" style={{ lineHeight: '1.1' }}>
+                  <div className="bg-blue-50 text-blue-700 px-2 py-2 rounded-lg border border-blue-200 flex items-center justify-center h-12" style={{ fontSize: '11px', fontWeight: '500' }}>
+                    <div className="text-center" style={{ lineHeight: '1.0' }}>
                       <div>Compartilhe com</div>
                       <div>seu médico</div>
                     </div>
