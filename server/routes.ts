@@ -1489,6 +1489,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Medications routes
+  app.post("/api/medications", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const medicationData = { ...req.body, userId: user.id };
+      
+      const [medication] = await db.insert(medications).values(medicationData).returning();
+      res.json(medication);
+    } catch (error) {
+      console.error("Error creating medication:", error);
+      res.status(500).json({ message: "Erro ao criar medicamento" });
+    }
+  });
+
+  app.get("/api/medications", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const userMedications = await db.select().from(medications)
+        .where(eq(medications.userId, user.id))
+        .orderBy(desc(medications.createdAt));
+      
+      res.json(userMedications);
+    } catch (error) {
+      console.error("Error fetching medications:", error);
+      res.status(500).json({ message: "Erro ao buscar medicamentos" });
+    }
+  });
+
+  app.put("/api/medications/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const id = parseInt(req.params.id);
+      
+      const [medication] = await db.update(medications)
+        .set(req.body)
+        .where(eq(medications.id, id) && eq(medications.userId, user.id))
+        .returning();
+      
+      if (!medication) {
+        return res.status(404).json({ message: "Medicamento não encontrado" });
+      }
+      
+      res.json(medication);
+    } catch (error) {
+      console.error("Error updating medication:", error);
+      res.status(500).json({ message: "Erro ao atualizar medicamento" });
+    }
+  });
+
+  app.delete("/api/medications/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const id = parseInt(req.params.id);
+      
+      await db.delete(medications)
+        .where(eq(medications.id, id) && eq(medications.userId, user.id));
+      
+      res.json({ message: "Medicamento excluído com sucesso" });
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+      res.status(500).json({ message: "Erro ao excluir medicamento" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

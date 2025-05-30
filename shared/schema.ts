@@ -167,6 +167,31 @@ export const insertDiagnosisSchema = createInsertSchema(diagnoses).pick({
   notes: true,
 });
 
+// Medications schema
+export const medications = pgTable("medications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  format: text("format").notNull(), // comprimido, xarope, cápsula, etc.
+  dosage: text("dosage").notNull(), // ex: 500mg, 10ml, etc.
+  frequency: text("frequency").notNull(), // ex: 1x ao dia, 2x ao dia, etc.
+  notes: text("notes"),
+  startDate: text("start_date").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMedicationSchema = createInsertSchema(medications).pick({
+  userId: true,
+  name: true,
+  format: true,
+  dosage: true,
+  frequency: true,
+  notes: true,
+  startDate: true,
+  isActive: true,
+});
+
 // Subscription plans schema
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
