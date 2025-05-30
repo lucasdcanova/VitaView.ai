@@ -72,8 +72,20 @@ export default function HealthTrendsNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingDiagnosis, setEditingDiagnosis] = useState<any>(null);
 
   const form = useForm<DiagnosisForm>({
+    resolver: zodResolver(diagnosisSchema),
+    defaultValues: {
+      cidCode: "",
+      diagnosisDate: "",
+      status: undefined,
+      notes: "",
+    },
+  });
+
+  const editForm = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
       cidCode: "",
@@ -112,6 +124,28 @@ export default function HealthTrendsNew() {
     },
   });
 
+  // Mutation para editar diagnóstico
+  const editDiagnosisMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: DiagnosisForm }) => 
+      apiRequest("PUT", `/api/diagnoses/${id}`, data),
+    onSuccess: () => {
+      toast({
+        title: "Diagnóstico atualizado",
+        description: "O diagnóstico foi atualizado com sucesso.",
+      });
+      setIsEditDialogOpen(false);
+      setEditingDiagnosis(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar diagnóstico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation para remover diagnóstico
   const removeDiagnosisMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/diagnoses/${id}`),
@@ -120,6 +154,8 @@ export default function HealthTrendsNew() {
         title: "Diagnóstico removido",
         description: "O diagnóstico foi removido da sua linha do tempo.",
       });
+      setIsEditDialogOpen(false);
+      setEditingDiagnosis(null);
       queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
     },
     onError: (error: any) => {
@@ -181,6 +217,29 @@ export default function HealthTrendsNew() {
 
   const onSubmit = (data: DiagnosisForm) => {
     addDiagnosisMutation.mutate(data);
+  };
+
+  const onEditSubmit = (data: DiagnosisForm) => {
+    if (editingDiagnosis) {
+      editDiagnosisMutation.mutate({ id: editingDiagnosis.id, data });
+    }
+  };
+
+  const openEditDialog = (diagnosis: any) => {
+    setEditingDiagnosis(diagnosis);
+    editForm.reset({
+      cidCode: diagnosis.cidCode || "",
+      diagnosisDate: diagnosis.diagnosisDate || "",
+      status: diagnosis.status || undefined,
+      notes: diagnosis.notes || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleRemoveDiagnosis = () => {
+    if (editingDiagnosis && confirm("Deseja remover este diagnóstico?")) {
+      removeDiagnosisMutation.mutate(editingDiagnosis.id);
+    }
   };
 
   const getStatusColor = (status?: string) => {
@@ -416,9 +475,7 @@ export default function HealthTrendsNew() {
                               className="bg-white border border-gray-200 rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow duration-200 hover:border-[#48C9B0] mr-4"
                               onClick={() => {
                                 if (item.type === "diagnosis" && item.originalData) {
-                                  if (confirm("Deseja remover este diagnóstico?")) {
-                                    removeDiagnosisMutation.mutate(item.originalData.id);
-                                  }
+                                  openEditDialog(item.originalData);
                                 }
                               }}
                             >
@@ -429,8 +486,8 @@ export default function HealthTrendsNew() {
                                 {format(parseISO(item.date), "dd MMM", { locale: ptBR })}
                               </div>
                               {item.type === "diagnosis" && (
-                                <div className="text-xs text-red-500 mt-1">
-                                  Clique para remover
+                                <div className="text-xs text-blue-500 mt-1">
+                                  Clique para editar
                                 </div>
                               )}
                             </div>
@@ -443,7 +500,16 @@ export default function HealthTrendsNew() {
                           
                           {/* Conteúdo no lado direito */}
                           <div className="ml-16 flex-1">
-                            <Card className="transition-shadow hover:shadow-md">
+                            <Card 
+                              className={`transition-shadow hover:shadow-md ${
+                                item.type === "diagnosis" ? "cursor-pointer hover:bg-gray-50" : ""
+                              }`}
+                              onClick={() => {
+                                if (item.type === "diagnosis" && item.originalData) {
+                                  openEditDialog(item.originalData);
+                                }
+                              }}
+                            >
                               <CardContent className="p-4">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex items-center gap-2">
