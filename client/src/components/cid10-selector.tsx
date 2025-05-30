@@ -115,26 +115,42 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0">
-          <Command>
-            <CommandInput
-              placeholder="Digite para buscar CID-10..."
-              value={searchValue}
-              onValueChange={setSearchValue}
-            />
-            <CommandEmpty>
-              {isLoading ? "Carregando..." : searchValue.length < 2 ? "Digite pelo menos 2 caracteres" : "Nenhum código encontrado."}
-            </CommandEmpty>
-            <ScrollArea className="h-64">
-              <CommandGroup>
-                {filteredCodes.map((code) => (
-                <CommandItem
+          <div className="flex flex-col">
+            <div className="p-3 border-b">
+              <Input
+                placeholder="Digite para buscar CID-10..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto p-1">
+              {isLoading && (
+                <div className="p-4 text-center text-gray-500">
+                  Carregando...
+                </div>
+              )}
+              {!isLoading && searchValue.length < 2 && (
+                <div className="p-4 text-center text-gray-500">
+                  Digite pelo menos 2 caracteres
+                </div>
+              )}
+              {!isLoading && searchValue.length >= 2 && filteredCodes.length === 0 && (
+                <div className="p-4 text-center text-gray-500">
+                  Nenhum código encontrado
+                </div>
+              )}
+              {filteredCodes.map((code) => (
+                <div
                   key={code.code}
-                  value={code.code}
-                  onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue);
+                  onClick={() => {
+                    onValueChange(code.code);
                     setOpen(false);
                   }}
-                  className="flex items-center"
+                  className={cn(
+                    "flex items-center p-2 cursor-pointer rounded hover:bg-gray-100",
+                    value === code.code ? "bg-blue-50 border border-blue-200" : ""
+                  )}
                 >
                   <Check
                     className={cn(
@@ -153,11 +169,10 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                     </div>
                     <span className="text-sm text-left">{code.description}</span>
                   </div>
-                </CommandItem>
-                ))}
-              </CommandGroup>
-            </ScrollArea>
-          </Command>
+                </div>
+              ))}
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
