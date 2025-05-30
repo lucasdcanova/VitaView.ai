@@ -292,9 +292,11 @@ export default function HealthTrendsNew() {
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Linha do Tempo da Saúde</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Meu <span className="text-[#1E3A5F]">VitaView</span>
+                  </h1>
                   <p className="text-gray-600 mt-2">
-                    Acompanhe sua evolução médica com exames e diagnósticos organizados cronologicamente
+                    Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
                   </p>
                 </div>
                 <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
