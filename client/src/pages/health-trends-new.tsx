@@ -61,14 +61,12 @@ export default function HealthTrendsNew() {
   });
 
   // Buscar exames do usuário
-  const { data: exams = [] } = useQuery({
+  const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
 
-  // Buscar diagnósticos do usuário
-  const { data: diagnoses = [] } = useQuery({
-    queryKey: ["/api/diagnoses"],
-  });
+  // Por enquanto, vou criar uma lista vazia para diagnósticos até implementarmos a funcionalidade completa
+  const diagnoses: any[] = [];
 
   // Mutation para adicionar diagnóstico
   const addDiagnosisMutation = useMutation({
@@ -93,15 +91,15 @@ export default function HealthTrendsNew() {
 
   // Combinar e ordenar itens da timeline
   const timelineItems: TimelineItem[] = [
-    ...exams.map((exam: any) => ({
+    ...(Array.isArray(exams) ? exams.map((exam: any) => ({
       id: exam.id,
       type: "exam" as const,
-      date: exam.uploadedAt || exam.createdAt,
-      title: exam.title || "Exame",
+      date: exam.uploadDate || exam.uploadedAt || exam.createdAt,
+      title: exam.name || exam.title || "Exame",
       description: exam.description,
       examType: exam.examType,
       resultSummary: exam.resultSummary,
-    })),
+    })) : []),
     ...diagnoses.map((diagnosis: any) => ({
       id: diagnosis.id,
       type: "diagnosis" as const,
@@ -112,7 +110,14 @@ export default function HealthTrendsNew() {
       severity: diagnosis.severity,
       status: diagnosis.status,
     })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+      return 0;
+    }
+    return dateB.getTime() - dateA.getTime();
+  });
 
   const onSubmit = (data: DiagnosisForm) => {
     addDiagnosisMutation.mutate(data);
@@ -141,7 +146,7 @@ export default function HealthTrendsNew() {
       <Sidebar />
       <MobileHeader />
       <div className="lg:pl-64">
-        <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+        <div className="min-h-screen bg-gray-50 pt-16 lg:pt-4 px-4 lg:px-6 pb-4 lg:pb-6">
           <div className="max-w-4xl mx-auto">
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-6">
@@ -294,7 +299,7 @@ export default function HealthTrendsNew() {
                   <FileText className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{exams.length}</div>
+                  <div className="text-2xl font-bold">{Array.isArray(exams) ? exams.length : 0}</div>
                 </CardContent>
               </Card>
               
@@ -353,7 +358,10 @@ export default function HealthTrendsNew() {
                                   <CardTitle className="text-lg">{item.title}</CardTitle>
                                   <CardDescription className="flex items-center gap-2 mt-1">
                                     <Calendar className="h-4 w-4" />
-                                    {format(new Date(item.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                    {item.date && !isNaN(new Date(item.date).getTime()) 
+                                      ? format(new Date(item.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                                      : "Data não disponível"
+                                    }
                                   </CardDescription>
                                 </div>
                                 <Badge variant={item.type === "exam" ? "default" : "destructive"}>

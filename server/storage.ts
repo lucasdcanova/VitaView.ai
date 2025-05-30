@@ -1,4 +1,4 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses } from "@shared/schema";
 import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
