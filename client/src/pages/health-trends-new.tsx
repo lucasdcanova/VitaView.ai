@@ -175,7 +175,7 @@ export default function HealthTrendsNew() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1 lg:pl-64">
         <div className="p-4 lg:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Cabeçalho */}
