@@ -559,6 +559,112 @@ export default function HealthTrendsNew() {
             </div>
           </div>
         </main>
+
+        {/* Dialog de Edição de Diagnóstico */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Diagnóstico</DialogTitle>
+              <DialogDescription>
+                Modifique ou remova este diagnóstico da sua linha do tempo
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                <div className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="cidCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código CID-10 *</FormLabel>
+                        <FormControl>
+                          <CID10Selector
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Buscar código CID-10..."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="diagnosisDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data do Diagnóstico *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="ativo">Ativo</SelectItem>
+                            <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                            <SelectItem value="curado">Curado</SelectItem>
+                            <SelectItem value="cronico">Crônico</SelectItem>
+                            <SelectItem value="controlado">Controlado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações (opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Adicione observações sobre o diagnóstico..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-between gap-3">
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={handleRemoveDiagnosis}
+                    disabled={removeDiagnosisMutation.isPending}
+                  >
+                    {removeDiagnosisMutation.isPending ? "Removendo..." : "Remover Diagnóstico"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editDiagnosisMutation.isPending}>
+                      {editDiagnosisMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
