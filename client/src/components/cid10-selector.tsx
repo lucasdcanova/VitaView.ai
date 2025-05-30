@@ -128,8 +128,13 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
               className="p-1" 
               style={{ 
                 maxHeight: '256px', 
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch'
+                overflowY: 'scroll',
+                WebkitOverflowScrolling: 'touch',
+                scrollBehavior: 'smooth'
+              }}
+              onWheel={(e) => {
+                // Permitir scroll manual dentro do container
+                e.stopPropagation();
               }}
             >
               {isLoading && (
