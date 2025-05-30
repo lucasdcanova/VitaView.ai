@@ -48,8 +48,7 @@ import {
 } from "lucide-react";
 
 const diagnosisSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
-  cidCode: z.string().optional(),
+  cidCode: z.string().min(1, "Código CID-10 é obrigatório"),
   diagnosisDate: z.string().min(1, "Data é obrigatória"),
   status: z.enum(["ativo", "em_tratamento", "resolvido", "cronico"]).optional(),
   notes: z.string().optional(),
@@ -77,7 +76,6 @@ export default function HealthTrendsNew() {
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
-      description: "",
       cidCode: "",
       diagnosisDate: "",
       status: undefined,
@@ -184,7 +182,7 @@ export default function HealthTrendsNew() {
       <Sidebar />
       <main className="lg:pl-64">
         <MobileHeader />
-        <div className="p-4 lg:p-8">
+        <div className="p-4 lg:p-8 pt-4 lg:pt-8">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -212,23 +210,10 @@ export default function HealthTrendsNew() {
                     <div className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Descrição do Diagnóstico</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Ex: Hipertensão arterial" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
                         name="cidCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Código CID-10 (opcional)</FormLabel>
+                            <FormLabel>Código CID-10 *</FormLabel>
                             <FormControl>
                               <CID10Selector
                                 value={field.value || ""}
