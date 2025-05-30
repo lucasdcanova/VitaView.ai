@@ -124,7 +124,14 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                 className="w-full"
               />
             </div>
-            <div className="max-h-64 overflow-y-auto p-1">
+            <div 
+              className="p-1" 
+              style={{ 
+                maxHeight: '256px', 
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
               {isLoading && (
                 <div className="p-4 text-center text-gray-500">
                   Carregando...
