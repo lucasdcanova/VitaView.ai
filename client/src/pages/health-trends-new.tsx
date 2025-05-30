@@ -291,7 +291,56 @@ export default function HealthTrendsNew() {
                 </DialogContent>
               </Dialog>
 
-              <div className="space-y-6">
+              {/* Resumo Atual da Saúde */}
+              <Card className="mb-8 border-t-4 border-t-[#48C9B0]">
+                <CardHeader>
+                  <CardTitle className="text-xl text-gray-900">Situação Atual de Saúde</CardTitle>
+                  <p className="text-gray-600">Resumo baseado nos últimos exames e diagnósticos</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Diagnósticos Ativos</h4>
+                      {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento").length > 0 ? (
+                        <div className="space-y-2">
+                          {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento").map((diagnosis: any) => (
+                            <div key={diagnosis.id} className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              <span className="text-sm text-gray-700">{diagnosis.cidCode}</span>
+                              <Badge className={getStatusColor(diagnosis.status)} variant="secondary">
+                                {getStatusLabel(diagnosis.status)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Nenhum diagnóstico ativo registrado</p>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Últimos Exames</h4>
+                      {Array.isArray(exams) && exams.length > 0 ? (
+                        <div className="space-y-2">
+                          {exams.slice(0, 3).map((exam: any) => (
+                            <div key={exam.id} className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm text-gray-700">{exam.name}</span>
+                              <span className="text-xs text-gray-500">
+                                {format(parseISO(exam.uploadDate), "dd/MM/yy", { locale: ptBR })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Nenhum exame enviado ainda</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Linha do Tempo */}
+              <div className="relative">
                 {timelineItems.length === 0 ? (
                   <Card className="p-8 text-center">
                     <div className="flex flex-col items-center gap-4">
@@ -307,58 +356,75 @@ export default function HealthTrendsNew() {
                     </div>
                   </Card>
                 ) : (
-                  timelineItems.map((item) => (
-                    <Card key={`${item.type}-${item.id}`} className="transition-shadow hover:shadow-md">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            {item.type === "exam" ? (
-                              <div className="p-2 bg-blue-50 rounded-lg">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                              </div>
-                            ) : (
-                              <div className="p-2 bg-green-50 rounded-lg">
-                                <Activity className="h-5 w-5 text-green-600" />
-                              </div>
-                            )}
-                            <div>
-                              <CardTitle className="text-lg">{item.title}</CardTitle>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Calendar className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">
-                                  {format(parseISO(item.date), "dd/MM/yyyy", { locale: ptBR })}
-                                </span>
+                  <div className="relative pl-20">
+                    {/* Linha vertical */}
+                    <div className="absolute left-16 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#48C9B0] to-[#1E3A5F]"></div>
+                    
+                    <div className="space-y-8">
+                      {timelineItems.map((item, index) => (
+                        <div key={`${item.type}-${item.id}`} className="relative flex items-start">
+                          {/* Data no lado esquerdo */}
+                          <div className="absolute -left-20 top-2 w-16 text-right">
+                            <div className="text-sm font-bold text-[#1E3A5F]">
+                              {format(parseISO(item.date), "yyyy", { locale: ptBR })}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {format(parseISO(item.date), "dd/MM", { locale: ptBR })}
+                            </div>
+                          </div>
+                          
+                          {/* Ponto na linha */}
+                          <div className={`absolute left-0 top-3 z-10 flex-shrink-0 w-3 h-3 rounded-full border-3 border-white ${
+                            item.type === "exam" ? "bg-blue-500" : "bg-green-500"
+                          } shadow-lg`}></div>
+                          
+                          {/* Conteúdo no lado direito */}
+                          <div className="ml-8 flex-1">
+                            <Card className="transition-shadow hover:shadow-md">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    {item.type === "exam" ? (
+                                      <FileText className="h-4 w-4 text-blue-600" />
+                                    ) : (
+                                      <Activity className="h-4 w-4 text-green-600" />
+                                    )}
+                                    <h3 className="font-medium text-gray-900">{item.title}</h3>
+                                  </div>
+                                  {item.status && (
+                                    <Badge className={getStatusColor(item.status)} variant="secondary">
+                                      {getStatusLabel(item.status)}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
                                 {item.type === "exam" && item.examType && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="outline" className="text-xs mb-2">
                                     {item.examType}
                                   </Badge>
                                 )}
-                              </div>
-                            </div>
+                                
+                                {item.cidCode && (
+                                  <div className="mb-2">
+                                    <span className="text-sm font-medium text-gray-700">CID-10: </span>
+                                    <span className="text-sm text-gray-600">{item.cidCode}</span>
+                                  </div>
+                                )}
+                                
+                                {item.description && (
+                                  <p className="text-gray-600 text-sm">{item.description}</p>
+                                )}
+                                
+                                {item.resultSummary && (
+                                  <p className="text-gray-600 text-sm mt-2">{item.resultSummary}</p>
+                                )}
+                              </CardContent>
+                            </Card>
                           </div>
-                          {item.status && (
-                            <Badge className={getStatusColor(item.status)}>
-                              {getStatusLabel(item.status)}
-                            </Badge>
-                          )}
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        {item.cidCode && (
-                          <div className="mb-3">
-                            <span className="text-sm font-medium text-gray-700">CID-10: </span>
-                            <span className="text-sm text-gray-600">{item.cidCode}</span>
-                          </div>
-                        )}
-                        {item.description && (
-                          <p className="text-gray-600 text-sm">{item.description}</p>
-                        )}
-                        {item.resultSummary && (
-                          <p className="text-gray-600 text-sm mt-2">{item.resultSummary}</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
