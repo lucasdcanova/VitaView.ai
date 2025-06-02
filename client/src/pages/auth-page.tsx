@@ -414,7 +414,7 @@ export default function AuthPage() {
         <div className="max-w-lg">
           {/* Title section - Removido o logo grande do topo */}
           <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
               <span className="text-primary-600">Mais controle,</span> <span className="text-primary-800">menos papel</span>
             </h2>
             <p className="text-base text-gray-600 mb-2">
