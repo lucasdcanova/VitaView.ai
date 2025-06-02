@@ -490,27 +490,38 @@ export default function AuthPage() {
                 </span>
               </div>
               
-              <div className="h-[160px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={cholesterolData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={60}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                      labelLine={false}
-                    >
-                      {cholesterolData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+              <div className="h-[160px] flex items-center justify-center">
+                <div className="w-32 h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={cholesterolData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={25}
+                        outerRadius={40}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {cholesterolData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value, name) => [`${value}`, name]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="ml-4 space-y-1">
+                  {cholesterolData.map((entry, index) => (
+                    <div key={entry.name} className="flex items-center text-xs">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      ></div>
+                      <span className="text-gray-700">{entry.name}: {entry.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
             
