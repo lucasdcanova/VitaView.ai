@@ -490,17 +490,17 @@ export default function AuthPage() {
                 </span>
               </div>
               
-              <div className="h-[160px] flex items-center justify-center">
-                <div className="w-32 h-32">
+              <div className="h-[140px] flex items-center justify-center p-2">
+                <div className="w-20 h-20 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={cholesterolData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={25}
-                        outerRadius={40}
-                        paddingAngle={2}
+                        innerRadius={15}
+                        outerRadius={30}
+                        paddingAngle={1}
                         dataKey="value"
                       >
                         {cholesterolData.map((entry, index) => (
@@ -511,14 +511,14 @@ export default function AuthPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="ml-4 space-y-1">
+                <div className="ml-3 space-y-1 flex-1">
                   {cholesterolData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center text-xs">
                       <div 
-                        className="w-3 h-3 rounded-full mr-2" 
+                        className="w-2 h-2 rounded-full mr-2 flex-shrink-0" 
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       ></div>
-                      <span className="text-gray-700">{entry.name}: {entry.value}</span>
+                      <span className="text-gray-700 truncate">{entry.name}: {entry.value}</span>
                     </div>
                   ))}
                 </div>
