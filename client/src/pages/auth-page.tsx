@@ -441,7 +441,7 @@ export default function AuthPage() {
                 </span>
               </div>
               
-              <div className="h-[160px] flex items-center justify-center">
+              <div className="h-[120px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={healthData}
@@ -490,7 +490,7 @@ export default function AuthPage() {
                 </span>
               </div>
               
-              <div className="h-[140px] flex items-center justify-center p-2">
+              <div className="h-[100px] flex items-center justify-center p-2">
                 <div className="w-20 h-20 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
