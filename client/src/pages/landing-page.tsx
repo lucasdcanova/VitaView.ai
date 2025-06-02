@@ -796,18 +796,11 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Resumo da IA */}
-                <div className="bg-primary-50 p-4 rounded-lg border border-primary-100">
-                  <div className="flex items-start">
-                    <div className="p-2 bg-primary-100 rounded-full mr-3">
-                      <Brain className="h-5 w-5 text-primary-500" />
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-medium text-primary-800 mb-1">Análise da IA</h5>
-                      <p className="text-sm text-gray-700">
-                        Resultados dentro dos parâmetros normais. Glicose no limite superior - recomendamos monitoramento e cuidados alimentares.
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-primary-50 p-3 rounded-lg border border-primary-100">
+                  <h5 className="font-medium text-primary-800 mb-1">Análise da IA</h5>
+                  <p className="text-sm text-gray-700">
+                    Resultados dentro dos parâmetros normais. Glicose no limite superior - recomendamos monitoramento e cuidados alimentares.
+                  </p>
                 </div>
               </div>
             </motion.div>
