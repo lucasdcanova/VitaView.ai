@@ -441,7 +441,7 @@ export default function AuthPage() {
                 </span>
               </div>
               
-              <div className="h-[160px]">
+              <div className="h-[160px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={healthData}
