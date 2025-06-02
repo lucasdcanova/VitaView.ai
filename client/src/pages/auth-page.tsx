@@ -159,7 +159,7 @@ export default function AuthPage() {
             <div className="flex justify-center w-full my-4">
               <div className="flex flex-col items-center">
                 <img 
-                  src="/assets/vitaview_logo_clean.svg" 
+                  src="/assets/vitaview_logo_icon.png" 
                   alt="VitaView AI Logo" 
                   className="h-20 w-auto object-contain mb-2" 
                   onError={(e) => {

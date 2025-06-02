@@ -59,7 +59,7 @@ export default function Sidebar(props: SidebarProps) {
       <div className="p-4 flex items-center border-b border-gray-100">
         <div className="w-12 h-12 flex items-center justify-center mr-3">
           <img 
-            src="/assets/vitaview_logo_clean.svg" 
+            src="/assets/vitaview_logo_icon.png" 
             alt="VitaView AI Logo" 
             className="w-12 h-auto" 
             onError={(e) => {
