@@ -485,7 +485,7 @@ export default function AuthPage() {
                   <Heart className="h-5 w-5 text-red-500" />
                   <h3 className="font-medium text-gray-800">Perfil Lipídico</h3>
                 </div>
-                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full text-center">
                   Análise recente
                 </span>
               </div>
