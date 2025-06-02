@@ -537,7 +537,7 @@ export default function AuthPage() {
                   <BarChart2 className="h-5 w-5 text-amber-500" />
                   <h3 className="font-medium text-gray-800">Status de Resultados</h3>
                 </div>
-                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-center">
                   Último exame
                 </span>
               </div>
