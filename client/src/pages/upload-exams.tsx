@@ -37,6 +37,22 @@ export default function UploadExams() {
               <p className="text-gray-600">Envie seus exames para análise pela IA</p>
             </header>
             
+            {/* Informação sobre limites de upload */}
+            <div className="bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-primary-800 mb-1">Limites de Upload</h3>
+                  <p className="text-sm text-primary-700">
+                    <span className="font-medium">Plano Gratuito:</span> 1 arquivo por vez • 
+                    <span className="font-medium ml-2">Assinantes:</span> Upload ilimitado
+                  </p>
+                </div>
+                <div className="text-primary-600">
+                  <FileUpIcon size={24} />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Carregue seus exames</h2>
@@ -92,10 +108,7 @@ export default function UploadExams() {
                       <FileDigitIcon className="text-primary-500 mt-1 mr-3 flex-shrink-0" size={18} />
                       <div>
                         <h4 className="font-medium text-gray-800">Múltiplos exames</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          <strong>Plano gratuito:</strong> 1 arquivo por vez<br/>
-                          <strong>Assinantes:</strong> Upload ilimitado para análise conjunta
-                        </p>
+                        <p className="text-sm text-gray-600 mt-1">Envie vários exames simultaneamente para uma análise integrada completa.</p>
                       </div>
                     </div>
                   </div>
