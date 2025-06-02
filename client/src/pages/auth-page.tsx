@@ -417,9 +417,8 @@ export default function AuthPage() {
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
               <span className="text-primary-600">Mais controle,</span> <span className="text-primary-800">menos papel</span>
             </h2>
-            <p className="text-lg text-gray-600 mb-2">
-              Todos os seus exames e informações de saúde<br/>
-              reunidos em um só lugar, sempre ao seu alcance.
+            <p className="text-base text-gray-600 mb-2">
+              Todos os seus exames e informações de saúde reunidos em um só lugar, sempre ao seu alcance.
             </p>
           </div>
           
