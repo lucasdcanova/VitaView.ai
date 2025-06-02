@@ -123,32 +123,6 @@ export default function UploadExams() {
                     </div>
                   </div>
                 </div>
-                
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-800 mb-2">Exames recomendados</h3>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center">
-                      <Check className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                      <span>Hemograma Completo</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                      <span>Perfil Lipídico</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                      <span>Glicemia em Jejum</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                      <span>Vitamina D</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="text-green-500 mr-2 flex-shrink-0" size={16} />
-                      <span>TSH e T4 livre</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
             </div>
           </div>
