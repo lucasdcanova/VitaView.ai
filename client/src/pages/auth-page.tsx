@@ -418,7 +418,8 @@ export default function AuthPage() {
               <span className="text-primary-600">Mais controle,</span> <span className="text-primary-800">menos papel</span>
             </h2>
             <p className="text-lg text-gray-600 mb-2">
-              Todos os seus exames e informações de saúde reunidos em um só lugar, sempre ao seu alcance.
+              Todos os seus exames e informações de saúde reunidos<br/>
+              em um só lugar, sempre ao seu alcance.
             </p>
           </div>
           
