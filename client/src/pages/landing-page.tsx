@@ -803,8 +803,8 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <h5 className="font-medium text-primary-800 mb-1">Análise da IA</h5>
-                      <p className="text-sm text-gray-700">
-                        Seus exames mostram resultados dentro dos parâmetros normais. A glicose está no limite superior da faixa de referência, recomendamos monitoramento e atenção à dieta.
+                      <p className="text-sm text-gray-700 text-center leading-relaxed">
+                        Seus exames apresentam resultados dentro dos valores normais. A glicose encontra-se no limite superior de referência - recomendamos acompanhamento médico e cuidados com a alimentação.
                       </p>
                     </div>
                   </div>
