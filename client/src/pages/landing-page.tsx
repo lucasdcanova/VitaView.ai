@@ -45,8 +45,6 @@ import {
   Upload,
   Download,
   ExternalLink,
-  Files,
-  CheckCircle,
   BarChart3,
   PieChart,
   ArrowUp,
@@ -1331,109 +1329,6 @@ export default function LandingPage() {
               >
                 Comece Sua Jornada de Saúde
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Upload Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Recursos de <span className="text-primary-600">Upload</span>
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Compare as funcionalidades disponíveis em cada plano
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Plano Gratuito */}
-            <motion.div 
-              className="bg-white rounded-xl shadow-lg p-6 border border-gray-200"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="flex items-start mb-4">
-                <div className="p-3 bg-gray-100 rounded-full mr-4">
-                  <Upload className="h-6 w-6 text-gray-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Plano Gratuito</h3>
-                  <p className="text-gray-600">
-                    Perfeito para conhecer a plataforma e fazer testes iniciais com seus exames.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                  <span className="font-semibold text-yellow-800">Limite de Upload</span>
-                </div>
-                <p className="text-yellow-700 text-sm">
-                  <strong>1 arquivo por envio</strong> - Analise um exame por vez
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Planos Pagos */}
-            <motion.div 
-              className="bg-white rounded-xl shadow-lg p-6 border-2 border-primary-200 relative"
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Recomendado
-                </span>
-              </div>
-              
-              <div className="flex items-start mb-4">
-                <div className="p-3 bg-primary-100 rounded-full mr-4">
-                  <FileText className="h-6 w-6 text-primary-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Planos Pagos</h3>
-                  <p className="text-gray-600">
-                    Para usuários que querem máximo aproveitamento da plataforma.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="font-semibold text-green-800">Upload Ilimitado</span>
-                </div>
-                <p className="text-green-700 text-sm">
-                  <strong>Múltiplos arquivos por envio</strong> - Analise vários exames simultaneamente para uma visão completa
-                </p>
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-center mt-8"
-          >
-            <Link href="/subscription-plans">
-              <Button className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold">
-                Conheça Nossos Planos
-                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </motion.div>
