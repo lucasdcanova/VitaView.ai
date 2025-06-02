@@ -579,7 +579,7 @@ export default function AuthPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <User className="h-5 w-5 text-green-600" />
-                  <h3 className="font-medium text-gray-800">Seu Perfil de Saúde</h3>
+                  <h3 className="font-medium text-gray-800">Perfil de Saúde</h3>
                 </div>
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                   Personalizado
