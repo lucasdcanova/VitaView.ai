@@ -461,7 +461,8 @@ export default function HealthTrendsNew() {
                     Meu <span className="text-[#1E3A5F]">VitaView</span>
                   </h1>
                   <p className="text-gray-600 mt-2">
-                    Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências em um só lugar
+                    Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências<br/>
+                    em um só lugar
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
