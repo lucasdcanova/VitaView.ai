@@ -92,7 +92,10 @@ export default function UploadExams() {
                       <FileDigitIcon className="text-primary-500 mt-1 mr-3 flex-shrink-0" size={18} />
                       <div>
                         <h4 className="font-medium text-gray-800">Múltiplos exames</h4>
-                        <p className="text-sm text-gray-600 mt-1">Você pode enviar vários exames de uma vez para uma análise conjunta.</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <strong>Plano gratuito:</strong> 1 arquivo por vez<br/>
+                          <strong>Assinantes:</strong> Upload ilimitado para análise conjunta
+                        </p>
                       </div>
                     </div>
                   </div>
