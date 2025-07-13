@@ -7,9 +7,15 @@ import type { IStorage } from "../storage";
 const OPENAI_MODEL = "gpt-4o";
 
 // Initialize OpenAI using the API key from environment variables
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai: OpenAI | null = null;
+
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ 
+    apiKey: process.env.OPENAI_API_KEY
+  });
+} else {
+  console.warn("OpenAI API key not found. OpenAI features will use fallback responses.");
+}
 
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any) {
   try {
@@ -156,6 +162,10 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 // Function to call the OpenAI API
 async function callOpenAIApi(prompt: string) {
   try {
+    if (!openai) {
+      throw new Error("OpenAI client not initialized");
+    }
+    
     console.log("Calling OpenAI API...");
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
@@ -604,6 +614,10 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                   }`;
     
     try {
+      if (!openai) {
+        throw new Error("OpenAI client not initialized");
+      }
+      
       // Chamar a API da OpenAI com suporte a imagens (GPT-4o)
       const response = await openai.chat.completions.create({
         model: OPENAI_MODEL,
@@ -752,6 +766,10 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
     }
     
     try {
+      if (!openai) {
+        throw new Error("OpenAI client not initialized");
+      }
+      
       // Chama a API da OpenAI
       const response = await openai.chat.completions.create({
         model: OPENAI_MODEL,

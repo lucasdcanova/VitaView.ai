@@ -213,13 +213,15 @@ function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics
 }
 
 // Configuração do Stripe
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-}
+let stripe: Stripe | null = null;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-});
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
+} else {
+  console.warn("Stripe secret key not found. Payment features will be disabled.");
+}
 
 // Middleware para verificar autenticação
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
