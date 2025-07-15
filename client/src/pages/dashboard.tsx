@@ -53,7 +53,6 @@ export default function Dashboard() {
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
-        console.error("Error fetching exams from API:", error);
         return [];
       }
     },
@@ -67,7 +66,6 @@ export default function Dashboard() {
         if (!res.ok) throw new Error("Failed to fetch health metrics");
         return res.json();
       } catch (error) {
-        console.error("Error fetching health metrics from API:", error);
         return [];
       }
     },
@@ -140,7 +138,7 @@ export default function Dashboard() {
             commonMetrics[normalizedMetricName].count += 1;
           }
         } catch (e) {
-          console.warn(`Error parsing value for ${metric.name}:`, e);
+          // Error parsing value for metric
         }
       }
       

@@ -130,7 +130,6 @@ export default function DiagnosisPage() {
       queryClient.invalidateQueries({ queryKey: [`/api/exams/${examId}/insights`] });
     },
     onError: (error) => {
-      console.error("Erro na análise com OpenAI:", error);
       toast({
         title: "Falha na análise",
         description: error instanceof Error ? error.message : "Ocorreu um erro na análise do exame",

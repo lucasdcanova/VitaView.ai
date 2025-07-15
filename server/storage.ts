@@ -653,7 +653,7 @@ export class DatabaseStorage implements IStorage {
       const existingPlans = await this.getSubscriptionPlans();
       
       if (existingPlans.length === 0) {
-        console.log("Creating default subscription plans...");
+        // Creating default subscription plans...
         
         // Plano Gratuito
         await this.createSubscriptionPlan({
@@ -876,7 +876,7 @@ export class DatabaseStorage implements IStorage {
       
       // Fallback para método alternativo se o SQL direto falhar
       try {
-        console.log("Tentando método alternativo com projeção segura...");
+        // Tentando método alternativo com projeção segura...
         
         // Selecionar todas as colunas incluindo a nova
         const results = await db.select({
@@ -1042,7 +1042,7 @@ export class DatabaseStorage implements IStorage {
   
   async deleteAllHealthMetricsByUserId(userId: number): Promise<number> {
     try {
-      console.log(`[DeleteAllHealthMetrics] Excluindo todas as métricas para o usuário ${userId}`);
+      // [DeleteAllHealthMetrics] Excluindo todas as métricas para o usuário
       const result = await db.delete(healthMetrics).where(eq(healthMetrics.userId, userId));
       return result && result.rowCount ? result.rowCount : 0;
     } catch (error) {

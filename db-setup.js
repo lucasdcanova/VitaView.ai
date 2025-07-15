@@ -16,7 +16,7 @@ if (!connectionString) {
 const pool = new Pool({ connectionString });
 
 async function setupDatabase() {
-  console.log('🔧 Setting up database...');
+  // Setting up database...
   
   try {
     // Create tables
@@ -87,7 +87,7 @@ async function setupDatabase() {
       CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
     `);
     
-    console.log('✅ Database setup completed successfully!');
+    // Database setup completed successfully!
   } catch (error) {
     console.error('❌ Error setting up database:', error);
     process.exit(1);

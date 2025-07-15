@@ -17,7 +17,7 @@ export default function RecentExams() {
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
-        console.error("Error fetching exams from API:", error);
+        // Error fetching exams from API
         return [];
       }
     },
@@ -36,7 +36,7 @@ export default function RecentExams() {
         setLocalExams(savedExams);
       }
     } catch (error) {
-      console.error("Error reading from localStorage:", error);
+      // Error reading from localStorage
     }
   }, []);
   

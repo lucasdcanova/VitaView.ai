@@ -37,7 +37,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const res = await apiRequest("GET", "/api/profiles");
         return await res.json();
       } catch (error) {
-        console.error("Error fetching profiles:", error);
+        // Error fetching profiles
         return [];
       }
     },

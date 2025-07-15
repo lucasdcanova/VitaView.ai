@@ -2,8 +2,17 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupSecurity } from "./middleware/security";
+import logger, { logError, logInfo, stream } from "./logger";
+import morgan from "morgan";
 
 const app = express();
+
+// Setup security middleware first
+setupSecurity(app);
+
+// Setup HTTP request logging
+app.use(morgan('combined', { stream }));
 // Aumentar limite de tamanho para permitir uploads maiores (50MB)
 // Adicionar middleware CORS
 app.use((req, res, next) => {
@@ -37,16 +46,19 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      const meta = {
+        method: req.method,
+        path,
+        statusCode: res.statusCode,
+        duration,
+        response: capturedJsonResponse
+      };
+      
+      if (res.statusCode >= 400) {
+        logger.error(`${req.method} ${path} ${res.statusCode} in ${duration}ms`, meta);
+      } else {
+        logger.info(`${req.method} ${path} ${res.statusCode} in ${duration}ms`, meta);
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
     }
   });
 
@@ -76,8 +88,9 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen(port, () => {
+    logInfo(`Server started on port ${port}`);
     log(`serving on port ${port}`);
   });
 })();

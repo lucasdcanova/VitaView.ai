@@ -19,11 +19,11 @@ const DEFAULT_FILE_PATH = './attached_assets/Resultado0022119-20241219161215.pdf
 // Executar o teste do pipeline
 async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
   try {
-    console.log(`\n=== TESTE DO PIPELINE COMPLETO ===\n`);
-    console.log(`Usando arquivo: ${filePath}`);
+    // === TESTE DO PIPELINE COMPLETO ===
+    // Usando arquivo: ${filePath}
     
     // Carregar o arquivo
-    console.log(`Carregando arquivo...`);
+    // Carregando arquivo...
     const fileContent = readFileSync(filePath, { encoding: 'base64' });
     
     // Determinar o tipo de arquivo
@@ -33,8 +33,8 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
         ? 'jpeg'
         : 'png';
         
-    console.log(`Tipo de arquivo: ${fileType}`);
-    console.log(`Tamanho: ${Math.round(fileContent.length * 0.75 / 1024)}KB`);
+    // Tipo de arquivo: ${fileType}
+    // Tamanho: ${Math.round(fileContent.length * 0.75 / 1024)}KB
     
     // Configurar o teste
     const options: AnalysisOptions = {
@@ -47,7 +47,7 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
     };
     
     // Executar o pipeline (extração + análise)
-    console.log(`\nIniciando pipeline...`);
+    // Iniciando pipeline...
     console.time('Pipeline completo');
     
     const result = await runAnalysisPipeline(options);
@@ -55,36 +55,36 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
     console.timeEnd('Pipeline completo');
     
     // Exibir resultados
-    console.log(`\n=== RESULTADOS DO PIPELINE ===\n`);
-    console.log(`ID do exame: ${result.exam.id}`);
-    console.log(`Status final: ${result.exam.status}`);
-    console.log(`Métricas extraídas: ${result.metrics.totalExtracted}`);
-    console.log(`Categorias identificadas: ${result.metrics.categories.join(', ')}`);
+    // === RESULTADOS DO PIPELINE ===
+    // ID do exame: ${result.exam.id}
+    // Status final: ${result.exam.status}
+    // Métricas extraídas: ${result.metrics.totalExtracted}
+    // Categorias identificadas: ${result.metrics.categories.join(', ')}
     
     // Estatísticas de status
-    console.log('\nDistribuição por status:');
+    // Distribuição por status:
     Object.entries(result.metrics.status).forEach(([status, count]) => {
-      console.log(`- ${status}: ${count}`);
+      // - ${status}: ${count}
     });
     
     // Buscar resultado de exame no banco
     const examResult = await storage.getExamResultByExamId(result.exam.id);
     if (examResult) {
-      console.log(`\nResumo da análise: ${examResult.summary}`);
+      // Resumo da análise: ${examResult.summary}
       
       if (examResult.recommendations) {
-        console.log(`\nRecomendações principais:`);
+        // Recomendações principais:
         if (Array.isArray(examResult.recommendations)) {
           examResult.recommendations.slice(0, 3).forEach((rec, i) => {
-            console.log(`${i+1}. ${rec}`);
+            // ${i+1}. ${rec}
           });
         } else if (typeof examResult.recommendations === 'string') {
-          console.log(examResult.recommendations.split('\n').slice(0, 3).join('\n'));
+          // examResult.recommendations.split('\n').slice(0, 3).join('\n')
         }
       }
     }
     
-    console.log(`\nTeste do pipeline concluído com sucesso!`);
+    // Teste do pipeline concluído com sucesso!
     
   } catch (error) {
     console.error('Erro no teste do pipeline:', error);
@@ -95,7 +95,7 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
 // Executar o teste
 runPipelineTest()
   .then(() => {
-    console.log('Teste finalizado.');
+    // Teste finalizado.
     process.exit(0);
   })
   .catch(err => {

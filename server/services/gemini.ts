@@ -54,11 +54,9 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
   
   // Log o tipo e tamanho do arquivo para diagnóstico 
   const fileSizeKB = Math.round(fileContent.length * 0.75 / 1024); // aproximado para base64
-  console.log(`Processando documento ${fileType} de aproximadamente ${fileSizeKB}KB`);
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`Analyzing ${fileType} document with Google Gemini API (attempt ${attempt}/${MAX_RETRIES})`);
       
       // Create Gemini model instance
       const model = genAI.getGenerativeModel({
@@ -171,12 +169,9 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       ];
     
       // Generate content using Gemini
-      console.log("Enviando documento para Gemini API...");
       const result = await model.generateContent(parts);
       const response = result.response;
       const text = response.text();
-      console.log("Resposta recebida da Gemini API. Tamanho da resposta:", text.length);
-      console.log("Amostra da resposta:", text.substring(0, 200));
       
       try {
         // Extract JSON from the response
@@ -188,7 +183,6 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         
         // Validate and enhance the response data if needed
         if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
-          console.log("Sem métricas extraídas do documento. Usando fallback.");
           analysisData.healthMetrics = defaultHealthMetrics(fileType);
         }
         
@@ -217,7 +211,6 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         
         return analysisData;
       } catch (jsonError) {
-        console.error("Error parsing Gemini response as JSON:", jsonError);
         // Fallback to structured text parsing
         return {
           summary: "Seus exames foram analisados pela IA Gemini",
@@ -231,7 +224,6 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       }
       
     } catch (error: any) {
-      console.error(`Error analyzing document with Gemini API (attempt ${attempt}/${MAX_RETRIES}):`, error);
       lastError = error;
       
       // Check if the error is related to service overload (503) or rate limiting
@@ -247,18 +239,15 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       
       // Exponential backoff: wait longer between each retry
       const waitTime = RETRY_DELAY * Math.pow(2, attempt - 1);
-      console.log(`Retrying in ${waitTime}ms...`);
       await delay(waitTime);
     }
   }
   
   // If we reached here, all attempts failed
-  console.error("All Gemini API attempts failed. Using fallback...");
   
   try {
     // Try to use OpenAI as fallback if OPENAI_API_KEY is available
     if (process.env.OPENAI_API_KEY) {
-      console.log("Tentando fallback com OpenAI...");
       
       try {
         // Import analyzeDocumentWithOpenAI dynamically to avoid circular dependency
@@ -267,7 +256,6 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         // Try to extract with OpenAI
         const openAIResults = await analyzeDocumentWithOpenAI(fileContent, fileType);
         
-        console.log("Fallback com OpenAI bem-sucedido!");
         return {
           ...openAIResults,
           aiProvider: "openai:fallback",
@@ -275,13 +263,11 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
           fallbackUsed: true
         };
       } catch (openAIError) {
-        console.error("Erro no fallback com OpenAI:", openAIError);
         // Continue to default fallback
       }
     }
     
     // If OpenAI fallback failed or API key not available, use default fallback
-    console.log("Usando fallback padrão com dados de exemplo");
     return {
       summary: "Não foi possível analisar o documento com precisão",
       detailedAnalysis: "O serviço de análise está temporariamente indisponível. Os resultados mostrados são aproximados e não devem ser usados para diagnóstico médico.",
@@ -297,7 +283,6 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       fallbackUsed: true
     };
   } catch (fallbackError) {
-    console.error("Error in all fallback mechanisms:", fallbackError);
     // If even the fallback fails, throw a user-friendly error
     throw new Error("Não foi possível analisar o documento neste momento. Por favor, tente novamente mais tarde.");
   }
@@ -410,7 +395,6 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
     // Se usuário estiver autenticado, pega o id do req.user
     if (!userId && req.isAuthenticated() && req.user) {
       userId = req.user.id;
-      console.log("Usando userId da sessão:", userId);
     } 
     
     // Verificar se temos dados suficientes
@@ -420,19 +404,14 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       return res.status(400).json({ message: "Dados incompletos para análise" });
     }
     
-    console.log("Processando upload de exame para usuário:", userId);
-    
     // ETAPA 1: EXTRAÇÃO com Gemini (sem análise)
-    console.log("ETAPA 1: Iniciando extração de dados com Gemini");
     const extractionResult = await analyzeDocument(fileContent, fileType);
     
     // Use extracted date from document or fallback to provided date or current date
     const extractedExamDate = extractionResult.examDate || examDate || new Date().toISOString().split('T')[0];
-    console.log(`Data de exame extraída: ${extractedExamDate}`);
     
     // Use extracted laboratory name from document or fallback to provided name
     const extractedLabName = extractionResult.laboratoryName || laboratoryName || "Laboratório não identificado";
-    console.log(`Laboratório extraído: ${extractedLabName}`);
     
     // Get requesting physician if available
     let requestingPhysician = extractionResult.requestingPhysician || null;
@@ -444,13 +423,11 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
         .replace(/^Dra\.\s*/i, '')
         .replace(/^Dr\s*/i, '')
         .replace(/^Dra\s*/i, '');
-      console.log(`Médico requisitante extraído e sanitizado: ${requestingPhysician}`);
     } else {
-      console.log('Médico requisitante não encontrado no documento');
+      // Médico requisitante não encontrado no documento
     }
     
     // ETAPA 2: CRIAÇÃO E CLASSIFICAÇÃO DO EXAME
-    console.log("ETAPA 2: Criando registro do exame com metadados extraídos");
     const exam = await storage.createExam({
       userId,
       name: extractionResult.examType ? `${extractionResult.examType} - ${name}` : name,
@@ -462,10 +439,7 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       originalContent: fileContent // Guardar conteúdo original direto durante criação
     });
     
-    console.log(`Exame criado com sucesso. ID: ${exam.id}`);
-    
     // ETAPA 3: SALVAMENTO DAS MÉTRICAS EXTRAÍDAS
-    console.log("ETAPA 3: Salvando métricas extraídas");
     
     // Salvamos apenas o resultado da extração, sem análise completa ainda
     // A análise acontecerá posteriormente com OpenAI
@@ -477,8 +451,6 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       healthMetrics: extractionResult.healthMetrics,
       aiProvider: "gemini:extraction-only"
     });
-    
-    console.log(`Resultado inicial do exame salvo. ID: ${examResult.id}`);
     
     // Notificação mais específica sobre a extração
     await storage.createNotification({
@@ -520,16 +492,9 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
         savedMetricsCount++;
       } catch (metricError) {
         failedMetricsCount++;
-        console.error(`Erro ao salvar métrica ${metric.name}:`, metricError);
         // Continua com a próxima métrica mesmo se essa falhar
       }
     }
-    
-    // Log do resumo das métricas salvas
-    console.log(`RESUMO: Salvas ${savedMetricsCount} métricas, falhas: ${failedMetricsCount}`);
-    metricsByCategory.forEach((metrics, category) => {
-      console.log(`- Categoria '${category}': ${metrics.length} métricas (${metrics.join(', ')})`);
-    });
     
     // Após a extração, atualizamos o status do exame
     await storage.updateExam(exam.id, { 
@@ -545,7 +510,6 @@ export async function uploadAndAnalyzeDocument(req: Request, res: Response) {
       }
     });
   } catch (error) {
-    console.error("Error in upload and analyze document:", error);
     res.status(500).json({ message: "Erro ao processar o documento", error: String(error) });
   }
 }

@@ -115,7 +115,6 @@ export default function ExamResults() {
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
-        console.error("Error fetching exams from API:", error);
         return [];
       }
     },
@@ -130,7 +129,6 @@ export default function ExamResults() {
         if (!res.ok) throw new Error("Failed to fetch health metrics");
         return res.json();
       } catch (error) {
-        console.error("Error fetching health metrics from API:", error);
         return [];
       }
     },
@@ -153,7 +151,7 @@ export default function ExamResults() {
         setLocalHealthMetrics(metrics);
       }
     } catch (error) {
-      console.error("Error reading from localStorage:", error);
+      // Error reading from localStorage
     }
   }, []);
   

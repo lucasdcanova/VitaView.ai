@@ -63,7 +63,7 @@ export default function Sidebar(props: SidebarProps) {
             alt="VitaView AI Logo" 
             className="w-12 h-auto" 
             onError={(e) => {
-              console.error("Erro ao carregar logo:", e);
+              // Erro ao carregar logo
               e.currentTarget.onerror = null;
             }}
           />

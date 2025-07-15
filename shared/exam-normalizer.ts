@@ -222,20 +222,15 @@ export function normalizeExamName(name: string): string {
   // Converter para minúsculo e remover espaços extras
   const normalized = name.toLowerCase().trim();
   
-  // Debug para entender o problema
-  console.log(`Normalizando: "${name}" -> "${normalized}"`);
-  
   // Verificar no mapeamento
   if (examNameMap[normalized]) {
     const result = examNameMap[normalized];
-    console.log(`Mapeamento encontrado: "${normalized}" -> "${result}"`);
     return result;
   }
   
   // Se não estiver no mapeamento, retorna o nome original com primeira letra maiúscula 
   // e resto minúscula para manter consistência
   const result = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  console.log(`Sem mapeamento, usando padrão: "${name}" -> "${result}"`);
   return result;
 }
 
@@ -269,6 +264,85 @@ export function normalizeHealthMetrics(metrics: any[]): any[] {
   
   // Converter de volta para array
   return Array.from(processedMetrics.values());
+}
+
+interface ExamResult {
+  category: string;
+  name: string;
+  value: number;
+  unit: string;
+  normalRange: { min: number; max: number };
+  status: 'normal' | 'high' | 'low';
+}
+
+const examNormalRanges: Record<string, { min: number; max: number; unit: string; category: string }> = {
+  'hemoglobina': { min: 12, max: 16, unit: 'g/dL', category: 'Blood Test' },
+  'glicose': { min: 70, max: 100, unit: 'mg/dL', category: 'Blood Test' },
+  'colesterol total': { min: 0, max: 200, unit: 'mg/dL', category: 'Blood Test' },
+  'tsh': { min: 0.4, max: 4.0, unit: 'mIU/L', category: 'Hormones' },
+  't4 livre': { min: 0.8, max: 1.8, unit: 'ng/dL', category: 'Hormones' },
+  'triglicerídeos': { min: 0, max: 150, unit: 'mg/dL', category: 'Blood Test' },
+  'creatinina': { min: 0.6, max: 1.2, unit: 'mg/dL', category: 'Renal Function' },
+  'ureia': { min: 15, max: 40, unit: 'mg/dL', category: 'Renal Function' },
+};
+
+/**
+ * Normaliza resultados de exames de texto livre para formato estruturado
+ * 
+ * @param text Texto com resultados de exames
+ * @returns Array de resultados normalizados
+ */
+export function normalizeExamResults(text: string): ExamResult[] {
+  if (!text || text.trim() === '') return [];
+  
+  const results: ExamResult[] = [];
+  const lines = text.split('\n').filter(line => line.trim());
+  
+  for (const line of lines) {
+    // Tentar diferentes padrões de parsing
+    const patterns = [
+      /(.+?):\s*([\d,\.]+)\s*(.+)?/,  // Nome: valor unidade
+      /(.+?)\s*=\s*([\d,\.]+)\s*(.+)?/, // Nome = valor unidade
+      /(.+?)\s*-\s*([\d,\.]+)\s*(.+)?/, // Nome - valor unidade
+    ];
+    
+    let match = null;
+    for (const pattern of patterns) {
+      match = line.match(pattern);
+      if (match) break;
+    }
+    
+    if (match) {
+      const [, nameRaw, valueRaw, unitRaw = ''] = match;
+      const name = normalizeExamName(nameRaw.trim());
+      const value = parseFloat(valueRaw.replace(',', '.'));
+      const unit = unitRaw.trim() || 'units';
+      
+      if (!isNaN(value)) {
+        const rangeInfo = examNormalRanges[name.toLowerCase()] || {
+          min: 0,
+          max: Infinity,
+          unit: unit,
+          category: 'Other'
+        };
+        
+        let status: 'normal' | 'high' | 'low' = 'normal';
+        if (value < rangeInfo.min) status = 'low';
+        else if (value > rangeInfo.max) status = 'high';
+        
+        results.push({
+          category: rangeInfo.category,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          value,
+          unit: rangeInfo.unit || unit,
+          normalRange: { min: rangeInfo.min, max: rangeInfo.max },
+          status
+        });
+      }
+    }
+  }
+  
+  return results;
 }
 
 /**

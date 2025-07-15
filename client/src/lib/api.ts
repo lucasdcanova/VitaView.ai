@@ -56,20 +56,16 @@ export const getExamInsights = async (examId: number) => {
 
 // Nova função: Analisa um exame já extraído usando OpenAI
 export const analyzeExtractedExam = async (examId: number, patientData?: PatientData) => {
-  console.log(`Solicitando análise OpenAI para exame ID ${examId}`);
-  
   try {
     const res = await apiRequest("POST", `/api/exams/${examId}/analyze`, { patientData });
     
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`Erro na análise do exame ${examId}:`, errorText);
       throw new Error(errorText || res.statusText);
     }
     
     return await res.json();
   } catch (error) {
-    console.error("Erro ao analisar exame com OpenAI:", error);
     throw error;
   }
 };
@@ -114,7 +110,6 @@ export const updateUserProfile = async (profileData: any) => {
     const res = await apiRequest("PUT", "/api/user/profile", profileData);
     return await res.json();
   } catch (error) {
-    console.error("Error updating profile:", error);
     throw new Error(error instanceof Error ? error.message : "Erro ao atualizar perfil");
   }
 };
@@ -125,7 +120,6 @@ export const deleteExam = async (examId: number): Promise<{ message: string }> =
     const res = await apiRequest("DELETE", `/api/exams/${examId}`);
     return await res.json();
   } catch (error) {
-    console.error("Erro ao excluir exame:", error);
     throw new Error(error instanceof Error ? error.message : "Erro ao excluir o exame");
   }
 };
@@ -136,7 +130,6 @@ export const deleteAllHealthMetrics = async (userId: number): Promise<{ message:
     const res = await apiRequest("DELETE", `/api/health-metrics/user/${userId}`);
     return await res.json();
   } catch (error) {
-    console.error("Erro ao excluir métricas de saúde:", error);
     throw new Error(error instanceof Error ? error.message : "Erro ao excluir métricas de saúde");
   }
 };

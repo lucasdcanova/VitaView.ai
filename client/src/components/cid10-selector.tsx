@@ -60,7 +60,7 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
 
           setFilteredCodes(filtered.slice(0, 15)); // Reduzir para 15 resultados
         } catch (error) {
-          console.error('Erro ao carregar base CID-10:', error);
+          // Erro ao carregar base CID-10
           setFilteredCodes([]);
         } finally {
           setIsLoading(false);

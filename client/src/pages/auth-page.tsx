@@ -163,7 +163,7 @@ export default function AuthPage() {
                   alt="VitaView AI Logo" 
                   className="h-20 w-auto object-contain mb-2" 
                   onError={(e) => {
-                    console.error("Erro ao carregar logo:", e);
+                    // Erro ao carregar logo
                     e.currentTarget.onerror = null;
                   }}
                 />

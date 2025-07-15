@@ -38,21 +38,8 @@ function processCID10Data() {
   
   fs.writeFileSync('client/src/data/cid10-database.ts', jsContent);
   
-  console.log(`Processados ${cid10Database.length} códigos CID-10 autênticos do SUS (categorias + subcategorias)`);
-  console.log('Arquivo gerado: client/src/data/cid10-database.ts');
-  
-  // Mostrar alguns exemplos
-  console.log('\nExemplos de códigos processados:');
-  cid10Database.slice(0, 10).forEach(item => {
-    console.log(`${item.code} - ${item.description} (${item.category})`);
-  });
-  
-  // Mostrar exemplos de subcategorias F10
-  console.log('\nExemplos de subcategorias F10 (álcool):');
-  const f10Codes = cid10Database.filter(item => item.code.startsWith('F10'));
-  f10Codes.forEach(item => {
-    console.log(`${item.code} - ${item.description} (${item.category})`);
-  });
+  // Processados códigos CID-10 autênticos do SUS (categorias + subcategorias)
+  // Arquivo gerado: client/src/data/cid10-database.ts
 }
 
 function processLines(lines, database, type) {

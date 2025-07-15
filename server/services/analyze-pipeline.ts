@@ -49,13 +49,13 @@ export interface AnalysisResult {
  * @returns Resultado da análise
  */
 export async function runAnalysisPipeline(options: AnalysisOptions): Promise<AnalysisResult> {
-  console.log(`[Pipeline] Iniciando análise completa para usuário ${options.userId}`);
+  // [Pipeline] Iniciando análise completa para usuário
   
   try {
     // ETAPA 1: EXTRAÇÃO DADOS (GEMINI)
-    console.log(`[Pipeline] ETAPA 1: Extraindo dados com Gemini (doc tipo: ${options.fileType})`);
+    // [Pipeline] ETAPA 1: Extraindo dados com Gemini
     const fileSizeKB = Math.round(options.fileContent.length * 0.75 / 1024);
-    console.log(`[Pipeline] Processando arquivo de ${fileSizeKB}KB`);
+    // [Pipeline] Processando arquivo
     
     const extractionResult = await analyzeDocument(options.fileContent, options.fileType);
     
@@ -74,7 +74,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     }
     
     // CRIAR REGISTRO DO EXAME
-    console.log(`[Pipeline] ETAPA 2: Criando registro do exame`);
+    // [Pipeline] ETAPA 2: Criando registro do exame
     const examName = extractionResult.examType 
       ? `${extractionResult.examType} - ${options.name}` 
       : options.name;
@@ -90,15 +90,15 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       originalContent: options.fileContent
     });
     
-    console.log(`[Pipeline] Exame criado com ID: ${exam.id}`);
+    // [Pipeline] Exame criado com ID
     
     // NORMALIZAR MÉTRICAS - Unificar nomes para evitar duplicatas com nomes ligeiramente diferentes
-    console.log(`[Pipeline] Normalizando métricas de saúde...`);
+    // [Pipeline] Normalizando métricas de saúde...
     const normalizedMetrics = normalizeHealthMetrics(extractionResult.healthMetrics || []);
-    console.log(`[Pipeline] Normalização reduziu de ${extractionResult.healthMetrics?.length || 0} para ${normalizedMetrics.length} métricas únicas`);
+    // [Pipeline] Normalização de métricas concluída
     
     // SALVAR RESULTADO DA EXTRAÇÃO COM MÉTRICAS NORMALIZADAS
-    console.log(`[Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)`);
+    // [Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)
     const examResult = await storage.createExamResult({
       examId: exam.id,
       summary: `Exame extraído com ${normalizedMetrics.length} parâmetros`,
@@ -158,7 +158,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     }
     
     // ETAPA 4: ANÁLISE DETALHADA (OPENAI)
-    console.log(`[Pipeline] ETAPA 4: Iniciando análise detalhada com OpenAI`);
+    // [Pipeline] ETAPA 4: Iniciando análise detalhada com OpenAI
     
     // Atualizar status do exame
     await storage.updateExam(exam.id, { status: "analyzing" });
@@ -166,7 +166,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     try {
       // Obter análise profunda
       const analysisResult = await analyzeExtractedExam(exam.id, options.userId, storage);
-      console.log(`[Pipeline] Análise com OpenAI concluída com sucesso`);
+      // [Pipeline] Análise com OpenAI concluída com sucesso
       
       // Atualizar status para finalizado
       await storage.updateExam(exam.id, { status: "analyzed" });

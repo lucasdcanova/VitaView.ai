@@ -24,7 +24,7 @@ export default function QuickSummary({ onComplete }: QuickSummaryProps) {
   // Quick summary mutation
   const generateSummaryMutation = useMutation({
     mutationFn: async (data: { fileContent: string, fileType: string }) => {
-      console.log(`Enviando requisição para geração rápida de resumo`);
+      // Enviando requisição para geração rápida de resumo
       
       const response = await fetch("/api/exams/quick-summary", {
         method: "POST",
@@ -37,12 +37,12 @@ export default function QuickSummary({ onComplete }: QuickSummaryProps) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Erro na resposta da API: ${response.status}`, errorText);
+        // Erro na resposta da API
         throw new Error(errorText || response.statusText);
       }
       
       const resultData = await response.json();
-      console.log("Recebido resultado da geração rápida:", resultData ? "dados recebidos" : "null");
+      // Recebido resultado da geração rápida
       return resultData;
     },
     onSuccess: (data) => {
@@ -100,7 +100,7 @@ export default function QuickSummary({ onComplete }: QuickSummaryProps) {
           ? 'jpeg'
           : 'png';
       
-      console.log(`Iniciando geração rápida para arquivo ${file.name} (${fileType})`);
+      // Iniciando geração rápida para arquivo
       
       // Ler o arquivo como base64
       const reader = new FileReader();
@@ -112,7 +112,7 @@ export default function QuickSummary({ onComplete }: QuickSummaryProps) {
           
         // Verificar se o usuário está autenticado
         if (!user || !user.id) {
-          console.error("Usuário não autenticado ao tentar analisar arquivo");
+          // Usuário não autenticado ao tentar analisar arquivo
           toast({
             title: "Erro de autenticação",
             description: "Por favor, faça login novamente para continuar.",
@@ -130,7 +130,7 @@ export default function QuickSummary({ onComplete }: QuickSummaryProps) {
       };
       
       reader.onerror = () => {
-        console.error("Erro ao ler arquivo");
+        // Erro ao ler arquivo
         toast({
           title: "Erro na leitura",
           description: "Ocorreu um erro ao ler o arquivo selecionado.",

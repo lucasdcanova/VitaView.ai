@@ -23,7 +23,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   // Gemini análise do documento
   const analyzeWithGeminiMutation = useMutation({
     mutationFn: async (data: { fileContent: string, fileType: string }) => {
-      console.log(`Enviando requisição para /api/analyze/gemini (tamanho: ${data.fileContent.length} chars)`);
       
       const response = await fetch("/api/analyze/gemini", {
         method: "POST",
@@ -36,12 +35,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Erro na resposta da API Gemini: ${response.status}`, errorText);
         throw new Error(errorText || response.statusText);
       }
       
       const resultData = await response.json();
-      console.log("Recebido resultado da análise Gemini:", resultData ? "dados recebidos" : "null");
       return resultData;
     },
     onSuccess: (data) => {
@@ -77,7 +74,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   // OpenAI interpretação dos resultados
   const interpretWithOpenAIMutation = useMutation({
     mutationFn: async (data: { analysisResult: any, patientData: any }) => {
-      console.log("Enviando dados para interpretação com OpenAI:", data);
       
       const response = await fetch("/api/analyze/interpretation", {
         method: "POST",
@@ -90,18 +86,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Erro na resposta da API OpenAI: ${response.status}`, errorText);
         throw new Error(errorText || response.statusText);
       }
       
       const interpretationData = await response.json();
-      console.log("Recebido resultado da interpretação OpenAI:", interpretationData ? "dados recebidos" : "null");
       return interpretationData;
     },
     onSuccess: (openaiInterpretation) => {
       // Verificar se usuário está autenticado
       if (!user || !user.id) {
-        console.error("Usuário não autenticado");
         toast({
           title: "Erro de autenticação",
           description: "Você precisa estar autenticado para salvar exames. Por favor, faça login novamente.",
@@ -126,12 +119,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       // Removendo requestingPhysician pois não existe na tabela
       
       // Para debug: vamos garantir que o userId é enviado mesmo se a sessão estiver com problemas
-      console.log("Usuário autenticado:", user);
-      console.log("Preparando dados do exame com ID do usuário:", user?.id);
       
       // Verificamos se o usuário está autenticado
       if (!user || !user.id) {
-        console.error("Erro: Usuário não autenticado ao tentar criar exame");
         toast({
           title: "Erro de autenticação",
           description: "Você precisa estar logado para enviar exames. Por favor, faça login novamente.",
@@ -185,7 +175,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           }
         },
         onError: (error) => {
-          console.error("Erro ao salvar exame:", error);
           toast({
             title: "Erro ao salvar",
             description: "A análise foi concluída, mas houve um erro ao salvar o exame.",
@@ -211,11 +200,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       try {
         // Verificação de autenticação
         if (user === null) {
-          console.error("Usuário não está autenticado ao tentar salvar exame");
           throw new Error("Você precisa estar autenticado para salvar exames");
         }
         
-        console.log("Dados recebidos para salvar:", data);
         
         // Extrair dados do exame do novo formato
         const { examData: rawExamData, geminiAnalysis, openaiInterpretation } = data;
@@ -234,7 +221,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         };
         
         // Criar o exame no banco de dados
-        console.log("Enviando dados do exame para a API:", examData);
         const examResponse = await fetch("/api/exams", {
           method: "POST",
           headers: {
@@ -244,17 +230,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           credentials: "include"
         });
         
-        // Log detalhado da resposta para debugging
-        console.log(`Resposta da API exams: ${examResponse.status} ${examResponse.statusText}`);
         
         if (!examResponse.ok) {
           const errorText = await examResponse.text();
-          console.error("Erro detalhado ao salvar exame:", errorText);
           throw new Error(`Erro ao salvar exame: ${errorText}`);
         }
         
         const savedExam = await examResponse.json();
-        console.log("Exame salvo com sucesso:", savedExam);
         
         // Salvar o resultado da análise
         if (savedExam && savedExam.id) {
@@ -275,7 +257,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             aiProvider: "gemini+openai"
           };
           
-          console.log("Enviando resultado da análise para a API:", resultData);
           const resultResponse = await fetch("/api/exam-results", {
             method: "POST",
             headers: {
@@ -285,23 +266,18 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             credentials: "include"
           });
           
-          // Log detalhado da resposta para debugging
-          console.log(`Resposta da API exam-results: ${resultResponse.status} ${resultResponse.statusText}`);
           
           if (!resultResponse.ok) {
             const errorText = await resultResponse.text();
-            console.error("Erro detalhado ao salvar resultado:", errorText);
             
             // Mesmo com erro na criação do resultado, continuamos (não interrompemos)
             // - isso garante que ao menos o exame seja registrado
           } else {
             const savedResult = await resultResponse.json();
-            console.log("Resultado salvo com sucesso:", savedResult);
           }
           
           // Salvar métricas de saúde individuais, se disponíveis
           if (geminiAnalysis?.healthMetrics && Array.isArray(geminiAnalysis.healthMetrics)) {
-            console.log("Salvando métricas de saúde individuais:", geminiAnalysis.healthMetrics.length);
             
             // Pré-processamento para normalizar nomes e unificar métricas duplicadas
             const processedMetrics = new Map<string, any>();
@@ -320,7 +296,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               }
             }
             
-            console.log(`Após normalização: ${processedMetrics.size} métricas únicas (original: ${geminiAnalysis.healthMetrics.length})`);
             
             // Segundo passo: salvar cada métrica unificada
             const uniqueMetrics = Array.from(processedMetrics.values());
@@ -337,7 +312,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   date: examData.examDate || new Date().toISOString() // Usar mesma data do exame
                 };
                 
-                console.log(`Enviando métrica ${metric.name} para a API:`, metricData);
                 const metricResponse = await fetch("/api/health-metrics", {
                   method: "POST",
                   headers: {
@@ -349,13 +323,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 
                 if (!metricResponse.ok) {
                   const errorText = await metricResponse.text();
-                  console.error(`Erro ao salvar métrica ${metric.name}:`, errorText);
                 } else {
                   const savedMetric = await metricResponse.json();
-                  console.log(`Métrica ${metric.name} salva com sucesso:`, savedMetric);
                 }
               } catch (metricError) {
-                console.error("Erro ao salvar métrica:", metricError);
               }
             }
           }
@@ -366,7 +337,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           result: openaiInterpretation || {}
         };
       } catch (error: any) {
-        console.error("Erro ao processar exame:", error);
         throw new Error("Falha ao processar e salvar exame: " + (error?.message || "Erro desconhecido"));
       }
     }
@@ -404,7 +374,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           ? 'jpeg'
           : 'png';
       
-      console.log(`Iniciando análise de arquivo ${file.name} (${fileType})`);
       
       // Ler o arquivo como base64
       const reader = new FileReader();
@@ -416,7 +385,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           
         // Verificar se o usuário está autenticado
         if (!user || !user.id) {
-          console.error("Usuário não autenticado ao tentar analisar arquivo");
           toast({
             title: "Erro de autenticação",
             description: "Por favor, faça login novamente para continuar.",
@@ -426,12 +394,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           return;
         }
         
-        // Verificação adicional dos cookies de sessão
-        console.log("Cookie disponível:", document.cookie ? "Sim" : "Não");
-        console.log("Usuário autenticado com ID:", user.id);
-          
         // Chamar API para análise com o Gemini
-        console.log(`Enviando arquivo para análise com Gemini (tamanho: ${base64Content.length} caracteres)`);
         analyzeWithGeminiMutation.mutate({
           fileContent: base64Content,
           fileType: fileType

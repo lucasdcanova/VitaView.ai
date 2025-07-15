@@ -14,12 +14,11 @@ if (process.env.OPENAI_API_KEY) {
     apiKey: process.env.OPENAI_API_KEY
   });
 } else {
-  console.warn("OpenAI API key not found. OpenAI features will use fallback responses.");
+  // OpenAI API key not found. OpenAI features will use fallback responses.
 }
 
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any) {
   try {
-    console.log("Generating health insights with OpenAI API");
     
     // Prepare patient context if available
     let patientContext = "";
@@ -142,7 +141,6 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
     
     // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
-      console.warn("OpenAI API key not found, using fallback response");
       return getFallbackInsights(patientData);
     }
     
@@ -150,11 +148,9 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       // Call the actual OpenAI API
       return await callOpenAIApi(prompt);
     } catch (apiError) {
-      console.error("Error calling OpenAI API, using fallback:", apiError);
       return getFallbackInsights(patientData);
     }
   } catch (error) {
-    console.error("Error generating health insights with OpenAI:", error);
     throw new Error("Falha ao gerar insights de saúde com OpenAI");
   }
 }
@@ -166,7 +162,6 @@ async function callOpenAIApi(prompt: string) {
       throw new Error("OpenAI client not initialized");
     }
     
-    console.log("Calling OpenAI API...");
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
@@ -179,14 +174,10 @@ async function callOpenAIApi(prompt: string) {
       throw new Error("Empty response from OpenAI API");
     }
     
-    console.log("OpenAI API response received successfully");
-    
     try {
       // Tentar analisar a resposta como JSON
       return JSON.parse(content);
     } catch (parseError) {
-      console.warn("Error parsing OpenAI response as JSON:", parseError);
-      console.log("Raw response content:", content);
       
       // Se não for um JSON válido, tente extrair um JSON válido do conteúdo
       try {
@@ -194,11 +185,10 @@ async function callOpenAIApi(prompt: string) {
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const jsonStr = jsonMatch[0];
-          console.log("Extracted JSON string:", jsonStr);
           return JSON.parse(jsonStr);
         }
       } catch (extractError) {
-        console.error("Failed to extract JSON from response:", extractError);
+        // Failed to extract JSON from response
       }
       
       // Se ainda falhar, retorne um objeto estruturado básico
@@ -216,14 +206,12 @@ async function callOpenAIApi(prompt: string) {
       };
     }
   } catch (error) {
-    console.error("Error calling OpenAI API:", error);
     throw error;
   }
 }
 
 // Fallback response if OpenAI API is unavailable
 function getFallbackInsights(patientData?: any) {
-  console.log("Using fallback health insights response");
   
   // Base response com estrutura atualizada conforme novo formato, incluindo diagnósticos possíveis
   const response = {
@@ -344,7 +332,6 @@ function getFallbackInsights(patientData?: any) {
  */
 export async function analyzeExtractedExam(examId: number, userId: number, storage: IStorage, patientData?: any) {
   try {
-    console.log(`Iniciando análise do exame ID ${examId} com OpenAI`);
     
     // 1. Obter o exame e resultado da extração feita pelo Gemini
     const exam = await storage.getExam(examId);
@@ -371,13 +358,10 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     let metricsFromThisExam = [];
     
     if (extractionResult.healthMetrics && Array.isArray(extractionResult.healthMetrics)) {
-      console.log(`Usando ${extractionResult.healthMetrics.length} métricas diretamente do resultado da extração`);
       metricsFromThisExam = extractionResult.healthMetrics;
     } else {
-      console.log("Nenhuma métrica encontrada no resultado da extração. Usando array vazio.");
+      // Nenhuma métrica encontrada no resultado da extração. Usando array vazio.
     }
-    
-    console.log(`Analisando ${metricsFromThisExam.length} métricas do exame`);
     
     // 4. Organizar métricas por categoria para uma análise mais estruturada
     const metricsByCategory = new Map();
@@ -500,11 +484,9 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     `;
     
     // 6. Chamar a API da OpenAI
-    console.log("Enviando prompt para OpenAI...");
     const insightsResponse = await callOpenAIApi(prompt);
     
     // 7. Atualizar o exame para refletir a análise completa
-    console.log("Atualizando exame com análise OpenAI");
     await storage.updateExam(examId, { 
       status: "analyzed" 
     });
@@ -535,8 +517,6 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     };
     
   } catch (error: any) {
-    console.error('Erro ao analisar exame com OpenAI:', error);
-    
     // Em caso de falha, retornar um erro estruturado
     return {
       error: true,
@@ -554,11 +534,8 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
  */
 export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: string) {
   try {
-    console.log(`Analyzing ${fileType} document with OpenAI API as fallback`);
-    
     // Verificar se a API key está disponível
     if (!process.env.OPENAI_API_KEY) {
-      console.warn("OpenAI API key not found for document analysis fallback");
       throw new Error("OpenAI API key not available");
     }
     
@@ -648,8 +625,6 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
         throw new Error("Empty response from OpenAI API");
       }
       
-      console.log("OpenAI API document analysis successful");
-      
       try {
         // Analisar a resposta JSON
         const analysisData = JSON.parse(content);
@@ -661,15 +636,12 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
         
         return analysisData;
       } catch (jsonError) {
-        console.error("Error parsing OpenAI response:", jsonError);
         throw jsonError;
       }
     } catch (apiError) {
-      console.error("Error calling OpenAI API for document analysis:", apiError);
       throw apiError;
     }
   } catch (error) {
-    console.error("Error analyzing document with OpenAI:", error);
     throw new Error("Falha ao analisar o documento com OpenAI como fallback");
   }
 }
@@ -690,7 +662,6 @@ interface UserInfo {
 
 export async function generateChronologicalReport(examResults: ExamResult[], user: UserInfo) {
   try {
-    console.log("Generating chronological report with OpenAI API");
     
     // Prepara informações do paciente para contextualização
     const patientInfo = `
@@ -761,7 +732,6 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
     
     // Verifica se a API key está disponível
     if (!process.env.OPENAI_API_KEY) {
-      console.warn("OpenAI API key not found, using fallback for chronological report");
       return getFallbackChronologicalReport(examResults, user);
     }
     
@@ -784,14 +754,11 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
         throw new Error("Empty response from OpenAI API");
       }
       
-      console.log("OpenAI API chronological report generated successfully");
       return JSON.parse(content);
     } catch (apiError) {
-      console.error("Error calling OpenAI API for chronological report, using fallback:", apiError);
       return getFallbackChronologicalReport(examResults, user);
     }
   } catch (error) {
-    console.error("Error generating chronological report with OpenAI:", error);
     throw new Error("Falha ao gerar relatório cronológico com OpenAI");
   }
 }
@@ -800,7 +767,6 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
  * Resposta de fallback para o relatório cronológico quando a API da OpenAI não está disponível
  */
 function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInfo) {
-  console.log("Using fallback chronological report");
   
   // Calcula algumas tendências básicas baseadas nos dados disponíveis
   let hasTrendData = examResults.length > 1;

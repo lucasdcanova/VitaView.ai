@@ -220,24 +220,18 @@ if (process.env.STRIPE_SECRET_KEY) {
     apiVersion: "2023-10-16",
   });
 } else {
-  console.warn("Stripe secret key not found. Payment features will be disabled.");
+  // Stripe secret key not found. Payment features will be disabled.
 }
 
 // Middleware para verificar autenticação
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
-  console.log(`[Auth Check] Path: ${req.path}, Method: ${req.method}, Auth: ${req.isAuthenticated()}, Session ID: ${req.sessionID || 'undefined'}`);
-  console.log(`[Auth Headers] ${JSON.stringify(req.headers)}`);
-  
   // Verifica a autenticação padrão pelo Passport
   if (req.isAuthenticated()) {
-    console.log(`[Auth Success] User ID: ${req.user!.id}, Username: ${req.user!.username}`);
     return next();
   }
   
   // Tenta recuperar a autenticação pelo cookie auxiliar
   try {
-    console.log(`[Auth Debug] Cookie Header: ${req.headers.cookie}`);
-    
     const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
       const parts = cookie.trim().split('=');
       if (parts.length >= 2) {
@@ -248,86 +242,68 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
       return acc;
     }, {} as Record<string, string>) || {};
     
-    console.log(`[Auth Debug] Parsed Cookies: ${JSON.stringify(cookies)}`);
-    
     // Verifica o cookie simplificado auth_user_id
     if (cookies['auth_user_id']) {
       try {
-        console.log(`[Auth Debug] Found auth_user_id: ${cookies['auth_user_id']}`);
         const userId = parseInt(cookies['auth_user_id']);
         
         if (!isNaN(userId)) {
-          console.log(`[Auth Alternative] Usando auth_user_id para user ID: ${userId}`);
           // Recupera o usuário pelo ID
           const user = await storage.getUser(userId);
           
           if (user) {
-            console.log(`[Auth Alternative] Usuário recuperado via auth_user_id: ${user.username}`);
             // Define o usuário na sessão
             return req.login(user, (err) => {
               if (err) {
-                console.error("[Auth Alternative] Erro ao fazer login:", err);
                 return res.status(401).json({ message: "Erro de autenticação" });
               }
               // Continua o fluxo
-              console.log(`[Auth Alternative] Login bem-sucedido para ${user.username}`);
               return next();
             });
           } else {
-            console.log(`[Auth Alternative] Usuário não encontrado para auth_user_id: ${userId}`);
+            // Usuário não encontrado para auth_user_id
           }
         } else {
-          console.log(`[Auth Alternative] auth_user_id inválido: ${cookies['auth_user_id']}`);
+          // auth_user_id inválido
         }
       } catch (error) {
-        console.error("[Auth Error] Erro ao processar auth_user_id:", error);
+        // Erro ao processar auth_user_id
       }
     }
     // Também tenta o cookie auth_token para compatibilidade com versões anteriores
     else if (cookies['auth_token']) {
       try {
-        console.log(`[Auth Debug] Raw auth_token: ${cookies['auth_token']}`);
         const decodedToken = decodeURIComponent(cookies['auth_token']);
-        console.log(`[Auth Debug] Decoded auth_token: ${decodedToken}`);
         const authData = JSON.parse(decodedToken);
         
         if (authData && authData.id) {
-          console.log(`[Auth Alternative] Encontrado token auxiliar para user ID: ${authData.id}`);
           // Recupera o usuário pelo ID
           const user = await storage.getUser(authData.id);
           
           if (user) {
-            console.log(`[Auth Alternative] Usuário recuperado: ${user.username}`);
             // Define o usuário na sessão
             return req.login(user, (err) => {
               if (err) {
-                console.error("[Auth Alternative] Erro ao fazer login:", err);
                 return res.status(401).json({ message: "Erro de autenticação" });
               }
               // Continua o fluxo
-              console.log(`[Auth Alternative] Login bem-sucedido para ${user.username}`);
               return next();
             });
           } else {
-            console.log(`[Auth Alternative] Usuário não encontrado: ID ${authData.id}`);
+            // Usuário não encontrado
           }
         } else {
-          console.log(`[Auth Alternative] Token sem ID válido: ${JSON.stringify(authData)}`);
+          // Token sem ID válido
         }
       } catch (parseError) {
-        console.error("[Auth Error] Erro ao parsear token JSON:", parseError);
+        // Erro ao parsear token JSON
       }
     } else {
-      console.log(`[Auth Debug] Nenhum cookie de autenticação alternativa encontrado`);
+      // Nenhum cookie de autenticação alternativa encontrado
     }
   } catch (error) {
-    console.error("[Auth Error] Erro ao processar autenticação alternativa:", error);
+    // Erro ao processar autenticação alternativa
   }
-  
-  // Debug dos cookies
-  console.log(`[Auth Failed] Cookies: ${req.headers.cookie}`);
-  console.log(`[Auth Failed] Session Data: ${JSON.stringify(req.session || {})}`);
-  console.log(`[Auth Failed] PassportJS: ${JSON.stringify(req.session && 'passport' in req.session ? req.session.passport : {})}`);
   
   // Removido o bypass para análise Gemini
   // Todas as requisições devem ser autenticadas
@@ -338,7 +314,6 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
 
 // Middleware de logs para depuração
 function logRequest(req: Request, res: Response, next: NextFunction) {
-  console.log(`${new Date().toISOString()} [${req.method}] ${req.path} - User: ${req.isAuthenticated() ? req.user?.id : 'não autenticado'}`);
   next();
 }
 
@@ -368,8 +343,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
       }
       
-      console.log(`Processando upload de exame ${name} para usuário ${userId}`);
-      
       // Importamos o novo pipeline dinâmicamente para evitar dependência circular
       const { runAnalysisPipeline } = await import('./services/analyze-pipeline');
       
@@ -387,7 +360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(result);
       
     } catch (error: unknown) {
-      console.error("Erro no processamento de exame:", error);
       res.status(500).json({ 
         message: "Erro ao processar o exame", 
         error: error instanceof Error ? error.message : String(error),
@@ -414,8 +386,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Dados incompletos para análise. Tipo de arquivo e conteúdo são obrigatórios." });
       }
       
-      console.log(`Processando geração rápida de resumo para usuário ${userId}`);
-      
       // Primeiro step: utilizar Gemini para extrair informações básicas
       const analysisResult = await analyzeDocument(fileContent, fileType);
       
@@ -433,7 +403,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(quickSummary);
       
     } catch (error: unknown) {
-      console.error("Erro na geração rápida de resumo:", error);
       res.status(500).json({ 
         message: "Erro ao gerar resumo rápido", 
         error: error instanceof Error ? error.message : String(error),
@@ -445,11 +414,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota para análise de documentos - etapa 1: análise com Gemini
   app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
     try {
-      console.log("[Gemini Endpoint] Recebida requisição");
-      console.log("[Gemini Endpoint] Autenticado:", req.isAuthenticated());
-      console.log("[Gemini Endpoint] Session ID:", req.sessionID);
-      console.log("[Gemini Endpoint] Cookies:", req.headers.cookie);
-      
       const { fileContent, fileType } = req.body;
       
       if (!fileContent || !fileType) {
@@ -457,12 +421,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Temporariamente removemos a verificação de autenticação para diagnóstico
-      console.log(`[Gemini Endpoint] Iniciando análise (autenticado: ${req.isAuthenticated()})`);
       const analysisResult = await analyzeDocument(fileContent, fileType);
-      console.log("[Gemini Endpoint] Análise concluída com sucesso");
       res.json(analysisResult);
     } catch (error) {
-      console.error("Error in direct Gemini analysis:", error);
       res.status(500).json({ message: "Erro ao analisar o documento com Gemini API" });
     }
   });
@@ -470,11 +431,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
   app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
     try {
-      console.log("[OpenAI Endpoint] Recebida requisição");
-      console.log("[OpenAI Endpoint] Autenticado:", req.isAuthenticated());
-      console.log("[OpenAI Endpoint] Session ID:", req.sessionID);
-      console.log("[OpenAI Endpoint] Cookies:", req.headers.cookie);
-      
       const { analysisResult, patientData } = req.body;
       
       if (!analysisResult) {
@@ -482,7 +438,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Temporariamente removemos a verificação de autenticação para diagnóstico
-      console.log(`[OpenAI Endpoint] Iniciando interpretação (autenticado: ${req.isAuthenticated()})`);
       
       // Formatar como ExamResult para passar para o OpenAI
       const formattedResult = {
@@ -500,31 +455,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Gerar insights usando OpenAI com contexto do paciente
       const insights = await generateHealthInsights(formattedResult, patientData);
-      console.log("[OpenAI Endpoint] Interpretação concluída com sucesso");
       res.json(insights);
     } catch (error) {
-      console.error("Error in OpenAI interpretation:", error);
       res.status(500).json({ message: "Erro ao interpretar análise com OpenAI API" });
     }
   });
   
   app.post("/api/exams", ensureAuthenticated, async (req, res) => {
     try {  
-      console.log("[Exams Endpoint] Recebida requisição para criar exame");
-      console.log("[Exams Endpoint] Autenticado:", req.isAuthenticated());
-      console.log("[Exams Endpoint] Session ID:", req.sessionID);
-      console.log("[Exams Endpoint] Cookies:", req.headers.cookie);
-      
       // Sempre usar o userId do corpo da requisição para diagnóstico
       // Esta é uma medida temporária para garantir que os exames sejam salvos
       let userId = req.body.userId;
       
       if (!userId) {
-        console.error("[Exams Endpoint] Sem userId válido no corpo da requisição");
         // Tenta obter do usuário autenticado se disponível
         if (req.isAuthenticated() && req.user) {
           userId = req.user.id;
-          console.log("[Exams Endpoint] Usando userId da sessão:", userId);
         } else {
           return res.status(400).json({ message: "Erro: userId é obrigatório" });
         }
@@ -550,12 +496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadDate: new Date()
       };
       
-      console.log("[Exams Endpoint] Creating exam with data:", examData);
       const newExam = await storage.createExam(examData);
-      console.log("[Exams Endpoint] Exam created successfully:", newExam);
       res.status(201).json(newExam);
     } catch (error) {
-      console.error("[Exams Endpoint] Error creating exam:", error);
       res.status(500).json({ message: "Erro ao criar exame" });
     }
   });
@@ -563,17 +506,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API para salvar resultados de exames - com requisito de autenticação
   app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
     try {      
-      console.log("[ExamResults Endpoint] Recebida requisição para criar resultado de exame");
-      console.log("[ExamResults Endpoint] Autenticado:", req.isAuthenticated());
-      console.log("[ExamResults Endpoint] Session ID:", req.sessionID);
-      console.log("[ExamResults Endpoint] Cookies:", req.headers.cookie);
-      
       const resultData = {
         ...req.body,
         analysisDate: new Date()
       };
-      
-      console.log("[ExamResults Endpoint] Creating exam result with data:", resultData);
       
       // Verificar se o exame existe
       const exam = await storage.getExam(resultData.examId);
@@ -584,10 +520,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Temporariamente removida a verificação de propriedade para diagnóstico
       
       const newResult = await storage.createExamResult(resultData);
-      console.log("[ExamResults Endpoint] Exam result created successfully:", newResult);
       res.status(201).json(newResult);
     } catch (error) {
-      console.error("[ExamResults Endpoint] Error creating exam result:", error);
       res.status(500).json({ message: "Erro ao salvar resultado do exame" });
     }
   });
@@ -622,12 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date
       };
       
-      console.log("Creating health metric with data:", metricData);
       const newMetric = await storage.createHealthMetric(metricData);
-      console.log("Health metric created successfully:", newMetric);
       res.status(201).json(newMetric);
     } catch (error) {
-      console.error("Error creating health metric:", error);
       res.status(500).json({ message: "Erro ao salvar métrica de saúde" });
     }
   });
@@ -655,8 +586,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (exam.userId !== req.user.id) {
         return res.status(403).json({ message: "Você não tem permissão para excluir este exame" });
       }
-      
-      console.log(`[DeleteExam] Excluindo exame ${examId} do usuário ${req.user.id}`);
       
       // Primeiro excluir as métricas associadas a este exame
       const examResult = await storage.getExamResultByExamId(examId);
@@ -692,17 +621,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Erro ao excluir o exame" });
       }
     } catch (error) {
-      console.error("[DeleteExam] Erro:", error);
       res.status(500).json({ message: "Erro ao excluir o exame" });
     }
   });
   
   app.get("/api/exams", ensureAuthenticated, async (req, res) => {
     try {      
-      // Adicionar mais logs para debug
-      console.log("[GetExams] Autenticado:", req.isAuthenticated());
-      console.log("[GetExams] Cookies:", req.headers.cookie);
-      
       // Tenta extrair userId dos cookies
       const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
         const parts = cookie.trim().split('=');
@@ -719,13 +643,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se autenticado, usa o userId do req.user
       if (req.isAuthenticated() && req.user) {
         userId = req.user.id;
-        console.log("[GetExams] Usando userId da sessão:", userId);
       } 
       // Se não autenticado, tenta pegar do cookie auxiliar
       else if (cookies['auth_user_id']) {
         userId = parseInt(cookies['auth_user_id']);
         if (!isNaN(userId)) {
-          console.log("[GetExams] Usando userId do cookie:", userId);
+          // Usando userId do cookie
         }
       }
       
@@ -734,7 +657,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Permitir query param userId para testes em ambiente de desenvolvimento
         if (process.env.NODE_ENV === 'development' && req.query.userId) {
           userId = parseInt(req.query.userId as string);
-          console.log("[GetExams] Usando userId do query param (modo desenvolvimento):", userId);
         } else {
           return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
@@ -742,14 +664,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         const exams = await storage.getExamsByUserId(userId);
-        console.log("[GetExams] Exames encontrados:", exams?.length || 0);
         res.json(exams || []);
       } catch (dbError) {
-        console.error("[GetExams] Erro na função getExamsByUserId:", dbError);
         throw dbError;
       }
     } catch (error: any) {
-      console.error("[GetExams] Erro detalhado ao buscar exames:", error);
       res.status(500).json({ message: "Erro ao buscar exames", error: error?.message || 'Erro desconhecido' });
     }
   });
@@ -763,7 +682,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       let userId = req.user.id;
-      console.log(`Buscando exame ID ${examId}, autenticado: ${req.isAuthenticated()}, userId: ${userId}`);
       
       const exam = await storage.getExam(examId);
       
@@ -773,17 +691,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Para diagnóstico, permitimos acesso mesmo sem autenticação
       if (req.isAuthenticated() && userId !== exam.userId) {
-        console.log(`Aviso: usuário ${userId} tentando acessar exame de outro usuário (${exam.userId})`);
+        // Aviso: usuário tentando acessar exame de outro usuário
         // Não bloqueamos o acesso para diagnóstico
       }
       
       const examResult = await storage.getExamResultByExamId(examId);
-      console.log(`Exame encontrado:`, exam);
-      console.log(`Resultado do exame:`, examResult);
       
       res.json({ exam, result: examResult });
     } catch (error) {
-      console.error("Erro ao buscar exame:", error);
       res.status(500).json({ message: "Erro ao buscar exame" });
     }
   });
@@ -810,8 +725,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Acesso não autorizado a este exame" });
       }
       
-      console.log(`Iniciando análise do exame ${examId} com OpenAI para usuário ${userId}`);
-      
       // Extrair dados do paciente do corpo da requisição, se disponíveis
       const patientData = req.body.patientData || {};
       
@@ -819,13 +732,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await analyzeExtractedExam(examId, userId, storage, patientData);
       
       if (result.error) {
-        console.error(`Erro na análise do exame ${examId}:`, result.message);
         return res.status(400).json(result);
       }
       
       res.status(200).json(result);
     } catch (error) {
-      console.error("Erro ao analisar exame com OpenAI:", error);
       res.status(500).json({ 
         message: "Erro ao analisar o exame",
         error: String(error)
@@ -842,7 +753,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       let userId = req.user.id;
-      console.log(`Gerando insights para exame ID ${examId}, autenticado: ${req.isAuthenticated()}, userId: ${userId}`);
       
       const exam = await storage.getExam(examId);
       
@@ -852,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Para diagnóstico, permitimos acesso mesmo sem autenticação
       if (req.isAuthenticated() && userId !== exam.userId) {
-        console.log(`Aviso: usuário ${userId} tentando acessar insights de outro usuário (${exam.userId})`);
+        // Aviso: usuário tentando acessar insights de outro usuário
         // Não bloqueamos o acesso para diagnóstico
       }
       
@@ -872,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           patientData = JSON.parse(req.query.patientData as string);
         } catch (e) {
-          console.warn("Error parsing patient data:", e);
+          // Error parsing patient data
         }
       } else if (user) {
         // Se não fornecido, criar dados básicos do perfil do usuário
@@ -896,10 +806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Chamada à OpenAI com contexto do paciente
       const insights = await generateHealthInsights(examResult, patientData);
-      console.log("Insights gerados com sucesso");
       res.json(insights);
     } catch (error) {
-      console.error("Error generating health insights:", error);
       res.status(500).json({ message: "Erro ao gerar insights" });
     }
   });
@@ -907,21 +815,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for health metrics
   app.get("/api/health-metrics", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Buscando métricas de saúde para usuário ${req.user!.id}`);
       const metrics = await storage.getHealthMetricsByUserId(req.user!.id);
-      console.log(`Métricas encontradas: ${metrics?.length || 0}`);
       res.json(metrics || []);
     } catch (error) {
-      console.error("Erro ao buscar métricas de saúde:", error);
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
   
   app.get("/api/health-metrics/latest", ensureAuthenticated, async (req, res) => {
     try {
-      console.log("[GetLatestMetrics] Autenticado:", req.isAuthenticated());
-      console.log("[GetLatestMetrics] Cookies:", req.headers.cookie);
-      
       // Tenta extrair userId dos cookies
       const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
         const parts = cookie.trim().split('=');
@@ -938,13 +840,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se autenticado, usa o userId do req.user
       if (req.isAuthenticated() && req.user) {
         userId = req.user.id;
-        console.log("[GetLatestMetrics] Usando userId da sessão:", userId);
       } 
       // Se não autenticado, tenta pegar do cookie auxiliar
       else if (cookies['auth_user_id']) {
         userId = parseInt(cookies['auth_user_id']);
         if (!isNaN(userId)) {
-          console.log("[GetLatestMetrics] Usando userId do cookie:", userId);
+          // Usando userId do cookie
         }
       }
       
@@ -953,19 +854,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Permitir query param userId para testes em ambiente de desenvolvimento
         if (process.env.NODE_ENV === 'development' && req.query.userId) {
           userId = parseInt(req.query.userId as string);
-          console.log("[GetLatestMetrics] Usando userId do query param (modo desenvolvimento):", userId);
         } else {
           return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
       }
       
       const limit = parseInt(req.query.limit as string) || 10;
-      console.log(`[GetLatestMetrics] Buscando ${limit} métricas mais recentes para usuário ${userId}`);
       const metrics = await storage.getLatestHealthMetrics(userId, limit);
-      console.log(`[GetLatestMetrics] Métricas encontradas: ${metrics?.length || 0}`);
       res.json(metrics || []);
     } catch (error) {
-      console.error("[GetLatestMetrics] Erro ao buscar métricas de saúde:", error);
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
@@ -989,19 +886,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Você não tem permissão para excluir métricas de outro usuário" });
       }
       
-      console.log(`[DeleteAllHealthMetrics] Requisição para excluir todas as métricas do usuário ${targetUserId}`);
-      
       // Executar a exclusão
       const count = await storage.deleteAllHealthMetricsByUserId(targetUserId);
-      
-      console.log(`[DeleteAllHealthMetrics] Excluídas ${count} métricas de saúde do usuário ${targetUserId}`);
       
       res.status(200).json({ 
         message: `${count} métricas de saúde excluídas com sucesso`, 
         count 
       });
     } catch (error) {
-      console.error(`[DeleteAllHealthMetrics] Erro ao excluir métricas de saúde:`, error);
       res.status(500).json({ message: "Erro ao excluir métricas de saúde" });
     }
   });
@@ -1009,12 +901,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for notifications
   app.get("/api/notifications", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Buscando notificações para usuário ${req.user!.id}`);
       const notifications = await storage.getNotificationsByUserId(req.user!.id);
-      console.log(`Notificações encontradas: ${notifications?.length || 0}`);
       res.json(notifications || []);
     } catch (error) {
-      console.error("Erro ao buscar notificações:", error);
       res.status(500).json({ message: "Erro ao buscar notificações" });
     }
   });
@@ -1022,7 +911,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notifications/:id/read", ensureAuthenticated, async (req, res) => {
     try {
       const notificationId = parseInt(req.params.id);
-      console.log(`Marcando notificação ${notificationId} como lida para usuário ${req.user!.id}`);
       const notification = await storage.markNotificationAsRead(notificationId);
       
       if (!notification) {
@@ -1031,7 +919,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(notification);
     } catch (error) {
-      console.error("Erro ao marcar notificação como lida:", error);
       res.status(500).json({ message: "Erro ao marcar notificação como lida" });
     }
   });
@@ -1039,7 +926,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for user profile
   app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Atualizando perfil do usuário ${req.user!.id}`);
       const updatedUser = await storage.updateUser(req.user!.id, req.body);
       
       if (!updatedUser) {
@@ -1049,7 +935,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
       res.status(500).json({ message: "Erro ao atualizar perfil" });
     }
   });
@@ -1057,19 +942,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for diagnoses
   app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Buscando diagnósticos para usuário ${req.user!.id}`);
       const diagnoses = await storage.getDiagnosesByUserId(req.user!.id);
-      console.log(`Diagnósticos encontrados: ${diagnoses?.length || 0}`);
       res.json(diagnoses || []);
     } catch (error) {
-      console.error("Erro ao buscar diagnósticos:", error);
       res.status(500).json({ message: "Erro ao buscar diagnósticos" });
     }
   });
 
   app.post("/api/diagnoses", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Criando diagnóstico para usuário ${req.user!.id}`, req.body);
       const diagnosisData = {
         userId: req.user!.id,
         cidCode: req.body.cidCode,
@@ -1079,10 +960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const newDiagnosis = await storage.createDiagnosis(diagnosisData);
-      console.log("Diagnóstico criado com sucesso:", newDiagnosis);
       res.status(201).json(newDiagnosis);
     } catch (error) {
-      console.error("Erro ao criar diagnóstico:", error);
       res.status(500).json({ message: "Erro ao criar diagnóstico" });
     }
   });
@@ -1103,7 +982,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedDiagnosis = await storage.updateDiagnosis(diagnosisId, req.body);
       res.json(updatedDiagnosis);
     } catch (error) {
-      console.error("Erro ao atualizar diagnóstico:", error);
       res.status(500).json({ message: "Erro ao atualizar diagnóstico" });
     }
   });
@@ -1124,7 +1002,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteDiagnosis(diagnosisId);
       res.json({ message: "Diagnóstico excluído com sucesso" });
     } catch (error) {
-      console.error("Erro ao excluir diagnóstico:", error);
       res.status(500).json({ message: "Erro ao excluir diagnóstico" });
     }
   });
@@ -1132,7 +1009,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota para gerar relatório cronológico contextual com OpenAI
   app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {
-      console.log(`Gerando relatório cronológico para usuário ${req.user!.id}`);
       // Buscar todos os resultados de exames do usuário
       const exams = await storage.getExamsByUserId(req.user!.id);
       
@@ -1171,7 +1047,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(report);
     } catch (error) {
-      console.error("Error generating chronological report:", error);
       res.status(500).json({ message: "Erro ao gerar relatório cronológico" });
     }
   });
@@ -1182,7 +1057,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profiles = await storage.getProfilesByUserId(req.user!.id);
       res.json(profiles);
     } catch (error) {
-      console.error("Error fetching user profiles:", error);
       res.status(500).json({ message: "Erro ao buscar perfis do usuário" });
     }
   });
@@ -1198,7 +1072,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newProfile = await storage.createProfile(profileData);
       res.status(201).json(newProfile);
     } catch (error) {
-      console.error("Error creating profile:", error);
       res.status(500).json({ message: "Erro ao criar perfil" });
     }
   });
@@ -1220,7 +1093,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedProfile = await storage.updateProfile(profileId, req.body);
       res.json(updatedProfile);
     } catch (error) {
-      console.error("Error updating profile:", error);
       res.status(500).json({ message: "Erro ao atualizar perfil" });
     }
   });
@@ -1251,7 +1123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Erro ao excluir perfil" });
       }
     } catch (error) {
-      console.error("Error deleting profile:", error);
       res.status(500).json({ message: "Erro ao excluir perfil" });
     }
   });
@@ -1277,7 +1148,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Responder com o perfil selecionado
       res.json(profile);
     } catch (error) {
-      console.error("Error switching active profile:", error);
       res.status(500).json({ message: "Erro ao alterar perfil ativo" });
     }
   });
@@ -1288,7 +1158,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plans = await storage.getSubscriptionPlans();
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching subscription plans:", error);
       res.status(500).json({ message: "Erro ao buscar planos de assinatura" });
     }
   });
@@ -1311,7 +1180,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan
       });
     } catch (error) {
-      console.error("Error fetching user subscription:", error);
       res.status(500).json({ message: "Erro ao buscar assinatura do usuário" });
     }
   });
@@ -1343,7 +1211,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
-      console.error("Error creating payment intent:", error);
       res.status(500).json({ message: "Erro ao criar intenção de pagamento: " + error.message });
     }
   });
@@ -1425,7 +1292,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "paid"
       });
     } catch (error: any) {
-      console.error("Error creating subscription setup:", error);
       res.status(500).json({ message: "Erro ao configurar assinatura: " + error.message });
     }
   });
@@ -1544,7 +1410,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ received: true });
     } catch (error) {
-      console.error('Webhook error:', error);
       res.status(400).send(`Webhook Error: ${error.message}`);
     }
   });
@@ -1568,7 +1433,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             cancel_at_period_end: true
           });
         } catch (error: any) {
-          console.error('Erro ao cancelar assinatura no Stripe:', error);
           // Continuar mesmo com erro no Stripe, para garantir cancelamento local
         }
       }
@@ -1581,7 +1445,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscription: canceledSubscription
       });
     } catch (error) {
-      console.error("Error canceling subscription:", error);
       res.status(500).json({ message: "Erro ao cancelar assinatura" });
     }
   });
@@ -1614,7 +1477,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error checking subscription limits:", error);
       res.status(500).json({ message: "Erro ao verificar limites de assinatura" });
     }
   });
@@ -1645,7 +1507,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error updating Stripe info:", error);
       res.status(500).json({ message: "Erro ao atualizar informações do Stripe" });
     }
   });
@@ -1691,7 +1552,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error checking upload permission:", error);
       res.status(500).json({ message: "Erro ao verificar permissão de upload" });
     }
   });
@@ -1719,7 +1579,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error creating medication:", error);
       res.status(500).json({ message: "Erro ao criar medicamento" });
     }
   });
@@ -1736,7 +1595,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result.rows);
     } catch (error) {
-      console.error("Error fetching medications:", error);
       res.status(500).json({ message: "Erro ao buscar medicamentos" });
     }
   });
@@ -1768,7 +1626,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error updating medication:", error);
       res.status(500).json({ message: "Erro ao atualizar medicamento" });
     }
   });
@@ -1785,7 +1642,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Medicamento excluído com sucesso" });
     } catch (error) {
-      console.error("Error deleting medication:", error);
       res.status(500).json({ message: "Erro ao excluir medicamento" });
     }
   });
@@ -1847,7 +1703,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(pdfBuffer);
       
     } catch (error) {
-      console.error("Error generating health report:", error);
       res.status(500).json({ message: "Erro ao gerar relatório de saúde" });
     }
   });

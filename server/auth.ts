@@ -29,17 +29,25 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Ensure SESSION_SECRET is set
+  if (!process.env.SESSION_SECRET) {
+    throw new Error(
+      'SESSION_SECRET environment variable is required. ' +
+      'Generate one with: openssl rand -base64 32'
+    );
+  }
+
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "healthanalytics-secret-key",
-    resave: true,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
     rolling: true, // Renova o cookie a cada requisição
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true, // Cookies de sessão devem ser httpOnly para segurança
-      secure: false, // Mudar para true em produção
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production', // HTTPS em produção
+      sameSite: 'strict',
       path: '/'
     }
   };
