@@ -15,7 +15,8 @@
       "Bash(find:*)",
       "Bash(node:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
