@@ -94,25 +94,10 @@ export function setupAuth(app: Express) {
         password: await hashPassword(req.body.password),
       });
 
-      // Create default health metrics for the new user
-      const defaultMetrics = [
-        { name: "colesterol", value: "180", unit: "mg/dL", status: "normal", change: "-5" },
-        { name: "glicemia", value: "95", unit: "mg/dL", status: "atenção", change: "+3" },
-        { name: "hemoglobina", value: "14.2", unit: "g/dL", status: "normal", change: "+0.1" },
-        { name: "vitamina_d", value: "32", unit: "ng/mL", status: "baixo", change: "-2" }
-      ];
-
-      for (const metric of defaultMetrics) {
-        await storage.createHealthMetric({
-          userId: user.id,
-          ...metric
-        });
-      }
-
       // Create welcome notification
       await storage.createNotification({
         userId: user.id,
-        title: "Bem-vindo ao HealthAnalytics",
+        title: "Bem-vindo ao VitaView",
         message: "Envie seus exames médicos para análise e obtenha insights valiosos sobre sua saúde.",
         read: false
       });
