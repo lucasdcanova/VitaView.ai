@@ -160,4 +160,32 @@ export function setupAuth(app: Express) {
     const { password, ...userWithoutPassword } = req.user as SelectUser;
     res.json(userWithoutPassword);
   });
+
+  // Endpoint para recuperação de senha
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
+      }
+
+      // Por enquanto, vamos apenas simular o envio de email
+      // Em produção, você deve:
+      // 1. Verificar se o usuário existe
+      // 2. Gerar um token único de recuperação
+      // 3. Salvar o token no banco com tempo de expiração
+      // 4. Enviar email real com link de recuperação
+      
+      console.log(`Email de recuperação de senha seria enviado para: ${email}`);
+      
+      // Simula sucesso no envio
+      res.status(200).json({ 
+        message: "Se este email estiver cadastrado, você receberá instruções de recuperação de senha." 
+      });
+    } catch (error) {
+      console.error("Erro ao processar recuperação de senha:", error);
+      res.status(500).json({ message: "Erro ao processar solicitação" });
+    }
+  });
 }

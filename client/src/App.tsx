@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
 import Dashboard from "@/pages/dashboard";
 import UploadExams from "@/pages/upload-exams";
 import ExamHistory from "@/pages/exam-history";
@@ -52,6 +53,7 @@ function Router() {
       
       {/* Rotas públicas */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/quick-summary" component={QuickSummaryPage} />
       <Route component={NotFound} />
     </Switch>

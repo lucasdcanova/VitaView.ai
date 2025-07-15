@@ -239,9 +239,11 @@ export default function AuthPage() {
                     />
                     
                     <div className="flex justify-end">
-                      <Button variant="link" className="text-sm text-[#1E3A5F] px-0">
-                        Esqueceu a senha?
-                      </Button>
+                      <Link href="/forgot-password">
+                        <Button variant="link" className="text-sm text-[#1E3A5F] px-0">
+                          Esqueceu a senha?
+                        </Button>
+                      </Link>
                     </div>
                     
                     <Button
