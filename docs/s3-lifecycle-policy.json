@@ -1,0 +1,44 @@
+{
+  "Rules": [
+    {
+      "ID": "DeleteOldFiles",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "Expiration": {
+        "Days": 365
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 30
+      }
+    },
+    {
+      "ID": "TransitionToIA",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "Transitions": [
+        {
+          "Days": 90,
+          "StorageClass": "STANDARD_IA"
+        },
+        {
+          "Days": 180,
+          "StorageClass": "GLACIER"
+        }
+      ]
+    },
+    {
+      "ID": "AbortIncompleteMultipartUpload",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 7
+      }
+    }
+  ]
+}

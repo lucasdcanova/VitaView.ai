@@ -7,11 +7,51 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+
+// Log para debug detalhado
+console.log('=== Debug Stripe ===');
+console.log('Stripe Public Key existe:', !!stripePublicKey);
+console.log('Stripe Public Key length:', stripePublicKey?.length);
+console.log('Stripe Public Key começa com pk_:', stripePublicKey?.startsWith('pk_'));
+console.log('Ambiente:', import.meta.env.MODE);
+
+if (!stripePublicKey) {
+  console.error('VITE_STRIPE_PUBLIC_KEY não está definida nas variáveis de ambiente');
   throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
 }
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Validar formato da chave
+if (!stripePublicKey.startsWith('pk_')) {
+  console.error('Chave pública do Stripe tem formato inválido. Deve começar com pk_');
+}
+
+// Criar Promise do Stripe com tratamento de erro melhorado
+let stripePromise: Promise<any> | null = null;
+
+try {
+  stripePromise = loadStripe(stripePublicKey);
+  stripePromise.then(
+    (stripe) => {
+      if (stripe) {
+        console.log('Stripe carregado com sucesso');
+      } else {
+        console.error('Stripe retornou null - verifique a chave pública');
+      }
+    },
+    (error) => {
+      console.error('Erro ao carregar Stripe.js:', error);
+      console.error('Possíveis causas:');
+      console.error('1. Bloqueio de rede/firewall');
+      console.error('2. Chave pública inválida');
+      console.error('3. Erro de CORS');
+      console.error('4. Stripe.js não pode ser carregado do CDN');
+    }
+  );
+} catch (error) {
+  console.error('Erro ao inicializar Stripe:', error);
+  stripePromise = Promise.reject(error);
+}
 
 interface CheckoutFormProps {
   onSuccess?: () => void;

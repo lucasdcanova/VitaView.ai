@@ -324,6 +324,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Aplicar middleware de log para todas as rotas
   app.use(logRequest);
 
+  // Importar rotas de upload
+  const uploadRoutes = await import('./routes/upload.routes');
+  app.use('/api', uploadRoutes.default);
+
   // API routes for exams - com requisito de autenticação
   // Atualizado para usar o novo pipeline de análise otimizado
   app.post("/api/exams/upload", ensureAuthenticated, async (req, res) => {

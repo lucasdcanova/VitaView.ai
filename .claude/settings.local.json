@@ -17,7 +17,16 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(git pull:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(kill:*)",
+      "Bash(wget:*)",
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(cp:*)",
+      "Bash(psql:*)"
     ],
     "deny": []
   }

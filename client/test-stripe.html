@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Stripe</title>
+</head>
+<body>
+    <h1>Teste de Carregamento do Stripe.js</h1>
+    <div id="result"></div>
+    
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        const resultDiv = document.getElementById('result');
+        const publicKey = 'pk_live_51RAOnMKOsPzrrDErXaDRtMivvPi3iVD7socexHWBbvb5BEjeUuDBxhC3WTrBRC9NLJ1IASrSAI8SGQj8ZF9uZA8F002np3ZUCz';
+        
+        try {
+            console.log('Tentando carregar Stripe com chave:', publicKey);
+            const stripe = Stripe(publicKey);
+            
+            if (stripe) {
+                resultDiv.innerHTML = '<p style="color: green;">✓ Stripe carregado com sucesso!</p>';
+                console.log('Stripe carregado:', stripe);
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">✗ Stripe retornou null</p>';
+            }
+        } catch (error) {
+            resultDiv.innerHTML = '<p style="color: red;">✗ Erro: ' + error.message + '</p>';
+            console.error('Erro ao carregar Stripe:', error);
+        }
+    </script>
+</body>
+</html>
