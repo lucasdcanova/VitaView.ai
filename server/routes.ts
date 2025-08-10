@@ -7,9 +7,10 @@ import { analyzeExtractedExam } from "./services/openai";
 import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 import { pool } from "./db";
 import Stripe from "stripe";
+import { CID10_DATABASE } from "../shared/data/cid10-database";
 
 // Função para gerar HTML do relatório de saúde
-function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics }: any) {
+function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics, allergies }: any) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -24,188 +25,99 @@ function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics
     }
   };
 
+  const getCIDDescription = (cidCode: string): string => {
+    const cidEntry = CID10_DATABASE.find(item => item.code === cidCode);
+    return cidEntry ? `${cidCode} - ${cidEntry.description}` : cidCode;
+  };
+
   return `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Relatório de Saúde - ${user.fullName || user.username}</title>
       <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height: 1.6;
-          margin: 0;
-          padding: 20px;
-          color: #333;
-          background: white;
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 30px;
-          padding: 20px 0;
-          border-bottom: 2px solid #1E3A5F;
-        }
-        .logo {
-          font-size: 24px;
-          font-weight: bold;
-          color: #1E3A5F;
-          margin-bottom: 10px;
-        }
-        .subtitle {
-          color: #48C9B0;
-          font-size: 16px;
-        }
-        .patient-info {
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 8px;
-          margin-bottom: 30px;
-        }
-        .section {
-          margin-bottom: 30px;
-          page-break-inside: avoid;
-        }
-        .section-title {
-          font-size: 18px;
-          font-weight: bold;
-          color: #1E3A5F;
-          border-bottom: 2px solid #48C9B0;
-          padding-bottom: 10px;
-          margin-bottom: 20px;
-        }
-        .item {
-          background: white;
-          padding: 15px;
-          margin-bottom: 15px;
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .item-title {
-          font-weight: bold;
-          color: #1E3A5F;
-          margin-bottom: 5px;
-        }
-        .item-date {
-          color: #666;
-          font-size: 14px;
-          margin-bottom: 10px;
-        }
-        .status {
-          display: inline-block;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; margin: 0; padding: 12px; color: #333; }
+        .header { text-align: center; margin-bottom: 12px; border-bottom: 1px solid #1E3A5F; padding-bottom: 8px; }
+        .logo { font-size: 14px; font-weight: bold; color: #1E3A5F; }
+        .patient-info { background: #f8f9fa; padding: 8px; margin-bottom: 12px; border-radius: 3px; }
+        .patient-info h3 { margin: 0 0 6px 0; font-size: 12px; color: #1E3A5F; }
+        .patient-info p { margin: 2px 0; font-size: 10px; }
+        .section { margin-bottom: 12px; }
+        .section-title { font-size: 12px; font-weight: bold; color: #1E3A5F; border-bottom: 1px solid #48C9B0; padding-bottom: 3px; margin-bottom: 8px; }
+        .item { padding: 6px; margin-bottom: 4px; border: 1px solid #e0e0e0; border-radius: 2px; }
+        .item-title { font-weight: bold; color: #1E3A5F; font-size: 11px; }
+        .item-date { color: #666; font-size: 9px; margin: 2px 0; }
+        .item-details { font-size: 10px; margin: 2px 0; }
+        .status { padding: 1px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; }
         .status-ativo { background: #fee; color: #c53030; }
         .status-em_tratamento { background: #fff5e6; color: #d69e2e; }
         .status-resolvido { background: #f0fff4; color: #38a169; }
         .status-cronico { background: #ebf8ff; color: #3182ce; }
-        .metrics-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 15px;
-          margin-top: 15px;
-        }
-        .metric-item {
-          background: #f7fafc;
-          padding: 10px;
-          border-radius: 4px;
-          border-left: 4px solid #48C9B0;
-        }
-        .footer {
-          margin-top: 40px;
-          padding-top: 20px;
-          border-top: 1px solid #e0e0e0;
-          text-align: center;
-          color: #666;
-          font-size: 12px;
-        }
-        .page-break {
-          page-break-before: always;
-        }
+        .footer { margin-top: 15px; padding-top: 8px; border-top: 1px solid #e0e0e0; text-align: center; font-size: 8px; color: #666; }
+        .compact-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .compact-item { flex: 1; min-width: 45%; }
       </style>
     </head>
     <body>
       <div class="header">
-        <div class="logo">VitaView AI</div>
-        <div class="subtitle">Relatório Médico Completo</div>
+        <div class="logo">VitaView AI - Relatório de Saúde</div>
       </div>
 
       <div class="patient-info">
-        <h2>Informações do Paciente</h2>
-        <p><strong>Nome:</strong> ${user.fullName || user.username}</p>
-        <p><strong>Email:</strong> ${user.email || 'Não informado'}</p>
-        <p><strong>Data do Relatório:</strong> ${formatDate(new Date().toISOString())}</p>
-        <p><strong>Gerado por:</strong> VitaView AI - Plataforma de Gestão de Saúde</p>
+        <h3>Paciente: ${user.fullName || user.username}</h3>
+        <p>Relatório gerado em: ${formatDate(new Date().toISOString())}</p>
       </div>
-
-      ${medications.length > 0 ? `
-      <div class="section">
-        <div class="section-title">Medicamentos em Uso Contínuo (${medications.length})</div>
-        ${medications.map((med: any) => `
-          <div class="item">
-            <div class="item-title">${med.name}</div>
-            <div class="item-date">Iniciado em: ${formatDate(med.start_date)}</div>
-            <p><strong>Formato:</strong> ${med.format}</p>
-            <p><strong>Dosagem:</strong> ${med.dosage}</p>
-            <p><strong>Frequência:</strong> ${med.frequency}</p>
-            ${med.notes ? `<p><strong>Observações:</strong> ${med.notes}</p>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      ` : ''}
 
       ${diagnoses.length > 0 ? `
       <div class="section">
-        <div class="section-title">Histórico de Diagnósticos (${diagnoses.length})</div>
-        ${diagnoses.map((diag: any) => `
-          <div class="item">
-            <div class="item-title">CID-10: ${diag.cid_code}</div>
-            <div class="item-date">Data: ${formatDate(diag.diagnosis_date)}</div>
-            ${diag.status ? `<span class="status status-${diag.status}">${getStatusLabel(diag.status)}</span>` : ''}
-            ${diag.notes ? `<p><strong>Observações:</strong> ${diag.notes}</p>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      ` : ''}
-
-      ${exams.length > 0 ? `
-      <div class="section page-break">
-        <div class="section-title">Histórico de Exames (${exams.length})</div>
-        ${exams.map((exam: any) => `
-          <div class="item">
-            <div class="item-title">${exam.exam_type || 'Exame Laboratorial'}</div>
-            <div class="item-date">Data: ${formatDate(exam.exam_date)}</div>
-            <p><strong>Laboratório:</strong> ${exam.laboratory_name || 'Não informado'}</p>
-            ${exam.summary ? `<p><strong>Resumo:</strong> ${exam.summary}</p>` : ''}
-            ${exam.ai_insights ? `<p><strong>Análise IA:</strong> ${exam.ai_insights}</p>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      ` : ''}
-
-      ${metrics.length > 0 ? `
-      <div class="section">
-        <div class="section-title">Métricas de Saúde Recentes</div>
-        <div class="metrics-grid">
-          ${metrics.slice(0, 20).map((metric: any) => `
-            <div class="metric-item">
-              <strong>${metric.metric_name}:</strong><br>
-              ${metric.value} ${metric.unit || ''}<br>
-              <small>${formatDate(metric.exam_date)}</small>
+        <div class="section-title">Diagnósticos</div>
+        <div class="compact-grid">
+          ${diagnoses.map((diag: any) => `
+            <div class="item compact-item">
+              <div class="item-title">${getCIDDescription(diag.cid_code)}</div>
+              <div class="item-date">${formatDate(diag.diagnosis_date)}</div>
+              ${diag.status ? `<span class="status status-${diag.status}">${getStatusLabel(diag.status)}</span>` : ''}
             </div>
           `).join('')}
         </div>
       </div>
       ` : ''}
 
+      ${medications.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Medicamentos</div>
+        ${medications.map((med: any) => `
+          <div class="item">
+            <div class="item-title">${med.name}</div>
+            <div class="item-details">${med.dosage} • ${med.frequency} • Desde ${formatDate(med.start_date)}</div>
+          </div>
+        `).join('')}
+      </div>
+      ` : ''}
+
+      ${allergies && allergies.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Alergias</div>
+        <div class="compact-grid">
+          ${allergies.map((allergy: any) => `
+            <div class="item compact-item">
+              <div class="item-title">${allergy.allergen}</div>
+              ${allergy.reaction ? `<div class="item-details">${allergy.reaction}</div>` : ''}
+              ${allergy.severity ? `<div class="item-details">Severidade: ${allergy.severity}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : `
+      <div class="section">
+        <div class="section-title">Alergias</div>
+        <div class="item" style="text-align: center; color: #666;">Sem alergias registradas</div>
+      </div>
+      `}
+
       <div class="footer">
-        <p>Este relatório foi gerado automaticamente pela plataforma VitaView AI</p>
-        <p>Para mais informações, visite: vitaview.ai</p>
-        <p>Data de geração: ${formatDate(new Date().toISOString())} - ${new Date().toLocaleTimeString('pt-BR')}</p>
+        <p>VitaView AI • ${formatDate(new Date().toISOString())} • Para uso médico</p>
       </div>
     </body>
     </html>
@@ -1650,10 +1562,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Allergies routes
+  app.post("/api/allergies", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { allergen, allergenType, reaction, severity, notes } = req.body;
+
+      if (!allergen) {
+        return res.status(400).json({ message: "Nome do alérgeno é obrigatório" });
+      }
+
+      const result = await pool.query(`
+        INSERT INTO allergies (user_id, allergen, allergen_type, reaction, severity, notes)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `, [user.id, allergen, allergenType || 'medication', reaction, severity, notes]);
+
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error("Erro ao criar alergia:", error);
+      res.status(500).json({ message: "Erro ao registrar alergia" });
+    }
+  });
+
+  app.get("/api/allergies", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const result = await pool.query(`
+        SELECT * FROM allergies 
+        WHERE user_id = $1 
+        ORDER BY created_at DESC
+      `, [user.id]);
+
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Erro ao buscar alergias:", error);
+      res.status(500).json({ message: "Erro ao buscar alergias" });
+    }
+  });
+
+  app.put("/api/allergies/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      const { allergen, allergenType, reaction, severity, notes } = req.body;
+
+      if (!allergen) {
+        return res.status(400).json({ message: "Nome do alérgeno é obrigatório" });
+      }
+
+      const result = await pool.query(`
+        UPDATE allergies 
+        SET allergen = $1, allergen_type = $2, reaction = $3, severity = $4, notes = $5
+        WHERE id = $6 AND user_id = $7
+        RETURNING *
+      `, [allergen, allergenType, reaction, severity, notes, id, user.id]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Alergia não encontrada" });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Erro ao atualizar alergia:", error);
+      res.status(500).json({ message: "Erro ao atualizar alergia" });
+    }
+  });
+
+  app.delete("/api/allergies/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+
+      const result = await pool.query(`
+        DELETE FROM allergies 
+        WHERE id = $1 AND user_id = $2
+      `, [id, user.id]);
+
+      res.json({ message: "Alergia removida com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir alergia:", error);
+      res.status(500).json({ message: "Erro ao excluir alergia" });
+    }
+  });
+
   // Rota para exportar relatório de saúde em PDF
   app.post("/api/export-health-report", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
+      console.log('Exportando PDF para usuário:', user.id);
       
       // Buscar dados do usuário
       const examsResult = await pool.query(`
@@ -1661,24 +1658,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE user_id = $1 
         ORDER BY exam_date DESC
       `, [user.id]);
+      console.log('Exames encontrados:', examsResult.rows.length);
       
       const diagnosesResult = await pool.query(`
         SELECT * FROM diagnoses 
         WHERE user_id = $1 
         ORDER BY diagnosis_date DESC
       `, [user.id]);
+      console.log('Diagnósticos encontrados:', diagnosesResult.rows.length);
       
       const medicationsResult = await pool.query(`
         SELECT * FROM medications 
         WHERE user_id = $1 AND is_active = true
         ORDER BY created_at DESC
       `, [user.id]);
+      console.log('Medicações encontradas:', medicationsResult.rows.length);
 
       const metricsResult = await pool.query(`
         SELECT * FROM health_metrics 
         WHERE user_id = $1 
-        ORDER BY exam_date DESC
+        ORDER BY date DESC
       `, [user.id]);
+      console.log('Métricas encontradas:', metricsResult.rows.length);
+
+      const allergiesResult = await pool.query(`
+        SELECT * FROM allergies 
+        WHERE user_id = $1 
+        ORDER BY created_at DESC
+      `, [user.id]);
+      console.log('Alergias encontradas:', allergiesResult.rows.length);
 
       // Gerar HTML do relatório
       const htmlContent = generateHealthReportHTML({
@@ -1686,8 +1694,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         exams: examsResult.rows,
         diagnoses: diagnosesResult.rows,
         medications: medicationsResult.rows,
-        metrics: metricsResult.rows
+        metrics: metricsResult.rows,
+        allergies: allergiesResult.rows
       });
+      console.log('HTML gerado, tamanho:', htmlContent.length);
 
       // Configurações do PDF
       const options = { 
@@ -1697,17 +1707,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Gerar PDF usando html-pdf-node
-      const htmlPdf = require('html-pdf-node');
+      const { generatePdf } = await import('html-pdf-node');
       const file = { content: htmlContent };
       
-      const pdfBuffer = await htmlPdf.generatePdf(file, options);
+      console.log('Gerando PDF...');
+      const pdfBuffer = await generatePdf(file, options);
+      console.log('PDF gerado, tamanho:', pdfBuffer.length);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="relatorio-saude-${user.username}.pdf"`);
       res.send(pdfBuffer);
       
     } catch (error) {
-      res.status(500).json({ message: "Erro ao gerar relatório de saúde" });
+      console.error('Erro detalhado na geração do PDF:', error);
+      res.status(500).json({ message: "Erro ao gerar relatório de saúde", error: error.message });
     }
   });
 

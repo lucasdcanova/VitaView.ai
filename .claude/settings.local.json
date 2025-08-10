@@ -26,7 +26,10 @@
       "Bash(cat:*)",
       "Bash(npm run build:*)",
       "Bash(cp:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(npx tsx:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx kill-port:*)"
     ],
     "deny": []
   }

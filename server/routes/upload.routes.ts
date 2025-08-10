@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Request, Response } from "express";
 import { uploadSensitive, processS3Upload, uploadLocal } from "../middleware/upload.middleware";
 import { S3Service } from "../services/s3.service";
-import { logger } from "../lib/logger";
+import logger from "../logger";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();

@@ -34,6 +34,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
+import { CID10_DATABASE } from "@/data/cid10-database";
 import { 
   FileText, 
   Calendar,
@@ -63,8 +64,23 @@ const medicationSchema = z.object({
   notes: z.string().optional(),
 });
 
+const allergySchema = z.object({
+  allergen: z.string().min(1, "Nome do alérgeno é obrigatório"),
+  allergenType: z.string().default("medication"),
+  reaction: z.string().optional(),
+  severity: z.enum(["leve", "moderada", "grave"]).optional(),
+  notes: z.string().optional(),
+});
+
 type DiagnosisForm = z.infer<typeof diagnosisSchema>;
 type MedicationForm = z.infer<typeof medicationSchema>;
+type AllergyForm = z.infer<typeof allergySchema>;
+
+// Função para buscar a descrição do código CID-10
+const getCIDDescription = (cidCode: string): string => {
+  const cidEntry = CID10_DATABASE.find(item => item.code === cidCode);
+  return cidEntry ? `${cidCode} - ${cidEntry.description}` : cidCode;
+};
 
 interface TimelineItem {
   id: number;
@@ -88,6 +104,9 @@ export default function HealthTrendsNew() {
   const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
   const [isEditMedicationDialogOpen, setIsEditMedicationDialogOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<any>(null);
+  const [isAllergyDialogOpen, setIsAllergyDialogOpen] = useState(false);
+  const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
+  const [editingAllergy, setEditingAllergy] = useState<any>(null);
 
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
@@ -133,6 +152,28 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const allergyForm = useForm<AllergyForm>({
+    resolver: zodResolver(allergySchema),
+    defaultValues: {
+      allergen: "",
+      allergenType: "medication",
+      reaction: "",
+      severity: undefined,
+      notes: "",
+    },
+  });
+
+  const editAllergyForm = useForm<AllergyForm>({
+    resolver: zodResolver(allergySchema),
+    defaultValues: {
+      allergen: "",
+      allergenType: "medication",
+      reaction: "",
+      severity: undefined,
+      notes: "",
+    },
+  });
+
   const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
@@ -143,6 +184,10 @@ export default function HealthTrendsNew() {
 
   const { data: medications = [], isLoading: medicationsLoading } = useQuery({
     queryKey: ["/api/medications"],
+  });
+
+  const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
+    queryKey: ["/api/allergies"],
   });
 
   // Mutation para adicionar diagnóstico
@@ -270,6 +315,66 @@ export default function HealthTrendsNew() {
     },
   });
 
+  // Mutations para alergias
+  const addAllergyMutation = useMutation({
+    mutationFn: (data: AllergyForm) => apiRequest("POST", "/api/allergies", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+      allergyForm.reset();
+      setIsAllergyDialogOpen(false);
+      toast({
+        title: "Alergia registrada",
+        description: "Alergia medicamentosa registrada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao registrar alergia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editAllergyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: AllergyForm }) => 
+      apiRequest("PUT", `/api/allergies/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+      setEditingAllergy(null);
+      setIsEditAllergyDialogOpen(false);
+      toast({
+        title: "Sucesso",
+        description: "Alergia atualizada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar alergia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAllergyMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/allergies/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+      toast({
+        title: "Sucesso",
+        description: "Alergia excluída com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir alergia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const timelineItems: TimelineItem[] = [
     ...(Array.isArray(exams) ? exams.map((exam: any) => {
       const originalContent = exam.originalContent ? JSON.parse(exam.originalContent) : null;
@@ -310,7 +415,7 @@ export default function HealthTrendsNew() {
       id: diagnosis.id,
       type: "diagnosis" as const,
       date: diagnosis.diagnosisDate,
-      title: diagnosis.cidCode || "Diagnóstico",
+      title: getCIDDescription(diagnosis.cidCode) || "Diagnóstico",
       description: diagnosis.notes,
       cidCode: diagnosis.cidCode,
       status: diagnosis.status,
@@ -372,6 +477,35 @@ export default function HealthTrendsNew() {
   const handleRemoveMedication = (id: number) => {
     if (confirm("Deseja remover este medicamento?")) {
       deleteMedicationMutation.mutate(id);
+    }
+  };
+
+  // Funções para alergias
+  const onAllergySubmit = (data: AllergyForm) => {
+    addAllergyMutation.mutate(data);
+  };
+
+  const onEditAllergySubmit = (data: AllergyForm) => {
+    if (editingAllergy) {
+      editAllergyMutation.mutate({ id: editingAllergy.id, data });
+    }
+  };
+
+  const openEditAllergyDialog = (allergy: any) => {
+    setEditingAllergy(allergy);
+    editAllergyForm.reset({
+      allergen: allergy.allergen || "",
+      allergenType: allergy.allergen_type || "medication",
+      reaction: allergy.reaction || "",
+      severity: allergy.severity || undefined,
+      notes: allergy.notes || "",
+    });
+    setIsEditAllergyDialogOpen(true);
+  };
+
+  const handleRemoveAllergy = (id: number) => {
+    if (confirm("Deseja remover esta alergia?")) {
+      deleteAllergyMutation.mutate(id);
     }
   };
 
@@ -461,27 +595,45 @@ export default function HealthTrendsNew() {
                     Meu <span className="text-[#1E3A5F]">VitaView</span>
                   </h1>
                   <p className="text-gray-600 mt-2">
-                    Sua visão completa de saúde: acompanhe exames, diagnósticos e tendências<br/>
-                    em um só lugar
+                    Sua visão completa de saúde: exames,<br/>diagnósticos e tendências em um só lugar
                   </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
-                  <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
-                    <PlusCircle className="h-4 w-4" />
-                    Medicamento
-                  </Button>
-                  <Button onClick={() => setIsDialogOpen(true)} className="flex items-center justify-center gap-2 h-12">
-                    <PlusCircle className="h-4 w-4" />
-                    Diagnóstico
-                  </Button>
-                  <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center justify-center gap-2 h-12">
-                    <FileDown className="h-4 w-4" />
-                    Exportar PDF
-                  </Button>
-                  <div className="bg-blue-50 text-blue-700 px-2 py-2 rounded-lg border border-blue-200 flex items-center justify-center h-12" style={{ fontSize: '12px', fontWeight: '500' }}>
-                    <div className="text-center" style={{ lineHeight: '1.1' }}>
-                      <div>Compartilhe com</div>
-                      <div>seu médico</div>
+                <div className="grid grid-cols-2 gap-2 max-w-4xl">
+                  {/* Coluna da esquerda: Medicamentos + Alergia/Diagnóstico */}
+                  <div className="space-y-3">
+                    {/* Primeira linha: Medicamento */}
+                    <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12 w-full">
+                      <PlusCircle className="h-4 w-4" />
+                      Medicamento
+                    </Button>
+                    
+                    {/* Segunda linha: Alergia e Diagnóstico */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
+                        <PlusCircle className="h-4 w-4" />
+                        Alergia
+                      </Button>
+                      <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
+                        <PlusCircle className="h-4 w-4" />
+                        Diagnóstico
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Coluna da direita: PDF e Compartilhar */}
+                  <div className="space-y-3">
+                    {/* Primeira linha: Exportar PDF */}
+                    <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center justify-center gap-2 h-12 w-full">
+                      <FileDown className="h-4 w-4" />
+                      Exportar PDF
+                    </Button>
+                    
+                    {/* Segunda linha: Compartilhar */}
+                    <div className="bg-blue-50 text-blue-700 px-2 py-2 rounded-lg border border-blue-200 flex items-center justify-center h-12 w-full" style={{ fontSize: '12px', fontWeight: '500' }}>
+                      <div className="text-center" style={{ lineHeight: '1.1' }}>
+                        <div>Compartilhe com</div>
+                        <div>seu médico</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -588,15 +740,15 @@ export default function HealthTrendsNew() {
                   <p className="text-gray-600">Resumo baseado nos últimos exames e diagnósticos</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-3 gap-6">
                     <div>
                       <h4 className="font-medium text-gray-900 mb-3">Diagnósticos Ativos</h4>
                       {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
                         <div className="space-y-2">
                           {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").map((diagnosis: any) => (
                             <div key={diagnosis.id} className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              <span className="text-sm text-gray-700">{diagnosis.cidCode}</span>
+                              <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-sm text-gray-700">{getCIDDescription(diagnosis.cidCode)}</span>
                               <Badge className={getStatusColor(diagnosis.status)} variant="secondary">
                                 {getStatusLabel(diagnosis.status)}
                               </Badge>
@@ -605,6 +757,26 @@ export default function HealthTrendsNew() {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500">Nenhum diagnóstico ativo registrado</p>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Alergias Medicamentosas</h4>
+                      {Array.isArray(allergies) && allergies.length > 0 ? (
+                        <div className="space-y-2">
+                          {allergies.map((allergy: any) => (
+                            <div key={allergy.id} className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              <span className="text-sm text-gray-700">{allergy.allergen}</span>
+                              {allergy.severity && (
+                                <Badge variant={allergy.severity === "grave" ? "destructive" : allergy.severity === "moderada" ? "default" : "secondary"}>
+                                  {allergy.severity}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Sem alergias medicamentosas</p>
                       )}
                     </div>
                     <div>
@@ -765,7 +937,7 @@ export default function HealthTrendsNew() {
                                 {item.cidCode && (
                                   <div className="mb-2">
                                     <span className="text-sm font-medium text-gray-700">CID-10: </span>
-                                    <span className="text-sm text-gray-600">{item.cidCode}</span>
+                                    <span className="text-sm text-gray-600">{getCIDDescription(item.cidCode)}</span>
                                   </div>
                                 )}
                                 
@@ -1169,6 +1341,234 @@ export default function HealthTrendsNew() {
                     </Button>
                     <Button type="submit" disabled={editMedicationMutation.isPending}>
                       {editMedicationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para adicionar nova alergia */}
+        <Dialog open={isAllergyDialogOpen} onOpenChange={setIsAllergyDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Adicionar Nova Alergia</DialogTitle>
+            </DialogHeader>
+            <Form {...allergyForm}>
+              <form onSubmit={allergyForm.handleSubmit(onAllergySubmit)} className="space-y-4">
+                <FormField
+                  control={allergyForm.control}
+                  name="allergen"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medicamento/Substância</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={allergyForm.control}
+                  name="allergenType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="medication">Medicamento</SelectItem>
+                          <SelectItem value="food">Alimento</SelectItem>
+                          <SelectItem value="environment">Ambiental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={allergyForm.control}
+                  name="reaction"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reação</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={allergyForm.control}
+                  name="severity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gravidade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="leve">Leve</SelectItem>
+                          <SelectItem value="moderada">Moderada</SelectItem>
+                          <SelectItem value="grave">Grave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={allergyForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsAllergyDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addAllergyMutation.isPending}>
+                    {addAllergyMutation.isPending ? "Salvando..." : "Salvar Alergia"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para editar alergia existente */}
+        <Dialog open={isEditAllergyDialogOpen} onOpenChange={setIsEditAllergyDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Alergia</DialogTitle>
+            </DialogHeader>
+            <Form {...editAllergyForm}>
+              <form onSubmit={editAllergyForm.handleSubmit(onEditAllergySubmit)} className="space-y-4">
+                <FormField
+                  control={editAllergyForm.control}
+                  name="allergen"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medicamento/Substância</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editAllergyForm.control}
+                  name="allergenType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="medication">Medicamento</SelectItem>
+                          <SelectItem value="food">Alimento</SelectItem>
+                          <SelectItem value="environment">Ambiental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editAllergyForm.control}
+                  name="reaction"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reação</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editAllergyForm.control}
+                  name="severity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gravidade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="leve">Leve</SelectItem>
+                          <SelectItem value="moderada">Moderada</SelectItem>
+                          <SelectItem value="grave">Grave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editAllergyForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => editingAllergy && handleRemoveAllergy(editingAllergy.id)}
+                    disabled={deleteAllergyMutation.isPending}
+                  >
+                    {deleteAllergyMutation.isPending ? "Removendo..." : "Remover Alergia"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditAllergyDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editAllergyMutation.isPending}>
+                      {editAllergyMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                     </Button>
                   </div>
                 </div>

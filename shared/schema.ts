@@ -192,6 +192,27 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   isActive: true,
 });
 
+// Allergies schema
+export const allergies = pgTable("allergies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  allergen: text("allergen").notNull(), // Nome do medicamento ou substância
+  allergenType: text("allergen_type").notNull().default("medication"), // medication, food, environment
+  reaction: text("reaction"), // Tipo de reação alérgica
+  severity: text("severity"), // leve, moderada, grave
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAllergySchema = createInsertSchema(allergies).pick({
+  userId: true,
+  allergen: true,
+  allergenType: true,
+  reaction: true,
+  severity: true,
+  notes: true,
+});
+
 // Subscription plans schema
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
