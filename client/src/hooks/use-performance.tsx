@@ -40,10 +40,7 @@ export function usePerformance() {
   }, []);
 
   // Measure API call performance
-  const measureApiCall = useCallback(async <T>(
-    apiCall: () => Promise<T>,
-    endpoint: string
-  ) => {
+  const measureApiCall = useCallback(async (apiCall: () => Promise<any>, endpoint: string) => {
     const startTime = performance.now();
     
     try {
