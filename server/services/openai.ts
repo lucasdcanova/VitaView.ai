@@ -60,11 +60,19 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       ### INSTRUÇÕES ESPECÍFICAS:
       1. Faça correlações entre diferentes marcadores/parâmetros e integre-os no contexto do perfil do paciente
       2. Identifique padrões que possam indicar condições subclínicas ou riscos emergentes
-      3. Priorize a detecção de fatores de risco modificáveis e ofereça intervenções específicas
+      3. Priorize a detecção de fatores de risco modificáveis através de mudanças no estilo de vida
       4. Forneça uma análise de tendências temporais quando houver dados históricos disponíveis
       5. Sugira monitoramento personalizado baseado no perfil de risco específico
-      6. Inclua recomendações nutricionais específicas por nutriente baseadas nos resultados 
-      7. Ofereça uma interpretação integrada que considere potenciais interações entre medicamentos, suplementos e resultados
+      
+      ### DIRETRIZES LEGAIS E ÉTICAS OBRIGATÓRIAS (MINISTÉRIO DA SAÚDE):
+      ⚠️ ALERTA LEGAL: É CRIME prescrever ou recomendar medicamentos, vitaminas, suplementos
+      🚫 TOTALMENTE PROIBIDO mencionar: vitamina D, B12, C, zinco, magnésio, ferro, cálcio, ômega 3, qualquer nutriente específico
+      ✅ APENAS use estas frases EXATAS:
+      - "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde"
+      - "Pratique atividade física regular conforme orientações do Ministério da Saúde (150 min/semana)"
+      - "Consulte um médico para orientações específicas"
+      🚫 JAMAIS sugira: suplementos, vitaminas, minerais, nutrientes específicos, exposição solar
+      📋 SIGA EXCLUSIVAMENTE as diretrizes do SUS e Ministério da Saúde
       
       ### RESPONDA ESTRITAMENTE NO SEGUINTE FORMATO JSON:
       {
@@ -80,11 +88,11 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
         ],
         
         "recommendations": [
-          "Recomendação 1: ação específica, mensurável e personalizada",
-          "Recomendação 2: prioridade baseada no risco individual",
-          "Recomendação 3: intervenção diretamente relacionada aos achados laboratoriais",
-          "Recomendação 4: seguimento específico com prazos sugeridos",
-          "Recomendação 5: exames complementares se necessário, com justificativa"
+          "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde",
+          "Pratique atividade física regular conforme orientações do Ministério da Saúde (150 min/semana)",
+          "Consulte um médico para orientações específicas sobre os resultados",
+          "Mantenha sono adequado de 7-8 horas por noite",
+          "Realize acompanhamento médico regular conforme orientação profissional"
         ],
         
         "specialists": [
@@ -94,10 +102,10 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
         ],
         
         "lifestyle": {
-          "diet": "Recomendações nutricionais detalhadas, personalizadas e orientadas pelos resultados, incluindo nutrientes específicos a aumentar/reduzir com quantidades sugeridas e fontes alimentares",
-          "exercise": "Recomendações de exercícios específicas (tipo, intensidade, frequência, duração) baseadas nos resultados, incluindo precauções particulares",
-          "sleep": "Recomendações de sono baseadas nos parâmetros metabólicos e hormonais, incluindo duração ideal e práticas de higiene do sono",
-          "stress_management": "Técnicas específicas de gerenciamento de estresse com relevância particular para o perfil metabólico do paciente"
+          "diet": "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde, priorizando alimentos in natura e minimamente processados",
+          "exercise": "Pratique atividade física regular conforme orientações do Ministério da Saúde: 150 minutos de atividade moderada por semana",
+          "sleep": "Mantenha sono adequado de 7-8 horas por noite com horários regulares",
+          "stress_management": "Pratique técnicas de relaxamento e consulte profissional de saúde para orientações específicas"
         },
         
         "riskFactors": [
@@ -217,10 +225,10 @@ function getFallbackInsights(patientData?: any) {
   const response = {
     possibleDiagnoses: [
       {
-        condition: "Deficiência de Vitamina D",
+        condition: "Alteração em exames específicos",
         probability: "média",
-        description: "Níveis baixos de Vitamina D podem afetar o sistema imunológico e a saúde óssea",
-        indicativeMarkers: ["Vitamina D < 30 ng/mL", "Histórico de pouca exposição solar"]
+        description: "Alguns parâmetros podem estar alterados - consulte um médico para orientações específicas",
+        indicativeMarkers: ["Valores fora do intervalo de referência", "Necessita avaliação médica"]
       },
       {
         condition: "Pré-diabetes",
@@ -230,11 +238,11 @@ function getFallbackInsights(patientData?: any) {
       }
     ],
     recommendations: [
-      "Agende uma consulta com seu clínico geral para discutir os resultados dos exames",
-      "Considere aumentar a exposição solar controlada ou suplementação de Vitamina D",
-      "Monitore seus níveis de glicemia com exames regulares a cada 3 meses",
-      "Mantenha um registro alimentar para identificar padrões que afetam seus níveis de colesterol",
-      "Realize exercícios físicos regulares para melhorar os parâmetros metabólicos"
+      "Consulte um clínico geral para discutir os resultados dos exames",
+      "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde",
+      "Pratique atividade física regular conforme orientações do Ministério da Saúde (150 min/semana)",
+      "Mantenha sono adequado de 7-8 horas por noite",
+      "Realize acompanhamento médico regular conforme orientação profissional"
     ],
     specialists: [
       "Nutricionista - para orientação alimentar personalizada",
@@ -242,15 +250,15 @@ function getFallbackInsights(patientData?: any) {
       "Cardiologista - para acompanhamento preventivo"
     ],
     lifestyle: {
-      diet: "Reduza o consumo de carboidratos refinados e aumente a ingestão de vegetais folhosos e gorduras saudáveis",
-      exercise: "Realize pelo menos 150 minutos de atividade física moderada por semana",
-      sleep: "Priorize 7-8 horas de sono de qualidade por noite para regulação metabólica",
-      stress_management: "Pratique técnicas de relaxamento como meditação ou respiração profunda por 10-15 minutos diariamente"
+      diet: "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde, priorizando alimentos in natura",
+      exercise: "Pratique atividade física regular conforme orientações do Ministério da Saúde: 150 minutos por semana",
+      sleep: "Mantenha sono adequado de 7-8 horas por noite com horários regulares",
+      stress_management: "Pratique técnicas de relaxamento e consulte profissional de saúde para orientações específicas"
     },
     riskFactors: [
-      "Pré-diabetes - devido aos níveis elevados de glicemia (evidência moderada)",
-      "Deficiência de Vitamina D - pode afetar a imunidade e saúde óssea (evidência forte)",
-      "Resposta inflamatória leve - indicada por leucócitos levemente elevados (evidência preliminar)"
+      "Alterações metabólicas - consulte médico para avaliação específica",
+      "Parâmetros fora do intervalo de referência - necessita acompanhamento médico",
+      "Fatores de risco cardiovascular - siga orientações do Ministério da Saúde"
     ],
     contextualAnalysis: "Análise contextual não disponível no momento. Consulte um médico para uma avaliação personalizada.",
     
@@ -297,7 +305,7 @@ function getFallbackInsights(patientData?: any) {
     
     if (patientData.diseases && patientData.diseases.includes('diabetes')) {
       response.riskFactors.push("Diabetes diagnosticada - necessita monitoramento rigoroso da glicemia (evidência forte)");
-      response.lifestyle.diet = "Dieta com controle rigoroso de carboidratos, evitando açúcares simples e preferindo carboidratos complexos";
+      response.lifestyle.diet = "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde, priorizando alimentos in natura";
       response.healthParameters.criticalAreas.push("Controle glicêmico rigoroso");
       response.healthParameters.healthScore = 65;
       response.evidenceBasedAssessment.studyReferences.push(
@@ -554,10 +562,18 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
     const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
                   Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
                   
+                  ⚠️ ALERTA LEGAL OBRIGATÓRIO (MINISTÉRIO DA SAÚDE):
+                  🚫 É CRIME mencionar: vitamina D, B12, C, zinco, magnésio, ferro, cálcio, ômega 3, QUALQUER nutriente específico
+                  ✅ APENAS use estas frases LITERAIS:
+                  - "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde"
+                  - "Pratique atividade física regular conforme orientações do Ministério da Saúde"
+                  - "Consulte um médico para orientações específicas"
+                  🚫 TOTALMENTE PROIBIDO: suplementos, vitaminas, minerais, exposição solar específica
+                  📋 SIGA APENAS diretrizes do SUS
+                  
                   Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado e baseado em evidências,
                   incluindo achados clínicos relevantes, interpretação precisa dos valores, 
-                  correlações entre parâmetros, diretrizes clínicas aplicáveis, 
-                  recomendações médicas e instruções específicas para o paciente.
+                  correlações entre parâmetros, diretrizes clínicas aplicáveis.
                   
                   Analise a imagem ou PDF do exame cuidadosamente e extraia todas as informações relevantes.
                   Estabeleça parâmetros de saúde baseados em evidências científicas recentes.
@@ -567,7 +583,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                   {
                     "summary": "resumo geral dos resultados, em uma frase",
                     "detailedAnalysis": "análise detalhada e fundamentada dos resultados encontrados",
-                    "recommendations": ["lista de 3-5 recomendações específicas para o paciente baseadas em evidências"],
+                    "recommendations": ["APENAS orientações conforme Ministério da Saúde: alimentação equilibrada, atividade física 150min/semana, consulte médico para orientações específicas"],
                     "healthMetrics": [
                       {
                         "name": "nome do parâmetro, ex: hemoglobina",

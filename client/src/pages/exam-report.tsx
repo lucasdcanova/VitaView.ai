@@ -131,11 +131,11 @@ export default function ExamReport() {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
-      if (tabParam && ['summary', 'metrics', 'insights', 'details'].includes(tabParam)) {
+      if (tabParam && ['summary', 'detailed', 'recommendations', 'evidence'].includes(tabParam)) {
         return tabParam;
       }
     }
-    return "metrics"; // Tab padrão se não houver parâmetro válido
+    return "summary"; // Tab padrão se não houver parâmetro válido
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
@@ -240,6 +240,50 @@ export default function ExamReport() {
       default:
         return 'text-gray-700 bg-gray-50 border-gray-200';
     }
+  };
+
+  // Filtrar recomendações para garantir conformidade com diretrizes do Ministério da Saúde
+  const filterRecommendations = (recommendations: string[]) => {
+    const prohibitedTerms = [
+      'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
+      'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
+    ];
+    
+    return recommendations.filter(rec => {
+      const lowerRec = rec.toLowerCase();
+      return !prohibitedTerms.some(term => lowerRec.includes(term));
+    }).map(rec => {
+      // Se ainda houver recomendações problemáticas, substituir por orientação padrão
+      if (rec.toLowerCase().includes('acompanhamento') && !rec.includes('Ministério da Saúde')) {
+        return 'Consulte um médico para orientações específicas sobre os resultados';
+      }
+      return rec;
+    });
+  };
+
+  // Filtrar texto de lifestyle para remover nutrientes específicos
+  const filterLifestyleText = (text: string) => {
+    const prohibitedTerms = [
+      'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
+      'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
+    ];
+    
+    let filteredText = text;
+    prohibitedTerms.forEach(term => {
+      const regex = new RegExp(term, 'gi');
+      if (regex.test(filteredText)) {
+        // Se contém termo proibido, usar texto padrão do Ministério da Saúde
+        if (text.toLowerCase().includes('alimentação') || text.toLowerCase().includes('diet')) {
+          filteredText = 'Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde';
+        } else if (text.toLowerCase().includes('exercí') || text.toLowerCase().includes('atividade')) {
+          filteredText = 'Pratique atividade física regular conforme orientações do Ministério da Saúde (150 min/semana)';
+        } else {
+          filteredText = 'Consulte um médico para orientações específicas';
+        }
+      }
+    });
+    
+    return filteredText;
   };
   
   const getFileIcon = (fileType?: string, iconSize: number = 16) => {
@@ -386,7 +430,7 @@ export default function ExamReport() {
           <div className="border-b bg-white shadow-sm">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Link to="/exams">
+                <Link href="/exam-history">
                   <Button variant="outline" size="icon" className="h-9 w-9">
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
@@ -419,39 +463,72 @@ export default function ExamReport() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" className="hidden md:flex">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Compartilhar
-                </Button>
-                <Button variant="outline" size="sm" className="hidden md:flex">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex"
+                  onClick={async () => {
+                    if (!data) return;
+                    
+                    try {
+                      const response = await fetch(`/api/export-exam-report/${examId}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `relatorio-exame-${data.exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } else {
+                        alert('Erro ao gerar o PDF do relatório');
+                      }
+                    } catch (error) {
+                      console.error('Erro ao baixar PDF:', error);
+                      alert('Erro ao gerar o PDF do relatório');
+                    }
+                  }}
+                >
                   <Download className="mr-2 h-4 w-4" />
-                  Baixar
+                  Baixar PDF
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="hidden md:flex text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="hidden md:flex"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `Relatório de Exame - ${data?.exam.name}`,
+                        text: data?.result.summary,
+                        url: window.location.href
+                      }).catch(() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copiado para a área de transferência!');
+                      });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert('Link copiado para a área de transferência!');
+                    }
+                  }}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Compartilhar
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={handleDeleteClick}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir
-                </Button>
-                <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" className="md:hidden h-9 w-9 p-0">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="md:hidden h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={handleDeleteClick}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                  <Printer className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -511,22 +588,9 @@ export default function ExamReport() {
                   </>
                 ) : (
                   <>
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-800">{data?.exam.name}</h2>
-                        <p className="text-gray-500">Analisado em {formatDate(data?.result.analysisDate.toString())}</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
-                          <Download className="h-5 w-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
-                          <Share2 className="h-5 w-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
-                          <Printer className="h-5 w-5" />
-                        </Button>
-                      </div>
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold text-gray-800">{data?.exam.name}</h2>
+                      <p className="text-gray-500">Analisado em {formatDate(data?.result.analysisDate.toString())}</p>
                     </div>
                     
                     <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -811,7 +875,10 @@ export default function ExamReport() {
                       {/* Recommendations Tab */}
                       <TabsContent value="recommendations">
                         <div className="mb-6">
-                          <h3 className="font-medium text-lg text-gray-800 mb-3">Recomendações principais</h3>
+                          <h3 className="font-medium text-lg text-gray-800 mb-3">Orientações de saúde</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            ⚠️ Seguimos rigorosamente as diretrizes do Ministério da Saúde. Todas as orientações são gerais e não substituem consulta médica.
+                          </p>
                           
                           <div className="space-y-4">
                             {isLoadingInsights ? (
@@ -827,20 +894,22 @@ export default function ExamReport() {
                                 </div>
                               ))
                             ) : (
-                              insights?.recommendations.map((recommendation, index) => (
+                              filterRecommendations(insights?.recommendations || []).map((recommendation, index) => (
                                 <div key={index} className="bg-primary-50 p-4 rounded-lg">
                                   <div className="flex">
                                     <div className="flex-shrink-0">
                                       {index === 0 && <UserRound className="text-primary-600" size={20} />}
-                                      {index === 1 && <Calendar className="text-primary-600" size={20} />}
-                                      {index > 1 && <CheckCircle2 className="text-primary-600" size={20} />}
+                                      {index === 1 && <Apple className="text-emerald-600" size={20} />}
+                                      {index === 2 && <Dumbbell className="text-blue-600" size={20} />}
+                                      {index > 2 && <CheckCircle2 className="text-primary-600" size={20} />}
                                     </div>
                                     <div className="ml-4">
                                       <h4 className="text-base font-medium text-gray-900">
-                                        {index === 0 && 'Consulta de acompanhamento'}
-                                        {index === 1 && 'Próximos exames'}
-                                        {index === 2 && 'Cuidados de saúde'}
-                                        {index > 2 && `Recomendação ${index + 1}`}
+                                        {index === 0 && 'Orientação médica'}
+                                        {index === 1 && 'Alimentação saudável'}
+                                        {index === 2 && 'Atividade física'}
+                                        {index === 3 && 'Cuidados gerais'}
+                                        {index > 3 && `Orientação ${index + 1}`}
                                       </h4>
                                       <p className="mt-1 text-sm text-gray-600">{recommendation}</p>
                                     </div>
@@ -885,20 +954,20 @@ export default function ExamReport() {
                               <ul className="space-y-2 text-sm text-gray-700">
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Alimentação:</span>
-                                  <span>{insights.lifestyle.diet}</span>
+                                  <span>{filterLifestyleText(insights.lifestyle.diet)}</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Exercícios:</span>
-                                  <span>{insights.lifestyle.exercise}</span>
+                                  <span>{filterLifestyleText(insights.lifestyle.exercise)}</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Sono:</span>
-                                  <span>{insights.lifestyle.sleep}</span>
+                                  <span>{filterLifestyleText(insights.lifestyle.sleep)}</span>
                                 </li>
                                 {insights.lifestyle.stress_management && (
                                   <li className="flex items-start">
                                     <span className="font-medium mr-2">Gerenciamento de estresse:</span>
-                                    <span>{insights.lifestyle.stress_management}</span>
+                                    <span>{filterLifestyleText(insights.lifestyle.stress_management)}</span>
                                   </li>
                                 )}
                               </ul>
@@ -1177,23 +1246,13 @@ export default function ExamReport() {
                     
                     <hr className="my-4 border-gray-200" />
                     
-                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Ações</h2>
+                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações</h2>
                     
-                    <div className="space-y-3">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Compartilhar com médico
-                      </Button>
-                      
-                      <Button variant="outline" className="w-full justify-start">
-                        <Download className="mr-2 h-4 w-4" />
-                        Baixar relatório
-                      </Button>
-                      
-                      <Button variant="outline" className="w-full justify-start">
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir
-                      </Button>
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <p><strong>Data do exame:</strong> {data?.exam.examDate || 'Não informado'}</p>
+                      <p><strong>Laboratório:</strong> {data?.exam.laboratoryName || 'Não informado'}</p>
+                      <p><strong>Médico solicitante:</strong> {data?.exam.requestingPhysician || 'Não informado'}</p>
+                      <p><strong>Tipo de arquivo:</strong> {data?.exam.fileType?.toUpperCase() || 'Não informado'}</p>
                     </div>
                   </>
                 )}

@@ -10,6 +10,145 @@ import Stripe from "stripe";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
 
 // Função para gerar HTML do relatório de saúde
+function generateExamReportHTML({ user, exam, metrics }: any) {
+  const formatDate = (dateString: string) => {
+    return dateString ? new Date(dateString).toLocaleDateString('pt-BR') : 'Não informado';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'normal': return '#10b981';
+      case 'atenção': case 'atencao': return '#f59e0b';
+      case 'alto': case 'crítico': case 'critico': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Relatório de Exame - ${exam.name}</title>
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; line-height: 1.4; margin: 0; padding: 16px; color: #374151; }
+        .header { text-align: center; margin-bottom: 24px; border-bottom: 3px solid #2563eb; padding-bottom: 16px; }
+        .logo { font-size: 20px; font-weight: bold; color: #2563eb; margin-bottom: 8px; }
+        .title { font-size: 16px; color: #1f2937; margin: 8px 0; }
+        .patient-info { background: #f8fafc; padding: 16px; margin-bottom: 20px; border-radius: 8px; border-left: 4px solid #2563eb; }
+        .patient-info h3 { margin: 0 0 12px 0; font-size: 14px; color: #1f2937; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-item { margin-bottom: 6px; }
+        .info-label { font-weight: 600; color: #4b5563; }
+        .info-value { color: #1f2937; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 14px; font-weight: 700; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 12px; }
+        .content-box { background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; margin-bottom: 12px; }
+        .summary-box { background: #dbeafe; border-left: 4px solid #2563eb; padding: 12px; margin: 12px 0; border-radius: 4px; }
+        .analysis-box { background: #f0f9ff; border: 1px solid #0ea5e9; padding: 12px; margin: 12px 0; border-radius: 4px; }
+        .recommendations-box { background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px; margin: 12px 0; border-radius: 4px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+        .metric-item { background: white; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; }
+        .metric-name { font-weight: 600; font-size: 11px; color: #374151; }
+        .metric-value { font-size: 13px; font-weight: 700; margin: 2px 0; }
+        .metric-unit { font-size: 10px; color: #6b7280; }
+        .metric-status { display: inline-block; padding: 2px 6px; border-radius: 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; color: white; margin-top: 4px; }
+        .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 10px; color: #6b7280; }
+        .disclaimer { background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin: 16px 0; font-size: 11px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">VitaView.ai</div>
+        <div class="title">Relatório de Análise de Exame</div>
+      </div>
+
+      <div class="patient-info">
+        <h3>Informações do Exame</h3>
+        <div class="info-grid">
+          <div>
+            <div class="info-item">
+              <span class="info-label">Paciente:</span> <span class="info-value">${user.fullName || user.username}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Nome do Exame:</span> <span class="info-value">${exam.name}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data do Exame:</span> <span class="info-value">${formatDate(exam.exam_date)}</span>
+            </div>
+          </div>
+          <div>
+            <div class="info-item">
+              <span class="info-label">Laboratório:</span> <span class="info-value">${exam.laboratory_name || 'Não informado'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Médico Solicitante:</span> <span class="info-value">${exam.requesting_physician || 'Não informado'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data da Análise:</span> <span class="info-value">${formatDate(exam.analysis_date)}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <span class="info-label">Relatório gerado em:</span> <span class="info-value">${formatDate(new Date().toISOString())}</span>
+        </div>
+      </div>
+
+      ${exam.summary ? `
+      <div class="section">
+        <div class="section-title">📋 Resumo Executivo</div>
+        <div class="summary-box">
+          ${exam.summary}
+        </div>
+      </div>
+      ` : ''}
+
+      ${metrics && metrics.length > 0 ? `
+      <div class="section">
+        <div class="section-title">📊 Métricas de Saúde</div>
+        <div class="metrics-grid">
+          ${metrics.map((metric: any) => `
+            <div class="metric-item">
+              <div class="metric-name">${metric.name}</div>
+              <div class="metric-value" style="color: ${getStatusColor(metric.status)}">${metric.value} ${metric.unit || ''}</div>
+              <div class="metric-status" style="background-color: ${getStatusColor(metric.status)}">${metric.status || 'N/A'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
+
+      ${exam.detailed_analysis ? `
+      <div class="section">
+        <div class="section-title">🔬 Análise Detalhada</div>
+        <div class="analysis-box">
+          ${exam.detailed_analysis}
+        </div>
+      </div>
+      ` : ''}
+
+      ${exam.recommendations ? `
+      <div class="section">
+        <div class="section-title">💡 Recomendações</div>
+        <div class="recommendations-box">
+          ${exam.recommendations}
+        </div>
+      </div>
+      ` : ''}
+
+      <div class="disclaimer">
+        <strong>⚠️ Aviso Importante:</strong> Este relatório foi gerado automaticamente pela plataforma VitaView.ai com base na análise de inteligência artificial. As informações contidas neste documento são apenas para fins informativos e não substituem a consulta, diagnóstico ou tratamento médico profissional. Sempre consulte um profissional de saúde qualificado para questões relacionadas à sua saúde.
+      </div>
+
+      <div class="footer">
+        <p>Este relatório foi gerado pela plataforma VitaView.ai em ${formatDate(new Date().toISOString())}</p>
+        <p>Para mais informações, visite nosso site ou entre em contato com nossa equipe de suporte</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 function generateHealthReportHTML({ user, exams, diagnoses, medications, metrics, allergies }: any) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -1721,6 +1860,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erro detalhado na geração do PDF:', error);
       res.status(500).json({ message: "Erro ao gerar relatório de saúde", error: error.message });
+    }
+  });
+
+  // Nova rota para gerar PDF de exame específico
+  app.post("/api/export-exam-report/:examId", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const examId = parseInt(req.params.examId);
+      
+      console.log('Exportando PDF do exame:', examId, 'para usuário:', user.id);
+      
+      // Buscar dados do exame específico
+      const examResult = await pool.query(`
+        SELECT e.*, er.summary, er.detailed_analysis, er.recommendations, er.analysis_date
+        FROM exams e
+        LEFT JOIN exam_results er ON e.id = er.exam_id
+        WHERE e.id = $1 AND e.user_id = $2
+      `, [examId, user.id]);
+      
+      if (examResult.rows.length === 0) {
+        return res.status(404).json({ message: "Exame não encontrado" });
+      }
+      
+      const exam = examResult.rows[0];
+      console.log('Exame encontrado:', exam.name);
+      
+      // Buscar métricas do exame
+      const metricsResult = await pool.query(`
+        SELECT * FROM health_metrics 
+        WHERE exam_id = $1 
+        ORDER BY date DESC
+      `, [examId]);
+      
+      // Gerar HTML do relatório do exame
+      const htmlContent = generateExamReportHTML({
+        user,
+        exam,
+        metrics: metricsResult.rows
+      });
+      console.log('HTML gerado, tamanho:', htmlContent.length);
+
+      // Configurações do PDF
+      const options = { 
+        format: 'A4',
+        margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
+        printBackground: true
+      };
+
+      // Gerar PDF usando html-pdf-node
+      const { generatePdf } = await import('html-pdf-node');
+      const file = { content: htmlContent };
+      
+      console.log('Gerando PDF...');
+      const pdfBuffer = await generatePdf(file, options);
+      console.log('PDF gerado, tamanho:', pdfBuffer.length);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="relatorio-exame-${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('Erro detalhado na geração do PDF do exame:', error);
+      res.status(500).json({ message: "Erro ao gerar relatório do exame", error: error.message });
     }
   });
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
@@ -7,7 +7,7 @@ import HealthScore from "@/components/health-score";
 import HealthMetrics from "@/components/health-metrics";
 import RecentExams from "@/components/recent-exams";
 import HealthRecommendations from "@/components/health-recommendations";
-import { Exam, HealthMetric } from "@shared/schema";
+import { Exam, HealthMetric, Profile } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -71,6 +71,19 @@ export default function Dashboard() {
     },
   });
   
+  const { data: profiles, isLoading: isLoadingProfiles } = useQuery<Profile[]>({
+    queryKey: ["/api/profiles"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/profiles", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch profiles");
+        return res.json();
+      } catch (error) {
+        return [];
+      }
+    },
+  });
+  
   // Function to process exam data for recency
   const getRecentExams = (examList: Exam[] = [], count: number = 3) => {
     if (!examList || examList.length === 0) return [];
@@ -87,112 +100,159 @@ export default function Dashboard() {
   
   // Process the last 6 months of metrics data for charts
   const processChartData = (metricList: HealthMetric[] = []) => {
-    if (!metricList || metricList.length === 0) return [];
+    console.log('🔍 Processing metrics data:', metricList);
+    if (!metricList || metricList.length === 0) {
+      console.log('⚠️ No metrics data to process');
+      return [];
+    }
     
-    // Group by date (month) and calculate averages for common metrics
+    // If we have metrics, let's create a simplified version that just shows general health score
+    // Group metrics by month and calculate a simple health score
     const dataByMonth: Record<string, any> = {};
     
-    const commonMetrics = {
-      "Glicose": { key: "glucose", count: 0, sum: 0 },
-      "Colesterol Total": { key: "cholesterol", count: 0, sum: 0 },
-      "Hemoglobina": { key: "hemoglobin", count: 0, sum: 0 },
-      "Leucócitos": { key: "whiteCells", count: 0, sum: 0 }
-    };
-    
-    // Map alternate naming conventions for metrics
-    const metricNameMap: Record<string, string> = {
-      "Glicemia": "Glicose",
-      "Colesterol": "Colesterol Total",
-      "HDL": "HDL",
-      "LDL": "LDL"
-    };
-    
     metricList.forEach(metric => {
+      console.log('📊 Processing metric:', metric.name, '=', metric.value, 'status:', metric.status);
       const date = new Date(metric.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
       
       if (!dataByMonth[monthKey]) {
         dataByMonth[monthKey] = {
           month: new Date(date.getFullYear(), date.getMonth(), 1),
-          count: 0,
-          ...Object.keys(commonMetrics).reduce((acc, metricName) => {
-            acc[commonMetrics[metricName].key] = 0;
-            return acc;
-          }, {} as Record<string, number>)
+          monthStr: new Date(date.getFullYear(), date.getMonth(), 1).toLocaleDateString('pt-BR', { month: 'short' }),
+          totalMetrics: 0,
+          normalCount: 0,
+          warningCount: 0,
+          alertCount: 0,
+          healthScore: 0
         };
       }
       
-      // Try to match metric name with our common metrics or their aliases
-      const normalizedMetricName = metricNameMap[metric.name] || metric.name;
+      dataByMonth[monthKey].totalMetrics += 1;
       
-      if (normalizedMetricName in commonMetrics) {
-        const metricKey = commonMetrics[normalizedMetricName].key;
-        try {
-          // Parse the value, handling any formatting issues
-          let valueStr = metric.value.replace(',', '.'); // Handle comma decimal separators
-          const value = parseFloat(valueStr);
-          
-          if (!isNaN(value)) {
-            dataByMonth[monthKey][metricKey] += value;
-            commonMetrics[normalizedMetricName].sum += value;
-            commonMetrics[normalizedMetricName].count += 1;
-          }
-        } catch (e) {
-          // Error parsing value for metric
-        }
+      // Calculate health score based on status
+      const status = metric.status?.toLowerCase() || 'normal';
+      if (status === 'normal') {
+        dataByMonth[monthKey].normalCount += 1;
+      } else if (status.includes('atenção') || status.includes('atencao') || status === 'warning') {
+        dataByMonth[monthKey].warningCount += 1;
+      } else if (status.includes('alto') || status.includes('baixo') || status === 'alert') {
+        dataByMonth[monthKey].alertCount += 1;
+      } else {
+        // Default to normal if status is unclear
+        dataByMonth[monthKey].normalCount += 1;
       }
-      
-      dataByMonth[monthKey].count += 1;
     });
     
-    // Calculate averages and format for chart
-    return Object.values(dataByMonth)
-      .map(item => {
-        const result: Record<string, any> = {
-          month: new Date(item.month).toLocaleDateString('pt-BR', { month: 'short' }),
-        };
+    // Calculate health scores for each month
+    Object.keys(dataByMonth).forEach(monthKey => {
+      const data = dataByMonth[monthKey];
+      if (data.totalMetrics > 0) {
+        const normalPercentage = (data.normalCount / data.totalMetrics) * 100;
+        const warningPercentage = (data.warningCount / data.totalMetrics) * 100;
+        const alertPercentage = (data.alertCount / data.totalMetrics) * 100;
         
-        // Only include metrics that have actual data
-        Object.keys(commonMetrics).forEach(metricName => {
-          const metricKey = commonMetrics[metricName].key;
-          const count = commonMetrics[metricName].count;
-          
-          // Only add this metric if we have data for it
-          if (count > 0) {
-            result[metricKey] = item.count > 0 ? Math.round(item[metricKey] / item.count) : 0;
-          }
-        });
-        
-        return result;
-      })
+        // Calculate weighted health score (normal = 85, warning = 70, alert = 50)
+        data.healthScore = Math.round(
+          (normalPercentage * 0.85) + (warningPercentage * 0.70) + (alertPercentage * 0.50)
+        );
+      }
+    });
+    
+    console.log('📈 Data by month:', dataByMonth);
+    
+    const finalResult = Object.values(dataByMonth)
+      .map(item => ({
+        month: item.monthStr,
+        healthScore: item.healthScore,
+        totalMetrics: item.totalMetrics
+      }))
       .sort((a, b) => {
         const months = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
         return months.indexOf(a.month) - months.indexOf(b.month);
       });
+    
+    console.log('📈 Final chart data result:', finalResult);
+    return finalResult;
   };
   
-  const getHealthMetricStatus = (value: number, metricType: string): 'normal' | 'warning' | 'alert' => {
+  const getHealthMetricStatus = (value: number, metricName: string): 'normal' | 'warning' | 'alert' => {
     if (!value) return 'normal';
     
-    switch (metricType) {
-      case 'cholesterol':
-        if (value <= 200) return 'normal';
-        if (value <= 240) return 'warning';
-        return 'alert';
-      
-      case 'glucose':
-        if (value <= 99) return 'normal';
-        if (value <= 125) return 'warning';
-        return 'alert';
-      
-      case 'bloodPressure':
-        if (value <= 120) return 'normal';
-        if (value <= 140) return 'warning';
-        return 'alert';
-      
-      default:
-        return 'normal';
+    const name = metricName.toLowerCase();
+    
+    // Colesterol e lipídios
+    if (name.includes('colesterol total') || (name.includes('colesterol') && !name.includes('hdl') && !name.includes('ldl'))) {
+      if (value < 200) return 'normal';
+      if (value <= 239) return 'warning';
+      return 'alert';
     }
+    
+    if (name.includes('hdl')) {
+      if (value >= 40) return 'normal'; // Homens: ≥40, Mulheres: ≥50
+      return 'alert';
+    }
+    
+    if (name.includes('ldl')) {
+      if (value < 100) return 'normal';
+      if (value <= 159) return 'warning';
+      return 'alert';
+    }
+    
+    if (name.includes('triglicerídeos') || name.includes('triglicerideos')) {
+      if (value < 150) return 'normal';
+      if (value <= 199) return 'warning';
+      return 'alert';
+    }
+    
+    // Glicemia
+    if (name.includes('glicose') || name.includes('glicemia')) {
+      if (value <= 99) return 'normal';
+      if (value <= 125) return 'warning';
+      return 'alert';
+    }
+    
+    // Hemoglobina Glicada
+    if (name.includes('hemoglobina glicada') || name.includes('hba1c')) {
+      if (value < 5.7) return 'normal';
+      if (value <= 6.4) return 'warning';
+      return 'alert';
+    }
+    
+    // Vitamina D
+    if (name.includes('vitamina d') || name.includes('25-hidroxivitamina d')) {
+      if (value >= 30) return 'normal'; // ng/mL
+      if (value >= 20) return 'warning';
+      return 'alert';
+    }
+    
+    // TSH
+    if (name.includes('tsh')) {
+      if (value >= 0.4 && value <= 4.0) return 'normal';
+      return 'warning';
+    }
+    
+    // Creatinina
+    if (name.includes('creatinina')) {
+      if (value <= 1.2) return 'normal'; // mg/dL
+      if (value <= 1.5) return 'warning';
+      return 'alert';
+    }
+    
+    // Hemoglobina
+    if (name.includes('hemoglobina') && !name.includes('glicada')) {
+      if (value >= 12 && value <= 16) return 'normal'; // g/dL
+      return 'warning';
+    }
+    
+    // ALT/TGP
+    if (name.includes('alt') || name.includes('tgp')) {
+      if (value <= 40) return 'normal'; // U/L
+      if (value <= 50) return 'warning';
+      return 'alert';
+    }
+    
+    // Para métricas não identificadas, assumir normal
+    return 'normal';
   };
   
   const formatDate = (dateString: string) => {
@@ -295,6 +355,32 @@ export default function Dashboard() {
   const { averageScore, trend, recentMetrics } = calcHealthStats();
   const latestExams = getRecentExams(exams, 3);
   const chartData = processChartData(metrics);
+  
+  // Process metrics to create a map by metric name for easy access
+  const processedMetrics = React.useMemo(() => {
+    if (!metrics || metrics.length === 0) return {};
+    
+    const metricMap: Record<string, HealthMetric> = {};
+    
+    // Group by metric name and get the most recent value for each
+    metrics.forEach(metric => {
+      const key = metric.name.toLowerCase();
+      if (!metricMap[key] || new Date(metric.date) > new Date(metricMap[key].date)) {
+        metricMap[key] = metric;
+      }
+    });
+    
+    return metricMap;
+  }, [metrics]);
+  
+  // Helper function to get metric by various name variations
+  const getMetricByName = (names: string[]) => {
+    for (const name of names) {
+      const metric = processedMetrics[name.toLowerCase()];
+      if (metric) return metric;
+    }
+    return null;
+  };
   
   // Health stats for metrics display
   const healthStats = {
@@ -818,143 +904,614 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
-                    ) : recentMetrics && recentMetrics.length > 0 ? (
+                    ) : Object.keys(processedMetrics).length > 0 ? (
                       <div>
-                        {/* Colesterol */}
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium">Colesterol</span>
-                            <span className={`text-xs font-medium ${
-                              getHealthMetricStatus(recentMetrics[0]?.cholesterol || 0, 'cholesterol') === 'normal' 
-                                ? 'text-green-600' 
-                                : getHealthMetricStatus(recentMetrics[0]?.cholesterol || 0, 'cholesterol') === 'warning'
-                                ? 'text-amber-600'
-                                : 'text-red-600'
-                            }`}>
-                              {recentMetrics[0]?.cholesterol || '-'} mg/dL
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full ${
-                                getHealthMetricStatus(recentMetrics[0]?.cholesterol || 0, 'cholesterol') === 'normal' 
-                                  ? 'bg-green-500' 
-                                  : getHealthMetricStatus(recentMetrics[0]?.cholesterol || 0, 'cholesterol') === 'warning'
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                              }`} 
-                              style={{ 
-                                width: `${Math.min(100, ((recentMetrics[0]?.cholesterol || 0) / 300) * 100)}%` 
-                              }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>0</span>
-                            <span>150</span>
-                            <span>300+</span>
-                          </div>
-                        </div>
-                        
-                        {/* Glicemia */}
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium">Glicemia</span>
-                            <span className={`text-xs font-medium ${
-                              getHealthMetricStatus(recentMetrics[0]?.glucose || 0, 'glucose') === 'normal' 
-                                ? 'text-green-600' 
-                                : getHealthMetricStatus(recentMetrics[0]?.glucose || 0, 'glucose') === 'warning'
-                                ? 'text-amber-600'
-                                : 'text-red-600'
-                            }`}>
-                              {recentMetrics[0]?.glucose || '-'} mg/dL
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full ${
-                                getHealthMetricStatus(recentMetrics[0]?.glucose || 0, 'glucose') === 'normal' 
-                                  ? 'bg-green-500' 
-                                  : getHealthMetricStatus(recentMetrics[0]?.glucose || 0, 'glucose') === 'warning'
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                              }`} 
-                              style={{ 
-                                width: `${Math.min(100, ((recentMetrics[0]?.glucose || 0) / 200) * 100)}%` 
-                              }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>0</span>
-                            <span>100</span>
-                            <span>200+</span>
-                          </div>
-                        </div>
-                        
-                        {/* Pressão Arterial */}
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium">Pressão Arterial</span>
-                            <span className={`text-xs font-medium ${
-                              getHealthMetricStatus(recentMetrics[0]?.bloodPressureSystolic || 0, 'bloodPressure') === 'normal' 
-                                ? 'text-green-600' 
-                                : getHealthMetricStatus(recentMetrics[0]?.bloodPressureSystolic || 0, 'bloodPressure') === 'warning'
-                                ? 'text-amber-600'
-                                : 'text-red-600'
-                            }`}>
-                              {recentMetrics[0]?.bloodPressureSystolic || '-'}/{recentMetrics[0]?.bloodPressureDiastolic || '-'} mmHg
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full ${
-                                getHealthMetricStatus(recentMetrics[0]?.bloodPressureSystolic || 0, 'bloodPressure') === 'normal' 
-                                  ? 'bg-green-500' 
-                                  : getHealthMetricStatus(recentMetrics[0]?.bloodPressureSystolic || 0, 'bloodPressure') === 'warning'
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                              }`} 
-                              style={{ 
-                                width: `${Math.min(100, ((recentMetrics[0]?.bloodPressureSystolic || 0) / 180) * 100)}%` 
-                              }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>0</span>
-                            <span>120</span>
-                            <span>180+</span>
-                          </div>
-                        </div>
-                        
-                        {/* TSH (Tireoide) */}
-                        <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium">TSH (Tireoide)</span>
-                            <span className="text-xs font-medium text-green-600">
-                              {recentMetrics[0]?.tsh || '-'} μIU/mL
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div 
-                              className="h-1.5 rounded-full bg-green-500" 
-                              style={{ 
-                                width: `${Math.min(100, ((recentMetrics[0]?.tsh || 0) / 10) * 100)}%` 
-                              }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>0</span>
-                            <span>5</span>
-                            <span>10+</span>
-                          </div>
-                        </div>
+                        {console.log('📊 Processed metrics for display:', processedMetrics)}
+                        {/* Render metrics dynamically */}
+                        {Object.values(processedMetrics).slice(0, 4).map((metric, index) => {
+                          const value = parseFloat(String(metric.value).replace(',', '.')) || 0;
+                          // Use the improved health metric status function
+                          const healthStatus = getHealthMetricStatus(value, metric.name);
+                          
+                          const getStatusColor = (status: 'normal' | 'warning' | 'alert') => {
+                            if (status === 'normal') return 'text-green-600';
+                            if (status === 'warning') return 'text-amber-600';
+                            if (status === 'alert') return 'text-red-600';
+                            return 'text-green-600';
+                          };
+                          
+                          const getStatusBgColor = (status: 'normal' | 'warning' | 'alert') => {
+                            if (status === 'normal') return 'bg-green-500';
+                            if (status === 'warning') return 'bg-amber-500';
+                            if (status === 'alert') return 'bg-red-500';
+                            return 'bg-green-500';
+                          };
+                          
+                          // Get max value for progress bar - use the actual max from reference range
+                          const getMaxValueFromRange = (referenceRange: { min: string, ref: string, max: string, hasRange?: boolean }) => {
+                            const maxStr = referenceRange.max;
+                            if (maxStr === 'máx') return 100; // fallback
+                            
+                            // Extract numeric value from max string
+                            const numericMatch = maxStr.match(/(\d+(?:\.\d+)?)/);
+                            if (numericMatch) {
+                              return parseFloat(numericMatch[1]);
+                            }
+                            return 100; // fallback
+                          };
+                          
+                          // Get personalized reference ranges based on age and gender
+                          const getPersonalizedReferenceRange = (name: string, age?: number, gender?: string) => {
+                            const n = name.toLowerCase();
+                            const isMale = gender?.toLowerCase() === 'masculino' || gender?.toLowerCase() === 'male' || gender?.toLowerCase() === 'm';
+                            const isFemale = gender?.toLowerCase() === 'feminino' || gender?.toLowerCase() === 'female' || gender?.toLowerCase() === 'f';
+                            
+                            // Return format: { min: string, refMin: string, refMax: string, max: string, hasRange: boolean }
+                            
+                            // Colesterol e lipídios (mesmos para ambos os gêneros)
+                            if (n.includes('colesterol total') || (n.includes('colesterol') && !n.includes('hdl') && !n.includes('ldl'))) {
+                              return { min: '0', ref: '<200', max: '240', hasRange: false };
+                            }
+                            
+                            // HDL - varia por gênero
+                            if (n.includes('hdl')) {
+                              if (isMale) {
+                                return { min: '0', ref: '≥40', max: '100', hasRange: false };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '≥50', max: '100', hasRange: false };
+                              } else {
+                                return { min: '0', ref: '≥40', max: '100', hasRange: false };
+                              }
+                            }
+                            
+                            if (n.includes('ldl')) {
+                              return { min: '0', ref: '<100', max: '160', hasRange: false };
+                            }
+                            if (n.includes('triglicerídeos') || n.includes('triglicerideos')) {
+                              return { min: '0', ref: '<150', max: '200', hasRange: false };
+                            }
+                            
+                            // Glicemia (mesma para ambos)
+                            if (n.includes('glicose') || n.includes('glicemia')) {
+                              return { min: '0', ref: '≤99', max: '140', hasRange: false };
+                            }
+                            if (n.includes('hemoglobina glicada') || n.includes('hba1c')) {
+                              return { min: '0', ref: '<5.7%', max: '10%', hasRange: false };
+                            }
+                            
+                            // Vitamina D (varia por idade)
+                            if (n.includes('vitamina d') || n.includes('25-hidroxivitamina d')) {
+                              if (age && age >= 65) {
+                                return { min: '0', ref: '40', max: '100', hasRange: true }; // Idosos precisam de mais
+                              } else {
+                                return { min: '0', ref: '30', max: '100', hasRange: true };
+                              }
+                            }
+                            if (n.includes('vitamina b12')) {
+                              return { min: '0', ref: '200', max: '900', hasRange: true };
+                            }
+                            
+                            // Hormônios da tireoide (varia com idade)
+                            if (n.includes('tsh')) {
+                              if (age && age >= 65) {
+                                return { min: '0', ref: '0.4', max: '6.0', hasRange: true }; // Idosos toleram TSH mais alto
+                              } else {
+                                return { min: '0', ref: '0.4', max: '4.0', hasRange: true };
+                              }
+                            }
+                            if (n.includes('t4 livre') || n.includes('t4l')) {
+                              return { min: '0', ref: '0.8', max: '1.8', hasRange: true };
+                            }
+                            if (n.includes('t4 total') || (n.includes('t4') && !n.includes('livre') && !n.includes('t4l'))) {
+                              return { min: '0', ref: '4.5', max: '12.0', hasRange: true }; // μg/dL
+                            }
+                            if (n.includes('t3 livre') || n.includes('t3l')) {
+                              return { min: '0', ref: '2.3', max: '4.2', hasRange: true }; // pg/mL
+                            }
+                            if (n.includes('t3 total') || (n.includes('t3') && !n.includes('livre') && !n.includes('t3l'))) {
+                              return { min: '0', ref: '80', max: '200', hasRange: true }; // ng/dL
+                            }
+                            
+                            // Creatinina (varia por gênero e idade)
+                            if (n.includes('creatinina')) {
+                              if (isMale) {
+                                return { min: '0', ref: '≤1.3', max: '2.0', hasRange: false };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '≤1.1', max: '2.0', hasRange: false };
+                              } else {
+                                return { min: '0', ref: '≤1.2', max: '2.0', hasRange: false };
+                              }
+                            }
+                            if (n.includes('ureia') || n.includes('uréia')) {
+                              return { min: '0', ref: '15', max: '45', hasRange: true };
+                            }
+                            
+                            // Função hepática
+                            if (n.includes('alt') || n.includes('tgp')) {
+                              return { min: '0', ref: '≤40', max: '60', hasRange: false };
+                            }
+                            if (n.includes('ast') || n.includes('tgo')) {
+                              return { min: '0', ref: '≤40', max: '60', hasRange: false };
+                            }
+                            
+                            // Hemoglobina (varia por gênero)
+                            if (n.includes('hemoglobina') && !n.includes('glicada')) {
+                              if (isMale) {
+                                return { min: '0', ref: '14', max: '18', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '12', max: '16', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '12', max: '16', hasRange: true };
+                              }
+                            }
+                            if (n.includes('hematócrito') || n.includes('hematocrito')) {
+                              if (isMale) {
+                                return { min: '0', ref: '41', max: '53', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '36', max: '46', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '36', max: '48', hasRange: true };
+                              }
+                            }
+                            if (n.includes('leucócitos') || n.includes('leucocitos')) {
+                              return { min: '0', ref: '4k', max: '11k', hasRange: true };
+                            }
+                            if (n.includes('plaquetas')) {
+                              return { min: '0', ref: '150k', max: '450k', hasRange: true };
+                            }
+                            if (n.includes('eritrócitos') || n.includes('eritrocitos') || n.includes('hemácias') || n.includes('hemacias')) {
+                              if (isMale) {
+                                return { min: '0', ref: '4.5', max: '5.9', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '4.1', max: '5.1', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '4.1', max: '5.5', hasRange: true };
+                              }
+                            }
+                            
+                            // Ferro e ferritina (varia por gênero)
+                            if (n.includes('ferro')) {
+                              if (isMale) {
+                                return { min: '0', ref: '65', max: '175', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '50', max: '170', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '60', max: '170', hasRange: true };
+                              }
+                            }
+                            if (n.includes('ferritina')) {
+                              if (isMale) {
+                                return { min: '0', ref: '20', max: '300', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '10', max: '150', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '15', max: '200', hasRange: true };
+                              }
+                            }
+                            if (n.includes('cálcio') || n.includes('calcio')) {
+                              return { min: '0', ref: '8.5', max: '10.5', hasRange: true };
+                            }
+                            
+                            // Proteínas e inflamação
+                            if (n.includes('proteína c reativa') || n.includes('pcr')) {
+                              return { min: '0', ref: '<3.0', max: '15', hasRange: false };
+                            }
+                            if (n.includes('albumina')) {
+                              return { min: '0', ref: '3.5', max: '5.0', hasRange: true };
+                            }
+                            
+                            // Ácido úrico (varia por gênero)
+                            if (n.includes('ácido úrico') || n.includes('acido urico')) {
+                              if (isMale) {
+                                return { min: '0', ref: '3.5', max: '7.2', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '2.6', max: '6.0', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '3.5', max: '7.0', hasRange: true };
+                              }
+                            }
+                            
+                            // Hormônios sexuais (varia por gênero)
+                            // Testosterona - diferentes tipos têm valores diferentes
+                            if (n.includes('testosterona livre')) {
+                              return { min: '0', ref: '8.7', max: '25.1', hasRange: true }; // pg/mL
+                            }
+                            if (n.includes('testosterona total') || (n.includes('testosterona') && !n.includes('livre'))) {
+                              return { min: '0', ref: '300', max: '1000', hasRange: true }; // ng/dL
+                            }
+                            
+                            // Estradiol - diferentes tipos
+                            if (n.includes('estradiol livre')) {
+                              if (isFemale) {
+                                return { min: '0', ref: '0.5', max: '5', hasRange: true }; // pg/mL
+                              } else {
+                                return { min: '0', ref: '0.3', max: '1.5', hasRange: true }; // pg/mL
+                              }
+                            }
+                            if (n.includes('estradiol total') || (n.includes('estradiol') && !n.includes('livre'))) {
+                              if (isFemale) {
+                                return { min: '0', ref: '30', max: '400', hasRange: true }; // pg/mL
+                              } else {
+                                return { min: '0', ref: '10', max: '50', hasRange: true }; // pg/mL
+                              }
+                            }
+                            
+                            // FSH e LH - variam por gênero e ciclo menstrual
+                            if (n.includes('fsh')) {
+                              if (isFemale) {
+                                return { min: '0', ref: '3.5', max: '12.5', hasRange: true }; // mUI/mL (fase folicular)
+                              } else {
+                                return { min: '0', ref: '1.5', max: '12.4', hasRange: true }; // mUI/mL
+                              }
+                            }
+                            if (n.includes('lh')) {
+                              if (isFemale) {
+                                return { min: '0', ref: '2.4', max: '12.6', hasRange: true }; // mUI/mL (fase folicular)
+                              } else {
+                                return { min: '0', ref: '1.7', max: '8.6', hasRange: true }; // mUI/mL
+                              }
+                            }
+                            
+                            if (n.includes('progesterona')) {
+                              return { min: '0', ref: '0.2', max: '25', hasRange: true };
+                            }
+                            
+                            // Outros exames comuns - diferentes tipos
+                            if (n.includes('insulina em jejum') || n.includes('insulina basal')) {
+                              return { min: '0', ref: '2', max: '25', hasRange: true }; // μU/mL
+                            }
+                            if (n.includes('insulina pós-prandial') || n.includes('insulina 2h')) {
+                              return { min: '0', ref: '30', max: '150', hasRange: true }; // μU/mL
+                            }
+                            if (n.includes('insulina') && !n.includes('jejum') && !n.includes('basal') && !n.includes('pós') && !n.includes('2h')) {
+                              return { min: '0', ref: '2', max: '25', hasRange: true };
+                            }
+                            
+                            // Cortisol - diferentes horários
+                            if (n.includes('cortisol manhã') || n.includes('cortisol matinal') || n.includes('cortisol 8h')) {
+                              return { min: '0', ref: '6', max: '23', hasRange: true }; // μg/dL
+                            }
+                            if (n.includes('cortisol noturno') || n.includes('cortisol 23h')) {
+                              return { min: '0', ref: '≤7.5', max: '15', hasRange: false }; // μg/dL
+                            }
+                            if (n.includes('cortisol livre urinário')) {
+                              return { min: '0', ref: '10', max: '50', hasRange: true }; // μg/24h
+                            }
+                            if (n.includes('cortisol') && !n.includes('manhã') && !n.includes('matinal') && !n.includes('noturno') && !n.includes('livre') && !n.includes('8h') && !n.includes('23h')) {
+                              return { min: '0', ref: '6', max: '23', hasRange: true };
+                            }
+                            
+                            if (n.includes('prolactina')) {
+                              if (isMale) {
+                                return { min: '0', ref: '4', max: '15', hasRange: true };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '4', max: '23', hasRange: true };
+                              } else {
+                                return { min: '0', ref: '4', max: '20', hasRange: true };
+                              }
+                            }
+                            
+                            // Enzimas cardíacas - diferentes tipos
+                            if (n.includes('troponina i')) {
+                              return { min: '0', ref: '≤0.04', max: '0.1', hasRange: false }; // ng/mL
+                            }
+                            if (n.includes('troponina t')) {
+                              return { min: '0', ref: '≤0.01', max: '0.1', hasRange: false }; // ng/mL
+                            }
+                            if (n.includes('ck total') || (n.includes('ck') && !n.includes('mb') && !n.includes('-'))) {
+                              if (isMale) {
+                                return { min: '0', ref: '38', max: '174', hasRange: true }; // U/L
+                              } else {
+                                return { min: '0', ref: '26', max: '140', hasRange: true }; // U/L
+                              }
+                            }
+                            if (n.includes('ck-nac') || n.includes('ck nac')) {
+                              return { min: '0', ref: '10', max: '190', hasRange: true }; // U/L
+                            }
+                            if (n.includes('ldh')) {
+                              return { min: '0', ref: '125', max: '220', hasRange: true }; // U/L
+                            }
+                            
+                            // Vitaminas adicionais - diferentes formas
+                            if (n.includes('vitamina c')) {
+                              return { min: '0', ref: '0.4', max: '2.0', hasRange: true };
+                            }
+                            if (n.includes('vitamina e')) {
+                              return { min: '0', ref: '5', max: '20', hasRange: true };
+                            }
+                            if (n.includes('vitamina a')) {
+                              return { min: '0', ref: '30', max: '65', hasRange: true };
+                            }
+                            
+                            // Vitamina B - diferentes tipos
+                            if (n.includes('vitamina b1') || n.includes('tiamina')) {
+                              return { min: '0', ref: '70', max: '180', hasRange: true }; // nmol/L
+                            }
+                            if (n.includes('vitamina b6') || n.includes('piridoxina')) {
+                              return { min: '0', ref: '20', max: '125', hasRange: true }; // nmol/L
+                            }
+                            if (n.includes('vitamina b9') || n.includes('ácido fólico') || n.includes('folato')) {
+                              return { min: '0', ref: '7', max: '46', hasRange: true }; // nmol/L
+                            }
+                            
+                            // Vitamina K - diferentes formas
+                            if (n.includes('vitamina k1') || n.includes('filoquinona')) {
+                              return { min: '0', ref: '0.15', max: '1.55', hasRange: true }; // ng/mL
+                            }
+                            if (n.includes('vitamina k2') || n.includes('menaquinona')) {
+                              return { min: '0', ref: '0.1', max: '1.2', hasRange: true }; // ng/mL
+                            }
+                            
+                            // Minerais adicionais
+                            if (n.includes('magnésio') || n.includes('magnesio')) {
+                              return { min: '0', ref: '1.7', max: '2.2', hasRange: true };
+                            }
+                            if (n.includes('potássio') || n.includes('potassio')) {
+                              return { min: '0', ref: '3.5', max: '5.0', hasRange: true };
+                            }
+                            if (n.includes('sódio') || n.includes('sodio')) {
+                              return { min: '0', ref: '136', max: '145', hasRange: true };
+                            }
+                            if (n.includes('zinco')) {
+                              return { min: '0', ref: '70', max: '120', hasRange: true };
+                            }
+                            
+                            // Proteínas e enzimas adicionais - diferentes tipos
+                            if (n.includes('proteínas totais') || n.includes('proteinas totais')) {
+                              return { min: '0', ref: '6.0', max: '8.3', hasRange: true };
+                            }
+                            if (n.includes('globulina alfa-1') || n.includes('alfa-1-globulina')) {
+                              return { min: '0', ref: '0.1', max: '0.3', hasRange: true }; // g/dL
+                            }
+                            if (n.includes('globulina alfa-2') || n.includes('alfa-2-globulina')) {
+                              return { min: '0', ref: '0.6', max: '1.0', hasRange: true }; // g/dL
+                            }
+                            if (n.includes('globulina beta') || n.includes('beta-globulina')) {
+                              return { min: '0', ref: '0.7', max: '1.1', hasRange: true }; // g/dL
+                            }
+                            if (n.includes('globulina gama') || n.includes('gama-globulina') || n.includes('globulina gamma') || n.includes('gamma-globulina')) {
+                              return { min: '0', ref: '0.7', max: '1.6', hasRange: true }; // g/dL
+                            }
+                            if (n.includes('globulina') && !n.includes('alfa') && !n.includes('beta') && !n.includes('gama') && !n.includes('gamma')) {
+                              return { min: '0', ref: '2.3', max: '3.5', hasRange: true };
+                            }
+                            
+                            // Bilirrubina - diferentes frações
+                            if (n.includes('bilirrubina direta') || n.includes('bilirrubina conjugada')) {
+                              return { min: '0', ref: '≤0.3', max: '0.8', hasRange: false }; // mg/dL
+                            }
+                            if (n.includes('bilirrubina indireta') || n.includes('bilirrubina não conjugada')) {
+                              return { min: '0', ref: '≤0.8', max: '1.5', hasRange: false }; // mg/dL
+                            }
+                            if (n.includes('bilirrubina total')) {
+                              return { min: '0', ref: '≤1.2', max: '2.0', hasRange: false };
+                            }
+                            
+                            // Fosfatases - diferentes tipos
+                            if (n.includes('fosfatase alcalina óssea')) {
+                              return { min: '0', ref: '20', max: '50', hasRange: true }; // U/L
+                            }
+                            if (n.includes('fosfatase alcalina hepática')) {
+                              return { min: '0', ref: '35', max: '104', hasRange: true }; // U/L
+                            }
+                            if (n.includes('fosfatase alcalina') && !n.includes('óssea') && !n.includes('hepática')) {
+                              return { min: '0', ref: '44', max: '147', hasRange: true };
+                            }
+                            if (n.includes('fosfatase ácida')) {
+                              return { min: '0', ref: '0', max: '3.5', hasRange: true }; // U/L
+                            }
+                            
+                            // Lipídios adicionais - diferentes tipos
+                            if (n.includes('lipoproteína(a)') || n.includes('lp(a)')) {
+                              return { min: '0', ref: '≤30', max: '50', hasRange: false }; // mg/dL
+                            }
+                            if (n.includes('apolipoproteína a1') || n.includes('apo a1')) {
+                              if (isMale) {
+                                return { min: '0', ref: '120', max: '180', hasRange: true }; // mg/dL
+                              } else {
+                                return { min: '0', ref: '140', max: '200', hasRange: true }; // mg/dL
+                              }
+                            }
+                            if (n.includes('apolipoproteína b') || n.includes('apo b')) {
+                              return { min: '0', ref: '≤100', max: '140', hasRange: false }; // mg/dL
+                            }
+                            if (n.includes('colesterol não-hdl') || n.includes('colesterol nao-hdl')) {
+                              return { min: '0', ref: '≤130', max: '190', hasRange: false }; // mg/dL
+                            }
+                            
+                            // Imunoglobulinas - diferentes tipos
+                            if (n.includes('imunoglobulina g') || n.includes('igg')) {
+                              return { min: '0', ref: '700', max: '1600', hasRange: true }; // mg/dL
+                            }
+                            if (n.includes('imunoglobulina a') || n.includes('iga')) {
+                              return { min: '0', ref: '70', max: '400', hasRange: true }; // mg/dL
+                            }
+                            if (n.includes('imunoglobulina m') || n.includes('igm')) {
+                              return { min: '0', ref: '40', max: '230', hasRange: true }; // mg/dL
+                            }
+                            if (n.includes('imunoglobulina e') || n.includes('ige')) {
+                              return { min: '0', ref: '≤100', max: '400', hasRange: false }; // UI/mL
+                            }
+                            
+                            // Marcadores cardíacos
+                            if (n.includes('troponina')) {
+                              return { min: '0', ref: '≤0.04', max: '0.1', hasRange: false };
+                            }
+                            if (n.includes('ck-mb') || n.includes('ckmb')) {
+                              return { min: '0', ref: '≤25', max: '50', hasRange: false };
+                            }
+                            
+                            // Marcadores tumorais - diferentes tipos
+                            if (n.includes('psa livre')) {
+                              return { min: '0', ref: '≥0.15', max: '1', hasRange: false }; // relação PSA livre/total
+                            }
+                            if (n.includes('psa total') || (n.includes('psa') && !n.includes('livre'))) {
+                              if (age && age >= 50) {
+                                return { min: '0', ref: '≤4.0', max: '10', hasRange: false };
+                              } else {
+                                return { min: '0', ref: '≤2.5', max: '10', hasRange: false };
+                              }
+                            }
+                            if (n.includes('cea')) {
+                              return { min: '0', ref: '≤5.0', max: '15', hasRange: false };
+                            }
+                            if (n.includes('ca 19-9')) {
+                              return { min: '0', ref: '≤37', max: '100', hasRange: false }; // U/mL
+                            }
+                            if (n.includes('ca 125')) {
+                              return { min: '0', ref: '≤35', max: '100', hasRange: false }; // U/mL
+                            }
+                            if (n.includes('ca 15-3')) {
+                              return { min: '0', ref: '≤31.3', max: '100', hasRange: false }; // U/mL
+                            }
+                            if (n.includes('alfa-fetoproteína') || n.includes('afp')) {
+                              return { min: '0', ref: '≤10', max: '20', hasRange: false }; // ng/mL
+                            }
+                            if (n.includes('beta-hcg') || n.includes('hcg')) {
+                              if (isFemale) {
+                                return { min: '0', ref: '≤5', max: '25', hasRange: false }; // mUI/mL (não grávida)
+                              } else {
+                                return { min: '0', ref: '≤2', max: '5', hasRange: false }; // mUI/mL
+                              }
+                            }
+                            
+                            // Coagulação
+                            if (n.includes('tempo de protrombina') || n.includes('tp') || n.includes('inr')) {
+                              return { min: '0', ref: '0.8', max: '1.2', hasRange: true };
+                            }
+                            if (n.includes('ttpa') || n.includes('ptt')) {
+                              return { min: '0', ref: '25', max: '35', hasRange: true };
+                            }
+                            
+                            // Sedimentação
+                            if (n.includes('vhs') || n.includes('velocidade de hemossedimentação')) {
+                              if (isMale) {
+                                return { min: '0', ref: '≤15', max: '30', hasRange: false };
+                              } else if (isFemale) {
+                                return { min: '0', ref: '≤20', max: '35', hasRange: false };
+                              } else {
+                                return { min: '0', ref: '≤20', max: '35', hasRange: false };
+                              }
+                            }
+                            
+                            // Default mais específico baseado no nome da métrica
+                            const cleanName = n.replace(/[^a-záêçõ\s]/g, '').trim();
+                            if (cleanName.length > 0) {
+                              return { min: '0', ref: 'ref', max: 'máx', hasRange: false };
+                            }
+                            
+                            return { min: '0', ref: 'normal', max: 'máx', hasRange: false };
+                          };
+                          
+                          // Get user profile info for personalized references
+                          const activeProfile = profiles?.find(p => p.isDefault) || profiles?.[0];
+                          const userAge = activeProfile?.birthDate ? 
+                            new Date().getFullYear() - new Date(activeProfile.birthDate).getFullYear() : undefined;
+                          const userGender = activeProfile?.gender;
+                          
+                          const referenceRange = getPersonalizedReferenceRange(metric.name, userAge, userGender);
+                          
+                          // Calculate progress bar position to match visual layout
+                          const calculateProgressPercentage = (value: number, referenceRange: any) => {
+                            const minVal = parseFloat(referenceRange.min) || 0;
+                            const maxVal = parseFloat(referenceRange.max) || 100;
+                            const refVal = parseFloat(referenceRange.ref) || 50;
+                            
+                            if (referenceRange.hasRange) {
+                              // For range-based values: min=0%, ref=50%, max=100%
+                              if (value <= refVal) {
+                                // Value is between min and ref: scale to 0-50%
+                                const percentage = ((value - minVal) / (refVal - minVal)) * 50;
+                                return Math.min(50, Math.max(0, percentage));
+                              } else {
+                                // Value is between ref and max: scale to 50-100%
+                                const percentage = 50 + ((value - refVal) / (maxVal - refVal)) * 50;
+                                return Math.min(100, Math.max(50, percentage));
+                              }
+                            } else {
+                              // For limit-based values: reference point at 50%
+                              const percentage = (value / refVal) * 50;
+                              return Math.min(100, Math.max(0, percentage));
+                            }
+                          };
+                          
+                          const progressPercentage = calculateProgressPercentage(value, referenceRange);
+                          
+                          return (
+                            <div key={metric.id} className={`mb-4 ${index === 3 ? '' : 'mb-4'}`}>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-sm font-medium">{metric.name}</span>
+                                <span className={`text-xs font-medium ${getStatusColor(healthStatus)}`}>
+                                  {metric.value} {metric.unit || ''}
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full ${getStatusBgColor(healthStatus)}`} 
+                                  style={{ width: `${progressPercentage}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>{referenceRange.min}</span>
+                                {referenceRange.hasRange ? (
+                                  <>
+                                    <span className="font-medium text-gray-700">{referenceRange.ref}</span>
+                                    <span className="font-medium text-gray-700">{referenceRange.max}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="font-medium text-gray-700">{referenceRange.ref}</span>
+                                    <span>{referenceRange.max}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                         
                         <div className="mt-6 text-center">
-                          <Link href="/report/latest">
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <Activity className="h-4 w-4" />
-                              Ver relatório completo
-                            </Button>
-                          </Link>
+                          {(() => {
+                            console.log('🔍 DEBUG Relatório:', {
+                              recentMetrics: recentMetrics,
+                              recentMetricsLength: recentMetrics?.length,
+                              firstMetricExamId: recentMetrics?.[0]?.examId,
+                              latestExams: latestExams,
+                              latestExamsLength: latestExams?.length,
+                              firstExamId: latestExams?.[0]?.id
+                            });
+                            
+                            if (recentMetrics && recentMetrics.length > 0 && recentMetrics[0].examId) {
+                              const examId = recentMetrics[0].examId;
+                              console.log(`📊 Usando examId da métrica: ${examId}`);
+                              return (
+                                <Link href={`/report/${examId}`}>
+                                  <Button variant="outline" size="sm" className="gap-1">
+                                    <Activity className="h-4 w-4" />
+                                    Ver relatório completo
+                                  </Button>
+                                </Link>
+                              );
+                            } else if (latestExams && latestExams.length > 0) {
+                              const examId = latestExams[0].id;
+                              console.log(`📋 Usando examId do exame: ${examId}`);
+                              return (
+                                <Link href={`/report/${examId}`}>
+                                  <Button variant="outline" size="sm" className="gap-1">
+                                    <Activity className="h-4 w-4" />
+                                    Ver relatório completo
+                                  </Button>
+                                </Link>
+                              );
+                            } else {
+                              console.log('❌ Nenhum dado disponível para relatório');
+                              return (
+                                <Button variant="outline" size="sm" className="gap-1" disabled>
+                                  <Activity className="h-4 w-4" />
+                                  Ver relatório completo
+                                </Button>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     ) : (
