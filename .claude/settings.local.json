@@ -30,7 +30,9 @@
       "Bash(npx tsx:*)",
       "Bash(taskkill:*)",
       "Bash(npx kill-port:*)",
-      "Bash(set NODE_ENV=development)"
+      "Bash(set NODE_ENV=development)",
+      "Bash(magick:*)",
+      "Bash(where convert)"
     ],
     "deny": []
   }
