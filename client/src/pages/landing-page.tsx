@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/ui/logo";
 import { 
   FileText, 
   Brain, 
@@ -158,20 +159,15 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <Link href="/">
             <motion.div 
-              className="flex items-center"
               whileHover={{ scale: 1.03 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <div className="w-12 h-12 flex items-center justify-center mr-3 overflow-hidden">
-                <img src="/assets/vitaview_logo_only_2k.png" alt="VitaView Logo" className="w-20 h-20 object-cover transform scale-125" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold tracking-tight">
-                  <span className="text-[#1E3A5F]">VitaView</span>
-                  <span className="text-[#448C9B] text-xl ml-1">AI</span>
-                </span>
-
-              </div>
+              <Logo 
+                size="md" 
+                showText={true} 
+                textSize="lg" 
+                className="font-bold tracking-tight"
+              />
             </motion.div>
           </Link>
           

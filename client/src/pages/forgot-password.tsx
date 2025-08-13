@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/ui/logo";
 import {
   Form,
   FormControl,
@@ -85,17 +86,12 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo VitaView */}
         <div className="flex justify-center mb-6">
-          <div className="flex flex-col items-center">
-            <img 
-              src="/assets/vitaview_logo_icon.png" 
-              alt="VitaView AI Logo" 
-              className="h-16 w-auto object-contain mb-2" 
-            />
-            <div className="text-center">
-              <span className="font-semibold text-[#1E3A5F] text-xl">VitaView</span>
-              <span className="font-semibold text-[#448C9B] text-xl">AI</span>
-            </div>
-          </div>
+          <Logo 
+            size="lg" 
+            showText={true} 
+            textSize="md" 
+            className="flex-col items-center"
+          />
         </div>
         
         <Card className="bg-white rounded-xl shadow-lg border-t-4 border-t-[#1E3A5F] border border-gray-100">

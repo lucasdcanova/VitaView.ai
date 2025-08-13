@@ -6,6 +6,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/ui/logo";
 import {
   Form,
   FormControl,
@@ -157,21 +158,12 @@ export default function AuthPage() {
             className="flex items-center gap-3 mb-5"
           >
             <div className="flex justify-center w-full my-4">
-              <div className="flex flex-col items-center">
-                <img 
-                  src="/assets/vitaview_logo_icon.png" 
-                  alt="VitaView AI Logo" 
-                  className="h-20 w-auto object-contain mb-2" 
-                  onError={(e) => {
-                    // Erro ao carregar logo
-                    e.currentTarget.onerror = null;
-                  }}
-                />
-                <div className="text-center mt-2 mb-2">
-                  <span className="font-semibold text-[#1E3A5F] text-2xl">VitaView</span>
-                  <span className="font-semibold text-[#448C9B] text-2xl">AI</span>
-                </div>
-              </div>
+              <Logo 
+                size="xl" 
+                showText={true} 
+                textSize="lg" 
+                className="flex-col items-center"
+              />
             </div>
           </motion.div>
         </div>

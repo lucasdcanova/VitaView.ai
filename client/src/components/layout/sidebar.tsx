@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import ProfileSwitcher from "@/components/profile-switcher";
+import Logo from "@/components/ui/logo";
 import { 
   LayoutDashboard, 
   Upload, 
@@ -56,22 +57,8 @@ export default function Sidebar(props: SidebarProps) {
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
-      <div className="p-4 flex items-center border-b border-gray-100">
-        <div className="w-12 h-12 flex items-center justify-center mr-3">
-          <img 
-            src="/assets/vitaview_logo_icon.png" 
-            alt="VitaView AI Logo" 
-            className="w-12 h-auto" 
-            onError={(e) => {
-              // Erro ao carregar logo
-              e.currentTarget.onerror = null;
-            }}
-          />
-        </div>
-        <div>
-          <span className="font-semibold text-[#1E3A5F] text-xl">VitaView</span>
-          <span className="font-semibold text-[#448C9B] text-xl">AI</span>
-        </div>
+      <div className="p-4 border-b border-gray-100">
+        <Logo size="md" showText={true} textSize="md" />
       </div>
       
       <div className="p-4 border-b border-gray-100">
