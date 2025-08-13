@@ -43,7 +43,7 @@ export function usePerformance() {
   const measureApiCall = useCallback(async <T>(
     apiCall: () => Promise<T>,
     endpoint: string
-  ): Promise<T> => {
+  ) => {
     const startTime = performance.now();
     
     try {
