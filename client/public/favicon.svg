@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+  <defs>
+    <style>
+      .eye-main { fill: #1E3A5F; }
+      .eye-accent { fill: #4ECDC4; }
+      .eye-center { fill: #FFFFFF; }
+      .eye-pupil { fill: #1E3A5F; }
+    </style>
+  </defs>
+  <!-- Formato do olho principal -->
+  <path class="eye-main" d="M10 50 C10 30, 30 15, 50 15 C70 15, 90 30, 90 50 C90 70, 70 85, 50 85 C30 85, 10 70, 10 50 Z"/>
+  <!-- Parte inferior do olho (verde) -->
+  <path class="eye-accent" d="M50 15 C70 15, 90 30, 90 50 C90 70, 70 85, 50 85 C60 75, 70 65, 70 50 C70 35, 60 25, 50 15 Z"/>
+  <!-- Parte branca do olho -->
+  <circle class="eye-center" cx="50" cy="50" r="18"/>
+  <!-- Pupila -->
+  <circle class="eye-pupil" cx="50" cy="50" r="8"/>
+</svg>
