@@ -1,0 +1,83 @@
+{
+  "name": "VitaView AI - Plataforma de Análise Bioquímica",
+  "short_name": "VitaView AI",
+  "description": "Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1E3A5F",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["health", "medical", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/vitaview_logo_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/vitaview_logo_only_2k.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/vitaview_ai_transparent_2k.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acesso rápido ao painel principal",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/assets/vitaview_logo_icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Enviar Exame",
+      "short_name": "Upload",
+      "description": "Enviar novo exame para análise",
+      "url": "/upload",
+      "icons": [
+        {
+          "src": "/assets/vitaview_logo_icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Histórico",
+      "short_name": "Histórico",
+      "description": "Visualizar histórico de exames",
+      "url": "/history",
+      "icons": [
+        {
+          "src": "/assets/vitaview_logo_icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [
+    {
+      "src": "/assets/vitaview_ai_transparent_2k.png",
+      "sizes": "1024x768",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "VitaView AI Dashboard"
+    }
+  ]
+}
