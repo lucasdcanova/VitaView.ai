@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import ExternalScriptLoader from '../../utils/load-external-scripts';
 import { Elements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
@@ -26,30 +27,56 @@ if (!stripePublicKey.startsWith('pk_')) {
   console.error('Chave pública do Stripe tem formato inválido. Deve começar com pk_');
 }
 
-// Criar Promise do Stripe com tratamento de erro melhorado
+// Enhanced Stripe loading with CSP support
 let stripePromise: Promise<any> | null = null;
 
-try {
-  stripePromise = loadStripe(stripePublicKey);
-  stripePromise.then(
-    (stripe) => {
-      if (stripe) {
-        console.log('Stripe carregado com sucesso');
-      } else {
-        console.error('Stripe retornou null - verifique a chave pública');
-      }
-    },
-    (error) => {
-      console.error('Erro ao carregar Stripe.js:', error);
-      console.error('Possíveis causas:');
-      console.error('1. Bloqueio de rede/firewall');
-      console.error('2. Chave pública inválida');
-      console.error('3. Erro de CORS');
-      console.error('4. Stripe.js não pode ser carregado do CDN');
+const initializeStripe = async () => {
+  if (stripePromise) return stripePromise;
+  
+  try {
+    console.log('🔄 Inicializando Stripe com suporte CSP...');
+    
+    // First, ensure Stripe.js is loaded via our CSP-compliant loader
+    await ExternalScriptLoader.loadStripeJS();
+    
+    // Then initialize with loadStripe
+    stripePromise = loadStripe(stripePublicKey);
+    
+    const stripe = await stripePromise;
+    if (stripe) {
+      console.log('✅ Stripe carregado com sucesso via ExternalScriptLoader');
+    } else {
+      console.error('❌ Stripe retornou null - verifique a chave pública:', stripePublicKey);
     }
-  );
+    
+    return stripe;
+  } catch (error) {
+    console.error('❌ Erro ao carregar Stripe.js:', error);
+    console.group('🔍 Diagnóstico de problemas Stripe:');
+    console.error('1. Bloqueio CSP - script-src não permite js.stripe.com');
+    console.error('2. Chave pública inválida:', stripePublicKey);
+    console.error('3. Rede/firewall bloqueando stripe.com');
+    console.error('4. Erro de CORS ou headers de segurança');
+    console.error('5. CDN Stripe indisponível');
+    console.groupEnd();
+    
+    // Try fallback initialization
+    try {
+      console.log('🔄 Tentando inicialização fallback do Stripe...');
+      stripePromise = loadStripe(stripePublicKey);
+      return await stripePromise;
+    } catch (fallbackError) {
+      console.error('❌ Fallback também falhou:', fallbackError);
+      throw error;
+    }
+  }
+};
+
+// Initialize Stripe
+try {
+  stripePromise = initializeStripe();
 } catch (error) {
-  console.error('Erro ao inicializar Stripe:', error);
+  console.error('❌ Falha crítica na inicialização do Stripe:', error);
   stripePromise = Promise.reject(error);
 }
 

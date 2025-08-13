@@ -42,17 +42,33 @@ export class ExternalScriptLoader {
     }
     
     try {
+      // Wait a bit to ensure CSP is properly set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       await this.loadScript(scriptUrl, {
         async: true,
-        crossOrigin: 'anonymous'
+        crossOrigin: 'anonymous',
+        timeout: 10000 // Longer timeout for Stripe
       });
+      
+      // Wait for Stripe object to be available
+      let attempts = 0;
+      while (!(window as any).Stripe && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (!(window as any).Stripe) {
+        throw new Error('Stripe object not available after script load');
+      }
       
       console.log('[Script Loader] Stripe.js loaded successfully');
       this.loadedScripts.add(scriptUrl);
       return (window as any).Stripe;
     } catch (error) {
       console.error('[Script Loader] Failed to load Stripe.js:', error);
-      throw new Error('Stripe.js could not be loaded');
+      console.error('[Script Loader] CSP may be blocking Stripe resources');
+      throw new Error('Stripe.js could not be loaded - check CSP settings');
     }
   }
   

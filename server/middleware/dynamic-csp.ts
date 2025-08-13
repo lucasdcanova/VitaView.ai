@@ -7,7 +7,9 @@ const TRUSTED_DOMAINS = {
     'https://m.stripe.network',
     'https://q.stripe.com',
     'https://b.stripecdn.com',
-    'https://r.stripe.com'
+    'https://r.stripe.com',
+    'https://checkout.stripe.com',
+    'https://connect.stripe.com'
   ],
   replit: [
     'https://replit.com',
@@ -59,7 +61,9 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   // Detect which services are being used
   const needsStripe = req.path.includes('payment') || 
                      req.path.includes('subscription') || 
-                     referer.includes('stripe');
+                     req.path.includes('stripe') ||
+                     referer.includes('stripe') ||
+                     isDev; // Always include Stripe in development
   
   const needsReplit = isReplit || 
                      req.hostname.includes('replit') || 
