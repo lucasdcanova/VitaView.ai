@@ -1,34 +1,64 @@
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Express, Request, Response, NextFunction } from 'express';
+import { handleCSPViolation, getDynamicCSPDirectives, nonceMiddleware } from './csp-reporter';
 
 export function setupSecurity(app: Express) {
   // Trust proxy for proper IP detection behind reverse proxies
   app.set('trust proxy', 1);
 
-  // Enhanced security headers with Helmet
+  // CSP violation reporting
+  app.use(handleCSPViolation);
+  
+  // Add nonce middleware for inline scripts
+  app.use(nonceMiddleware);
+
+  // Define CSP directives based on environment
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // Dynamic CSP configuration
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const cspDirectives = getDynamicCSPDirectives(req);
+    
+    // Set CSP header directly for more control
+    if (!isDevelopment) {
+      const cspString = Object.entries(cspDirectives)
+        .map(([directive, sources]) => {
+          const directiveName = directive.replace(/([A-Z])/g, '-$1').toLowerCase();
+          return `${directiveName} ${Array.isArray(sources) ? sources.join(' ') : ''}`;
+        })
+        .join('; ');
+      
+      res.setHeader('Content-Security-Policy', cspString);
+      
+      // Also set reporting endpoint
+      res.setHeader('Content-Security-Policy-Report-Only', 
+        `${cspString}; report-uri /api/csp-violation-report`);
+    } else {
+      // In development, use report-only mode to identify issues without blocking
+      const cspString = Object.entries(cspDirectives)
+        .map(([directive, sources]) => {
+          const directiveName = directive.replace(/([A-Z])/g, '-$1').toLowerCase();
+          return `${directiveName} ${Array.isArray(sources) ? sources.join(' ') : ''}`;
+        })
+        .join('; ');
+        
+      res.setHeader('Content-Security-Policy-Report-Only', 
+        `${cspString}; report-uri /api/csp-violation-report`);
+    }
+    
+    next();
+  });
+
+  // Enhanced security headers with Helmet (excluding CSP as we handle it above)
   app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.tailwindcss.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://cdn.tailwindcss.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'", "https://api.openai.com", "https://generativelanguage.googleapis.com", "https://api.stripe.com"],
-        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-        frameAncestors: ["'none'"],
-      },
-    },
+    contentSecurityPolicy: false, // We handle CSP manually above
     crossOriginEmbedderPolicy: false,
-    hsts: {
+    hsts: process.env.NODE_ENV === 'production' ? {
       maxAge: 31536000, // 1 year
       includeSubDomains: true,
       preload: true
-    }
+    } : false
   }));
 
   // Rate limiting with different levels based on endpoint criticality

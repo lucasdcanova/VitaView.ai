@@ -1926,6 +1926,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSP violation reporting endpoint
+  app.post("/api/csp-violation-report", (req: Request, res: Response) => {
+    try {
+      const violation = req.body;
+      
+      // Log CSP violations for monitoring
+      console.warn('[CSP Violation Report]', {
+        timestamp: new Date().toISOString(),
+        violatedDirective: violation['violated-directive'],
+        blockedURI: violation['blocked-uri'],
+        documentURI: violation['document-uri'],
+        originalPolicy: violation['original-policy'],
+        referrer: violation.referrer,
+        statusCode: violation['status-code'],
+        userAgent: req.get('user-agent'),
+        ip: req.ip
+      });
+
+      res.status(204).end();
+    } catch (error) {
+      console.error('Error handling CSP violation report:', error);
+      res.status(500).json({ message: "Error processing CSP violation report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
