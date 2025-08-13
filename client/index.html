@@ -178,23 +178,11 @@
       });
     </script>
     
-    <!-- Development banner (only in development) -->
+    <!-- Development banner (loaded by ExternalScriptLoader) -->
     <script type="text/javascript">
-      // Load development tools with CSP compliance
-      if (window.location.hostname === 'localhost' || window.location.hostname.includes('replit')) {
-        // Import CSP manager if available
-        if (typeof CSPManager !== 'undefined') {
-          CSPManager.loadScript('https://replit.com/public/js/replit-dev-banner.js')
-            .catch(error => console.log('Replit banner could not be loaded:', error));
-        } else {
-          // Fallback for direct loading
-          const script = document.createElement('script');
-          script.src = 'https://replit.com/public/js/replit-dev-banner.js';
-          script.async = true;
-          script.onerror = () => console.log('Replit banner could not be loaded');
-          document.head.appendChild(script);
-        }
-      }
+      // Development banner will be loaded automatically by ExternalScriptLoader
+      // This is now handled in load-external-scripts.ts
+      console.log('[Dev] External script loading delegated to ExternalScriptLoader');
     </script>
   </body>
 </html>

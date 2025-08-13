@@ -4,6 +4,7 @@ import "./index.css";
 
 // Load CSP utilities
 import CSPManager from "./utils/csp";
+import ExternalScriptLoader from "./utils/load-external-scripts";
 
 // Load CSP debugger in development
 if (process.env.NODE_ENV === 'development') {

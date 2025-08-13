@@ -14,9 +14,41 @@ export function setupSecurity(app: Express) {
   // Add nonce middleware for inline scripts
   app.use(nonceMiddleware);
 
-  // Dynamic CSP system - detects needed services and adjusts CSP accordingly
-  app.use(dynamicCSPMiddleware);
-  app.use(applyCSPHeader);
+  // Define CSP directives based on environment
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // CSP configuration
+  if (isDevelopment) {
+    // Development: Disable CSP enforcement, only report violations
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      const cspPolicy = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data:",
+        "script-src-elem 'self' 'unsafe-inline' https: http:",
+        "style-src 'self' 'unsafe-inline' https: http:",
+        "style-src-elem 'self' 'unsafe-inline' https: http:",
+        "font-src 'self' https: http: data:",
+        "img-src 'self' https: http: data: blob:",
+        "connect-src 'self' https: http: ws: wss:",
+        "frame-src 'self' https: http:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'"
+      ].join('; ');
+      
+      // Only report violations in development, don't block
+      res.setHeader('Content-Security-Policy-Report-Only', 
+        `${cspPolicy}; report-uri /api/csp-violation-report`);
+      
+      console.log('[CSP Dev] Using permissive CSP for development');
+      next();
+    });
+  } else {
+    // Production: Use strict CSP
+    app.use(dynamicCSPMiddleware);
+    app.use(applyCSPHeader);
+  }
 
   // Enhanced security headers with Helmet (excluding CSP as we handle it above)
   app.use(helmet({

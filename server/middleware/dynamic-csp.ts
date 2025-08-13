@@ -63,7 +63,9 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   
   const needsReplit = isReplit || 
                      req.hostname.includes('replit') || 
-                     referer.includes('replit');
+                     referer.includes('replit') ||
+                     req.get('host')?.includes('replit') ||
+                     isDev; // Always include in development for safety
   
   const needsAnalytics = !isDev; // Only in production
   
@@ -101,12 +103,15 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   connectSrc.push(...getTrustedDomains('apis'));
   
   // Store CSP directives in res.locals for use by other middleware
+  const finalScriptSrc = [...new Set(scriptSrc)];
+  const finalStyleSrc = [...new Set(styleSrc)];
+  
   res.locals.cspDirectives = {
     'default-src': ["'self'"],
-    'script-src': [...new Set(scriptSrc)],
-    'script-src-elem': [...new Set(scriptSrc)],
-    'style-src': [...new Set(styleSrc)],
-    'style-src-elem': [...new Set(styleSrc)],
+    'script-src': finalScriptSrc,
+    'script-src-elem': finalScriptSrc, // Explicit script-src-elem
+    'style-src': finalStyleSrc,
+    'style-src-elem': finalStyleSrc, // Explicit style-src-elem
     'font-src': ["'self'", ...getTrustedDomains('fonts'), "data:"],
     'img-src': [...new Set(imgSrc)],
     'connect-src': [...new Set(connectSrc)],
@@ -120,6 +125,16 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
       'block-all-mixed-content': []
     })
   };
+  
+  // Debug log in development
+  if (isDev) {
+    console.log('[CSP Debug] Generated directives for', req.path, {
+      'script-src': finalScriptSrc,
+      'script-src-elem': finalScriptSrc,
+      needsReplit,
+      needsStripe
+    });
+  }
   
   next();
 }
