@@ -180,10 +180,20 @@
     
     <!-- Development banner (only in development) -->
     <script type="text/javascript">
+      // Load development tools with CSP compliance
       if (window.location.hostname === 'localhost' || window.location.hostname.includes('replit')) {
-        const script = document.createElement('script');
-        script.src = 'https://replit.com/public/js/replit-dev-banner.js';
-        document.head.appendChild(script);
+        // Import CSP manager if available
+        if (typeof CSPManager !== 'undefined') {
+          CSPManager.loadScript('https://replit.com/public/js/replit-dev-banner.js')
+            .catch(error => console.log('Replit banner could not be loaded:', error));
+        } else {
+          // Fallback for direct loading
+          const script = document.createElement('script');
+          script.src = 'https://replit.com/public/js/replit-dev-banner.js';
+          script.async = true;
+          script.onerror = () => console.log('Replit banner could not be loaded');
+          document.head.appendChild(script);
+        }
       }
     </script>
   </body>

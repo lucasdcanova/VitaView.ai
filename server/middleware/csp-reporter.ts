@@ -56,6 +56,7 @@ export function getDynamicCSPDirectives(req: Request) {
         "'unsafe-inline'", // Required for CSS-in-JS and hot reload
         "https://fonts.googleapis.com",
         "https://cdn.tailwindcss.com",
+        "https://js.stripe.com",
         `${protocol}://${host}`,
         "http://localhost:*",
         "https://localhost:*"
@@ -66,6 +67,19 @@ export function getDynamicCSPDirectives(req: Request) {
         "'unsafe-eval'", // Required for Vite dev server
         "https://replit.com",
         "https://js.stripe.com",
+        "https://m.stripe.network",
+        "https://q.stripe.com",
+        `${protocol}://${host}`,
+        "http://localhost:*",
+        "https://localhost:*"
+      ],
+      scriptSrcElem: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://replit.com",
+        "https://js.stripe.com",
+        "https://m.stripe.network",
+        "https://q.stripe.com",
         `${protocol}://${host}`,
         "http://localhost:*",
         "https://localhost:*"
@@ -106,11 +120,22 @@ export function getDynamicCSPDirectives(req: Request) {
     styleSrc: [
       "'self'",
       "'unsafe-inline'", // Still needed for some CSS-in-JS
-      "https://fonts.googleapis.com"
+      "https://fonts.googleapis.com",
+      "https://js.stripe.com"
     ],
     scriptSrc: [
       "'self'",
       "https://js.stripe.com",
+      "https://m.stripe.network",
+      "https://q.stripe.com",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com"
+    ],
+    scriptSrcElem: [
+      "'self'",
+      "https://js.stripe.com",
+      "https://m.stripe.network", 
+      "https://q.stripe.com",
       "https://www.googletagmanager.com",
       "https://www.google-analytics.com"
     ],
