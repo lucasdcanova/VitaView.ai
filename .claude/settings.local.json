@@ -33,7 +33,8 @@
       "Bash(set NODE_ENV=development)",
       "Bash(magick:*)",
       "Bash(where convert)",
-      "Bash(npm run check:*)"
+      "Bash(npm run check:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

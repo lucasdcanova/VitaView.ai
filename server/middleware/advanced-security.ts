@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 
 // Security Configuration for Medical Data (HIPAA/LGPD Compliant)

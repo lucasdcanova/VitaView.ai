@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { advancedSecurity } from '../middleware/advanced-security';
 
 // Sistema de Detecção de Intrusão e Anomalias para Dados Médicos
@@ -86,7 +86,7 @@ interface RuleAction {
 export class IntrusionDetectionSystem {
   private securityEvents: SecurityEvent[] = [];
   private userProfiles = new Map<string, UserBehaviorProfile>();
-  private threatIntel: ThreatIntelligence;
+  private threatIntel!: ThreatIntelligence;
   private detectionRules: DetectionRule[] = [];
   private blockedIPs = new Map<string, Date>();
   private blockedUsers = new Map<string, Date>();
@@ -122,7 +122,7 @@ export class IntrusionDetectionSystem {
         /<script[^>]*>.*?<\/script>/i,
         /(\b(exec|execute|sp_)\b)/i,
         /(javascript:|vbscript:|onload=|onerror=)/i,
-        /(\.\./.*){3,}/,
+        /(\.\.\/.*){3,}/,
         /(sleep|benchmark|waitfor)\s*\(/i
       ],
       geolocationRisks: new Map([

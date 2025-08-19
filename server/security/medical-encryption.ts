@@ -421,18 +421,26 @@ export class MedicalDataEncryption {
 
   private initializeSecureEnvironment() {
     // Initialize secure random number generator
-    if (!crypto.constants.SSL_OP_NO_SSLv2) {
+    try {
+      crypto.randomBytes(16);
+    } catch (error) {
       throw new Error('Cryptographically secure environment not available');
     }
     
     // Verify required algorithms are available
-    const requiredAlgorithms = ['aes-256-gcm', 'sha256', 'pbkdf2'];
+    const requiredCiphers = ['aes-256-gcm'];
     const availableAlgorithms = crypto.getCiphers();
     
-    for (const algorithm of requiredAlgorithms) {
-      if (!availableAlgorithms.includes(algorithm) && algorithm !== 'pbkdf2') {
-        throw new Error(`Required cryptographic algorithm not available: ${algorithm}`);
+    for (const cipher of requiredCiphers) {
+      if (!availableAlgorithms.includes(cipher)) {
+        throw new Error(`Required cryptographic algorithm not available: ${cipher}`);
       }
+    }
+    
+    // Verify hash algorithms
+    const availableHashes = crypto.getHashes();
+    if (!availableHashes.includes('sha256')) {
+      throw new Error('Required hash algorithm not available: sha256');
     }
   }
 
