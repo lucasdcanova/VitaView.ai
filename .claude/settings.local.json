@@ -32,8 +32,10 @@
       "Bash(npx kill-port:*)",
       "Bash(set NODE_ENV=development)",
       "Bash(magick:*)",
-      "Bash(where convert)"
+      "Bash(where convert)",
+      "Bash(npm run check:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

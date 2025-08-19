@@ -124,8 +124,8 @@ async function runDatabaseCompatibilityTest() {
     
     // console.log('Retrieved exam result successfully');
     // console.log('Health metrics structure preserved?', 
-      Array.isArray(retrievedResult.healthMetrics) && 
-      retrievedResult.healthMetrics.length === testHealthMetrics.length);
+    //   Array.isArray(retrievedResult.healthMetrics) && 
+    //   retrievedResult.healthMetrics.length === testHealthMetrics.length);
     
     // Check if the first health metric has all expected fields
     const healthMetrics = retrievedResult.healthMetrics as Array<any>;

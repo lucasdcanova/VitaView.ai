@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { Express, Request, Response, NextFunction } from 'express';
 import { handleCSPViolation, getDynamicCSPDirectives, nonceMiddleware } from './csp-reporter';
 import { dynamicCSPMiddleware, applyCSPHeader } from './dynamic-csp';
+import { enhancedRateLimit } from './enhanced-rate-limit';
 
 export function setupSecurity(app: Express) {
   // Trust proxy for proper IP detection behind reverse proxies
@@ -121,15 +122,20 @@ export function setupSecurity(app: Express) {
     }
   });
 
-  // Apply rate limiters to specific endpoints
-  app.use('/api/login', strictAuthLimiter);
-  app.use('/api/register', strictAuthLimiter);
-  app.use('/api/forgot-password', strictAuthLimiter);
-  app.use('/api/exams/upload', uploadLimiter);
-  app.use('/api/upload', uploadLimiter);
-  app.use('/api/analyze', aiAnalysisLimiter);
-  app.use('/api/exams/quick-summary', aiAnalysisLimiter);
-  app.use('/api/', apiLimiter);
+  // Apply enhanced rate limiting system
+  if (process.env.NODE_ENV === 'production') {
+    enhancedRateLimit.applyEnhancedRateLimiting(app);
+  } else {
+    // Development fallback with basic rate limiting
+    app.use('/api/login', strictAuthLimiter);
+    app.use('/api/register', strictAuthLimiter);
+    app.use('/api/forgot-password', strictAuthLimiter);
+    app.use('/api/exams/upload', uploadLimiter);
+    app.use('/api/upload', uploadLimiter);
+    app.use('/api/analyze', aiAnalysisLimiter);
+    app.use('/api/exams/quick-summary', aiAnalysisLimiter);
+    app.use('/api/', apiLimiter);
+  }
 
   // Input sanitization and validation middleware
   app.use((req: Request, res: Response, next: NextFunction) => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
@@ -42,6 +42,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 
+// Memoized components for better performance
+const MemoizedHealthScore = memo(HealthScore);
+const MemoizedHealthMetrics = memo(HealthMetrics);
+const MemoizedRecentExams = memo(RecentExams);
+const MemoizedHealthRecommendations = memo(HealthRecommendations);
+
 export default function Dashboard() {
   const [activeMetricsTab, setActiveMetricsTab] = useState("all");
 
@@ -84,24 +90,24 @@ export default function Dashboard() {
     },
   });
   
-  // Function to process exam data for recency
-  const getRecentExams = (examList: Exam[] = [], count: number = 3) => {
-    if (!examList || examList.length === 0) return [];
+  // Memoized function to process exam data for recency
+  const recentExams = useMemo(() => {
+    if (!exams || exams.length === 0) return [];
     
-    return [...examList]
+    return [...exams]
       .filter(exam => exam.status === 'analyzed')
       .sort((a, b) => {
         const dateA = a.examDate ? new Date(a.examDate) : new Date(a.uploadDate);
         const dateB = b.examDate ? new Date(b.examDate) : new Date(b.uploadDate);
         return dateB.getTime() - dateA.getTime();
       })
-      .slice(0, count);
-  };
+      .slice(0, 3);
+  }, [exams]);
   
-  // Process the last 6 months of metrics data for charts
-  const processChartData = (metricList: HealthMetric[] = []) => {
-    console.log('🔍 Processing metrics data:', metricList);
-    if (!metricList || metricList.length === 0) {
+  // Memoized chart data processing
+  const chartData = useMemo(() => {
+    console.log('🔍 Processing metrics data:', metrics);
+    if (!metrics || metrics.length === 0) {
       console.log('⚠️ No metrics data to process');
       return [];
     }
@@ -110,7 +116,7 @@ export default function Dashboard() {
     // Group metrics by month and calculate a simple health score
     const dataByMonth: Record<string, any> = {};
     
-    metricList.forEach(metric => {
+    metrics.forEach(metric => {
       console.log('📊 Processing metric:', metric.name, '=', metric.value, 'status:', metric.status);
       const date = new Date(metric.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -173,9 +179,10 @@ export default function Dashboard() {
     
     console.log('📈 Final chart data result:', finalResult);
     return finalResult;
-  };
+  }, [metrics]);
   
-  const getHealthMetricStatus = (value: number, metricName: string): 'normal' | 'warning' | 'alert' => {
+  // Memoized health metric status calculation
+  const getHealthMetricStatus = useCallback((value: number, metricName: string): 'normal' | 'warning' | 'alert' => {
     if (!value) return 'normal';
     
     const name = metricName.toLowerCase();
@@ -253,18 +260,19 @@ export default function Dashboard() {
     
     // Para métricas não identificadas, assumir normal
     return 'normal';
-  };
+  }, []);
   
-  const formatDate = (dateString: string) => {
+  // Memoized utility functions
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
-  };
+  }, []);
   
-  const formatRelativeDate = (dateString: string) => {
+  const formatRelativeDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
-  };
+  }, []);
   
-  const getFileIcon = (fileType: string, iconSize: number = 16) => {
+  const getFileIcon = useCallback((fileType: string, iconSize: number = 16) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
         return <FileText className="text-blue-600" size={iconSize} />;
@@ -274,9 +282,9 @@ export default function Dashboard() {
       default:
         return <FileText className="text-gray-600" size={iconSize} />;
     }
-  };
+  }, []);
   
-  const getExamTypeColor = (fileType: string) => {
+  const getExamTypeColor = useCallback((fileType: string) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
         return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -287,10 +295,10 @@ export default function Dashboard() {
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
-  };
+  }, []);
   
-  // Calculate health stats
-  const calcHealthStats = () => {
+  // Memoized health stats calculation
+  const healthStats = useMemo(() => {
     if (!metrics || metrics.length === 0) {
       return { averageScore: null, trend: null, recentMetrics: [], hasData: false };
     }
@@ -350,14 +358,10 @@ export default function Dashboard() {
     }
     
     return { averageScore, trend, recentMetrics, hasData: true };
-  };
+  }, [metrics]);
   
-  const { averageScore, trend, recentMetrics } = calcHealthStats();
-  const latestExams = getRecentExams(exams, 3);
-  const chartData = processChartData(metrics);
-  
-  // Process metrics to create a map by metric name for easy access
-  const processedMetrics = React.useMemo(() => {
+  // Memoized processed metrics map
+  const processedMetrics = useMemo(() => {
     if (!metrics || metrics.length === 0) return {};
     
     const metricMap: Record<string, HealthMetric> = {};
@@ -373,24 +377,25 @@ export default function Dashboard() {
     return metricMap;
   }, [metrics]);
   
-  // Helper function to get metric by various name variations
-  const getMetricByName = (names: string[]) => {
+  // Memoized helper function to get metric by various name variations
+  const getMetricByName = useCallback((names: string[]) => {
     for (const name of names) {
       const metric = processedMetrics[name.toLowerCase()];
       if (metric) return metric;
     }
     return null;
-  };
+  }, [processedMetrics]);
   
-  // Health stats for metrics display
-  const healthStats = {
-    labels: ["Colesterol", "Glicemia", "Pressão Arterial", "Hormônios Tireoidianos"],
-    abnormalCount: 2
-  };
-  
-  // Determine if we're in a good state to show welcome based on data status
-  const isNewUser = !metrics || metrics.length === 0 || !exams || exams.length === 0;
-  const isWelcomeVisible = isNewUser && (!isLoadingMetrics && !isLoadingExams);
+  // Memoized derived state calculations
+  const derivedState = useMemo(() => {
+    const isNewUser = !metrics || metrics.length === 0 || !exams || exams.length === 0;
+    const isWelcomeVisible = isNewUser && (!isLoadingMetrics && !isLoadingExams);
+    
+    return {
+      isNewUser,
+      isWelcomeVisible
+    };
+  }, [metrics, exams, isLoadingMetrics, isLoadingExams]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -753,9 +758,9 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
-                    ) : latestExams.length > 0 ? (
+                    ) : recentExams.length > 0 ? (
                       <div className="space-y-3">
-                        {latestExams.map(exam => (
+                        {recentExams.map(exam => (
                           <div key={exam.id} className="flex flex-col sm:flex-row sm:items-center p-3 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition-colors">
                             <div className="flex items-start flex-1 mb-3 sm:mb-0">
                               <div className={`p-2 rounded-md mr-3 ${getExamTypeColor(exam.fileType)}`}>
@@ -1472,16 +1477,16 @@ export default function Dashboard() {
                         <div className="mt-6 text-center">
                           {(() => {
                             console.log('🔍 DEBUG Relatório:', {
-                              recentMetrics: recentMetrics,
-                              recentMetricsLength: recentMetrics?.length,
-                              firstMetricExamId: recentMetrics?.[0]?.examId,
-                              latestExams: latestExams,
-                              latestExamsLength: latestExams?.length,
-                              firstExamId: latestExams?.[0]?.id
+                              recentMetrics: healthStats.recentMetrics,
+                              recentMetricsLength: healthStats.recentMetrics?.length,
+                              firstMetricExamId: healthStats.recentMetrics?.[0]?.examId,
+                              latestExams: recentExams,
+                              latestExamsLength: recentExams?.length,
+                              firstExamId: recentExams?.[0]?.id
                             });
                             
-                            if (recentMetrics && recentMetrics.length > 0 && recentMetrics[0].examId) {
-                              const examId = recentMetrics[0].examId;
+                            if (healthStats.recentMetrics && healthStats.recentMetrics.length > 0 && healthStats.recentMetrics[0].examId) {
+                              const examId = healthStats.recentMetrics[0].examId;
                               console.log(`📊 Usando examId da métrica: ${examId}`);
                               return (
                                 <Link href={`/report/${examId}`}>
@@ -1491,8 +1496,8 @@ export default function Dashboard() {
                                   </Button>
                                 </Link>
                               );
-                            } else if (latestExams && latestExams.length > 0) {
-                              const examId = latestExams[0].id;
+                            } else if (recentExams && recentExams.length > 0) {
+                              const examId = recentExams[0].id;
                               console.log(`📋 Usando examId do exame: ${examId}`);
                               return (
                                 <Link href={`/report/${examId}`}>

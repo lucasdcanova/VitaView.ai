@@ -13,4 +13,7 @@ if (process.env.NODE_ENV === 'development') {
   import("./utils/csp-stripe-fix");
 }
 
+// Initialize PWA manager
+import("./utils/pwa-manager");
+
 createRoot(document.getElementById("root")!).render(<App />);

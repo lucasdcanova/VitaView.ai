@@ -3,12 +3,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupSecurity } from "./middleware/security";
+import { advancedCompression } from "./middleware/compression";
 import logger, { logError, logInfo, stream } from "./logger";
 import morgan from "morgan";
 
 const app = express();
 
-// Setup security middleware first
+// Setup compression middleware first for better performance
+advancedCompression.applyCompression(app);
+
+// Setup security middleware
 setupSecurity(app);
 
 // Setup HTTP request logging

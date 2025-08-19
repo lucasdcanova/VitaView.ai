@@ -5,10 +5,13 @@ import { FileText, Image, AlertCircle, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LazyComponent, useLazyLoading } from "@/components/ui/lazy-image";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 
 export default function RecentExams() {
+  const { ref, isInView } = useLazyLoading(0.1, '100px');
+  
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
     queryKey: ["/api/exams"],
     queryFn: async () => {
@@ -21,6 +24,7 @@ export default function RecentExams() {
         return [];
       }
     },
+    enabled: isInView, // Only fetch when component is in view
   });
   
   // Use React state instead of direct localStorage access for SSR compatibility
@@ -71,7 +75,7 @@ export default function RecentExams() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 overflow-hidden">
+    <div ref={ref} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Exames Recentes</h2>
@@ -120,16 +124,34 @@ export default function RecentExams() {
         </div>
       ) : (
         <div className="space-y-3">
-          {recentExams?.map((exam) => (
-            <div 
-              key={exam.id} 
-              className={cn(
-                "border rounded-xl p-4 transition-all transform hover:-translate-y-1 hover:shadow-md duration-300",
-                exam.status === 'analyzed' 
-                  ? "border-green-200 bg-green-50/70 hover:bg-green-50" 
-                  : "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
-              )}
+          {recentExams?.map((exam, index) => (
+            <LazyComponent
+              key={exam.id}
+              fallback={
+                <div className="border border-gray-100 rounded-xl p-4 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Skeleton className="h-12 w-12 rounded-lg" />
+                      <div>
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded" />
+                  </div>
+                </div>
+              }
+              threshold={0.1}
+              rootMargin="50px"
             >
+              <div 
+                className={cn(
+                  "border rounded-xl p-4 transition-all transform hover:-translate-y-1 hover:shadow-md duration-300",
+                  exam.status === 'analyzed' 
+                    ? "border-green-200 bg-green-50/70 hover:bg-green-50" 
+                    : "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
+                )}
+              >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className={cn(
@@ -199,7 +221,8 @@ export default function RecentExams() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            </LazyComponent>
           ))}
           
           <div className="flex justify-center pt-4 mt-2">
