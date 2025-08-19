@@ -407,7 +407,7 @@ export default function Dashboard() {
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
             {/* Welcome section for new users */}
-            {isWelcomeVisible && (
+            {derivedState.isWelcomeVisible && (
               <Card className="mb-8 border-t-4 border-t-primary">
                 <CardContent className="pt-6">
                   <div className="grid md:grid-cols-2 gap-6 items-center">
