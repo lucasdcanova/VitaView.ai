@@ -7,6 +7,7 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -22,6 +23,7 @@ type LoginData = Pick<InsertUser, "username" | "password">;
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const {
     data: user,
     error,
@@ -79,6 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Remover o cookie auxiliar
       document.cookie = "auth_user_id=; max-age=0; path=/; SameSite=Lax";
       queryClient.setQueryData(["/api/user"], null);
+      // Redirecionar para a página de login após logout
+      navigate("/auth");
       // Popup de logout removido conforme solicitado
     },
     onError: (error: Error) => {
