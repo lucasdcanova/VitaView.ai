@@ -91,8 +91,10 @@ export class IntrusionDetectionSystem {
   private blockedIPs = new Map<string, Date>();
   private blockedUsers = new Map<string, Date>();
   private alertSubscribers: Array<(event: SecurityEvent) => void> = [];
+  private isDevelopment: boolean;
 
   constructor() {
+    this.isDevelopment = process.env.NODE_ENV === 'development';
     this.initializeThreatIntelligence();
     this.initializeDetectionRules();
     this.startBackgroundProcessing();
@@ -926,6 +928,18 @@ export class IntrusionDetectionSystem {
   middleware() {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
+        // Em desenvolvimento, ser mais permissivo
+        if (this.isDevelopment) {
+          const analysis = await this.analyzeRequest(req);
+          (req as any).security = analysis;
+          
+          // Apenas log, sem bloqueio em desenvolvimento
+          if (analysis.threat && analysis.riskScore > 80) {
+            console.log('[IDS DEV] High-risk threat detected but allowed:', analysis.events.map(e => e.type));
+          }
+          return next();
+        }
+
         const analysis = await this.analyzeRequest(req);
         
         // Adicionar informações de segurança ao request

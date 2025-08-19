@@ -57,17 +57,19 @@ export class WebApplicationFirewall {
   private allowedIPs = new Set<string>();
 
   constructor() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     this.config = {
       enabled: true,
       logAllRequests: false,
-      blockMaliciousRequests: true,
-      rateLimitEnabled: true,
+      blockMaliciousRequests: !isDevelopment, // Menos restritivo em desenvolvimento
+      rateLimitEnabled: !isDevelopment, // Desabilitar rate limiting em desenvolvimento
       geoBlockingEnabled: false,
       medicalDataProtection: true,
       maxRequestSize: 50 * 1024 * 1024, // 50MB
       allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.docx', '.xlsx'],
       blockedCountries: [], // Configurável conforme necessário
-      whitelistedIPs: [],
+      whitelistedIPs: ['127.0.0.1', '::1', 'localhost'], // Whitelist localhost
       blacklistedIPs: []
     };
 

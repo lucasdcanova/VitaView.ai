@@ -185,13 +185,17 @@ export class AdvancedSessionSecurity {
         req.query = this.deepSanitize(req.query);
       }
 
-      // Check for suspicious patterns
-      if (this.detectSuspiciousPatterns(req)) {
+      // Check for suspicious patterns (menos restritivo em desenvolvimento)
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      if (!isDevelopment && this.detectSuspiciousPatterns(req)) {
         this.auditLog('SUSPICIOUS_PATTERN_DETECTED', req.user?.id, req);
         return res.status(400).json({
           error: 'Suspicious request pattern detected',
           code: 'SUSPICIOUS_PATTERN'
         });
+      } else if (isDevelopment && this.detectSuspiciousPatterns(req)) {
+        // Em desenvolvimento, apenas log sem bloquear
+        console.log('[SECURITY DEV] Suspicious pattern detected but allowed:', req.path);
       }
 
       next();
