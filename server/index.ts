@@ -4,6 +4,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupSecurity } from "./middleware/security";
 import { advancedCompression } from "./middleware/compression";
+import { httpsConfig } from "./security/https-config";
+import { webApplicationFirewall } from "./security/waf";
 import logger, { logError, logInfo, stream } from "./logger";
 import morgan from "morgan";
 
@@ -11,6 +13,9 @@ const app = express();
 
 // Setup compression middleware first for better performance
 advancedCompression.applyCompression(app);
+
+// Setup WAF middleware before other security layers
+app.use(webApplicationFirewall.middleware());
 
 // Setup security middleware
 setupSecurity(app);
@@ -70,7 +75,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // First register all routes
+  await registerRoutes(app);
+  
+  // Then setup HTTPS server with the configured app
+  const server = await httpsConfig.setupHTTPSServer(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
