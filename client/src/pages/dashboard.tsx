@@ -504,29 +504,29 @@ export default function Dashboard() {
                       <Skeleton className="h-32 w-32 rounded-full mb-4" />
                       <Skeleton className="h-5 w-32 mb-2" />
                     </div>
-                  ) : metrics && metrics.length > 0 && averageScore !== null ? (
+                  ) : metrics && metrics.length > 0 && healthStats.averageScore !== null ? (
                     <div className="flex flex-col items-center">
                       <div className="relative mb-4">
                         <div className="w-32 h-32 rounded-full flex items-center justify-center border-8 border-gray-100">
                           <div 
                             className={`w-24 h-24 rounded-full flex items-center justify-center ${
-                              averageScore >= 80 ? 'bg-green-50 text-green-700' : 
-                              averageScore >= 60 ? 'bg-yellow-50 text-yellow-700' : 
+                              healthStats.averageScore >= 80 ? 'bg-green-50 text-green-700' : 
+                              healthStats.averageScore >= 60 ? 'bg-yellow-50 text-yellow-700' : 
                               'bg-red-50 text-red-700'
                             }`}
                           >
-                            <span className="text-4xl font-bold">{averageScore}</span>
+                            <span className="text-4xl font-bold">{healthStats.averageScore}</span>
                           </div>
                         </div>
-                        {trend && (
+                        {healthStats.trend && (
                           <div className={`absolute -top-1 -right-1 rounded-full p-1.5 ${
-                            trend === 'improving' ? 'bg-green-100 text-green-700' :
-                            trend === 'declining' ? 'bg-red-100 text-red-700' :
+                            healthStats.trend === 'improving' ? 'bg-green-100 text-green-700' :
+                            healthStats.trend === 'declining' ? 'bg-red-100 text-red-700' :
                             'bg-blue-100 text-blue-700'
                           }`}>
-                            {trend === 'improving' ? (
+                            {healthStats.trend === 'improving' ? (
                               <TrendingUp className="h-5 w-5" />
-                            ) : trend === 'declining' ? (
+                            ) : healthStats.trend === 'declining' ? (
                               <TrendingUp className="h-5 w-5 transform rotate-180" />
                             ) : (
                               <Activity className="h-5 w-5" />
@@ -536,24 +536,24 @@ export default function Dashboard() {
                       </div>
                       <div className="text-center mb-3">
                         <p className="font-medium text-gray-800">
-                          {averageScore >= 80 ? 'Excelente' : 
-                           averageScore >= 70 ? 'Muito Bom' :
-                           averageScore >= 60 ? 'Bom' :
-                           averageScore >= 50 ? 'Regular' : 'Requer Atenção'}
+                          {healthStats.averageScore >= 80 ? 'Excelente' : 
+                           healthStats.averageScore >= 70 ? 'Muito Bom' :
+                           healthStats.averageScore >= 60 ? 'Bom' :
+                           healthStats.averageScore >= 50 ? 'Regular' : 'Requer Atenção'}
                         </p>
-                        {trend && (
+                        {healthStats.trend && (
                           <p className="text-sm text-gray-500">
-                            {trend === 'improving' ? 'Em melhora' : 
-                             trend === 'declining' ? 'Em declínio' : 'Estável'}
+                            {healthStats.trend === 'improving' ? 'Em melhora' : 
+                             healthStats.trend === 'declining' ? 'Em declínio' : 'Estável'}
                           </p>
                         )}
                       </div>
                       
                       <div className="w-full bg-gray-100 h-1 mb-4 rounded-full">
                         <div className={`h-1 rounded-full ${
-                          averageScore >= 80 ? 'bg-green-500' : 
-                          averageScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} style={{ width: `${averageScore}%` }}></div>
+                          healthStats.averageScore >= 80 ? 'bg-green-500' : 
+                          healthStats.averageScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} style={{ width: `${healthStats.averageScore}%` }}></div>
                       </div>
                       
                       <div className="grid grid-cols-3 w-full text-center text-xs gap-1">
