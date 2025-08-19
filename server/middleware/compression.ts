@@ -1,6 +1,6 @@
 import compression from 'compression';
 import { Request, Response, NextFunction, Express } from 'express';
-import { createGzip, createBrotliCompress } from 'zlib';
+import { createGzip, createBrotliCompress, constants as zlibConstants } from 'zlib';
 
 interface CompressionOptions {
   threshold: number;
@@ -154,8 +154,8 @@ class AdvancedCompression {
     
     const brotli = createBrotliCompress({
       params: {
-        [require('zlib').constants.BROTLI_PARAM_QUALITY]: 6,
-        [require('zlib').constants.BROTLI_PARAM_SIZE_HINT]: res.get('content-length')
+        [zlibConstants.BROTLI_PARAM_QUALITY]: 6,
+        [zlibConstants.BROTLI_PARAM_SIZE_HINT]: res.get('content-length')
       }
     });
     

@@ -11,8 +11,8 @@ import morgan from "morgan";
 
 const app = express();
 
-// Setup compression middleware first for better performance
-advancedCompression.applyCompression(app);
+// Setup compression middleware first for better performance (temporarily disabled)
+// advancedCompression.applyCompression(app);
 
 // Setup WAF middleware before other security layers
 app.use(webApplicationFirewall.middleware());
