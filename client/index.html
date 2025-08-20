@@ -35,9 +35,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/vitaview_logo_icon.png">
     <meta name="msapplication-TileImage" content="/assets/vitaview_logo_icon.png">
     
-    <!-- Preload critical assets -->
-    <link rel="preload" href="/assets/vitaview_logo_only_2k.png" as="image" type="image/png">
-    <link rel="preload" href="/assets/vitaview_logo_new.png" as="image" type="image/png">
+    <!-- Preload critical assets (only the most essential) -->
+    <link rel="preload" href="/assets/vitaview_logo_icon.png" as="image" type="image/png">
     
     <!-- DNS prefetch for external resources -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
@@ -133,36 +132,11 @@
     <!-- Main application script -->
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration (handled by pwa-manager.ts) -->
     <script>
-      // Register service worker for offline support and caching
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('[SW] Service Worker registered successfully:', registration.scope);
-              
-              // Check for updates
-              registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (newWorker) {
-                  newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      // Show update notification
-                      if (confirm('Nova versão disponível. Atualizar agora?')) {
-                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                        window.location.reload();
-                      }
-                    }
-                  });
-                }
-              });
-            })
-            .catch((error) => {
-              console.log('[SW] Service Worker registration failed:', error);
-            });
-        });
-      }
+      // Service Worker registration is handled by the PWA manager
+      // which includes development mode checks
+      console.log('[SW] Registration delegated to PWA Manager');
       
       // Performance monitoring
       window.addEventListener('load', () => {

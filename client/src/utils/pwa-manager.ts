@@ -59,6 +59,20 @@ class PWAManager {
   }
 
   private async registerServiceWorker() {
+    // Skip service worker registration in development to avoid conflicts
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[PWA] Service Worker registration skipped in development mode');
+      // Unregister any existing service worker in development
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+          console.log('[PWA] Unregistered existing service worker');
+        }
+      }
+      return;
+    }
+    
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {

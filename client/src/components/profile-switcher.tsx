@@ -32,9 +32,9 @@ type ProfileFormData = {
 const profileSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   relationship: z.string().optional(),
-  gender: z.string().optional(),
+  gender: z.string().min(1, "Gênero é obrigatório"),
   bloodType: z.string().optional(),
-  birthDate: z.string().optional(),
+  birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
 });
 
 export default function ProfileSwitcher() {
@@ -246,7 +246,7 @@ export default function ProfileSwitcher() {
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Gênero</FormLabel>
+                          <FormLabel>Gênero *</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -301,7 +301,7 @@ export default function ProfileSwitcher() {
                       name="birthDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Data de Nascimento</FormLabel>
+                          <FormLabel>Data de Nascimento *</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -376,7 +376,7 @@ export default function ProfileSwitcher() {
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gênero</FormLabel>
+                    <FormLabel>Gênero *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -431,7 +431,7 @@ export default function ProfileSwitcher() {
                 name="birthDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data de Nascimento</FormLabel>
+                    <FormLabel>Data de Nascimento *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>

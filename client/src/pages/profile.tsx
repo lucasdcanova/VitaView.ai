@@ -215,7 +215,7 @@ export default function Profile() {
                               <FormItem>
                                 <FormLabel>Nome</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} name={field.name} autoComplete="given-name" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -229,7 +229,7 @@ export default function Profile() {
                               <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                  <Input type="email" {...field} />
+                                  <Input type="email" {...field} name={field.name} autoComplete="email" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -243,7 +243,7 @@ export default function Profile() {
                               <FormItem>
                                 <FormLabel>Telefone</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} name={field.name} autoComplete="tel" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -257,7 +257,7 @@ export default function Profile() {
                               <FormItem>
                                 <FormLabel>Data de Nascimento</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} />
+                                  <Input type="date" {...field} name={field.name} autoComplete="bday" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -273,6 +273,7 @@ export default function Profile() {
                                 <Select
                                   value={field.value}
                                   onValueChange={field.onChange}
+                                  name={field.name}
                                 >
                                   <FormControl>
                                     <SelectTrigger>
@@ -300,7 +301,7 @@ export default function Profile() {
                               <FormItem>
                                 <FormLabel>Endereço</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} name={field.name} autoComplete="address-line1" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -338,43 +339,43 @@ export default function Profile() {
                         <div className="space-y-2">
                           <div className="flex items-center">
                             <Checkbox 
-                              id="condition1" 
+                              id="condition-hypertension" 
                               checked={conditions.hypertension}
                               onCheckedChange={(checked) => 
                                 setConditions({...conditions, hypertension: checked === true})
                               }
                             />
-                            <label htmlFor="condition1" className="ml-3 text-sm text-gray-700">Hipertensão</label>
+                            <label htmlFor="condition-hypertension" className="ml-3 text-sm text-gray-700">Hipertensão</label>
                           </div>
                           <div className="flex items-center">
                             <Checkbox 
-                              id="condition2" 
+                              id="condition-diabetes" 
                               checked={conditions.diabetes}
                               onCheckedChange={(checked) => 
                                 setConditions({...conditions, diabetes: checked === true})
                               }
                             />
-                            <label htmlFor="condition2" className="ml-3 text-sm text-gray-700">Diabetes</label>
+                            <label htmlFor="condition-diabetes" className="ml-3 text-sm text-gray-700">Diabetes</label>
                           </div>
                           <div className="flex items-center">
                             <Checkbox 
-                              id="condition3" 
+                              id="condition-asthma" 
                               checked={conditions.asthma}
                               onCheckedChange={(checked) => 
                                 setConditions({...conditions, asthma: checked === true})
                               }
                             />
-                            <label htmlFor="condition3" className="ml-3 text-sm text-gray-700">Asma</label>
+                            <label htmlFor="condition-asthma" className="ml-3 text-sm text-gray-700">Asma</label>
                           </div>
                           <div className="flex items-center">
                             <Checkbox 
-                              id="condition4" 
+                              id="condition-cholesterol" 
                               checked={conditions.highCholesterol}
                               onCheckedChange={(checked) => 
                                 setConditions({...conditions, highCholesterol: checked === true})
                               }
                             />
-                            <label htmlFor="condition4" className="ml-3 text-sm text-gray-700">Colesterol alto</label>
+                            <label htmlFor="condition-cholesterol" className="ml-3 text-sm text-gray-700">Colesterol alto</label>
                           </div>
                         </div>
                       </div>
@@ -454,7 +455,7 @@ export default function Profile() {
                                 <FormItem>
                                   <FormLabel>Senha atual</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} name={field.name} autoComplete="current-password" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -468,7 +469,7 @@ export default function Profile() {
                                 <FormItem>
                                   <FormLabel>Nova senha</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} name={field.name} autoComplete="new-password" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -482,7 +483,7 @@ export default function Profile() {
                                 <FormItem>
                                   <FormLabel>Confirmar nova senha</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} name={field.name} autoComplete="new-password" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -664,9 +665,9 @@ export default function Profile() {
                 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
+                    <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
                     <Select defaultValue="pt-BR">
-                      <SelectTrigger>
+                      <SelectTrigger id="language-select">
                         <SelectValue placeholder="Selecione o idioma" />
                       </SelectTrigger>
                       <SelectContent>
@@ -678,9 +679,9 @@ export default function Profile() {
                   </div>
                   
                   <div>
-                    <label htmlFor="units" className="block text-sm font-medium text-gray-700 mb-1">Unidades de medida</label>
+                    <label htmlFor="units-select" className="block text-sm font-medium text-gray-700 mb-1">Unidades de medida</label>
                     <Select defaultValue="metric">
-                      <SelectTrigger>
+                      <SelectTrigger id="units-select">
                         <SelectValue placeholder="Selecione o sistema de unidades" />
                       </SelectTrigger>
                       <SelectContent>
