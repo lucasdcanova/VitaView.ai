@@ -77,7 +77,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
+    target: 'es2021',
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -157,7 +157,7 @@ export default defineConfig({
     ],
     exclude: ['@vite/client', '@vite/env'],
     esbuildOptions: {
-      target: 'es2020',
+      target: 'es2021',
     },
   },
   

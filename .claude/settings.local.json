@@ -34,7 +34,9 @@
       "Bash(magick:*)",
       "Bash(where convert)",
       "Bash(npm run check:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx update-browserslist-db:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

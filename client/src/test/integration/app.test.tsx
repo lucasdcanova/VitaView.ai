@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { Router } from 'wouter';
 import App from '../../App';
 import { AuthProvider } from '../../hooks/use-auth';
 import { setupServer } from 'msw/node';
@@ -80,11 +80,11 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
           {children}
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   );
 };
@@ -97,9 +97,6 @@ describe('VitaView AI Application Integration Tests', () => {
   afterEach(() => {
     server.resetHandlers();
     vi.clearAllMocks();
-  });
-
-  afterAll(() => {
     server.close();
   });
 
