@@ -1,23 +1,22 @@
-import ProfileSwitcher from "@/components/profile-switcher";
-import { useAuth } from "@/hooks/use-auth";
-import { useProfiles } from "@/hooks/use-profiles";
-
 interface PatientHeaderProps {
   title: string;
   description?: string;
+  clinicianLabel: string;
+  patientName?: string;
+  planType?: string | null;
+  showSwitcher?: boolean;
 }
 
-export default function PatientHeader({ title, description }: PatientHeaderProps) {
-  const { user } = useAuth();
-  const { activeProfile } = useProfiles();
+import ProfileSwitcher from "@/components/profile-switcher";
 
-  const clinicianName = user?.fullName || user?.username || "Profissional";
-  const normalizedGender = user?.gender?.toLowerCase();
-  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
-    ? "Dra."
-    : "Dr.";
-  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
-
+export default function PatientHeader({
+  title,
+  description,
+  clinicianLabel,
+  patientName,
+  planType,
+  showSwitcher = true,
+}: PatientHeaderProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-6 mb-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -31,13 +30,13 @@ export default function PatientHeader({ title, description }: PatientHeaderProps
           <div className="text-left md:text-right">
             <p className="text-xs uppercase tracking-wide text-primary-600">Paciente ativo</p>
             <p className="text-sm font-semibold text-gray-900">
-              {activeProfile ? activeProfile.name : "Nenhum paciente selecionado"}
+              {patientName || "Nenhum paciente selecionado"}
             </p>
-            {activeProfile?.planType && (
-              <p className="text-xs text-gray-500">Plano: {activeProfile.planType}</p>
+            {planType && (
+              <p className="text-xs text-gray-500">Plano: {planType}</p>
             )}
           </div>
-          <ProfileSwitcher />
+          {showSwitcher && <ProfileSwitcher />}
         </div>
       </div>
     </div>

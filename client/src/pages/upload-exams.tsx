@@ -11,12 +11,20 @@ import {
   Check
 } from "lucide-react";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import PatientHeader from "@/components/patient-header";
 
 export default function UploadExams() {
   const [, navigate] = useLocation();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const { user } = useAuth();
+  const clinicianName = user?.fullName || user?.username || "Profissional";
+  const normalizedGender = user?.gender?.toLowerCase();
+  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
+    ? "Dra."
+    : "Dr.";
+  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
 
   const handleUploadComplete = (result: any) => {
     // If we have a result with an exam ID, navigate to the report page
@@ -48,7 +56,11 @@ export default function UploadExams() {
             <div className="max-w-6xl mx-auto">
               <PatientHeader
                 title="Envio de exames"
-                description="Selecione ou cadastre um paciente para direcionar o upload dos exames." />
+                description="Selecione ou cadastre um paciente para direcionar o upload dos exames."
+                clinicianLabel={clinicianLabel}
+                patientName={activeProfile?.name}
+                planType={activeProfile?.planType}
+              />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
                 <p className="text-sm text-gray-500 mt-2">
@@ -74,6 +86,9 @@ export default function UploadExams() {
             <PatientHeader
               title="Envio de exames"
               description={`Os novos documentos serão vinculados ao prontuário de ${activeProfile.name}.`}
+              clinicianLabel={clinicianLabel}
+              patientName={activeProfile.name}
+              planType={activeProfile.planType}
             />
             
             {/* Informação sobre limites de upload */}

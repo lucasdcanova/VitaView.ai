@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useAuth } from "@/hooks/use-auth";
 import PatientHeader from "@/components/patient-header";
 import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,13 @@ export default function ExamHistory() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const { user } = useAuth();
+  const clinicianName = user?.fullName || user?.username || "Profissional";
+  const normalizedGender = user?.gender?.toLowerCase();
+  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
+    ? "Dra."
+    : "Dr.";
+  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
   
   // Mutation para excluir um exame
   const deleteMutation = useMutation({
@@ -162,7 +170,11 @@ export default function ExamHistory() {
             <div className="max-w-6xl mx-auto">
               <PatientHeader
                 title="Histórico de exames"
-                description="Selecione ou cadastre um paciente para acessar a linha do tempo de exames." />
+                description="Selecione ou cadastre um paciente para acessar a linha do tempo de exames."
+                clinicianLabel={clinicianLabel}
+                patientName={activeProfile?.name}
+                planType={activeProfile?.planType}
+              />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
                 <p className="text-sm text-gray-500 mt-2">
@@ -512,7 +524,11 @@ export default function ExamHistory() {
           <div className="p-4 md:p-6">
             <PatientHeader
               title="Histórico de exames"
-              description="Visualize, analise e gerencie os exames do paciente selecionado." />
+              description="Visualize, analise e gerencie os exames do paciente selecionado."
+              clinicianLabel={clinicianLabel}
+              patientName={activeProfile.name}
+              planType={activeProfile.planType}
+            />
             <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
               <Link href="/upload-exams">
                 <Button>Enviar novo exame</Button>

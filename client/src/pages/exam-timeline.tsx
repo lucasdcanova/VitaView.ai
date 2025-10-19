@@ -8,6 +8,7 @@ import type { Exam, HealthMetric } from "@shared/schema";
 import { normalizeExamName } from "@shared/exam-normalizer";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useAuth } from "@/hooks/use-auth";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
@@ -52,6 +53,13 @@ function formatMetricDisplayName(name: string): string {
 
 export default function ExamTimeline() {
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const { user } = useAuth();
+  const clinicianName = user?.fullName || user?.username || "Profissional";
+  const normalizedGender = user?.gender?.toLowerCase();
+  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
+    ? "Dra."
+    : "Dr.";
+  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
 
   // Buscar exames
   const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
@@ -101,6 +109,9 @@ export default function ExamTimeline() {
               <PatientHeader
                 title="Evolução clínica"
                 description="Selecione um paciente para analisar tendências e linhas do tempo de exames."
+                clinicianLabel={clinicianLabel}
+                patientName={activeProfile?.name}
+                planType={activeProfile?.planType}
               />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
@@ -191,6 +202,9 @@ export default function ExamTimeline() {
             <PatientHeader
               title="Evolução clínica"
               description={`Acompanhe a evolução das métricas laboratoriais do paciente ${activeProfile.name}.`}
+              clinicianLabel={clinicianLabel}
+              patientName={activeProfile.name}
+              planType={activeProfile.planType}
             />
 
             <Card>

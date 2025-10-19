@@ -42,6 +42,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useAuth } from "@/hooks/use-auth";
 import PatientHeader from "@/components/patient-header";
 
 // Memoized components for better performance
@@ -53,6 +54,13 @@ const MemoizedHealthRecommendations = memo(HealthRecommendations);
 export default function Dashboard() {
   const [activeMetricsTab, setActiveMetricsTab] = useState("all");
   const { profiles, activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const { user } = useAuth();
+  const clinicianName = user?.fullName || user?.username || "Profissional";
+  const normalizedGender = user?.gender?.toLowerCase();
+  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
+    ? "Dra."
+    : "Dr.";
+  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
 
   const { data: exams, isLoading: isLoadingExams } = useQuery<Exam[]>({
     queryKey: ["/api/exams", activeProfile?.id],
@@ -106,6 +114,9 @@ export default function Dashboard() {
               <PatientHeader
                 title="Painel clínico"
                 description="Selecione ou cadastre um paciente para visualizar indicadores e exames."
+                clinicianLabel={clinicianLabel}
+                patientName={activeProfile?.name}
+                planType={activeProfile?.planType}
               />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
@@ -503,6 +514,9 @@ export default function Dashboard() {
             <PatientHeader
               title="Painel clínico"
               description="Acompanhe os indicadores e análises do paciente selecionado."
+              clinicianLabel={clinicianLabel}
+              patientName={activeProfile.name}
+              planType={activeProfile.planType}
             />
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link href="/upload-exams">
