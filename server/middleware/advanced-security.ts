@@ -557,7 +557,7 @@ export class AdvancedSessionSecurity {
       // Path traversal
       /\.\.[\/\\]/g,
       // Command injection
-      /[;&|`$(){}]/g,
+      /(?:;|\|\||&&)\s*(?:cat|ls|whoami|pwd|netstat|ps)\b|[`$]\(|\${/gi,
       // LDAP injection
       /[()&|!*]/g
     ];
