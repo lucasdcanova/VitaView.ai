@@ -3,8 +3,9 @@ import type { ExamResult, User, Exam } from "@shared/schema";
 import type { HealthMetric } from "@shared/schema";
 import type { IStorage } from "../storage";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const OPENAI_MODEL = "gpt-4o";
+// Default GPT-5 vision model can be overridden through environment variables
+const OPENAI_MODEL = process.env.OPENAI_GPT5_MODEL || process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1";
+const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o";
 
 // Initialize OpenAI using the API key from environment variables
 let openai: OpenAI | null = null;
@@ -541,124 +542,176 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
  * @returns Resultado da análise com métricas de saúde e recomendações
  */
 export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: string) {
-  try {
-    // Verificar se a API key está disponível
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not available");
+  // Verificar se a API key está disponível
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key not available");
+  }
+
+  if (!openai) {
+    throw new Error("OpenAI client not initialized");
+  }
+
+  const truncateBase64 = (content: string) => {
+    const MAX_LENGTH = 6_000_000; // ~6MB em base64
+    return content.length > MAX_LENGTH ? content.substring(0, MAX_LENGTH) : content;
+  };
+
+  const extractResponseText = (response: any): string | undefined => {
+    if (!response) return undefined;
+
+    if (typeof response.output_text === "string" && response.output_text.trim()) {
+      return response.output_text;
     }
-    
-    // Limitar o tamanho do conteúdo para evitar exceder limites da API
-    // Nota: O GPT-4o suporta até 1 imagem. O conteúdo Base64 muito grande pode causar problemas
-    const truncatedContent = fileContent.length > 300000 
-      ? fileContent.substring(0, 300000)
-      : fileContent;
-      
-    // Determinar o tipo MIME baseado no tipo de arquivo
-    const mimeType = 
-      fileType === 'pdf' ? 'application/pdf' :
-      fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
-      
-    // Preparar o prompt melhorado para a API com foco em evidências científicas e parâmetros detalhados
-    const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
-                  Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
-                  
-                  ⚠️ ALERTA LEGAL OBRIGATÓRIO (MINISTÉRIO DA SAÚDE):
-                  🚫 É CRIME mencionar: vitamina D, B12, C, zinco, magnésio, ferro, cálcio, ômega 3, QUALQUER nutriente específico
-                  ✅ APENAS use estas frases LITERAIS:
-                  - "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde"
-                  - "Pratique atividade física regular conforme orientações do Ministério da Saúde"
-                  - "Consulte um médico para orientações específicas"
-                  🚫 TOTALMENTE PROIBIDO: suplementos, vitaminas, minerais, exposição solar específica
-                  📋 SIGA APENAS diretrizes do SUS
-                  
-                  Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado e baseado em evidências,
-                  incluindo achados clínicos relevantes, interpretação precisa dos valores, 
-                  correlações entre parâmetros, diretrizes clínicas aplicáveis.
-                  
-                  Analise a imagem ou PDF do exame cuidadosamente e extraia todas as informações relevantes.
-                  Estabeleça parâmetros de saúde baseados em evidências científicas recentes.
-                  Inclua citações de estudos ou diretrizes quando pertinente.
-                  
-                  Formate sua resposta como um JSON com a seguinte estrutura:
-                  {
-                    "summary": "resumo geral dos resultados, em uma frase",
-                    "detailedAnalysis": "análise detalhada e fundamentada dos resultados encontrados",
-                    "recommendations": ["APENAS orientações conforme Ministério da Saúde: alimentação equilibrada, atividade física 150min/semana, consulte médico para orientações específicas"],
-                    "healthMetrics": [
-                      {
-                        "name": "nome do parâmetro, ex: hemoglobina",
-                        "value": "valor numérico, ex: 14.2",
-                        "unit": "unidade, ex: g/dL",
-                        "status": "normal, atenção, alto ou baixo",
-                        "change": "+0.1 ou -0.2 comparado com o valor anterior",
-                        "referenceRange": "intervalo de referência considerado normal",
-                        "evidenceLevel": "nível de evidência científica (forte, moderada, preliminar)",
-                        "clinicalSignificance": "significado clínico deste parâmetro"
-                      }
-                    ],
-                    "healthStatus": {
-                      "overallScore": "pontuação global de saúde (0-100)",
-                      "criticalParameters": ["parâmetros que exigem atenção imediata"],
-                      "stableParameters": ["parâmetros que estão em níveis aceitáveis"],
-                      "clinicalGuidelines": ["diretrizes clínicas relevantes para os resultados"],
-                      "differentialAnalysis": "análise diferencial considerando os resultados",
-                      "confidenceLevel": "nível de confiança na análise (alto, médio, baixo)"
-                    }
-                  }`;
-    
-    try {
-      if (!openai) {
-        throw new Error("OpenAI client not initialized");
-      }
-      
-      // Chamar a API da OpenAI com suporte a imagens (GPT-4o)
-      const response = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { 
-                type: "text", 
-                text: prompt 
-              },
-              { 
-                type: "image_url", 
-                image_url: { 
-                  url: `data:${mimeType};base64,${truncatedContent}`
-                } 
-              }
-            ]
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 1500
-      });
-      
-      const content = response.choices[0].message.content;
-      if (!content) {
-        throw new Error("Empty response from OpenAI API");
-      }
-      
-      try {
-        // Analisar a resposta JSON
-        const analysisData = JSON.parse(content);
-        
-        // Validar e melhorar os dados da resposta se necessário
-        if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
-          throw new Error("Invalid health metrics in OpenAI response");
+
+    if (Array.isArray(response.output)) {
+      for (const item of response.output) {
+        if (item?.type === "output_text" && typeof item.text === "string") {
+          return item.text;
         }
-        
-        return analysisData;
-      } catch (jsonError) {
-        throw jsonError;
+
+        if (item?.content && Array.isArray(item.content)) {
+          for (const sub of item.content) {
+            if (sub?.type === "output_text" && typeof sub.text === "string") {
+              return sub.text;
+            }
+            if (typeof sub?.text === "string") {
+              return sub.text;
+            }
+          }
+        }
       }
-    } catch (apiError) {
-      throw apiError;
     }
-  } catch (error) {
-    throw new Error("Falha ao analisar o documento com OpenAI como fallback");
+
+    // Fallback para o formato antigo de chat completions
+    if (Array.isArray(response.choices)) {
+      const choice = response.choices[0];
+      if (choice?.message?.content) {
+        if (typeof choice.message.content === "string") {
+          return choice.message.content;
+        }
+        if (Array.isArray(choice.message.content)) {
+          const textPart = choice.message.content.find((part: any) => part?.type === "text");
+          if (textPart?.text) {
+            return textPart.text;
+          }
+        }
+      }
+    }
+
+    return undefined;
+  };
+
+  // Limitar o tamanho do conteúdo para evitar exceder limites da API
+  const truncatedContent = truncateBase64(fileContent);
+
+  const mimeType =
+    fileType === "pdf" ? "application/pdf" :
+    fileType === "jpeg" ? "image/jpeg" :
+    "image/png";
+
+  const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
+                Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
+                
+                ⚠️ ALERTA LEGAL OBRIGATÓRIO (MINISTÉRIO DA SAÚDE):
+                🚫 É CRIME mencionar: vitamina D, B12, C, zinco, magnésio, ferro, cálcio, ômega 3, QUALQUER nutriente específico
+                ✅ APENAS use estas frases LITERAIS:
+                - "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde"
+                - "Pratique atividade física regular conforme orientações do Ministério da Saúde"
+                - "Consulte um médico para orientações específicas"
+                🚫 TOTALMENTE PROIBIDO: suplementos, vitaminas, minerais, exposição solar específica
+                📋 SIGA APENAS diretrizes do SUS
+                
+                Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado e baseado em evidências,
+                incluindo achados clínicos relevantes, interpretação precisa dos valores, 
+                correlações entre parâmetros, diretrizes clínicas aplicáveis.
+                
+                Analise a imagem ou PDF do exame cuidadosamente e extraia todas as informações relevantes.
+                Estabeleça parâmetros de saúde baseados em evidências científicas recentes.
+                Inclua citações de estudos ou diretrizes quando pertinente.
+                
+                Formate sua resposta como um JSON com a seguinte estrutura:
+                {
+                  "summary": "resumo geral dos resultados, em uma frase",
+                  "detailedAnalysis": "análise detalhada e fundamentada dos resultados encontrados",
+                  "recommendations": ["APENAS orientações conforme Ministério da Saúde: alimentação equilibrada, atividade física 150min/semana, consulte médico para orientações específicas"],
+                  "healthMetrics": [
+                    {
+                      "name": "nome do parâmetro, ex: hemoglobina",
+                      "value": "valor numérico, ex: 14.2",
+                      "unit": "unidade, ex: g/dL",
+                      "status": "normal, atenção, alto ou baixo",
+                      "change": "+0.1 ou -0.2 comparado com o valor anterior",
+                      "referenceRange": "intervalo de referência considerado normal",
+                      "evidenceLevel": "nível de evidência científica (forte, moderada, preliminar)",
+                      "clinicalSignificance": "significado clínico deste parâmetro"
+                    }
+                  ],
+                  "healthStatus": {
+                    "overallScore": "pontuação global de saúde (0-100)",
+                    "criticalParameters": ["parâmetros que exigem atenção imediata"],
+                    "stableParameters": ["parâmetros que estão em níveis aceitáveis"],
+                    "clinicalGuidelines": ["diretrizes clínicas relevantes para os resultados"],
+                    "differentialAnalysis": "análise diferencial considerando os resultados",
+                    "confidenceLevel": "nível de confiança na análise (alto, médio, baixo)"
+                  }
+                }`;
+
+  try {
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: prompt },
+            { type: "input_image", detail: "auto", image_url: `data:${mimeType};base64,${truncatedContent}` }
+          ]
+        }
+      ],
+      temperature: 0.2,
+      max_output_tokens: 1500
+    });
+
+    const content = extractResponseText(response);
+    if (!content) {
+      throw new Error("Empty response from GPT-5");
+    }
+
+    const analysisData = JSON.parse(content);
+    if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
+      throw new Error("Invalid health metrics in GPT-5 response");
+    }
+
+    return analysisData;
+  } catch (primaryError) {
+    // Fallback para modelos legados caso a API de Responses não esteja disponível
+    const fallbackResponse = await openai.chat.completions.create({
+      model: OPENAI_FALLBACK_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${truncatedContent}` } }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 1500
+    });
+
+    const fallbackContent = extractResponseText(fallbackResponse);
+    if (!fallbackContent) {
+      throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
+    }
+
+    const fallbackData = JSON.parse(fallbackContent);
+    if (!fallbackData.healthMetrics || !Array.isArray(fallbackData.healthMetrics) || fallbackData.healthMetrics.length === 0) {
+      throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
+    }
+
+    return fallbackData;
   }
 }
 

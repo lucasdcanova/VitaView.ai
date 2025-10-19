@@ -18,20 +18,22 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [uploadStep, setUploadStep] = useState<'idle' | 'uploading' | 'analyzing' | 'interpreting' | 'complete' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzedResult, setAnalyzedResult] = useState<any>(null);
+  const [uploadedFileType, setUploadedFileType] = useState<string>('pdf');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { activeProfile } = useProfiles();
 
   // Gemini análise do documento
   const analyzeWithGeminiMutation = useMutation({
-    mutationFn: async (data: { fileContent: string, fileType: string }) => {
-      
-      const response = await fetch("/api/analyze/gemini", {
+    mutationFn: async (data: { file: File; fileType: string }) => {
+      const formData = new FormData();
+      formData.append("fileType", data.fileType);
+      formData.append("file", data.file);
+
+      const response = await fetch("/api/analyze/openai", {
         method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        body: formData,
         credentials: "include"
       });
       
@@ -119,11 +121,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       }
       
       // Salvar o exame no banco de dados
-      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-      const filename = input?.files?.[0]?.name || 'Exame';
+      const filename = selectedFile?.name || 'Exame';
       
       // Obter o tipo de arquivo das variáveis corretas
-      const fileType = analyzedResult?.fileType || 'pdf';
+      const fileType = analyzedResult?.fileType || uploadedFileType || 'pdf';
       
       // Alguns campos são extraídos da análise Gemini se disponíveis
       // como data do exame, médico solicitante, etc.
@@ -217,6 +218,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         if (user === null) {
           throw new Error("Você precisa estar autenticado para salvar exames");
         }
+
+        if (!activeProfile) {
+          throw new Error("Selecione um paciente antes de salvar exames");
+        }
+
+        const profileId = activeProfile.id;
         
         
         // Extrair dados do exame do novo formato
@@ -231,7 +238,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         examDate: rawExamData.examDate,
         status: "analyzed",
         userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
-        profileId: activeProfile.id,
+        profileId,
         requestingPhysician: rawExamData.requestingPhysician || null,
         originalContent: rawExamData.originalContent || null
       };
@@ -320,7 +327,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 // Garantir que os dados estão no formato esperado pelo backend
                 const metricData = {
                   userId: Number(savedExam.userId), // Usar userId do exame salvo que já foi confirmado
-                  profileId: activeProfile.id,
+                  profileId,
                   name: metric.name, // Já normalizado
                   value: String(metric.value || "0"),
                   unit: metric.unit || '',
@@ -392,44 +399,46 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       setUploadStep('analyzing');
       
       const file = acceptedFiles[0];
-      
-      // Determinar tipo de arquivo
-      const fileType = file.type.includes('pdf') 
-        ? 'pdf' 
-        : file.type.includes('jpeg') || file.type.includes('jpg')
-          ? 'jpeg'
-          : 'png';
-      
-      
-      // Ler o arquivo como base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Extrair apenas a parte base64 (sem o prefixo data:...)
-        const base64Content = e.target?.result 
-          ? String(e.target.result).split(',')[1]
-          : '';
-          
-        // Verificar se o usuário está autenticado
-        if (!user || !user.id) {
-          toast({
-            title: "Erro de autenticação",
-            description: "Por favor, faça login novamente para continuar.",
-            variant: "destructive"
-          });
-          setUploadStep('error');
-          return;
-        }
-        
-        // Chamar API para análise com o Gemini
-        analyzeWithGeminiMutation.mutate({
-          fileContent: base64Content,
-          fileType: fileType
+      if (!file) {
+        setUploadStep('error');
+        toast({
+          title: "Arquivo inválido",
+          description: "Não foi possível ler o arquivo selecionado.",
+          variant: "destructive"
         });
+        return;
+      }
+
+      const determineFileType = (input: File) => {
+        const mime = input.type?.toLowerCase() || '';
+        const name = input.name?.toLowerCase() || '';
+
+        if (mime.includes('pdf') || name.endsWith('.pdf')) return 'pdf';
+        if (mime.includes('jpeg') || mime.includes('jpg') || name.endsWith('.jpeg') || name.endsWith('.jpg')) return 'jpeg';
+        if (mime.includes('png') || name.endsWith('.png')) return 'png';
+        return 'pdf';
       };
-      
-      reader.readAsDataURL(file);
+
+      const fileType = determineFileType(file);
+      setSelectedFile(file);
+      setUploadedFileType(fileType);
+
+      if (!user || !user.id) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Por favor, faça login novamente para continuar.",
+          variant: "destructive"
+        });
+        setUploadStep('error');
+        return;
+      }
+
+      analyzeWithGeminiMutation.mutate({
+        file,
+        fileType
+      });
     }, 2000);
-  }, [analyzeWithGeminiMutation, interpretWithOpenAIMutation, onUploadComplete, toast, user]);
+  }, [activeProfile, analyzeWithGeminiMutation, toast, user]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

@@ -14,6 +14,19 @@ import { rbacSystem } from "./auth/rbac-system";
 import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
+import { uploadAnalysis } from "./middleware/upload.middleware";
+import { analyzeDocumentWithOpenAI } from "./services/openai";
+
+const normalizeFileType = (type?: string | null) => {
+  if (!type) return undefined;
+  const lower = type.toLowerCase();
+
+  if (lower.includes("pdf")) return "pdf";
+  if (lower.includes("jpeg") || lower.includes("jpg")) return "jpeg";
+  if (lower.includes("png")) return "png";
+
+  return undefined;
+};
 
 // Função para gerar HTML do relatório de saúde
 function generateExamReportHTML({ user, exam, metrics }: any) {
@@ -672,22 +685,43 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
   
-  // Rota para análise de documentos - etapa 1: análise com Gemini
-  app.post("/api/analyze/gemini", ensureAuthenticated, async (req, res) => {
+  const handleVisionAnalysis = async (req: Request, res: Response) => {
     try {
-      const { fileContent, fileType } = req.body;
-      
-      if (!fileContent || !fileType) {
+      let { fileContent } = req.body as { fileContent?: string };
+      const providedType = (req.body as { fileType?: string }).fileType;
+      let normalizedFileType = normalizeFileType(providedType);
+
+      if (req.file) {
+        fileContent = req.file.buffer.toString("base64");
+        normalizedFileType = normalizeFileType(req.file.mimetype) ?? normalizeFileType(req.file.originalname) ?? normalizedFileType;
+      }
+
+      if (!fileContent || !normalizedFileType) {
         return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
       }
-      
-      // Temporariamente removemos a verificação de autenticação para diagnóstico
-      const analysisResult = await analyzeDocument(fileContent, fileType);
-      res.json(analysisResult);
+
+      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
+      res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
-      res.status(500).json({ message: "Erro ao analisar o documento com Gemini API" });
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      res.status(500).json({ message: "Erro ao analisar o documento com GPT-5", details: message });
     }
-  });
+  };
+
+  // Rota para análise usando GPT-5 (mantém legado /gemini como alias)
+  app.post(
+    "/api/analyze/openai",
+    ensureAuthenticated,
+    uploadAnalysis.single("file"),
+    handleVisionAnalysis
+  );
+
+  app.post(
+    "/api/analyze/gemini",
+    ensureAuthenticated,
+    uploadAnalysis.single("file"),
+    handleVisionAnalysis
+  );
   
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
   app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {

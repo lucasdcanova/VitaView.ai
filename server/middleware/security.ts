@@ -175,7 +175,10 @@ export function setupSecurity(app: Express) {
   // Request size limits
   app.use((req: Request, res: Response, next: NextFunction) => {
     const contentLength = parseInt(req.get('content-length') || '0');
-    const maxSize = req.path.includes('/upload') ? 50 * 1024 * 1024 : 1024 * 1024; // 50MB for uploads, 1MB for others
+    const largePayloadPaths = ['/upload', '/analyze/gemini', '/analyze/openai'];
+    const maxSize = largePayloadPaths.some(segment => req.path.includes(segment))
+      ? 50 * 1024 * 1024
+      : 1024 * 1024; // 50MB for uploads/analysis, 1MB for others
     
     if (contentLength > maxSize) {
       return res.status(413).json({

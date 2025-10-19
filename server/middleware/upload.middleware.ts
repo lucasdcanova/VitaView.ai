@@ -44,6 +44,15 @@ export const uploadSensitive = multer({
   fileFilter: fileFilter,
 });
 
+// Middleware específico para rotas de análise (mantém arquivo em memória)
+export const uploadAnalysis = multer({
+  storage: memoryStorage,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+  },
+  fileFilter: fileFilter,
+});
+
 // Middleware para processar e enviar arquivo ao S3
 export const processS3Upload = async (req: Request, res: any, next: any) => {
   try {
