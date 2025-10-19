@@ -176,7 +176,9 @@ export function setupSecurity(app: Express) {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const contentLength = parseInt(req.get('content-length') || '0');
     const largePayloadPaths = ['/upload', '/analyze/gemini', '/analyze/openai'];
-    const maxSize = largePayloadPaths.some(segment => req.path.includes(segment))
+    const isMultipart = (req.headers['content-type'] || '').includes('multipart/form-data');
+    const isLargePath = largePayloadPaths.some(segment => req.path.includes(segment));
+    const maxSize = (isLargePath || isMultipart)
       ? 50 * 1024 * 1024
       : 1024 * 1024; // 50MB for uploads/analysis, 1MB for others
     
