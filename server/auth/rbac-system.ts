@@ -532,7 +532,7 @@ export class RBACSystem {
 
         // Criar requisição de acesso
         const accessRequest: AccessRequest = {
-          userId: req.user.id,
+          userId: String(req.user.id),
           resource,
           action,
           resourceId: req.params.id || req.params.examId || req.params.userId,
@@ -551,6 +551,16 @@ export class RBACSystem {
         };
 
         // Verificar permissão
+        // Garantir papel padrão para usuários legados (ex.: papel vindo da coluna role do usuário)
+        let userRoles = this.getUserRoles(String(req.user.id));
+        if ((!userRoles || userRoles.length === 0) && req.user.role) {
+          const fallbackRole = this.mapLegacyRole(req.user.role as string);
+          if (fallbackRole) {
+            await this.assignRole(String(req.user.id), fallbackRole, 'system-auto');
+            userRoles = this.getUserRoles(String(req.user.id));
+          }
+        }
+
         const permissionResult = await this.checkPermission(accessRequest);
 
         // Log de auditoria
@@ -584,6 +594,32 @@ export class RBACSystem {
         });
       }
     };
+  }
+
+  /**
+   * Mapear papeis antigos ou provenientes da coluna `role` da tabela users
+   */
+  private mapLegacyRole(role: string): string | null {
+    const normalized = role.toLowerCase();
+
+    switch (normalized) {
+      case 'admin':
+      case 'super_admin':
+        return 'super_admin';
+      case 'physician':
+      case 'clinician':
+      case 'doctor':
+      case 'user':
+        return 'physician';
+      case 'nurse':
+        return 'nurse';
+      case 'technician':
+        return 'technician';
+      case 'patient':
+        return 'patient';
+      default:
+        return 'physician';
+    }
   }
 
   /**
