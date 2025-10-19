@@ -42,7 +42,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useProfiles } from "@/hooks/use-profiles";
-import ProfileSwitcher from "@/components/profile-switcher";
+import PatientHeader from "@/components/patient-header";
 
 // Memoized components for better performance
 const MemoizedHealthScore = memo(HealthScore);
@@ -101,15 +101,18 @@ export default function Dashboard() {
         <MobileHeader />
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
-            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
-              <h1 className="text-xl font-semibold text-gray-800">Selecione ou cadastre um paciente</h1>
-              <p className="text-gray-600 mt-3">
-                Para visualizar exames e métricas de saúde, escolha um paciente no painel lateral ou cadastre um novo.
-              </p>
-              <p className="text-sm text-gray-500 mt-4">
-                Profissionais podem gerenciar múltiplos pacientes e alternar entre eles a qualquer momento.
-              </p>
+          <main className="flex-1 bg-gray-50 px-6 py-8">
+            <div className="max-w-6xl mx-auto">
+              <PatientHeader
+                title="Painel clínico"
+                description="Selecione ou cadastre um paciente para visualizar indicadores e exames."
+              />
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
+                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  Use o seletor acima para criar um novo paciente ou escolher um existente.
+                </p>
+              </div>
             </div>
           </main>
         </div>
@@ -497,28 +500,18 @@ export default function Dashboard() {
               </Card>
             )}
             
-            <header className="mb-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Painel clínico</h1>
-                  <p className="text-gray-600 mt-1">
-                    Informações consolidadas do paciente <span className="font-semibold text-primary-700">{activeProfile.name}</span>
-                  </p>
-                  {activeProfile.planType && (
-                    <p className="text-xs text-gray-500 mt-1">Plano de saúde: {activeProfile.planType}</p>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <ProfileSwitcher />
-                  <Link href="/upload-exams">
-                    <Button className="gap-2">
-                      <FileUp className="h-4 w-4" />
-                      Enviar Novo Exame
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </header>
+            <PatientHeader
+              title="Painel clínico"
+              description="Acompanhe os indicadores e análises do paciente selecionado."
+            />
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <Link href="/upload-exams">
+                <Button className="gap-2">
+                  <FileUp className="h-4 w-4" />
+                  Enviar novo exame
+                </Button>
+              </Link>
+            </div>
             
             {/* Health Score & Overview Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

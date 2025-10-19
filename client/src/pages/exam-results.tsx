@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PatientHeader from "@/components/patient-header";
 
 export default function ExamResults() {
   const { user } = useAuth();
@@ -153,16 +154,21 @@ export default function ExamResults() {
 
   if (!activeProfile) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <MobileHeader />
-        <div className="flex flex-1 relative">
-          <Sidebar />
-          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
-            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
-              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
-              <p className="text-gray-600 mt-3">
-                Utilize o seletor no topo do painel para escolher qual paciente deseja analisar antes de acessar os resultados clínicos.
-              </p>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <MobileHeader toggleSidebar={toggleSidebar} />
+          <main className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="container mx-auto max-w-7xl">
+              <PatientHeader
+                title="Resultados clínicos"
+                description="Selecione um paciente para revisar relatórios e métricas consolidadas." />
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
+                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  Utilize o seletor acima para criar ou escolher um paciente.
+                </p>
+              </div>
             </div>
           </main>
         </div>
@@ -327,17 +333,15 @@ export default function ExamResults() {
         
         <main className="flex-1 overflow-y-auto">
           <div className="container px-4 py-6 mx-auto max-w-7xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Resultados de Exames</h1>
-                <p className="text-gray-500 mt-1">
-                  Visualize e filtre todos os seus resultados de exames
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
+            <PatientHeader
+              title="Resultados clínicos"
+              description={`Visualize e filtre todos os resultados gerados para ${activeProfile.name}.`}
+            />
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+              <div className="flex gap-3">
                 <Link href="/upload">
                   <Button className="bg-primary-600 hover:bg-primary-700">
-                    Novo Exame
+                    Novo exame
                   </Button>
                 </Link>
               </div>

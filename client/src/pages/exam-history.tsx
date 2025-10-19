@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
+import PatientHeader from "@/components/patient-header";
 import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { 
@@ -157,12 +158,17 @@ export default function ExamHistory() {
         <MobileHeader />
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
-            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
-              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
-              <p className="text-gray-600 mt-3">
-                Use o seletor no topo do painel para escolher qual paciente deseja analisar antes de visualizar o histórico de exames.
-              </p>
+          <main className="flex-1 bg-gray-50 px-6 py-8">
+            <div className="max-w-6xl mx-auto">
+              <PatientHeader
+                title="Histórico de exames"
+                description="Selecione ou cadastre um paciente para acessar a linha do tempo de exames." />
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
+                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  Utilize o seletor acima para criar ou escolher um paciente.
+                </p>
+              </div>
             </div>
           </main>
         </div>
@@ -504,20 +510,14 @@ export default function ExamHistory() {
         
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
-            <header className="mb-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Histórico de Exames</h1>
-                  <p className="text-gray-600 mt-1">Visualize, analise e gerencie seus exames médicos</p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Link href="/upload-exams">
-                    <Button>Enviar Novo Exame</Button>
-                  </Link>
-                </div>
-              </div>
-            </header>
+            <PatientHeader
+              title="Histórico de exames"
+              description="Visualize, analise e gerencie os exames do paciente selecionado." />
+            <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
+              <Link href="/upload-exams">
+                <Button>Enviar novo exame</Button>
+              </Link>
+            </div>
             
             <div className="mb-6">
               <Card>
