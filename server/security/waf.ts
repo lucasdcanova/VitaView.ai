@@ -192,7 +192,7 @@ export class WebApplicationFirewall {
         enabled: true,
         category: 'command_injection',
         severity: 'critical',
-        pattern: /[;&|`$(){}]|(\bcat\b|\bls\b|\bwhoami\b|\bpwd\b|\bnetstat\b|\bps\b)(\s|$)/i,
+        pattern: /(?:;|\|\||&&)\s*(?:cat|ls|whoami|pwd|netstat|ps)\b|[`$]\(|\${/i,
         action: 'block',
         blockDuration: 2 * 60 * 60 * 1000
       },
