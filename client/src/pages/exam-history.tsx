@@ -27,6 +27,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { 
@@ -80,6 +81,7 @@ export default function ExamHistory() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
   
   // Mutation para excluir um exame
   const deleteMutation = useMutation({
@@ -128,13 +130,45 @@ export default function ExamHistory() {
   }, [filterOptions, searchTerm, activeView]);
 
   const { data: exams, isLoading } = useQuery<Exam[]>({
-    queryKey: ["/api/exams"],
+    queryKey: ["/api/exams", activeProfile?.id],
     queryFn: async () => {
-      const res = await fetch("/api/exams", { credentials: "include" });
+      const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+      const res = await fetch(`/api/exams${queryParam}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch exams");
       return res.json();
     },
+    enabled: !!activeProfile,
   });
+
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
+            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
+              <p className="text-gray-600 mt-3">
+                Use o seletor no topo do painel para escolher qual paciente deseja analisar antes de visualizar o histórico de exames.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
   
   // Helper function to get date value (defined once here)
   const getExamDate = (exam: Exam) => {

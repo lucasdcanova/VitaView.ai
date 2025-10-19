@@ -52,14 +52,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       toast({
-        title: "Perfil criado",
-        description: "O perfil foi criado com sucesso",
+        title: "Paciente cadastrado",
+        description: "O paciente foi adicionado ao seu painel",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao criar perfil",
+        title: "Erro ao cadastrar paciente",
         description: error.message,
         variant: "destructive",
       });
@@ -74,8 +74,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (updatedProfile) => {
       toast({
-        title: "Perfil atualizado",
-        description: "O perfil foi atualizado com sucesso",
+        title: "Paciente atualizado",
+        description: "Os dados do paciente foram atualizados",
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
@@ -87,7 +87,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     },
     onError: (error) => {
       toast({
-        title: "Erro ao atualizar perfil",
+        title: "Erro ao atualizar paciente",
         description: error.message,
         variant: "destructive",
       });
@@ -102,27 +102,34 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (deletedId) => {
       toast({
-        title: "Perfil removido",
-        description: "O perfil foi removido com sucesso",
+        title: "Paciente removido",
+        description: "O paciente foi removido do painel",
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
       
       // If active profile was deleted, select a different one
       if (activeProfile && activeProfile.id === deletedId) {
-        const defaultProfile = profiles.find((p: Profile) => p.isDefault);
-        if (defaultProfile) {
-          setActiveProfileState(defaultProfile);
-        } else if (profiles.length > 0) {
-          setActiveProfileState(profiles[0]);
-        } else {
-          setActiveProfileState(null);
+        const remainingProfiles = profiles.filter((p: Profile) => p.id !== deletedId);
+        const defaultProfile = remainingProfiles.find((p: Profile) => p.isDefault);
+        const nextProfile = defaultProfile || remainingProfiles[0] || null;
+
+        setActiveProfileState(nextProfile || null);
+
+        try {
+          if (nextProfile) {
+            document.cookie = `active_profile_id=${nextProfile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          } else {
+            document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
+          }
+        } catch (err) {
+          // ignore cookie errors
         }
       }
     },
     onError: (error) => {
       toast({
-        title: "Erro ao remover perfil",
+        title: "Erro ao remover paciente",
         description: error.message,
         variant: "destructive",
       });
@@ -141,17 +148,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setActiveProfileState(profile);
       
       toast({
-        title: "Perfil alterado",
-        description: `Agora você está usando o perfil "${profile.name}"`,
+        title: "Paciente selecionado",
+        description: `Visualizando histórico de "${profile.name}"`,
       });
       
+      try {
+        document.cookie = `active_profile_id=${profile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      } catch (err) {
+        // Ignore cookie errors no-op
+      }
+
       // Refresh all data for the new profile
       queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao mudar perfil",
+        title: "Erro ao selecionar paciente",
         description: error.message,
         variant: "destructive",
       });
@@ -161,12 +174,24 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // Initialize active profile
   useEffect(() => {
     if (profiles.length > 0 && !activeProfile) {
-      const defaultProfile = profiles.find((p: Profile) => p.isDefault);
-      if (defaultProfile) {
-        setActiveProfileState(defaultProfile);
-      } else {
-        setActiveProfileState(profiles[0]);
+      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, ...rest] = cookie.trim().split('=');
+        if (key) acc[key] = rest.join('=');
+        return acc;
+      }, {} as Record<string, string>);
+
+      const cookieProfileId = cookies['active_profile_id'] ? Number(cookies['active_profile_id']) : undefined;
+
+      if (cookieProfileId) {
+        const storedProfile = profiles.find((p) => p.id === cookieProfileId);
+        if (storedProfile) {
+          setActiveProfileState(storedProfile);
+          return;
+        }
       }
+
+      const defaultProfile = profiles.find((p: Profile) => p.isDefault);
+      setActiveProfileState(defaultProfile || profiles[0]);
     }
   }, [profiles, activeProfile]);
 

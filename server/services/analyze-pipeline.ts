@@ -19,6 +19,7 @@ import { normalizeExamName, normalizeHealthMetrics } from '../../shared/exam-nor
 
 export interface AnalysisOptions {
   userId: number;
+  profileId: number;
   name: string;
   fileType: string;
   fileContent: string;
@@ -81,6 +82,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       
     const exam = await storage.createExam({
       userId: options.userId,
+      profileId: options.profileId,
       name: examName,
       fileType: options.fileType,
       status: "extracted",
@@ -142,6 +144,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         // Criar métrica individual (apenas com campos do schema)
         await storage.createHealthMetric({
           userId: options.userId,
+          profileId: options.profileId,
           name: metric.name || "desconhecido",
           value: String(metric.value || "0"),
           unit: metric.unit || "",
@@ -165,7 +168,15 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     
     try {
       // Obter análise profunda
-      const analysisResult = await analyzeExtractedExam(exam.id, options.userId, storage);
+      const patientProfile = await storage.getProfile(options.profileId);
+      const patientData = patientProfile ? {
+        gender: patientProfile.gender,
+        birthDate: patientProfile.birthDate,
+        relationship: patientProfile.relationship,
+        planType: patientProfile.planType
+      } : undefined;
+
+      const analysisResult = await analyzeExtractedExam(exam.id, options.userId, storage, patientData);
       // [Pipeline] Análise com OpenAI concluída com sucesso
       
       // Atualizar status para finalizado

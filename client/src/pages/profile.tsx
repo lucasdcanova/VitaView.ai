@@ -155,8 +155,8 @@ export default function Profile() {
         <main className="flex-1">
           <div className="p-4 md:p-6">
             <header className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Meu Perfil</h1>
-              <p className="text-gray-600">Gerencie suas informações pessoais e preferências</p>
+              <h1 className="text-2xl font-bold text-gray-800">Conta profissional</h1>
+              <p className="text-gray-600">Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma</p>
             </header>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

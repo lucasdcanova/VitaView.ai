@@ -40,7 +40,7 @@ export default function MobileNav() {
           }`}
         >
           <UserCog className="h-5 w-5" />
-          <span className="text-xs mt-1">Perfil</span>
+          <span className="text-xs mt-1">Conta</span>
         </Link>
       </div>
     </nav>

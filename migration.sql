@@ -3,6 +3,16 @@ ALTER TABLE users
 ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
 ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 
+-- Garantir associação dos exames e métricas aos perfis/pacientes
+ALTER TABLE exams
+ADD COLUMN IF NOT EXISTS profile_id INTEGER REFERENCES profiles(id);
+
+ALTER TABLE health_metrics
+ADD COLUMN IF NOT EXISTS profile_id INTEGER REFERENCES profiles(id);
+
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS plan_type TEXT;
+
 -- Criar as tabelas de planos de assinatura e assinaturas se ainda não existirem
 CREATE TABLE IF NOT EXISTS subscription_plans (
     id SERIAL PRIMARY KEY,

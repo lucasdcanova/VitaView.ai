@@ -41,6 +41,8 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
+import { useProfiles } from "@/hooks/use-profiles";
+import ProfileSwitcher from "@/components/profile-switcher";
 
 // Memoized components for better performance
 const MemoizedHealthScore = memo(HealthScore);
@@ -50,45 +52,70 @@ const MemoizedHealthRecommendations = memo(HealthRecommendations);
 
 export default function Dashboard() {
   const [activeMetricsTab, setActiveMetricsTab] = useState("all");
+  const { profiles, activeProfile, isLoading: isLoadingProfiles } = useProfiles();
 
   const { data: exams, isLoading: isLoadingExams } = useQuery<Exam[]>({
-    queryKey: ["/api/exams"],
+    queryKey: ["/api/exams", activeProfile?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/exams", { credentials: "include" });
+        const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+        const res = await fetch(`/api/exams${queryParam}`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
         return [];
       }
     },
+    enabled: !!activeProfile,
   });
-  
+
   const { data: metrics, isLoading: isLoadingMetrics } = useQuery<HealthMetric[]>({
-    queryKey: ["/api/health-metrics/latest"],
+    queryKey: ["/api/health-metrics/latest", activeProfile?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/health-metrics/latest", { credentials: "include" });
+        const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+        const res = await fetch(`/api/health-metrics/latest${queryParam}`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch health metrics");
         return res.json();
       } catch (error) {
         return [];
       }
     },
+    enabled: !!activeProfile,
   });
   
-  const { data: profiles, isLoading: isLoadingProfiles } = useQuery<Profile[]>({
-    queryKey: ["/api/profiles"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/profiles", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to fetch profiles");
-        return res.json();
-      } catch (error) {
-        return [];
-      }
-    },
-  });
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
+            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+              <h1 className="text-xl font-semibold text-gray-800">Selecione ou cadastre um paciente</h1>
+              <p className="text-gray-600 mt-3">
+                Para visualizar exames e métricas de saúde, escolha um paciente no painel lateral ou cadastre um novo.
+              </p>
+              <p className="text-sm text-gray-500 mt-4">
+                Profissionais podem gerenciar múltiplos pacientes e alternar entre eles a qualquer momento.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
   
   // Memoized function to process exam data for recency
   const recentExams = useMemo(() => {
@@ -473,10 +500,16 @@ export default function Dashboard() {
             <header className="mb-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-                  <p className="text-gray-600 mt-1">Acompanhe seus indicadores de saúde e últimas análises</p>
+                  <h1 className="text-2xl font-bold text-gray-800">Painel clínico</h1>
+                  <p className="text-gray-600 mt-1">
+                    Informações consolidadas do paciente <span className="font-semibold text-primary-700">{activeProfile.name}</span>
+                  </p>
+                  {activeProfile.planType && (
+                    <p className="text-xs text-gray-500 mt-1">Plano de saúde: {activeProfile.planType}</p>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <ProfileSwitcher />
                   <Link href="/upload-exams">
                     <Button className="gap-2">
                       <FileUp className="h-4 w-4" />

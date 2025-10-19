@@ -7,6 +7,9 @@ import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import type { Exam, HealthMetric } from "@shared/schema";
 import { normalizeExamName } from "@shared/exam-normalizer";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useProfiles } from "@/hooks/use-profiles";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
 
 // Função para formatar data no padrão brasileiro
 function formatDateToBR(dateString: string | Date): string {
@@ -47,17 +50,63 @@ function formatMetricDisplayName(name: string): string {
 }
 
 export default function ExamTimeline() {
+  const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+
   // Buscar exames
   const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
-    queryKey: ["/api/exams"],
+    queryKey: ["/api/exams", activeProfile?.id],
+    queryFn: async () => {
+      const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+      const res = await fetch(`/api/exams${queryParam}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch exams");
+      return res.json();
+    },
+    enabled: !!activeProfile,
   });
 
   // Buscar métricas de saúde
   const { data: healthMetrics = [], isLoading: isLoadingMetrics } = useQuery<HealthMetric[]>({
-    queryKey: ["/api/health-metrics"],
+    queryKey: ["/api/health-metrics", activeProfile?.id],
+    queryFn: async () => {
+      const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+      const res = await fetch(`/api/health-metrics${queryParam}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch health metrics");
+      return res.json();
+    },
+    enabled: !!activeProfile,
   });
 
   const isLoading = isLoadingExams || isLoadingMetrics;
+
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
+            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
+              <p className="text-gray-600 mt-3">
+                Escolha um paciente no topo do painel para visualizar a evolução das métricas clínicas ao longo do tempo.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   // Preparar dados do gráfico - uma linha para cada métrica
   const { chartData, availableMetrics } = useMemo(() => {
@@ -132,10 +181,10 @@ export default function ExamTimeline() {
         {/* Cabeçalho */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Evolução das Métricas de Saúde
+            Evolução clínica do paciente {activeProfile.name}
           </h1>
           <p className="text-lg text-gray-600">
-            Acompanhe a evolução dos seus resultados ao longo do tempo
+            Acompanhe a evolução dos resultados do paciente de forma visual e comparativa
           </p>
         </div>
 

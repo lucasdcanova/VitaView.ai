@@ -569,7 +569,35 @@ export async function registerRoutes(app: Express): Promise<void> {
       const userId = req.user.id;
       
       // Verificar se temos dados suficientes
-      const { name, fileType, fileContent, laboratoryName, examDate } = req.body;
+      const { name, fileType, fileContent, laboratoryName, examDate, profileId: rawProfileId } = req.body;
+      
+      // Determinar paciente ativo
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const parts = cookie.trim().split('=');
+        if (parts.length >= 2) {
+          const key = parts[0];
+          const value = parts.slice(1).join('=');
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>) || {};
+      
+      let profileId = rawProfileId ? Number(rawProfileId) : undefined;
+      if (!profileId && cookies['active_profile_id']) {
+        const parsed = Number(cookies['active_profile_id']);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+      
+      if (!profileId || Number.isNaN(profileId)) {
+        return res.status(400).json({ message: "Selecione um paciente antes de enviar o exame." });
+      }
+      
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido para este profissional." });
+      }
       
       if (!name || !fileType || !fileContent) {
         return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
@@ -581,6 +609,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Executar o pipeline completo
       const result = await runAnalysisPipeline({
         userId,
+        profileId,
         name,
         fileType, 
         fileContent,
@@ -719,15 +748,31 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
       }
       
-      // Remover campo requestingPhysician que pode vir do cliente mas não existe no DB
-      const { requestingPhysician, ...bodyWithoutRequestingPhysician } = req.body;
+      // Garantir associação com o paciente selecionado
+      const {
+        requestingPhysician,
+        profileId: rawProfileId,
+        ...bodyWithoutProfile
+      } = req.body;
+
+      const profileId = rawProfileId ? Number(rawProfileId) : undefined;
+      if (!profileId || Number.isNaN(profileId)) {
+        return res.status(400).json({ message: "Selecione um paciente para associar o exame." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido para este profissional." });
+      }
       
       const examData = {
-        ...bodyWithoutRequestingPhysician,
-        userId: userId,
+        ...bodyWithoutProfile,
+        userId,
+        profileId,
+        requestingPhysician: requestingPhysician || null,
         uploadDate: new Date()
       };
-      
+
       const newExam = await storage.createExam(examData);
       res.status(201).json(newExam);
     } catch (error) {
@@ -774,12 +819,23 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       
+      const profileId = req.body.profileId ? Number(req.body.profileId) : undefined;
+      if (!profileId || Number.isNaN(profileId)) {
+        return res.status(400).json({ message: "Selecione um paciente para associar as métricas." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido." });
+      }
+
       // Converte para formato correto e ajusta os dados
       const date = req.body.date ? new Date(req.body.date) : new Date();
       
       // Verifica se todos os campos obrigatórios existem e estão em formato correto
       const metricData = {
         userId: Number(userId),
+        profileId,
         name: req.body.name || "desconhecido",
         value: String(req.body.value || "0"),
         unit: req.body.unit || "",
@@ -894,8 +950,30 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       }
       
+      let profileId: number | undefined;
+      if (req.query.profileId) {
+        const parsed = Number(req.query.profileId);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId) {
+        const defaultProfile = await storage.getDefaultProfileForUser(userId);
+        profileId = defaultProfile?.id;
+      }
+
+      if (!profileId) {
+        return res.status(400).json({ message: "Nenhum paciente selecionado." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido para este profissional." });
+      }
+
       try {
-        const exams = await storage.getExamsByUserId(userId);
+        const exams = await storage.getExamsByUserId(userId, profileId);
         res.json(exams || []);
       } catch (dbError) {
         throw dbError;
@@ -1047,13 +1125,52 @@ export async function registerRoutes(app: Express): Promise<void> {
   // API routes for health metrics
   app.get("/api/health-metrics", ensureAuthenticated, rbacSystem.requirePermission('health_metrics', 'read'), async (req, res) => {
     try {
-      const metrics = await storage.getHealthMetricsByUserId(req.user!.id);
+      const userId = req.user!.id;
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const parts = cookie.trim().split('=');
+        if (parts.length >= 2) {
+          const key = parts[0];
+          const value = parts.slice(1).join('=');
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>) || {};
+      let profileId: number | undefined;
+      if (req.query.profileId) {
+        const parsed = Number(req.query.profileId);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId && cookies['active_profile_id']) {
+        const parsed = Number(cookies['active_profile_id']);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId) {
+        const defaultProfile = await storage.getDefaultProfileForUser(userId);
+        profileId = defaultProfile?.id;
+      }
+
+      if (!profileId) {
+        return res.status(400).json({ message: "Nenhum paciente selecionado." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido." });
+      }
+
+      const metrics = await storage.getHealthMetricsByUserId(userId, profileId);
       res.json(metrics || []);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
-  
+
   app.get("/api/health-metrics/latest", ensureAuthenticated, async (req, res) => {
     try {
       // Tenta extrair userId dos cookies
@@ -1091,8 +1208,37 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       }
       
+      let profileId: number | undefined;
+      if (req.query.profileId) {
+        const parsed = Number(req.query.profileId);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId && cookies['active_profile_id']) {
+        const parsed = Number(cookies['active_profile_id']);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId) {
+        const defaultProfile = await storage.getDefaultProfileForUser(userId);
+        profileId = defaultProfile?.id;
+      }
+
+      if (!profileId) {
+        return res.status(400).json({ message: "Nenhum paciente selecionado." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Paciente inválido." });
+      }
+
       const limit = parseInt(req.query.limit as string) || 10;
-      const metrics = await storage.getLatestHealthMetrics(userId, limit);
+      const metrics = await storage.getLatestHealthMetrics(userId, limit, profileId);
       res.json(metrics || []);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
@@ -1118,8 +1264,25 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Você não tem permissão para excluir métricas de outro usuário" });
       }
       
+      let profileId: number | undefined;
+      if (req.query.profileId) {
+        const parsed = Number(req.query.profileId);
+        if (!Number.isNaN(parsed)) {
+          profileId = parsed;
+        }
+      }
+
+      if (!profileId) {
+        return res.status(400).json({ message: "Selecione um paciente para excluir métricas." });
+      }
+
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== targetUserId) {
+        return res.status(403).json({ message: "Paciente inválido." });
+      }
+
       // Executar a exclusão
-      const count = await storage.deleteAllHealthMetricsByUserId(targetUserId);
+      const count = await storage.deleteAllHealthMetricsByUserId(targetUserId, profileId);
       
       res.status(200).json({ 
         message: `${count} métricas de saúde excluídas com sucesso`, 
@@ -1377,6 +1540,14 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
       }
       
+      res.cookie('active_profile_id', profileId.toString(), {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'lax',
+        path: '/'
+      });
+
       // Responder com o perfil selecionado
       res.json(profile);
     } catch (error) {

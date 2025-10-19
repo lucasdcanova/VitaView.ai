@@ -2,18 +2,21 @@ import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import FileUpload from "@/components/ui/file-upload";
-import { 
-  FileUpIcon, 
-  BrainCircuitIcon, 
+import {
+  FileUpIcon,
+  BrainCircuitIcon,
   FileDigitIcon,
   ShieldCheck,
   ClipboardList,
   Check
 } from "lucide-react";
+import { useProfiles } from "@/hooks/use-profiles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UploadExams() {
   const [, navigate] = useLocation();
-  
+  const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+
   const handleUploadComplete = (result: any) => {
     // If we have a result with an exam ID, navigate to the report page
     if (result && result.exam && result.exam.id) {
@@ -22,6 +25,36 @@ export default function UploadExams() {
       }, 1000);
     }
   };
+
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Skeleton className="w-12 h-12 rounded-full mx-auto mb-4" />
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
+            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
+              <p className="text-gray-600 mt-3">
+                Escolha o paciente no topo do painel para direcionar o upload e a análise dos exames para o prontuário correto.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,8 +66,10 @@ export default function UploadExams() {
         <main className="flex-1">
           <div className="p-4 md:p-6">
             <header className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Enviar Exames</h1>
-              <p className="text-gray-600">Envie seus exames para análise pela IA</p>
+              <h1 className="text-2xl font-bold text-gray-800">Enviar exames</h1>
+              <p className="text-gray-600">
+                Exames enviados serão associados ao paciente <span className="font-semibold text-primary-700">{activeProfile.name}</span>
+              </p>
             </header>
             
             {/* Informação sobre limites de upload */}

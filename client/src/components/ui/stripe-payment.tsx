@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const stripeEnabled = Boolean(stripePublicKey && stripePublicKey.startsWith('pk_'));
 
 // Log para debug detalhado
 console.log('=== Debug Stripe ===');
@@ -18,19 +19,16 @@ console.log('Stripe Public Key começa com pk_:', stripePublicKey?.startsWith('p
 console.log('Ambiente:', import.meta.env.MODE);
 
 if (!stripePublicKey) {
-  console.error('VITE_STRIPE_PUBLIC_KEY não está definida nas variáveis de ambiente');
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-
-// Validar formato da chave
-if (!stripePublicKey.startsWith('pk_')) {
-  console.error('Chave pública do Stripe tem formato inválido. Deve começar com pk_');
+  console.warn('VITE_STRIPE_PUBLIC_KEY não está definida nas variáveis de ambiente. Pagamentos serão desativados.');
+} else if (!stripePublicKey.startsWith('pk_')) {
+  console.warn('Chave pública do Stripe tem formato inválido. Deve começar com pk_. Pagamentos serão desativados.');
 }
 
 // Enhanced Stripe loading with CSP support
 let stripePromise: Promise<any> | null = null;
 
 const initializeStripe = async () => {
+  if (!stripeEnabled) return null;
   if (stripePromise) return stripePromise;
   
   try {
@@ -73,11 +71,13 @@ const initializeStripe = async () => {
 };
 
 // Initialize Stripe
-try {
-  stripePromise = initializeStripe();
-} catch (error) {
-  console.error('❌ Falha crítica na inicialização do Stripe:', error);
-  stripePromise = Promise.reject(error);
+if (stripeEnabled) {
+  try {
+    stripePromise = initializeStripe();
+  } catch (error) {
+    console.error('❌ Falha crítica na inicialização do Stripe:', error);
+    stripePromise = Promise.reject(error);
+  }
 }
 
 interface CheckoutFormProps {
@@ -169,6 +169,11 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!stripeEnabled) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchPaymentIntent = async () => {
       try {
         const response = await apiRequest('POST', '/api/create-payment-intent', { planId });
@@ -192,6 +197,22 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
 
     fetchPaymentIntent();
   }, [planId, toast, onCancel]);
+
+  if (!stripeEnabled) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-red-500 font-medium">
+          Pagamentos via Stripe estão desativados porque a variável de ambiente `VITE_STRIPE_PUBLIC_KEY` não está configurada.
+        </p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Configure a chave pública (`pk_...`) e recarregue a página para habilitar esta funcionalidade.
+        </p>
+        <Button onClick={onCancel} className="mt-4" variant="outline">
+          Voltar
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -39,6 +39,7 @@ async function runPipelineTest(filePath = DEFAULT_FILE_PATH) {
     // Configurar o teste
     const options: AnalysisOptions = {
       userId: 1, // ID do usuário de teste
+      profileId: 1,
       name: `Teste Pipeline [${new Date().toISOString()}]`,
       fileType,
       fileContent,

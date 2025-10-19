@@ -1,18 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
-import ProfileSwitcher from "@/components/profile-switcher";
 import Logo from "@/components/ui/logo";
-import { 
-  LayoutDashboard, 
-  Upload, 
-  History, 
-  UserCog, 
+import {
+  LayoutDashboard,
+  Upload,
+  History,
+  UserCog,
   LogOut,
   LineChart,
-  Filter,
-  Activity,
-  TrendingUp,
   CreditCard,
   Store,
   Zap,
@@ -51,6 +47,11 @@ export default function Sidebar(props: SidebarProps) {
     }
   };
 
+  const doctorName = user?.fullName || user?.username || "Profissional";
+  const normalizedGender = user?.gender?.toLowerCase();
+  const doctorPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin") ? "Dra." : "Dr.";
+  const displayDoctor = `${doctorPrefix} ${doctorName}`.trim();
+
   return (
     <aside 
       className={`bg-white shadow-md w-64 flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-transform duration-300 ease-in-out md:translate-x-0 ${
@@ -67,12 +68,9 @@ export default function Sidebar(props: SidebarProps) {
             {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div>
-            <h3 className="font-medium text-sm">{user?.fullName || user?.username}</h3>
-            <p className="text-xs text-[#707070]">Último exame: 2 dias atrás</p>
+            <h3 className="font-medium text-sm">{displayDoctor}</h3>
+            <p className="text-xs text-[#707070]">Profissional de saúde</p>
           </div>
-        </div>
-        <div className="mt-3">
-          <ProfileSwitcher />
         </div>
       </div>
       
@@ -122,9 +120,7 @@ export default function Sidebar(props: SidebarProps) {
           }`}
         >
           <Heart className="mr-3 h-5 w-5" />
-          <span>
-            Meu <span className="text-[#1E3A5F] font-semibold">VitaView</span>
-          </span>
+          <span className="text-[#1E3A5F] font-semibold">VitaView do paciente</span>
         </Link>
         
         <Link href="/history"
@@ -160,7 +156,7 @@ export default function Sidebar(props: SidebarProps) {
           }`}
         >
           <UserCog className="mr-3 h-5 w-5" />
-          <span>Perfil</span>
+          <span>Conta profissional</span>
         </Link>
         
         <Link href="/subscription"

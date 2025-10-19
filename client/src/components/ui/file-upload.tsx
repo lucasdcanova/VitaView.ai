@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfiles } from "@/hooks/use-profiles";
 import { Button } from "@/components/ui/button";
 import { normalizeExamName, normalizeHealthMetrics } from "@shared/exam-normalizer";
 
@@ -19,6 +20,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [analyzedResult, setAnalyzedResult] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { activeProfile } = useProfiles();
 
   // Gemini análise do documento
   const analyzeWithGeminiMutation = useMutation({
@@ -42,15 +44,27 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       return resultData;
     },
     onSuccess: (data) => {
+      if (!activeProfile) {
+        setUploadStep('error');
+        toast({
+          title: "Selecione um paciente",
+          description: "Escolha um paciente antes de analisar exames.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setAnalyzedResult(data);
       setUploadStep('interpreting');
       
       // Agora vamos para o segundo passo: interpretação com OpenAI
       const patientData = {
-        gender: user?.gender || 'não informado',
-        age: user?.birthDate 
-          ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-          : null,
+        gender: activeProfile?.gender || 'não informado',
+        age: activeProfile?.birthDate 
+          ? Math.floor((new Date().getTime() - new Date(activeProfile.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+          : undefined,
+        relationship: activeProfile?.relationship,
+        planType: activeProfile?.planType,
         diseases: [],
         surgeries: [],
         allergies: []
@@ -94,10 +108,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     },
     onSuccess: (openaiInterpretation) => {
       // Verificar se usuário está autenticado
-      if (!user || !user.id) {
+      if (!user || !user.id || !activeProfile) {
         toast({
-          title: "Erro de autenticação",
-          description: "Você precisa estar autenticado para salvar exames. Por favor, faça login novamente.",
+          title: "Seleção necessária",
+          description: "Confirme que está autenticado e que um paciente está selecionado antes de salvar exames.",
           variant: "destructive",
         });
         setUploadStep('error');
@@ -133,7 +147,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       const examData = {
         name: filename.split('.')[0],
-        userId: user.id, // Sempre usar o ID do usuário autenticado
+        userId: user.id, // Sempre usar o ID do profissional autenticado
+        profileId: activeProfile.id,
         fileType: fileType,
         laboratoryName: "Upload via Plataforma",
         examDate: examDate,
@@ -209,16 +224,17 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         
         // Adaptar dados para formato esperado pela API
         // Manter o userId que foi enviado no objeto original (que pode ter um fallback)
-        const examData = {
-          name: rawExamData.name,
-          fileType: rawExamData.fileType,
-          laboratoryName: rawExamData.laboratoryName,
-          examDate: rawExamData.examDate,
-          status: "analyzed",
-          userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
-          requestingPhysician: rawExamData.requestingPhysician || null,
-          originalContent: rawExamData.originalContent || null
-        };
+      const examData = {
+        name: rawExamData.name,
+        fileType: rawExamData.fileType,
+        laboratoryName: rawExamData.laboratoryName,
+        examDate: rawExamData.examDate,
+        status: "analyzed",
+        userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
+        profileId: activeProfile.id,
+        requestingPhysician: rawExamData.requestingPhysician || null,
+        originalContent: rawExamData.originalContent || null
+      };
         
         // Criar o exame no banco de dados
         const examResponse = await fetch("/api/exams", {
@@ -304,6 +320,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 // Garantir que os dados estão no formato esperado pelo backend
                 const metricData = {
                   userId: Number(savedExam.userId), // Usar userId do exame salvo que já foi confirmado
+                  profileId: activeProfile.id,
                   name: metric.name, // Já normalizado
                   value: String(metric.value || "0"),
                   unit: metric.unit || '',
@@ -344,6 +361,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
+
+    if (!activeProfile) {
+      toast({
+        title: "Selecione um paciente",
+        description: "Escolha um paciente no painel lateral antes de enviar exames.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Iniciar upload
     setUploadStep('uploading');

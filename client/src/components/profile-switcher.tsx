@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -23,18 +22,16 @@ import { Profile } from "@shared/schema";
 
 type ProfileFormData = {
   name: string;
-  relationship: string;
   gender: string;
-  bloodType: string;
   birthDate: string;
+  planType?: string;
 };
 
 const profileSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  relationship: z.string().optional(),
   gender: z.string().min(1, "Gênero é obrigatório"),
-  bloodType: z.string().optional(),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+  planType: z.string().optional(),
 });
 
 export default function ProfileSwitcher() {
@@ -49,10 +46,9 @@ export default function ProfileSwitcher() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: "",
-      relationship: "",
       gender: "",
-      bloodType: "",
       birthDate: "",
+      planType: "",
     },
   });
 
@@ -60,16 +56,20 @@ export default function ProfileSwitcher() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: "",
-      relationship: "",
       gender: "",
-      bloodType: "",
       birthDate: "",
+      planType: "",
     },
   });
 
   const onCreateSubmit = (data: ProfileFormData) => {
     createProfile({
-      ...data,
+      name: data.name,
+      gender: data.gender,
+      birthDate: data.birthDate,
+      planType: data.planType || null,
+      relationship: null,
+      bloodType: null,
       isDefault: false,
     });
     setIsCreateDialogOpen(false);
@@ -78,7 +78,12 @@ export default function ProfileSwitcher() {
 
   const onEditSubmit = (data: ProfileFormData) => {
     if (profileToEdit) {
-      updateProfile(profileToEdit.id, data);
+      updateProfile(profileToEdit.id, {
+        name: data.name,
+        gender: data.gender,
+        birthDate: data.birthDate,
+        planType: data.planType || null,
+      });
       setIsEditDialogOpen(false);
       setProfileToEdit(null);
     }
@@ -96,10 +101,9 @@ export default function ProfileSwitcher() {
     setProfileToEdit(profile);
     editForm.reset({
       name: profile.name,
-      relationship: profile.relationship || "",
       gender: profile.gender || "",
-      bloodType: profile.bloodType || "",
       birthDate: profile.birthDate || "",
+      planType: profile.planType || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -110,94 +114,100 @@ export default function ProfileSwitcher() {
   };
 
   return (
-    <div className="w-full">
+    <div className="inline-block">
       <Popover>
         <PopoverTrigger asChild>
-          <Button 
-            variant="outline" 
-            className="w-full flex items-center justify-between border-dashed border-gray-300 py-6"
+          <Button
+            variant="outline"
+            className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-primary-200 bg-white shadow-sm text-primary-700 hover:text-primary-900 hover:border-primary-300"
           >
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
                 <User className="w-4 h-4" />
               </div>
               <div className="flex flex-col items-start overflow-hidden">
-                <span className="font-medium text-sm truncate max-w-[150px]">
-                  {activeProfile?.name || "Perfil principal"}
+                <span className="font-semibold text-sm truncate max-w-[180px]">
+                  {activeProfile?.name || "Selecione um paciente"}
                 </span>
-                <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                  {activeProfile?.relationship || "Próprio"}
+                <span className="text-xs text-gray-500 truncate max-w-[180px]">
+                  {activeProfile?.planType ? `Plano: ${activeProfile.planType}` : "Adicionar ou selecionar paciente"}
                 </span>
               </div>
             </div>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[320px] p-0" align="start">
           <div className="p-2">
             <div className="flex items-center p-2">
               <Users className="w-4 h-4 mr-2 text-primary-500" />
-              <span className="font-medium">Gerenciar Perfis</span>
+              <span className="font-medium">Selecionar paciente</span>
             </div>
             <Separator className="my-2" />
             <div className="max-h-[200px] overflow-y-auto space-y-1">
-              {profiles.map((profile) => (
-                <div 
-                  key={profile.id}
-                  className={`flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer ${
-                    activeProfile?.id === profile.id ? "bg-primary-50 text-primary-700" : ""
-                  }`}
-                  onClick={() => setActiveProfile(profile)}
-                >
-                  <div className="flex items-center">
-                    <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2">
-                      <User className="w-4 h-4" />
+              {profiles.length === 0 ? (
+                <div className="p-3 text-sm text-gray-500 text-center">
+                  Nenhum paciente cadastrado. Adicione um paciente para começar a análise.
+                </div>
+              ) : (
+                profiles.map((profile) => (
+                  <div 
+                    key={profile.id}
+                    className={`flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer ${
+                      activeProfile?.id === profile.id ? "bg-primary-50 text-primary-700" : ""
+                    }`}
+                    onClick={() => setActiveProfile(profile)}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">{profile.name}</div>
+                        <div className="text-xs text-gray-500">{profile.planType ? profile.planType : "Paciente"}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-medium">{profile.name}</div>
-                      <div className="text-xs text-gray-500">{profile.relationship || "Próprio"}</div>
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditDialog(profile);
-                      }}
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                    {!profile.isDefault && (
+                    <div className="flex space-x-1">
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-7 w-7 text-destructive"
+                        className="h-7 w-7"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openDeleteDialog(profile);
+                          openEditDialog(profile);
                         }}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
-                    )}
+                      {!profile.isDefault && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteDialog(profile);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Separator className="my-2" />
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full justify-start" variant="outline">
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Adicionar Perfil
+                  Cadastrar paciente
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Novo Perfil</DialogTitle>
+                  <DialogTitle>Adicionar novo paciente</DialogTitle>
                 </DialogHeader>
                 <Form {...createForm}>
                   <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
@@ -206,37 +216,10 @@ export default function ProfileSwitcher() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome</FormLabel>
+                          <FormLabel>Nome completo *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nome do perfil" {...field} />
+                            <Input placeholder="Nome do paciente" {...field} />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={createForm.control}
-                      name="relationship"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Parentesco</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o parentesco" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Próprio">Próprio</SelectItem>
-                              <SelectItem value="Filho(a)">Filho(a)</SelectItem>
-                              <SelectItem value="Pai/Mãe">Pai/Mãe</SelectItem>
-                              <SelectItem value="Cônjuge">Cônjuge</SelectItem>
-                              <SelectItem value="Outro">Outro</SelectItem>
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -268,42 +251,25 @@ export default function ProfileSwitcher() {
                     />
                     <FormField
                       control={createForm.control}
-                      name="bloodType"
+                      name="birthDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tipo Sanguíneo</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o tipo sanguíneo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="A+">A+</SelectItem>
-                              <SelectItem value="A-">A-</SelectItem>
-                              <SelectItem value="B+">B+</SelectItem>
-                              <SelectItem value="B-">B-</SelectItem>
-                              <SelectItem value="AB+">AB+</SelectItem>
-                              <SelectItem value="AB-">AB-</SelectItem>
-                              <SelectItem value="O+">O+</SelectItem>
-                              <SelectItem value="O-">O-</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Data de nascimento *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     <FormField
                       control={createForm.control}
-                      name="birthDate"
+                      name="planType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Data de Nascimento *</FormLabel>
+                          <FormLabel>Tipo de plano (opcional)</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <Input placeholder="SUS, particular, convênio..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -323,11 +289,11 @@ export default function ProfileSwitcher() {
         </PopoverContent>
       </Popover>
 
-      {/* Edit Profile Dialog */}
+      {/* Edit Patient Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogTitle>Editar paciente</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
@@ -336,37 +302,10 @@ export default function ProfileSwitcher() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>Nome completo *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome do perfil" {...field} />
+                      <Input placeholder="Nome do paciente" {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="relationship"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Parentesco</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o parentesco" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Próprio">Próprio</SelectItem>
-                        <SelectItem value="Filho(a)">Filho(a)</SelectItem>
-                        <SelectItem value="Pai/Mãe">Pai/Mãe</SelectItem>
-                        <SelectItem value="Cônjuge">Cônjuge</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -383,57 +322,40 @@ export default function ProfileSwitcher() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o gênero" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="bloodType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo Sanguíneo</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo sanguíneo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="A+">A+</SelectItem>
-                        <SelectItem value="A-">A-</SelectItem>
-                        <SelectItem value="B+">B+</SelectItem>
-                        <SelectItem value="B-">B-</SelectItem>
-                        <SelectItem value="AB+">AB+</SelectItem>
-                        <SelectItem value="AB-">AB-</SelectItem>
-                        <SelectItem value="O+">O+</SelectItem>
-                        <SelectItem value="O-">O-</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                        <SelectValue placeholder="Selecione o gênero" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Feminino">Feminino</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
               />
               <FormField
                 control={editForm.control}
                 name="birthDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data de Nascimento *</FormLabel>
+                    <FormLabel>Data de nascimento *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="planType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de plano (opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="SUS, particular, convênio..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -450,16 +372,16 @@ export default function ProfileSwitcher() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Patient Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remover Perfil</DialogTitle>
+            <DialogTitle>Remover paciente</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p>
-              Tem certeza que deseja remover o perfil "{profileToDelete?.name}"? 
-              Essa ação não pode ser desfeita e todos os dados associados serão perdidos.
+              Tem certeza que deseja remover o paciente "{profileToDelete?.name}"? 
+              Essa ação não pode ser desfeita e todos os dados clínicos associados serão excluídos.
             </p>
             <div className="flex justify-end space-x-2 pt-2">
               <DialogClose asChild>

@@ -4,7 +4,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, and } from "drizzle-orm";
 
 // Fix for type issues - use any to bypass complex type definitions
 type SessionStore = any;
@@ -31,7 +31,7 @@ export interface IStorage {
   // Exam operations
   createExam(exam: InsertExam): Promise<Exam>;
   getExam(id: number): Promise<Exam | undefined>;
-  getExamsByUserId(userId: number): Promise<Exam[]>;
+  getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]>;
   updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined>;
   deleteExam(id: number): Promise<boolean>;
   
@@ -42,10 +42,10 @@ export interface IStorage {
   
   // Health metrics operations
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
-  getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]>;
-  getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]>;
+  getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]>;
+  getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]>;
   deleteHealthMetric(id: number): Promise<boolean>;
-  deleteAllHealthMetricsByUserId(userId: number): Promise<number>;
+  deleteAllHealthMetricsByUserId(userId: number, profileId?: number): Promise<number>;
   
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -242,6 +242,7 @@ export class MemStorage implements IStorage {
       birthDate: profile.birthDate || null,
       gender: profile.gender || null,
       bloodType: profile.bloodType || null,
+      planType: profile.planType || null,
       isDefault: profile.isDefault || false,
       createdAt: new Date()
     };
@@ -284,7 +285,7 @@ export class MemStorage implements IStorage {
         }
       }
     }
-    
+
     const updatedProfile = { ...profile, ...profileData };
     this.profiles.set(id, updatedProfile);
     return updatedProfile;
@@ -325,7 +326,8 @@ export class MemStorage implements IStorage {
       originalContent: exam.originalContent || null,
       laboratoryName: exam.laboratoryName || null,
       examDate: exam.examDate || null,
-      requestingPhysician: exam.requestingPhysician || null
+      requestingPhysician: exam.requestingPhysician || null,
+      profileId: exam.profileId ?? null
     };
     this.exams.set(id, newExam);
     return newExam;
@@ -335,9 +337,9 @@ export class MemStorage implements IStorage {
     return this.exams.get(id);
   }
 
-  async getExamsByUserId(userId: number): Promise<Exam[]> {
+  async getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]> {
     return Array.from(this.exams.values()).filter(
-      (exam) => exam.userId === userId
+      (exam) => exam.userId === userId && (!profileId || exam.profileId === profileId)
     );
   }
 
@@ -393,7 +395,8 @@ export class MemStorage implements IStorage {
       date: metric.date || new Date(),
       status: metric.status || null,
       unit: metric.unit || null,
-      change: metric.change || null
+      change: metric.change || null,
+      profileId: metric.profileId ?? null
       // Removidos campos que não existem no banco de dados real
       // referenceMin, referenceMax, clinical_significance, category
     };
@@ -401,14 +404,14 @@ export class MemStorage implements IStorage {
     return newMetric;
   }
 
-  async getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]> {
+  async getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]> {
     return Array.from(this.healthMetricsMap.values()).filter(
-      (metric) => metric.userId === userId
+      (metric) => metric.userId === userId && (!profileId || metric.profileId === profileId)
     );
   }
 
-  async getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]> {
-    const userMetrics = await this.getHealthMetricsByUserId(userId);
+  async getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]> {
+    const userMetrics = await this.getHealthMetricsByUserId(userId, profileId);
     
     // Group by name to get latest of each type
     const metricsByName = new Map<string, HealthMetric>();
@@ -428,8 +431,8 @@ export class MemStorage implements IStorage {
     return this.healthMetricsMap.delete(id);
   }
   
-  async deleteAllHealthMetricsByUserId(userId: number): Promise<number> {
-    const metrics = await this.getHealthMetricsByUserId(userId);
+  async deleteAllHealthMetricsByUserId(userId: number, profileId?: number): Promise<number> {
+    const metrics = await this.getHealthMetricsByUserId(userId, profileId);
     let count = 0;
     
     for (const metric of metrics) {
@@ -829,7 +832,8 @@ export class DatabaseStorage implements IStorage {
     const examWithDefaults = {
       ...exam,
       originalContent: exam.originalContent || "",
-      requestingPhysician: exam.requestingPhysician || null
+      requestingPhysician: exam.requestingPhysician || null,
+      profileId: exam.profileId ?? null
     };
     const [newExam] = await db.insert(exams).values(examWithDefaults).returning();
     return newExam;
@@ -840,7 +844,7 @@ export class DatabaseStorage implements IStorage {
     return exam;
   }
 
-  async getExamsByUserId(userId: number): Promise<Exam[]> {
+  async getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]> {
     // Tentativa alternativa para evitar erros de coluna
     try {
       // Primeiro verificar se a tabela existe e tem registros
@@ -848,6 +852,7 @@ export class DatabaseStorage implements IStorage {
         SELECT 
           id, 
           user_id as "userId", 
+          profile_id as "profileId",
           name, 
           file_type as "fileType", 
           status, 
@@ -858,10 +863,12 @@ export class DatabaseStorage implements IStorage {
           COALESCE(original_content, '') as "originalContent"
         FROM exams 
         WHERE user_id = $1
+        ${profileId ? 'AND profile_id = $2' : ''}
       `;
       
       // Usar query SQL direta para maior controle e permitir COALESCE
-      const { rows } = await pool.query(queryText, [userId]);
+      const params = profileId ? [userId, profileId] : [userId];
+      const { rows } = await pool.query(queryText, params);
       
       // Se o COALESCE não funcionar devido à ausência das colunas, os erros serão capturados
       return rows.map(row => {
@@ -879,9 +886,14 @@ export class DatabaseStorage implements IStorage {
         // Tentando método alternativo com projeção segura...
         
         // Selecionar todas as colunas incluindo a nova
+        const whereClause = profileId
+          ? and(eq(exams.userId, userId), eq(exams.profileId!, profileId))
+          : eq(exams.userId, userId);
+
         const results = await db.select({
           id: exams.id,
           userId: exams.userId,
+          profileId: exams.profileId,
           name: exams.name,
           fileType: exams.fileType,
           status: exams.status,
@@ -889,14 +901,15 @@ export class DatabaseStorage implements IStorage {
           laboratoryName: exams.laboratoryName,
           examDate: exams.examDate,
           requestingPhysician: exams.requestingPhysician,
-        }).from(exams).where(eq(exams.userId, userId));
+        }).from(exams).where(whereClause);
         
         // Adaptar ao tipo completo - incluindo campos que podem faltar
         return results.map(exam => {
           return {
             ...exam,
             originalContent: null,
-            requestingPhysician: null
+            requestingPhysician: exam.requestingPhysician,
+            profileId: exam.profileId ?? null
           } as Exam;
         });
       } catch (fallbackError) {
@@ -948,6 +961,7 @@ export class DatabaseStorage implements IStorage {
       // Filtrar apenas as colunas que existem na tabela
       const filteredMetric = {
         userId: metric.userId,
+        profileId: metric.profileId ?? null,
         examId: metric.examId || null,
         name: metric.name,
         value: metric.value,
@@ -967,6 +981,7 @@ export class DatabaseStorage implements IStorage {
       return {
         id: -1, // ID fictício para indicar que não foi salvo
         userId: metric.userId,
+        profileId: metric.profileId ?? null,
         examId: metric.examId || null,
         name: metric.name,
         value: metric.value,
@@ -974,17 +989,18 @@ export class DatabaseStorage implements IStorage {
         status: metric.status || null,
         change: metric.change || null,
         date: metric.date || new Date()
-      };
+      } as HealthMetric;
     }
   }
 
-  async getHealthMetricsByUserId(userId: number): Promise<HealthMetric[]> {
+  async getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]> {
     try {
       // Usar consulta SQL direta para lidar com colunas que podem estar faltando
       const queryText = `
         SELECT 
           id, 
           user_id as "userId", 
+          profile_id as "profileId",
           name, 
           value, 
           unit, 
@@ -993,10 +1009,11 @@ export class DatabaseStorage implements IStorage {
           date
         FROM health_metrics 
         WHERE user_id = $1
+        ${profileId ? 'AND profile_id = $2' : ''}
       `;
       
-      // Usar query SQL direta para ter mais controle
-      const { rows } = await pool.query(queryText, [userId]);
+      const params = profileId ? [userId, profileId] : [userId];
+      const { rows } = await pool.query(queryText, params);
       
       // Converter as datas para objetos Date
       return rows.map(row => {
@@ -1011,9 +1028,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getLatestHealthMetrics(userId: number, limit: number): Promise<HealthMetric[]> {
+  async getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]> {
     // Get all metrics for the user
-    const userMetrics = await this.getHealthMetricsByUserId(userId);
+    const userMetrics = await this.getHealthMetricsByUserId(userId, profileId);
     
     // Group by name to get latest of each type
     const metricsByName = new Map<string, HealthMetric>();
@@ -1040,10 +1057,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async deleteAllHealthMetricsByUserId(userId: number): Promise<number> {
+  async deleteAllHealthMetricsByUserId(userId: number, profileId?: number): Promise<number> {
     try {
-      // [DeleteAllHealthMetrics] Excluindo todas as métricas para o usuário
-      const result = await db.delete(healthMetrics).where(eq(healthMetrics.userId, userId));
+      const whereClause = profileId
+        ? and(eq(healthMetrics.userId, userId), eq(healthMetrics.profileId!, profileId))
+        : eq(healthMetrics.userId, userId);
+
+      const result = await db.delete(healthMetrics).where(whereClause);
       return result && result.rowCount ? result.rowCount : 0;
     } catch (error) {
       console.error(`Erro ao excluir métricas de saúde do usuário ${userId}:`, error);

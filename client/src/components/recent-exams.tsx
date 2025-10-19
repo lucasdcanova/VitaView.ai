@@ -8,15 +8,18 @@ import { Button } from "@/components/ui/button";
 import { LazyComponent, useLazyLoading } from "@/components/ui/lazy-image";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
+import { useProfiles } from "@/hooks/use-profiles";
 
 export default function RecentExams() {
   const { ref, isInView } = useLazyLoading(0.1, '100px');
+  const { activeProfile } = useProfiles();
   
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
-    queryKey: ["/api/exams"],
+    queryKey: ["/api/exams", activeProfile?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/exams", { credentials: "include" });
+        const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+        const res = await fetch(`/api/exams${queryParam}`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
@@ -24,7 +27,7 @@ export default function RecentExams() {
         return [];
       }
     },
-    enabled: isInView, // Only fetch when component is in view
+    enabled: isInView && !!activeProfile, // Only fetch when component is in view and patient selected
   });
   
   // Use React state instead of direct localStorage access for SSR compatibility
@@ -37,12 +40,16 @@ export default function RecentExams() {
       const savedExamsString = localStorage.getItem('savedExams');
       if (savedExamsString) {
         const savedExams = JSON.parse(savedExamsString);
-        setLocalExams(savedExams);
+        if (Array.isArray(savedExams) && activeProfile) {
+          setLocalExams(savedExams.filter((exam: Exam) => exam.profileId === activeProfile.id));
+        } else {
+          setLocalExams([]);
+        }
       }
     } catch (error) {
       // Error reading from localStorage
     }
-  }, []);
+  }, [activeProfile]);
   
   // Combine both sources of exams
   const allExams = useMemo(() => {
@@ -73,6 +80,15 @@ export default function RecentExams() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
+
+  if (!activeProfile) {
+    return (
+      <div ref={ref} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 overflow-hidden">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Exames recentes</h2>
+        <p className="text-sm text-gray-500">Selecione um paciente para visualizar o histórico de exames analisados.</p>
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 overflow-hidden">

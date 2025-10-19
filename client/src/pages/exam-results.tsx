@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { 
@@ -56,14 +57,15 @@ export default function ExamResults() {
   const [localExams, setLocalExams] = useState<Exam[]>([]);
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
   const [, setLocation] = useLocation();
+  const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
   
   // Mutação para excluir todas as métricas de saúde
   const clearMetricsMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !user.id) {
+      if (!user || !user.id || !activeProfile) {
         throw new Error("Usuário não autenticado");
       }
-      return await fetch(`/api/health-metrics/user/${user.id}`, {
+      return await fetch(`/api/health-metrics/user/${user.id}?profileId=${activeProfile.id}`, {
         method: "DELETE", 
         credentials: "include"
       }).then(res => {
@@ -108,31 +110,65 @@ export default function ExamResults() {
   
   // Fetch exams from API
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
-    queryKey: ["/api/exams"],
+    queryKey: ["/api/exams", activeProfile?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/exams", { credentials: "include" });
+        const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+        const res = await fetch(`/api/exams${queryParam}`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch exams");
         return res.json();
       } catch (error) {
         return [];
       }
     },
+    enabled: !!activeProfile,
   });
   
   // Fetch health metrics from API
   const { data: apiHealthMetrics, isLoading: metricsLoading } = useQuery<HealthMetric[]>({
-    queryKey: ["/api/health-metrics"],
+    queryKey: ["/api/health-metrics", activeProfile?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/health-metrics", { credentials: "include" });
+        const queryParam = activeProfile ? `?profileId=${activeProfile.id}` : "";
+        const res = await fetch(`/api/health-metrics${queryParam}`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch health metrics");
         return res.json();
       } catch (error) {
         return [];
       }
     },
+    enabled: !!activeProfile,
   });
+
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 flex items-center justify-center bg-gray-50 px-6">
+            <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+              <h1 className="text-xl font-semibold text-gray-800">Selecione um paciente</h1>
+              <p className="text-gray-600 mt-3">
+                Utilize o seletor no topo do painel para escolher qual paciente deseja analisar antes de acessar os resultados clínicos.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
   
   // Load data from localStorage
   useEffect(() => {
@@ -141,19 +177,27 @@ export default function ExamResults() {
       const savedExamsString = localStorage.getItem('savedExams');
       if (savedExamsString) {
         const savedExams = JSON.parse(savedExamsString);
-        setLocalExams(savedExams);
+        setLocalExams(
+          Array.isArray(savedExams) && activeProfile
+            ? savedExams.filter((exam: Exam) => exam.profileId === activeProfile.id)
+            : []
+        );
       }
       
       // Load health metrics from localStorage
       const metricsString = localStorage.getItem('healthMetrics');
       if (metricsString) {
         const metrics = JSON.parse(metricsString);
-        setLocalHealthMetrics(metrics);
+        setLocalHealthMetrics(
+          Array.isArray(metrics) && activeProfile
+            ? metrics.filter((metric: HealthMetric) => metric.profileId === activeProfile.id)
+            : []
+        );
       }
     } catch (error) {
       // Error reading from localStorage
     }
-  }, []);
+  }, [activeProfile]);
   
   // Combine data from API and localStorage
   const allExams = useMemo(() => {

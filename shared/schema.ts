@@ -29,6 +29,7 @@ export const profiles = pgTable("profiles", {
   birthDate: text("birth_date"),
   gender: text("gender"),
   bloodType: text("blood_type"),
+  planType: text("plan_type"),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -40,20 +41,25 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
 });
 
-export const insertProfileSchema = createInsertSchema(profiles).pick({
-  userId: true,
-  name: true,
-  relationship: true,
-  birthDate: true,
-  gender: true,
-  bloodType: true,
-  isDefault: true,
-});
+export const insertProfileSchema = createInsertSchema(profiles)
+  .pick({
+    userId: true,
+    name: true,
+    birthDate: true,
+    gender: true,
+    planType: true,
+    isDefault: true,
+  })
+  .extend({
+    relationship: z.string().optional().nullable(),
+    bloodType: z.string().optional().nullable(),
+  });
 
 // Medical exam schema
 export const exams = pgTable("exams", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  profileId: integer("profile_id").references(() => profiles.id),
   name: text("name").notNull(),
   fileType: text("file_type").notNull(), // pdf, jpeg, png
   status: text("status").notNull(), // pending, analyzed
@@ -64,16 +70,20 @@ export const exams = pgTable("exams", {
   originalContent: text("original_content"), // Store the raw text from the exam
 });
 
-export const insertExamSchema = createInsertSchema(exams).pick({
-  userId: true,
-  name: true,
-  fileType: true,
-  status: true,
-  laboratoryName: true,
-  examDate: true,
-  requestingPhysician: true,
-  originalContent: true
-});
+export const insertExamSchema = createInsertSchema(exams)
+  .pick({
+    userId: true,
+    name: true,
+    fileType: true,
+    status: true,
+    laboratoryName: true,
+    examDate: true,
+    requestingPhysician: true,
+    originalContent: true
+  })
+  .extend({
+    profileId: z.number().int().optional().nullable()
+  });
 
 // Analysis results schema
 export const examResults = pgTable("exam_results", {
@@ -100,6 +110,7 @@ export const insertExamResultSchema = createInsertSchema(examResults).pick({
 export const healthMetrics = pgTable("health_metrics", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  profileId: integer("profile_id").references(() => profiles.id),
   examId: integer("exam_id"), // vinculação com o exame específico
   name: text("name").notNull(), // colesterol, glicemia, etc
   value: text("value").notNull(),
@@ -115,21 +126,25 @@ export const healthMetrics = pgTable("health_metrics", {
   // category: text("category"),
 });
 
-export const insertHealthMetricSchema = createInsertSchema(healthMetrics).pick({
-  userId: true,
-  examId: true,
-  name: true,
-  value: true,
-  unit: true,
-  status: true,
-  change: true,
-  date: true,
-  // Removidos campos que não existem no banco de dados
-  // referenceMin: true,
-  // referenceMax: true,
-  // clinical_significance: true,
-  // category: true,
-});
+export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
+  .pick({
+    userId: true,
+    examId: true,
+    name: true,
+    value: true,
+    unit: true,
+    status: true,
+    change: true,
+    date: true,
+    // Removidos campos que não existem no banco de dados
+    // referenceMin: true,
+    // referenceMax: true,
+    // clinical_significance: true,
+    // category: true,
+  })
+  .extend({
+    profileId: z.number().int().optional().nullable()
+  });
 
 // Notifications schema
 export const notifications = pgTable("notifications", {
