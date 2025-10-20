@@ -2328,17 +2328,20 @@ export async function registerRoutes(app: Express): Promise<void> {
   // CSP violation reporting endpoint
   app.post("/api/csp-violation-report", (req: Request, res: Response) => {
     try {
-      const violation = req.body;
+      const rawBody = req.body;
+      const violation = rawBody && typeof rawBody === 'object'
+        ? (rawBody['csp-report'] ?? rawBody)
+        : {};
       
       // Log CSP violations for monitoring
       console.warn('[CSP Violation Report]', {
         timestamp: new Date().toISOString(),
-        violatedDirective: violation['violated-directive'],
-        blockedURI: violation['blocked-uri'],
-        documentURI: violation['document-uri'],
-        originalPolicy: violation['original-policy'],
-        referrer: violation.referrer,
-        statusCode: violation['status-code'],
+        violatedDirective: violation?.['violated-directive'],
+        blockedURI: violation?.['blocked-uri'],
+        documentURI: violation?.['document-uri'],
+        originalPolicy: violation?.['original-policy'],
+        referrer: violation?.referrer,
+        statusCode: violation?.['status-code'],
         userAgent: req.get('user-agent'),
         ip: req.ip
       });

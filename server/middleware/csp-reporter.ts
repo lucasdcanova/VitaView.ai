@@ -3,29 +3,38 @@ import { Request, Response, NextFunction } from 'express';
 // CSP violation handler
 export function handleCSPViolation(req: Request, res: Response, next: NextFunction) {
   if (req.path === '/api/csp-violation-report') {
-    const violation = req.body;
-    
-    // Log CSP violations for monitoring
-    console.warn('[CSP Violation]', {
-      timestamp: new Date().toISOString(),
-      violatedDirective: violation['violated-directive'],
-      blockedURI: violation['blocked-uri'],
-      documentURI: violation['document-uri'],
-      originalPolicy: violation['original-policy'],
-      referrer: violation.referrer,
-      statusCode: violation['status-code'],
-      userAgent: req.get('user-agent'),
-      ip: req.ip
-    });
+    try {
+      const rawBody = req.body;
+      const violation =
+        rawBody && typeof rawBody === 'object'
+          ? (rawBody['csp-report'] ?? rawBody)
+          : {};
+      
+      // Log CSP violations for monitoring
+      console.warn('[CSP Violation]', {
+        timestamp: new Date().toISOString(),
+        violatedDirective: violation?.['violated-directive'],
+        blockedURI: violation?.['blocked-uri'],
+        documentURI: violation?.['document-uri'],
+        originalPolicy: violation?.['original-policy'],
+        referrer: violation?.referrer,
+        statusCode: violation?.['status-code'],
+        userAgent: req.get('user-agent'),
+        ip: req.ip
+      });
 
-    // In production, you might want to send this to a monitoring service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: Send to external monitoring service
-      // await sendToMonitoringService(violation);
+      // In production, you might want to send this to a monitoring service
+      if (process.env.NODE_ENV === 'production') {
+        // Example: Send to external monitoring service
+        // await sendToMonitoringService(violation);
+      }
+
+      res.status(204).end();
+      return;
+    } catch (error) {
+      console.error('[CSP Violation] Failed to process report:', error);
+      return res.status(204).end();
     }
-
-    res.status(204).end();
-    return;
   }
   
   next();

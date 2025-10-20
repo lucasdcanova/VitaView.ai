@@ -17,6 +17,15 @@ const app = express();
 // Setup WAF middleware before other security layers
 app.use(webApplicationFirewall.middleware());
 
+// Parse CSP reports before security middleware handles them
+app.use(
+  "/api/csp-violation-report",
+  express.json({
+    limit: "100kb",
+    type: ["application/json", "application/csp-report"],
+  }),
+);
+
 // Setup security middleware
 setupSecurity(app);
 

@@ -200,7 +200,8 @@ export function setupSecurity(app: Express) {
         'application/json',
         'application/x-www-form-urlencoded',
         'multipart/form-data',
-        'text/plain'
+        'text/plain',
+        'application/csp-report'
       ];
       
       if (!allowedTypes.some(type => contentType.includes(type))) {

@@ -278,6 +278,10 @@ export class WebApplicationFirewall {
         category: 'rate_limiting',
         severity: 'medium',
         customCheck: (req: Request) => {
+          if (!req.path.startsWith('/api')) {
+            return false;
+          }
+
           const ip = this.getClientIP(req);
           const now = Date.now();
           const windowDuration = 60 * 1000; // 1 minuto
