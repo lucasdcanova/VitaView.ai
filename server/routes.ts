@@ -16,6 +16,7 @@ import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
 import { analyzeDocumentWithOpenAI } from "./services/openai";
+import logger from "./logger";
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -700,10 +701,26 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
       }
 
+      if (!process.env.OPENAI_API_KEY) {
+        logger.warn("OpenAI API key não configurada. Utilizando fallback Gemini para análise de documento.");
+
+        const geminiResult = await analyzeDocument(fileContent, normalizedFileType);
+        const responsePayload = {
+          ...geminiResult,
+          fileType: normalizedFileType,
+          aiProvider: geminiResult?.aiProvider ?? "gemini:fallback",
+          fallbackUsed: true,
+          message: "OpenAI API key ausente. Resultado gerado usando Gemini."
+        };
+
+        return res.status(200).json(responsePayload);
+      }
+
       const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
       res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
+      logger.error("Falha ao processar análise de documento", { message, stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ message: "Erro ao analisar o documento com GPT-5", details: message });
     }
   };

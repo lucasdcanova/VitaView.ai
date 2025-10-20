@@ -33,7 +33,6 @@ import {
   FileText as FileMedical,
   Microscope,
   AlertCircle,
-  Check,
   Calendar,
   User,
   Image
@@ -91,45 +90,6 @@ export default function Dashboard() {
     },
     enabled: !!activeProfile,
   });
-  
-  if (isLoadingProfiles) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!activeProfile) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <MobileHeader />
-        <div className="flex flex-1 relative">
-          <Sidebar />
-          <main className="flex-1 bg-gray-50 px-6 py-8">
-            <div className="max-w-6xl mx-auto">
-              <PatientHeader
-                title="Painel clínico"
-                description="Selecione ou cadastre um paciente para visualizar indicadores e exames."
-                clinicianLabel={clinicianLabel}
-                patientName={activeProfile?.name}
-                planType={activeProfile?.planType}
-              />
-              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
-                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
-                <p className="text-sm text-gray-500 mt-2">
-                  Use o seletor acima para criar um novo paciente ou escolher um existente.
-                </p>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
   
   // Memoized function to process exam data for recency
   const recentExams = useMemo(() => {
@@ -427,17 +387,45 @@ export default function Dashboard() {
     return null;
   }, [processedMetrics]);
   
-  // Memoized derived state calculations
-  const derivedState = useMemo(() => {
-    const isNewUser = !metrics || metrics.length === 0 || !exams || exams.length === 0;
-    const isWelcomeVisible = isNewUser && (!isLoadingMetrics && !isLoadingExams);
-    
-    return {
-      isNewUser,
-      isWelcomeVisible
-    };
-  }, [metrics, exams, isLoadingMetrics, isLoadingExams]);
+  if (isLoadingProfiles) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
+  }
 
+  if (!activeProfile) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MobileHeader />
+        <div className="flex flex-1 relative">
+          <Sidebar />
+          <main className="flex-1 bg-gray-50 px-6 py-8">
+            <div className="max-w-6xl mx-auto">
+              <PatientHeader
+                title="Painel clínico"
+                description="Selecione ou cadastre um paciente para visualizar indicadores e exames."
+                clinicianLabel={clinicianLabel}
+                patientName={activeProfile?.name}
+                planType={activeProfile?.planType}
+              />
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
+                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  Use o seletor acima para criar um novo paciente ou escolher um existente.
+                </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen flex flex-col">
       <MobileHeader />
@@ -447,70 +435,6 @@ export default function Dashboard() {
         
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
-            {/* Welcome section for new users */}
-            {derivedState.isWelcomeVisible && (
-              <Card className="mb-8 border-t-4 border-t-primary">
-                <CardContent className="pt-6">
-                  <div className="grid md:grid-cols-2 gap-6 items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-2">Bem-vindo ao seu Assistente de Saúde</h2>
-                      <p className="text-gray-600 mb-4">
-                        Comece a usar seu assistente de análise bioquímica para obter insights detalhados sobre sua saúde através de seus exames.
-                      </p>
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 bg-primary/10 p-1 rounded-full">
-                            <Check className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Análise Avançada de Exames</h4>
-                            <p className="text-sm text-gray-500">Faça upload de seus exames médicos para obter insights profundos.</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 bg-primary/10 p-1 rounded-full">
-                            <Check className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Diagnósticos e Recomendações</h4>
-                            <p className="text-sm text-gray-500">Receba análises detalhadas e recomendações baseadas em seus resultados.</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 bg-primary/10 p-1 rounded-full">
-                            <Check className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Acompanhamento da Saúde</h4>
-                            <p className="text-sm text-gray-500">Visualize tendências e monitore sua saúde ao longo do tempo.</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-6">
-                        <Link href="/upload-exams">
-                          <Button size="lg" className="mr-3">Enviar meu primeiro exame</Button>
-                        </Link>
-                        <Link href="/profile">
-                          <Button variant="outline" size="lg">Completar perfil</Button>
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="hidden md:flex justify-center">
-                      <div className="relative w-64 h-64">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full"></div>
-                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-100 rounded-full"></div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="p-6 bg-white rounded-full shadow-lg">
-                            <Activity className="h-20 w-20 text-primary" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
             <PatientHeader
               title="Painel clínico"
               description="Acompanhe os indicadores e análises do paciente selecionado."
