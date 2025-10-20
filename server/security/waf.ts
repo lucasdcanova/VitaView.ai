@@ -307,7 +307,7 @@ export class WebApplicationFirewall {
           entry.count++;
           if (entry.count > maxRequests && !entry.blocked) {
             entry.blocked = true;
-            entry.blockedUntil = now + 5 * 60 * 1000; // Bloquear por 5 minutos
+            entry.blockedUntil = now + 60 * 1000; // Bloquear por 1 minuto
             return true;
           }
           
@@ -324,6 +324,11 @@ export class WebApplicationFirewall {
   middleware() {
     return async (req: Request, res: Response, next: NextFunction) => {
       if (!this.config.enabled) {
+        return next();
+      }
+
+      // Allow static assets to bypass WAF checks to avoid false positives
+      if (this.isStaticAssetRequest(req)) {
         return next();
       }
 
@@ -377,9 +382,15 @@ export class WebApplicationFirewall {
               case 'rate_limit':
                 res.setHeader('X-RateLimit-Limit', '100');
                 res.setHeader('X-RateLimit-Remaining', '0');
+                const retryAfter = Math.ceil((rule.blockDuration ?? 60 * 1000) / 1000);
                 res.setHeader('X-RateLimit-Reset', (Date.now() + 60000).toString());
                 if (this.config.blockMaliciousRequests) {
-                  return this.blockRequest(req, res, 'RATE_LIMITED', 'Rate limit excedido');
+                  return res.status(429).json({
+                    error: 'Too many requests',
+                    code: 'RATE_LIMITED',
+                    message: 'Rate limit excedido',
+                    retryAfter
+                  });
                 }
                 break;
               
@@ -477,6 +488,33 @@ export class WebApplicationFirewall {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('X-WAF-Protected', 'VitaView-WAF-v1.0');
+  }
+
+  /**
+   * Identifica requisições para assets estáticos que devem ignorar o WAF
+   */
+  private isStaticAssetRequest(req: Request): boolean {
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      return false;
+    }
+
+    const path = req.path || req.originalUrl || '';
+    if (!path) {
+      return false;
+    }
+
+    if (
+      path === '/' ||
+      path === '/favicon.ico' ||
+      path.startsWith('/assets/') ||
+      path.startsWith('/static/') ||
+      path.startsWith('/images/') ||
+      path.startsWith('/fonts/')
+    ) {
+      return true;
+    }
+
+    return /\.(js|css|png|jpg|jpeg|svg|gif|webp|ico|map|txt|json)$/i.test(path);
   }
 
   /**
