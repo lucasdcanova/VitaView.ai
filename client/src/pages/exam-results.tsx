@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, HealthMetric } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -60,7 +59,6 @@ export default function ExamResults() {
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
   const [, setLocation] = useLocation();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  const { user } = useAuth();
   const clinicianName = user?.fullName || user?.username || "Profissional";
   const normalizedGender = user?.gender?.toLowerCase();
   const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
