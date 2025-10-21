@@ -688,6 +688,11 @@ export async function registerRoutes(app: Express): Promise<void> {
   
   const handleVisionAnalysis = async (req: Request, res: Response) => {
     try {
+      let { fileContent } = req.body as { fileContent?: string };
+      const providedType = (req.body as { fileType?: string }).fileType;
+      let normalizedFileType = normalizeFileType(providedType);
+      const initialBase64Length = typeof fileContent === "string" ? fileContent.length : 0;
+
       logger.info("[Analysis] Iniciando análise de documento", {
         route: req.path,
         method: req.method,
@@ -696,22 +701,23 @@ export async function registerRoutes(app: Express): Promise<void> {
         hasMultipartFile: Boolean(req.file),
         mimetype: req.file?.mimetype,
         filename: req.file?.originalname,
-        contentLength: req.headers["content-length"]
+        contentLengthHeader: req.headers["content-length"],
+        initialBase64Length
       });
-
-      let { fileContent } = req.body as { fileContent?: string };
-      const providedType = (req.body as { fileType?: string }).fileType;
-      let normalizedFileType = normalizeFileType(providedType);
 
       if (req.file) {
         fileContent = req.file.buffer.toString("base64");
         normalizedFileType = normalizeFileType(req.file.mimetype) ?? normalizeFileType(req.file.originalname) ?? normalizedFileType;
       }
 
-      logger.debug("[Analysis] Tipo de arquivo normalizado", {
+      const effectiveBase64Length = typeof fileContent === "string" ? fileContent.length : 0;
+
+      logger.debug("[Analysis] Dados normalizados para processamento", {
         normalizedFileType,
         providedType,
-        mimetype: req.file?.mimetype
+        mimetype: req.file?.mimetype,
+        filename: req.file?.originalname,
+        effectiveBase64Length
       });
 
       if (!fileContent || !normalizedFileType) {
@@ -726,6 +732,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         logger.warn("OpenAI API key não configurada. Utilizando fallback Gemini para análise de documento.");
 
         const geminiResult = await analyzeDocument(fileContent, normalizedFileType);
+        logger.info("[Analysis] Resultado obtido via fallback Gemini", {
+          normalizedFileType,
+          metricsCount: Array.isArray(geminiResult?.healthMetrics) ? geminiResult.healthMetrics.length : 0,
+          hasSummary: Boolean(geminiResult?.summary),
+          fallbackUsed: true
+        });
         const responsePayload = {
           ...geminiResult,
           fileType: normalizedFileType,
@@ -738,6 +750,12 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
+      logger.info("[Analysis] Resultado obtido via OpenAI", {
+        normalizedFileType,
+        metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
+        hasSummary: Boolean((analysisResult as any)?.summary),
+        aiProvider: (analysisResult as any)?.aiProvider
+      });
       res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
@@ -752,7 +770,10 @@ export async function registerRoutes(app: Express): Promise<void> {
         mimetype: req.file?.mimetype,
         filename: req.file?.originalname,
         hasContent: Boolean((req.body as { fileContent?: string })?.fileContent),
-        contentLength: req.headers["content-length"]
+        contentLengthHeader: req.headers["content-length"],
+        base64Length: typeof (req.body as { fileContent?: string })?.fileContent === "string"
+          ? (req.body as { fileContent?: string })?.fileContent?.length
+          : req.file?.buffer?.length
       });
       res.status(500).json({ message: "Erro ao analisar o documento com GPT-5", details: message });
     }

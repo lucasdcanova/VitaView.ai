@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { storage } from "../storage";
+import logger from "../logger";
 import { 
   GoogleGenerativeAI, 
   HarmCategory, 
@@ -54,9 +55,19 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
   
   // Log o tipo e tamanho do arquivo para diagnóstico 
   const fileSizeKB = Math.round(fileContent.length * 0.75 / 1024); // aproximado para base64
+  logger.info("[Gemini] Iniciando análise do documento", {
+    fileType,
+    base64Length: fileContent.length,
+    approxSizeKB: fileSizeKB
+  });
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
+      logger.debug("[Gemini] Tentativa de análise", {
+        attempt,
+        maxRetries: MAX_RETRIES,
+        fileType
+      });
       
       // Create Gemini model instance
       const model = genAI.getGenerativeModel({
@@ -209,9 +220,19 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
           ];
         }
         
+        logger.info("[Gemini] Análise concluída com sucesso", {
+          fileType,
+          attempt,
+          metricsCount: analysisData.healthMetrics?.length ?? 0
+        });
         return analysisData;
       } catch (jsonError) {
         // Fallback to structured text parsing
+        logger.warn("[Gemini] Resposta não estruturada, utilizando fallback textual", {
+          fileType,
+          attempt,
+          message: jsonError instanceof Error ? jsonError.message : jsonError
+        });
         return {
           summary: "Seus exames foram analisados pela IA Gemini",
           detailedAnalysis: text.substring(0, 500),
@@ -231,6 +252,15 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
                               error.message?.includes("overloaded") ||
                               error.status === 503 ||
                               error.message?.includes("rate limit");
+
+      logger.error("[Gemini] Erro durante a análise", {
+        fileType,
+        attempt,
+        maxRetries: MAX_RETRIES,
+        message: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        isOverloadError
+      });
       
       // If it's the last attempt or not an overload error, don't retry
       if (attempt === MAX_RETRIES || !isOverloadError) {
@@ -239,6 +269,10 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
       
       // Exponential backoff: wait longer between each retry
       const waitTime = RETRY_DELAY * Math.pow(2, attempt - 1);
+      logger.warn("[Gemini] Reagendando tentativa após erro", {
+        fileType,
+        waitTime
+      });
       await delay(waitTime);
     }
   }
@@ -248,6 +282,7 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
   try {
     // Try to use OpenAI as fallback if OPENAI_API_KEY is available
     if (process.env.OPENAI_API_KEY) {
+      logger.info("[Gemini] Tentando fallback com OpenAI", { fileType });
       
       try {
         // Import analyzeDocumentWithOpenAI dynamically to avoid circular dependency
@@ -255,6 +290,11 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         
         // Try to extract with OpenAI
         const openAIResults = await analyzeDocumentWithOpenAI(fileContent, fileType);
+        
+        logger.info("[Gemini] Fallback com OpenAI bem-sucedido", {
+          fileType,
+          metricsCount: Array.isArray(openAIResults?.healthMetrics) ? openAIResults.healthMetrics.length : undefined
+        });
         
         return {
           ...openAIResults,
@@ -264,10 +304,15 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
         };
       } catch (openAIError) {
         // Continue to default fallback
+        logger.error("[Gemini] Fallback com OpenAI falhou", {
+          fileType,
+          message: openAIError instanceof Error ? openAIError.message : openAIError
+        });
       }
     }
     
     // If OpenAI fallback failed or API key not available, use default fallback
+    logger.warn("[Gemini] Utilizando fallback local", { fileType });
     return {
       summary: "Não foi possível analisar o documento com precisão",
       detailedAnalysis: "O serviço de análise está temporariamente indisponível. Os resultados mostrados são aproximados e não devem ser usados para diagnóstico médico.",
@@ -284,6 +329,10 @@ export async function analyzeDocument(fileContent: string, fileType: string) {
     };
   } catch (fallbackError) {
     // If even the fallback fails, throw a user-friendly error
+    logger.error("[Gemini] Falha total ao analisar documento", {
+      fileType,
+      message: fallbackError instanceof Error ? fallbackError.message : fallbackError
+    });
     throw new Error("Não foi possível analisar o documento neste momento. Por favor, tente novamente mais tarde.");
   }
 }

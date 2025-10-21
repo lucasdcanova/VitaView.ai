@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { ExamResult, User, Exam } from "@shared/schema";
 import type { HealthMetric } from "@shared/schema";
 import type { IStorage } from "../storage";
+import logger from "../logger";
 
 // Default GPT-5 vision model can be overridden through environment variables
 const OPENAI_MODEL = process.env.OPENAI_GPT5_MODEL || process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1";
@@ -602,7 +603,9 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
   };
 
   // Limitar o tamanho do conteúdo para evitar exceder limites da API
+  const originalBase64Length = fileContent.length;
   const truncatedContent = truncateBase64(fileContent);
+  const wasTruncated = truncatedContent.length !== originalBase64Length;
 
   const mimeType =
     fileType === "pdf" ? "application/pdf" :
@@ -656,6 +659,16 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                   }
                 }`;
 
+  logger.info("[OpenAI] analyzeDocumentWithOpenAI start", {
+    fileType,
+    mimeType,
+    originalBase64Length,
+    truncatedLength: truncatedContent.length,
+    wasTruncated,
+    model: OPENAI_MODEL,
+    fallbackModel: OPENAI_FALLBACK_MODEL
+  });
+
   try {
     const response = await openai.responses.create({
       model: OPENAI_MODEL,
@@ -682,8 +695,20 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       throw new Error("Invalid health metrics in GPT-5 response");
     }
 
+    logger.info("[OpenAI] análise concluída (responses API)", {
+      fileType,
+      healthMetricsCount: analysisData.healthMetrics.length,
+      hasSummary: Boolean(analysisData.summary)
+    });
+
     return analysisData;
   } catch (primaryError) {
+    logger.warn("[OpenAI] falha na Responses API, tentando fallback", {
+      fileType,
+      message: primaryError instanceof Error ? primaryError.message : primaryError,
+      stack: primaryError instanceof Error ? primaryError.stack : undefined
+    });
+
     // Fallback para modelos legados caso a API de Responses não esteja disponível
     const fallbackResponse = await openai.chat.completions.create({
       model: OPENAI_FALLBACK_MODEL,
@@ -703,13 +728,27 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
 
     const fallbackContent = extractResponseText(fallbackResponse);
     if (!fallbackContent) {
+      logger.error("[OpenAI] Fallback retornou conteúdo vazio", {
+        fileType,
+        originalError: primaryError instanceof Error ? primaryError.message : primaryError
+      });
       throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
     }
 
     const fallbackData = JSON.parse(fallbackContent);
     if (!fallbackData.healthMetrics || !Array.isArray(fallbackData.healthMetrics) || fallbackData.healthMetrics.length === 0) {
+      logger.error("[OpenAI] Fallback retornou métricas inválidas", {
+        fileType,
+        originalError: primaryError instanceof Error ? primaryError.message : primaryError
+      });
       throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
     }
+
+    logger.info("[OpenAI] análise concluída (fallback chat completions)", {
+      fileType,
+      healthMetricsCount: fallbackData.healthMetrics.length,
+      hasSummary: Boolean(fallbackData.summary)
+    });
 
     return fallbackData;
   }
