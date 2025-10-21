@@ -4,6 +4,8 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { visualizer } from "rollup-plugin-visualizer";
 
+const backendPort = Number(process.env.PORT || process.env.VITE_BACKEND_PORT || 5000);
+
 export default defineConfig({
   plugins: [
     react({
@@ -56,7 +58,7 @@ export default defineConfig({
     // https: process.env.HTTPS === 'true',
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: `http://localhost:${backendPort}`,
         changeOrigin: true,
         secure: false,
       },
