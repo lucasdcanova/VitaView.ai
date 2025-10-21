@@ -23,7 +23,8 @@ const TRUSTED_DOMAINS = {
   ],
   fonts: [
     'https://fonts.googleapis.com',
-    'https://fonts.gstatic.com'
+    'https://fonts.gstatic.com',
+    'https://r2cdn.perplexity.ai'
   ],
   apis: [
     'https://api.openai.com',

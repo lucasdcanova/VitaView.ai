@@ -96,6 +96,7 @@ export function getDynamicCSPDirectives(req: Request) {
       fontSrc: [
         "'self'",
         "https://fonts.gstatic.com",
+        "https://r2cdn.perplexity.ai",
         "data:"
       ],
       imgSrc: [
@@ -153,6 +154,7 @@ export function getDynamicCSPDirectives(req: Request) {
     fontSrc: [
       "'self'",
       "https://fonts.gstatic.com",
+      "https://r2cdn.perplexity.ai",
       "data:"
     ],
     imgSrc: [

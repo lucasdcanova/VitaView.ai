@@ -688,6 +688,17 @@ export async function registerRoutes(app: Express): Promise<void> {
   
   const handleVisionAnalysis = async (req: Request, res: Response) => {
     try {
+      logger.info("[Analysis] Iniciando análise de documento", {
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        providedFileType: (req.body as { fileType?: string })?.fileType,
+        hasMultipartFile: Boolean(req.file),
+        mimetype: req.file?.mimetype,
+        filename: req.file?.originalname,
+        contentLength: req.headers["content-length"]
+      });
+
       let { fileContent } = req.body as { fileContent?: string };
       const providedType = (req.body as { fileType?: string }).fileType;
       let normalizedFileType = normalizeFileType(providedType);
@@ -697,7 +708,17 @@ export async function registerRoutes(app: Express): Promise<void> {
         normalizedFileType = normalizeFileType(req.file.mimetype) ?? normalizeFileType(req.file.originalname) ?? normalizedFileType;
       }
 
+      logger.debug("[Analysis] Tipo de arquivo normalizado", {
+        normalizedFileType,
+        providedType,
+        mimetype: req.file?.mimetype
+      });
+
       if (!fileContent || !normalizedFileType) {
+        logger.warn("[Analysis] Conteúdo ou tipo ausente", {
+          hasContent: Boolean(fileContent),
+          normalizedFileType
+        });
         return res.status(400).json({ message: "Conteúdo do arquivo e tipo são obrigatórios" });
       }
 
@@ -720,7 +741,19 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
-      logger.error("Falha ao processar análise de documento", { message, stack: error instanceof Error ? error.stack : undefined });
+      logger.error("Falha ao processar análise de documento", {
+        message,
+        stack: error instanceof Error ? error.stack : undefined,
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        providedFileType: (req.body as { fileType?: string })?.fileType,
+        normalizedFileType: normalizeFileType((req.body as { fileType?: string })?.fileType),
+        mimetype: req.file?.mimetype,
+        filename: req.file?.originalname,
+        hasContent: Boolean((req.body as { fileContent?: string })?.fileContent),
+        contentLength: req.headers["content-length"]
+      });
       res.status(500).json({ message: "Erro ao analisar o documento com GPT-5", details: message });
     }
   };

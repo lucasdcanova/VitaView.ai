@@ -1,6 +1,7 @@
 import multer from "multer";
 import { Request } from "express";
 import { S3Service } from "../services/s3.service";
+import logger from "../logger";
 
 // Configuração de limites de upload
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -32,17 +33,30 @@ const DEFAULT_ALLOWED_TYPES = [
 // Armazenamento em memória para arquivos sensíveis (serão enviados ao S3)
 const memoryStorage = multer.memoryStorage();
 
+export function getAllowedMimeTypes(requestedType: string): string[] {
+  const normalized = (requestedType || "medical-records").toLowerCase();
+  return (
+    ALLOWED_MIME_TYPES[normalized as keyof typeof ALLOWED_MIME_TYPES] ||
+    EXTENSION_MIME_TYPES[normalized] ||
+    DEFAULT_ALLOWED_TYPES
+  );
+}
+
 // Filtro de arquivos
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const requestedType = (req.body.fileType || "medical-records").toLowerCase();
-  const allowedTypes =
-    ALLOWED_MIME_TYPES[requestedType as keyof typeof ALLOWED_MIME_TYPES] ||
-    EXTENSION_MIME_TYPES[requestedType] ||
-    DEFAULT_ALLOWED_TYPES;
+  const allowedTypes = getAllowedMimeTypes(requestedType);
   
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
+    logger.warn("[Upload] Tipo de arquivo bloqueado", {
+      requestedType,
+      mimetype: file.mimetype,
+      originalName: file.originalname,
+      allowedTypes,
+      size: file.size
+    });
     cb(new Error(`Tipo de arquivo não permitido. Permitidos: ${allowedTypes.join(", ")}`));
   }
 };
@@ -96,7 +110,13 @@ export const processS3Upload = async (req: Request, res: any, next: any) => {
 
     next();
   } catch (error) {
-    console.error("Erro no upload:", error);
+    logger.error("[Upload] Erro ao processar upload", {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      userId: req.user?.id,
+      fileType: req.body?.fileType,
+      hasFile: Boolean(req.file)
+    });
     res.status(500).json({ 
       error: "Erro ao processar upload",
       message: error instanceof Error ? error.message : "Erro desconhecido"
