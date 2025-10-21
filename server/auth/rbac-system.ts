@@ -553,10 +553,15 @@ export class RBACSystem {
         // Verificar permissão
         // Garantir papel padrão para usuários legados (ex.: papel vindo da coluna role do usuário)
         let userRoles = this.getUserRoles(String(req.user.id));
-        if ((!userRoles || userRoles.length === 0) && req.user.role) {
-          const fallbackRole = this.mapLegacyRole(req.user.role as string);
-          if (fallbackRole) {
-            await this.assignRole(String(req.user.id), fallbackRole, 'system-auto');
+        const expectedRole = req.user.role ? this.mapLegacyRole(req.user.role as string) : null;
+
+        if ((!userRoles || userRoles.length === 0) && expectedRole) {
+          await this.assignRole(String(req.user.id), expectedRole, 'system-auto');
+          userRoles = this.getUserRoles(String(req.user.id));
+        } else if (expectedRole) {
+          const hasExpected = userRoles?.some(role => role.roleId === expectedRole && role.isActive);
+          if (!hasExpected) {
+            await this.assignRole(String(req.user.id), expectedRole, 'system-auto');
             userRoles = this.getUserRoles(String(req.user.id));
           }
         }
@@ -609,8 +614,9 @@ export class RBACSystem {
       case 'physician':
       case 'clinician':
       case 'doctor':
-      case 'user':
         return 'physician';
+      case 'user':
+        return 'patient';
       case 'nurse':
         return 'nurse';
       case 'technician':

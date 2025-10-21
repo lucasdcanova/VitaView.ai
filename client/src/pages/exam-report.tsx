@@ -6,6 +6,7 @@ import MobileHeader from "@/components/layout/mobile-header";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import OpenAILogo from "@/assets/openai-logo.svg";
 import {
   ArrowLeft,
   FileText,
@@ -1230,7 +1231,7 @@ export default function ExamReport() {
                     
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
-                        <img src="https://img.icons8.com/color/48/000000/openai-logo.png" alt="OpenAI" className="w-6 h-6 mr-3" />
+                        <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
                           <h3 className="text-sm font-medium text-gray-700">Extração do documento</h3>
                           <p className="text-sm text-gray-600">OpenAI GPT-5 Vision</p>
@@ -1238,7 +1239,7 @@ export default function ExamReport() {
                       </div>
                       
                       <div className="flex items-center">
-                        <img src="https://img.icons8.com/color/48/000000/openai-logo.png" alt="OpenAI" className="w-6 h-6 mr-3" />
+                        <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
                           <h3 className="text-sm font-medium text-gray-700">Recomendações</h3>
                           <p className="text-sm text-gray-600">OpenAI GPT-4o</p>
