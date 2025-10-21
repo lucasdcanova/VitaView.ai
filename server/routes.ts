@@ -749,13 +749,47 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(200).json(responsePayload);
       }
 
-      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
-      logger.info("[Analysis] Resultado obtido via OpenAI", {
-        normalizedFileType,
-        metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
-        hasSummary: Boolean((analysisResult as any)?.summary),
-        aiProvider: (analysisResult as any)?.aiProvider
-      });
+      let analysisResult;
+      try {
+        analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
+        logger.info("[Analysis] Resultado obtido via OpenAI", {
+          normalizedFileType,
+          metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
+          hasSummary: Boolean((analysisResult as any)?.summary),
+          aiProvider: (analysisResult as any)?.aiProvider
+        });
+      } catch (primaryError) {
+        logger.warn("[Analysis] Falha na OpenAI, tentando fallback Gemini/local", {
+          normalizedFileType,
+          message: primaryError instanceof Error ? primaryError.message : primaryError
+        });
+        try {
+          const fallbackResult = await analyzeDocument(fileContent, normalizedFileType);
+          analysisResult = {
+            ...fallbackResult,
+            aiProvider: fallbackResult?.aiProvider ?? "gemini:fallback",
+            fallbackUsed: true,
+            fallbackReason: "openai_failure"
+          };
+          logger.info("[Analysis] Fallback Gemini/local concluído", {
+            normalizedFileType,
+            metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
+            hasSummary: Boolean((analysisResult as any)?.summary),
+            aiProvider: (analysisResult as any)?.aiProvider
+          });
+        } catch (fallbackError) {
+          logger.error("[Analysis] Falha completa na análise do documento", {
+            normalizedFileType,
+            message: fallbackError instanceof Error ? fallbackError.message : fallbackError,
+            originalError: primaryError instanceof Error ? primaryError.message : primaryError
+          });
+          return res.status(503).json({
+            message: "Não foi possível analisar o documento no momento. Tente novamente mais tarde.",
+            details: primaryError instanceof Error ? primaryError.message : String(primaryError)
+          });
+        }
+      }
+
       res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
