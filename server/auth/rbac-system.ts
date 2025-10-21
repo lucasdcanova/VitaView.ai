@@ -686,8 +686,10 @@ export class RBACSystem {
       // Verificar condição (implementação simplificada)
       switch (condition.operator) {
         case 'equals':
-          if (condition.field === 'userId' && request.resourceId !== request.userId) {
-            return { allowed: false };
+          if (condition.field === 'userId') {
+            if (request.resourceId && request.resourceId !== request.userId) {
+              return { allowed: false };
+            }
           }
           break;
       }

@@ -678,10 +678,9 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
 
     if (fileType === "pdf") {
       const fileBuffer = Buffer.from(fileContent, "base64");
-      const pdfFile = new File([fileBuffer], `exam-${Date.now()}.pdf`, { type: "application/pdf" });
       const uploadedFile = await openai.files.create({
-        file: pdfFile,
-        filename: pdfFile.name,
+        file: fileBuffer,
+        filename: `exam-${Date.now()}.pdf`,
         purpose: "assistants"
       });
       uploadedFileId = uploadedFile.id;
