@@ -74,13 +74,13 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   const needsAnalytics = !isDev; // Only in production
   
   // Build CSP based on detected needs
-  let scriptSrc = ["'self'"];
+  let scriptSrc = ["'self'", "'unsafe-inline'"];
   let styleSrc = ["'self'", "'unsafe-inline'"]; // CSS-in-JS needs unsafe-inline
   let connectSrc = ["'self'"];
   let imgSrc = ["'self'", "data:", "blob:"];
   
   if (isDev) {
-    scriptSrc.push("'unsafe-inline'", "'unsafe-eval'");
+    scriptSrc.push("'unsafe-eval'");
     scriptSrc.push("http://localhost:*", "https://localhost:*");
     connectSrc.push("http://localhost:*", "https://localhost:*", "ws://localhost:*", "wss://localhost:*");
     imgSrc.push("https:");

@@ -134,6 +134,7 @@ export function getDynamicCSPDirectives(req: Request) {
     ],
     scriptSrc: [
       "'self'",
+      "'unsafe-inline'",
       "https://js.stripe.com",
       "https://m.stripe.network",
       "https://q.stripe.com",
@@ -142,6 +143,7 @@ export function getDynamicCSPDirectives(req: Request) {
     ],
     scriptSrcElem: [
       "'self'",
+      "'unsafe-inline'",
       "https://js.stripe.com",
       "https://m.stripe.network", 
       "https://q.stripe.com",

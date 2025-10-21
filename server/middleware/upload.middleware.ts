@@ -15,19 +15,31 @@ const ALLOWED_MIME_TYPES = {
   "personal-documents": ["application/pdf", "image/jpeg", "image/png", "image/jpg"]
 };
 
+const EXTENSION_MIME_TYPES: Record<string, string[]> = {
+  pdf: ["application/pdf"],
+  jpeg: ["image/jpeg", "image/jpg"],
+  jpg: ["image/jpeg", "image/jpg"],
+  png: ["image/png"],
+};
+
+const DEFAULT_ALLOWED_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+];
+
 // Armazenamento em memória para arquivos sensíveis (serão enviados ao S3)
 const memoryStorage = multer.memoryStorage();
 
 // Filtro de arquivos
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const fileType = req.body.fileType || "medical-records";
-  const allowedTypes = ALLOWED_MIME_TYPES[fileType as keyof typeof ALLOWED_MIME_TYPES];
+  const requestedType = (req.body.fileType || "medical-records").toLowerCase();
+  const allowedTypes =
+    ALLOWED_MIME_TYPES[requestedType as keyof typeof ALLOWED_MIME_TYPES] ||
+    EXTENSION_MIME_TYPES[requestedType] ||
+    DEFAULT_ALLOWED_TYPES;
   
-  if (!allowedTypes) {
-    cb(new Error("Tipo de arquivo não suportado"));
-    return;
-  }
-
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
