@@ -91,7 +91,6 @@ O site estava apresentando bloqueios de recursos devido ao Content Security Poli
 #### Conexões Permitidas
 - ✅ API própria (`'self'`)
 - ✅ OpenAI API (`https://api.openai.com`)
-- ✅ Google Gemini (`https://generativelanguage.googleapis.com`)
 - ✅ Stripe API (`https://api.stripe.com`)
 - ✅ Google Analytics (`https://www.google-analytics.com`)
 - ✅ WebSocket local (desenvolvimento) (`ws://localhost:*`)

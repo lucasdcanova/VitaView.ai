@@ -334,8 +334,8 @@ function getFallbackInsights(patientData?: any) {
  */
 
 /**
- * Analisa exames extraídos pelo Gemini (sem análise prévia) usando a OpenAI
- * @param examId ID do exame que já foi processado pelo Gemini e está pronto para análise
+ * Analisa exames já extraídos previamente usando a OpenAI
+ * @param examId ID do exame que já possui dados estruturados e está pronto para análise
  * @param userId ID do usuário dono do exame
  * @param storage Interface de armazenamento para acessar dados
  * @param patientData Dados adicionais do paciente para contextualização
@@ -343,7 +343,7 @@ function getFallbackInsights(patientData?: any) {
 export async function analyzeExtractedExam(examId: number, userId: number, storage: IStorage, patientData?: any) {
   try {
     
-    // 1. Obter o exame e resultado da extração feita pelo Gemini
+    // 1. Obter o exame e resultado da extração inicial
     const exam = await storage.getExam(examId);
     if (!exam || exam.userId !== userId) {
       throw new Error("Exame não encontrado ou acesso não autorizado");
@@ -353,7 +353,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       throw new Error(`Exame com status inválido para análise: ${exam.status}`);
     }
     
-    // 2. Obter resultado da extração prévia feita pelo Gemini
+    // 2. Obter resultado da extração prévia armazenado no banco
     const extractionResult = await storage.getExamResultByExamId(examId);
     if (!extractionResult) {
       throw new Error("Resultado da extração não encontrado");
@@ -363,7 +363,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     const examDateStr = exam?.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
                         exam?.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
     
-    // Usar as métricas que já foram extraídas pelo Gemini e armazenadas em examResults
+    // Usar as métricas que já foram extraídas e armazenadas em examResults
     // em vez de tentar buscar da tabela health_metrics que está incompleta
     let metricsFromThisExam = [];
     
@@ -537,7 +537,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
 }
 
 /**
- * Analisa um documento médico usando a OpenAI como fallback quando o Gemini falha
+ * Analisa um documento médico usando exclusivamente a OpenAI
  * @param fileContent - Conteúdo do arquivo codificado em Base64
  * @param fileType - Tipo do arquivo (pdf, jpeg, png)
  * @returns Resultado da análise com métricas de saúde e recomendações
@@ -608,9 +608,9 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
   const wasTruncated = truncatedContent.length !== originalBase64Length;
 
   const mimeType =
-    fileType === "pdf" ? "application/pdf" :
     fileType === "jpeg" ? "image/jpeg" :
-    "image/png";
+    fileType === "png" ? "image/png" :
+    "application/pdf";
 
   const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
                 Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
@@ -669,16 +669,37 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
     fallbackModel: OPENAI_FALLBACK_MODEL
   });
 
+  let uploadedFileId: string | null = null;
+
   try {
+    const contentParts: any[] = [
+      { type: "input_text", text: prompt }
+    ];
+
+    if (fileType === "pdf") {
+      const fileBuffer = Buffer.from(fileContent, "base64");
+      const pdfFile = new File([fileBuffer], `exam-${Date.now()}.pdf`, { type: "application/pdf" });
+      const uploadedFile = await openai.files.create({
+        file: pdfFile,
+        filename: pdfFile.name,
+        purpose: "assistants"
+      });
+      uploadedFileId = uploadedFile.id;
+      contentParts.push({ type: "input_file", file_id: uploadedFile.id });
+    } else {
+      contentParts.push({
+        type: "input_image",
+        image_url: `data:${mimeType};base64,${truncatedContent}`,
+        detail: "auto"
+      });
+    }
+
     const response = await openai.responses.create({
       model: OPENAI_MODEL,
       input: [
         {
           role: "user",
-          content: [
-            { type: "input_text", text: prompt },
-            { type: "input_image", detail: "auto", image_url: `data:${mimeType};base64,${truncatedContent}` }
-          ]
+          content: contentParts
         }
       ],
       temperature: 0.2,
@@ -701,13 +722,20 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       hasSummary: Boolean(analysisData.summary)
     });
 
-    return analysisData;
+    return {
+      ...analysisData,
+      aiProvider: analysisData.aiProvider ?? "openai:gpt5"
+    };
   } catch (primaryError) {
     logger.warn("[OpenAI] falha na Responses API, tentando fallback", {
       fileType,
       message: primaryError instanceof Error ? primaryError.message : primaryError,
       stack: primaryError instanceof Error ? primaryError.stack : undefined
     });
+
+    if (fileType === "pdf") {
+      throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
+    }
 
     // Fallback para modelos legados caso a API de Responses não esteja disponível
     const fallbackResponse = await openai.chat.completions.create({
@@ -743,14 +771,28 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       });
       throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
     }
-
     logger.info("[OpenAI] análise concluída (fallback chat completions)", {
       fileType,
       healthMetricsCount: fallbackData.healthMetrics.length,
       hasSummary: Boolean(fallbackData.summary)
     });
 
-    return fallbackData;
+    return {
+      ...fallbackData,
+      aiProvider: fallbackData.aiProvider ?? "openai:gpt5:fallback"
+    };
+  } finally {
+    if (uploadedFileId) {
+      try {
+        await openai.files.del(uploadedFileId);
+      } catch (cleanupError) {
+        logger.warn("[OpenAI] Falha ao remover arquivo temporário", {
+          fileType,
+          fileId: uploadedFileId,
+          message: cleanupError instanceof Error ? cleanupError.message : cleanupError
+        });
+      }
+    }
   }
 }
 

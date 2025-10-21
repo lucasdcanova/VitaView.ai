@@ -2,9 +2,6 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { uploadAndAnalyzeDocument, analyzeDocument } from "./services/gemini";
-import { analyzeExtractedExam } from "./services/openai";
-import { generateHealthInsights, generateChronologicalReport } from "./services/openai";
 import { pool } from "./db";
 import Stripe from "stripe";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
@@ -15,7 +12,7 @@ import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
-import { analyzeDocumentWithOpenAI } from "./services/openai";
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport } from "./services/openai";
 import logger from "./logger";
 
 const normalizeFileType = (type?: string | null) => {
@@ -376,7 +373,7 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
     // Erro ao processar autenticação alternativa
   }
   
-  // Removido o bypass para análise Gemini
+  // Removido o bypass de análise automática
   // Todas as requisições devem ser autenticadas
   
   // Se não estiver autenticado, retorna 401
@@ -661,8 +658,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Dados incompletos para análise. Tipo de arquivo e conteúdo são obrigatórios." });
       }
       
-      // Primeiro step: utilizar Gemini para extrair informações básicas
-      const analysisResult = await analyzeDocument(fileContent, fileType);
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({ message: "Serviço de análise indisponível. Configure a chave da OpenAI." });
+      }
+
+      // Extração direta com OpenAI
+      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, fileType);
       
       // Preparar o resumo final
       const quickSummary = {
@@ -671,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         recommendations: analysisResult.recommendations || [],
         laboratoryName: analysisResult.laboratoryName || "Não identificado",
         examDate: analysisResult.examDate || new Date().toISOString().split('T')[0],
-        aiProvider: analysisResult.aiProvider || "gemini"
+        aiProvider: analysisResult.aiProvider || "openai"
       };
       
       // Retornar resultado
@@ -729,66 +730,19 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       if (!process.env.OPENAI_API_KEY) {
-        logger.warn("OpenAI API key não configurada. Utilizando fallback Gemini para análise de documento.");
-
-        const geminiResult = await analyzeDocument(fileContent, normalizedFileType);
-        logger.info("[Analysis] Resultado obtido via fallback Gemini", {
-          normalizedFileType,
-          metricsCount: Array.isArray(geminiResult?.healthMetrics) ? geminiResult.healthMetrics.length : 0,
-          hasSummary: Boolean(geminiResult?.summary),
-          fallbackUsed: true
+        logger.error("OpenAI API key não configurada para análise de documentos.");
+        return res.status(503).json({
+          message: "Serviço de análise indisponível. Configure a chave da OpenAI."
         });
-        const responsePayload = {
-          ...geminiResult,
-          fileType: normalizedFileType,
-          aiProvider: geminiResult?.aiProvider ?? "gemini:fallback",
-          fallbackUsed: true,
-          message: "OpenAI API key ausente. Resultado gerado usando Gemini."
-        };
-
-        return res.status(200).json(responsePayload);
       }
 
-      let analysisResult;
-      try {
-        analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
-        logger.info("[Analysis] Resultado obtido via OpenAI", {
-          normalizedFileType,
-          metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
-          hasSummary: Boolean((analysisResult as any)?.summary),
-          aiProvider: (analysisResult as any)?.aiProvider
-        });
-      } catch (primaryError) {
-        logger.warn("[Analysis] Falha na OpenAI, tentando fallback Gemini/local", {
-          normalizedFileType,
-          message: primaryError instanceof Error ? primaryError.message : primaryError
-        });
-        try {
-          const fallbackResult = await analyzeDocument(fileContent, normalizedFileType);
-          analysisResult = {
-            ...fallbackResult,
-            aiProvider: fallbackResult?.aiProvider ?? "gemini:fallback",
-            fallbackUsed: true,
-            fallbackReason: "openai_failure"
-          };
-          logger.info("[Analysis] Fallback Gemini/local concluído", {
-            normalizedFileType,
-            metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
-            hasSummary: Boolean((analysisResult as any)?.summary),
-            aiProvider: (analysisResult as any)?.aiProvider
-          });
-        } catch (fallbackError) {
-          logger.error("[Analysis] Falha completa na análise do documento", {
-            normalizedFileType,
-            message: fallbackError instanceof Error ? fallbackError.message : fallbackError,
-            originalError: primaryError instanceof Error ? primaryError.message : primaryError
-          });
-          return res.status(503).json({
-            message: "Não foi possível analisar o documento no momento. Tente novamente mais tarde.",
-            details: primaryError instanceof Error ? primaryError.message : String(primaryError)
-          });
-        }
-      }
+      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
+      logger.info("[Analysis] Resultado obtido via OpenAI", {
+        normalizedFileType,
+        metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
+        hasSummary: Boolean((analysisResult as any)?.summary),
+        aiProvider: (analysisResult as any)?.aiProvider
+      });
 
       res.json({ ...analysisResult, fileType: normalizedFileType });
     } catch (error) {
@@ -813,7 +767,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   };
 
-  // Rota para análise usando GPT-5 (mantém legado /gemini como alias)
+  // Rota para análise usando GPT-5
   app.post(
     "/api/analyze/openai",
     ensureAuthenticated,
@@ -821,13 +775,6 @@ export async function registerRoutes(app: Express): Promise<void> {
     handleVisionAnalysis
   );
 
-  app.post(
-    "/api/analyze/gemini",
-    ensureAuthenticated,
-    uploadAnalysis.single("file"),
-    handleVisionAnalysis
-  );
-  
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
   app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
     try {
@@ -850,7 +797,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           ? analysisResult.recommendations.join('\n') 
           : analysisResult.recommendations,
         healthMetrics: analysisResult.healthMetrics,
-        aiProvider: "gemini"
+        aiProvider: "openai"
       };
       
       // Gerar insights usando OpenAI com contexto do paciente

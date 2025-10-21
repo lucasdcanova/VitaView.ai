@@ -4,7 +4,7 @@ VitaView AI é uma plataforma avançada de análise de exames médicos que utili
 
 ## Funcionalidades Principais
 
-- **Extração inteligente de dados**: Converte PDFs e imagens de exames médicos em dados estruturados usando o Google Gemini AI
+- **Extração inteligente de dados**: Converte PDFs e imagens de exames médicos em dados estruturados usando o OpenAI GPT-5 Vision
 - **Análise aprofundada**: Interpreta os resultados extraídos com o OpenAI para fornecer contexto médico
 - **Acompanhamento de tendências**: Visualiza métricas de saúde ao longo do tempo
 - **Alertas personalizados**: Identifica valores fora da faixa de referência
@@ -15,37 +15,35 @@ VitaView AI é uma plataforma avançada de análise de exames médicos que utili
 - **Frontend**: React, TypeScript, TailwindCSS, Shadcn/UI
 - **Backend**: Node.js, Express
 - **Banco de Dados**: PostgreSQL com Drizzle ORM
-- **IA**: Google Gemini (extração) + OpenAI (análise)
+- **IA**: OpenAI (extração e análise)
 
 ## Estrutura da Aplicação
 
-A aplicação utiliza um pipeline de IA de duas etapas:
+A aplicação utiliza um pipeline de IA em duas fases consecutivas oferecidas pelo OpenAI:
 
-1. **Extração de dados (Gemini)**: Converte documentos médicos em dados estruturados
-2. **Análise contextual (OpenAI)**: Interpreta os dados extraídos para fornecer insights médicos
+1. **Extração de dados (OpenAI Vision)**: Converte documentos médicos em dados estruturados
+2. **Análise contextual (OpenAI Insights)**: Interpreta os dados extraídos para fornecer insights médicos
 
 ## Pipeline de IA do VitaView
 
 O pipeline de processamento opera em duas etapas:
 
 ```
-Documento PDF/Imagem → Gemini API (extração) → OpenAI (análise) → Resultados estruturados
+Documento PDF/Imagem → OpenAI (extração) → OpenAI (análise) → Resultados estruturados
 ```
 
 ### Mecanismo de Fallback
 
-O sistema inclui mecanismos robustos de fallback:
+O sistema inclui mecanismos de fallback:
 
-1. Se o Gemini falhar, é feito retry com backoff exponencial (5 tentativas)
-2. Se todas as tentativas falharem, o sistema recorre ao OpenAI como fallback
-3. Se ambos falharem, são utilizados valores padrão para evitar interrupção da experiência do usuário
+1. Tentativas automáticas adicionais em caso de erros transitórios da API OpenAI
+2. Caso a etapa de insights falhe após a extração, o exame é mantido com status de extraído e o usuário é notificado sobre a indisponibilidade temporária da análise contextual
 
 ## Configuração
 
 ### Variáveis de Ambiente Necessárias
 
 - `DATABASE_URL`: URL de conexão do PostgreSQL
-- `GOOGLE_API_KEY`: Chave de API para o Google Gemini
 - `OPENAI_API_KEY`: Chave de API para o OpenAI
 
 ## Testes
@@ -68,9 +66,9 @@ Testa o fluxo completo de processamento de documentos, desde a extração até a
 npx tsx server/test-pipeline.ts ./caminho/para/arquivo.pdf
 ```
 
-### Teste do Gemini API
+### Teste da Extração OpenAI
 
-Testa somente a extração de dados usando a API Gemini.
+Testa somente a extração de dados usando a API OpenAI.
 
 ```bash
 npx tsx server/test-ai.ts ./caminho/para/arquivo.pdf
@@ -81,7 +79,7 @@ npx tsx server/test-ai.ts ./caminho/para/arquivo.pdf
 ### Estrutura de Diretórios
 
 - `/server`: Backend da aplicação
-  - `/services`: Serviços de IA (Gemini e OpenAI)
+  - `/services`: Serviços de IA (OpenAI)
   - `/test-data`: Arquivos de amostra para testes
 - `/client`: Frontend da aplicação
 - `/shared`: Schemas de dados compartilhados
@@ -89,9 +87,9 @@ npx tsx server/test-ai.ts ./caminho/para/arquivo.pdf
 ### Fluxo de Processamento
 
 1. Upload do documento
-2. Extração com Gemini API
+2. Extração com OpenAI
 3. Armazenamento no banco de dados
-4. Análise com OpenAI
+4. Análise contextual com OpenAI
 5. Exibição dos resultados
 
 ## Limitações Conhecidas

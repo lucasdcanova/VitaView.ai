@@ -1,10 +1,10 @@
 /**
- * Test script for verifying the Gemini + OpenAI pipeline integration
+ * Test script for verifying the OpenAI-only pipeline integration
  * 
  * This script tests the complete flow from document extraction to detailed analysis:
  * 1. Simulates uploading a medical exam document
- * 2. Processes it through the Gemini API for data extraction
- * 3. Takes the extracted data and sends it to OpenAI for detailed analysis
+ * 2. Processes it through the OpenAI API for data extraction
+ * 3. Takes the extracted data and sends it again to OpenAI for detailed analysis
  * 4. Displays the complete result
  * 
  * Usage: NODE_ENV=development node server/test-ai-pipeline.js
@@ -13,8 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { analyzeDocument } from './services/gemini.ts';
-import { analyzeExtractedExam } from './services/openai.ts';
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './services/openai.ts';
 import { storage } from './storage.ts';
 
 // Fix __dirname in ES modules
@@ -43,17 +42,17 @@ async function runPipelineTest() {
     const fileContent = fs.readFileSync(TEST_FILE_PATH).toString('base64');
     // console.log(`File loaded: ${(fileContent.length / 1024).toFixed(2)} KB`);
     
-    // Step 2: Process with Gemini API (extraction phase)
-    // console.log('\n2. Running extraction with Gemini API...');
-    const geminiResult = await analyzeDocument(fileContent, TEST_FILE_TYPE);
+    // Step 2: Process with OpenAI API (extraction phase)
+    // console.log('\n2. Running extraction with OpenAI API...');
+    const extractionData = await analyzeDocumentWithOpenAI(fileContent, TEST_FILE_TYPE);
     
-    if (!geminiResult || geminiResult.error) {
-      throw new Error(`Gemini extraction failed: ${geminiResult?.error || 'Unknown error'}`);
+    if (!extractionData || extractionData.error) {
+      throw new Error(`OpenAI extraction failed: ${extractionData?.error || 'Unknown error'}`);
     }
     
-    // console.log('Gemini extraction successful!');
-    // console.log(`- Summary: ${geminiResult.summary || 'Not available'}`);
-    // console.log(`- Health metrics extracted: ${geminiResult.healthMetrics?.length || 0}`);
+    // console.log('OpenAI extraction successful!');
+    // console.log(`- Summary: ${extractionData.summary || 'Not available'}`);
+    // console.log(`- Health metrics extracted: ${extractionData.healthMetrics?.length || 0}`);
     
     // Step 3: Create a test exam record in the database
     // console.log('\n3. Creating test exam record in database...');
@@ -62,26 +61,26 @@ async function runPipelineTest() {
       name: `Test Exam (${new Date().toISOString()})`,
       fileType: TEST_FILE_TYPE,
       status: 'extracted',
-      laboratoryName: 'Test Laboratory',
-      examDate: new Date().toISOString().split('T')[0],
-      requestingPhysician: 'Dr. Test',
+      laboratoryName: extractionData.laboratoryName || 'Test Laboratory',
+      examDate: extractionData.examDate || new Date().toISOString().split('T')[0],
+      requestingPhysician: extractionData.requestingPhysician || 'Dr. Test',
       originalContent: fileContent.substring(0, 1000) + '...' // Store only first 1000 chars
     });
     
     // console.log(`Exam created with ID: ${exam.id}`);
     
     // Step 4: Store the extraction result
-    // console.log('\n4. Storing Gemini extraction result...');
-    const extractionResult = await storage.createExamResult({
+    // console.log('\n4. Storing OpenAI extraction result...');
+    const extractionRecord = await storage.createExamResult({
       examId: exam.id,
-      summary: geminiResult.summary || 'No summary available',
-      detailedAnalysis: JSON.stringify(geminiResult),
-      recommendations: geminiResult.recommendations?.join('\n') || 'No recommendations available',
-      healthMetrics: geminiResult.healthMetrics || [],
-      aiProvider: 'gemini:extraction'
+      summary: extractionData.summary || 'No summary available',
+      detailedAnalysis: JSON.stringify(extractionData),
+      recommendations: extractionData.recommendations?.join('\n') || 'No recommendations available',
+      healthMetrics: extractionData.healthMetrics || [],
+      aiProvider: extractionData.aiProvider || 'openai:extraction'
     });
     
-    // console.log(`Extraction result stored with ID: ${extractionResult.id}`);
+    // console.log(`Extraction result stored with ID: ${extractionRecord.id}`);
     
     // Step 5: Process with OpenAI for detailed analysis
     // console.log('\n5. Running analysis with OpenAI API...');
@@ -133,7 +132,7 @@ async function runPipelineTest() {
     }
     
     // console.log('\n======= TEST SUMMARY =======');
-    // console.log('✓ Gemini extraction completed successfully');
+    // console.log('✓ OpenAI extraction completed successfully');
     // console.log('✓ OpenAI analysis completed successfully');
     // console.log('✓ Complete pipeline integration verified');
     // console.log('\nTest result: SUCCESS');

@@ -129,7 +129,7 @@ export default function UploadExams() {
                         <BrainCircuitIcon size={18} />
                       </div>
                       <h4 className="font-medium text-gray-800 mb-1">2. IA analisa</h4>
-                      <p className="text-sm text-gray-600">Nossa IA Google Gemini analisa seus documentos.</p>
+                      <p className="text-sm text-gray-600">Nossa IA OpenAI GPT-5 analisa seus documentos.</p>
                     </div>
                     
                     <div className="bg-gray-50 p-4 rounded-lg">

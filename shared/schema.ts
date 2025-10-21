@@ -94,7 +94,7 @@ export const examResults = pgTable("exam_results", {
   detailedAnalysis: text("detailed_analysis"),
   recommendations: text("recommendations"),
   healthMetrics: json("health_metrics"), // Store metrics as JSON
-  aiProvider: text("ai_provider").notNull(), // gemini, openai
+  aiProvider: text("ai_provider").notNull(), // openai provider identifier
 });
 
 export const insertExamResultSchema = createInsertSchema(examResults).pick({

@@ -2,9 +2,8 @@
  * Pipeline completo de análise de documentos médicos
  * 
  * Este módulo implementa o fluxo completo de processamento:
- * 1. Extração com Gemini (baixo custo, rápido)
- * 2. Fallback para OpenAI se Gemini falhar
- * 3. Análise detalhada com OpenAI
+ * 1. Extração com OpenAI (ChatGPT 5 vision)
+ * 2. Análise detalhada com OpenAI
  * 
  * Benefícios:
  * - Tratamento robusto de erros
@@ -12,10 +11,9 @@
  * - Mecanismo de fallback entre providers
  */
 
-import { analyzeDocument } from './gemini';
-import { analyzeExtractedExam } from './openai';
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './openai';
 import { storage } from '../storage';
-import { normalizeExamName, normalizeHealthMetrics } from '../../shared/exam-normalizer';
+import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
 
 export interface AnalysisOptions {
   userId: number;
@@ -53,12 +51,11 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
   // [Pipeline] Iniciando análise completa para usuário
   
   try {
-    // ETAPA 1: EXTRAÇÃO DADOS (GEMINI)
-    // [Pipeline] ETAPA 1: Extraindo dados com Gemini
+    // ETAPA 1: EXTRAÇÃO DE DADOS (OPENAI)
+    // [Pipeline] ETAPA 1: Extraindo dados com OpenAI
     const fileSizeKB = Math.round(options.fileContent.length * 0.75 / 1024);
     // [Pipeline] Processando arquivo
-    
-    const extractionResult = await analyzeDocument(options.fileContent, options.fileType);
+    const extractionResult = await analyzeDocumentWithOpenAI(options.fileContent, options.fileType);
     
     // ARMAZENAR METADADOS
     const extractedExamDate = extractionResult.examDate || options.examDate || new Date().toISOString().split('T')[0];
@@ -107,7 +104,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       detailedAnalysis: null, // Será preenchido pela OpenAI posteriormente
       recommendations: null, // Será preenchido pela OpenAI posteriormente
       healthMetrics: normalizedMetrics,
-      aiProvider: extractionResult.aiProvider || "gemini:extraction-only"
+      aiProvider: extractionResult.aiProvider || "openai:extraction"
     });
     
     // PROCESSAR MÉTRICAS INDIVIDUAIS

@@ -36,7 +36,7 @@ export default function AnalysisComparison({
           <span>Comparação de Análises</span>
           <div className="flex space-x-2">
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Extração: Gemini AI
+              Extração: OpenAI
             </Badge>
             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
               Análise: OpenAI
@@ -52,7 +52,7 @@ export default function AnalysisComparison({
           <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="extraction" className="flex items-center">
               <Database className="h-4 w-4 mr-2" />
-              Extração Inicial (Gemini)
+              Extração Inicial (OpenAI)
             </TabsTrigger>
             <TabsTrigger value="analysis" className="flex items-center">
               <Sparkles className="h-4 w-4 mr-2" />

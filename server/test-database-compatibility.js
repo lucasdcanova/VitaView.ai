@@ -56,7 +56,7 @@ async function runDatabaseCompatibilityTest() {
     // Step 3: Test exam result creation with various health metrics structures
     // console.log('\n3. Testing exam result creation with health metrics...');
     
-    // Sample health metrics in the expected format from Gemini extraction
+    // Sample health metrics in the expected format from OpenAI extraction
     const testHealthMetrics = [
       {
         name: 'Hemoglobina',

@@ -17,15 +17,15 @@ interface FileUploadProps {
 export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [uploadStep, setUploadStep] = useState<'idle' | 'uploading' | 'analyzing' | 'interpreting' | 'complete' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [analyzedResult, setAnalyzedResult] = useState<any>(null);
+  const [extractionResult, setExtractionResult] = useState<any>(null);
   const [uploadedFileType, setUploadedFileType] = useState<string>('pdf');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { activeProfile } = useProfiles();
 
-  // Gemini análise do documento
-  const analyzeWithGeminiMutation = useMutation({
+  // OpenAI análise do documento
+  const analyzeDocumentMutation = useMutation({
     mutationFn: async (data: { file: File; fileType: string }) => {
       const formData = new FormData();
       formData.append("fileType", data.fileType);
@@ -56,7 +56,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         return;
       }
 
-      setAnalyzedResult(data);
+      setExtractionResult(data);
       setUploadStep('interpreting');
       
       // Agora vamos para o segundo passo: interpretação com OpenAI
@@ -124,11 +124,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       const filename = selectedFile?.name || 'Exame';
       
       // Obter o tipo de arquivo das variáveis corretas
-      const fileType = analyzedResult?.fileType || uploadedFileType || 'pdf';
+      const fileType = extractionResult?.fileType || uploadedFileType || 'pdf';
       
-      // Alguns campos são extraídos da análise Gemini se disponíveis
+      // Alguns campos são extraídos da análise inicial da OpenAI se disponíveis
       // como data do exame, médico solicitante, etc.
-      const examDate = analyzedResult?.examDate || new Date().toISOString().split('T')[0];
+      const examDate = extractionResult?.examDate || new Date().toISOString().split('T')[0];
       
       // IMPORTANTE: Removendo campos não presentes no banco de dados
       // Removendo requestingPhysician pois não existe na tabela
@@ -155,13 +155,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         examDate: examDate,
         status: "analyzed", // definir status como analisado
         // Removido requestingPhysician pois este campo não existe no banco de dados
-        originalContent: JSON.stringify(analyzedResult).substring(0, 5000) // Limitando tamanho para evitar problemas
+        originalContent: JSON.stringify(extractionResult).substring(0, 5000) // Limitando tamanho para evitar problemas
       };
       
       // Salvar exame completo
       saveExamMutation.mutate({
         examData,
-        geminiAnalysis: analyzedResult,
+        extractionResult,
         openaiInterpretation
       }, {
         onSuccess: (savedData) => {
@@ -185,7 +185,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           if (onUploadComplete) {
             onUploadComplete({
               savedExam: savedData.exam,
-              geminiAnalysis: analyzedResult,
+              extractionResult,
               openaiInterpretation: savedData.result
             });
           }
@@ -227,7 +227,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         
         
         // Extrair dados do exame do novo formato
-        const { examData: rawExamData, geminiAnalysis, openaiInterpretation } = data;
+        const { examData: rawExamData, extractionResult: extractionData, openaiInterpretation } = data;
+        const effectiveExtraction = extractionData || extractionResult;
         
         // Adaptar dados para formato esperado pela API
         // Manter o userId que foi enviado no objeto original (que pode ter um fallback)
@@ -264,20 +265,20 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         // Salvar o resultado da análise
         if (savedExam && savedExam.id) {
           // Preparar dados do resultado da análise
-          // Usando tanto os dados da análise Gemini quando a interpretação do OpenAI
+          // Usando tanto os dados da análise inicial quanto a interpretação da OpenAI
           const resultData = {
             examId: savedExam.id,
-            summary: openaiInterpretation?.contextualAnalysis || geminiAnalysis?.summary || "Análise não disponível",
-            detailedAnalysis: geminiAnalysis?.detailedAnalysis || "",
+            summary: openaiInterpretation?.contextualAnalysis || effectiveExtraction?.summary || "Análise não disponível",
+            detailedAnalysis: effectiveExtraction?.detailedAnalysis || "",
             recommendations: openaiInterpretation?.recommendations 
               ? Array.isArray(openaiInterpretation.recommendations)
                 ? openaiInterpretation.recommendations.join('\n')
                 : openaiInterpretation.recommendations
-              : Array.isArray(geminiAnalysis?.recommendations)
-                ? geminiAnalysis.recommendations.join('\n')
-                : geminiAnalysis?.recommendations || "",
-            healthMetrics: geminiAnalysis?.healthMetrics || [],
-            aiProvider: "gemini+openai"
+              : Array.isArray(effectiveExtraction?.recommendations)
+                ? effectiveExtraction.recommendations.join('\n')
+                : effectiveExtraction?.recommendations || "",
+            healthMetrics: effectiveExtraction?.healthMetrics || [],
+            aiProvider: "openai"
           };
           
           const resultResponse = await fetch("/api/exam-results", {
@@ -300,13 +301,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           }
           
           // Salvar métricas de saúde individuais, se disponíveis
-          if (geminiAnalysis?.healthMetrics && Array.isArray(geminiAnalysis.healthMetrics)) {
+          if (effectiveExtraction?.healthMetrics && Array.isArray(effectiveExtraction.healthMetrics)) {
             
             // Pré-processamento para normalizar nomes e unificar métricas duplicadas
             const processedMetrics = new Map<string, any>();
             
             // Primeiro passo: normalizar todos os nomes e agrupar métricas idênticas
-            for (const metric of geminiAnalysis.healthMetrics) {
+            for (const metric of effectiveExtraction.healthMetrics) {
               const normalizedName = normalizeExamName(metric.name || "desconhecido");
               
               // Se já temos uma métrica com esse nome normalizado, usamos a mais recente
@@ -433,12 +434,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         return;
       }
 
-      analyzeWithGeminiMutation.mutate({
+      analyzeDocumentMutation.mutate({
         file,
         fileType
       });
     }, 2000);
-  }, [activeProfile, analyzeWithGeminiMutation, toast, user]);
+  }, [activeProfile, analyzeDocumentMutation, toast, user]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

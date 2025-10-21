@@ -1,12 +1,11 @@
 # Testing the VitaView AI Pipeline
 
-This guide explains how to test the dual AI pipeline that powers VitaView's exam analysis.
+This guide explains how to test the OpenAI-powered pipeline that drives VitaView's exam analysis.
 
 ## Prerequisites
 
-1. Make sure you have API keys for both services:
-   - `GEMINI_API_KEY` - Google's Gemini API
-   - `OPENAI_API_KEY` - OpenAI API (GPT-4o model)
+1. Make sure you have a valid OpenAI API key configured:
+   - `OPENAI_API_KEY` - OpenAI API (GPT-4o / GPT-5 Vision)
 
 2. These keys should already be set in your Replit environment.
 
@@ -30,7 +29,7 @@ What this test checks:
 
 ### 2. End-to-End AI Pipeline Test
 
-This test verifies the complete integration between Gemini extraction and OpenAI analysis.
+This test verifies the complete OpenAI pipeline (extraction + analysis).
 
 ```bash
 # First, place a medical exam file (PDF, JPEG, PNG) in the server/test-data directory
@@ -40,7 +39,7 @@ npx tsx server/test-ai.ts ./server/test-data/your-exam-file.pdf
 
 What this test checks:
 - File reading and processing
-- Gemini extraction of health metrics
+- OpenAI extraction of health metrics
 - Storage of extraction results
 - OpenAI detailed analysis of the extracted data
 - Exam status updates in the workflow
@@ -51,16 +50,16 @@ What this test checks:
 You can also test the individual API endpoints:
 
 ```bash
-# Test Gemini extraction endpoint
+# Test OpenAI extraction endpoint
 curl -X POST -H "Content-Type: multipart/form-data" \
   -F "file=@./server/test-data/your-exam-file.pdf" \
-  -F "userId=1" \
-  http://localhost:5000/api/exams/upload
+  -F "fileType=pdf" \
+  http://localhost:5000/api/analyze/openai
 
-# Test OpenAI analysis endpoint (replace EXAM_ID with actual ID)
+# Test OpenAI interpretation endpoint (replace EXAM_ID with actual ID)
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"examId": EXAM_ID, "userId": 1}' \
-  http://localhost:5000/api/exams/analyze
+  -d '{"analysisResult": {"summary": "Exemplo"}, "patientData": {}}' \
+  http://localhost:5000/api/analyze/interpretation
 ```
 
 ## Analyzing Test Results
@@ -82,7 +81,6 @@ Common issues:
 1. **API Key Problems**: Make sure your API keys are set and valid.
    ```bash
    # Check if keys are set
-   echo $GEMINI_API_KEY
    echo $OPENAI_API_KEY
    ```
 

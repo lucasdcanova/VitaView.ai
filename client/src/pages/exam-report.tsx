@@ -1230,10 +1230,10 @@ export default function ExamReport() {
                     
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
-                        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Gemini" className="w-6 h-6 mr-3" />
+                        <img src="https://img.icons8.com/color/48/000000/openai-logo.png" alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Análise de documento</h3>
-                          <p className="text-sm text-gray-600">Google Gemini AI</p>
+                          <h3 className="text-sm font-medium text-gray-700">Extração do documento</h3>
+                          <p className="text-sm text-gray-600">OpenAI GPT-5 Vision</p>
                         </div>
                       </div>
                       

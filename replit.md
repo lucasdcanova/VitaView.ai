@@ -35,25 +35,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Key Components
 
-### Dual AI Processing Pipeline
-The system implements a sophisticated two-stage AI pipeline:
+### OpenAI Processing Pipeline
+The system implements a two-phase pipeline backed entirely by OpenAI:
 
-1. **Extraction Stage (Google Gemini)**
+1. **Extraction Stage (OpenAI GPT-5 Vision)**
    - Processes raw medical documents (PDFs, images)
    - Extracts structured health metrics from unstructured content
-   - Optimized for Brazilian Portuguese medical terminology
-   - Implements retry mechanism with exponential backoff (5 attempts)
+   - Otimizado para terminologia médica em português brasileiro
+   - Remove temporary uploaded files from OpenAI storage after processing
 
 2. **Analysis Stage (OpenAI GPT-4o)**
-   - Receives structured data from extraction stage
+   - Receives structured data from the extraction stage
    - Performs deep medical analysis and interpretation
    - Generates clinical insights and recommendations
    - Provides personalized health scoring
 
 ### Fallback Mechanism
-- Primary: Gemini API for extraction (cost-effective, fast)
-- Fallback: OpenAI API if Gemini fails
-- Graceful degradation with default values to maintain user experience
+- Automatic retries for transient OpenAI API errors
+- If the contextual analysis fails after extraction, the system preserves the extracted data and notifies the user that insights are temporarily unavailable
 
 ### Multi-Profile Support
 - Users can create multiple health profiles (family members, dependents)
@@ -68,13 +67,13 @@ The system implements a sophisticated two-stage AI pipeline:
 ## Data Flow
 
 ```
-Document Upload → Base64 Encoding → Gemini Extraction → Data Validation → 
-PostgreSQL Storage → OpenAI Analysis → Insights Generation → User Dashboard
+Document Upload → Base64 Encoding → OpenAI Extraction → Data Validation → 
+PostgreSQL Storage → OpenAI Insights → Insights Generation → User Dashboard
 ```
 
 1. User uploads medical document via React frontend
 2. Document converted to base64 and sent to backend
-3. Gemini API extracts structured health metrics
+3. OpenAI API extracts structured health metrics
 4. Extracted data stored in PostgreSQL with exam status "extraction_complete"
 5. OpenAI API analyzes extracted data for insights
 6. Analysis results stored and exam status updated to "analysis_complete"
@@ -83,7 +82,7 @@ PostgreSQL Storage → OpenAI Analysis → Insights Generation → User Dashboar
 ## External Dependencies
 
 ### AI Services
-- **Google Gemini 1.5 Pro**: Document extraction and initial processing
+- **OpenAI GPT-5 Vision**: Document extraction and initial processing
 - **OpenAI GPT-4o**: Advanced analysis and medical interpretation
 
 ### Database & Infrastructure
@@ -104,7 +103,6 @@ PostgreSQL Storage → OpenAI Analysis → Insights Generation → User Dashboar
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string
-- `GOOGLE_API_KEY`: Google Gemini API authentication
 - `OPENAI_API_KEY`: OpenAI API authentication
 - `SESSION_SECRET`: Session encryption key
 

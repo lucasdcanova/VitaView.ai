@@ -709,7 +709,6 @@ export default function AdminPanel() {
                   <label className="text-sm font-medium">Provedor de IA Principal</label>
                   <select className="w-full p-2 border rounded" defaultValue="openai">
                     <option value="openai">OpenAI (GPT)</option>
-                    <option value="google">Google Gemini</option>
                     <option value="anthropic">Claude (Anthropic)</option>
                   </select>
                 </div>
@@ -718,7 +717,6 @@ export default function AdminPanel() {
                   <select className="w-full p-2 border rounded" defaultValue="gpt-4">
                     <option value="gpt-4">GPT-4</option>
                     <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                    <option value="gemini-pro">Gemini Pro</option>
                   </select>
                 </div>
               </div>
@@ -739,10 +737,6 @@ export default function AdminPanel() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Chave da API OpenAI</label>
                 <Input type="password" placeholder="sk-..." />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Chave da API Google Gemini</label>
-                <Input type="password" placeholder="AI..." />
               </div>
               <Button>Salvar Configurações de IA</Button>
             </CardContent>

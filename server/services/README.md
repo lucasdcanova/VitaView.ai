@@ -1,61 +1,49 @@
 # VitaView AI Processing Pipeline
 
-This directory contains the implementation of VitaView's dual AI processing pipeline for medical exam analysis.
+This directory contains VitaView's medical exam processing pipeline powered entirely by OpenAI.  
+The same provider is responsible for extracting structured data from uploaded documents and for generating clinical insights.
 
 ## Architecture Overview
 
-The VitaView AI pipeline uses a two-stage approach to maximize accuracy and comprehensive analysis:
-
-1. **Extraction Stage** (Gemini API)
-   - Processes raw medical documents (PDFs, images)
-   - Extracts structured data from unstructured content
-   - Identifies health metrics, units, and basic parameters
-   - Provides initial categorization and extraction
-
-2. **Analysis Stage** (OpenAI API)
-   - Receives structured data from the extraction stage
-   - Performs deep medical analysis and interpretation
-   - Generates clinical insights, recommendations, and potential diagnoses
-   - Calculates health scores and identifies critical areas
-
 ```
-┌───────────┐    ┌───────────┐    ┌────────────┐    ┌────────────┐
-│ Raw Exam  │ -> │  Gemini   │ -> │ Structured │ -> │  OpenAI    │ -> Final Analysis
-│ Document  │    │ Extraction│    │    Data    │    │  Analysis  │    & Insights
-└───────────┘    └───────────┘    └────────────┘    └────────────┘
+┌───────────┐    ┌──────────────────────────┐    ┌────────────┐
+│ Raw Exam  │ -> │ OpenAI Vision Extraction │ -> │ Structured │
+│ Document  │    │ (PDF/Image to JSON)      │    │    Data    │
+└───────────┘    └──────────────────────────┘           │
+                                                         ▼
+                                                  ┌────────────┐
+                                                  │ OpenAI     │
+                                                  │ Insights   │
+                                                  │ Generation │
+                                                  └────────────┘
+                                                         │
+                                                         ▼
+                                                  Final Analysis
 ```
+
+1. The frontend uploads a PDF or image of the exam.
+2. `openai.ts` sends the document to the OpenAI Responses API (GPT‑5 Vision) and receives structured metrics, metadata and summaries.
+3. The structured data is persisted through `analyze-pipeline.ts` and associated with the current user/profile.
+4. A secondary OpenAI call converts the structured metrics into contextual insights, diagnoses and recommendations.
+5. Notifications are created and the UI presents both the raw extraction and the higher-level interpretation.
 
 ## Key Files
 
-- `gemini.ts` - Handles the extraction phase using Google's Gemini API
-- `openai.ts` - Handles the analysis phase using OpenAI's API
-- `../routes.ts` - Contains the API endpoints that coordinate the pipeline flow
-
-## Data Flow
-
-1. User uploads an exam document via the frontend
-2. The document is processed by Gemini for data extraction
-3. Extracted data is stored in the database as an exam result
-4. The exam status is updated to indicate extraction is complete
-5. OpenAI is then used to analyze the extracted data
-6. The analysis is stored in the database as another exam result
-7. The user is notified when the complete analysis is ready
-8. Frontend displays both extraction data and detailed analysis
+- `openai.ts` – wraps every interaction with the OpenAI API (extraction and insights).
+- `analyze-pipeline.ts` – orchestrates the multi-step workflow (store exam, normalize metrics, trigger insights).
+- `../routes.ts` – exposes HTTP endpoints for uploads, quick summaries and interpretations.
 
 ## Required Environment Variables
 
-Both APIs require authentication:
-
-- `GEMINI_API_KEY` - For Google Gemini API access
-- `OPENAI_API_KEY` - For OpenAI API access
+- `OPENAI_API_KEY` – OpenAI API authentication token used by all analysis steps.
 
 ## Error Handling
 
-Both services include fallback mechanisms:
-- If Gemini fails, OpenAI can be used directly for document analysis
-- If OpenAI fails, a simplified analysis is provided
-- All errors are logged and reported to the client with appropriate status codes
+- If the OpenAI extraction call fails, the pipeline responds with a clear 503 message and no data is persisted.
+- If the insights stage fails after extraction, the exam is stored with status `extraction_only` and the user is notified that only partial results are available.
+- File uploads are deleted from OpenAI once the response is generated to avoid leaking temporary artifacts.
 
 ## Testing
 
-See `../test-ai-pipeline.js` for an end-to-end test of the entire pipeline.
+- `../test-pipeline.ts` exercises the complete flow with a local file.
+- `../test-ai.ts` and `../test-ai-pipeline.js` run integration tests against the OpenAI-only pipeline.

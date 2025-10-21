@@ -2,10 +2,9 @@
  * Teste completo do pipeline de análise de exames
  * 
  * Este script testa o fluxo completo:
- * 1. Extração de dados do exame com Gemini
- * 2. Fallback para OpenAI se necessário
- * 3. Análise detalhada com OpenAI
- * 4. Armazenamento em banco de dados
+ * 1. Extração de dados do exame com OpenAI
+ * 2. Análise detalhada com OpenAI
+ * 3. Armazenamento em banco de dados
  */
 
 import { readFileSync } from 'fs';
