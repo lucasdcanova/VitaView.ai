@@ -300,7 +300,11 @@ export default function ExamReport() {
   
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    const parsedDate = new Date(dateString);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Data indisponível";
+    }
+    return parsedDate.toLocaleDateString('pt-BR');
   };
   
   // Função simplificada para obter o status da métrica para a UI, independente da função implementada
@@ -506,7 +510,7 @@ export default function ExamReport() {
                     if (navigator.share) {
                       navigator.share({
                         title: `Relatório de Exame - ${data?.exam.name}`,
-                        text: data?.result.summary,
+                        text: data?.result?.summary,
                         url: window.location.href
                       }).catch(() => {
                         navigator.clipboard.writeText(window.location.href);
@@ -590,7 +594,13 @@ export default function ExamReport() {
                   <>
                     <div className="mb-6">
                       <h2 className="text-xl font-semibold text-gray-800">{data?.exam.name}</h2>
-                      <p className="text-gray-500">Analisado em {formatDate(data?.result.analysisDate.toString())}</p>
+                      <p className="text-gray-500">
+                        {data?.result?.analysisDate
+                          ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
+                          : data?.exam?.uploadDate
+                            ? `Enviado em ${formatDate(data.exam.uploadDate.toString())}`
+                            : "Data de análise indisponível"}
+                      </p>
                     </div>
                     
                     <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -624,7 +634,7 @@ export default function ExamReport() {
                       {/* Summary Tab */}
                       <TabsContent value="summary" className="mt-6">
                         <p className="text-gray-600 mb-4">
-                          {data?.result.summary}
+                          {data?.result?.summary}
                         </p>
                         
                         <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg mb-4">
@@ -866,7 +876,7 @@ export default function ExamReport() {
                           <h3 className="font-medium text-lg text-gray-800 mb-3">Interpretação detalhada</h3>
                           <div className="space-y-3">
                             <p className="text-gray-600">
-                              {data?.result.detailedAnalysis}
+                              {data?.result?.detailedAnalysis}
                             </p>
                           </div>
                         </div>
