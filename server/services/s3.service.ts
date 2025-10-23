@@ -4,15 +4,28 @@ import crypto from "crypto";
 import logger from "../logger";
 
 // Configuração do S3 Client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+const resolveBucketName = () =>
+  process.env.AWS_S3_BUCKET ||
+  process.env.AWS_S3_BUCKET_NAME ||
+  "vitaview-sensitive-data";
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || "vitaview-sensitive-data";
+const ensureAwsConfig = () => {
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    throw new Error("Credenciais AWS não configuradas. Defina AWS_ACCESS_KEY_ID e AWS_SECRET_ACCESS_KEY.");
+  }
+
+  return new S3Client({
+    region: process.env.AWS_REGION || "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+};
+
+const s3Client = ensureAwsConfig();
+const BUCKET_NAME = resolveBucketName();
+const EXAM_FILE_PREFIX = "exam-documents";
 
 // Tipos de arquivos sensíveis que devem ser armazenados no S3
 const SENSITIVE_FILE_TYPES = [
@@ -30,14 +43,14 @@ export class S3Service {
    */
   private static generateS3Key(
     userId: number,
-    fileType: string,
+    fileCategory: string,
     originalName: string
   ): string {
     const timestamp = Date.now();
     const randomString = crypto.randomBytes(8).toString("hex");
     const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, "_");
     
-    return `${userId}/${fileType}/${timestamp}-${randomString}-${sanitizedName}`;
+    return `${fileCategory}/${userId}/${timestamp}-${randomString}-${sanitizedName}`;
   }
 
   /**
@@ -80,6 +93,58 @@ export class S3Service {
     } catch (error) {
       logger.error("Erro ao fazer upload para S3:", error);
       throw new Error("Falha ao armazenar arquivo seguro");
+    }
+  }
+
+  static async uploadExamDocument(options: {
+    userId: number;
+    profileId: number | null;
+    buffer: Buffer;
+    originalName: string;
+    mimeType: string;
+    size?: number;
+    metadata?: Record<string, string>;
+  }): Promise<{ key: string; bucket: string; url: string; size: number; mimeType: string; originalName: string }> {
+    const { userId, profileId, buffer, originalName, mimeType, size, metadata } = options;
+    try {
+      const key = this.generateS3Key(userId, EXAM_FILE_PREFIX, originalName);
+
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+        ServerSideEncryption: "AES256",
+        Metadata: {
+          userId: userId.toString(),
+          profileId: profileId?.toString() ?? "unknown",
+          uploadDate: new Date().toISOString(),
+          originalName,
+          ...(metadata ?? {}),
+        },
+      });
+
+      await s3Client.send(command);
+
+      const url = await this.getSignedUrl(key, 3600);
+      logger.info("[S3] Documento de exame armazenado", { key, bucket: BUCKET_NAME, userId, profileId });
+
+      return {
+        key,
+        bucket: BUCKET_NAME,
+        url,
+        size: size ?? buffer.length,
+        mimeType,
+        originalName,
+      };
+    } catch (error) {
+      logger.error("[S3] Erro ao enviar documento de exame", {
+        message: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        userId,
+        profileId,
+      });
+      throw new Error("Falha ao armazenar documento do exame");
     }
   }
 

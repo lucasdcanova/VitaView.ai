@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, FileType, BrainCircuit, Sparkles, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfiles } from "@/hooks/use-profiles";
 import { Button } from "@/components/ui/button";
-import { normalizeExamName, normalizeHealthMetrics } from "@shared/exam-normalizer";
+import { normalizeExamName } from "@shared/exam-normalizer";
 
 interface FileUploadProps {
   onUploadComplete?: (result: any) => void;
@@ -23,13 +23,20 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { activeProfile } = useProfiles();
+  
+  useEffect(() => {
+    console.info("[UploadFlow][Client] Etapa atualizada", { step: uploadStep });
+  }, [uploadStep]);
 
   // OpenAI análise do documento
   const analyzeDocumentMutation = useMutation({
-    mutationFn: async (data: { file: File; fileType: string }) => {
+    mutationFn: async (data: { file: File; fileType: string; profileId?: number | null }) => {
       const formData = new FormData();
       formData.append("fileType", data.fileType);
       formData.append("file", data.file);
+      if (typeof data.profileId === "number") {
+        formData.append("profileId", String(data.profileId));
+      }
 
       const response = await fetch("/api/analyze/openai", {
         method: "POST",
@@ -38,6 +45,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
       
       if (!response.ok) {
+        console.error("[UploadFlow][Client] Erro na análise do documento", {
+          status: response.status,
+          statusText: response.statusText
+        });
         const errorText = await response.text();
         throw new Error(errorText || response.statusText);
       }
@@ -47,6 +58,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     },
     onSuccess: (data) => {
       if (!activeProfile) {
+        console.warn("[UploadFlow][Client] Análise concluída sem paciente selecionado");
         setUploadStep('error');
         toast({
           title: "Selecione um paciente",
@@ -78,6 +90,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("[UploadFlow][Client] Falha na análise do documento", { error });
       setUploadStep('error');
       toast({
         title: "Erro na análise",
@@ -101,6 +114,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
       
       if (!response.ok) {
+        console.error("[UploadFlow][Client] Erro na interpretação do exame", {
+          status: response.status,
+          statusText: response.statusText
+        });
         const errorText = await response.text();
         throw new Error(errorText || response.statusText);
       }
@@ -111,6 +128,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     onSuccess: (openaiInterpretation) => {
       // Verificar se usuário está autenticado
       if (!user || !user.id || !activeProfile) {
+        console.warn("[UploadFlow][Client] Interpretação concluída sem usuário ou paciente válido", {
+          hasUser: Boolean(user?.id),
+          hasProfile: Boolean(activeProfile)
+        });
         toast({
           title: "Seleção necessária",
           description: "Confirme que está autenticado e que um paciente está selecionado antes de salvar exames.",
@@ -154,6 +175,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         laboratoryName: "Upload via Plataforma",
         examDate: examDate,
         status: "analyzed", // definir status como analisado
+        storageProvider: extractionResult?.storage?.provider,
+        storageKey: extractionResult?.storage?.key,
+        storageBucket: extractionResult?.storage?.bucket,
+        storageMimeType: extractionResult?.storage?.mimeType,
+        storageSize: extractionResult?.storage?.size,
+        storageOriginalName: extractionResult?.storage?.originalName || filename,
         // Removido requestingPhysician pois este campo não existe no banco de dados
         originalContent: JSON.stringify(extractionResult).substring(0, 5000) // Limitando tamanho para evitar problemas
       };
@@ -165,6 +192,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         openaiInterpretation
       }, {
         onSuccess: (savedData) => {
+          console.info("[UploadFlow][Client] Exame salvo com sucesso", {
+            examId: savedData?.exam?.id
+          });
           setUploadStep('complete');
           
           // Atualizar cache com novos dados
@@ -191,6 +221,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           }
         },
         onError: (error) => {
+          console.error("[UploadFlow][Client] Falha ao salvar exame", { error });
           toast({
             title: "Erro ao salvar",
             description: "A análise foi concluída, mas houve um erro ao salvar o exame.",
@@ -201,6 +232,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("[UploadFlow][Client] Falha na interpretação com OpenAI", { error });
       setUploadStep('error');
       toast({
         title: "Erro na interpretação",
@@ -232,17 +264,23 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         
         // Adaptar dados para formato esperado pela API
         // Manter o userId que foi enviado no objeto original (que pode ter um fallback)
-      const examData = {
-        name: rawExamData.name,
-        fileType: rawExamData.fileType,
-        laboratoryName: rawExamData.laboratoryName,
-        examDate: rawExamData.examDate,
-        status: "analyzed",
-        userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
-        profileId,
-        requestingPhysician: rawExamData.requestingPhysician || null,
-        originalContent: rawExamData.originalContent || null
-      };
+        const examData = {
+          name: rawExamData.name,
+          fileType: rawExamData.fileType,
+          laboratoryName: rawExamData.laboratoryName,
+          examDate: rawExamData.examDate,
+          status: "analyzed",
+          userId: rawExamData.userId, // Usar o userId que foi enviado originalmente
+          profileId,
+          requestingPhysician: rawExamData.requestingPhysician || null,
+          originalContent: rawExamData.originalContent || null,
+          storageProvider: rawExamData.storageProvider,
+          storageKey: rawExamData.storageKey,
+          storageBucket: rawExamData.storageBucket,
+          storageMimeType: rawExamData.storageMimeType,
+          storageSize: rawExamData.storageSize,
+          storageOriginalName: rawExamData.storageOriginalName
+        };
         
         // Criar o exame no banco de dados
         const examResponse = await fetch("/api/exams", {
@@ -334,6 +372,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   unit: metric.unit || '',
                   status: metric.status || 'normal',
                   change: metric.change || '',
+                  examId: savedExam.id,
                   date: examData.examDate || new Date().toISOString() // Usar mesma data do exame
                 };
                 
@@ -355,13 +394,14 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               }
             }
           }
-        }
+      }
         
         return {
           exam: savedExam,
           result: openaiInterpretation || {}
         };
       } catch (error: any) {
+        console.error("[UploadFlow][Client] Erro inesperado ao processar exame", { error });
         throw new Error("Falha ao processar e salvar exame: " + (error?.message || "Erro desconhecido"));
       }
     }
@@ -371,6 +411,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     if (acceptedFiles.length === 0) return;
 
     if (!activeProfile) {
+      console.warn("[UploadFlow][Client] Tentativa de upload sem paciente selecionado");
       toast({
         title: "Selecione um paciente",
         description: "Escolha um paciente no painel lateral antes de enviar exames.",
@@ -401,6 +442,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       
       const file = acceptedFiles[0];
       if (!file) {
+        console.error("[UploadFlow][Client] Nenhum arquivo disponível após drop");
         setUploadStep('error');
         toast({
           title: "Arquivo inválido",
@@ -425,6 +467,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       setUploadedFileType(fileType);
 
       if (!user || !user.id) {
+        console.error("[UploadFlow][Client] Usuário não autenticado durante upload");
         toast({
           title: "Erro de autenticação",
           description: "Por favor, faça login novamente para continuar.",
@@ -436,7 +479,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       analyzeDocumentMutation.mutate({
         file,
-        fileType
+        fileType,
+        profileId: activeProfile?.id ?? null
       });
     }, 2000);
   }, [activeProfile, analyzeDocumentMutation, toast, user]);

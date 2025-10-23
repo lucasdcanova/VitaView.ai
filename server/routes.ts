@@ -13,7 +13,9 @@ import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
 import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport } from "./services/openai";
+import { S3Service } from "./services/s3.service";
 import logger from "./logger";
+import { nanoid } from "nanoid";
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -688,16 +690,45 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
   
   const handleVisionAnalysis = async (req: Request, res: Response) => {
+    const requestId = nanoid();
+    let s3Info:
+      | {
+          key: string;
+          bucket: string;
+          url: string;
+          size: number;
+          mimeType: string;
+          originalName: string;
+        }
+      | undefined;
     try {
+      logger.info("[UploadFlow] Upload recebido para análise", {
+        requestId,
+        route: req.path,
+        method: req.method,
+        userId: (req as any).user?.id,
+        hasFile: Boolean(req.file),
+        bodyKeys: Object.keys(req.body || {}),
+        contentLengthHeader: req.headers["content-length"],
+        ip: req.ip
+      });
+
       let { fileContent } = req.body as { fileContent?: string };
       const providedType = (req.body as { fileType?: string }).fileType;
+      const profileIdRaw = (req.body as { profileId?: string }).profileId;
+      const parsedProfileId = profileIdRaw ? Number(profileIdRaw) : null;
+      const profileId =
+        typeof parsedProfileId === "number" && !Number.isNaN(parsedProfileId)
+          ? parsedProfileId
+          : null;
       let normalizedFileType = normalizeFileType(providedType);
       const initialBase64Length = typeof fileContent === "string" ? fileContent.length : 0;
 
       logger.info("[Analysis] Iniciando análise de documento", {
+        requestId,
         route: req.path,
         method: req.method,
-        userId: req.user?.id,
+        userId: (req as any).user?.id,
         providedFileType: (req.body as { fileType?: string })?.fileType,
         hasMultipartFile: Boolean(req.file),
         mimetype: req.file?.mimetype,
@@ -712,8 +743,45 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       const effectiveBase64Length = typeof fileContent === "string" ? fileContent.length : 0;
+      const userId = (req as any).user?.id;
+
+      if (userId && (req.file?.buffer || fileContent)) {
+        const buffer = req.file?.buffer ?? Buffer.from(fileContent!, "base64");
+        const originalName =
+          req.file?.originalname ||
+          `exam-${Date.now()}.${normalizedFileType ?? "bin"}`;
+        const mimeType =
+          req.file?.mimetype ||
+          (normalizedFileType === "pdf"
+            ? "application/pdf"
+            : normalizedFileType === "png"
+            ? "image/png"
+            : normalizedFileType === "jpeg"
+            ? "image/jpeg"
+            : "application/octet-stream");
+
+        s3Info = await S3Service.uploadExamDocument({
+          userId,
+          profileId,
+          buffer,
+          originalName,
+          mimeType,
+          size: req.file?.size ?? buffer.length,
+          metadata: {
+            fileType: normalizedFileType ?? "unknown",
+            requestId,
+          },
+        });
+      } else {
+        logger.warn("[UploadFlow] Documento não foi enviado ao S3", {
+          requestId,
+          hasUser: Boolean(userId),
+          hasFileBuffer: Boolean(req.file?.buffer || fileContent),
+        });
+      }
 
       logger.debug("[Analysis] Dados normalizados para processamento", {
+        requestId,
         normalizedFileType,
         providedType,
         mimetype: req.file?.mimetype,
@@ -723,6 +791,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (!fileContent || !normalizedFileType) {
         logger.warn("[Analysis] Conteúdo ou tipo ausente", {
+          requestId,
           hasContent: Boolean(fileContent),
           normalizedFileType
         });
@@ -738,21 +807,46 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
       logger.info("[Analysis] Resultado obtido via OpenAI", {
+        requestId,
         normalizedFileType,
         metricsCount: Array.isArray((analysisResult as any)?.healthMetrics) ? (analysisResult as any).healthMetrics.length : undefined,
         hasSummary: Boolean((analysisResult as any)?.summary),
         aiProvider: (analysisResult as any)?.aiProvider
       });
 
-      res.json({ ...analysisResult, fileType: normalizedFileType });
+      res.json({
+        ...analysisResult,
+        fileType: normalizedFileType,
+        storage: s3Info
+          ? {
+              provider: "aws-s3",
+              bucket: s3Info.bucket,
+              key: s3Info.key,
+              size: s3Info.size,
+              mimeType: s3Info.mimeType,
+              originalName: s3Info.originalName,
+              expiresAt: Date.now() + 3600 * 1000,
+            }
+          : undefined,
+      });
+      logger.info("[UploadFlow] Análise concluída com sucesso", {
+        requestId,
+        route: req.path,
+        userId: (req as any).user?.id,
+        normalizedFileType,
+        metricsCount: Array.isArray((analysisResult as any)?.healthMetrics)
+          ? (analysisResult as any).healthMetrics.length
+          : undefined
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
       logger.error("Falha ao processar análise de documento", {
+        requestId,
         message,
         stack: error instanceof Error ? error.stack : undefined,
         route: req.path,
         method: req.method,
-        userId: req.user?.id,
+        userId: (req as any).user?.id,
         providedFileType: (req.body as { fileType?: string })?.fileType,
         normalizedFileType: normalizeFileType((req.body as { fileType?: string })?.fileType),
         mimetype: req.file?.mimetype,
@@ -761,7 +855,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         contentLengthHeader: req.headers["content-length"],
         base64Length: typeof (req.body as { fileContent?: string })?.fileContent === "string"
           ? (req.body as { fileContent?: string })?.fileContent?.length
-          : req.file?.buffer?.length
+          : req.file?.buffer?.length,
+        s3Attempted: Boolean(s3Info),
+        s3Key: s3Info?.key
       });
       res.status(500).json({ message: "Erro ao analisar o documento com GPT-5", details: message });
     }
@@ -777,10 +873,23 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   // Rota para análise de documentos - etapa 2: interpretação com OpenAI
   app.post("/api/analyze/interpretation", ensureAuthenticated, async (req, res) => {
+    const requestId = nanoid();
     try {
       const { analysisResult, patientData } = req.body;
+      logger.info("[UploadFlow] Iniciando etapa de interpretação", {
+        requestId,
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        hasAnalysisResult: Boolean(analysisResult),
+        patientDataKeys: Object.keys(patientData || {})
+      });
       
       if (!analysisResult) {
+        logger.warn("[UploadFlow] Interpretação sem resultado de análise", {
+          requestId,
+          userId: req.user?.id
+        });
         return res.status(400).json({ message: "Resultado da análise é obrigatório" });
       }
       
@@ -803,13 +912,35 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Gerar insights usando OpenAI com contexto do paciente
       const insights = await generateHealthInsights(formattedResult, patientData);
       res.json(insights);
+      logger.info("[UploadFlow] Interpretação concluída", {
+        requestId,
+        userId: req.user?.id,
+        includesRecommendations: Boolean(insights?.recommendations && insights.recommendations.length > 0),
+        includesWarnings: Boolean(insights?.warnings && insights.warnings.length > 0)
+      });
     } catch (error) {
+      logger.error("Falha na etapa de interpretação", {
+        requestId,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id
+      });
       res.status(500).json({ message: "Erro ao interpretar análise com OpenAI API" });
     }
   });
   
   app.post("/api/exams", ensureAuthenticated, async (req, res) => {
+    const requestId = nanoid();
     try {  
+      logger.info("[UploadFlow] Iniciando persistência do exame", {
+        requestId,
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        bodyKeys: Object.keys(req.body || {}),
+        hasOriginalContent: Boolean(req.body?.originalContent),
+        originalContentLength: typeof req.body?.originalContent === 'string' ? req.body.originalContent.length : undefined
+      });
       // Sempre usar o userId do corpo da requisição para diagnóstico
       // Esta é uma medida temporária para garantir que os exames sejam salvos
       let userId = req.body.userId;
@@ -819,6 +950,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         if (req.isAuthenticated() && req.user) {
           userId = req.user.id;
         } else {
+          logger.warn("[UploadFlow] Persistência de exame sem userId", { requestId });
           return res.status(400).json({ message: "Erro: userId é obrigatório" });
         }
       }
@@ -838,16 +970,32 @@ export async function registerRoutes(app: Express): Promise<void> {
       const {
         requestingPhysician,
         profileId: rawProfileId,
+        storageProvider,
+        storageKey,
+        storageBucket,
+        storageMimeType,
+        storageSize,
+        storageOriginalName,
         ...bodyWithoutProfile
       } = req.body;
 
       const profileId = rawProfileId ? Number(rawProfileId) : undefined;
       if (!profileId || Number.isNaN(profileId)) {
+        logger.warn("[UploadFlow] Persistência de exame com profileId inválido", {
+          requestId,
+          userId,
+          rawProfileId
+        });
         return res.status(400).json({ message: "Selecione um paciente para associar o exame." });
       }
 
       const profile = await storage.getProfile(profileId);
       if (!profile || profile.userId !== userId) {
+        logger.warn("[UploadFlow] Persistência de exame com paciente inválido", {
+          requestId,
+          userId,
+          profileId
+        });
         return res.status(403).json({ message: "Paciente inválido para este profissional." });
       }
       
@@ -860,15 +1008,112 @@ export async function registerRoutes(app: Express): Promise<void> {
       };
 
       const newExam = await storage.createExam(examData);
-      res.status(201).json(newExam);
+
+      if (storageKey && typeof storageKey === "string") {
+        try {
+          const metadata = {
+            provider: storageProvider || "aws-s3",
+            bucket: storageBucket || null,
+            linkedAt: new Date().toISOString(),
+          };
+
+          await pool.query(
+            `
+            INSERT INTO s3_files (
+              user_id,
+              profile_id,
+              exam_id,
+              s3_key,
+              original_name,
+              file_type,
+              file_size,
+              mime_type,
+              metadata,
+              is_deleted,
+              deleted_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, FALSE, NULL)
+            ON CONFLICT (s3_key) DO UPDATE SET
+              exam_id = EXCLUDED.exam_id,
+              profile_id = EXCLUDED.profile_id,
+              file_size = EXCLUDED.file_size,
+              mime_type = EXCLUDED.mime_type,
+              metadata = EXCLUDED.metadata,
+              is_deleted = FALSE,
+              deleted_at = NULL
+          `,
+            [
+              userId,
+              profileId,
+              newExam.id,
+              storageKey,
+              storageOriginalName || newExam.name,
+              storageProvider || "lab-results",
+              storageSize ?? null,
+              storageMimeType ||
+                (examData.fileType === "pdf"
+                  ? "application/pdf"
+                  : examData.fileType === "jpeg"
+                  ? "image/jpeg"
+                  : examData.fileType === "png"
+                  ? "image/png"
+                  : "application/octet-stream"),
+              JSON.stringify({
+                ...metadata,
+                originalName: storageOriginalName || newExam.name,
+              }),
+            ]
+          );
+          logger.info("[UploadFlow] Referência S3 registrada", {
+            requestId,
+            examId: newExam.id,
+            storageKey,
+            storageBucket,
+          });
+        } catch (s3RecordError) {
+          logger.error("[UploadFlow] Falha ao registrar arquivo S3", {
+            requestId,
+            examId: newExam.id,
+            storageKey,
+            message: s3RecordError instanceof Error ? s3RecordError.message : s3RecordError,
+            stack: s3RecordError instanceof Error ? s3RecordError.stack : undefined,
+          });
+        }
+      }
+      logger.info("[UploadFlow] Exame salvo com sucesso", {
+        requestId,
+        examId: newExam?.id,
+        userId,
+        profileId,
+        status: newExam?.status
+      });
+      res.status(201).json({
+        ...newExam,
+        storageKey: storageKey || null,
+      });
     } catch (error) {
+      logger.error("Falha ao persistir exame", {
+        requestId,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        bodyKeys: Object.keys(req.body || {})
+      });
       res.status(500).json({ message: "Erro ao criar exame" });
     }
   });
   
   // API para salvar resultados de exames - com requisito de autenticação
   app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
+    const requestId = nanoid();
     try {      
+      logger.info("[UploadFlow] Persistindo resultado do exame", {
+        requestId,
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        bodyKeys: Object.keys(req.body || {}),
+        examId: req.body?.examId
+      });
       const resultData = {
         ...req.body,
         analysisDate: new Date()
@@ -877,6 +1122,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Verificar se o exame existe
       const exam = await storage.getExam(resultData.examId);
       if (!exam) {
+        logger.warn("[UploadFlow] Resultado sem exame associado", {
+          requestId,
+          requestedExamId: resultData.examId,
+          userId: req.user?.id
+        });
         return res.status(404).json({ message: "Exame não encontrado" });
       }
       
@@ -884,14 +1134,37 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       const newResult = await storage.createExamResult(resultData);
       res.status(201).json(newResult);
+      logger.info("[UploadFlow] Resultado salvo com sucesso", {
+        requestId,
+        examResultId: newResult?.id,
+        examId: newResult?.examId,
+        userId: req.user?.id
+      });
     } catch (error) {
+      logger.error("Falha ao salvar resultado do exame", {
+        requestId,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        examId: req.body?.examId
+      });
       res.status(500).json({ message: "Erro ao salvar resultado do exame" });
     }
   });
   
   // API para salvar métricas de saúde - com requisito de autenticação
   app.post("/api/health-metrics", ensureAuthenticated, async (req, res) => {
+    const requestId = nanoid();
     try {      
+      logger.info("[UploadFlow] Persistindo métrica de saúde", {
+        requestId,
+        route: req.path,
+        method: req.method,
+        userId: req.user?.id,
+        bodyKeys: Object.keys(req.body || {}),
+        examId: req.body?.examId,
+        metricName: req.body?.name
+      });
       // Permitir que userId venha do corpo da requisição
       let userId = req.body.userId;
       
@@ -902,16 +1175,30 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       // Verificar se temos userId válido
       if (!userId) {
+        logger.warn("[UploadFlow] Métrica sem usuário associado", {
+          requestId,
+          sessionHasUser: Boolean(req.user)
+        });
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       
       const profileId = req.body.profileId ? Number(req.body.profileId) : undefined;
       if (!profileId || Number.isNaN(profileId)) {
+        logger.warn("[UploadFlow] Métrica com profileId inválido", {
+          requestId,
+          userId,
+          rawProfileId: req.body.profileId
+        });
         return res.status(400).json({ message: "Selecione um paciente para associar as métricas." });
       }
 
       const profile = await storage.getProfile(profileId);
       if (!profile || profile.userId !== userId) {
+        logger.warn("[UploadFlow] Métrica com paciente inválido", {
+          requestId,
+          userId,
+          profileId
+        });
         return res.status(403).json({ message: "Paciente inválido." });
       }
 
@@ -919,6 +1206,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const date = req.body.date ? new Date(req.body.date) : new Date();
       
       // Verifica se todos os campos obrigatórios existem e estão em formato correto
+      const examId = req.body.examId ? Number(req.body.examId) : undefined;
+
       const metricData = {
         userId: Number(userId),
         profileId,
@@ -927,12 +1216,27 @@ export async function registerRoutes(app: Express): Promise<void> {
         unit: req.body.unit || "",
         status: req.body.status || "normal",
         change: req.body.change || "",
-        date
+        date,
+        examId: examId && !Number.isNaN(examId) ? examId : null
       };
       
       const newMetric = await storage.createHealthMetric(metricData);
       res.status(201).json(newMetric);
+      logger.info("[UploadFlow] Métrica de saúde salva", {
+        requestId,
+        metricId: newMetric?.id,
+        userId,
+        profileId,
+        metricName: newMetric?.name
+      });
     } catch (error) {
+      logger.error("Falha ao salvar métrica de saúde", {
+        requestId,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+        metricName: req.body?.name
+      });
       res.status(500).json({ message: "Erro ao salvar métrica de saúde" });
     }
   });
