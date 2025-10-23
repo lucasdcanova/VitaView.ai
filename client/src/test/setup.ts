@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
@@ -25,3 +26,20 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+if (typeof window.IntersectionObserver === "undefined") {
+  class MockIntersectionObserver {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  }
+
+  // @ts-expect-error jsdom global assignment
+  window.IntersectionObserver = MockIntersectionObserver;
+  // @ts-expect-error jsdom global assignment
+  global.IntersectionObserver = MockIntersectionObserver;
+}
