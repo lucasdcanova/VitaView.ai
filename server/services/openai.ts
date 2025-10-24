@@ -7,6 +7,7 @@ import logger from "../logger";
 // Default GPT-5 vision model can be overridden through environment variables
 const OPENAI_MODEL = process.env.OPENAI_GPT5_MODEL || process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1";
 const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o";
+const OPENAI_MAX_OUTPUT_TOKENS = Number(process.env.OPENAI_ANALYSIS_MAX_OUTPUT_TOKENS || "4000");
 
 // Initialize OpenAI using the API key from environment variables
 let openai: OpenAI | null = null;
@@ -176,7 +177,7 @@ async function callOpenAIApi(prompt: string) {
       model: OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_tokens: 1500
+      max_tokens: OPENAI_MAX_OUTPUT_TOKENS
     });
     
     const content = response.choices[0].message.content;
@@ -557,6 +558,62 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
     return content.length > MAX_LENGTH ? content.substring(0, MAX_LENGTH) : content;
   };
 
+  const stripMarkdownCodeFence = (raw: string | undefined) => {
+    if (!raw) return "";
+    let cleaned = raw.trim();
+
+    if (cleaned.startsWith("```")) {
+      const firstNewline = cleaned.indexOf("\n");
+      if (firstNewline !== -1) {
+        cleaned = cleaned.slice(firstNewline + 1);
+      } else {
+        cleaned = cleaned.replace(/^```[\w-]*\s*/i, "");
+      }
+
+      if (cleaned.endsWith("```")) {
+        cleaned = cleaned.slice(0, -3);
+      }
+
+      cleaned = cleaned.trim();
+    }
+
+    return cleaned;
+  };
+
+  const extractJsonPayload = (raw: string) => {
+    const firstBrace = raw.indexOf("{");
+    if (firstBrace === -1) {
+      return null;
+    }
+
+    let depth = 0;
+    let inString = false;
+    let prevChar = "";
+
+    for (let i = firstBrace; i < raw.length; i++) {
+      const char = raw[i];
+
+      if (char === "\"" && prevChar !== "\\") {
+        inString = !inString;
+      }
+
+      if (!inString) {
+        if (char === "{") {
+          depth += 1;
+        } else if (char === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            return raw.slice(firstBrace, i + 1);
+          }
+        }
+      }
+
+      prevChar = char;
+    }
+
+    return null;
+  };
+
   const extractResponseText = (response: any): string | undefined => {
     if (!response) return undefined;
 
@@ -677,10 +734,13 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
     ];
 
     if (fileType === "pdf") {
-      const fileBuffer = Buffer.from(fileContent, "base64");
+      if (typeof File === "undefined") {
+        throw new Error("File constructor not available. Update to Node.js 18+ or provide a compatible implementation.");
+      }
+
+      const pdfBuffer = Buffer.from(fileContent, "base64");
       const uploadedFile = await openai.files.create({
-        file: fileBuffer,
-        filename: `exam-${Date.now()}.pdf`,
+        file: new File([pdfBuffer], `exam-${Date.now()}.pdf`, { type: "application/pdf" }),
         purpose: "assistants"
       });
       uploadedFileId = uploadedFile.id;
@@ -702,15 +762,34 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
         }
       ],
       temperature: 0.2,
-      max_output_tokens: 1500
+      max_output_tokens: OPENAI_MAX_OUTPUT_TOKENS
     });
 
+    if (response.status === "incomplete") {
+      const reason = response.incomplete_details?.reason || "unknown";
+      throw new Error(`OpenAI response incomplete (${reason}).`);
+    }
+
     const content = extractResponseText(response);
-    if (!content) {
+    const sanitizedContent = stripMarkdownCodeFence(content);
+    if (!sanitizedContent) {
       throw new Error("Empty response from GPT-5");
     }
 
-    const analysisData = JSON.parse(content);
+    const jsonPayload = extractJsonPayload(sanitizedContent);
+    if (!jsonPayload) {
+      throw new Error("GPT-5 response did not contain a valid JSON object");
+    }
+
+    let analysisData;
+    try {
+      analysisData = JSON.parse(jsonPayload);
+    } catch (parseError) {
+      logger.warn("[OpenAI] Falha ao converter resposta em JSON", {
+        message: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+      throw parseError;
+    }
     if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
       throw new Error("Invalid health metrics in GPT-5 response");
     }
@@ -750,11 +829,12 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       ],
       response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 1500
+      max_tokens: OPENAI_MAX_OUTPUT_TOKENS
     });
 
     const fallbackContent = extractResponseText(fallbackResponse);
-    if (!fallbackContent) {
+    const sanitizedFallbackContent = stripMarkdownCodeFence(fallbackContent);
+    if (!sanitizedFallbackContent) {
       logger.error("[OpenAI] Fallback retornou conteúdo vazio", {
         fileType,
         originalError: primaryError instanceof Error ? primaryError.message : primaryError
@@ -762,7 +842,22 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
     }
 
-    const fallbackData = JSON.parse(fallbackContent);
+    const fallbackJsonPayload = extractJsonPayload(sanitizedFallbackContent);
+    if (!fallbackJsonPayload) {
+      throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
+    }
+
+    let fallbackData;
+    try {
+      fallbackData = JSON.parse(fallbackJsonPayload);
+    } catch (parseError) {
+      logger.error("[OpenAI] Fallback retornou JSON inválido", {
+        fileType,
+        message: parseError instanceof Error ? parseError.message : parseError,
+        originalError: primaryError instanceof Error ? primaryError.message : primaryError
+      });
+      throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
+    }
     if (!fallbackData.healthMetrics || !Array.isArray(fallbackData.healthMetrics) || fallbackData.healthMetrics.length === 0) {
       logger.error("[OpenAI] Fallback retornou métricas inválidas", {
         fileType,
@@ -895,7 +990,7 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.2,
-        max_tokens: 1500
+        max_tokens: OPENAI_MAX_OUTPUT_TOKENS
       });
       
       const content = response.choices[0].message.content;
