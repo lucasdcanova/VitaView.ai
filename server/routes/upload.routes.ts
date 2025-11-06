@@ -30,7 +30,12 @@ router.post(
         }
       });
     } catch (error) {
-      logger.error("Erro na rota de upload:", error);
+      logger.error("[Upload] Falha ao finalizar upload sensível", {
+        userId: (req as any)?.user?.id,
+        fileType: req.body?.fileType,
+        s3Key: req.body?.s3Key,
+        error
+      });
       res.status(500).json({ error: "Erro ao processar upload" });
     }
   }
@@ -56,7 +61,11 @@ router.get(
         expiresIn: expiresIn,
       });
     } catch (error) {
-      logger.error("Erro ao gerar URL assinada:", error);
+      logger.error("[Upload] Falha ao gerar URL assinada", {
+        userId: (req as any)?.user?.id,
+        key: req.params?.key,
+        error
+      });
       res.status(500).json({ error: "Erro ao acessar arquivo" });
     }
   }
@@ -80,7 +89,11 @@ router.delete(
         message: "Arquivo deletado com sucesso",
       });
     } catch (error) {
-      logger.error("Erro ao deletar arquivo:", error);
+      logger.error("[Upload] Falha ao deletar arquivo sensível", {
+        userId: (req as any)?.user?.id,
+        key: req.params?.key,
+        error
+      });
       res.status(500).json({ error: "Erro ao deletar arquivo" });
     }
   }
@@ -94,6 +107,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (!req.file) {
+        logger.warn("[Upload] Upload local sem arquivo", {
+          userId: (req as any)?.user?.id
+        });
         return res.status(400).json({ error: "Nenhum arquivo enviado" });
       }
       
@@ -108,7 +124,11 @@ router.post(
         }
       });
     } catch (error) {
-      logger.error("Erro no upload local:", error);
+      logger.error("[Upload] Falha ao processar upload local", {
+        userId: (req as any)?.user?.id,
+        fileName: req.file?.originalname,
+        error
+      });
       res.status(500).json({ error: "Erro ao processar upload" });
     }
   }

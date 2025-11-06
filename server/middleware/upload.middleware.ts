@@ -83,10 +83,18 @@ export const uploadAnalysis = multer({
 export const processS3Upload = async (req: Request, res: any, next: any) => {
   try {
     if (!req.file) {
+      logger.warn("[Upload] Upload sensível sem arquivo", {
+        userId: req.user?.id,
+        fileType: req.body?.fileType
+      });
       return res.status(400).json({ error: "Nenhum arquivo enviado" });
     }
 
     if (!req.user?.id) {
+      logger.warn("[Upload] Upload sensível sem usuário autenticado", {
+        hasFile: Boolean(req.file),
+        fileType: req.body?.fileType
+      });
       return res.status(401).json({ error: "Usuário não autenticado" });
     }
 
@@ -94,6 +102,10 @@ export const processS3Upload = async (req: Request, res: any, next: any) => {
     
     // Verificar se é um arquivo sensível
     if (!S3Service.isSensitiveFile(fileType)) {
+      logger.warn("[Upload] Upload marcado como sensível para tipo inválido", {
+        userId: req.user?.id,
+        fileType
+      });
       return res.status(400).json({ error: "Este tipo de arquivo não requer armazenamento seguro" });
     }
 

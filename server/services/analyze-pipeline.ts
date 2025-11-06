@@ -14,6 +14,7 @@
 import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './openai';
 import { storage } from '../storage';
 import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
+import logger from '../logger';
 
 export interface AnalysisOptions {
   userId: number;
@@ -153,8 +154,23 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         savedMetricsCount++;
       } catch (error) {
         failedMetricsCount++;
-        console.error(`[Pipeline] Erro ao salvar métrica ${metric.name}:`, error);
+        logger.error("[Pipeline] Erro ao salvar métrica individual", {
+          examId: exam.id,
+          userId: options.userId,
+          profileId: options.profileId,
+          metricName: metric.name,
+          error
+        });
       }
+    }
+    
+    if (failedMetricsCount > 0) {
+      logger.warn("[Pipeline] Métricas não salvas", {
+        examId: exam.id,
+        userId: options.userId,
+        profileId: options.profileId,
+        failedMetricsCount
+      });
     }
     
     // ETAPA 4: ANÁLISE DETALHADA (OPENAI)
@@ -200,7 +216,13 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       };
       
     } catch (analysisError) {
-      console.error(`[Pipeline] Erro na análise com OpenAI:`, analysisError);
+      logger.error("[Pipeline] Erro na etapa de análise detalhada", {
+        examId: exam.id,
+        userId: options.userId,
+        profileId: options.profileId,
+        examStatus: exam.status,
+        error: analysisError
+      });
       
       // Atualizar status para indicar apenas extração
       await storage.updateExam(exam.id, { status: "extraction_only" });
@@ -226,7 +248,13 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     }
     
   } catch (error) {
-    console.error(`[Pipeline] Erro no pipeline de análise:`, error);
+    logger.error("[Pipeline] Falha geral na análise de exame", {
+      userId: options.userId,
+      profileId: options.profileId,
+      examName: options.name,
+      fileType: options.fileType,
+      error
+    });
     throw error;
   }
 }

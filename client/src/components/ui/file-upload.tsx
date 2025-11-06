@@ -38,6 +38,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         formData.append("profileId", String(data.profileId));
       }
 
+      console.info("[UploadFlow][Client] Iniciando análise do documento", {
+        fileName: data.file.name,
+        fileType: data.fileType,
+        profileId: data.profileId
+      });
       const response = await fetch("/api/analyze/openai", {
         method: "POST",
         body: formData,
@@ -54,6 +59,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       }
       
       const resultData = await response.json();
+      console.info("[UploadFlow][Client] Análise de documento concluída", {
+        summary: resultData?.summary,
+        metrics: Array.isArray(resultData?.healthMetrics) ? resultData.healthMetrics.length : 0,
+        examDate: resultData?.examDate
+      });
       return resultData;
     },
     onSuccess: (data) => {
@@ -104,6 +114,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const interpretWithOpenAIMutation = useMutation({
     mutationFn: async (data: { analysisResult: any, patientData: any }) => {
       
+      console.info("[UploadFlow][Client] Iniciando interpretação do exame", {
+        hasAnalysisResult: Boolean(data.analysisResult),
+        patientData: data.patientData
+      });
       const response = await fetch("/api/analyze/interpretation", {
         method: "POST",
         headers: {
@@ -123,6 +137,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       }
       
       const interpretationData = await response.json();
+      console.info("[UploadFlow][Client] Interpretação concluída", {
+        diagnoses: interpretationData?.possibleDiagnoses?.length ?? 0,
+        recommendations: interpretationData?.recommendations?.length ?? 0
+      });
       return interpretationData;
     },
     onSuccess: (openaiInterpretation) => {
@@ -283,6 +301,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         };
         
         // Criar o exame no banco de dados
+        console.info("[UploadFlow][Client] Salvando exame no backend", {
+          examName: examData.name,
+          profileId,
+          userId: examData.userId
+        });
         const examResponse = await fetch("/api/exams", {
           method: "POST",
           headers: {
@@ -295,10 +318,19 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         
         if (!examResponse.ok) {
           const errorText = await examResponse.text();
+          console.error("[UploadFlow][Client] Falha na criação do exame", {
+            status: examResponse.status,
+            statusText: examResponse.statusText,
+            error: errorText
+          });
           throw new Error(`Erro ao salvar exame: ${errorText}`);
         }
         
         const savedExam = await examResponse.json();
+        console.info("[UploadFlow][Client] Exame salvo", {
+          examId: savedExam?.id,
+          status: savedExam?.status
+        });
         
         // Salvar o resultado da análise
         if (savedExam && savedExam.id) {
@@ -319,6 +351,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             aiProvider: "openai"
           };
           
+          console.info("[UploadFlow][Client] Registrando resultado de exame", {
+            examId: savedExam.id,
+            hasRecommendations: Boolean(resultData.recommendations),
+            metrics: resultData.healthMetrics.length
+          });
           const resultResponse = await fetch("/api/exam-results", {
             method: "POST",
             headers: {
@@ -331,11 +368,19 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           
           if (!resultResponse.ok) {
             const errorText = await resultResponse.text();
+            console.error("[UploadFlow][Client] Falha ao salvar resultado do exame", {
+              examId: savedExam.id,
+              error: errorText
+            });
             
             // Mesmo com erro na criação do resultado, continuamos (não interrompemos)
             // - isso garante que ao menos o exame seja registrado
           } else {
             const savedResult = await resultResponse.json();
+            console.info("[UploadFlow][Client] Resultado do exame salvo", {
+              resultId: savedResult?.id,
+              examId: savedExam.id
+            });
           }
           
           // Salvar métricas de saúde individuais, se disponíveis
@@ -376,6 +421,10 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   date: examData.examDate || new Date().toISOString() // Usar mesma data do exame
                 };
                 
+                console.info("[UploadFlow][Client] Salvando métrica individual", {
+                  name: metricData.name,
+                  examId: savedExam.id
+                });
                 const metricResponse = await fetch("/api/health-metrics", {
                   method: "POST",
                   headers: {
@@ -387,10 +436,24 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 
                 if (!metricResponse.ok) {
                   const errorText = await metricResponse.text();
+                  console.error("[UploadFlow][Client] Falha ao salvar métrica individual", {
+                    name: metricData.name,
+                    examId: savedExam.id,
+                    error: errorText
+                  });
                 } else {
                   const savedMetric = await metricResponse.json();
+                  console.debug("[UploadFlow][Client] Métrica salva", {
+                    id: savedMetric?.id,
+                    name: metricData.name
+                  });
                 }
               } catch (metricError) {
+                console.error("[UploadFlow][Client] Erro inesperado ao salvar métrica", {
+                  name: metric?.name,
+                  examId: savedExam.id,
+                  error: metricError
+                });
               }
             }
           }
@@ -420,6 +483,20 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       return;
     }
     
+    const file = acceptedFiles[0];
+    if (!file) {
+      console.error("[UploadFlow][Client] Nenhum arquivo recebido do drop");
+      return;
+    }
+
+    console.info("[UploadFlow][Client] Iniciando upload de arquivo", {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      profileId: activeProfile.id,
+      userId: user?.id
+    });
+
     // Iniciar upload
     setUploadStep('uploading');
     setUploadProgress(0);
@@ -440,7 +517,6 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       clearInterval(progressInterval);
       setUploadStep('analyzing');
       
-      const file = acceptedFiles[0];
       if (!file) {
         console.error("[UploadFlow][Client] Nenhum arquivo disponível após drop");
         setUploadStep('error');
@@ -476,6 +552,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         setUploadStep('error');
         return;
       }
+
+      console.info("[UploadFlow][Client] Enviando arquivo para análise", {
+        fileName: file.name,
+        fileType
+      });
 
       analyzeDocumentMutation.mutate({
         file,
