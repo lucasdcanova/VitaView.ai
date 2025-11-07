@@ -165,8 +165,16 @@ export class AdvancedSessionSecurity {
       if (req.body) {
         req.body = this.deepSanitize(req.body);
         
-        // Validate medical data fields
-        if (this.containsMedicalData(req.body)) {
+        // Pular validação estrita em rotas controladas pelo sistema
+        const skipMedicalValidationPaths = [
+          '/api/analyze/openai',
+          '/api/analyze/interpretation'
+        ];
+        const shouldValidateMedicalData = !skipMedicalValidationPaths.some(path =>
+          req.path.startsWith(path)
+        );
+
+        if (shouldValidateMedicalData && this.containsMedicalData(req.body)) {
           const validationResult = this.validateMedicalData(req.body);
           if (!validationResult.valid) {
             this.auditLog('INVALID_MEDICAL_DATA', req.user?.id, req, {
