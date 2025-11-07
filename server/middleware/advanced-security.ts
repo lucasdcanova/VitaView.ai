@@ -195,7 +195,13 @@ export class AdvancedSessionSecurity {
 
       // Check for suspicious patterns (menos restritivo em desenvolvimento)
       const isDevelopment = process.env.NODE_ENV === 'development';
-      if (!isDevelopment && this.detectSuspiciousPatterns(req)) {
+      const skipSuspiciousPaths = [
+        '/api/analyze/openai',
+        '/api/analyze/interpretation'
+      ];
+      const shouldCheckSuspicious = !skipSuspiciousPaths.some(path => req.path.startsWith(path));
+
+      if (!isDevelopment && shouldCheckSuspicious && this.detectSuspiciousPatterns(req)) {
         this.auditLog('SUSPICIOUS_PATTERN_DETECTED', req.user?.id, req);
         return res.status(400).json({
           error: 'Suspicious request pattern detected',
