@@ -535,8 +535,11 @@ export class AdvancedSessionSecurity {
         errors.push('healthMetrics must be an array');
       } else {
         data.healthMetrics.forEach((metric: any, index: number) => {
-          if (!metric.name || !metric.value || !metric.unit) {
-            errors.push(`healthMetrics[${index}] missing required fields`);
+          const hasName = typeof metric?.name === 'string' && metric.name.trim().length > 0;
+          const hasValue = metric?.value !== undefined && metric?.value !== null && `${metric.value}`.trim().length > 0;
+          
+          if (!hasName || !hasValue) {
+            errors.push(`healthMetrics[${index}] missing required fields (name/value)`);
           }
         });
       }
