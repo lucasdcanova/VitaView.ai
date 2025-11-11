@@ -34,6 +34,16 @@ export class AdvancedSessionSecurity {
   private activeSessions = new Map<string, SessionData>();
   private failedAttempts = new Map<string, FailedAttemptData>();
   private suspiciousActivity = new Map<string, SuspiciousActivityData>();
+  private readonly largeTextFields = new Set([
+    'originalContent',
+    'summary',
+    'detailedAnalysis',
+    'recommendations',
+    'notes',
+    'rawText',
+    'aiContext',
+    'aiResponse'
+  ]);
 
   constructor() {
     // Clean up expired sessions every 5 minutes
@@ -575,17 +585,47 @@ export class AdvancedSessionSecurity {
       /\.\.[\/\\]/g,
       // Command injection
       /(?:;|\|\||&&)\s*(?:cat|ls|whoami|pwd|netstat|ps)\b|[`$]\(|\${/gi,
-      // LDAP injection
-      /[()&|!*]/g
+      // LDAP injection (mais específico para evitar falsos positivos)
+      /\(\s*(?:&|\||!)\s*[a-z0-9_\-]+\s*=\s*[^)]*\)/i,
+      /[a-z0-9_\-]+\s*=\s*\*\)/i
     ];
     
     const requestContent = JSON.stringify({
       url: req.url,
-      body: req.body,
-      query: req.query
+      body: this.stripLargeTextFields(req.body),
+      query: this.stripLargeTextFields(req.query)
     });
     
     return suspiciousPatterns.some(pattern => pattern.test(requestContent));
+  }
+
+  private stripLargeTextFields(payload: any, depth = 0): any {
+    if (payload === null || payload === undefined) {
+      return payload;
+    }
+    
+    if (typeof payload !== 'object') {
+      return payload;
+    }
+
+    if (depth > 4) {
+      return '[truncated]';
+    }
+    
+    if (Array.isArray(payload)) {
+      return payload.map(item => this.stripLargeTextFields(item, depth + 1));
+    }
+    
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(payload)) {
+      if (this.largeTextFields.has(key)) {
+        sanitized[key] = '[omitted]';
+      } else {
+        sanitized[key] = this.stripLargeTextFields(value, depth + 1);
+      }
+    }
+    
+    return sanitized;
   }
 
   private calculateLogSeverity(action: string): LogSeverity {
