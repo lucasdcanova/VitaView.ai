@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
-import { useAuth } from "@/hooks/use-auth";
 import PatientHeader from "@/components/patient-header";
 import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -84,13 +83,6 @@ export default function ExamHistory() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  const { user } = useAuth();
-  const clinicianName = user?.fullName || user?.username || "Profissional";
-  const normalizedGender = user?.gender?.toLowerCase();
-  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
-    ? "Dra."
-    : "Dr.";
-  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
   
   // Mutation para excluir um exame
   const deleteMutation = useMutation({
@@ -171,9 +163,7 @@ export default function ExamHistory() {
               <PatientHeader
                 title="Histórico de exames"
                 description="Selecione ou cadastre um paciente para acessar a linha do tempo de exames."
-                clinicianLabel={clinicianLabel}
-                patientName={activeProfile?.name}
-                planType={activeProfile?.planType}
+                patient={activeProfile}
               />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
@@ -368,6 +358,47 @@ export default function ExamHistory() {
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
   };
 
+  const sanitizeFileName = (value?: string | null) => {
+    if (!value) return "";
+    return value.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  };
+
+  const titleCase = (value: string) =>
+    value
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+  const guessTitleFromKeywords = (value: string) => {
+    const lower = value.toLowerCase();
+    if (/(glic|hba1c|diab)/.test(lower)) return "Controle de glicemia";
+    if (/(pré|pre).*(operat)/.test(lower)) return "Avaliação pré-operatória";
+    if (/(lipid|colesterol|hdl|ldl|triglicer)/.test(lower)) return "Perfil lipídico";
+    if (/(hemograma|hemoglobina|hemat|eritro|leuco)/.test(lower)) return "Painel hematológico";
+    if (/(tireoide|tsh|t4|t3)/.test(lower)) return "Avaliação tireoidiana";
+    if (/(vitamina)/.test(lower)) return "Painel vitamínico";
+    return null;
+  };
+
+  const getExamDisplayName = (exam: Exam) => {
+    const existingName = exam.name?.trim();
+    const looksLikeFileName = existingName ? /\.[a-z0-9]{2,4}$/i.test(existingName) : false;
+    if (existingName && !looksLikeFileName) return existingName;
+
+    const cleaned = sanitizeFileName(existingName || "");
+    const keywordTitle = guessTitleFromKeywords(cleaned);
+
+    if (keywordTitle) return keywordTitle;
+    if (cleaned.length >= 3) return titleCase(cleaned);
+
+    if (exam.laboratoryName && exam.examDate) {
+      return `${exam.laboratoryName} • ${formatDate(exam.examDate)}`;
+    }
+
+    return `Exame #${exam.id}`;
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'analyzed':
@@ -392,60 +423,68 @@ export default function ExamHistory() {
   };
 
   // Exam card component for grid view
-  const ExamCard = ({ exam }: { exam: Exam }) => (
-    <Card className="h-full transition-all duration-200 hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-md ${getExamTypeColor(exam.fileType)}`}>
-              {getFileIcon(exam.fileType, 18)}
+  const ExamCard = ({ exam }: { exam: Exam }) => {
+    const displayName = getExamDisplayName(exam);
+    const subtitle =
+      exam.laboratoryName ||
+      (exam.examDate ? `Realizado em ${formatDate(exam.examDate)}` : "Origem não informada");
+
+    return (
+      <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-md">
+        <CardHeader className="pb-3 border-b border-gray-100">
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className={`p-2 rounded-md flex-shrink-0 ${getExamTypeColor(exam.fileType)}`}>
+                {getFileIcon(exam.fileType, 18)}
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-sm font-semibold text-gray-900 truncate">
+                  {displayName}
+                </CardTitle>
+                <CardDescription className="text-xs text-gray-500 truncate">{subtitle}</CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-base font-medium line-clamp-1">{exam.name}</CardTitle>
-              <CardDescription className="text-xs">{exam.laboratoryName || "Laboratório não informado"}</CardDescription>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex-shrink-0">{getStatusBadge(exam.status)}</div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {exam.status === 'analyzed' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/diagnosis/${exam.id}`} className="cursor-pointer">
+                          <FileBarChart className="mr-2 h-4 w-4" />
+                          Ver diagnóstico
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/report/${exam.id}`} className="cursor-pointer">
+                          <Activity className="mr-2 h-4 w-4" />
+                          Ver análise detalhada
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    onClick={() => handleDeleteClick(exam)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir exame
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            {getStatusBadge(exam.status)}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {exam.status === 'analyzed' && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/diagnosis/${exam.id}`} className="cursor-pointer">
-                        <FileBarChart className="mr-2 h-4 w-4" />
-                        Ver diagnóstico
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/report/${exam.id}`} className="cursor-pointer">
-                        <Activity className="mr-2 h-4 w-4" />
-                        Ver análise detalhada
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                  onClick={() => handleDeleteClick(exam)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir exame
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-2">
+        </CardHeader>
+      <CardContent className="flex-1 pb-2">
         <div className="grid grid-cols-1 gap-3 text-sm">
           <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
             <div className="flex items-center text-gray-700">
@@ -482,11 +521,11 @@ export default function ExamHistory() {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-3 flex justify-between items-center border-t border-gray-100">
+      <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-gray-100">
         <div className="text-xs text-gray-500">
           Enviado {formatRelativeDate(exam.uploadDate.toString())}
         </div>
-        <div className="space-x-2">
+        <div className="flex flex-wrap gap-2">
           {exam.status === 'analyzed' ? (
             <div className="inline-flex gap-2">
               <Link href={`/diagnosis/${exam.id}`}>
@@ -512,6 +551,7 @@ export default function ExamHistory() {
       </CardFooter>
     </Card>
   );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -525,9 +565,7 @@ export default function ExamHistory() {
             <PatientHeader
               title="Histórico de exames"
               description="Visualize, analise e gerencie os exames do paciente selecionado."
-              clinicianLabel={clinicianLabel}
-              patientName={activeProfile.name}
-              planType={activeProfile.planType}
+              patient={activeProfile}
             />
             <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
               <Link href="/upload-exams">

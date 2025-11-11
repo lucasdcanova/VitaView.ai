@@ -107,10 +107,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // ALWAYS serve the app on port 3000 (changed from 5000 due to macOS AirPlay conflict)
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = process.env.PORT || 5000;
+  const port = process.env.PORT || 3000;
   server.listen(port, () => {
     logInfo(`Server started on port ${port}`);
     log(`serving on port ${port}`);

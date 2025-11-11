@@ -37,11 +37,10 @@ import {
   User,
   Image
 } from "lucide-react";
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useProfiles } from "@/hooks/use-profiles";
-import { useAuth } from "@/hooks/use-auth";
 import PatientHeader from "@/components/patient-header";
 
 // Memoized components for better performance
@@ -53,13 +52,6 @@ const MemoizedHealthRecommendations = memo(HealthRecommendations);
 export default function Dashboard() {
   const [activeMetricsTab, setActiveMetricsTab] = useState("all");
   const { profiles, activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  const { user } = useAuth();
-  const clinicianName = user?.fullName || user?.username || "Profissional";
-  const normalizedGender = user?.gender?.toLowerCase();
-  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
-    ? "Dra."
-    : "Dr.";
-  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
 
   const { data: exams, isLoading: isLoadingExams } = useQuery<Exam[]>({
     queryKey: ["/api/exams", activeProfile?.id],
@@ -104,6 +96,34 @@ export default function Dashboard() {
       })
       .slice(0, 3);
   }, [exams]);
+
+  const latestExamDate = useMemo(() => {
+    if (!exams || exams.length === 0) return null;
+
+    const getTimestamp = (value?: string | null) => {
+      if (!value) return 0;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    };
+
+    const latestExam = exams.reduce<Exam | null>((currentLatest, exam) => {
+      if (!currentLatest) return exam;
+      const examTime = getTimestamp(exam.examDate || exam.uploadDate);
+      const latestTime = getTimestamp(currentLatest.examDate || currentLatest.uploadDate);
+      return examTime > latestTime ? exam : currentLatest;
+    }, null);
+
+    return latestExam?.examDate || latestExam?.uploadDate || null;
+  }, [exams]);
+
+  const lastMetricsUpdateLabel = useMemo(() => {
+    if (!latestExamDate) return null;
+    try {
+      return format(new Date(latestExamDate), "dd MMM 'às' HH:mm", { locale: ptBR });
+    } catch (error) {
+      return null;
+    }
+  }, [latestExamDate]);
   
   // Memoized chart data processing
   const chartData = useMemo(() => {
@@ -377,6 +397,10 @@ export default function Dashboard() {
     
     return metricMap;
   }, [metrics]);
+
+  const spotlightMetrics = useMemo(() => {
+    return Object.values(processedMetrics).slice(0, 4);
+  }, [processedMetrics]);
   
   // Memoized helper function to get metric by various name variations
   const getMetricByName = useCallback((names: string[]) => {
@@ -386,6 +410,7 @@ export default function Dashboard() {
     }
     return null;
   }, [processedMetrics]);
+
   
   if (isLoadingProfiles) {
     return (
@@ -409,9 +434,8 @@ export default function Dashboard() {
               <PatientHeader
                 title="Painel clínico"
                 description="Selecione ou cadastre um paciente para visualizar indicadores e exames."
-                clinicianLabel={clinicianLabel}
-                patientName={activeProfile?.name}
-                planType={activeProfile?.planType}
+                patient={activeProfile}
+                lastExamDate={latestExamDate}
               />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
@@ -438,9 +462,8 @@ export default function Dashboard() {
             <PatientHeader
               title="Painel clínico"
               description="Acompanhe os indicadores e análises do paciente selecionado."
-              clinicianLabel={clinicianLabel}
-              patientName={activeProfile.name}
-              planType={activeProfile.planType}
+              patient={activeProfile}
+              lastExamDate={latestExamDate}
             />
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <Link href="/upload-exams">
@@ -451,415 +474,26 @@ export default function Dashboard() {
               </Link>
             </div>
             
-            {/* Health Score & Overview Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {/* Health Score Card */}
-              <Card className="md:col-span-1 relative overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <Heart className="mr-2 h-5 w-5 text-primary" />
-                    Índice de Saúde
-                  </CardTitle>
-                  <CardDescription>Baseado nos seus últimos exames</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingMetrics ? (
-                    <div className="flex flex-col items-center justify-center py-4">
-                      <Skeleton className="h-32 w-32 rounded-full mb-4" />
-                      <Skeleton className="h-5 w-32 mb-2" />
-                    </div>
-                  ) : metrics && metrics.length > 0 && healthStats.averageScore !== null ? (
-                    <div className="flex flex-col items-center">
-                      <div className="relative mb-4">
-                        <div className="w-32 h-32 rounded-full flex items-center justify-center border-8 border-gray-100">
-                          <div 
-                            className={`w-24 h-24 rounded-full flex items-center justify-center ${
-                              healthStats.averageScore >= 80 ? 'bg-green-50 text-green-700' : 
-                              healthStats.averageScore >= 60 ? 'bg-yellow-50 text-yellow-700' : 
-                              'bg-red-50 text-red-700'
-                            }`}
-                          >
-                            <span className="text-4xl font-bold">{healthStats.averageScore}</span>
-                          </div>
-                        </div>
-                        {healthStats.trend && (
-                          <div className={`absolute -top-1 -right-1 rounded-full p-1.5 ${
-                            healthStats.trend === 'improving' ? 'bg-green-100 text-green-700' :
-                            healthStats.trend === 'declining' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {healthStats.trend === 'improving' ? (
-                              <TrendingUp className="h-5 w-5" />
-                            ) : healthStats.trend === 'declining' ? (
-                              <TrendingUp className="h-5 w-5 transform rotate-180" />
-                            ) : (
-                              <Activity className="h-5 w-5" />
-                            )}
-                          </div>
-                        )}
+            {/* Visão prioritária de métricas */}
+                <Card className="mb-6 border border-primary-100 bg-gradient-to-br from-white via-white to-primary-50/40 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-lg flex items-center">
+                          <BarChart className="mr-2 h-5 w-5 text-primary" />
+                          Monitoramento prioritário
+                        </CardTitle>
+                        <CardDescription>Indicadores mais relevantes do paciente</CardDescription>
                       </div>
-                      <div className="text-center mb-3">
-                        <p className="font-medium text-gray-800">
-                          {healthStats.averageScore >= 80 ? 'Excelente' : 
-                           healthStats.averageScore >= 70 ? 'Muito Bom' :
-                           healthStats.averageScore >= 60 ? 'Bom' :
-                           healthStats.averageScore >= 50 ? 'Regular' : 'Requer Atenção'}
-                        </p>
-                        {healthStats.trend && (
-                          <p className="text-sm text-gray-500">
-                            {healthStats.trend === 'improving' ? 'Em melhora' : 
-                             healthStats.trend === 'declining' ? 'Em declínio' : 'Estável'}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="w-full bg-gray-100 h-1 mb-4 rounded-full">
-                        <div className={`h-1 rounded-full ${
-                          healthStats.averageScore >= 80 ? 'bg-green-500' : 
-                          healthStats.averageScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} style={{ width: `${healthStats.averageScore}%` }}></div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 w-full text-center text-xs gap-1">
-                        <div className="bg-red-50 text-red-800 p-1 rounded-l-md">0-50</div>
-                        <div className="bg-yellow-50 text-yellow-800 p-1">51-79</div>
-                        <div className="bg-green-50 text-green-800 p-1 rounded-r-md">80-100</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-6 text-center">
-                      <AlertCircle className="h-10 w-10 text-gray-300 mb-2" />
-                      <p className="text-gray-500 mb-1">Sem dados suficientes</p>
-                      <p className="text-xs text-gray-400 mb-3">Faça upload de exames para visualizar seu índice de saúde</p>
-                      <Link href="/upload-exams">
-                        <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs">
-                          <FileUp className="h-3 w-3" />
-                          Enviar Exame
-                        </Button>
-                      </Link>
-                      <Link href="/upload-exams">
-                        <Button variant="outline" size="sm">Enviar primeiro exame</Button>
-                      </Link>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Health Metrics Charts */}
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center">
-                      <Activity className="mr-2 h-5 w-5 text-primary" />
-                      Tendências de Saúde
-                    </CardTitle>
-                    <Tabs value={activeMetricsTab} onValueChange={setActiveMetricsTab} className="w-auto">
-                      <TabsList className="h-8">
-                        <TabsTrigger value="all" className="text-xs h-7 px-2">Índice Geral</TabsTrigger>
-                        <TabsTrigger value="cholesterol" className="text-xs h-7 px-2">Colesterol</TabsTrigger>
-                        <TabsTrigger value="glucose" className="text-xs h-7 px-2">Glicemia</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                  <CardDescription>Evolução histórica dos seus indicadores</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[220px]">
-                  {isLoadingMetrics ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Skeleton className="h-full w-full rounded-md" />
-                    </div>
-                  ) : chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      {activeMetricsTab === 'all' ? (
-                        <LineChart
-                          data={chartData}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis 
-                            dataKey="month" 
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <YAxis 
-                            domain={[0, 100]} 
-                            axisLine={false}
-                            tickLine={false}
-                            tickCount={5}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <Tooltip 
-                            formatter={(value) => [`${value}`, 'Índice de Saúde']}
-                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="healthScore" 
-                            stroke="#3b82f6" 
-                            strokeWidth={2} 
-                            activeDot={{ r: 6 }} 
-                            dot={{ r: 4, fill: '#3b82f6' }}
-                          />
-                        </LineChart>
-                      ) : activeMetricsTab === 'cholesterol' ? (
-                        <LineChart
-                          data={chartData}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis 
-                            dataKey="month" 
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <YAxis 
-                            domain={[0, 300]} 
-                            axisLine={false}
-                            tickLine={false}
-                            tickCount={5}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <Tooltip 
-                            formatter={(value) => [`${value} mg/dL`, 'Colesterol']}
-                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="cholesterol" 
-                            stroke="#f59e0b" 
-                            strokeWidth={2} 
-                            activeDot={{ r: 6 }} 
-                            dot={{ r: 4, fill: '#f59e0b' }}
-                          />
-                        </LineChart>
-                      ) : (
-                        <LineChart
-                          data={chartData}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis 
-                            dataKey="month" 
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <YAxis 
-                            domain={[0, 200]} 
-                            axisLine={false}
-                            tickLine={false}
-                            tickCount={5}
-                            tickMargin={10}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <Tooltip 
-                            formatter={(value) => [`${value} mg/dL`, 'Glicemia']}
-                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="glucose" 
-                            stroke="#10b981" 
-                            strokeWidth={2} 
-                            activeDot={{ r: 6 }} 
-                            dot={{ r: 4, fill: '#10b981' }}
-                          />
-                        </LineChart>
+                      {lastMetricsUpdateLabel && (
+                        <Badge variant="outline" className="text-xs text-primary-700 border-primary-200 bg-white">
+                          Atualizado em {lastMetricsUpdateLabel}
+                        </Badge>
                       )}
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-center">
-                      <LineChartIcon className="h-10 w-10 text-gray-300 mb-2" />
-                      <p className="text-gray-500 mb-1">Sem dados históricos suficientes</p>
-                      <p className="text-xs text-gray-400">Envie mais exames para visualizar tendências</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Recent Exams and Health Insights */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg flex items-center">
-                        <FileMedical className="mr-2 h-5 w-5 text-primary" />
-                        Exames Recentes
-                      </CardTitle>
-                      <Link href="/history">
-                        <Button variant="ghost" size="sm" className="gap-1 text-xs h-8">
-                          Ver todos
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-                    </div>
-                    <CardDescription>Seus últimos exames analisados</CardDescription>
                   </CardHeader>
                   
-                  <CardContent>
-                    {isLoadingExams ? (
-                      <div className="space-y-4">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="flex items-start p-3 rounded-lg border border-gray-100">
-                            <Skeleton className="h-10 w-10 rounded-md mr-4" />
-                            <div className="flex-1">
-                              <Skeleton className="h-5 w-40 mb-2" />
-                              <div className="flex flex-wrap gap-2">
-                                <Skeleton className="h-4 w-20" />
-                                <Skeleton className="h-4 w-24" />
-                                <Skeleton className="h-4 w-16" />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : recentExams.length > 0 ? (
-                      <div className="space-y-3">
-                        {recentExams.map(exam => (
-                          <div key={exam.id} className="flex flex-col sm:flex-row sm:items-center p-3 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition-colors">
-                            <div className="flex items-start flex-1 mb-3 sm:mb-0">
-                              <div className={`p-2 rounded-md mr-3 ${getExamTypeColor(exam.fileType)}`}>
-                                {getFileIcon(exam.fileType, 20)}
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900 mb-1">{exam.name}</h4>
-                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                                  <div className="flex items-center text-gray-500">
-                                    <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
-                                    {exam.examDate ? formatDate(exam.examDate) : formatDate(exam.uploadDate.toString())}
-                                  </div>
-                                  
-                                  {exam.requestingPhysician && (
-                                    <div className="flex items-center text-gray-500">
-                                      <User className="h-3.5 w-3.5 mr-1 opacity-70" />
-                                      {exam.requestingPhysician}
-                                    </div>
-                                  )}
-                                  
-                                  <div className="flex items-center text-gray-500">
-                                    <Microscope className="h-3.5 w-3.5 mr-1 opacity-70" />
-                                    {exam.laboratoryName || "Lab não informado"}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium">
-                                <Activity className="w-3 h-3 mr-1" /> Analisado
-                              </Badge>
-                              <div className="flex gap-2">
-                                <Link href={`/diagnosis/${exam.id}`}>
-                                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                                    <FileBarChart className="h-3.5 w-3.5" />
-                                    Diagnóstico
-                                  </Button>
-                                </Link>
-                                <Link href={`/report/${exam.id}`}>
-                                  <Button size="sm" className="h-7 text-xs gap-1">
-                                    <Activity className="h-3.5 w-3.5" />
-                                    Detalhes
-                                  </Button>
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-8 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                          <FileMedical className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum exame encontrado</h3>
-                        <p className="text-gray-500 mb-4 max-w-md mx-auto">
-                          Você ainda não tem exames analisados. Faça upload do seu primeiro exame para receber análises detalhadas.
-                        </p>
-                        <Link href="/upload-exams">
-                          <Button className="gap-1">
-                            <FileUp className="h-4 w-4" />
-                            Enviar Exame
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                
-                {/* Recommendations Card */}
-                {metrics && metrics.length > 0 && (
-                  <Card className="mt-6">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center">
-                        <Clipboard className="mr-2 h-5 w-5 text-primary" />
-                        Recomendações Personalizadas
-                      </CardTitle>
-                      <CardDescription>Baseadas nos seus resultados recentes</CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-start p-3 rounded-lg border border-blue-100 bg-blue-50/30">
-                          <div className="p-2 bg-blue-100 rounded-md text-blue-700 mr-3">
-                            <Activity className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Acompanhamento de Colesterol</h4>
-                            <p className="text-gray-600 text-sm">Considere consultar um cardiologista para avaliar seus níveis de colesterol. Recomendamos uma dieta rica em fibras e baixa em gorduras saturadas.</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start p-3 rounded-lg border border-amber-100 bg-amber-50/30">
-                          <div className="p-2 bg-amber-100 rounded-md text-amber-700 mr-3">
-                            <FileBarChart className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Monitoramento de Glicemia</h4>
-                            <p className="text-gray-600 text-sm">Seus níveis de glicose estão ligeiramente elevados. Recomendamos reduzir o consumo de açúcares simples e aumentar a atividade física regular.</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
-                          <div className="p-2 bg-emerald-100 rounded-md text-emerald-700 mr-3">
-                            <Heart className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Saúde Preventiva</h4>
-                            <p className="text-gray-600 text-sm">Mantenha o acompanhamento trimestral de seus exames para monitorar a eficácia das mudanças no estilo de vida e ajustar conforme necessário.</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 text-center">
-                        <Link href="/upload-exams">
-                          <Button variant="outline" size="sm">Enviar novo exame para mais recomendações</Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-              
-              <div className="lg:col-span-1">
-                {/* Health Metrics Overview */}
-                <Card className="mb-6">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center">
-                      <BarChart className="mr-2 h-5 w-5 text-primary" />
-                      Métricas de Saúde
-                    </CardTitle>
-                    <CardDescription>Visão geral dos seus indicadores</CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
+                  <CardContent className="pt-0">
                     {isLoadingMetrics ? (
                       <div className="space-y-4">
                         {[...Array(4)].map((_, i) => (
@@ -875,7 +509,6 @@ export default function Dashboard() {
                       </div>
                     ) : Object.keys(processedMetrics).length > 0 ? (
                       <div>
-                        {console.log('📊 Processed metrics for display:', processedMetrics)}
                         {/* Render metrics dynamically */}
                         {Object.values(processedMetrics).slice(0, 4).map((metric, index) => {
                           const value = parseFloat(String(metric.value).replace(',', '.')) || 0;
@@ -894,19 +527,6 @@ export default function Dashboard() {
                             if (status === 'warning') return 'bg-amber-500';
                             if (status === 'alert') return 'bg-red-500';
                             return 'bg-green-500';
-                          };
-                          
-                          // Get max value for progress bar - use the actual max from reference range
-                          const getMaxValueFromRange = (referenceRange: { min: string, ref: string, max: string, hasRange?: boolean }) => {
-                            const maxStr = referenceRange.max;
-                            if (maxStr === 'máx') return 100; // fallback
-                            
-                            // Extract numeric value from max string
-                            const numericMatch = maxStr.match(/(\d+(?:\.\d+)?)/);
-                            if (numericMatch) {
-                              return parseFloat(numericMatch[1]);
-                            }
-                            return 100; // fallback
                           };
                           
                           // Get personalized reference ranges based on age and gender
@@ -1373,10 +993,10 @@ export default function Dashboard() {
                           };
                           
                           // Get user profile info for personalized references
-                          const activeProfile = profiles?.find(p => p.isDefault) || profiles?.[0];
-                          const userAge = activeProfile?.birthDate ? 
-                            new Date().getFullYear() - new Date(activeProfile.birthDate).getFullYear() : undefined;
-                          const userGender = activeProfile?.gender;
+                          const referenceProfile = profiles?.find(p => p.isDefault) || profiles?.[0];
+                          const userAge = referenceProfile?.birthDate ? 
+                            new Date().getFullYear() - new Date(referenceProfile.birthDate).getFullYear() : undefined;
+                          const userGender = referenceProfile?.gender;
                           
                           const referenceRange = getPersonalizedReferenceRange(metric.name, userAge, userGender);
                           
@@ -1407,11 +1027,20 @@ export default function Dashboard() {
                           const progressPercentage = calculateProgressPercentage(value, referenceRange);
                           
                           return (
-                            <div key={metric.id} className={`mb-4 ${index === 3 ? '' : 'mb-4'}`}>
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-sm font-medium">{metric.name}</span>
-                                <span className={`text-xs font-medium ${getStatusColor(healthStatus)}`}>
-                                  {metric.value} {metric.unit || ''}
+                            <div
+                              key={metric.id}
+                              className="mb-4 rounded-2xl border border-white bg-white/80 p-4 shadow-sm"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide text-gray-500">{metric.name}</p>
+                                  <div className="flex items-baseline gap-2 mt-1">
+                                    <span className="text-3xl font-semibold text-gray-900">{metric.value}</span>
+                                    {metric.unit && <span className="text-sm text-gray-500">{metric.unit}</span>}
+                                  </div>
+                                </div>
+                                <span className={`text-xs font-semibold ${getStatusColor(healthStatus)}`}>
+                                  {healthStatus === 'normal' ? 'Ideal' : healthStatus === 'warning' ? 'Atenção' : 'Crítico'}
                                 </span>
                               </div>
                               <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -1420,12 +1049,12 @@ export default function Dashboard() {
                                   style={{ width: `${progressPercentage}%` }}
                                 ></div>
                               </div>
-                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                              <div className="flex justify-between text-[11px] text-gray-500 mt-1">
                                 <span>{referenceRange.min}</span>
                                 {referenceRange.hasRange ? (
                                   <>
                                     <span className="font-medium text-gray-700">{referenceRange.ref}</span>
-                                    <span className="font-medium text-gray-700">{referenceRange.max}</span>
+                                    <span>{referenceRange.max}</span>
                                   </>
                                 ) : (
                                   <>
@@ -1434,24 +1063,19 @@ export default function Dashboard() {
                                   </>
                                 )}
                               </div>
+                              {metric.change && (
+                                <div className="mt-3 text-xs text-gray-500">
+                                  Variação recente: <span className="font-medium text-gray-700">{metric.change}</span>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                         
                         <div className="mt-6 text-center">
                           {(() => {
-                            console.log('🔍 DEBUG Relatório:', {
-                              recentMetrics: healthStats.recentMetrics,
-                              recentMetricsLength: healthStats.recentMetrics?.length,
-                              firstMetricExamId: healthStats.recentMetrics?.[0]?.examId,
-                              latestExams: recentExams,
-                              latestExamsLength: recentExams?.length,
-                              firstExamId: recentExams?.[0]?.id
-                            });
-                            
                             if (healthStats.recentMetrics && healthStats.recentMetrics.length > 0 && healthStats.recentMetrics[0].examId) {
                               const examId = healthStats.recentMetrics[0].examId;
-                              console.log(`📊 Usando examId da métrica: ${examId}`);
                               return (
                                 <Link href={`/report/${examId}`}>
                                   <Button variant="outline" size="sm" className="gap-1">
@@ -1462,7 +1086,6 @@ export default function Dashboard() {
                               );
                             } else if (recentExams && recentExams.length > 0) {
                               const examId = recentExams[0].id;
-                              console.log(`📋 Usando examId do exame: ${examId}`);
                               return (
                                 <Link href={`/report/${examId}`}>
                                   <Button variant="outline" size="sm" className="gap-1">
@@ -1471,15 +1094,13 @@ export default function Dashboard() {
                                   </Button>
                                 </Link>
                               );
-                            } else {
-                              console.log('❌ Nenhum dado disponível para relatório');
-                              return (
-                                <Button variant="outline" size="sm" className="gap-1" disabled>
-                                  <Activity className="h-4 w-4" />
-                                  Ver relatório completo
-                                </Button>
-                              );
                             }
+                            return (
+                              <Button variant="outline" size="sm" className="gap-1" disabled>
+                                <Activity className="h-4 w-4" />
+                                Ver relatório completo
+                              </Button>
+                            );
                           })()}
                         </div>
                       </div>
@@ -1498,6 +1119,404 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
                 
+            {/* Health Score & Overview Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
+              {/* Health Score Card */}
+              <Card className="relative overflow-hidden border border-dashed border-gray-200 shadow-none">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center text-gray-700">
+                    <Heart className="mr-2 h-5 w-5 text-primary" />
+                    Índice de Saúde
+                  </CardTitle>
+                  <CardDescription className="text-xs">Resumo rápido baseado nos últimos exames</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {isLoadingMetrics ? (
+                    <div className="flex flex-col items-center justify-center py-4">
+                      <Skeleton className="h-24 w-24 rounded-full mb-3" />
+                      <Skeleton className="h-4 w-24 mb-2" />
+                    </div>
+                  ) : metrics && metrics.length > 0 && healthStats.averageScore !== null ? (
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-4">
+                        <div className="w-28 h-28 rounded-full flex items-center justify-center border-4 border-gray-100">
+                          <div 
+                            className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                              healthStats.averageScore >= 80 ? 'bg-green-50 text-green-700' : 
+                              healthStats.averageScore >= 60 ? 'bg-yellow-50 text-yellow-700' : 
+                              'bg-red-50 text-red-700'
+                            }`}
+                          >
+                            <span className="text-3xl font-bold">{healthStats.averageScore}</span>
+                          </div>
+                        </div>
+                        {healthStats.trend && (
+                          <div className={`absolute -top-1 -right-1 rounded-full p-1.5 ${
+                            healthStats.trend === 'improving' ? 'bg-green-100 text-green-700' :
+                            healthStats.trend === 'declining' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {healthStats.trend === 'improving' ? (
+                              <TrendingUp className="h-5 w-5" />
+                            ) : healthStats.trend === 'declining' ? (
+                              <TrendingUp className="h-5 w-5 transform rotate-180" />
+                            ) : (
+                              <Activity className="h-5 w-5" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center mb-3">
+                        <p className="font-medium text-gray-800 text-sm">
+                          {healthStats.averageScore >= 80 ? 'Excelente' : 
+                           healthStats.averageScore >= 70 ? 'Muito Bom' :
+                           healthStats.averageScore >= 60 ? 'Bom' :
+                           healthStats.averageScore >= 50 ? 'Regular' : 'Requer Atenção'}
+                        </p>
+                        {healthStats.trend && (
+                          <p className="text-xs text-gray-500">
+                            {healthStats.trend === 'improving' ? 'Em melhora' : 
+                             healthStats.trend === 'declining' ? 'Em declínio' : 'Estável'}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="w-full bg-gray-100 h-1 mb-3 rounded-full">
+                        <div className={`h-1 rounded-full ${
+                          healthStats.averageScore >= 80 ? 'bg-green-500' : 
+                          healthStats.averageScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} style={{ width: `${healthStats.averageScore}%` }}></div>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 w-full text-center text-[10px] gap-1 text-gray-500">
+                        <div className="bg-red-50 text-red-700 py-1 rounded-l-md">0-50</div>
+                        <div className="bg-yellow-50 text-yellow-700 py-1">51-79</div>
+                        <div className="bg-green-50 text-green-700 py-1 rounded-r-md">80-100</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <AlertCircle className="h-10 w-10 text-gray-300 mb-2" />
+                      <p className="text-gray-500 mb-1">Sem dados suficientes</p>
+                      <p className="text-xs text-gray-400 mb-3">Faça upload de exames para visualizar seu índice de saúde</p>
+                      <Link href="/upload-exams">
+                        <Button size="sm" variant="outline" className="flex items-center gap-1 text-xs">
+                          <FileUp className="h-3 w-3" />
+                          Enviar Exame
+                        </Button>
+                      </Link>
+                      <Link href="/upload-exams">
+                        <Button variant="outline" size="sm">Enviar primeiro exame</Button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Health Metrics Charts */}
+              <Card className="border border-gray-200 shadow-none">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center text-gray-700">
+                      <Activity className="mr-2 h-5 w-5 text-primary" />
+                      Tendências de Saúde
+                    </CardTitle>
+                    <Tabs value={activeMetricsTab} onValueChange={setActiveMetricsTab} className="w-auto">
+                      <TabsList className="h-7">
+                        <TabsTrigger value="all" className="text-[11px] h-6 px-2">Índice Geral</TabsTrigger>
+                        <TabsTrigger value="cholesterol" className="text-[11px] h-6 px-2">Colesterol</TabsTrigger>
+                        <TabsTrigger value="glucose" className="text-[11px] h-6 px-2">Glicemia</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  <CardDescription className="text-xs">Mini histórico dos indicadores principais</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[180px] pt-0">
+                  {isLoadingMetrics ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Skeleton className="h-full w-full rounded-md" />
+                    </div>
+                  ) : chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      {activeMetricsTab === 'all' ? (
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false}
+                            tickLine={false}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            axisLine={false}
+                            tickLine={false}
+                            tickCount={5}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [`${value}`, 'Índice de Saúde']}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="healthScore" 
+                            stroke="#3b82f6" 
+                            strokeWidth={2} 
+                            activeDot={{ r: 6 }} 
+                            dot={{ r: 4, fill: '#3b82f6' }}
+                          />
+                        </LineChart>
+                      ) : activeMetricsTab === 'cholesterol' ? (
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false}
+                            tickLine={false}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <YAxis 
+                            domain={[0, 300]} 
+                            axisLine={false}
+                            tickLine={false}
+                            tickCount={5}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [`${value} mg/dL`, 'Colesterol']}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="cholesterol" 
+                            stroke="#f59e0b" 
+                            strokeWidth={2} 
+                            activeDot={{ r: 6 }} 
+                            dot={{ r: 4, fill: '#f59e0b' }}
+                          />
+                        </LineChart>
+                      ) : (
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false}
+                            tickLine={false}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <YAxis 
+                            domain={[0, 200]} 
+                            axisLine={false}
+                            tickLine={false}
+                            tickCount={5}
+                            tickMargin={10}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [`${value} mg/dL`, 'Glicemia']}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="glucose" 
+                            stroke="#10b981" 
+                            strokeWidth={2} 
+                            activeDot={{ r: 6 }} 
+                            dot={{ r: 4, fill: '#10b981' }}
+                          />
+                        </LineChart>
+                      )}
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-center">
+                      <LineChartIcon className="h-10 w-10 text-gray-300 mb-2" />
+                      <p className="text-gray-500 mb-1">Sem dados históricos suficientes</p>
+                      <p className="text-xs text-gray-400">Envie mais exames para visualizar tendências</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Recent Exams and Health Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg flex items-center">
+                        <FileMedical className="mr-2 h-5 w-5 text-primary" />
+                        Exames Recentes
+                      </CardTitle>
+                      <Link href="/history">
+                        <Button variant="ghost" size="sm" className="gap-1 text-xs h-8">
+                          Ver todos
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                    <CardDescription>Seus últimos exames analisados</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    {isLoadingExams ? (
+                      <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex items-start p-3 rounded-lg border border-gray-100">
+                            <Skeleton className="h-10 w-10 rounded-md mr-4" />
+                            <div className="flex-1">
+                              <Skeleton className="h-5 w-40 mb-2" />
+                              <div className="flex flex-wrap gap-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-16" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : recentExams.length > 0 ? (
+                      <div className="space-y-3">
+                        {recentExams.map(exam => (
+                          <div key={exam.id} className="flex flex-col sm:flex-row sm:items-center p-3 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition-colors">
+                            <div className="flex items-start flex-1 mb-3 sm:mb-0">
+                              <div className={`p-2 rounded-md mr-3 ${getExamTypeColor(exam.fileType)}`}>
+                                {getFileIcon(exam.fileType, 20)}
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900 mb-1">{exam.name}</h4>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                                  <div className="flex items-center text-gray-500">
+                                    <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
+                                    {exam.examDate ? formatDate(exam.examDate) : formatDate(exam.uploadDate.toString())}
+                                  </div>
+                                  
+                                  {exam.requestingPhysician && (
+                                    <div className="flex items-center text-gray-500">
+                                      <User className="h-3.5 w-3.5 mr-1 opacity-70" />
+                                      {exam.requestingPhysician}
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex items-center text-gray-500">
+                                    <Microscope className="h-3.5 w-3.5 mr-1 opacity-70" />
+                                    {exam.laboratoryName || "Lab não informado"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium">
+                                <Activity className="w-3 h-3 mr-1" /> Analisado
+                              </Badge>
+                              <div className="flex gap-2">
+                                <Link href={`/diagnosis/${exam.id}`}>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                                    <FileBarChart className="h-3.5 w-3.5" />
+                                    Diagnóstico
+                                  </Button>
+                                </Link>
+                                <Link href={`/report/${exam.id}`}>
+                                  <Button size="sm" className="h-7 text-xs gap-1">
+                                    <Activity className="h-3.5 w-3.5" />
+                                    Detalhes
+                                  </Button>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                          <FileMedical className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum exame encontrado</h3>
+                        <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                          Você ainda não tem exames analisados. Faça upload do seu primeiro exame para receber análises detalhadas.
+                        </p>
+                        <Link href="/upload-exams">
+                          <Button className="gap-1">
+                            <FileUp className="h-4 w-4" />
+                            Enviar Exame
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Recommendations Card */}
+                {metrics && metrics.length > 0 && (
+                  <Card className="mt-6">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex items-center">
+                        <Clipboard className="mr-2 h-5 w-5 text-primary" />
+                        Recomendações Personalizadas
+                      </CardTitle>
+                      <CardDescription>Baseadas nos seus resultados recentes</CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-start p-3 rounded-lg border border-blue-100 bg-blue-50/30">
+                          <div className="p-2 bg-blue-100 rounded-md text-blue-700 mr-3">
+                            <Activity className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Acompanhamento de Colesterol</h4>
+                            <p className="text-gray-600 text-sm">Considere consultar um cardiologista para avaliar seus níveis de colesterol. Recomendamos uma dieta rica em fibras e baixa em gorduras saturadas.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start p-3 rounded-lg border border-amber-100 bg-amber-50/30">
+                          <div className="p-2 bg-amber-100 rounded-md text-amber-700 mr-3">
+                            <FileBarChart className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Monitoramento de Glicemia</h4>
+                            <p className="text-gray-600 text-sm">Seus níveis de glicose estão ligeiramente elevados. Recomendamos reduzir o consumo de açúcares simples e aumentar a atividade física regular.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
+                          <div className="p-2 bg-emerald-100 rounded-md text-emerald-700 mr-3">
+                            <Heart className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Saúde Preventiva</h4>
+                            <p className="text-gray-600 text-sm">Mantenha o acompanhamento trimestral de seus exames para monitorar a eficácia das mudanças no estilo de vida e ajustar conforme necessário.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 text-center">
+                        <Link href="/upload-exams">
+                          <Button variant="outline" size="sm">Enviar novo exame para mais recomendações</Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+              
+              <div className="lg:col-span-1 space-y-6">
                 {/* Quick Actions Card */}
                 <Card>
                   <CardHeader className="pb-2">

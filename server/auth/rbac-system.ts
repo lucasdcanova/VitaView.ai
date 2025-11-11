@@ -687,7 +687,15 @@ export class RBACSystem {
       switch (condition.operator) {
         case 'equals':
           if (condition.field === 'userId') {
-            if (request.resourceId && request.resourceId !== request.userId) {
+            const metadataBodyUserId = request.metadata?.body && typeof request.metadata.body === 'object'
+              ? (request.metadata.body as any).userId
+              : undefined;
+            const resourceOwnerId =
+              request.metadata?.resourceOwnerId ||
+              metadataBodyUserId ||
+              (request.resource === 'user' ? request.resourceId : undefined);
+
+            if (resourceOwnerId && String(resourceOwnerId) !== String(request.userId)) {
               return { allowed: false };
             }
           }

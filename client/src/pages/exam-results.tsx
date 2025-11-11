@@ -59,12 +59,6 @@ export default function ExamResults() {
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
   const [, setLocation] = useLocation();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  const clinicianName = user?.fullName || user?.username || "Profissional";
-  const normalizedGender = user?.gender?.toLowerCase();
-  const clinicianPrefix = normalizedGender?.startsWith("f") || normalizedGender?.includes("femin")
-    ? "Dra."
-    : "Dr.";
-  const clinicianLabel = `${clinicianPrefix} ${clinicianName}`.trim();
   
   // Mutação para excluir todas as métricas de saúde
   const clearMetricsMutation = useMutation({
@@ -169,9 +163,7 @@ export default function ExamResults() {
               <PatientHeader
                 title="Resultados clínicos"
                 description="Selecione um paciente para revisar relatórios e métricas consolidadas."
-                clinicianLabel={clinicianLabel}
-                patientName={activeProfile?.name}
-                planType={activeProfile?.planType}
+                patient={activeProfile}
               />
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
                 <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
@@ -346,9 +338,7 @@ export default function ExamResults() {
             <PatientHeader
               title="Resultados clínicos"
               description={`Visualize e filtre todos os resultados gerados para ${activeProfile.name}.`}
-              clinicianLabel={clinicianLabel}
-              patientName={activeProfile.name}
-              planType={activeProfile.planType}
+              patient={activeProfile}
             />
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <div className="flex gap-3">

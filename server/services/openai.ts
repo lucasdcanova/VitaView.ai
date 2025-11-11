@@ -4,6 +4,68 @@ import type { HealthMetric } from "@shared/schema";
 import type { IStorage } from "../storage";
 import logger from "../logger";
 
+const sanitizePhysicianName = (value?: string | null) => {
+  if (!value) return null;
+  const cleaned = value
+    .replace(/m[ée]dico solicitante[:\-]?\s*/i, "")
+    .replace(/solicitante[:\-]?\s*/i, "")
+    .replace(/^(dr|dra)\.?/i, "")
+    .replace(/^(dr|dra)\s+/i, "")
+    .trim();
+  return cleaned || null;
+};
+
+const normalizeAnalysisPayload = (analysisData: any, defaultProvider: string) => {
+  const legacyMetadata = (analysisData?.metadata && typeof analysisData.metadata === 'object')
+    ? analysisData.metadata
+    : {};
+  const preferredMetadata = (analysisData?.examMetadata && typeof analysisData.examMetadata === 'object')
+    ? analysisData.examMetadata
+    : {};
+  const metadata = { ...legacyMetadata, ...preferredMetadata };
+  const normalizedDoctor = sanitizePhysicianName(
+    analysisData?.requestingPhysician || metadata?.requestingPhysician
+  );
+
+  const normalizedExamType =
+    analysisData?.examType ||
+    metadata?.examType ||
+    metadata?.documentTitle ||
+    null;
+
+  const normalizedPurpose = analysisData?.examPurpose || metadata?.examPurpose || null;
+  const normalizedCategory = analysisData?.examCategory || metadata?.examCategory || null;
+  const normalizedLab = analysisData?.laboratoryName || metadata?.laboratoryName || null;
+  const normalizedExamDate = analysisData?.examDate || metadata?.examDate || null;
+  const normalizedDocumentTitle =
+    metadata?.documentTitle ||
+    normalizedExamType ||
+    null;
+
+  const normalizedMetadata = {
+    ...metadata,
+    documentTitle: normalizedDocumentTitle || null,
+    examType: normalizedExamType || null,
+    examPurpose: normalizedPurpose || null,
+    examCategory: normalizedCategory || null,
+    requestingPhysician: normalizedDoctor,
+    laboratoryName: normalizedLab || null,
+    examDate: normalizedExamDate || null
+  };
+
+  return {
+    ...analysisData,
+    examMetadata: normalizedMetadata,
+    requestingPhysician: normalizedDoctor,
+    examType: normalizedExamType,
+    examPurpose: normalizedPurpose,
+    examCategory: normalizedCategory,
+    laboratoryName: normalizedLab,
+    examDate: normalizedExamDate,
+    aiProvider: analysisData?.aiProvider ?? defaultProvider
+  };
+};
+
 // Default GPT-5 vision model can be overridden through environment variables
 const OPENAI_MODEL = process.env.OPENAI_GPT5_MODEL || process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1";
 const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o";
@@ -713,8 +775,24 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                     "clinicalGuidelines": ["diretrizes clínicas relevantes para os resultados"],
                     "differentialAnalysis": "análise diferencial considerando os resultados",
                     "confidenceLevel": "nível de confiança na análise (alto, médio, baixo)"
+                  },
+                  "examMetadata": {
+                    "documentTitle": "título amigável do exame (ex: Controle de glicemia - Março/2025)",
+                    "examType": "categoria curta (ex: Controle de glicemia, Pré-operatório, Check-up cardiovascular)",
+                    "examCategory": "especialidade (ex: Endocrinologia, Cardiologia, Pré-operatório)",
+                    "examPurpose": "motivo do exame (ex: acompanhamento, pré-operatório, check-up)",
+                    "requestingPhysician": "nome do médico solicitante sem prefixos Dr./Dra.",
+                    "laboratoryName": "nome do laboratório ou hospital",
+                    "examDate": "data no formato YYYY-MM-DD",
+                    "patientName": "nome identificado no documento, se houver"
                   }
-                }`;
+                }
+                
+                Regras adicionais:
+                - Se o documento não citar médico solicitante, defina "requestingPhysician" como null.
+                - Remova prefixos como Dr./Dra. ao preencher "requestingPhysician".
+                - Sempre crie um "documentTitle" descritivo mesmo quando o arquivo possuir um nome genérico (ex: transformar "scan123.pdf" em "Controle de glicemia - Abril/2025").
+                - "examType" deve ser curto e contextual (ex: "Pré-operatório", "Painel lipídico", "Controle de glicemia").`;
 
   logger.info("[OpenAI] analyzeDocumentWithOpenAI start", {
     fileType,
@@ -800,10 +878,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       hasSummary: Boolean(analysisData.summary)
     });
 
-    return {
-      ...analysisData,
-      aiProvider: analysisData.aiProvider ?? "openai:gpt5"
-    };
+    return normalizeAnalysisPayload(analysisData, "openai:gpt5");
   } catch (primaryError) {
     logger.warn("[OpenAI] falha na Responses API, tentando fallback", {
       fileType,
@@ -871,10 +946,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       hasSummary: Boolean(fallbackData.summary)
     });
 
-    return {
-      ...fallbackData,
-      aiProvider: fallbackData.aiProvider ?? "openai:gpt5:fallback"
-    };
+    return normalizeAnalysisPayload(fallbackData, "openai:gpt5:fallback");
   } finally {
     if (uploadedFileId) {
       try {

@@ -15,6 +15,84 @@ import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './openai';
 import { storage } from '../storage';
 import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+const stripFileExtension = (value: string) => value.replace(/\.[^.]+$/, '');
+
+const normalizeDisplayName = (value: string) => {
+  if (!value) return '';
+  return stripFileExtension(value).replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+};
+
+const capitalizeSentence = (value: string) => {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const deriveNameFromMetrics = (metrics: any[]) => {
+  if (!Array.isArray(metrics) || metrics.length === 0) return null;
+  const names = metrics.map(metric => (metric.name || '').toLowerCase());
+  const containsAny = (terms: string[]) => terms.some(term => names.some(name => name.includes(term)));
+  
+  if (containsAny(['glicose', 'glicemia', 'hba1c'])) return 'Controle de glicemia';
+  if (containsAny(['colesterol', 'hdl', 'ldl', 'triglicer'])) return 'Perfil lipídico';
+  if (containsAny(['hemograma', 'hemoglobina', 'hematócrito', 'eritro', 'leucócitos'])) return 'Painel hematológico';
+  if (containsAny(['tireoide', 'tsh', 't4', 't3'])) return 'Avaliação tireoidiana';
+  if (containsAny(['vitamina d', 'vitamina b12'])) return 'Painel vitamínico';
+  if (containsAny(['psa'])) return 'Monitoramento PSA';
+  return null;
+};
+
+const buildExamDisplayName = (
+  uploadedName: string,
+  extractionResult: any,
+  normalizedMetrics: any[],
+  fallbackExamDate: string | null
+) => {
+  const metadata = extractionResult?.examMetadata || {};
+  const cleanedUpload = normalizeDisplayName(uploadedName);
+  const metricBasedName = deriveNameFromMetrics(normalizedMetrics);
+
+  const primaryCandidate = [
+    metadata.documentTitle,
+    extractionResult?.examType,
+    metadata.examPurpose,
+    metricBasedName,
+    cleanedUpload,
+    'Exame laboratorial'
+  ].find(value => typeof value === 'string' && value.trim().length > 0) as string;
+
+  const uniqueParts: string[] = [];
+  const pushUnique = (value?: string | null) => {
+    if (!value) return;
+    const normalized = value.trim();
+    if (!normalized) return;
+    const lower = normalized.toLowerCase();
+    if (!uniqueParts.some(part => part.toLowerCase() === lower)) {
+      uniqueParts.push(capitalizeSentence(normalized));
+    }
+  };
+
+  pushUnique(primaryCandidate);
+
+  if (metadata.examPurpose && !primaryCandidate?.toLowerCase().includes(metadata.examPurpose.toLowerCase())) {
+    pushUnique(metadata.examPurpose);
+  }
+  if (extractionResult?.laboratoryName && !primaryCandidate?.toLowerCase().includes(extractionResult.laboratoryName.toLowerCase())) {
+    pushUnique(extractionResult.laboratoryName);
+  }
+
+  const examDate = extractionResult?.examDate || metadata.examDate || fallbackExamDate;
+  if (examDate) {
+    const parsed = new Date(examDate);
+    if (!Number.isNaN(parsed.getTime())) {
+      pushUnique(format(parsed, "MMM yyyy", { locale: ptBR }));
+    }
+  }
+
+  return uniqueParts.join(" • ");
+};
 
 export interface AnalysisOptions {
   userId: number;
@@ -72,12 +150,12 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         .replace(/^Dra\s*/i, '');
     }
     
-    // CRIAR REGISTRO DO EXAME
-    // [Pipeline] ETAPA 2: Criando registro do exame
-    const examName = extractionResult.examType 
-      ? `${extractionResult.examType} - ${options.name}` 
-      : options.name;
-      
+    // Normalizar métricas antes de persistir
+    const normalizedMetrics = normalizeHealthMetrics(extractionResult.healthMetrics || []);
+
+    // Criar nome contextual para o exame
+    const examName = buildExamDisplayName(options.name, extractionResult, normalizedMetrics, extractedExamDate);
+    
     const exam = await storage.createExam({
       userId: options.userId,
       profileId: options.profileId,
@@ -91,11 +169,6 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     });
     
     // [Pipeline] Exame criado com ID
-    
-    // NORMALIZAR MÉTRICAS - Unificar nomes para evitar duplicatas com nomes ligeiramente diferentes
-    // [Pipeline] Normalizando métricas de saúde...
-    const normalizedMetrics = normalizeHealthMetrics(extractionResult.healthMetrics || []);
-    // [Pipeline] Normalização de métricas concluída
     
     // SALVAR RESULTADO DA EXTRAÇÃO COM MÉTRICAS NORMALIZADAS
     // [Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)
