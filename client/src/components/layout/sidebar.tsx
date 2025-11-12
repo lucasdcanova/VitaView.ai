@@ -120,7 +120,7 @@ export default function Sidebar(props: SidebarProps) {
           }`}
         >
           <Heart className="mr-3 h-5 w-5" />
-          <span className="text-[#1E3A5F] font-semibold">VitaView do paciente</span>
+          <span className="text-[#1E3A5F] font-semibold">Prontuário do paciente</span>
         </Link>
         
         <Link href="/history"

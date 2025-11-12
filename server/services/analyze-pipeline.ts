@@ -12,6 +12,7 @@
  */
 
 import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './openai';
+import { buildPatientRecordContext } from './patient-record';
 import { storage } from '../storage';
 import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
@@ -255,12 +256,13 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
     try {
       // Obter análise profunda
       const patientProfile = await storage.getProfile(options.profileId);
-      const patientData = patientProfile ? {
+      const profileContext = patientProfile ? {
         gender: patientProfile.gender,
         birthDate: patientProfile.birthDate,
         relationship: patientProfile.relationship,
         planType: patientProfile.planType
-      } : undefined;
+      } : {};
+      const patientData = await buildPatientRecordContext(options.userId, profileContext);
 
       const analysisResult = await analyzeExtractedExam(exam.id, options.userId, storage, patientData);
       // [Pipeline] Análise com OpenAI concluída com sucesso

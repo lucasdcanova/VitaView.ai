@@ -12,7 +12,8 @@ import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
-import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport } from "./services/openai";
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis } from "./services/openai";
+import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import logger from "./logger";
 import { nanoid } from "nanoid";
@@ -895,6 +896,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       // Temporariamente removemos a verificação de autenticação para diagnóstico
       
+      const enrichedPatientData = await buildPatientRecordContext(req.user!.id, patientData || {});
+      
       // Formatar como ExamResult para passar para o OpenAI
       const formattedResult = {
         id: 0, // ID temporário
@@ -910,7 +913,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       };
       
       // Gerar insights usando OpenAI com contexto do paciente
-      const insights = await generateHealthInsights(formattedResult, patientData);
+      const insights = await generateHealthInsights(formattedResult, enrichedPatientData);
       res.json(insights);
       logger.info("[UploadFlow] Interpretação concluída", {
         requestId,
@@ -1426,7 +1429,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
       
       // Extrair dados do paciente do corpo da requisição, se disponíveis
-      const patientData = req.body.patientData || {};
+      const requestPatientData = req.body.patientData || {};
+      const patientData = await buildPatientRecordContext(userId, requestPatientData);
       
       // Chamar o serviço de análise da OpenAI
       const result = await analyzeExtractedExam(examId, userId, storage, patientData);
@@ -1504,8 +1508,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         };
       }
       
+      const ownerId = req.isAuthenticated() && req.user ? req.user.id : exam.userId;
+      const enrichedPatientData = await buildPatientRecordContext(ownerId, patientData || {});
+      
       // Chamada à OpenAI com contexto do paciente
-      const insights = await generateHealthInsights(examResult, patientData);
+      const insights = await generateHealthInsights(examResult, enrichedPatientData);
       res.json(insights);
     } catch (error) {
       res.status(500).json({ message: "Erro ao gerar insights" });
@@ -1721,6 +1728,24 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar perfil" });
+    }
+  });
+
+  app.post("/api/patient-record/analyze", ensureAuthenticated, async (req, res) => {
+    try {
+      const text = typeof req.body?.text === "string" ? req.body.text : "";
+      if (!text.trim()) {
+        return res.status(400).json({ message: "Texto da anamnese é obrigatório" });
+      }
+
+      const record = await extractRecordFromAnamnesis(text);
+      res.json(record);
+    } catch (error) {
+      logger.error("[PatientRecord] Falha ao analisar anamnese com IA", {
+        userId: req.user?.id,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ message: "Erro ao interpretar anamnese" });
     }
   });
   

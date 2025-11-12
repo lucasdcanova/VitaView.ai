@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import { useProfiles } from "@/hooks/use-profiles";
 import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
 import { CID10_DATABASE } from "@/data/cid10-database";
@@ -42,9 +43,11 @@ import {
   PlusCircle,
   ClipboardList,
   Activity,
-  FileDown
+  FileDown,
+  Sparkles,
+  Loader2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -98,6 +101,7 @@ interface TimelineItem {
 export default function HealthTrendsNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { activeProfile } = useProfiles();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDiagnosis, setEditingDiagnosis] = useState<any>(null);
@@ -107,6 +111,9 @@ export default function HealthTrendsNew() {
   const [isAllergyDialogOpen, setIsAllergyDialogOpen] = useState(false);
   const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<any>(null);
+  const [anamnesisText, setAnamnesisText] = useState("");
+  const [extractedRecord, setExtractedRecord] = useState<any | null>(null);
+  const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
 
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
@@ -375,6 +382,27 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const analyzeAnamnesisMutation = useMutation({
+    mutationFn: async ({ text }: { text: string }) => {
+      const res = await apiRequest("POST", "/api/patient-record/analyze", { text });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setExtractedRecord(data);
+      toast({
+        title: "Anamnese analisada",
+        description: "Identificamos diagnósticos, medicamentos e alergias a partir do texto.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro na análise",
+        description: error?.message || "Não foi possível interpretar o texto.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const timelineItems: TimelineItem[] = [
     ...(Array.isArray(exams) ? exams.map((exam: any) => {
       const originalContent = exam.originalContent ? JSON.parse(exam.originalContent) : null;
@@ -509,6 +537,101 @@ export default function HealthTrendsNew() {
     }
   };
 
+  const handleAnalyzeAnamnesis = () => {
+    if (!anamnesisText.trim()) {
+      toast({
+        title: "Anamnese vazia",
+        description: "Descreva o quadro clínico antes de solicitar a análise.",
+        variant: "destructive",
+      });
+      return;
+    }
+    analyzeAnamnesisMutation.mutate({ text: anamnesisText.trim() });
+  };
+
+  const handleResetAnamnesis = () => {
+    setAnamnesisText("");
+    setExtractedRecord(null);
+  };
+
+  const handleApplyExtraction = async () => {
+    if (!extractedRecord) return;
+    setIsApplyingExtraction(true);
+    const today = new Date().toISOString().split("T")[0];
+    const created = { diagnoses: 0, medications: 0, allergies: 0 };
+
+    try {
+      for (const diagnosis of extractedRecord.diagnoses || []) {
+        if (!diagnosis?.cidCode) continue;
+        await apiRequest("POST", "/api/diagnoses", {
+          cidCode: diagnosis.cidCode,
+          diagnosisDate: diagnosis.diagnosisDate || today,
+          status: diagnosis.status || "ativo",
+          notes: diagnosis.notes || diagnosis.description || null,
+        });
+        created.diagnoses += 1;
+      }
+
+      for (const medication of extractedRecord.medications || []) {
+        if (!medication?.name) continue;
+        await apiRequest("POST", "/api/medications", {
+          name: medication.name,
+          format: medication.format || "comprimido",
+          dosage: medication.dosage || medication.dose || "dose a confirmar",
+          frequency: medication.frequency || "1x ao dia",
+          notes: medication.notes || null,
+          startDate: medication.startDate || today,
+          isActive: medication.isActive !== false,
+        });
+        created.medications += 1;
+      }
+
+      for (const allergy of extractedRecord.allergies || []) {
+        if (!allergy?.allergen) continue;
+        await apiRequest("POST", "/api/allergies", {
+          allergen: allergy.allergen,
+          allergenType: allergy.allergenType || "medication",
+          reaction: allergy.reaction || null,
+          severity: allergy.severity || null,
+          notes: allergy.notes || null,
+        });
+        created.allergies += 1;
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/medications"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/allergies"] }),
+      ]);
+
+      toast({
+        title: "Prontuário atualizado",
+        description: `Dados aplicados: ${created.diagnoses} diagnósticos, ${created.medications} medicamentos, ${created.allergies} alergias.`,
+      });
+      setExtractedRecord(null);
+      setAnamnesisText("");
+    } catch (error: any) {
+      toast({
+        title: "Falha ao salvar dados",
+        description: error?.message || "Revise o texto ou tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplyingExtraction(false);
+    }
+  };
+
+  const diagnosesCount = Array.isArray(diagnoses) ? diagnoses.length : 0;
+  const medicationsCount = Array.isArray(medications) ? medications.length : 0;
+  const allergiesCount = Array.isArray(allergies) ? allergies.length : 0;
+  const summaryHighlights = [
+    { label: "Diagnósticos registrados", value: diagnosesCount },
+    { label: "Medicamentos ativos", value: medicationsCount },
+    { label: "Alergias registradas", value: allergiesCount }
+  ];
+  const profileName = activeProfile?.name || "seu paciente";
+  const hasRecordData = summaryHighlights.some((item) => item.value > 0);
+
   // Função para exportar dados para PDF
   const handleExportToPDF = async () => {
     try {
@@ -588,56 +711,190 @@ export default function HealthTrendsNew() {
         
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Meu <span className="text-[#1E3A5F]">VitaView</span>
-                  </h1>
-                  <p className="text-gray-600 mt-2">
-                    Sua visão completa de saúde: exames,<br/>diagnósticos e tendências em um só lugar
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-2 max-w-4xl">
-                  {/* Coluna da esquerda: Medicamentos + Alergia/Diagnóstico */}
-                  <div className="space-y-3">
-                    {/* Primeira linha: Medicamento */}
-                    <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12 w-full">
-                      <PlusCircle className="h-4 w-4" />
-                      Medicamento
-                    </Button>
-                    
-                    {/* Segunda linha: Alergia e Diagnóstico */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
-                        <PlusCircle className="h-4 w-4" />
-                        Alergia
-                      </Button>
-                      <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="flex items-center justify-center gap-2 h-12">
-                        <PlusCircle className="h-4 w-4" />
-                        Diagnóstico
-                      </Button>
+            <div className="max-w-5xl mx-auto space-y-6">
+              <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-3xl text-gray-900">Prontuário do paciente</CardTitle>
+                    <CardDescription>
+                      Acompanhe e atualize o histórico clínico de {profileName} para que cada exame seja interpretado com contexto.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {summaryHighlights.map((item) => (
+                        <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">{item.label}</p>
+                          <p className="text-2xl font-semibold text-[#1E3A5F]">{item.value}</p>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                  
-                  {/* Coluna da direita: PDF e Compartilhar */}
-                  <div className="space-y-3">
-                    {/* Primeira linha: Exportar PDF */}
-                    <Button onClick={handleExportToPDF} variant="secondary" className="flex items-center justify-center gap-2 h-12 w-full">
-                      <FileDown className="h-4 w-4" />
-                      Exportar PDF
+                    <p className="mt-3 text-xs text-gray-500">
+                      {hasRecordData
+                        ? "Mantenha diagnósticos, medicamentos e alergias atualizados para análises mais precisas."
+                        : "Comece adicionando novos registros para enriquecer o prontuário e personalizar os insights."}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-primary-100 bg-white shadow-md">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-gray-900">Ações rápidas</CardTitle>
+                    <CardDescription>Cadastre as informações prioritárias do paciente</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
+                      <Activity className="h-4 w-4 text-primary-600" />
+                      Registrar medicamento
                     </Button>
-                    
-                    {/* Segunda linha: Compartilhar */}
-                    <div className="bg-blue-50 text-blue-700 px-2 py-2 rounded-lg border border-blue-200 flex items-center justify-center h-12 w-full" style={{ fontSize: '12px', fontWeight: '500' }}>
-                      <div className="text-center" style={{ lineHeight: '1.1' }}>
-                        <div>Compartilhe com</div>
-                        <div>seu médico</div>
+                    <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
+                      <ClipboardList className="h-4 w-4 text-primary-600" />
+                      Registrar alergia
+                    </Button>
+                    <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
+                      <FileText className="h-4 w-4 text-primary-600" />
+                      Registrar diagnóstico
+                    </Button>
+                    <Button onClick={handleExportToPDF} variant="secondary" className="w-full justify-start gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Exportar PDF do prontuário
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="border border-primary-100 shadow-md">
+                <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
+                    <CardDescription>
+                      Descreva o quadro clínico e deixe a IA identificar diagnósticos, comorbidades, medicamentos e alergias.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Textarea
+                    value={anamnesisText}
+                    onChange={(event) => setAnamnesisText(event.target.value)}
+                    placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg, histórico familiar de diabetes, refere alergia a penicilina..."
+                    className="min-h-[140px] resize-vertical"
+                  />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      onClick={handleAnalyzeAnamnesis}
+                      disabled={analyzeAnamnesisMutation.isPending}
+                      className="gap-2"
+                    >
+                      {analyzeAnamnesisMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                      Extrair dados com IA
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
+                      Limpar texto
+                    </Button>
+                    <p className="text-sm text-gray-500">
+                      A IA sugere registros prontos que você pode aplicar ao prontuário em um clique.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {extractedRecord && (
+                <Card className="border-primary-200 bg-white shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-2xl text-gray-900">Insights identificados</CardTitle>
+                    <CardDescription>{extractedRecord.summary || "Revisão automática da anamnese"}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {Array.isArray(extractedRecord.comorbidities) && extractedRecord.comorbidities.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {extractedRecord.comorbidities.map((item: string, index: number) => (
+                          <span key={`${item}-${index}`} className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Diagnósticos sugeridos</p>
+                        {Array.isArray(extractedRecord.diagnoses) && extractedRecord.diagnoses.length > 0 ? (
+                          <div className="space-y-2">
+                            {extractedRecord.diagnoses.map((diagnosis: any, index: number) => (
+                              <div key={`diag-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                <p className="font-semibold text-gray-900">{diagnosis.cidCode || diagnosis.condition || "Diagnóstico sugerido"}</p>
+                                {diagnosis.notes && <p className="text-xs text-gray-600 mt-1">{diagnosis.notes}</p>}
+                                <Badge className="mt-2 w-fit" variant="secondary">{diagnosis.status || "avaliar"}</Badge>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Nenhum diagnóstico identificado.</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Medicamentos em uso</p>
+                        {Array.isArray(extractedRecord.medications) && extractedRecord.medications.length > 0 ? (
+                          <div className="space-y-2">
+                            {extractedRecord.medications.map((medication: any, index: number) => (
+                              <div key={`med-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                <p className="font-semibold text-gray-900">{medication.name}</p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  {medication.dosage || medication.dose || "dosagem não informada"} · {medication.frequency || "frequência não informada"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Sem medicamentos detectados.</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Alergias</p>
+                        {Array.isArray(extractedRecord.allergies) && extractedRecord.allergies.length > 0 ? (
+                          <div className="space-y-2">
+                            {extractedRecord.allergies.map((allergy: any, index: number) => (
+                              <div key={`allergy-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                <p className="font-semibold text-gray-900">{allergy.allergen}</p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  {allergy.severity ? `Gravidade: ${allergy.severity}` : "Gravidade não informada"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Nenhuma alergia identificada.</p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <p className="text-sm text-gray-500">
+                        Revise os dados sugeridos e aplique ao prontuário para usar imediatamente em novas análises.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" variant="ghost" onClick={handleResetAnamnesis}>
+                          Descartar
+                        </Button>
+                        <Button
+                          type="button"
+                          className="gap-2"
+                          onClick={handleApplyExtraction}
+                          disabled={isApplyingExtraction}
+                        >
+                          {isApplyingExtraction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                          Aplicar ao prontuário
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-2xl">

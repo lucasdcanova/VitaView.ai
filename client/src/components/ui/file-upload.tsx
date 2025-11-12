@@ -593,7 +593,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <p className="text-sm text-gray-500 mb-4">ou</p>
           <button
             type="button"
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition"
+            className="px-4 py-2 bg-white text-primary-600 border border-primary-500 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition"
           >
             Selecionar arquivos
           </button>

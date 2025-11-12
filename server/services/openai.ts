@@ -66,6 +66,253 @@ const normalizeAnalysisPayload = (analysisData: any, defaultProvider: string) =>
   };
 };
 
+const stripMarkdownCodeFence = (raw: string | undefined) => {
+  if (!raw) return "";
+  let cleaned = raw.trim();
+
+  if (cleaned.startsWith("```")) {
+    const firstNewline = cleaned.indexOf("\n");
+    if (firstNewline !== -1) {
+      cleaned = cleaned.slice(firstNewline + 1);
+    } else {
+      cleaned = cleaned.replace(/^```[\w-]*\s*/i, "");
+    }
+
+    if (cleaned.endsWith("```")) {
+      cleaned = cleaned.slice(0, -3);
+    }
+
+    cleaned = cleaned.trim();
+  }
+
+  return cleaned;
+};
+
+const extractJsonPayload = (raw: string) => {
+  const firstBrace = raw.indexOf("{");
+  if (firstBrace === -1) {
+    return null;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let prevChar = "";
+
+  for (let i = firstBrace; i < raw.length; i++) {
+    const char = raw[i];
+
+    if (char === "\"" && prevChar !== "\\") {
+      inString = !inString;
+    }
+
+    if (!inString) {
+      if (char === "{") {
+        depth += 1;
+      } else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          return raw.slice(firstBrace, i + 1);
+        }
+      }
+    }
+
+    prevChar = char;
+  }
+
+  return null;
+};
+
+const extractResponseText = (response: any): string | undefined => {
+  if (!response) return undefined;
+
+  if (typeof response.output_text === "string" && response.output_text.trim()) {
+    return response.output_text;
+  }
+
+  if (Array.isArray(response.output)) {
+    for (const item of response.output) {
+      if (item?.type === "output_text" && typeof item.text === "string") {
+        return item.text;
+      }
+
+      if (item?.content && Array.isArray(item.content)) {
+        for (const sub of item.content) {
+          if (sub?.type === "output_text" && typeof sub.text === "string") {
+            return sub.text;
+          }
+          if (typeof sub?.text === "string") {
+            return sub.text;
+          }
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(response.choices)) {
+    const choice = response.choices[0];
+    if (choice?.message?.content) {
+      if (typeof choice.message.content === "string") {
+        return choice.message.content;
+      }
+      if (Array.isArray(choice.message.content)) {
+        const textPart = choice.message.content.find((part: any) => part?.type === "text");
+        if (textPart?.text) {
+          return textPart.text;
+        }
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const calculateAgeFromBirthDate = (birthDate?: string | null) => {
+  if (!birthDate) return null;
+  const parsed = new Date(birthDate);
+  if (isNaN(parsed.getTime())) {
+    return null;
+  }
+  return Math.floor((Date.now() - parsed.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+};
+
+const formatRecordItem = (value?: string | null, fallback = "Não informado") => {
+  if (!value) return fallback;
+  return value;
+};
+
+const formatPatientContext = (patientData?: any) => {
+  if (!patientData) return "";
+  
+  const inferredAge = patientData.age ?? calculateAgeFromBirthDate(patientData.birthDate);
+  const diseasesText = Array.isArray(patientData.diseases) && patientData.diseases.length > 0
+    ? patientData.diseases.join(", ")
+    : "Nenhuma informada";
+  const surgeriesText = Array.isArray(patientData.surgeries) && patientData.surgeries.length > 0
+    ? patientData.surgeries.join(", ")
+    : "Nenhuma informada";
+  const allergiesText = Array.isArray(patientData.allergies) && patientData.allergies.length > 0
+    ? patientData.allergies.join(", ")
+    : "Nenhuma informada";
+  const medicationsText = Array.isArray(patientData.medications) && patientData.medications.length > 0
+    ? patientData.medications.join(", ")
+    : "Nenhum informado";
+  
+  const diagnosesDetails = Array.isArray(patientData.medicalRecord?.diagnoses) && patientData.medicalRecord.diagnoses.length > 0
+    ? patientData.medicalRecord.diagnoses.map((diagnosis: any) => {
+        const code = diagnosis.cidCode || diagnosis.cid_code || "CID não informado";
+        const status = diagnosis.status ? ` - ${diagnosis.status}` : "";
+        const date = diagnosis.diagnosisDate || diagnosis.diagnosis_date;
+        const formattedDate = date ? ` (${date})` : "";
+        return `${code}${status}${formattedDate}`.trim();
+      }).join("; ")
+    : "Nenhum registrado";
+  
+  const medicationsDetails = Array.isArray(patientData.medicalRecord?.medications) && patientData.medicalRecord.medications.length > 0
+    ? patientData.medicalRecord.medications.map((medication: any) => {
+        const name = medication.name || "Medicamento";
+        const dosage = medication.dosage ? ` - ${medication.dosage}` : "";
+        const frequency = medication.frequency ? ` (${medication.frequency})` : "";
+        return `${name}${dosage}${frequency}`.trim();
+      }).join("; ")
+    : "Nenhum registrado";
+  
+  const allergiesDetails = Array.isArray(patientData.medicalRecord?.allergies) && patientData.medicalRecord.allergies.length > 0
+    ? patientData.medicalRecord.allergies.map((allergy: any) => {
+        const name = allergy.allergen || "Alergia";
+        const severity = allergy.severity ? ` - ${allergy.severity}` : "";
+        const reaction = allergy.reaction ? ` (${allergy.reaction})` : "";
+        return `${name}${severity}${reaction}`.trim();
+      }).join("; ")
+    : "Nenhum registrado";
+  
+  return `
+      Dados do paciente:
+      - Sexo: ${formatRecordItem(patientData.gender)}
+      - Idade: ${inferredAge ?? "Não informada"}
+      - Doenças/diagnósticos prévios: ${diseasesText}
+      - Cirurgias prévias: ${surgeriesText}
+      - Alergias conhecidas: ${allergiesText}
+      - Medicamentos em uso contínuo: ${medicationsText}
+      - Histórico familiar: ${formatRecordItem(patientData.familyHistory, "Não informado")}
+      
+      Resumo do prontuário:
+      - Diagnósticos (CID-10): ${diagnosesDetails}
+      - Medicamentos ativos: ${medicationsDetails}
+      - Alergias registradas: ${allergiesDetails}
+  `;
+};
+
+const normalizeExtractedRecord = (payload: any) => {
+  return {
+    summary: payload?.summary || "",
+    diagnoses: Array.isArray(payload?.diagnoses) ? payload.diagnoses : [],
+    medications: Array.isArray(payload?.medications) ? payload.medications : [],
+    allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
+    comorbidities: Array.isArray(payload?.comorbidities) ? payload.comorbidities : [],
+  };
+};
+
+const fallbackDiagnosisKeywords = [
+  { term: /hipertens/i, cidCode: "I10", label: "Hipertensão arterial essencial" },
+  { term: /diabet/i, cidCode: "E11", label: "Diabetes mellitus tipo 2" },
+  { term: /asma/i, cidCode: "J45", label: "Asma" },
+  { term: /dislipidem/i, cidCode: "E78", label: "Dislipidemia" },
+];
+
+const fallbackMedicationKeywords = [
+  { term: /losartan/i, name: "Losartana", dosage: "50mg", frequency: "1x ao dia", format: "comprimido" },
+  { term: /metformin/i, name: "Metformina", dosage: "850mg", frequency: "2x ao dia", format: "comprimido" },
+  { term: /sinvastatin|simvastatin/i, name: "Sinvastatina", dosage: "20mg", frequency: "1x ao dia", format: "comprimido" },
+];
+
+const fallbackAllergyKeywords = [
+  { term: /penicilin/i, allergen: "Penicilina", severity: "grave" },
+  { term: /dipirona/i, allergen: "Dipirona", severity: "moderada" },
+];
+
+const fallbackAnamnesisExtraction = (text: string) => {
+  const normalizedText = text.toLowerCase();
+  const today = new Date().toISOString().split("T")[0];
+
+  const diagnoses = fallbackDiagnosisKeywords
+    .filter((item) => item.term.test(normalizedText))
+    .map((item) => ({
+      cidCode: item.cidCode,
+      status: "cronico",
+      notes: `Detectado automaticamente: ${item.label}`,
+      diagnosisDate: today,
+    }));
+
+  const medications = fallbackMedicationKeywords
+    .filter((item) => item.term.test(normalizedText))
+    .map((item) => ({
+      name: item.name,
+      dosage: item.dosage,
+      frequency: item.frequency,
+      format: item.format,
+      startDate: today,
+      notes: "Detectado automaticamente na anamnese",
+      isActive: true,
+    }));
+
+  const allergies = fallbackAllergyKeywords
+    .filter((item) => item.term.test(normalizedText))
+    .map((item) => ({
+      allergen: item.allergen,
+      severity: item.severity,
+      notes: "Detectado automaticamente na anamnese",
+      allergenType: "medication",
+    }));
+
+  return {
+    summary: "Extração simplificada baseada em regras locais.",
+    diagnoses,
+    medications,
+    allergies,
+    comorbidities: diagnoses.map((item) => item.cidCode),
+  };
+};
+
 // Default GPT-5 vision model can be overridden through environment variables
 const OPENAI_MODEL = process.env.OPENAI_GPT5_MODEL || process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1";
 const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o";
@@ -85,19 +332,7 @@ if (process.env.OPENAI_API_KEY) {
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any) {
   try {
     
-    // Prepare patient context if available
-    let patientContext = "";
-    if (patientData) {
-      patientContext = `
-      Dados do paciente:
-      - Sexo: ${patientData.gender || 'Não informado'}
-      - Idade: ${patientData.age || 'Não informada'}
-      - Doenças preexistentes: ${patientData.diseases?.join(", ") || 'Nenhuma informada'}
-      - Cirurgias prévias: ${patientData.surgeries?.join(", ") || 'Nenhuma informada'}
-      - Alergias: ${patientData.allergies?.join(", ") || 'Nenhuma informada'}
-      - Histórico familiar: ${patientData.familyHistory || 'Não informado'}
-      `;
-    }
+    const patientContext = formatPatientContext(patientData);
     
     // Prompt aprimorado para OpenAI com análise holística e personalizada
     const prompt = `
@@ -446,19 +681,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       metricsByCategory.get(category).push(metric);
     });
     
-    // Prepare patient context if available
-    let patientContext = "";
-    if (patientData) {
-      patientContext = `
-      Dados do paciente:
-      - Sexo: ${patientData.gender || 'Não informado'}
-      - Idade: ${patientData.age || 'Não informada'}
-      - Doenças preexistentes: ${patientData.diseases?.join(", ") || 'Nenhuma informada'}
-      - Cirurgias prévias: ${patientData.surgeries?.join(", ") || 'Nenhuma informada'}
-      - Alergias: ${patientData.allergies?.join(", ") || 'Nenhuma informada'}
-      - Histórico familiar: ${patientData.familyHistory || 'Não informado'}
-      `;
-    }
+    const patientContext = formatPatientContext(patientData);
     
     // Criar prompt mais estruturado para a OpenAI com base nas categorias de exames
     let metricsDescriptionByCategory = "";
@@ -618,107 +841,6 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
   const truncateBase64 = (content: string) => {
     const MAX_LENGTH = 6_000_000; // ~6MB em base64
     return content.length > MAX_LENGTH ? content.substring(0, MAX_LENGTH) : content;
-  };
-
-  const stripMarkdownCodeFence = (raw: string | undefined) => {
-    if (!raw) return "";
-    let cleaned = raw.trim();
-
-    if (cleaned.startsWith("```")) {
-      const firstNewline = cleaned.indexOf("\n");
-      if (firstNewline !== -1) {
-        cleaned = cleaned.slice(firstNewline + 1);
-      } else {
-        cleaned = cleaned.replace(/^```[\w-]*\s*/i, "");
-      }
-
-      if (cleaned.endsWith("```")) {
-        cleaned = cleaned.slice(0, -3);
-      }
-
-      cleaned = cleaned.trim();
-    }
-
-    return cleaned;
-  };
-
-  const extractJsonPayload = (raw: string) => {
-    const firstBrace = raw.indexOf("{");
-    if (firstBrace === -1) {
-      return null;
-    }
-
-    let depth = 0;
-    let inString = false;
-    let prevChar = "";
-
-    for (let i = firstBrace; i < raw.length; i++) {
-      const char = raw[i];
-
-      if (char === "\"" && prevChar !== "\\") {
-        inString = !inString;
-      }
-
-      if (!inString) {
-        if (char === "{") {
-          depth += 1;
-        } else if (char === "}") {
-          depth -= 1;
-          if (depth === 0) {
-            return raw.slice(firstBrace, i + 1);
-          }
-        }
-      }
-
-      prevChar = char;
-    }
-
-    return null;
-  };
-
-  const extractResponseText = (response: any): string | undefined => {
-    if (!response) return undefined;
-
-    if (typeof response.output_text === "string" && response.output_text.trim()) {
-      return response.output_text;
-    }
-
-    if (Array.isArray(response.output)) {
-      for (const item of response.output) {
-        if (item?.type === "output_text" && typeof item.text === "string") {
-          return item.text;
-        }
-
-        if (item?.content && Array.isArray(item.content)) {
-          for (const sub of item.content) {
-            if (sub?.type === "output_text" && typeof sub.text === "string") {
-              return sub.text;
-            }
-            if (typeof sub?.text === "string") {
-              return sub.text;
-            }
-          }
-        }
-      }
-    }
-
-    // Fallback para o formato antigo de chat completions
-    if (Array.isArray(response.choices)) {
-      const choice = response.choices[0];
-      if (choice?.message?.content) {
-        if (typeof choice.message.content === "string") {
-          return choice.message.content;
-        }
-        if (Array.isArray(choice.message.content)) {
-          const textPart = choice.message.content.find((part: any) => part?.type === "text");
-          if (textPart?.text) {
-            return textPart.text;
-          }
-        }
-      }
-    }
-
-    return undefined;
   };
 
   // Limitar o tamanho do conteúdo para evitar exceder limites da API
@@ -1076,6 +1198,73 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
     }
   } catch (error) {
     throw new Error("Falha ao gerar relatório cronológico com OpenAI");
+  }
+}
+
+export async function extractRecordFromAnamnesis(text: string) {
+  if (!text || !text.trim()) {
+    throw new Error("Texto da anamnese é obrigatório");
+  }
+
+  if (!process.env.OPENAI_API_KEY || !openai) {
+    return fallbackAnamnesisExtraction(text);
+  }
+
+  const instructions = `
+Você é um médico especialista em clínica integrativa.
+Analise a anamnese abaixo e extraia apenas informações estruturadas.
+
+Para cada categoria, preencha os campos conhecidos e use null quando não tiver certeza.
+Datas devem estar no formato YYYY-MM-DD.
+Status aceitos: "ativo", "em_tratamento", "resolvido", "cronico".
+
+Responda apenas em JSON no formato:
+{
+  "summary": "Resumo em 2 frases",
+  "diagnoses": [
+    {"cidCode": "I10", "status": "cronico", "diagnosisDate": "2024-01-10", "notes": "Hipertensão controlada"}
+  ],
+  "medications": [
+    {"name": "Losartana", "dosage": "50mg", "frequency": "1x ao dia", "format": "comprimido", "startDate": "2023-11-01", "notes": "Uso contínuo"}
+  ],
+  "allergies": [
+    {"allergen": "Penicilina", "allergenType": "medication", "reaction": "urticária", "severity": "grave", "notes": "Evitar beta-lactâmicos"}
+  ],
+  "comorbidities": ["Hipertensão arterial", "Diabetes tipo 2"]
+}
+
+Anamnese:
+"""${text.trim()}"""
+`;
+
+  try {
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [{ type: "input_text", text: instructions }],
+        },
+      ],
+      temperature: 0.2,
+      max_output_tokens: 1200,
+    });
+
+    const content = extractResponseText(response);
+    const sanitized = stripMarkdownCodeFence(content);
+    const jsonPayload = sanitized ? extractJsonPayload(sanitized) : null;
+
+    if (!jsonPayload) {
+      throw new Error("Resposta da OpenAI sem JSON válido");
+    }
+
+    const parsed = JSON.parse(jsonPayload);
+    return normalizeExtractedRecord(parsed);
+  } catch (error) {
+    logger.error("[OpenAI] Falha na extração automática da anamnese", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return fallbackAnamnesisExtraction(text);
   }
 }
 
