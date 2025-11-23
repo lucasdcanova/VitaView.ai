@@ -1,5 +1,5 @@
 import { Profile } from "@shared/schema";
-import { Calendar, FileText, ShieldCheck, User } from "lucide-react";
+import { Calendar, FileText, ShieldCheck, User, UserCog } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ProfileSwitcher from "@/components/profile-switcher";
@@ -86,10 +86,13 @@ export default function PatientHeader({
           )}
         </div>
         {showSwitcher && (
-          <div className="w-full md:w-auto">
-            <p className="text-xs font-medium text-gray-500 mb-1 text-center md:text-right">
-              Trocar paciente
-            </p>
+          <div className="w-full md:w-auto bg-blue-50 border border-blue-100 rounded-xl p-3 shadow-sm">
+            <div className="flex items-center justify-center md:justify-end gap-2 mb-2">
+              <UserCog className="h-4 w-4 text-blue-600" />
+              <p className="text-sm font-semibold text-blue-700">
+                Trocar paciente
+              </p>
+            </div>
             <ProfileSwitcher />
           </div>
         )}

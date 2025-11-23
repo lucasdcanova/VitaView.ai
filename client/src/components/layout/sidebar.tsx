@@ -99,17 +99,7 @@ export default function Sidebar(props: SidebarProps) {
           <span>Enviar Exames</span>
         </Link>
         
-        <Link href="/quick-summary"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-            location === '/quick-summary' 
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
-              : 'hover:bg-amber-50 text-amber-700'
-          }`}
-        >
-          <Zap className="mr-3 h-5 w-5 text-amber-500" />
-          <span>Resumo Rápido</span>
-        </Link>
+
         
         <Link href="/health-trends"
           onClick={handleNavClick}
@@ -147,17 +137,7 @@ export default function Sidebar(props: SidebarProps) {
           <span>Resultados</span>
         </Link>
         
-        <Link href="/profile"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-            location === '/profile' 
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]' 
-              : 'hover:bg-gray-50 text-gray-700'
-          }`}
-        >
-          <UserCog className="mr-3 h-5 w-5" />
-          <span>Conta profissional</span>
-        </Link>
+
         
         <Link href="/subscription"
           onClick={handleNavClick}
