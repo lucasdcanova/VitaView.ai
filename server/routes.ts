@@ -300,7 +300,7 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   if (req.isAuthenticated()) {
     return next();
   }
-  
+
   // Tenta recuperar a autenticação pelo cookie auxiliar
   try {
     const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
@@ -312,16 +312,16 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
       }
       return acc;
     }, {} as Record<string, string>) || {};
-    
+
     // Verifica o cookie simplificado auth_user_id
     if (cookies['auth_user_id']) {
       try {
         const userId = parseInt(cookies['auth_user_id']);
-        
+
         if (!isNaN(userId)) {
           // Recupera o usuário pelo ID
           const user = await storage.getUser(userId);
-          
+
           if (user) {
             // Define o usuário na sessão
             return req.login(user, (err) => {
@@ -346,11 +346,11 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
       try {
         const decodedToken = decodeURIComponent(cookies['auth_token']);
         const authData = JSON.parse(decodedToken);
-        
+
         if (authData && authData.id) {
           // Recupera o usuário pelo ID
           const user = await storage.getUser(authData.id);
-          
+
           if (user) {
             // Define o usuário na sessão
             return req.login(user, (err) => {
@@ -375,10 +375,10 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   } catch (error) {
     // Erro ao processar autenticação alternativa
   }
-  
+
   // Removido o bypass de análise automática
   // Todas as requisições devem ser autenticadas
-  
+
   // Se não estiver autenticado, retorna 401
   return res.status(401).json({ message: "Não autenticado" });
 }
@@ -441,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const { ruleId } = req.params;
       const { enabled } = req.body;
       webApplicationFirewall.toggleRule(ruleId, enabled);
-      
+
       advancedSecurity.auditLog('WAF_RULE_TOGGLED', req.user?.id, req, { ruleId, enabled });
       res.json({ success: true });
     } catch (error) {
@@ -453,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const { ip } = req.body;
       webApplicationFirewall.whitelistIP(ip);
-      
+
       advancedSecurity.auditLog('WAF_IP_WHITELISTED', req.user?.id, req, { ip });
       res.json({ success: true });
     } catch (error) {
@@ -465,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const { ip } = req.body;
       webApplicationFirewall.blacklistIP(ip);
-      
+
       advancedSecurity.auditLog('WAF_IP_BLACKLISTED', req.user?.id, req, { ip });
       res.json({ success: true });
     } catch (error) {
@@ -563,6 +563,129 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Admin User Management Routes
+  app.get("/api/admin/users", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+
+      // Enrich users with subscription data
+      const enrichedUsers = await Promise.all(users.map(async (user) => {
+        const { password, ...safeUser } = user;
+        const subscription = await storage.getUserSubscription(user.id);
+
+        let plan = undefined;
+        if (subscription && subscription.planId) {
+          plan = await storage.getSubscriptionPlan(subscription.planId);
+        }
+
+        return {
+          ...safeUser,
+          subscription: subscription ? {
+            id: subscription.id,
+            status: subscription.status,
+            currentPeriodEnd: subscription.currentPeriodEnd,
+            currentPeriodStart: subscription.currentPeriodStart,
+            createdAt: subscription.createdAt,
+            planId: subscription.planId
+          } : undefined,
+          plan: plan ? {
+            name: plan.name,
+            price: plan.price,
+            interval: plan.interval
+          } : undefined
+        };
+      }));
+
+      res.json(enrichedUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao listar usuários" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      // Prevent deleting self
+      if (req.user?.id === id) {
+        return res.status(400).json({ message: "Não é possível excluir seu próprio usuário" });
+      }
+
+      const success = await storage.deleteUser(id);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ message: "Usuário não encontrado" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir usuário" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const updatedUser = await storage.updateUser(id, req.body);
+      if (updatedUser) {
+        const { password, ...safeUser } = updatedUser;
+        res.json(safeUser);
+      } else {
+        res.status(404).json({ message: "Usuário não encontrado" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar usuário" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/change-plan", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { planId } = req.body;
+
+      if (isNaN(userId) || !planId) {
+        return res.status(400).json({ message: "Dados inválidos" });
+      }
+
+      const subscription = await storage.getUserSubscription(userId);
+      if (subscription) {
+        await storage.updateUserSubscription(subscription.id, { planId });
+        res.json({ success: true });
+      } else {
+        // Create new subscription if none exists
+        await storage.createUserSubscription({
+          userId,
+          planId,
+          status: 'active',
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          stripeSubscriptionId: `sub_manual_${Date.now()}`,
+          stripeCustomerId: `cus_manual_${Date.now()}`
+        });
+        res.json({ success: true });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao alterar plano" });
+    }
+  });
+
+  // Doctor Dashboard Stats
+  app.get("/api/doctor/dashboard-stats", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const stats = await storage.getDoctorDashboardStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar estatísticas do painel" });
+    }
+  });
+
   // Aplicar middleware de log para todas as rotas
   app.use(logRequest);
 
@@ -578,13 +701,13 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
       }
-      
+
       // Extrai userId da sessão autenticada
       const userId = req.user.id;
-      
+
       // Verificar se temos dados suficientes
       const { name, fileType, fileContent, laboratoryName, examDate, profileId: rawProfileId } = req.body;
-      
+
       // Determinar paciente ativo
       const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
         const parts = cookie.trim().split('=');
@@ -595,7 +718,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
         return acc;
       }, {} as Record<string, string>) || {};
-      
+
       let profileId = rawProfileId ? Number(rawProfileId) : undefined;
       if (!profileId && cookies['active_profile_id']) {
         const parsed = Number(cookies['active_profile_id']);
@@ -603,46 +726,46 @@ export async function registerRoutes(app: Express): Promise<void> {
           profileId = parsed;
         }
       }
-      
+
       if (!profileId || Number.isNaN(profileId)) {
         return res.status(400).json({ message: "Selecione um paciente antes de enviar o exame." });
       }
-      
+
       const profile = await storage.getProfile(profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Paciente inválido para este profissional." });
       }
-      
+
       if (!name || !fileType || !fileContent) {
         return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
       }
-      
+
       // Importamos o novo pipeline dinâmicamente para evitar dependência circular
       const { runAnalysisPipeline } = await import('./services/analyze-pipeline');
-      
+
       // Executar o pipeline completo
       const result = await runAnalysisPipeline({
         userId,
         profileId,
         name,
-        fileType, 
+        fileType,
         fileContent,
         laboratoryName,
         examDate
       });
-      
+
       // Retornar resultado
       res.status(200).json(result);
-      
+
     } catch (error: unknown) {
-      res.status(500).json({ 
-        message: "Erro ao processar o exame", 
+      res.status(500).json({
+        message: "Erro ao processar o exame",
         error: error instanceof Error ? error.message : String(error),
         stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       });
     }
   });
-  
+
   // API route for quick one-click document summary generation
   app.post("/api/exams/quick-summary", ensureAuthenticated, async (req, res) => {
     try {
@@ -650,24 +773,24 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
       }
-      
+
       // Extrai userId da sessão autenticada
       const userId = req.user.id;
-      
+
       // Verificar se temos dados suficientes
       const { fileType, fileContent } = req.body;
-      
+
       if (!fileType || !fileContent) {
         return res.status(400).json({ message: "Dados incompletos para análise. Tipo de arquivo e conteúdo são obrigatórios." });
       }
-      
+
       if (!process.env.OPENAI_API_KEY) {
         return res.status(503).json({ message: "Serviço de análise indisponível. Configure a chave da OpenAI." });
       }
 
       // Extração direta com OpenAI
       const analysisResult = await analyzeDocumentWithOpenAI(fileContent, fileType);
-      
+
       // Preparar o resumo final
       const quickSummary = {
         summary: analysisResult.summary || "Não foi possível gerar um resumo para este documento.",
@@ -677,30 +800,30 @@ export async function registerRoutes(app: Express): Promise<void> {
         examDate: analysisResult.examDate || new Date().toISOString().split('T')[0],
         aiProvider: analysisResult.aiProvider || "openai"
       };
-      
+
       // Retornar resultado
       res.status(200).json(quickSummary);
-      
+
     } catch (error: unknown) {
-      res.status(500).json({ 
-        message: "Erro ao gerar resumo rápido", 
+      res.status(500).json({
+        message: "Erro ao gerar resumo rápido",
         error: error instanceof Error ? error.message : String(error),
         stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       });
     }
   });
-  
+
   const handleVisionAnalysis = async (req: Request, res: Response) => {
     const requestId = nanoid();
     let s3Info:
       | {
-          key: string;
-          bucket: string;
-          url: string;
-          size: number;
-          mimeType: string;
-          originalName: string;
-        }
+        key: string;
+        bucket: string;
+        url: string;
+        size: number;
+        mimeType: string;
+        originalName: string;
+      }
       | undefined;
     try {
       logger.info("[UploadFlow] Upload recebido para análise", {
@@ -756,10 +879,10 @@ export async function registerRoutes(app: Express): Promise<void> {
           (normalizedFileType === "pdf"
             ? "application/pdf"
             : normalizedFileType === "png"
-            ? "image/png"
-            : normalizedFileType === "jpeg"
-            ? "image/jpeg"
-            : "application/octet-stream");
+              ? "image/png"
+              : normalizedFileType === "jpeg"
+                ? "image/jpeg"
+                : "application/octet-stream");
 
         s3Info = await S3Service.uploadExamDocument({
           userId,
@@ -820,14 +943,14 @@ export async function registerRoutes(app: Express): Promise<void> {
         fileType: normalizedFileType,
         storage: s3Info
           ? {
-              provider: "aws-s3",
-              bucket: s3Info.bucket,
-              key: s3Info.key,
-              size: s3Info.size,
-              mimeType: s3Info.mimeType,
-              originalName: s3Info.originalName,
-              expiresAt: Date.now() + 3600 * 1000,
-            }
+            provider: "aws-s3",
+            bucket: s3Info.bucket,
+            key: s3Info.key,
+            size: s3Info.size,
+            mimeType: s3Info.mimeType,
+            originalName: s3Info.originalName,
+            expiresAt: Date.now() + 3600 * 1000,
+          }
           : undefined,
       });
       logger.info("[UploadFlow] Análise concluída com sucesso", {
@@ -885,7 +1008,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         hasAnalysisResult: Boolean(analysisResult),
         patientDataKeys: Object.keys(patientData || {})
       });
-      
+
       if (!analysisResult) {
         logger.warn("[UploadFlow] Interpretação sem resultado de análise", {
           requestId,
@@ -893,11 +1016,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
         return res.status(400).json({ message: "Resultado da análise é obrigatório" });
       }
-      
+
       // Temporariamente removemos a verificação de autenticação para diagnóstico
-      
+
       const enrichedPatientData = await buildPatientRecordContext(req.user!.id, patientData || {});
-      
+
       // Formatar como ExamResult para passar para o OpenAI
       const formattedResult = {
         id: 0, // ID temporário
@@ -905,13 +1028,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         analysisDate: new Date(),
         summary: analysisResult.summary,
         detailedAnalysis: analysisResult.detailedAnalysis,
-        recommendations: Array.isArray(analysisResult.recommendations) 
-          ? analysisResult.recommendations.join('\n') 
+        recommendations: Array.isArray(analysisResult.recommendations)
+          ? analysisResult.recommendations.join('\n')
           : analysisResult.recommendations,
         healthMetrics: analysisResult.healthMetrics,
         aiProvider: "openai"
       };
-      
+
       // Gerar insights usando OpenAI com contexto do paciente
       const insights = await generateHealthInsights(formattedResult, enrichedPatientData);
       res.json(insights);
@@ -931,10 +1054,10 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao interpretar análise com OpenAI API" });
     }
   });
-  
+
   app.post("/api/exams", ensureAuthenticated, async (req, res) => {
     const requestId = nanoid();
-    try {  
+    try {
       logger.info("[UploadFlow] Iniciando persistência do exame", {
         requestId,
         route: req.path,
@@ -947,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Sempre usar o userId do corpo da requisição para diagnóstico
       // Esta é uma medida temporária para garantir que os exames sejam salvos
       let userId = req.body.userId;
-      
+
       if (!userId) {
         // Tenta obter do usuário autenticado se disponível
         if (req.isAuthenticated() && req.user) {
@@ -957,7 +1080,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           return res.status(400).json({ message: "Erro: userId é obrigatório" });
         }
       }
-      
+
       // Adicionando cookie auxiliar para facilitar a autenticação em requisições futuras
       if (userId) {
         res.cookie('auth_user_id', userId.toString(), {
@@ -968,7 +1091,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           path: '/'
         });
       }
-      
+
       // Garantir associação com o paciente selecionado
       const {
         requestingPhysician,
@@ -1001,7 +1124,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
         return res.status(403).json({ message: "Paciente inválido para este profissional." });
       }
-      
+
       const examData = {
         ...bodyWithoutProfile,
         userId,
@@ -1053,13 +1176,13 @@ export async function registerRoutes(app: Express): Promise<void> {
               storageProvider || "lab-results",
               storageSize ?? null,
               storageMimeType ||
-                (examData.fileType === "pdf"
-                  ? "application/pdf"
-                  : examData.fileType === "jpeg"
+              (examData.fileType === "pdf"
+                ? "application/pdf"
+                : examData.fileType === "jpeg"
                   ? "image/jpeg"
                   : examData.fileType === "png"
-                  ? "image/png"
-                  : "application/octet-stream"),
+                    ? "image/png"
+                    : "application/octet-stream"),
               JSON.stringify({
                 ...metadata,
                 originalName: storageOriginalName || newExam.name,
@@ -1104,11 +1227,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao criar exame" });
     }
   });
-  
+
   // API para salvar resultados de exames - com requisito de autenticação
   app.post("/api/exam-results", ensureAuthenticated, async (req, res) => {
     const requestId = nanoid();
-    try {      
+    try {
       logger.info("[UploadFlow] Persistindo resultado do exame", {
         requestId,
         route: req.path,
@@ -1121,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         ...req.body,
         analysisDate: new Date()
       };
-      
+
       // Verificar se o exame existe
       const exam = await storage.getExam(resultData.examId);
       if (!exam) {
@@ -1132,9 +1255,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       // Temporariamente removida a verificação de propriedade para diagnóstico
-      
+
       const newResult = await storage.createExamResult(resultData);
       res.status(201).json(newResult);
       logger.info("[UploadFlow] Resultado salvo com sucesso", {
@@ -1154,11 +1277,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao salvar resultado do exame" });
     }
   });
-  
+
   // API para salvar métricas de saúde - com requisito de autenticação
   app.post("/api/health-metrics", ensureAuthenticated, async (req, res) => {
     const requestId = nanoid();
-    try {      
+    try {
       logger.info("[UploadFlow] Persistindo métrica de saúde", {
         requestId,
         route: req.path,
@@ -1170,12 +1293,12 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
       // Permitir que userId venha do corpo da requisição
       let userId = req.body.userId;
-      
+
       // Tenta obter da sessão se não estiver no corpo
       if (!userId && req.isAuthenticated() && req.user) {
         userId = req.user.id;
       }
-      
+
       // Verificar se temos userId válido
       if (!userId) {
         logger.warn("[UploadFlow] Métrica sem usuário associado", {
@@ -1184,7 +1307,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
-      
+
       const profileId = req.body.profileId ? Number(req.body.profileId) : undefined;
       if (!profileId || Number.isNaN(profileId)) {
         logger.warn("[UploadFlow] Métrica com profileId inválido", {
@@ -1207,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Converte para formato correto e ajusta os dados
       const date = req.body.date ? new Date(req.body.date) : new Date();
-      
+
       // Verifica se todos os campos obrigatórios existem e estão em formato correto
       const examId = req.body.examId ? Number(req.body.examId) : undefined;
 
@@ -1222,7 +1345,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         date,
         examId: examId && !Number.isNaN(examId) ? examId : null
       };
-      
+
       const newMetric = await storage.createHealthMetric(metricData);
       res.status(201).json(newMetric);
       logger.info("[UploadFlow] Métrica de saúde salva", {
@@ -1243,7 +1366,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao salvar métrica de saúde" });
     }
   });
-  
+
   // Rota para excluir um exame
   app.delete("/api/exams/:examId", ensureAuthenticated, rbacSystem.requirePermission('exam', 'delete'), async (req, res) => {
     try {
@@ -1251,51 +1374,51 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
       }
-      
+
       const examId = parseInt(req.params.examId);
       if (isNaN(examId)) {
         return res.status(400).json({ message: "ID do exame inválido" });
       }
-      
+
       // Buscar o exame para verificar a propriedade
       const exam = await storage.getExam(examId);
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       // Verificar se o usuário é dono do exame
       if (exam.userId !== req.user.id) {
         return res.status(403).json({ message: "Você não tem permissão para excluir este exame" });
       }
-      
+
       // Primeiro excluir as métricas associadas a este exame
       const examResult = await storage.getExamResultByExamId(examId);
-      
+
       if (examResult) {
         // Buscar IDs das métricas associadas ao exame (se houver)
         let healthMetricsIds: number[] = [];
-        
+
         if (examResult.healthMetrics && Array.isArray(examResult.healthMetrics)) {
           // Extrair IDs de métricas que são objetos com um campo ID
           healthMetricsIds = examResult.healthMetrics
             .filter((metric: any) => metric && typeof metric === 'object' && 'id' in metric)
             .map((metric: any) => metric.id);
         }
-          
+
         // Excluir as métricas associadas
         for (const metricId of healthMetricsIds) {
           if (metricId) {
             await storage.deleteHealthMetric(metricId);
           }
         }
-        
+
         // Excluir o resultado do exame
         await storage.deleteExamResult(examResult.id);
       }
-      
+
       // Agora excluir o exame
       const deleted = await storage.deleteExam(examId);
-      
+
       if (deleted) {
         res.status(200).json({ message: "Exame excluído com sucesso" });
       } else {
@@ -1305,9 +1428,9 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao excluir o exame" });
     }
   });
-  
+
   app.get("/api/exams", ensureAuthenticated, rbacSystem.requirePermission('exam', 'read'), async (req, res) => {
-    try {      
+    try {
       // Tenta extrair userId dos cookies
       const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
         const parts = cookie.trim().split('=');
@@ -1318,13 +1441,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
         return acc;
       }, {} as Record<string, string>) || {};
-      
+
       let userId: number | undefined;
-      
+
       // Se autenticado, usa o userId do req.user
       if (req.isAuthenticated() && req.user) {
         userId = req.user.id;
-      } 
+      }
       // Se não autenticado, tenta pegar do cookie auxiliar
       else if (cookies['auth_user_id']) {
         userId = parseInt(cookies['auth_user_id']);
@@ -1332,7 +1455,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           // Usando userId do cookie
         }
       }
-      
+
       // Verificar se temos userId válido
       if (!userId) {
         // Permitir query param userId para testes em ambiente de desenvolvimento
@@ -1342,7 +1465,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
       }
-      
+
       let profileId: number | undefined;
       if (req.query.profileId) {
         const parsed = Number(req.query.profileId);
@@ -1375,37 +1498,37 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar exames", error: error?.message || 'Erro desconhecido' });
     }
   });
-  
+
   app.get("/api/exams/:id", ensureAuthenticated, async (req, res) => {
-    try {      
+    try {
       const examId = parseInt(req.params.id);
-      
+
       // Verificar autenticação
       if (!req.isAuthenticated() || !req.user) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       let userId = req.user.id;
-      
+
       const exam = await storage.getExam(examId);
-      
+
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       // Para diagnóstico, permitimos acesso mesmo sem autenticação
       if (req.isAuthenticated() && userId !== exam.userId) {
         // Aviso: usuário tentando acessar exame de outro usuário
         // Não bloqueamos o acesso para diagnóstico
       }
-      
+
       const examResult = await storage.getExamResultByExamId(examId);
-      
+
       res.json({ exam, result: examResult });
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar exame" });
     }
   });
-  
+
   // API route for health insights
   // Nova rota para analisar um exame já extraído com a OpenAI
   app.post("/api/exams/:id/analyze", ensureAuthenticated, async (req, res) => {
@@ -1413,73 +1536,73 @@ export async function registerRoutes(app: Express): Promise<void> {
       // ensureAuthenticated garante que req.user não será undefined
       const examId = parseInt(req.params.id, 10);
       const userId = req.user!.id;
-      
+
       if (isNaN(examId)) {
         return res.status(400).json({ message: "ID de exame inválido" });
       }
-      
+
       // Verificar se o exame existe e pertence ao usuário
       const exam = await storage.getExam(examId);
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       if (exam.userId !== userId) {
         return res.status(403).json({ message: "Acesso não autorizado a este exame" });
       }
-      
+
       // Extrair dados do paciente do corpo da requisição, se disponíveis
       const requestPatientData = req.body.patientData || {};
       const patientData = await buildPatientRecordContext(userId, requestPatientData);
-      
+
       // Chamar o serviço de análise da OpenAI
       const result = await analyzeExtractedExam(examId, userId, storage, patientData);
-      
+
       if (result.error) {
         return res.status(400).json(result);
       }
-      
+
       res.status(200).json(result);
     } catch (error) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Erro ao analisar o exame",
         error: String(error)
       });
     }
   });
-  
+
   app.get("/api/exams/:id/insights", ensureAuthenticated, async (req, res) => {
     try {
       const examId = parseInt(req.params.id);
-      
+
       // Verificar autenticação
       if (!req.isAuthenticated() || !req.user) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
       }
       let userId = req.user.id;
-      
+
       const exam = await storage.getExam(examId);
-      
+
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       // Para diagnóstico, permitimos acesso mesmo sem autenticação
       if (req.isAuthenticated() && userId !== exam.userId) {
         // Aviso: usuário tentando acessar insights de outro usuário
         // Não bloqueamos o acesso para diagnóstico
       }
-      
+
       const examResult = await storage.getExamResultByExamId(examId);
-      
+
       if (!examResult) {
         return res.status(404).json({ message: "Resultado do exame não encontrado" });
       }
-      
+
       // Obter dados do paciente para contextualização
       // Se não estiver autenticado, usamos dados genéricos
       let user = req.isAuthenticated() ? req.user! : null;
-      
+
       // Obter dados de histórico médico (se fornecidos via query params)
       let patientData = null;
       if (req.query.patientData) {
@@ -1507,10 +1630,10 @@ export async function registerRoutes(app: Express): Promise<void> {
           allergies: []
         };
       }
-      
+
       const ownerId = req.isAuthenticated() && req.user ? req.user.id : exam.userId;
       const enrichedPatientData = await buildPatientRecordContext(ownerId, patientData || {});
-      
+
       // Chamada à OpenAI com contexto do paciente
       const insights = await generateHealthInsights(examResult, enrichedPatientData);
       res.json(insights);
@@ -1518,7 +1641,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao gerar insights" });
     }
   });
-  
+
   // API routes for health metrics
   app.get("/api/health-metrics", ensureAuthenticated, rbacSystem.requirePermission('health_metrics', 'read'), async (req, res) => {
     try {
@@ -1580,13 +1703,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
         return acc;
       }, {} as Record<string, string>) || {};
-      
+
       let userId: number | undefined;
-      
+
       // Se autenticado, usa o userId do req.user
       if (req.isAuthenticated() && req.user) {
         userId = req.user.id;
-      } 
+      }
       // Se não autenticado, tenta pegar do cookie auxiliar
       else if (cookies['auth_user_id']) {
         userId = parseInt(cookies['auth_user_id']);
@@ -1594,7 +1717,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           // Usando userId do cookie
         }
       }
-      
+
       // Verificar se temos userId válido
       if (!userId) {
         // Permitir query param userId para testes em ambiente de desenvolvimento
@@ -1604,7 +1727,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login." });
         }
       }
-      
+
       let profileId: number | undefined;
       if (req.query.profileId) {
         const parsed = Number(req.query.profileId);
@@ -1641,7 +1764,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar métricas de saúde" });
     }
   });
-  
+
   // Rota para excluir todas as métricas de saúde de um usuário
   app.delete("/api/health-metrics/user/:userId", ensureAuthenticated, async (req, res) => {
     try {
@@ -1649,18 +1772,18 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "Usuário não autenticado. Por favor, faça login novamente." });
       }
-      
+
       // Verificar se o usuário está tentando excluir suas próprias métricas
       // Em um ambiente real, você poderia adicionar verificação de admin aqui
       const targetUserId = parseInt(req.params.userId);
       if (isNaN(targetUserId)) {
         return res.status(400).json({ message: "ID de usuário inválido" });
       }
-      
+
       if (targetUserId !== req.user.id) {
         return res.status(403).json({ message: "Você não tem permissão para excluir métricas de outro usuário" });
       }
-      
+
       let profileId: number | undefined;
       if (req.query.profileId) {
         const parsed = Number(req.query.profileId);
@@ -1680,16 +1803,16 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Executar a exclusão
       const count = await storage.deleteAllHealthMetricsByUserId(targetUserId, profileId);
-      
-      res.status(200).json({ 
-        message: `${count} métricas de saúde excluídas com sucesso`, 
-        count 
+
+      res.status(200).json({
+        message: `${count} métricas de saúde excluídas com sucesso`,
+        count
       });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir métricas de saúde" });
     }
   });
-  
+
   // API routes for notifications
   app.get("/api/notifications", ensureAuthenticated, async (req, res) => {
     try {
@@ -1699,31 +1822,31 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar notificações" });
     }
   });
-  
+
   app.post("/api/notifications/:id/read", ensureAuthenticated, async (req, res) => {
     try {
       const notificationId = parseInt(req.params.id);
       const notification = await storage.markNotificationAsRead(notificationId);
-      
+
       if (!notification) {
         return res.status(404).json({ message: "Notificação não encontrada" });
       }
-      
+
       res.json(notification);
     } catch (error) {
       res.status(500).json({ message: "Erro ao marcar notificação como lida" });
     }
   });
-  
+
   // API routes for user profile
   app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {
       const updatedUser = await storage.updateUser(req.user!.id, req.body);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
@@ -1748,7 +1871,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao interpretar anamnese" });
     }
   });
-  
+
   // API routes for diagnoses
   app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
     try {
@@ -1780,7 +1903,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const diagnosisId = parseInt(req.params.id);
       const diagnosis = await storage.getDiagnosis(diagnosisId);
-      
+
       if (!diagnosis) {
         return res.status(404).json({ message: "Diagnóstico não encontrado" });
       }
@@ -1800,7 +1923,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const diagnosisId = parseInt(req.params.id);
       const diagnosis = await storage.getDiagnosis(diagnosisId);
-      
+
       if (!diagnosis) {
         return res.status(404).json({ message: "Diagnóstico não encontrado" });
       }
@@ -1821,11 +1944,11 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       // Buscar todos os resultados de exames do usuário
       const exams = await storage.getExamsByUserId(req.user!.id);
-      
+
       if (!exams || exams.length === 0) {
         return res.status(404).json({ message: "Nenhum exame encontrado para análise" });
       }
-      
+
       // Buscar resultados de exames
       const examResults = [];
       for (const exam of exams) {
@@ -1838,23 +1961,23 @@ export async function registerRoutes(app: Express): Promise<void> {
           });
         }
       }
-      
+
       if (examResults.length === 0) {
         return res.status(404).json({ message: "Nenhum resultado de exame encontrado para análise" });
       }
-      
+
       // Ordenar resultados por data (do mais antigo para o mais recente)
       examResults.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      
+
       // Buscar dados do usuário para contextualização
       const user = req.user!;
-      
+
       // Obter parâmetros adicionais do paciente (se fornecidos)
       const patientData = req.query.patientData ? JSON.parse(req.query.patientData as string) : null;
-      
+
       // Gerar relatório cronológico
       const report = await generateChronologicalReport(examResults, user);
-      
+
       res.json(report);
     } catch (error) {
       res.status(500).json({ message: "Erro ao gerar relatório cronológico" });
@@ -1870,7 +1993,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar perfis do usuário" });
     }
   });
-  
+
   app.post("/api/profiles", ensureAuthenticated, async (req, res) => {
     try {
       const profileData = {
@@ -1878,54 +2001,54 @@ export async function registerRoutes(app: Express): Promise<void> {
         userId: req.user!.id,
         createdAt: new Date()
       };
-      
+
       const newProfile = await storage.createProfile(profileData);
       res.status(201).json(newProfile);
     } catch (error) {
       res.status(500).json({ message: "Erro ao criar perfil" });
     }
   });
-  
+
   app.put("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
     try {
       const profileId = parseInt(req.params.id);
-      
+
       // Verificar se o perfil existe e pertence ao usuário
       const profile = await storage.getProfile(profileId);
       if (!profile) {
         return res.status(404).json({ message: "Perfil não encontrado" });
       }
-      
+
       if (profile.userId !== req.user!.id) {
         return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
       }
-      
+
       const updatedProfile = await storage.updateProfile(profileId, req.body);
       res.json(updatedProfile);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar perfil" });
     }
   });
-  
+
   app.delete("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
     try {
       const profileId = parseInt(req.params.id);
-      
+
       // Verificar se o perfil existe e pertence ao usuário
       const profile = await storage.getProfile(profileId);
       if (!profile) {
         return res.status(404).json({ message: "Perfil não encontrado" });
       }
-      
+
       if (profile.userId !== req.user!.id) {
         return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
       }
-      
+
       // Não permitir a exclusão do perfil principal
       if (profile.isDefault) {
         return res.status(400).json({ message: "Não é possível excluir o perfil principal" });
       }
-      
+
       const success = await storage.deleteProfile(profileId);
       if (success) {
         res.status(200).json({ message: "Perfil excluído com sucesso" });
@@ -1936,7 +2059,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao excluir perfil" });
     }
   });
-  
+
   // API routes for active profile switch
   app.put("/api/users/active-profile", ensureAuthenticated, async (req, res) => {
     try {
@@ -1944,17 +2067,17 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!profileId) {
         return res.status(400).json({ message: "ID do perfil é obrigatório" });
       }
-      
+
       // Verificar se o perfil existe e pertence ao usuário
       const profile = await storage.getProfile(profileId);
       if (!profile) {
         return res.status(404).json({ message: "Perfil não encontrado" });
       }
-      
+
       if (profile.userId !== req.user!.id) {
         return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
       }
-      
+
       res.cookie('active_profile_id', profileId.toString(), {
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: false,
@@ -1979,20 +2102,20 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar planos de assinatura" });
     }
   });
-  
+
   app.get("/api/user-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
       const subscription = await storage.getUserSubscription(userId);
-      
+
       // Se não houver assinatura, retornar objeto vazio em vez de erro 404
       if (!subscription) {
         return res.json({ subscription: null, plan: null });
       }
-      
+
       // Buscar detalhes do plano de assinatura
       const plan = await storage.getSubscriptionPlan(subscription.planId);
-      
+
       res.json({
         subscription,
         plan
@@ -2001,7 +2124,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar assinatura do usuário" });
     }
   });
-  
+
   // Stripe payment route for one-time payments
   app.post("/api/create-payment-intent", async (req, res) => {
     try {
@@ -2009,13 +2132,13 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!planId) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
       }
-      
+
       // Buscar detalhes do plano
       const plan = await storage.getSubscriptionPlan(planId);
       if (!plan) {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
-      
+
       // Criar payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount: plan.price, // Preço já está em centavos
@@ -2026,13 +2149,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         },
         payment_method_types: ['card']
       });
-      
+
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
       res.status(500).json({ message: "Erro ao criar intenção de pagamento: " + error.message });
     }
   });
-  
+
   // Stripe subscription route
   app.post("/api/create-subscription", ensureAuthenticated, async (req, res) => {
     try {
@@ -2040,22 +2163,22 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!planId) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
       }
-      
+
       const userId = req.user!.id;
       const user = req.user!;
-      
+
       // Verificar se o usuário já tem uma assinatura ativa
       const existingSubscription = await storage.getUserSubscription(userId);
       if (existingSubscription && existingSubscription.status === "active") {
         return res.status(400).json({ message: "Usuário já possui uma assinatura ativa" });
       }
-      
+
       // Buscar detalhes do plano
       const plan = await storage.getSubscriptionPlan(planId);
       if (!plan) {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
-      
+
       // Se é o plano gratuito, criar assinatura diretamente sem pagamento
       if (plan.price === 0) {
         const subscription = await storage.createUserSubscription({
@@ -2065,18 +2188,18 @@ export async function registerRoutes(app: Express): Promise<void> {
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
         });
-        
-        return res.json({ 
-          success: true, 
+
+        return res.json({
+          success: true,
           subscription,
           plan,
           type: "free"
         });
       }
-      
+
       // Para planos pagos, criar um cliente no Stripe se não existir
       let stripeCustomerId = user.stripeCustomerId;
-      
+
       if (!stripeCustomerId) {
         const customer = await stripe.customers.create({
           email: user.email || undefined,
@@ -2085,13 +2208,13 @@ export async function registerRoutes(app: Express): Promise<void> {
             userId: userId.toString()
           }
         });
-        
+
         stripeCustomerId = customer.id;
-        
+
         // Atualizar o usuário com o ID do cliente Stripe
         await storage.updateUser(userId, { stripeCustomerId });
       }
-      
+
       // Criar SetupIntent para planos pagos (para configurar método de pagamento)
       const setupIntent = await stripe.setupIntents.create({
         customer: stripeCustomerId,
@@ -2101,7 +2224,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           planId: planId.toString()
         }
       });
-      
+
       res.json({
         clientSecret: setupIntent.client_secret,
         setupIntentId: setupIntent.id,
@@ -2113,15 +2236,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao configurar assinatura: " + error.message });
     }
   });
-  
+
   // Webhook para eventos do Stripe
   app.post("/api/webhook", async (req, res) => {
     let event;
-    
+
     try {
       // Verificar assinatura do webhook, necessário configurar o webhook secret
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      
+
       if (webhookSecret) {
         const signature = req.headers['stripe-signature'] as string;
         event = stripe.webhooks.constructEvent(
@@ -2133,15 +2256,15 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Para ambiente de desenvolvimento
         event = req.body;
       }
-      
+
       // Lidar com os eventos
       switch (event.type) {
         case 'payment_intent.succeeded':
           const paymentIntent = event.data.object;
-          
+
           // Extrair metadados
           const { userId, planId } = paymentIntent.metadata;
-          
+
           if (userId && planId) {
             // Criar assinatura para o usuário
             await storage.createUserSubscription({
@@ -2155,19 +2278,19 @@ export async function registerRoutes(app: Express): Promise<void> {
             });
           }
           break;
-          
+
         case 'setup_intent.succeeded':
           // Quando o método de pagamento é configurado com sucesso
           const setupIntent = event.data.object;
-          
+
           // Extrair metadados
           const setupMetadata = setupIntent.metadata;
-          
+
           if (setupMetadata.userId && setupMetadata.planId) {
             // Criar assinatura recorrente no Stripe
             // Aqui precisaríamos do ID do preço no Stripe para o plano selecionado
             const plan = await storage.getSubscriptionPlan(parseInt(setupMetadata.planId));
-            
+
             if (plan && plan.stripePriceId) {
               // Criar assinatura no Stripe
               const stripeSubscription = await stripe.subscriptions.create({
@@ -2176,7 +2299,7 @@ export async function registerRoutes(app: Express): Promise<void> {
                 default_payment_method: setupIntent.payment_method,
                 metadata: setupMetadata
               });
-              
+
               // Criar assinatura no banco de dados
               await storage.createUserSubscription({
                 userId: parseInt(setupMetadata.userId),
@@ -2190,18 +2313,18 @@ export async function registerRoutes(app: Express): Promise<void> {
             }
           }
           break;
-          
+
         case 'invoice.payment_succeeded':
           // Quando um pagamento recorrente é bem-sucedido
           const invoice = event.data.object;
-          
+
           if (invoice.subscription) {
             // Atualizar período da assinatura
             const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
-            
+
             // Encontrar assinatura no banco de dados
             const subscriptions = await storage.getAllSubscriptionsByStripeId(invoice.subscription);
-            
+
             for (const subscription of subscriptions) {
               // Atualizar período da assinatura
               await storage.updateUserSubscription(subscription.id, {
@@ -2211,39 +2334,39 @@ export async function registerRoutes(app: Express): Promise<void> {
             }
           }
           break;
-          
+
         case 'customer.subscription.deleted':
           // Quando uma assinatura é cancelada
           const canceledSubscription = event.data.object;
-          
+
           // Encontrar assinatura no banco de dados
           const subscriptions = await storage.getAllSubscriptionsByStripeId(canceledSubscription.id);
-          
+
           for (const subscription of subscriptions) {
             // Cancelar assinatura no banco de dados
             await storage.cancelUserSubscription(subscription.id);
           }
           break;
       }
-      
+
       res.json({ received: true });
     } catch (error) {
       res.status(400).send(`Webhook Error: ${error.message}`);
     }
   });
-  
+
   // Rota para cancelar assinatura
   app.post("/api/cancel-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Buscar assinatura do usuário
       const subscription = await storage.getUserSubscription(userId);
-      
+
       if (!subscription) {
         return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
       }
-      
+
       // Se tiver ID de assinatura do Stripe, cancelar no Stripe também
       if (subscription.stripeSubscriptionId) {
         try {
@@ -2254,10 +2377,10 @@ export async function registerRoutes(app: Express): Promise<void> {
           // Continuar mesmo com erro no Stripe, para garantir cancelamento local
         }
       }
-      
+
       // Cancelar no banco de dados
       const canceledSubscription = await storage.cancelUserSubscription(subscription.id);
-      
+
       res.json({
         success: true,
         subscription: canceledSubscription
@@ -2266,23 +2389,23 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao cancelar assinatura" });
     }
   });
-  
+
   // Rota para verificar limitações de perfil e uploads
   app.get("/api/subscription/limits", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Verificar se o usuário pode criar mais perfis
       const canCreateProfile = await storage.canCreateProfile(userId);
-      
+
       // Buscar assinatura e plano do usuário para informações detalhadas
       const subscription = await storage.getUserSubscription(userId);
       let plan = null;
-      
+
       if (subscription) {
         plan = await storage.getSubscriptionPlan(subscription.planId);
       }
-      
+
       res.json({
         canCreateProfile,
         subscription,
@@ -2298,23 +2421,23 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao verificar limites de assinatura" });
     }
   });
-  
+
   // Rota para atualizar informações do Stripe no usuário
   app.post("/api/update-stripe-info", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
       const { stripeCustomerId, stripeSubscriptionId } = req.body;
-      
+
       if (!stripeCustomerId && !stripeSubscriptionId) {
         return res.status(400).json({ message: "Pelo menos um ID do Stripe deve ser fornecido" });
       }
-      
+
       // Atualizar informações do Stripe no usuário
       const updatedUser = await storage.updateUserStripeInfo(userId, {
         stripeCustomerId,
         stripeSubscriptionId
       });
-      
+
       res.json({
         success: true,
         user: {
@@ -2328,38 +2451,38 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao atualizar informações do Stripe" });
     }
   });
-  
+
   // Rota para verificar se o usuário pode fazer upload para um perfil específico
   app.get("/api/subscription/can-upload/:profileId", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
       const profileId = parseInt(req.params.profileId);
-      
+
       // Verificar se o perfil existe e pertence ao usuário
       const profile = await storage.getProfile(profileId);
       if (!profile) {
         return res.status(404).json({ message: "Perfil não encontrado" });
       }
-      
+
       if (profile.userId !== userId) {
         return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
       }
-      
+
       // Verificar se o usuário pode fazer upload para este perfil
       const canUpload = await storage.canUploadExam(userId, profileId);
-      
+
       // Buscar assinatura e plano para informações detalhadas
       const subscription = await storage.getUserSubscription(userId);
       let plan = null;
       let uploadsUsed = 0;
-      
+
       if (subscription) {
         plan = await storage.getSubscriptionPlan(subscription.planId);
         // Verificar quantos uploads já foram feitos para este perfil
         const uploadsCount = subscription.uploadsCount as Record<string, number> || {};
         uploadsUsed = uploadsCount[profileId.toString()] || 0;
       }
-      
+
       res.json({
         canUpload,
         subscription,
@@ -2379,7 +2502,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const medicationData = { ...req.body, userId: user.id };
-      
+
       const result = await pool.query(`
         INSERT INTO medications (user_id, name, format, dosage, frequency, notes, start_date, is_active)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -2394,7 +2517,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         medicationData.startDate,
         medicationData.isActive !== false
       ]);
-      
+
       res.json(result.rows[0]);
     } catch (error) {
       res.status(500).json({ message: "Erro ao criar medicamento" });
@@ -2404,13 +2527,13 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      
+
       const result = await pool.query(`
         SELECT * FROM medications 
         WHERE user_id = $1 AND is_active = true
         ORDER BY created_at DESC
       `, [user.id]);
-      
+
       res.json(result.rows);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar medicamentos" });
@@ -2421,7 +2544,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
-      
+
       const result = await pool.query(`
         UPDATE medications 
         SET name = $1, format = $2, dosage = $3, frequency = $4, notes = $5, start_date = $6
@@ -2437,11 +2560,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         id,
         user.id
       ]);
-      
+
       if (result.rows.length === 0) {
         return res.status(404).json({ message: "Medicamento não encontrado" });
       }
-      
+
       res.json(result.rows[0]);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar medicamento" });
@@ -2452,12 +2575,12 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
-      
+
       await pool.query(`
         UPDATE medications SET is_active = false 
         WHERE id = $1 AND user_id = $2
       `, [id, user.id]);
-      
+
       res.json({ message: "Medicamento excluído com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir medicamento" });
@@ -2553,7 +2676,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       console.log('Exportando PDF para usuário:', user.id);
-      
+
       // Buscar dados do usuário
       const examsResult = await pool.query(`
         SELECT * FROM exams 
@@ -2561,14 +2684,14 @@ export async function registerRoutes(app: Express): Promise<void> {
         ORDER BY exam_date DESC
       `, [user.id]);
       console.log('Exames encontrados:', examsResult.rows.length);
-      
+
       const diagnosesResult = await pool.query(`
         SELECT * FROM diagnoses 
         WHERE user_id = $1 
         ORDER BY diagnosis_date DESC
       `, [user.id]);
       console.log('Diagnósticos encontrados:', diagnosesResult.rows.length);
-      
+
       const medicationsResult = await pool.query(`
         SELECT * FROM medications 
         WHERE user_id = $1 AND is_active = true
@@ -2602,7 +2725,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('HTML gerado, tamanho:', htmlContent.length);
 
       // Configurações do PDF
-      const options = { 
+      const options = {
         format: 'A4',
         margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
         printBackground: true
@@ -2611,15 +2734,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Gerar PDF usando html-pdf-node
       const { generatePdf } = await import('html-pdf-node');
       const file = { content: htmlContent };
-      
+
       console.log('Gerando PDF...');
       const pdfBuffer = await generatePdf(file, options);
       console.log('PDF gerado, tamanho:', pdfBuffer.length);
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="relatorio-saude-${user.username}.pdf"`);
       res.send(pdfBuffer);
-      
+
     } catch (error) {
       console.error('Erro detalhado na geração do PDF:', error);
       res.status(500).json({ message: "Erro ao gerar relatório de saúde", error: error.message });
@@ -2631,9 +2754,9 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const examId = parseInt(req.params.examId);
-      
+
       console.log('Exportando PDF do exame:', examId, 'para usuário:', user.id);
-      
+
       // Buscar dados do exame específico
       const examResult = await pool.query(`
         SELECT e.*, er.summary, er.detailed_analysis, er.recommendations, er.analysis_date
@@ -2641,21 +2764,21 @@ export async function registerRoutes(app: Express): Promise<void> {
         LEFT JOIN exam_results er ON e.id = er.exam_id
         WHERE e.id = $1 AND e.user_id = $2
       `, [examId, user.id]);
-      
+
       if (examResult.rows.length === 0) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
-      
+
       const exam = examResult.rows[0];
       console.log('Exame encontrado:', exam.name);
-      
+
       // Buscar métricas do exame
       const metricsResult = await pool.query(`
         SELECT * FROM health_metrics 
         WHERE exam_id = $1 
         ORDER BY date DESC
       `, [examId]);
-      
+
       // Gerar HTML do relatório do exame
       const htmlContent = generateExamReportHTML({
         user,
@@ -2665,7 +2788,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('HTML gerado, tamanho:', htmlContent.length);
 
       // Configurações do PDF
-      const options = { 
+      const options = {
         format: 'A4',
         margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
         printBackground: true
@@ -2674,15 +2797,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Gerar PDF usando html-pdf-node
       const { generatePdf } = await import('html-pdf-node');
       const file = { content: htmlContent };
-      
+
       console.log('Gerando PDF...');
       const pdfBuffer = await generatePdf(file, options);
       console.log('PDF gerado, tamanho:', pdfBuffer.length);
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="relatorio-exame-${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
       res.send(pdfBuffer);
-      
+
     } catch (error) {
       console.error('Erro detalhado na geração do PDF do exame:', error);
       res.status(500).json({ message: "Erro ao gerar relatório do exame", error: error.message });
@@ -2696,7 +2819,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const violation = rawBody && typeof rawBody === 'object'
         ? (rawBody['csp-report'] ?? rawBody)
         : {};
-      
+
       // Log CSP violations for monitoring
       console.warn('[CSP Violation Report]', {
         timestamp: new Date().toISOString(),

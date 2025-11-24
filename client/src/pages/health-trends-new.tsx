@@ -1111,8 +1111,8 @@ export default function HealthTrendsNew() {
               Timeline temporarily disabled for debugging
             </div>
           </div>
-      </div >
-    </main >
+      </main>
+    </div>
 
     {/* Dialog de Edição de Diagnóstico */ }
   < Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} >
@@ -1729,7 +1729,6 @@ export default function HealthTrendsNew() {
       </Form>
     </DialogContent>
   </Dialog >
-      </div >
-    </div >
+    </div>
   );
 }

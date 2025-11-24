@@ -1,55 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { 
-  Search, 
-  Users, 
-  CreditCard, 
-  Settings, 
-  Edit, 
-  Trash, 
-  MoreVertical, 
-  Shield, 
+import {
+  Search,
+  Users,
+  CreditCard,
+  Settings,
+  Edit,
+  Trash,
+  MoreVertical,
+  Shield,
   UserIcon,
   ArrowLeft
 } from 'lucide-react';
@@ -94,6 +94,8 @@ interface UserWithSubscription extends AdminUser {
     id: number;
     status: string;
     currentPeriodEnd: string;
+    currentPeriodStart: string;
+    createdAt: string;
     planId: number;
   };
   plan?: {
@@ -117,22 +119,22 @@ export default function AdminPanel() {
   const [isPlanEditOpen, setIsPlanEditOpen] = useState(false);
 
   // Consulta para obter a lista de usuários
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery<UserWithSubscription[]>({ 
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery<UserWithSubscription[]>({
     queryKey: ['/api/admin/users'],
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
   // Consulta para obter a lista de planos de assinatura
-  const { data: allSubscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<AdminPlan[]>({ 
+  const { data: allSubscriptionPlans = [], isLoading: isLoadingPlans } = useQuery<AdminPlan[]>({
     queryKey: ['/api/subscription-plans'],
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
   // Remover planos duplicados baseado no nome e configurações
-  const subscriptionPlans = allSubscriptionPlans.filter((plan, index, self) => 
-    index === self.findIndex(p => 
-      p.name === plan.name && 
-      p.maxProfiles === plan.maxProfiles && 
+  const subscriptionPlans = allSubscriptionPlans.filter((plan, index, self) =>
+    index === self.findIndex(p =>
+      p.name === plan.name &&
+      p.maxProfiles === plan.maxProfiles &&
       p.maxUploadsPerProfile === plan.maxUploadsPerProfile &&
       p.price === plan.price
     )
@@ -140,15 +142,15 @@ export default function AdminPanel() {
 
   // Função para contar usuários ativos por plano
   const getUserCountForPlan = (planId: number): number => {
-    return users.filter(user => 
-      user.subscription?.planId === planId && 
+    return users.filter(user =>
+      user.subscription?.planId === planId &&
       user.subscription?.status === 'active'
     ).length;
   };
 
   // Verificar se o usuário atual é um administrador
   const { data: currentUser } = useQuery({ queryKey: ['/api/user'] });
-  
+
   // Redirecionar se o usuário não for um administrador
   useEffect(() => {
     if (currentUser && currentUser.role !== 'admin') {
@@ -164,20 +166,20 @@ export default function AdminPanel() {
   // Filtrar usuários com base no termo de pesquisa
   const filteredUsers = users.filter(user => {
     if (!user.username && !user.fullName && !user.email) return false;
-    
+
     const searchableFields = [
       user.username || '',
       user.fullName || '',
       user.email || '',
     ].map(field => field.toLowerCase());
-    
+
     return searchableFields.some(field => field.includes(searchTerm.toLowerCase()));
   });
 
   // Função para editar usuário
   const handleEditUser = async (userData: Partial<AdminUser>) => {
     if (!selectedUser) return;
-    
+
     try {
       const response = await apiRequest('PATCH', `/api/admin/users/${selectedUser.id}`, userData);
       if (response.ok) {
@@ -203,7 +205,7 @@ export default function AdminPanel() {
   // Função para excluir usuário
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    
+
     try {
       const response = await apiRequest('DELETE', `/api/admin/users/${selectedUser.id}`);
       if (response.ok) {
@@ -229,7 +231,7 @@ export default function AdminPanel() {
   // Função para alterar o plano do usuário
   const handleChangePlan = async (planId: number) => {
     if (!selectedUser) return;
-    
+
     try {
       const response = await apiRequest('POST', `/api/admin/users/${selectedUser.id}/change-plan`, { planId });
       if (response.ok) {
@@ -255,9 +257,9 @@ export default function AdminPanel() {
   // Função para conceder papel de administrador
   const handleToggleAdminRole = async (user: UserWithSubscription) => {
     if (!user.role) return;
-    
+
     const newRole = user.role === 'admin' ? 'user' : 'admin';
-    
+
     try {
       const response = await apiRequest('PATCH', `/api/admin/users/${user.id}`, { role: newRole });
       if (response.ok) {
@@ -282,8 +284,8 @@ export default function AdminPanel() {
   // Função para ativar/desativar plano
   const handleTogglePlanStatus = async (plan: AdminPlan) => {
     try {
-      const response = await apiRequest('PATCH', `/api/admin/plans/${plan.id}`, { 
-        isActive: !plan.isActive 
+      const response = await apiRequest('PATCH', `/api/admin/plans/${plan.id}`, {
+        isActive: !plan.isActive
       });
       if (response.ok) {
         toast({
@@ -307,7 +309,7 @@ export default function AdminPanel() {
   // Função para editar plano
   const handleEditPlan = async (planData: Partial<AdminPlan>) => {
     if (!selectedPlan) return;
-    
+
     try {
       const response = await apiRequest('PATCH', `/api/admin/plans/${selectedPlan.id}`, planData);
       if (response.ok) {
@@ -358,7 +360,7 @@ export default function AdminPanel() {
       </div>
       <h1 className="text-3xl font-bold mb-2">Painel de Administração</h1>
       <p className="text-muted-foreground mb-6">Gerencie usuários, planos e configurações do sistema</p>
-      
+
       <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
           <TabsTrigger value="users" className="flex items-center gap-2">
@@ -374,7 +376,7 @@ export default function AdminPanel() {
             <span>Configurações</span>
           </TabsTrigger>
         </TabsList>
-        
+
         {/* Aba de Usuários */}
         <TabsContent value="users" className="space-y-4">
           <Card>
@@ -415,6 +417,9 @@ export default function AdminPanel() {
                         <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Plano</TableHead>
+                        <TableHead>Criado em</TableHead>
+                        <TableHead>Início Plano</TableHead>
+                        <TableHead>Renovação</TableHead>
                         <TableHead>Papel</TableHead>
                         <TableHead className="w-[100px]">Ações</TableHead>
                       </TableRow>
@@ -432,6 +437,19 @@ export default function AdminPanel() {
                             ) : (
                               <span className="text-muted-foreground">Gratuito</span>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {user.subscription?.createdAt
+                              ? new Date(user.subscription.createdAt).toLocaleDateString()
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {user.subscription?.currentPeriodEnd
+                              ? new Date(user.subscription.currentPeriodEnd).toLocaleDateString()
+                              : "-"}
                           </TableCell>
                           <TableCell>
                             {user.role === 'admin' ? (
@@ -509,7 +527,7 @@ export default function AdminPanel() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Aba de Planos */}
         <TabsContent value="plans" className="space-y-4">
           <Card>
@@ -547,8 +565,8 @@ export default function AdminPanel() {
                         <TableRow key={plan.id}>
                           <TableCell className="font-medium">{plan.name}</TableCell>
                           <TableCell>
-                            {plan.price === 0 
-                              ? "Grátis" 
+                            {plan.price === 0
+                              ? "Grátis"
                               : `R$${(plan.price / 100).toFixed(2)}/${plan.interval === 'month' ? 'mês' : 'ano'}`
                             }
                           </TableCell>
@@ -614,7 +632,7 @@ export default function AdminPanel() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Aba de Configurações */}
         <TabsContent value="settings" className="space-y-4">
           {/* Configurações Gerais */}
@@ -859,7 +877,7 @@ export default function AdminPanel() {
           </Card>
         </TabsContent>
       </Tabs>
-      
+
       {/* Dialog de Edição de Usuário */}
       {selectedUser && (
         <Dialog open={isUserEditOpen} onOpenChange={setIsUserEditOpen}>
@@ -919,7 +937,7 @@ export default function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
-      
+
       {/* Dialog de Exclusão de Usuário */}
       {selectedUser && (
         <Dialog open={isUserDeleteOpen} onOpenChange={setIsUserDeleteOpen}>
@@ -946,7 +964,7 @@ export default function AdminPanel() {
           </DialogContent>
         </Dialog>
       )}
-      
+
       {/* Dialog de Alteração de Plano */}
       {selectedUser && (
         <Dialog open={isChangePlanOpen} onOpenChange={setIsChangePlanOpen}>
@@ -961,14 +979,13 @@ export default function AdminPanel() {
               <p className="text-sm text-muted-foreground">
                 Plano atual: <strong>{selectedUser.plan?.name || "Gratuito"}</strong>
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {subscriptionPlans.map((plan) => (
-                  <Card 
-                    key={plan.id} 
-                    className={`cursor-pointer hover:border-primary transition-all duration-200 ${
-                      selectedUser.subscription?.planId === plan.id ? 'border-primary bg-primary/5' : ''
-                    }`}
+                  <Card
+                    key={plan.id}
+                    className={`cursor-pointer hover:border-primary transition-all duration-200 ${selectedUser.subscription?.planId === plan.id ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => handleChangePlan(plan.id)}
                   >
                     <CardHeader className="pb-2">
@@ -976,8 +993,8 @@ export default function AdminPanel() {
                     </CardHeader>
                     <CardContent>
                       <div className="font-semibold text-lg mb-2">
-                        {plan.price === 0 
-                          ? "Grátis" 
+                        {plan.price === 0
+                          ? "Grátis"
                           : `R$${(plan.price / 100).toFixed(2)}/${plan.interval === 'month' ? 'mês' : 'ano'}`
                         }
                       </div>
