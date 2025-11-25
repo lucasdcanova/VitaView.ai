@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
 import { ProfileProvider } from "@/hooks/use-profiles";
+import { UploadManagerProvider } from "@/hooks/use-upload-manager";
 import { ProtectedRoute } from "@/lib/protected-route";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { usePerformance, webVitals } from "@/hooks/use-performance";
@@ -47,7 +48,7 @@ function Router() {
       <Switch>
         {/* Landing Page como página inicial pública */}
         <Route path="/" component={Home} />
-        
+
         {/* Área autenticada */}
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <ProtectedRoute path="/upload" component={UploadExams} />
@@ -65,7 +66,7 @@ function Router() {
         <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
         <ProtectedRoute path="/admin-panel" component={AdminPanel} />
         <ProtectedRoute path="/admin" component={AdminPanel} />
-        
+
         {/* Rotas públicas */}
         <Route path="/auth" component={AuthPage} />
         <Route path="/forgot-password" component={ForgotPasswordPage} />
@@ -93,7 +94,7 @@ function AppWithPerformance() {
     <ErrorBoundary
       onError={(error, errorInfo) => {
         console.error('Global error caught:', error, errorInfo);
-        
+
         // Send to error tracking service
         if (window.gtag) {
           window.gtag('event', 'exception', {
@@ -106,12 +107,14 @@ function AppWithPerformance() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ProfileProvider>
-            <SidebarProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Router />
-              </TooltipProvider>
-            </SidebarProvider>
+            <UploadManagerProvider>
+              <SidebarProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Router />
+                </TooltipProvider>
+              </SidebarProvider>
+            </UploadManagerProvider>
           </ProfileProvider>
         </AuthProvider>
       </QueryClientProvider>

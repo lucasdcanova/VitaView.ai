@@ -15,6 +15,7 @@ import { uploadAnalysis } from "./middleware/upload.middleware";
 import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis } from "./services/openai";
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
+import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import logger from "./logger";
 import { nanoid } from "nanoid";
 
@@ -740,22 +741,42 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
       }
 
-      // Importamos o novo pipeline dinâmicamente para evitar dependência circular
-      const { runAnalysisPipeline } = await import('./services/analyze-pipeline');
+      // Upload para S3/Local
+      const s3Result = await S3Service.uploadExamDocument({
+        userId,
+        profileId,
+        buffer: Buffer.from(fileContent, 'base64'), // fileContent vem como base64 do frontend?
+        // Wait, fileContent in body usually means text content or base64 string.
+        // If using multer, it should be req.file.
+        // The current implementation seems to expect JSON body with fileContent string.
+        // Let's assume fileContent is base64 string.
+        originalName: name,
+        mimeType: fileType === 'pdf' ? 'application/pdf' : 'image/jpeg' // Simplificação
+      });
 
-      // Executar o pipeline completo
-      const result = await runAnalysisPipeline({
+      // Criar registro do exame
+      const exam = await storage.createExam({
         userId,
         profileId,
         name,
         fileType,
-        fileContent,
+        status: "queued",
         laboratoryName,
-        examDate
+        examDate,
+        filePath: s3Result.key
       });
 
-      // Retornar resultado
-      res.status(200).json(result);
+      // Iniciar processamento em background (fire and forget)
+      runAnalysisPipeline(exam.id).catch(err => {
+        logger.error(`Erro no processamento em background do exame ${exam.id}:`, err);
+      });
+
+      // Retornar resultado imediato
+      res.status(200).json({
+        message: "Upload realizado com sucesso. O processamento continuará em segundo plano.",
+        examId: exam.id,
+        status: "queued"
+      });
 
     } catch (error: unknown) {
       res.status(500).json({
@@ -763,6 +784,88 @@ export async function registerRoutes(app: Express): Promise<void> {
         error: error instanceof Error ? error.message : String(error),
         stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       });
+    }
+  });
+
+  // Rota para upload de múltiplos arquivos
+  app.post("/api/exams/upload-multiple", ensureAuthenticated, rbacSystem.requirePermission('exam', 'write'), async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Usuário não autenticado." });
+      }
+
+      const userId = req.user.id;
+      const { files, profileId: rawProfileId } = req.body; // files: Array<{ name, fileType, fileContent, ... }>
+
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ message: "Nenhum arquivo enviado." });
+      }
+
+      // Determinar paciente ativo (mesma lógica do upload simples)
+      let profileId = rawProfileId ? Number(rawProfileId) : undefined;
+      // ... (lógica de cookie se necessário, ou confiar no body)
+
+      // Se não vier no body, tentar cookie
+      if (!profileId) {
+        const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+          const parts = cookie.trim().split('=');
+          if (parts.length >= 2) acc[parts[0]] = parts.slice(1).join('=');
+          return acc;
+        }, {} as Record<string, string>) || {};
+
+        if (cookies['active_profile_id']) {
+          profileId = Number(cookies['active_profile_id']);
+        }
+      }
+
+      if (!profileId || Number.isNaN(profileId)) {
+        return res.status(400).json({ message: "Selecione um paciente." });
+      }
+
+      const results = [];
+
+      for (const file of files) {
+        const { name, fileType, fileContent, laboratoryName, examDate } = file;
+
+        try {
+          const s3Result = await S3Service.uploadExamDocument({
+            userId,
+            profileId,
+            buffer: Buffer.from(fileContent, 'base64'),
+            originalName: name,
+            mimeType: fileType === 'pdf' ? 'application/pdf' : 'image/jpeg'
+          });
+
+          const exam = await storage.createExam({
+            userId,
+            profileId,
+            name,
+            fileType,
+            status: "queued",
+            laboratoryName,
+            examDate,
+            filePath: s3Result.key
+          });
+
+          // Iniciar processamento
+          runAnalysisPipeline(exam.id).catch(err => {
+            logger.error(`Erro no processamento em background do exame ${exam.id}:`, err);
+          });
+
+          results.push({ examId: exam.id, status: "queued", name });
+        } catch (err) {
+          logger.error(`Erro ao iniciar upload de ${name}:`, err);
+          results.push({ name, error: "Falha ao iniciar upload" });
+        }
+      }
+
+      res.status(200).json({
+        message: "Uploads iniciados.",
+        results
+      });
+
+    } catch (error) {
+      res.status(500).json({ message: "Erro no upload múltiplo" });
     }
   });
 

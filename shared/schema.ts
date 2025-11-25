@@ -68,6 +68,8 @@ export const exams = pgTable("exams", {
   examDate: text("exam_date"),
   requestingPhysician: text("requesting_physician"),
   originalContent: text("original_content"), // Store the raw text from the exam
+  filePath: text("file_path"), // Path/Key to the stored file
+  processingError: text("processing_error"), // Error message if processing fails
 });
 
 export const insertExamSchema = createInsertSchema(exams)
@@ -79,7 +81,8 @@ export const insertExamSchema = createInsertSchema(exams)
     laboratoryName: true,
     examDate: true,
     requestingPhysician: true,
-    originalContent: true
+    originalContent: true,
+    filePath: true
   })
   .extend({
     profileId: z.number().int().optional().nullable()

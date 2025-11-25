@@ -18,6 +18,7 @@ import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { S3Service } from './s3.service';
 
 const stripFileExtension = (value: string) => value.replace(/\.[^.]+$/, '');
 
@@ -35,7 +36,7 @@ const deriveNameFromMetrics = (metrics: any[]) => {
   if (!Array.isArray(metrics) || metrics.length === 0) return null;
   const names = metrics.map(metric => (metric.name || '').toLowerCase());
   const containsAny = (terms: string[]) => terms.some(term => names.some(name => name.includes(term)));
-  
+
   if (containsAny(['glicose', 'glicemia', 'hba1c'])) return 'Controle de glicemia';
   if (containsAny(['colesterol', 'hdl', 'ldl', 'triglicer'])) return 'Perfil lipídico';
   if (containsAny(['hemograma', 'hemoglobina', 'hematócrito', 'eritro', 'leucócitos'])) return 'Painel hematológico';
@@ -95,16 +96,6 @@ const buildExamDisplayName = (
   return uniqueParts.join(" • ");
 };
 
-export interface AnalysisOptions {
-  userId: number;
-  profileId: number;
-  name: string;
-  fileType: string;
-  fileContent: string;
-  laboratoryName?: string | null;
-  examDate?: string | null;
-}
-
 export interface AnalysisResult {
   exam: any;
   extractionResult: any;
@@ -122,26 +113,44 @@ export interface AnalysisResult {
 }
 
 /**
- * Executa o pipeline completo de análise de documentos
+ * Executa o pipeline completo de análise de documentos em background
  * 
- * @param options Opções para a análise
+ * @param examId ID do exame a ser processado
  * @returns Resultado da análise
  */
-export async function runAnalysisPipeline(options: AnalysisOptions): Promise<AnalysisResult> {
-  // [Pipeline] Iniciando análise completa para usuário
-  
+export async function runAnalysisPipeline(examId: number): Promise<AnalysisResult> {
+  // [Pipeline] Iniciando análise completa para exame existente
+
+  const exam = await storage.getExam(examId);
+  if (!exam) {
+    throw new Error(`Exame ${examId} não encontrado`);
+  }
+
   try {
+    // Atualizar status para processando
+    await storage.updateExam(examId, { status: "processing" });
+
+    // Obter conteúdo do arquivo
+    let fileContent: string;
+    if (exam.filePath) {
+      const buffer = await S3Service.getFile(exam.filePath);
+      fileContent = buffer.toString('base64');
+    } else if (exam.originalContent) {
+      // Fallback para conteúdo legado (se houver)
+      fileContent = exam.originalContent;
+    } else {
+      throw new Error("Conteúdo do arquivo não encontrado");
+    }
+
     // ETAPA 1: EXTRAÇÃO DE DADOS (OPENAI)
     // [Pipeline] ETAPA 1: Extraindo dados com OpenAI
-    const fileSizeKB = Math.round(options.fileContent.length * 0.75 / 1024);
-    // [Pipeline] Processando arquivo
-    const extractionResult = await analyzeDocumentWithOpenAI(options.fileContent, options.fileType);
-    
+    const extractionResult = await analyzeDocumentWithOpenAI(fileContent, exam.fileType);
+
     // ARMAZENAR METADADOS
-    const extractedExamDate = extractionResult.examDate || options.examDate || new Date().toISOString().split('T')[0];
-    const extractedLabName = extractionResult.laboratoryName || options.laboratoryName || "Laboratório não identificado";
+    const extractedExamDate = extractionResult.examDate || exam.examDate || new Date().toISOString().split('T')[0];
+    const extractedLabName = extractionResult.laboratoryName || exam.laboratoryName || "Laboratório não identificado";
     let requestingPhysician = extractionResult.requestingPhysician || null;
-    
+
     // Sanitizar nome do médico
     if (requestingPhysician) {
       requestingPhysician = requestingPhysician
@@ -150,27 +159,23 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         .replace(/^Dr\s*/i, '')
         .replace(/^Dra\s*/i, '');
     }
-    
+
     // Normalizar métricas antes de persistir
     const normalizedMetrics = normalizeHealthMetrics(extractionResult.healthMetrics || []);
 
     // Criar nome contextual para o exame
-    const examName = buildExamDisplayName(options.name, extractionResult, normalizedMetrics, extractedExamDate);
-    
-    const exam = await storage.createExam({
-      userId: options.userId,
-      profileId: options.profileId,
+    const examName = buildExamDisplayName(exam.name, extractionResult, normalizedMetrics, extractedExamDate);
+
+    // Atualizar exame com dados extraídos
+    await storage.updateExam(examId, {
       name: examName,
-      fileType: options.fileType,
       status: "extracted",
       laboratoryName: extractedLabName,
       examDate: extractedExamDate,
       requestingPhysician: requestingPhysician,
-      originalContent: options.fileContent
+      // originalContent: fileContent // Opcional: não salvar conteúdo se já estiver no S3 para economizar espaço no DB
     });
-    
-    // [Pipeline] Exame criado com ID
-    
+
     // SALVAR RESULTADO DA EXTRAÇÃO COM MÉTRICAS NORMALIZADAS
     // [Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)
     const examResult = await storage.createExamResult({
@@ -181,12 +186,12 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       healthMetrics: normalizedMetrics,
       aiProvider: extractionResult.aiProvider || "openai:extraction"
     });
-    
+
     // PROCESSAR MÉTRICAS INDIVIDUAIS
     const metricsByCategory = new Map();
     let savedMetricsCount = 0;
     let failedMetricsCount = 0;
-    
+
     // Estatísticas por status
     const statusCounts = {
       normal: 0,
@@ -194,7 +199,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
       baixo: 0,
       atencao: 0
     };
-    
+
     // Usar as métricas já normalizadas para salvar por categoria
     for (const metric of normalizedMetrics) {
       try {
@@ -204,7 +209,7 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
           metricsByCategory.set(category, []);
         }
         metricsByCategory.get(category).push(metric.name);
-        
+
         // Contar por status
         const status = metric.status?.toLowerCase() || "normal";
         if (status === "normal" || status === "alto" || status === "baixo" || status === "atencao") {
@@ -212,11 +217,11 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         } else {
           statusCounts.normal += 1; // fallback para normal
         }
-        
+
         // Criar métrica individual (apenas com campos do schema)
         await storage.createHealthMetric({
-          userId: options.userId,
-          profileId: options.profileId,
+          userId: exam.userId,
+          profileId: exam.profileId,
           name: metric.name || "desconhecido",
           value: String(metric.value || "0"),
           unit: metric.unit || "",
@@ -224,60 +229,60 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
           change: metric.change || "",
           date: new Date(extractedExamDate)
         });
-        
+
         savedMetricsCount++;
       } catch (error) {
         failedMetricsCount++;
         logger.error("[Pipeline] Erro ao salvar métrica individual", {
           examId: exam.id,
-          userId: options.userId,
-          profileId: options.profileId,
+          userId: exam.userId,
+          profileId: exam.profileId,
           metricName: metric.name,
           error
         });
       }
     }
-    
+
     if (failedMetricsCount > 0) {
       logger.warn("[Pipeline] Métricas não salvas", {
         examId: exam.id,
-        userId: options.userId,
-        profileId: options.profileId,
+        userId: exam.userId,
+        profileId: exam.profileId,
         failedMetricsCount
       });
     }
-    
+
     // ETAPA 4: ANÁLISE DETALHADA (OPENAI)
     // [Pipeline] ETAPA 4: Iniciando análise detalhada com OpenAI
-    
+
     // Atualizar status do exame
     await storage.updateExam(exam.id, { status: "analyzing" });
-    
+
     try {
       // Obter análise profunda
-      const patientProfile = await storage.getProfile(options.profileId);
+      const patientProfile = exam.profileId ? await storage.getProfile(exam.profileId) : undefined;
       const profileContext = patientProfile ? {
         gender: patientProfile.gender,
         birthDate: patientProfile.birthDate,
         relationship: patientProfile.relationship,
         planType: patientProfile.planType
       } : {};
-      const patientData = await buildPatientRecordContext(options.userId, profileContext);
+      const patientData = await buildPatientRecordContext(exam.userId, profileContext);
 
-      const analysisResult = await analyzeExtractedExam(exam.id, options.userId, storage, patientData);
+      const analysisResult = await analyzeExtractedExam(exam.id, exam.userId, storage, patientData);
       // [Pipeline] Análise com OpenAI concluída com sucesso
-      
+
       // Atualizar status para finalizado
       await storage.updateExam(exam.id, { status: "analyzed" });
-      
+
       // Criar notificação para usuário
       await storage.createNotification({
-        userId: options.userId,
+        userId: exam.userId,
         title: "Análise Completa",
         message: `A análise detalhada do exame "${examName}" está disponível.`,
         read: false
       });
-      
+
       // Preparar resultado final
       return {
         exam,
@@ -289,27 +294,27 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
           status: statusCounts
         }
       };
-      
+
     } catch (analysisError) {
       logger.error("[Pipeline] Erro na etapa de análise detalhada", {
         examId: exam.id,
-        userId: options.userId,
-        profileId: options.profileId,
+        userId: exam.userId,
+        profileId: exam.profileId,
         examStatus: exam.status,
         error: analysisError
       });
-      
+
       // Atualizar status para indicar apenas extração
       await storage.updateExam(exam.id, { status: "extraction_only" });
-      
+
       // Criar notificação para usuário
       await storage.createNotification({
-        userId: options.userId,
+        userId: exam.userId,
         title: "Análise Parcial",
         message: `O exame "${examName}" foi extraído, mas a análise detalhada não está disponível.`,
         read: false
       });
-      
+
       // Retornar resultado só da extração
       return {
         exam,
@@ -321,15 +326,21 @@ export async function runAnalysisPipeline(options: AnalysisOptions): Promise<Ana
         }
       };
     }
-    
+
   } catch (error) {
     logger.error("[Pipeline] Falha geral na análise de exame", {
-      userId: options.userId,
-      profileId: options.profileId,
-      examName: options.name,
-      fileType: options.fileType,
+      userId: exam.userId,
+      profileId: exam.profileId,
+      examName: exam.name,
+      fileType: exam.fileType,
       error
     });
+
+    await storage.updateExam(examId, {
+      status: "failed",
+      processingError: error instanceof Error ? error.message : String(error)
+    });
+
     throw error;
   }
 }

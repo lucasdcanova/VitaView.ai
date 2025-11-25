@@ -240,20 +240,6 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, newUser);
 
-    // Create a default profile for the new user
-    const defaultProfile = await this.createProfile({
-      userId: id,
-      name: user.fullName || "Perfil Principal",
-      relationship: "Próprio",
-      birthDate: null,
-      gender: null,
-      bloodType: null,
-      isDefault: true
-    });
-
-    // Set the default profile as the active profile
-    await this.updateUser(id, { activeProfileId: defaultProfile.id });
-
     return this.users.get(id)!;
   }
 

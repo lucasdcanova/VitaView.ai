@@ -17,30 +17,30 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2, ArrowLeft, ChevronRight, Activity, Heart, BarChart2, User } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip 
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip
 } from "recharts";
 
 const loginSchema = z.object({
@@ -89,14 +89,14 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   // Removemos a variável showQuickLogin que não é mais necessária
   const submitButtonRef = useRef<HTMLButtonElement>(null);
-  
+
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
-  
+
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -104,20 +104,20 @@ export default function AuthPage() {
       password: "",
     },
   });
-  
+
   // Monitorar os campos do formulário de login 
   const username = useWatch({
     control: loginForm.control,
     name: "username",
   });
-  
+
   const password = useWatch({
     control: loginForm.control,
     name: "password",
   });
-  
+
   // Removemos a lógica do botão rápido para simplificar a interface
-  
+
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -128,11 +128,11 @@ export default function AuthPage() {
       confirmPassword: "",
     },
   });
-  
+
   const onLoginSubmit = (values: LoginFormValues) => {
     loginMutation.mutate(values);
   };
-  
+
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const { confirmPassword, ...registerData } = values;
     registerMutation.mutate(registerData);
@@ -146,7 +146,7 @@ export default function AuthPage() {
           <ArrowLeft size={18} />
         </Button>
       </Link>
-      
+
       {/* Left side - Form */}
       <div className="md:w-3/5 w-full flex flex-col justify-center items-center p-6 min-h-screen">
         {/* Cabeçalho com logo VitaView acima do card */}
@@ -158,10 +158,10 @@ export default function AuthPage() {
             className="flex items-center gap-3 mb-5"
           >
             <div className="flex justify-center w-full my-4">
-              <Logo 
-                size="xl" 
-                showText={true} 
-                textSize="lg" 
+              <Logo
+                size="xl"
+                showText={true}
+                textSize="lg"
                 className="flex-col items-center"
               />
             </div>
@@ -173,7 +173,7 @@ export default function AuthPage() {
           <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-2 px-4 text-center">
             <span className="text-white font-medium text-sm">Sua plataforma de saúde inteligente</span>
           </div>
-          
+
           <CardHeader className="text-center pt-6">
             <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
               <span>Acesse sua conta</span>
@@ -182,14 +182,14 @@ export default function AuthPage() {
               Faça login para gerenciar seus exames de saúde
             </CardDescription>
           </CardHeader>
-        
+
           <CardContent>
             <Tabs defaultValue="login" value={tab} onValueChange={(value) => setTab(value as "login" | "register")}>
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="register">Cadastrar</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login">
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
@@ -210,7 +210,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={loginForm.control}
                       name="password"
@@ -229,15 +229,13 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex justify-end">
-                      <Link href="/forgot-password">
-                        <Button variant="link" className="text-sm text-[#1E3A5F] px-0">
-                          Esqueceu a senha?
-                        </Button>
+                      <Link href="/forgot-password" className="text-sm text-[#1E3A5F] hover:underline px-0">
+                        Esqueceu a senha?
                       </Link>
                     </div>
-                    
+
                     <Button
                       ref={submitButtonRef}
                       type="submit"
@@ -256,7 +254,7 @@ export default function AuthPage() {
                     </Button>
                   </form>
                 </Form>
-                
+
                 <div className="mt-4 text-center">
                   <p className="text-gray-600 text-sm">
                     Não tem uma conta?{" "}
@@ -266,7 +264,7 @@ export default function AuthPage() {
                   </p>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="register">
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
@@ -287,7 +285,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="fullName"
@@ -309,7 +307,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="email"
@@ -332,7 +330,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="password"
@@ -351,7 +349,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="confirmPassword"
@@ -370,7 +368,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <Button
                       type="submit"
                       size="lg"
@@ -388,7 +386,7 @@ export default function AuthPage() {
                     </Button>
                   </form>
                 </Form>
-                
+
                 <div className="mt-4 text-center">
                   <p className="text-gray-600 text-sm">
                     Já tem uma conta?{" "}
@@ -402,7 +400,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Right side - Hero with interactive graphics */}
       <div className="md:w-2/5 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden min-h-screen">
         <div className="max-w-lg">
@@ -415,11 +413,11 @@ export default function AuthPage() {
               Todos os seus exames e informações de saúde reunidos em um só lugar, sempre ao seu alcance.
             </p>
           </div>
-          
+
           {/* Interactive graphics with 2 rows of charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Interactive Chart 1: Line Chart with animation */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
@@ -434,14 +432,14 @@ export default function AuthPage() {
                   Últimos 6 meses
                 </span>
               </div>
-              
+
               <div className="h-[90px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={healthData}
                     margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
                   >
-                    <Tooltip 
+                    <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           return (
@@ -466,9 +464,9 @@ export default function AuthPage() {
                 </ResponsiveContainer>
               </div>
             </motion.div>
-            
+
             {/* Interactive Chart 2: Area Chart with animation */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -483,7 +481,7 @@ export default function AuthPage() {
                   Análise recente
                 </span>
               </div>
-              
+
               <div className="h-[80px] flex items-center justify-center px-2">
                 <div className="w-16 h-16 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
@@ -508,8 +506,8 @@ export default function AuthPage() {
                 <div className="ml-3 space-y-1 flex-1">
                   {cholesterolData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center text-xs">
-                      <div 
-                        className="w-2 h-2 rounded-full mr-2 flex-shrink-0" 
+                      <div
+                        className="w-2 h-2 rounded-full mr-2 flex-shrink-0"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       ></div>
                       <span className="text-gray-700 truncate">{entry.name}: {entry.value}</span>
@@ -518,9 +516,9 @@ export default function AuthPage() {
                 </div>
               </div>
             </motion.div>
-            
+
             {/* Interactive Chart 3: Bar Chart with animation */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -535,7 +533,7 @@ export default function AuthPage() {
                   Último exame
                 </span>
               </div>
-              
+
               <div className="h-[160px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -562,9 +560,9 @@ export default function AuthPage() {
                 </ResponsiveContainer>
               </div>
             </motion.div>
-            
+
             {/* Interactive element 4: Health Card */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -579,7 +577,7 @@ export default function AuthPage() {
                   Personalizado
                 </span>
               </div>
-              
+
               <div className="flex flex-col gap-3 mt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 text-sm">Índice de Saúde</span>
@@ -588,16 +586,16 @@ export default function AuthPage() {
                     <span className="text-xs text-gray-500 ml-1">/100</span>
                   </div>
                 </div>
-                
+
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: "87%" }}
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
                   />
                 </div>
-                
+
                 {/* Categorias de exames - Simulação */}
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-1">
@@ -617,15 +615,15 @@ export default function AuthPage() {
                     <span className="text-gray-600">Vitamina D: Normal</span>
                   </div>
                 </div>
-                
+
 
               </div>
             </motion.div>
           </div>
-          
+
           {/* Features section */}
           <div className="grid grid-cols-2 gap-4 mt-2">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -633,13 +631,13 @@ export default function AuthPage() {
             >
               <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>
               </div>
               <span className="ml-2 text-gray-700">Seguro e privado</span>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.6 }}
@@ -647,7 +645,7 @@ export default function AuthPage() {
             >
               <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
                 </svg>
               </div>
               <span className="ml-2 text-gray-700">Alertas de saúde</span>

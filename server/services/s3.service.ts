@@ -11,7 +11,8 @@ const resolveBucketName = () =>
 
 const ensureAwsConfig = () => {
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    throw new Error("Credenciais AWS não configuradas. Defina AWS_ACCESS_KEY_ID e AWS_SECRET_ACCESS_KEY.");
+    logger.warn("Credenciais AWS não configuradas. Usando armazenamento local.");
+    return null;
   }
 
   return new S3Client({
@@ -49,7 +50,7 @@ export class S3Service {
     const timestamp = Date.now();
     const randomString = crypto.randomBytes(8).toString("hex");
     const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, "_");
-    
+
     return `${fileCategory}/${userId}/${timestamp}-${randomString}-${sanitizedName}`;
   }
 
@@ -82,7 +83,8 @@ export class S3Service {
         },
       });
 
-      await s3Client.send(command);
+      if (!s3Client) throw new Error("S3 client not initialized");
+      await s3Client!.send(command);
 
       // Gerar URL assinada para acesso temporário (1 hora)
       const url = await this.getSignedUrl(key, 3600);
@@ -124,7 +126,8 @@ export class S3Service {
         },
       });
 
-      await s3Client.send(command);
+      if (!s3Client) throw new Error("S3 client not initialized");
+      await s3Client!.send(command);
 
       const url = await this.getSignedUrl(key, 3600);
       logger.info("[S3] Documento de exame armazenado", { key, bucket: BUCKET_NAME, userId, profileId });
@@ -157,7 +160,8 @@ export class S3Service {
       Key: key,
     });
 
-    return await getSignedUrl(s3Client, command, { expiresIn });
+    if (!s3Client) throw new Error("S3 client not initialized");
+    return await getSignedUrl(s3Client!, command, { expiresIn });
   }
 
   /**
@@ -170,15 +174,16 @@ export class S3Service {
         Key: key,
       });
 
-      const response = await s3Client.send(command);
+      if (!s3Client) throw new Error("S3 client not initialized");
+      const response = await s3Client!.send(command);
       const stream = response.Body as any;
-      
+
       // Converter stream para Buffer
       const chunks: Buffer[] = [];
       for await (const chunk of stream) {
         chunks.push(chunk);
       }
-      
+
       return Buffer.concat(chunks);
     } catch (error) {
       logger.error("Erro ao buscar arquivo do S3:", error);
@@ -196,7 +201,8 @@ export class S3Service {
         Key: key,
       });
 
-      await s3Client.send(command);
+      if (!s3Client) throw new Error("S3 client not initialized");
+      await s3Client!.send(command);
       logger.info(`Arquivo deletado do S3: ${key}`);
     } catch (error) {
       logger.error("Erro ao deletar arquivo do S3:", error);
@@ -210,4 +216,62 @@ export class S3Service {
   static isSensitiveFile(fileType: string): boolean {
     return SENSITIVE_FILE_TYPES.includes(fileType);
   }
+}
+
+// Implementação de fallback local
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+
+const writeFileAsync = promisify(fs.writeFile);
+const readFileAsync = promisify(fs.readFile);
+const unlinkAsync = promisify(fs.unlink);
+const mkdirAsync = promisify(fs.mkdir);
+
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+
+// Garantir que diretório de uploads existe
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+// Sobrescrever métodos se S3 não estiver disponível
+if (!s3Client) {
+  S3Service.uploadSensitiveFile = async (userId: number, fileType: string, file: Express.Multer.File) => {
+    const key = `${userId}_${Date.now()}_${file.originalname}`;
+    const filePath = path.join(UPLOAD_DIR, key);
+    await writeFileAsync(filePath, file.buffer);
+    return { key, url: `/uploads/${key}` };
+  };
+
+  S3Service.uploadExamDocument = async (options: any) => {
+    const { userId, buffer, originalName, mimeType } = options;
+    const key = `${userId}_${Date.now()}_${originalName}`;
+    const filePath = path.join(UPLOAD_DIR, key);
+    await writeFileAsync(filePath, buffer);
+    return {
+      key,
+      bucket: 'local',
+      url: `/uploads/${key}`,
+      size: buffer.length,
+      mimeType,
+      originalName
+    };
+  };
+
+  S3Service.getSignedUrl = async (key: string) => {
+    return `/uploads/${key}`;
+  };
+
+  S3Service.getFile = async (key: string) => {
+    const filePath = path.join(UPLOAD_DIR, key);
+    return await readFileAsync(filePath);
+  };
+
+  S3Service.deleteFile = async (key: string) => {
+    const filePath = path.join(UPLOAD_DIR, key);
+    if (fs.existsSync(filePath)) {
+      await unlinkAsync(filePath);
+    }
+  };
 }
