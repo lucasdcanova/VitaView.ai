@@ -23,7 +23,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { activeProfile } = useProfiles();
-  
+
   useEffect(() => {
     console.info("[UploadFlow][Client] Etapa atualizada", { step: uploadStep });
   }, [uploadStep]);
@@ -48,7 +48,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         body: formData,
         credentials: "include"
       });
-      
+
       if (!response.ok) {
         console.error("[UploadFlow][Client] Erro na análise do documento", {
           status: response.status,
@@ -57,7 +57,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         const errorText = await response.text();
         throw new Error(errorText || response.statusText);
       }
-      
+
       const resultData = await response.json();
       console.info("[UploadFlow][Client] Análise de documento concluída", {
         summary: resultData?.summary,
@@ -80,11 +80,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       setExtractionResult(data);
       setUploadStep('interpreting');
-      
+
       // Agora vamos para o segundo passo: interpretação com OpenAI
       const patientData = {
         gender: activeProfile?.gender || 'não informado',
-        age: activeProfile?.birthDate 
+        age: activeProfile?.birthDate
           ? Math.floor((new Date().getTime() - new Date(activeProfile.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
           : undefined,
         relationship: activeProfile?.relationship,
@@ -93,8 +93,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         surgeries: [],
         allergies: []
       };
-      
-      interpretWithOpenAIMutation.mutate({ 
+
+      interpretWithOpenAIMutation.mutate({
         analysisResult: data,
         patientData
       });
@@ -109,11 +109,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     }
   });
-  
+
   // OpenAI interpretação dos resultados
   const interpretWithOpenAIMutation = useMutation({
     mutationFn: async (data: { analysisResult: any, patientData: any }) => {
-      
+
       console.info("[UploadFlow][Client] Iniciando interpretação do exame", {
         hasAnalysisResult: Boolean(data.analysisResult),
         patientData: data.patientData
@@ -126,7 +126,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         body: JSON.stringify(data),
         credentials: "include"
       });
-      
+
       if (!response.ok) {
         console.error("[UploadFlow][Client] Erro na interpretação do exame", {
           status: response.status,
@@ -135,7 +135,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         const errorText = await response.text();
         throw new Error(errorText || response.statusText);
       }
-      
+
       const interpretationData = await response.json();
       console.info("[UploadFlow][Client] Interpretação concluída", {
         diagnoses: interpretationData?.possibleDiagnoses?.length ?? 0,
@@ -158,22 +158,29 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         setUploadStep('error');
         return;
       }
-      
+
       // Salvar o exame no banco de dados
       const filename = selectedFile?.name || 'Exame';
-      
+
+      // Tentar obter um nome mais descritivo da análise da IA
+      // A IA gera um documentTitle descritivo (ex: "Hemograma Completo - 10/10/2023")
+      const aiGeneratedName = extractionResult?.examMetadata?.documentTitle ||
+        extractionResult?.examMetadata?.examType;
+
+      const finalName = aiGeneratedName || filename.split('.')[0];
+
       // Obter o tipo de arquivo das variáveis corretas
       const fileType = extractionResult?.fileType || uploadedFileType || 'pdf';
-      
+
       // Alguns campos são extraídos da análise inicial da OpenAI se disponíveis
       // como data do exame, médico solicitante, etc.
-      const examDate = extractionResult?.examDate || new Date().toISOString().split('T')[0];
-      
+      const examDate = extractionResult?.examMetadata?.examDate || extractionResult?.examDate || new Date().toISOString().split('T')[0];
+
       // IMPORTANTE: Removendo campos não presentes no banco de dados
       // Removendo requestingPhysician pois não existe na tabela
-      
+
       // Para debug: vamos garantir que o userId é enviado mesmo se a sessão estiver com problemas
-      
+
       // Verificamos se o usuário está autenticado
       if (!user || !user.id) {
         toast({
@@ -184,9 +191,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         setUploadStep('error');
         return;
       }
-      
+
       const examData = {
-        name: filename.split('.')[0],
+        name: finalName,
         userId: user.id, // Sempre usar o ID do profissional autenticado
         profileId: activeProfile.id,
         fileType: fileType,
@@ -202,7 +209,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         // Removido requestingPhysician pois este campo não existe no banco de dados
         originalContent: JSON.stringify(extractionResult).substring(0, 5000) // Limitando tamanho para evitar problemas
       };
-      
+
       // Salvar exame completo
       saveExamMutation.mutate({
         examData,
@@ -214,22 +221,22 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             examId: savedData?.exam?.id
           });
           setUploadStep('complete');
-          
+
           // Atualizar cache com novos dados
           queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
           queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
           queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-          
+
           toast({
             title: "Análise concluída",
             description: "Seu exame foi analisado, interpretado e salvo com sucesso!",
           });
-          
+
           // Redirecionar para a página de detalhes do exame com a aba de resumo selecionada
           setTimeout(() => {
             window.location.href = `/report/${savedData.exam.id}?tab=summary`;
           }, 1500); // Aguardar 1.5 segundos antes de redirecionar para dar tempo de ver a mensagem
-          
+
           if (onUploadComplete) {
             onUploadComplete({
               savedExam: savedData.exam,
@@ -259,7 +266,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     }
   });
-  
+
   // Salvar exame completo no banco de dados
   const saveExamMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -274,12 +281,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         }
 
         const profileId = activeProfile.id;
-        
-        
+
+
         // Extrair dados do exame do novo formato
         const { examData: rawExamData, extractionResult: extractionData, openaiInterpretation } = data;
         const effectiveExtraction = extractionData || extractionResult;
-        
+
         // Adaptar dados para formato esperado pela API
         // Manter o userId que foi enviado no objeto original (que pode ter um fallback)
         const examData = {
@@ -299,7 +306,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           storageSize: rawExamData.storageSize,
           storageOriginalName: rawExamData.storageOriginalName
         };
-        
+
         // Criar o exame no banco de dados
         console.info("[UploadFlow][Client] Salvando exame no backend", {
           examName: examData.name,
@@ -314,8 +321,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           body: JSON.stringify(examData),
           credentials: "include"
         });
-        
-        
+
+
         if (!examResponse.ok) {
           const errorText = await examResponse.text();
           console.error("[UploadFlow][Client] Falha na criação do exame", {
@@ -325,13 +332,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           });
           throw new Error(`Erro ao salvar exame: ${errorText}`);
         }
-        
+
         const savedExam = await examResponse.json();
         console.info("[UploadFlow][Client] Exame salvo", {
           examId: savedExam?.id,
           status: savedExam?.status
         });
-        
+
         // Salvar o resultado da análise
         if (savedExam && savedExam.id) {
           // Preparar dados do resultado da análise
@@ -340,7 +347,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             examId: savedExam.id,
             summary: openaiInterpretation?.contextualAnalysis || effectiveExtraction?.summary || "Análise não disponível",
             detailedAnalysis: effectiveExtraction?.detailedAnalysis || "",
-            recommendations: openaiInterpretation?.recommendations 
+            recommendations: openaiInterpretation?.recommendations
               ? Array.isArray(openaiInterpretation.recommendations)
                 ? openaiInterpretation.recommendations.join('\n')
                 : openaiInterpretation.recommendations
@@ -350,7 +357,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             healthMetrics: effectiveExtraction?.healthMetrics || [],
             aiProvider: "openai"
           };
-          
+
           console.info("[UploadFlow][Client] Registrando resultado de exame", {
             examId: savedExam.id,
             hasRecommendations: Boolean(resultData.recommendations),
@@ -364,15 +371,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             body: JSON.stringify(resultData),
             credentials: "include"
           });
-          
-          
+
+
           if (!resultResponse.ok) {
             const errorText = await resultResponse.text();
             console.error("[UploadFlow][Client] Falha ao salvar resultado do exame", {
               examId: savedExam.id,
               error: errorText
             });
-            
+
             // Mesmo com erro na criação do resultado, continuamos (não interrompemos)
             // - isso garante que ao menos o exame seja registrado
           } else {
@@ -382,17 +389,17 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               examId: savedExam.id
             });
           }
-          
+
           // Salvar métricas de saúde individuais, se disponíveis
           if (effectiveExtraction?.healthMetrics && Array.isArray(effectiveExtraction.healthMetrics)) {
-            
+
             // Pré-processamento para normalizar nomes e unificar métricas duplicadas
             const processedMetrics = new Map<string, any>();
-            
+
             // Primeiro passo: normalizar todos os nomes e agrupar métricas idênticas
             for (const metric of effectiveExtraction.healthMetrics) {
               const normalizedName = normalizeExamName(metric.name || "desconhecido");
-              
+
               // Se já temos uma métrica com esse nome normalizado, usamos a mais recente
               // ou a que tem mais informações (assumindo que a ordem indica prioridade)
               if (!processedMetrics.has(normalizedName)) {
@@ -402,8 +409,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                 });
               }
             }
-            
-            
+
+
             // Segundo passo: salvar cada métrica unificada
             const uniqueMetrics = Array.from(processedMetrics.values());
             for (const metric of uniqueMetrics) {
@@ -420,7 +427,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   examId: savedExam.id,
                   date: examData.examDate || new Date().toISOString() // Usar mesma data do exame
                 };
-                
+
                 console.info("[UploadFlow][Client] Salvando métrica individual", {
                   name: metricData.name,
                   examId: savedExam.id
@@ -433,7 +440,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   body: JSON.stringify(metricData),
                   credentials: "include"
                 });
-                
+
                 if (!metricResponse.ok) {
                   const errorText = await metricResponse.text();
                   console.error("[UploadFlow][Client] Falha ao salvar métrica individual", {
@@ -457,8 +464,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
               }
             }
           }
-      }
-        
+        }
+
         return {
           exam: savedExam,
           result: openaiInterpretation || {}
@@ -469,7 +476,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       }
     }
   });
-  
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
@@ -482,7 +489,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
       return;
     }
-    
+
     const file = acceptedFiles[0];
     if (!file) {
       console.error("[UploadFlow][Client] Nenhum arquivo recebido do drop");
@@ -500,7 +507,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
     // Iniciar upload
     setUploadStep('uploading');
     setUploadProgress(0);
-    
+
     // Simular progresso de upload
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
@@ -511,12 +518,12 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         return prev + 5;
       });
     }, 100);
-    
+
     // Após o "upload" estar completo, preparar dados para análise
     setTimeout(() => {
       clearInterval(progressInterval);
       setUploadStep('analyzing');
-      
+
       if (!file) {
         console.error("[UploadFlow][Client] Nenhum arquivo disponível após drop");
         setUploadStep('error');
@@ -565,7 +572,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       });
     }, 2000);
   }, [activeProfile, analyzeDocumentMutation, toast, user]);
-  
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -579,9 +586,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   return (
     <div
-      className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center ${
-        isDragActive ? 'bg-primary-50' : uploadStep === 'idle' ? 'bg-gray-50' : ''
-      }`}
+      className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center ${isDragActive ? 'bg-primary-50' : uploadStep === 'idle' ? 'bg-gray-50' : ''
+        }`}
       {...(uploadStep === 'idle' ? getRootProps() : {})}
     >
       {uploadStep === 'idle' && (
@@ -601,7 +607,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <p className="text-xs text-gray-500 mt-4">Formatos suportados: PDF, JPEG, PNG (máx. 50MB)</p>
         </div>
       )}
-      
+
       {uploadStep === 'uploading' && (
         <div className="space-y-4">
           <FileType className="mx-auto h-12 w-12 text-primary-500" />
@@ -610,7 +616,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <p className="text-sm text-gray-500">{uploadProgress}% concluído</p>
         </div>
       )}
-      
+
       {uploadStep === 'analyzing' && (
         <div className="space-y-4">
           <BrainCircuit className="mx-auto h-12 w-12 text-primary-500" />
@@ -624,7 +630,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <p className="text-sm text-gray-500">Extração de métricas e análise do documento</p>
         </div>
       )}
-      
+
       {uploadStep === 'interpreting' && (
         <div className="space-y-4">
           <Sparkles className="mx-auto h-12 w-12 text-amber-500" />
@@ -638,13 +644,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           <p className="text-sm text-gray-500">Gerando recomendações personalizadas baseadas nos resultados</p>
         </div>
       )}
-      
+
       {uploadStep === 'complete' && (
         <div className="space-y-4">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
           <h3 className="text-lg font-medium text-gray-700">Análise completa!</h3>
           <p className="text-sm text-gray-600 mb-4">Seu exame foi analisado com sucesso e as recomendações foram geradas.</p>
-          <Button 
+          <Button
             onClick={() => setUploadStep('idle')}
             className="bg-primary-600 text-white hover:bg-primary-700"
           >
@@ -652,7 +658,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           </Button>
         </div>
       )}
-      
+
       {uploadStep === 'error' && (
         <div className="space-y-4">
           <div className="mx-auto h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -672,14 +678,14 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
             </ul>
           </div>
           <div className="flex space-x-3">
-            <Button 
+            <Button
               onClick={() => window.location.href = '/auth'}
               variant="default"
               className="flex-1"
             >
               Ir para login
             </Button>
-            <Button 
+            <Button
               onClick={() => setUploadStep('idle')}
               variant="outline"
               className="flex-1"

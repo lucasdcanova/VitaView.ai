@@ -711,1024 +711,1173 @@ export default function HealthTrendsNew() {
 
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
-            <div className="max-w-5xl mx-auto space-y-6">
-              <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-3xl text-gray-900">Prontuário do paciente</CardTitle>
-                    <CardDescription>
-                      Acompanhe e atualize o histórico clínico de {profileName} para que cada exame seja interpretado com contexto.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      {summaryHighlights.map((item) => (
-                        <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                          <p className="text-xs uppercase tracking-wide text-gray-500">{item.label}</p>
-                          <p className="text-2xl font-semibold text-[#1E3A5F]">{item.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-xs text-gray-500">
-                      {hasRecordData
-                        ? "Mantenha diagnósticos, medicamentos e alergias atualizados para análises mais precisas."
-                        : "Comece adicionando novos registros para enriquecer o prontuário e personalizar os insights."}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-primary-100 bg-white shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-gray-900">Ações rápidas</CardTitle>
-                    <CardDescription>Cadastre as informações prioritárias do paciente</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
-                      <Activity className="h-4 w-4 text-primary-600" />
-                      Registrar medicamento
-                    </Button>
-                    <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
-                      <ClipboardList className="h-4 w-4 text-primary-600" />
-                      Registrar alergia
-                    </Button>
-                    <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="w-full justify-start gap-2">
-                      <FileText className="h-4 w-4 text-primary-600" />
-                      Registrar diagnóstico
-                    </Button>
-                    <Button onClick={handleExportToPDF} variant="secondary" className="w-full justify-start gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Exportar PDF do prontuário
-                    </Button>
-                  </CardContent>
-                </Card>
+            <div className="max-w-6xl mx-auto space-y-8">
+              {/* Header com Nome do Paciente */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                    Prontuário de <span className="text-primary-600">{profileName}</span>
+                  </h1>
+                  <p className="text-gray-500 mt-1">
+                    Visão geral, histórico clínico e monitoramento de saúde
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
+                    {timelineItems.length} registros no histórico
+                  </Badge>
+                </div>
               </div>
 
-              <Card className="border border-primary-100 shadow-md">
-                <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
-                    <CardDescription>
-                      Descreva o quadro clínico e deixe a IA identificar diagnósticos, comorbidades, medicamentos e alergias.
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea
-                    value={anamnesisText}
-                    onChange={(event) => setAnamnesisText(event.target.value)}
-                    placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg, histórico familiar de diabetes, refere alergia a penicilina..."
-                    className="min-h-[140px] resize-vertical"
-                  />
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      onClick={handleAnalyzeAnamnesis}
-                      disabled={analyzeAnamnesisMutation.isPending}
-                      className="gap-2"
-                    >
-                      {analyzeAnamnesisMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-4 w-4" />
-                      )}
-                      Extrair dados com IA
-                    </Button>
-                    <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
-                      Limpar texto
-                    </Button>
-                    <p className="text-sm text-gray-500">
-                      A IA sugere registros prontos que você pode aplicar ao prontuário em um clique.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {extractedRecord && (
-                <Card className="border-primary-200 bg-white shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-gray-900">Insights identificados</CardTitle>
-                    <CardDescription>{extractedRecord.summary || "Revisão automática da anamnese"}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {Array.isArray(extractedRecord.comorbidities) && extractedRecord.comorbidities.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {extractedRecord.comorbidities.map((item: string, index: number) => (
-                          <span key={`${item}-${index}`} className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Diagnósticos sugeridos</p>
-                        {Array.isArray(extractedRecord.diagnoses) && extractedRecord.diagnoses.length > 0 ? (
-                          <div className="space-y-2">
-                            {extractedRecord.diagnoses.map((diagnosis: any, index: number) => (
-                              <div key={`diag-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                <p className="font-semibold text-gray-900">{diagnosis.cidCode || diagnosis.condition || "Diagnóstico sugerido"}</p>
-                                {diagnosis.notes && <p className="text-xs text-gray-600 mt-1">{diagnosis.notes}</p>}
-                                <Badge className="mt-2 w-fit" variant="secondary">{diagnosis.status || "avaliar"}</Badge>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">Nenhum diagnóstico identificado.</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Medicamentos em uso</p>
-                        {Array.isArray(extractedRecord.medications) && extractedRecord.medications.length > 0 ? (
-                          <div className="space-y-2">
-                            {extractedRecord.medications.map((medication: any, index: number) => (
-                              <div key={`med-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                <p className="font-semibold text-gray-900">{medication.name}</p>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  {medication.dosage || medication.dose || "dosagem não informada"} · {medication.frequency || "frequência não informada"}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">Sem medicamentos detectados.</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Alergias</p>
-                        {Array.isArray(extractedRecord.allergies) && extractedRecord.allergies.length > 0 ? (
-                          <div className="space-y-2">
-                            {extractedRecord.allergies.map((allergy: any, index: number) => (
-                              <div key={`allergy-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                <p className="font-semibold text-gray-900">{allergy.allergen}</p>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  {allergy.severity ? `Gravidade: ${allergy.severity}` : "Gravidade não informada"}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">Nenhuma alergia identificada.</p>
-                        )}
-                      </div>
+              {/* Situação Atual de Saúde - Banner Superior */}
+              <Card className="border-none shadow-md bg-gradient-to-br from-white to-gray-50 overflow-hidden">
+                <div className="h-1.5 bg-[#48C9B0] w-full" />
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#48C9B0]/10 rounded-lg">
+                      <Activity className="h-5 w-5 text-[#48C9B0]" />
                     </div>
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <p className="text-sm text-gray-500">
-                        Revise os dados sugeridos e aplique ao prontuário para usar imediatamente em novas análises.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button type="button" variant="ghost" onClick={handleResetAnamnesis}>
-                          Descartar
-                        </Button>
-                        <Button
-                          type="button"
-                          className="gap-2"
-                          onClick={handleApplyExtraction}
-                          disabled={isApplyingExtraction}
-                        >
-                          {isApplyingExtraction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                          Aplicar ao prontuário
-                        </Button>
-                      </div>
+                    <div>
+                      <CardTitle className="text-lg text-gray-900">Resumo de Saúde</CardTitle>
+                      <CardDescription>Estado atual baseado nos registros ativos</CardDescription>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
-                  <DialogDescription>
-                    Adicione um diagnóstico médico à sua linha do tempo
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="cidCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Código CID-10 *</FormLabel>
-                            <FormControl>
-                              <CID10Selector
-                                value={field.value || ""}
-                                onValueChange={field.onChange}
-                                placeholder="Buscar código CID-10..."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="diagnosisDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Data do Diagnóstico</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ativo">Ativo</SelectItem>
-                                  <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
-                                  <SelectItem value="resolvido">Resolvido</SelectItem>
-                                  <SelectItem value="cronico">Crônico</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Observações (opcional)</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Adicione observações sobre o diagnóstico..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={addDiagnosisMutation.isPending}>
-                        {addDiagnosisMutation.isPending ? "Registrando..." : "Registrar Diagnóstico"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Resumo Atual da Saúde */}
-            <Card className="mb-8 border-t-4 border-t-[#48C9B0]">
-              <CardHeader>
-                <CardTitle className="text-xl text-gray-900">Situação Atual de Saúde</CardTitle>
-                <p className="text-gray-600">Resumo baseado nos últimos exames e diagnósticos</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Diagnósticos Ativos</h4>
-                    {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
-                      <div className="space-y-2">
-                        {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").map((diagnosis: any) => (
-                          <div key={diagnosis.id} className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
-                            <span className="text-sm text-gray-700">{getCIDDescription(diagnosis.cidCode)}</span>
-                            <Badge className={getStatusColor(diagnosis.status)} variant="secondary">
-                              {getStatusLabel(diagnosis.status)}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Nenhum diagnóstico ativo registrado</p>
-                    )}
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Alergias Medicamentosas</h4>
-                    {Array.isArray(allergies) && allergies.length > 0 ? (
-                      <div className="space-y-2">
-                        {allergies.map((allergy: any) => (
-                          <div key={allergy.id} className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            <span className="text-sm text-gray-700">{allergy.allergen}</span>
-                            {allergy.severity && (
-                              <Badge variant={allergy.severity === "grave" ? "destructive" : allergy.severity === "moderada" ? "default" : "secondary"}>
-                                {allergy.severity}
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Sem alergias medicamentosas</p>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Últimos Exames</h4>
-                    {Array.isArray(exams) && exams.length > 0 ? (
-                      <div className="space-y-2">
-                        {exams.slice(0, 3).map((exam: any) => (
-                          <div key={exam.id} className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm text-gray-700">{exam.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {format(parseISO(exam.uploadDate), "dd/MM/yy", { locale: ptBR })}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Nenhum exame enviado ainda</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Medicamentos em Uso */}
-            {medications.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <svg className="h-5 w-5 text-[#48C9B0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 9.172V5L8 4z" />
-                    </svg>
-                    Medicamentos em Uso Contínuo ({medications.length})
-                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-3">
-                    {medications.map((medication: any) => (
-                      <div
-                        key={medication.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => openEditMedicationDialog(medication)}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-gray-900">{medication.name}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {medication.format}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            {medication.dosage} • {medication.frequency}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Desde {format(parseISO(medication.start_date || medication.startDate), "dd/MM/yyyy", { locale: ptBR })}
-                          </div>
-                          {medication.notes && (
-                            <div className="text-xs text-gray-600 mt-1 italic">
-                              {medication.notes}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-blue-500">
-                          Clique para editar
-                        </div>
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* Diagnósticos */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                          Diagnósticos
+                        </h4>
+                        <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
                       </div>
-                    ))}
+
+                      {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
+                        <div className="space-y-3">
+                          {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").slice(0, 3).map((diagnosis: any) => (
+                            <div key={diagnosis.id} className="group flex items-start justify-between gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div>
+                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={getCIDDescription(diagnosis.cidCode)}>
+                                  {getCIDDescription(diagnosis.cidCode)}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {format(parseISO(diagnosis.diagnosisDate), "dd/MM/yy", { locale: ptBR })}
+                                </p>
+                              </div>
+                              <Badge className={`${getStatusColor(diagnosis.status)} text-[10px] px-1.5 py-0 h-5`} variant="secondary">
+                                {getStatusLabel(diagnosis.status)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <FileText className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhum ativo</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Alergias */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                          Alergias
+                        </h4>
+                        <Badge variant="outline" className="bg-gray-50">{allergies.length}</Badge>
+                      </div>
+
+                      {Array.isArray(allergies) && allergies.length > 0 ? (
+                        <div className="space-y-3">
+                          {allergies.slice(0, 3).map((allergy: any) => (
+                            <div key={allergy.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="mt-1">
+                                <div className={`w-2 h-2 rounded-full ${allergy.severity === 'grave' ? 'bg-red-500' :
+                                  allergy.severity === 'moderada' ? 'bg-orange-400' : 'bg-yellow-400'
+                                  }`} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-800">{allergy.allergen}</p>
+                              </div>
+                              {allergy.severity && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 capitalize">
+                                  {allergy.severity}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <ClipboardList className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhuma alergia</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Exames */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          Últimos Exames
+                        </h4>
+                        <Badge variant="outline" className="bg-gray-50">{exams.length}</Badge>
+                      </div>
+
+                      {Array.isArray(exams) && exams.length > 0 ? (
+                        <div className="space-y-3">
+                          {exams.slice(0, 3).map((exam: any) => (
+                            <div key={exam.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="p-1.5 bg-blue-50 rounded-md text-blue-600">
+                                <FileText className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">{exam.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {format(parseISO(exam.uploadDate), "dd/MM/yy", { locale: ptBR })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <FileDown className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhum exame</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {/* Linha do Tempo */}
-            <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center text-gray-500">
-              Timeline temporarily disabled for debugging
-            </div>
-          </div>
-      </main>
-    </div>
+              <div className="grid gap-8 md:grid-cols-[1fr,300px]">
+                {/* Coluna Principal */}
+                <div className="space-y-8">
 
-    {/* Dialog de Edição de Diagnóstico */ }
-  < Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} >
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Editar Diagnóstico</DialogTitle>
-        <DialogDescription>
-          Modifique ou remova este diagnóstico da sua linha do tempo
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...editForm}>
-        <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-          <div className="space-y-4">
-            <FormField
-              control={editForm.control}
-              name="cidCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Código CID-10 *</FormLabel>
-                  <FormControl>
-                    <CID10Selector
-                      value={field.value || ""}
-                      onValueChange={field.onChange}
-                      placeholder="Buscar código CID-10..."
+                  <Card className="border border-primary-100 shadow-md">
+                    <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
+                        <CardDescription>
+                          Descreva o quadro clínico e deixe a IA identificar diagnósticos, comorbidades, medicamentos e alergias.
+                        </CardDescription>
+                      </div>
+                      <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Textarea
+                        value={anamnesisText}
+                        onChange={(event) => setAnamnesisText(event.target.value)}
+                        placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg, histórico familiar de diabetes, refere alergia a penicilina..."
+                        className="min-h-[140px] resize-vertical"
+                      />
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={handleAnalyzeAnamnesis}
+                          disabled={analyzeAnamnesisMutation.isPending}
+                          className="gap-2"
+                        >
+                          {analyzeAnamnesisMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          Extrair dados com IA
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
+                          Limpar texto
+                        </Button>
+                        <p className="text-sm text-gray-500">
+                          A IA sugere registros prontos que você pode aplicar ao prontuário em um clique.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {
+                    extractedRecord && (
+                      <Card className="border-primary-200 bg-white shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="text-2xl text-gray-900">Insights identificados</CardTitle>
+                          <CardDescription>{extractedRecord.summary || "Revisão automática da anamnese"}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {Array.isArray(extractedRecord.comorbidities) && extractedRecord.comorbidities.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {extractedRecord.comorbidities.map((item: string, index: number) => (
+                                <span key={`${item}-${index}`} className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Diagnósticos sugeridos</p>
+                              {Array.isArray(extractedRecord.diagnoses) && extractedRecord.diagnoses.length > 0 ? (
+                                <div className="space-y-2">
+                                  {extractedRecord.diagnoses.map((diagnosis: any, index: number) => (
+                                    <div key={`diag-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                      <p className="font-semibold text-gray-900">{diagnosis.cidCode || diagnosis.condition || "Diagnóstico sugerido"}</p>
+                                      {diagnosis.notes && <p className="text-xs text-gray-600 mt-1">{diagnosis.notes}</p>}
+                                      <Badge className="mt-2 w-fit" variant="secondary">{diagnosis.status || "avaliar"}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500">Nenhum diagnóstico identificado.</p>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Medicamentos em uso</p>
+                              {Array.isArray(extractedRecord.medications) && extractedRecord.medications.length > 0 ? (
+                                <div className="space-y-2">
+                                  {extractedRecord.medications.map((medication: any, index: number) => (
+                                    <div key={`med-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                      <p className="font-semibold text-gray-900">{medication.name}</p>
+                                      <p className="text-xs text-gray-600 mt-1">
+                                        {medication.dosage || medication.dose || "dosagem não informada"} · {medication.frequency || "frequência não informada"}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500">Sem medicamentos detectados.</p>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Alergias</p>
+                              {Array.isArray(extractedRecord.allergies) && extractedRecord.allergies.length > 0 ? (
+                                <div className="space-y-2">
+                                  {extractedRecord.allergies.map((allergy: any, index: number) => (
+                                    <div key={`allergy-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
+                                      <p className="font-semibold text-gray-900">{allergy.allergen}</p>
+                                      <p className="text-xs text-gray-600 mt-1">
+                                        {allergy.severity ? `Gravidade: ${allergy.severity}` : "Gravidade não informada"}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500">Nenhuma alergia identificada.</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <p className="text-sm text-gray-500">
+                              Revise os dados sugeridos e aplique ao prontuário para usar imediatamente em novas análises.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button type="button" variant="ghost" onClick={handleResetAnamnesis}>
+                                Descartar
+                              </Button>
+                              <Button
+                                type="button"
+                                className="gap-2"
+                                onClick={handleApplyExtraction}
+                                disabled={isApplyingExtraction}
+                              >
+                                {isApplyingExtraction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                Aplicar ao prontuário
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  }
+                  {/* Linha do Tempo */}
+                  <div className="space-y-6 pb-12">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                          <Calendar className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Linha do Tempo Clínica</h3>
+                          <p className="text-sm text-gray-500">Histórico cronológico de eventos</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-gray-600 bg-white border-gray-200 px-3 py-1">
+                        {timelineItems.length} registros
+                      </Badge>
+                    </div>
+
+                    <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4">
+                      {timelineItems.length > 0 ? (
+                        timelineItems.map((item, index) => (
+                          <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
+                            {/* Dot on the line */}
+                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-blue-500' : 'bg-red-500'
+                              }`} />
+
+                            <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group-hover:border-indigo-100">
+                              <CardContent className="p-4">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                  <div className="space-y-2 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'
+                                        }`}>
+                                        {item.type === 'exam' ? 'Exame' : 'Diagnóstico'}
+                                      </Badge>
+                                      <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        {format(parseISO(item.date), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                                      </span>
+                                    </div>
+
+                                    <div>
+                                      <h4 className="text-lg font-bold text-gray-900 leading-tight">{item.title}</h4>
+                                      <p className="text-gray-600 mt-1">{item.description}</p>
+                                    </div>
+
+                                    {item.resultSummary && (
+                                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm border border-gray-100 flex items-start gap-2">
+                                        <Activity className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                          <span className="font-medium text-gray-700">Resumo: </span>
+                                          <span className="text-gray-600">{item.resultSummary}</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {item.type === 'diagnosis' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => openEditDialog(item.originalData)}
+                                      className="self-start text-gray-400 hover:text-gray-900"
+                                    >
+                                      Editar
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="pl-8 py-8">
+                          <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                            <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
+                            <p className="text-gray-500 mt-1">
+                              Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div > {/* End Left Column */}
+
+                {/* Right Column (Sidebar) */}
+                <div className="space-y-6">
+                  {/* Ações Rápidas */}
+                  <Card className="border border-primary-100 bg-white shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg text-gray-900">Ações rápidas</CardTitle>
+                      <CardDescription>Cadastre informações</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-all">
+                          <div className="p-2 bg-primary-100 rounded-full text-primary-600">
+                            <Activity className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Medicamento</span>
+                            <span className="text-xs text-gray-500 font-normal">Registrar uso</span>
+                          </div>
+                        </Button>
+
+                        <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 transition-all">
+                          <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                            <ClipboardList className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Alergia</span>
+                            <span className="text-xs text-gray-500 font-normal">Registrar alergia</span>
+                          </div>
+                        </Button>
+
+                        <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all">
+                          <div className="p-2 bg-red-100 rounded-full text-red-600">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Diagnóstico</span>
+                            <span className="text-xs text-gray-500 font-normal">Adicionar condição</span>
+                          </div>
+                        </Button>
+                      </div>
+
+                      <Button onClick={handleExportToPDF} variant="secondary" className="w-full justify-center gap-2 mt-2">
+                        <FileDown className="h-4 w-4" />
+                        Exportar PDF
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Medicamentos em Uso */}
+                  {medications.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Activity className="h-5 w-5 text-[#48C9B0]" />
+                          Medicamentos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid gap-2">
+                          {medications.map((medication: any) => (
+                            <div
+                              key={medication.id}
+                              className="p-2 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
+                              onClick={() => openEditMedicationDialog(medication)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-sm text-gray-900">{medication.name}</h4>
+                                <Badge variant="outline" className="text-[10px]">
+                                  {medication.format}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {medication.dosage} • {medication.frequency}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div >
+            </div >
+          </div >
+        </main >
+
+        {/* Dialog para Novo Diagnóstico */}
+        < Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
+              <DialogDescription>
+                Adicione um diagnóstico médico à sua linha do tempo
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="cidCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código CID-10 *</FormLabel>
+                        <FormControl>
+                          <CID10Selector
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Buscar código CID-10..."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="diagnosisDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data do Diagnóstico</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ativo">Ativo</SelectItem>
+                              <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                              <SelectItem value="resolvido">Resolvido</SelectItem>
+                              <SelectItem value="cronico">Crônico</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações (opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Adicione observações sobre o diagnóstico..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addDiagnosisMutation.isPending}>
+                    {addDiagnosisMutation.isPending ? "Registrando..." : "Registrar Diagnóstico"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
+
+        {/* Dialog de Edição de Diagnóstico */}
+        < Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Diagnóstico</DialogTitle>
+              <DialogDescription>
+                Modifique ou remova este diagnóstico da sua linha do tempo
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                <div className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="cidCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código CID-10 *</FormLabel>
+                        <FormControl>
+                          <CID10Selector
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Buscar código CID-10..."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="diagnosisDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data do Diagnóstico *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={editForm.control}
-                name="diagnosisDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data do Diagnóstico *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormField
+                      control={editForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="ativo">Ativo</SelectItem>
+                              <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
+                              <SelectItem value="curado">Curado</SelectItem>
+                              <SelectItem value="cronico">Crônico</SelectItem>
+                              <SelectItem value="controlado">Controlado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={editForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações (opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Adicione observações sobre o diagnóstico..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-between gap-3">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleRemoveDiagnosis}
+                    disabled={removeDiagnosisMutation.isPending}
+                  >
+                    {removeDiagnosisMutation.isPending ? "Removendo..." : "Remover Diagnóstico"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editDiagnosisMutation.isPending}>
+                      {editDiagnosisMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
+
+        {/* Dialog para adicionar medicamento */}
+        < Dialog open={isMedicationDialogOpen} onOpenChange={setIsMedicationDialogOpen} >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Adicionar Medicamento de Uso Contínuo</DialogTitle>
+              <DialogDescription>
+                Registre um medicamento que você usa regularmente
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...medicationForm}>
+              <form onSubmit={medicationForm.handleSubmit(onMedicationSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={medicationForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Medicamento *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Losartana" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="format"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Formato *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o formato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="comprimido">Comprimido</SelectItem>
+                              <SelectItem value="capsula">Cápsula</SelectItem>
+                              <SelectItem value="solucao">Solução</SelectItem>
+                              <SelectItem value="xarope">Xarope</SelectItem>
+                              <SelectItem value="gotas">Gotas</SelectItem>
+                              <SelectItem value="injecao">Injeção</SelectItem>
+                              <SelectItem value="creme">Creme</SelectItem>
+                              <SelectItem value="pomada">Pomada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosagem *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 50mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="frequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Frequência *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a frequência" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
+                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
+                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
+                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
+                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
+                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
+                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
+                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Início *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={medicationForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
+                        <Textarea
+                          placeholder="Adicione observações sobre o medicamento..."
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ativo">Ativo</SelectItem>
-                        <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
-                        <SelectItem value="curado">Curado</SelectItem>
-                        <SelectItem value="cronico">Crônico</SelectItem>
-                        <SelectItem value="controlado">Controlado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={editForm.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Adicione observações sobre o diagnóstico..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="flex justify-between gap-3">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleRemoveDiagnosis}
-              disabled={removeDiagnosisMutation.isPending}
-            >
-              {removeDiagnosisMutation.isPending ? "Removendo..." : "Remover Diagnóstico"}
-            </Button>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={editDiagnosisMutation.isPending}>
-                {editDiagnosisMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog >
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3">
+                  <Button type="button" variant="outline" onClick={() => setIsMedicationDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addMedicationMutation.isPending}>
+                    {addMedicationMutation.isPending ? "Adicionando..." : "Adicionar Medicamento"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
 
-  {/* Dialog para adicionar medicamento */ }
-  < Dialog open={isMedicationDialogOpen} onOpenChange={setIsMedicationDialogOpen} >
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Adicionar Medicamento de Uso Contínuo</DialogTitle>
-        <DialogDescription>
-          Registre um medicamento que você usa regularmente
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...medicationForm}>
-        <form onSubmit={medicationForm.handleSubmit(onMedicationSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={medicationForm.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Medicamento *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Losartana" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={medicationForm.control}
-              name="format"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Formato *</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o formato" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="comprimido">Comprimido</SelectItem>
-                        <SelectItem value="capsula">Cápsula</SelectItem>
-                        <SelectItem value="solucao">Solução</SelectItem>
-                        <SelectItem value="xarope">Xarope</SelectItem>
-                        <SelectItem value="gotas">Gotas</SelectItem>
-                        <SelectItem value="injecao">Injeção</SelectItem>
-                        <SelectItem value="creme">Creme</SelectItem>
-                        <SelectItem value="pomada">Pomada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={medicationForm.control}
-              name="dosage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dosagem *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: 50mg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={medicationForm.control}
-              name="frequency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frequência *</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a frequência" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1x-dia">1x ao dia</SelectItem>
-                        <SelectItem value="2x-dia">2x ao dia</SelectItem>
-                        <SelectItem value="3x-dia">3x ao dia</SelectItem>
-                        <SelectItem value="4x-dia">4x ao dia</SelectItem>
-                        <SelectItem value="12h-12h">12h em 12h</SelectItem>
-                        <SelectItem value="8h-8h">8h em 8h</SelectItem>
-                        <SelectItem value="6h-6h">6h em 6h</SelectItem>
-                        <SelectItem value="quando-necessario">Quando necessário</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={medicationForm.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Início *</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={medicationForm.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observações (opcional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Adicione observações sobre o medicamento..."
-                    {...field}
+        {/* Dialog para editar medicamento */}
+        < Dialog open={isEditMedicationDialogOpen} onOpenChange={setIsEditMedicationDialogOpen} >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Medicamento</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do medicamento
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editMedicationForm}>
+              <form onSubmit={editMedicationForm.handleSubmit(onEditMedicationSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Medicamento *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Losartana" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setIsMedicationDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={addMedicationMutation.isPending}>
-              {addMedicationMutation.isPending ? "Adicionando..." : "Adicionar Medicamento"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog >
-
-  {/* Dialog para editar medicamento */ }
-  < Dialog open={isEditMedicationDialogOpen} onOpenChange={setIsEditMedicationDialogOpen} >
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Editar Medicamento</DialogTitle>
-        <DialogDescription>
-          Atualize as informações do medicamento
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...editMedicationForm}>
-        <form onSubmit={editMedicationForm.handleSubmit(onEditMedicationSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={editMedicationForm.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Medicamento *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Losartana" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editMedicationForm.control}
-              name="format"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Formato *</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o formato" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="comprimido">Comprimido</SelectItem>
-                        <SelectItem value="capsula">Cápsula</SelectItem>
-                        <SelectItem value="solucao">Solução</SelectItem>
-                        <SelectItem value="xarope">Xarope</SelectItem>
-                        <SelectItem value="gotas">Gotas</SelectItem>
-                        <SelectItem value="injecao">Injeção</SelectItem>
-                        <SelectItem value="creme">Creme</SelectItem>
-                        <SelectItem value="pomada">Pomada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editMedicationForm.control}
-              name="dosage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dosagem *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: 50mg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editMedicationForm.control}
-              name="frequency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frequência *</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a frequência" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1x-dia">1x ao dia</SelectItem>
-                        <SelectItem value="2x-dia">2x ao dia</SelectItem>
-                        <SelectItem value="3x-dia">3x ao dia</SelectItem>
-                        <SelectItem value="4x-dia">4x ao dia</SelectItem>
-                        <SelectItem value="12h-12h">12h em 12h</SelectItem>
-                        <SelectItem value="8h-8h">8h em 8h</SelectItem>
-                        <SelectItem value="6h-6h">6h em 6h</SelectItem>
-                        <SelectItem value="quando-necessario">Quando necessário</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editMedicationForm.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Início *</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={editMedicationForm.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observações (opcional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Adicione observações sobre o medicamento..."
-                    {...field}
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="format"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Formato *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o formato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="comprimido">Comprimido</SelectItem>
+                              <SelectItem value="capsula">Cápsula</SelectItem>
+                              <SelectItem value="solucao">Solução</SelectItem>
+                              <SelectItem value="xarope">Xarope</SelectItem>
+                              <SelectItem value="gotas">Gotas</SelectItem>
+                              <SelectItem value="injecao">Injeção</SelectItem>
+                              <SelectItem value="creme">Creme</SelectItem>
+                              <SelectItem value="pomada">Pomada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="flex justify-between gap-3">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => editingMedication && handleRemoveMedication(editingMedication.id)}
-              disabled={deleteMedicationMutation.isPending}
-            >
-              {deleteMedicationMutation.isPending ? "Removendo..." : "Remover Medicamento"}
-            </Button>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsEditMedicationDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={editMedicationMutation.isPending}>
-                {editMedicationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog >
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosagem *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: 50mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="frequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Frequência *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a frequência" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
+                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
+                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
+                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
+                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
+                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
+                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
+                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Início *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={editMedicationForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Adicione observações sobre o medicamento..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-between gap-3">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => editingMedication && handleRemoveMedication(editingMedication.id)}
+                    disabled={deleteMedicationMutation.isPending}
+                  >
+                    {deleteMedicationMutation.isPending ? "Removendo..." : "Remover Medicamento"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditMedicationDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editMedicationMutation.isPending}>
+                      {editMedicationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
 
-  {/* Dialog para adicionar nova alergia */ }
-  < Dialog open={isAllergyDialogOpen} onOpenChange={setIsAllergyDialogOpen} >
-    <DialogContent className="max-w-md">
-      <DialogHeader>
-        <DialogTitle>Adicionar Nova Alergia</DialogTitle>
-      </DialogHeader>
-      <Form {...allergyForm}>
-        <form onSubmit={allergyForm.handleSubmit(onAllergySubmit)} className="space-y-4">
-          <FormField
-            control={allergyForm.control}
-            name="allergen"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Medicamento/Substância</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Dialog para adicionar nova alergia */}
+        < Dialog open={isAllergyDialogOpen} onOpenChange={setIsAllergyDialogOpen} >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Adicionar Nova Alergia</DialogTitle>
+            </DialogHeader>
+            <Form {...allergyForm}>
+              <form onSubmit={allergyForm.handleSubmit(onAllergySubmit)} className="space-y-4">
+                <FormField
+                  control={allergyForm.control}
+                  name="allergen"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medicamento/Substância</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={allergyForm.control}
-            name="allergenType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="medication">Medicamento</SelectItem>
-                    <SelectItem value="food">Alimento</SelectItem>
-                    <SelectItem value="environment">Ambiental</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={allergyForm.control}
+                  name="allergenType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="medication">Medicamento</SelectItem>
+                          <SelectItem value="food">Alimento</SelectItem>
+                          <SelectItem value="environment">Ambiental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={allergyForm.control}
-            name="reaction"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reação</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={allergyForm.control}
+                  name="reaction"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reação</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={allergyForm.control}
-            name="severity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Gravidade</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a gravidade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="leve">Leve</SelectItem>
-                    <SelectItem value="moderada">Moderada</SelectItem>
-                    <SelectItem value="grave">Grave</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={allergyForm.control}
+                  name="severity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gravidade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="leve">Leve</SelectItem>
+                          <SelectItem value="moderada">Moderada</SelectItem>
+                          <SelectItem value="grave">Grave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={allergyForm.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observações</FormLabel>
-                <FormControl>
-                  <Textarea {...field} placeholder="Informações adicionais..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={allergyForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => setIsAllergyDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={addAllergyMutation.isPending}>
-              {addAllergyMutation.isPending ? "Salvando..." : "Salvar Alergia"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog >
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsAllergyDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addAllergyMutation.isPending}>
+                    {addAllergyMutation.isPending ? "Salvando..." : "Salvar Alergia"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
 
-  {/* Dialog para editar alergia existente */ }
-  < Dialog open={isEditAllergyDialogOpen} onOpenChange={setIsEditAllergyDialogOpen} >
-    <DialogContent className="max-w-md">
-      <DialogHeader>
-        <DialogTitle>Editar Alergia</DialogTitle>
-      </DialogHeader>
-      <Form {...editAllergyForm}>
-        <form onSubmit={editAllergyForm.handleSubmit(onEditAllergySubmit)} className="space-y-4">
-          <FormField
-            control={editAllergyForm.control}
-            name="allergen"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Medicamento/Substância</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Dialog para editar alergia existente */}
+        < Dialog open={isEditAllergyDialogOpen} onOpenChange={setIsEditAllergyDialogOpen} >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Alergia</DialogTitle>
+            </DialogHeader>
+            <Form {...editAllergyForm}>
+              <form onSubmit={editAllergyForm.handleSubmit(onEditAllergySubmit)} className="space-y-4">
+                <FormField
+                  control={editAllergyForm.control}
+                  name="allergen"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medicamento/Substância</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={editAllergyForm.control}
-            name="allergenType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="medication">Medicamento</SelectItem>
-                    <SelectItem value="food">Alimento</SelectItem>
-                    <SelectItem value="environment">Ambiental</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={editAllergyForm.control}
+                  name="allergenType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="medication">Medicamento</SelectItem>
+                          <SelectItem value="food">Alimento</SelectItem>
+                          <SelectItem value="environment">Ambiental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={editAllergyForm.control}
-            name="reaction"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reação</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={editAllergyForm.control}
+                  name="reaction"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reação</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={editAllergyForm.control}
-            name="severity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Gravidade</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a gravidade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="leve">Leve</SelectItem>
-                    <SelectItem value="moderada">Moderada</SelectItem>
-                    <SelectItem value="grave">Grave</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={editAllergyForm.control}
+                  name="severity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gravidade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="leve">Leve</SelectItem>
+                          <SelectItem value="moderada">Moderada</SelectItem>
+                          <SelectItem value="grave">Grave</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={editAllergyForm.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observações</FormLabel>
-                <FormControl>
-                  <Textarea {...field} placeholder="Informações adicionais..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={editAllergyForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <div className="flex justify-between pt-4">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => editingAllergy && handleRemoveAllergy(editingAllergy.id)}
-              disabled={deleteAllergyMutation.isPending}
-            >
-              {deleteAllergyMutation.isPending ? "Removendo..." : "Remover Alergia"}
-            </Button>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsEditAllergyDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={editAllergyMutation.isPending}>
-                {editAllergyMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog >
-    </div>
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => editingAllergy && handleRemoveAllergy(editingAllergy.id)}
+                    disabled={deleteAllergyMutation.isPending}
+                  >
+                    {deleteAllergyMutation.isPending ? "Removendo..." : "Remover Alergia"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditAllergyDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editAllergyMutation.isPending}>
+                      {editAllergyMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog >
+
+      </div >
+    </div >
   );
 }
