@@ -419,9 +419,11 @@ export class MemStorage implements IStorage {
       status: metric.status || null,
       unit: metric.unit || null,
       change: metric.change || null,
-      profileId: metric.profileId ?? null
-      // Removidos campos que não existem no banco de dados real
-      // referenceMin, referenceMax, clinical_significance, category
+
+      profileId: metric.profileId ?? null,
+      referenceMin: metric.referenceMin || null,
+      referenceMax: metric.referenceMax || null
+      // clinical_significance, category removed
     };
     this.healthMetricsMap.set(id, newMetric);
     return newMetric;
@@ -1142,7 +1144,12 @@ export class DatabaseStorage implements IStorage {
           unit, 
           status, 
           change, 
-          date
+          unit, 
+          status, 
+          change, 
+          date,
+          reference_min as "referenceMin",
+          reference_max as "referenceMax"
         FROM health_metrics 
         WHERE user_id = $1
         ${profileId ? 'AND profile_id = $2' : ''}

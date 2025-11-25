@@ -9,8 +9,8 @@ import { useAuth } from "@/hooks/use-auth";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import {
-  AlertCircle, 
-  Filter, 
+  AlertCircle,
+  Filter,
   Search,
   Trash2,
 } from "lucide-react";
@@ -18,13 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -59,7 +59,7 @@ export default function ExamResults() {
   const [localHealthMetrics, setLocalHealthMetrics] = useState<HealthMetric[]>([]);
   const [, setLocation] = useLocation();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  
+
   // Mutação para excluir todas as métricas de saúde
   const clearMetricsMutation = useMutation({
     mutationFn: async () => {
@@ -67,7 +67,7 @@ export default function ExamResults() {
         throw new Error("Usuário não autenticado");
       }
       return await fetch(`/api/health-metrics/user/${user.id}?profileId=${activeProfile.id}`, {
-        method: "DELETE", 
+        method: "DELETE",
         credentials: "include"
       }).then(res => {
         if (!res.ok) throw new Error("Falha ao excluir métricas");
@@ -78,7 +78,7 @@ export default function ExamResults() {
       // Invalidar a consulta de métricas de saúde
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
-      
+
       toast({
         title: "Métricas excluídas",
         description: `${data.count} métricas de saúde foram removidas com sucesso.`,
@@ -93,10 +93,10 @@ export default function ExamResults() {
       });
     }
   });
-  
+
   // Verificar se estamos na rota individual
   const [match] = useRoute("/results/:id");
-  
+
   // Se estamos na rota individual, redirecionar para o componente específico
   useEffect(() => {
     if (match) {
@@ -104,11 +104,11 @@ export default function ExamResults() {
       // o componente ExamResultSingle quando estamos em /results/:id
     }
   }, [match]);
-  
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
+
   // Fetch exams from API
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
     queryKey: ["/api/exams", activeProfile?.id],
@@ -124,7 +124,7 @@ export default function ExamResults() {
     },
     enabled: !!activeProfile,
   });
-  
+
   // Fetch health metrics from API
   const { data: apiHealthMetrics, isLoading: metricsLoading } = useQuery<HealthMetric[]>({
     queryKey: ["/api/health-metrics", activeProfile?.id],
@@ -177,7 +177,7 @@ export default function ExamResults() {
       </div>
     );
   }
-  
+
   // Load data from localStorage
   useEffect(() => {
     try {
@@ -191,7 +191,7 @@ export default function ExamResults() {
             : []
         );
       }
-      
+
       // Load health metrics from localStorage
       const metricsString = localStorage.getItem('healthMetrics');
       if (metricsString) {
@@ -206,64 +206,64 @@ export default function ExamResults() {
       // Error reading from localStorage
     }
   }, [activeProfile]);
-  
+
   // Combine data from API and localStorage
   const allExams = useMemo(() => {
     const apiExamsArray = apiExams || [];
     return [...apiExamsArray, ...localExams];
   }, [apiExams, localExams]);
-  
+
   const allHealthMetrics = useMemo(() => {
     const apiMetricsArray = apiHealthMetrics || [];
     return [...apiMetricsArray, ...localHealthMetrics];
   }, [apiHealthMetrics, localHealthMetrics]);
-  
+
   // Get unique exam types
   const examTypes = useMemo(() => {
     const types = new Set<string>();
-    
+
     // Add types from health metrics
     allHealthMetrics.forEach(metric => {
       types.add(metric.name);
     });
-    
+
     return ["all", ...Array.from(types)].sort();
   }, [allHealthMetrics]);
-  
+
   // Apply filters to health metrics
   const filteredMetrics = useMemo(() => {
     let filtered = [...allHealthMetrics];
-    
+
     // Apply exam type filter
     if (selectedExamType !== "all") {
-      filtered = filtered.filter(metric => 
+      filtered = filtered.filter(metric =>
         metric.name.toLowerCase() === selectedExamType.toLowerCase()
       );
     }
-    
+
     // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(metric => 
+      filtered = filtered.filter(metric =>
         metric.name.toLowerCase().includes(searchLower) ||
         (metric.status && metric.status.toLowerCase().includes(searchLower)) ||
         metric.value.toString().includes(searchLower) ||
         (metric.unit && metric.unit.toLowerCase().includes(searchLower))
       );
     }
-    
+
     return filtered;
   }, [allHealthMetrics, selectedExamType, searchTerm]);
-  
+
   // Group metrics by name
   const groupedMetrics = useMemo(() => {
     const groups = new Map<string, HealthMetric[]>();
-    
+
     filteredMetrics.forEach(metric => {
       const existing = groups.get(metric.name) || [];
       groups.set(metric.name, [...existing, metric]);
     });
-    
+
     // Sort each group by date (using date field or creation date)
     groups.forEach((metrics, name) => {
       metrics.sort((a, b) => {
@@ -273,16 +273,16 @@ export default function ExamResults() {
         return dateB - dateA;
       });
     });
-    
+
     return groups;
   }, [filteredMetrics]);
-  
+
   const isLoading = apiLoading || metricsLoading;
-  
+
   // Helper function to map status to colors
   const getStatusColor = (status: string | null | undefined) => {
     if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
-    
+
     switch (status.toLowerCase()) {
       case 'normal':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -300,28 +300,28 @@ export default function ExamResults() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-  
+
   // Helper function to get trend icon and color
   const getTrendData = (change: string | null | undefined) => {
     if (!change) return { icon: null, color: "" };
-    
+
     const num = parseFloat(change);
     if (isNaN(num)) return { icon: null, color: "" };
-    
+
     if (num > 0) {
-      return { 
-        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z" /></svg>, 
-        color: "text-red-500" 
+      return {
+        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z" /></svg>,
+        color: "text-red-500"
       };
     } else if (num < 0) {
-      return { 
-        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z" /></svg>, 
-        color: "text-green-500" 
+      return {
+        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z" /></svg>,
+        color: "text-green-500"
       };
     } else {
-      return { 
-        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /></svg>, 
-        color: "text-gray-500" 
+      return {
+        icon: <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /></svg>,
+        color: "text-gray-500"
       };
     }
   };
@@ -329,10 +329,10 @@ export default function ExamResults() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader toggleSidebar={toggleSidebar} />
-        
+
         <main className="flex-1 overflow-y-auto">
           <div className="container px-4 py-6 mx-auto max-w-7xl">
             <PatientHeader
@@ -349,7 +349,7 @@ export default function ExamResults() {
                 </Link>
               </div>
             </div>
-            
+
             {/* Filters */}
             <Card className="mb-8">
               <CardHeader className="pb-3">
@@ -401,7 +401,7 @@ export default function ExamResults() {
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Alerta quando existem métricas sem exames */}
             {allHealthMetrics.length > 0 && (allExams.length === 0) && (
               <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -410,13 +410,13 @@ export default function ExamResults() {
                   <div>
                     <h3 className="text-sm font-medium text-yellow-800">Dados desconectados detectados</h3>
                     <p className="text-sm text-yellow-600 mt-1 mb-3">
-                      Existem {allHealthMetrics.length} métricas de saúde em seu perfil, mas nenhum exame encontrado. 
+                      Existem {allHealthMetrics.length} métricas de saúde em seu perfil, mas nenhum exame encontrado.
                       Isso pode acontecer quando exames foram excluídos mas as métricas permaneceram no sistema.
                     </p>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
-                          variant="destructive" 
+                          variant="destructive"
                           size="sm"
                           className="flex items-center gap-1.5"
                         >
@@ -428,7 +428,7 @@ export default function ExamResults() {
                         <DialogHeader>
                           <DialogTitle>Excluir todas as métricas de saúde</DialogTitle>
                           <DialogDescription>
-                            Tem certeza que deseja excluir todas as {allHealthMetrics.length} métricas de saúde do seu perfil? 
+                            Tem certeza que deseja excluir todas as {allHealthMetrics.length} métricas de saúde do seu perfil?
                             Esta ação não pode ser desfeita.
                           </DialogDescription>
                         </DialogHeader>
@@ -451,7 +451,7 @@ export default function ExamResults() {
                 </div>
               </div>
             )}
-            
+
             {/* View Tabs */}
             <Tabs defaultValue="grid" className="mb-6" onValueChange={(value) => setViewMode(value as "list" | "grid")}>
               <div className="flex justify-between items-center mb-4">
@@ -463,7 +463,7 @@ export default function ExamResults() {
                   {filteredMetrics.length} resultado(s) encontrado(s)
                 </div>
               </div>
-              
+
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...Array(6)].map((_, index) => (
@@ -516,7 +516,73 @@ export default function ExamResults() {
                                 {metrics[0]?.status}
                               </Badge>
                             </div>
-                            
+
+                            {/* Reference Ruler */}
+                            {metrics[0]?.referenceMin && metrics[0]?.referenceMax && (
+                              <div className="mb-4">
+                                <div className="flex justify-between text-[10px] text-gray-400 mb-1.5 uppercase tracking-wider font-medium">
+                                  <span>{metrics[0].referenceMin}</span>
+                                  <span>Referência</span>
+                                  <span>{metrics[0].referenceMax}</span>
+                                </div>
+                                <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                  {/* Calculation for ruler */}
+                                  {(() => {
+                                    const min = parseFloat(metrics[0].referenceMin?.replace(',', '.') || '0');
+                                    const max = parseFloat(metrics[0].referenceMax?.replace(',', '.') || '100');
+                                    const val = parseFloat(metrics[0].value?.replace(',', '.'));
+
+                                    if (isNaN(min) || isNaN(max) || isNaN(val)) return null;
+
+                                    // Determine display range (add padding)
+                                    const range = max - min;
+                                    const padding = range > 0 ? range * 0.5 : max * 0.2;
+                                    const displayMin = min - padding;
+                                    const displayMax = max + padding;
+                                    const displayRange = displayMax - displayMin;
+
+                                    if (displayRange <= 0) return null;
+
+                                    // Calculate positions in percentage
+                                    let valPercent = ((val - displayMin) / displayRange) * 100;
+                                    valPercent = Math.max(0, Math.min(100, valPercent));
+
+                                    const refStart = Math.max(0, ((min - displayMin) / displayRange) * 100);
+                                    const refWidth = Math.min(100 - refStart, ((max - min) / displayRange) * 100);
+
+                                    return (
+                                      <>
+                                        {/* Reference Range (Green Zone) */}
+                                        <div
+                                          className="absolute top-0 bottom-0 bg-green-100 border-x border-green-200"
+                                          style={{ left: `${refStart}%`, width: `${refWidth}%` }}
+                                        />
+
+                                        {/* Value Marker */}
+                                        <div
+                                          className={cn(
+                                            "absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-white z-10",
+                                            metrics[0].status === 'normal' ? "bg-green-500" :
+                                              (metrics[0].status?.toLowerCase().includes('alto') || metrics[0].status?.toLowerCase().includes('high')) ? "bg-red-500" :
+                                                (metrics[0].status?.toLowerCase().includes('baixo') || metrics[0].status?.toLowerCase().includes('low')) ? "bg-blue-500" : "bg-amber-500"
+                                          )}
+                                          style={{ left: `calc(${valPercent}% - 6px)` }}
+                                          title={`Valor: ${metrics[0].value}`}
+                                        />
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                                  <span className="opacity-0">{metrics[0].referenceMin}</span>
+                                  <span className="text-center w-full">
+                                    {metrics[0].value} {metrics[0].unit}
+                                  </span>
+                                  <span className="opacity-0">{metrics[0].referenceMax}</span>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="flex items-center text-sm">
                               <span className={cn("flex items-center gap-1", getTrendData(metrics[0]?.change).color)}>
                                 {getTrendData(metrics[0]?.change).icon}
@@ -524,8 +590,8 @@ export default function ExamResults() {
                               </span>
                               <span className="mx-2 text-gray-300">•</span>
                               <span className="text-gray-500">
-                                {metrics.length > 1 
-                                  ? `Histórico de ${metrics.length} medições` 
+                                {metrics.length > 1
+                                  ? `Histórico de ${metrics.length} medições`
                                   : "Primeira medição"}
                               </span>
                             </div>
@@ -539,27 +605,27 @@ export default function ExamResults() {
                                   const min = Math.min(...values);
                                   const max = Math.max(...values);
                                   const range = max - min;
-                                  
+
                                   // Calculate height percentage (30% to 100%)
                                   const valueNum = parseFloat(metric.value);
                                   let heightPercent = 30; // default min height
-                                  
+
                                   if (range > 0) {
                                     heightPercent = 30 + ((valueNum - min) / range) * 70;
                                   }
-                                  
+
                                   return (
                                     <div
                                       key={i}
                                       className={cn(
                                         "w-full rounded-t",
                                         !metric.status ? "bg-gray-200" :
-                                        metric.status === "normal" ? "bg-green-200" :
-                                        (metric.status && metric.status.toLowerCase().includes("alt")) || 
-                                        (metric.status && metric.status.toLowerCase().includes("high")) ? "bg-red-200" :
-                                        (metric.status && metric.status.toLowerCase().includes("baix")) || 
-                                        (metric.status && metric.status.toLowerCase().includes("low")) ? "bg-blue-200" :
-                                        "bg-amber-200"
+                                          metric.status === "normal" ? "bg-green-200" :
+                                            (metric.status && metric.status.toLowerCase().includes("alt")) ||
+                                              (metric.status && metric.status.toLowerCase().includes("high")) ? "bg-red-200" :
+                                              (metric.status && metric.status.toLowerCase().includes("baix")) ||
+                                                (metric.status && metric.status.toLowerCase().includes("low")) ? "bg-blue-200" :
+                                                "bg-amber-200"
                                       )}
                                       style={{ height: `${heightPercent}%` }}
                                       title={`${metric.value} ${metric.unit || ''} - ${new Date(metric.date || Date.now()).toLocaleDateString()}`}
@@ -573,7 +639,7 @@ export default function ExamResults() {
                       ))}
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="list" className="mt-0">
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 py-3 px-4 text-sm font-medium text-gray-500">
@@ -583,11 +649,11 @@ export default function ExamResults() {
                         <div className="col-span-2 text-center">Status</div>
                         <div className="col-span-2 text-center">Variação</div>
                       </div>
-                      
-                      {Array.from(groupedMetrics.entries()).flatMap(([name, metrics]) => 
+
+                      {Array.from(groupedMetrics.entries()).flatMap(([name, metrics]) =>
                         metrics.map((metric, index) => (
-                          <div 
-                            key={`${name}-${index}`} 
+                          <div
+                            key={`${name}-${index}`}
                             className="grid grid-cols-12 py-3 px-4 border-b border-gray-100 items-center hover:bg-gray-50"
                           >
                             <div className="col-span-4 font-medium text-gray-800">

@@ -36,7 +36,7 @@ const examNameMap: Record<string, string> = {
   'rdw-cv': 'rdw',
   'rdw-sd': 'rdw-sd',
   'amplitude de distribuição dos eritrócitos': 'rdw',
-  
+
   // Leucograma
   'leucócitos': 'leucócitos',
   'leucocitos': 'leucócitos',
@@ -54,19 +54,19 @@ const examNameMap: Record<string, string> = {
   'linfocitos': 'linfócitos',
   'monócitos': 'monócitos',
   'monocitos': 'monócitos',
-  
+
   // Plaquetas
   'plaquetas': 'plaquetas',
   'plt': 'plaquetas',
   'contagem de plaquetas': 'plaquetas',
-  
+
   // Glicose
   'glicose': 'glicose',
   'glicemia': 'glicose',
   'glicemia de jejum': 'glicose',
   'glic.': 'glicose',
   'gli': 'glicose',
-  
+
   // Colesterol
   'colesterol total': 'colesterol total',
   'colesterol': 'colesterol total',
@@ -84,14 +84,14 @@ const examNameMap: Record<string, string> = {
   'vldl-colesterol': 'colesterol vldl',
   'colesterol vldl': 'colesterol vldl',
   'vldl-c': 'colesterol vldl',
-  
+
   // Triglicerídeos
   'triglicerídeos': 'triglicerídeos',
   'triglicerideos': 'triglicerídeos',
   'triglicérides': 'triglicerídeos',
   'triglicerides': 'triglicerídeos',
   'tg': 'triglicerídeos',
-  
+
   // Função hepática
   'tgo': 'tgo',
   'ast': 'tgo',
@@ -118,7 +118,7 @@ const examNameMap: Record<string, string> = {
   'bilirubina indireta': 'bilirubina indireta',
   'bi': 'bilirubina indireta',
   'bilirrubina indireta': 'bilirubina indireta',
-  
+
   // Função renal
   'ureia': 'ureia',
   'uréia': 'ureia',
@@ -132,7 +132,7 @@ const examNameMap: Record<string, string> = {
   'ácido úrico': 'ácido úrico',
   'acido urico': 'ácido úrico',
   'au': 'ácido úrico',
-  
+
   // Eletrólitos
   'sódio': 'sódio',
   'sodio': 'sódio',
@@ -154,7 +154,7 @@ const examNameMap: Record<string, string> = {
   'mg': 'magnésio',
   'ferro': 'ferro',
   'fe': 'ferro',
-  
+
   // Proteínas
   'proteínas totais': 'proteínas totais',
   'proteinas totais': 'proteínas totais',
@@ -166,7 +166,7 @@ const examNameMap: Record<string, string> = {
   'glob': 'globulina',
   'relação albumina/globulina': 'relação albumina/globulina',
   'rel a/g': 'relação albumina/globulina',
-  
+
   // Coagulação
   'tempo de protrombina': 'tempo de protrombina',
   'tp': 'tempo de protrombina',
@@ -176,7 +176,7 @@ const examNameMap: Record<string, string> = {
   'kttp': 'tempo de tromboplastina parcial ativada',
   'inr': 'inr',
   'razão normalizada internacional': 'inr',
-  
+
   // Inflamação
   'vhs': 'vhs',
   'hemossedimentação': 'vhs',
@@ -184,7 +184,7 @@ const examNameMap: Record<string, string> = {
   'pcr': 'proteína c reativa',
   'proteína c reativa': 'proteína c reativa',
   'proteina c reativa': 'proteína c reativa',
-  
+
   // Hormônios
   'tsh': 'tsh',
   'hormônio estimulante da tireoide': 'tsh',
@@ -196,7 +196,7 @@ const examNameMap: Record<string, string> = {
   't3 livre': 't3 livre',
   't3l': 't3 livre',
   'insulina': 'insulina',
-  
+
   // Outros
   'ferritina': 'ferritina',
   'vitamina d': 'vitamina d',
@@ -218,16 +218,16 @@ const examNameMap: Record<string, string> = {
  */
 export function normalizeExamName(name: string): string {
   if (!name) return "desconhecido";
-  
+
   // Converter para minúsculo e remover espaços extras
   const normalized = name.toLowerCase().trim();
-  
+
   // Verificar no mapeamento
   if (examNameMap[normalized]) {
     const result = examNameMap[normalized];
     return result;
   }
-  
+
   // Se não estiver no mapeamento, retorna o nome original com primeira letra maiúscula 
   // e resto minúscula para manter consistência
   const result = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -242,26 +242,60 @@ export function normalizeExamName(name: string): string {
  */
 export function normalizeHealthMetrics(metrics: any[]): any[] {
   if (!metrics || !Array.isArray(metrics)) return [];
-  
+
   // Usar um mapa para agrupar métricas por nome normalizado
   const processedMetrics = new Map<string, any>();
-  
+
   // Normalizar todos os nomes e agrupar métricas idênticas
   for (const metric of metrics) {
     if (!metric || !metric.name) continue;
-    
+
     const normalizedName = normalizeExamName(metric.name);
-    
+
+    // Parse reference range if available and min/max not already set
+    let referenceMin = metric.referenceMin;
+    let referenceMax = metric.referenceMax;
+
+    if ((!referenceMin || !referenceMax) && metric.referenceRange) {
+      // Try to parse "min - max" or similar patterns
+      // Examples: "70 - 99", "70-99", "< 200", "> 60", "Até 150"
+      const rangeStr = String(metric.referenceRange).trim();
+
+      // Pattern: "X - Y" or "X to Y"
+      const rangeMatch = rangeStr.match(/([\d,.]+)\s*(?:-|a|to)\s*([\d,.]+)/i);
+      if (rangeMatch) {
+        referenceMin = rangeMatch[1];
+        referenceMax = rangeMatch[2];
+      } else {
+        // Pattern: "< X" or "Até X"
+        const maxMatch = rangeStr.match(/(?:<|até|inf\.|inferior a)\s*([\d,.]+)/i);
+        if (maxMatch) {
+          referenceMin = "0";
+          referenceMax = maxMatch[1];
+        } else {
+          // Pattern: "> X" or "Superior a X"
+          const minMatch = rangeStr.match(/(?:>|sup\.|superior a)\s*([\d,.]+)/i);
+          if (minMatch) {
+            referenceMin = minMatch[1];
+            // No explicit max, maybe leave undefined or set a high number?
+            // For visualization, we might need a max.
+          }
+        }
+      }
+    }
+
     // Se já temos uma métrica com esse nome normalizado, usamos a mais recente
     // ou a que tem mais informações (assumindo que a ordem indica prioridade)
     if (!processedMetrics.has(normalizedName)) {
       processedMetrics.set(normalizedName, {
         ...metric,
-        name: normalizedName
+        name: normalizedName,
+        referenceMin,
+        referenceMax
       });
     }
   }
-  
+
   // Converter de volta para array
   return Array.from(processedMetrics.values());
 }
@@ -294,10 +328,10 @@ const examNormalRanges: Record<string, { min: number; max: number; unit: string;
  */
 export function normalizeExamResults(text: string): ExamResult[] {
   if (!text || text.trim() === '') return [];
-  
+
   const results: ExamResult[] = [];
   const lines = text.split('\n').filter(line => line.trim());
-  
+
   for (const line of lines) {
     // Tentar diferentes padrões de parsing
     const patterns = [
@@ -305,19 +339,19 @@ export function normalizeExamResults(text: string): ExamResult[] {
       /(.+?)\s*=\s*([\d,\.]+)\s*(.+)?/, // Nome = valor unidade
       /(.+?)\s*-\s*([\d,\.]+)\s*(.+)?/, // Nome - valor unidade
     ];
-    
+
     let match = null;
     for (const pattern of patterns) {
       match = line.match(pattern);
       if (match) break;
     }
-    
+
     if (match) {
       const [, nameRaw, valueRaw, unitRaw = ''] = match;
       const name = normalizeExamName(nameRaw.trim());
       const value = parseFloat(valueRaw.replace(',', '.'));
       const unit = unitRaw.trim() || 'units';
-      
+
       if (!isNaN(value)) {
         const rangeInfo = examNormalRanges[name.toLowerCase()] || {
           min: 0,
@@ -325,11 +359,11 @@ export function normalizeExamResults(text: string): ExamResult[] {
           unit: unit,
           category: 'Other'
         };
-        
+
         let status: 'normal' | 'high' | 'low' = 'normal';
         if (value < rangeInfo.min) status = 'low';
         else if (value > rangeInfo.max) status = 'high';
-        
+
         results.push({
           category: rangeInfo.category,
           name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -341,7 +375,7 @@ export function normalizeExamResults(text: string): ExamResult[] {
       }
     }
   }
-  
+
   return results;
 }
 
@@ -353,32 +387,32 @@ export function normalizeExamResults(text: string): ExamResult[] {
  */
 export function formatMetricDisplayName(name: string): string {
   if (!name) return "Desconhecido";
-  
+
   // Remover underscores e substituir por espaços
   let formatted = name.replace(/_/g, ' ');
-  
+
   // Lista de siglas que devem ser todas maiúsculas
   const acronyms = [
-    'vcm', 'hcm', 'chcm', 'rdw', 'tsh', 't3', 't4', 'ldl', 'hdl', 'vhs', 
-    'pcr', 'inr', 'ige', 'igg', 'iga', 'igm', 'hbsag', 'anti-hbs', 'psa', 
-    'ca', 'cea', 'afp', 'beta-hcg', 'ck', 'ck-mb', 'ldh', 'ggt', 'ast', 
+    'vcm', 'hcm', 'chcm', 'rdw', 'tsh', 't3', 't4', 'ldl', 'hdl', 'vhs',
+    'pcr', 'inr', 'ige', 'igg', 'iga', 'igm', 'hbsag', 'anti-hbs', 'psa',
+    'ca', 'cea', 'afp', 'beta-hcg', 'ck', 'ck-mb', 'ldh', 'ggt', 'ast',
     'alt', 'tgo', 'tgp', 'fa', 'dhl', 'cpk', 'pt', 'ttpa', 'tp', 'ttp',
     'ch50', 'c3', 'c4', 'dna', 'rna', 'hla', 'ana', 'anca', 'hiv', 'hcv',
     'hbv', 'cmv', 'ebv', 'hsv', 'vzv', 'toxo', 'rubéola', 'citomegalovírus'
   ];
-  
+
   // Dividir em palavras
   const words = formatted.toLowerCase().split(/\s+/);
-  
+
   // Formatar cada palavra
   const formattedWords = words.map(word => {
     const cleanWord = word.trim();
-    
+
     // Se for uma sigla conhecida, deixar toda maiúscula
     if (acronyms.includes(cleanWord)) {
       return cleanWord.toUpperCase();
     }
-    
+
     // Casos especiais para algumas palavras compostas
     if (cleanWord.includes('-')) {
       return cleanWord.split('-').map(part => {
@@ -388,7 +422,7 @@ export function formatMetricDisplayName(name: string): string {
         return part.charAt(0).toUpperCase() + part.slice(1);
       }).join('-');
     }
-    
+
     // Casos especiais para palavras específicas
     switch (cleanWord) {
       case 'vitamina':
@@ -466,6 +500,6 @@ export function formatMetricDisplayName(name: string): string {
         return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
     }
   });
-  
+
   return formattedWords.join(' ');
 }

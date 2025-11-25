@@ -121,10 +121,8 @@ export const healthMetrics = pgTable("health_metrics", {
   status: text("status"), // normal, atenção, alto
   change: text("change"), // +2, -3, etc (change from previous)
   date: timestamp("date").defaultNow().notNull(),
-  // Nota: Os campos abaixo não existem na tabela real do banco de dados
-  // Foram removidos para compatibilidade com o schema real
-  // referenceMin: text("reference_min"), 
-  // referenceMax: text("reference_max"), 
+  referenceMin: text("reference_min"),
+  referenceMax: text("reference_max"),
   // clinical_significance: text("clinical_significance"),
   // category: text("category"),
 });
@@ -139,9 +137,8 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
     status: true,
     change: true,
     date: true,
-    // Removidos campos que não existem no banco de dados
-    // referenceMin: true,
-    // referenceMax: true,
+    referenceMin: true,
+    referenceMax: true,
     // clinical_significance: true,
     // category: true,
   })

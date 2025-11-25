@@ -228,7 +228,9 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
           unit: metric.unit || "",
           status: metric.status || "normal",
           change: metric.change || "",
-          date: new Date(extractedExamDate)
+          date: new Date(extractedExamDate),
+          referenceMin: metric.referenceMin || null,
+          referenceMax: metric.referenceMax || null
         });
 
         savedMetricsCount++;
