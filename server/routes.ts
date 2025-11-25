@@ -848,6 +848,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           });
 
           // Iniciar processamento
+          logger.info(`Iniciando pipeline para exame ${exam.id}`);
           runAnalysisPipeline(exam.id).catch(err => {
             logger.error(`Erro no processamento em background do exame ${exam.id}:`, err);
           });

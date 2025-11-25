@@ -119,6 +119,7 @@ export interface AnalysisResult {
  * @returns Resultado da análise
  */
 export async function runAnalysisPipeline(examId: number): Promise<AnalysisResult> {
+  logger.info(`[Pipeline] Iniciando runAnalysisPipeline para exame ${examId}`);
   // [Pipeline] Iniciando análise completa para exame existente
 
   const exam = await storage.getExam(examId);
