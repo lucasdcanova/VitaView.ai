@@ -75,9 +75,18 @@ const allergySchema = z.object({
   notes: z.string().optional(),
 });
 
+const surgerySchema = z.object({
+  procedureName: z.string().min(1, "Nome do procedimento é obrigatório"),
+  hospitalName: z.string().optional(),
+  surgeonName: z.string().optional(),
+  surgeryDate: z.string().min(1, "Data da cirurgia é obrigatória"),
+  notes: z.string().optional(),
+});
+
 type DiagnosisForm = z.infer<typeof diagnosisSchema>;
 type MedicationForm = z.infer<typeof medicationSchema>;
 type AllergyForm = z.infer<typeof allergySchema>;
+type SurgeryForm = z.infer<typeof surgerySchema>;
 
 // Função para buscar a descrição do código CID-10
 const getCIDDescription = (cidCode: string): string => {
@@ -111,6 +120,9 @@ export default function HealthTrendsNew() {
   const [isAllergyDialogOpen, setIsAllergyDialogOpen] = useState(false);
   const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<any>(null);
+  const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
+  const [isEditSurgeryDialogOpen, setIsEditSurgeryDialogOpen] = useState(false);
+  const [editingSurgery, setEditingSurgery] = useState<any>(null);
   const [anamnesisText, setAnamnesisText] = useState("");
   const [extractedRecord, setExtractedRecord] = useState<any | null>(null);
   const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
@@ -181,6 +193,28 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const surgeryForm = useForm<SurgeryForm>({
+    resolver: zodResolver(surgerySchema),
+    defaultValues: {
+      procedureName: "",
+      hospitalName: "",
+      surgeonName: "",
+      surgeryDate: "",
+      notes: "",
+    },
+  });
+
+  const editSurgeryForm = useForm<SurgeryForm>({
+    resolver: zodResolver(surgerySchema),
+    defaultValues: {
+      procedureName: "",
+      hospitalName: "",
+      surgeonName: "",
+      surgeryDate: "",
+      notes: "",
+    },
+  });
+
   const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
@@ -195,6 +229,10 @@ export default function HealthTrendsNew() {
 
   const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
     queryKey: ["/api/allergies"],
+  });
+
+  const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery({
+    queryKey: ["/api/surgeries"],
   });
 
   // Mutation para adicionar diagnóstico
@@ -382,6 +420,66 @@ export default function HealthTrendsNew() {
     },
   });
 
+  // Mutations para cirurgias
+  const addSurgeryMutation = useMutation({
+    mutationFn: (data: SurgeryForm) => apiRequest("POST", "/api/surgeries", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      surgeryForm.reset();
+      setIsSurgeryDialogOpen(false);
+      toast({
+        title: "Cirurgia registrada",
+        description: "Cirurgia registrada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao registrar cirurgia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editSurgeryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: SurgeryForm }) =>
+      apiRequest("PUT", `/api/surgeries/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      setEditingSurgery(null);
+      setIsEditSurgeryDialogOpen(false);
+      toast({
+        title: "Sucesso",
+        description: "Cirurgia atualizada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar cirurgia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSurgeryMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/surgeries/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      toast({
+        title: "Sucesso",
+        description: "Cirurgia excluída com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir cirurgia. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const analyzeAnamnesisMutation = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
       const res = await apiRequest("POST", "/api/patient-record/analyze", { text });
@@ -448,6 +546,14 @@ export default function HealthTrendsNew() {
       cidCode: diagnosis.cidCode,
       status: diagnosis.status,
       originalData: diagnosis,
+    })) : []),
+    ...(Array.isArray(surgeries) ? surgeries.map((surgery: any) => ({
+      id: surgery.id,
+      type: "surgery" as const,
+      date: surgery.surgeryDate,
+      title: surgery.procedureName || "Cirurgia",
+      description: `${surgery.hospitalName ? `Hospital: ${surgery.hospitalName}` : ""} ${surgery.surgeonName ? `| Cirurgião: ${surgery.surgeonName}` : ""}`,
+      originalData: surgery,
     })) : [])
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -534,6 +640,35 @@ export default function HealthTrendsNew() {
   const handleRemoveAllergy = (id: number) => {
     if (confirm("Deseja remover esta alergia?")) {
       deleteAllergyMutation.mutate(id);
+    }
+  };
+
+  // Funções para cirurgias
+  const onSurgerySubmit = (data: SurgeryForm) => {
+    addSurgeryMutation.mutate(data);
+  };
+
+  const onEditSurgerySubmit = (data: SurgeryForm) => {
+    if (editingSurgery) {
+      editSurgeryMutation.mutate({ id: editingSurgery.id, data });
+    }
+  };
+
+  const openEditSurgeryDialog = (surgery: any) => {
+    setEditingSurgery(surgery);
+    editSurgeryForm.reset({
+      procedureName: surgery.procedureName || "",
+      hospitalName: surgery.hospitalName || "",
+      surgeonName: surgery.surgeonName || "",
+      surgeryDate: surgery.surgeryDate || "",
+      notes: surgery.notes || "",
+    });
+    setIsEditSurgeryDialogOpen(true);
+  };
+
+  const handleRemoveSurgery = (id: number) => {
+    if (confirm("Deseja remover esta cirurgia?")) {
+      deleteSurgeryMutation.mutate(id);
     }
   };
 
@@ -624,10 +759,12 @@ export default function HealthTrendsNew() {
   const diagnosesCount = Array.isArray(diagnoses) ? diagnoses.length : 0;
   const medicationsCount = Array.isArray(medications) ? medications.length : 0;
   const allergiesCount = Array.isArray(allergies) ? allergies.length : 0;
+  const surgeriesCount = Array.isArray(surgeries) ? surgeries.length : 0;
   const summaryHighlights = [
     { label: "Diagnósticos registrados", value: diagnosesCount },
     { label: "Medicamentos ativos", value: medicationsCount },
-    { label: "Alergias registradas", value: allergiesCount }
+    { label: "Alergias registradas", value: allergiesCount },
+    { label: "Cirurgias realizadas", value: surgeriesCount }
   ];
   const profileName = activeProfile?.name || "seu paciente";
   const hasRecordData = summaryHighlights.some((item) => item.value > 0);
@@ -744,7 +881,7 @@ export default function HealthTrendsNew() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-4 gap-6">
                     {/* Diagnósticos */}
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
@@ -800,46 +937,12 @@ export default function HealthTrendsNew() {
                                   allergy.severity === 'moderada' ? 'bg-orange-400' : 'bg-yellow-400'
                                   }`} />
                               </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-800">{allergy.allergen}</p>
-                              </div>
-                              {allergy.severity && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 capitalize">
-                                  {allergy.severity}
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <ClipboardList className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhuma alergia</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Exames */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                          Últimos Exames
-                        </h4>
-                        <Badge variant="outline" className="bg-gray-50">{exams.length}</Badge>
-                      </div>
-
-                      {Array.isArray(exams) && exams.length > 0 ? (
-                        <div className="space-y-3">
-                          {exams.slice(0, 3).map((exam: any) => (
-                            <div key={exam.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="p-1.5 bg-blue-50 rounded-md text-blue-600">
-                                <FileText className="h-4 w-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{exam.name}</p>
-                                <p className="text-xs text-gray-500">
-                                  {format(parseISO(exam.uploadDate), "dd/MM/yy", { locale: ptBR })}
+                              <div>
+                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={allergy.allergen}>
+                                  {allergy.allergen}
+                                </p>
+                                <p className="text-xs text-gray-500 line-clamp-1">
+                                  {allergy.reaction || "Sem reação descrita"}
                                 </p>
                               </div>
                             </div>
@@ -847,8 +950,80 @@ export default function HealthTrendsNew() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <FileDown className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhum exame</p>
+                          <Sparkles className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhuma registrada</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Medicamentos */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          Medicamentos
+                        </h4>
+                        <Badge variant="outline" className="bg-gray-50">{medications.filter((m: any) => m.isActive).length}</Badge>
+                      </div>
+
+                      {Array.isArray(medications) && medications.filter((m: any) => m.isActive).length > 0 ? (
+                        <div className="space-y-3">
+                          {medications.filter((m: any) => m.isActive).slice(0, 3).map((medication: any) => (
+                            <div key={medication.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="bg-blue-50 p-1.5 rounded-md mt-0.5">
+                                <ClipboardList className="h-3 w-3 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={medication.name}>
+                                  {medication.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {medication.dosage} • {medication.frequency}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <ClipboardList className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhum ativo</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cirurgias */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                          Cirurgias
+                        </h4>
+                        <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
+                      </div>
+
+                      {Array.isArray(surgeries) && surgeries.length > 0 ? (
+                        <div className="space-y-3">
+                          {surgeries.slice(0, 3).map((surgery: any) => (
+                            <div key={surgery.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="bg-purple-50 p-1.5 rounded-md mt-0.5">
+                                <Activity className="h-3 w-3 text-purple-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={surgery.procedureName}>
+                                  {surgery.procedureName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {format(parseISO(surgery.surgeryDate), "dd/MM/yy", { locale: ptBR })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <Activity className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhuma registrada</p>
                         </div>
                       )}
                     </div>
@@ -1116,6 +1291,16 @@ export default function HealthTrendsNew() {
                           <div className="flex flex-col items-start">
                             <span className="font-medium">Diagnóstico</span>
                             <span className="text-xs text-gray-500 font-normal">Adicionar condição</span>
+                          </div>
+                        </Button>
+
+                        <Button onClick={() => setIsSurgeryDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all">
+                          <div className="p-2 bg-purple-100 rounded-full text-purple-600">
+                            <Activity className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Cirurgia</span>
+                            <span className="text-xs text-gray-500 font-normal">Registrar procedimento</span>
                           </div>
                         </Button>
                       </div>
@@ -1876,6 +2061,198 @@ export default function HealthTrendsNew() {
             </Form>
           </DialogContent>
         </Dialog >
+
+        {/* Dialog para adicionar nova cirurgia */}
+        <Dialog open={isSurgeryDialogOpen} onOpenChange={setIsSurgeryDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Registrar Nova Cirurgia</DialogTitle>
+            </DialogHeader>
+            <Form {...surgeryForm}>
+              <form onSubmit={surgeryForm.handleSubmit(onSurgerySubmit)} className="space-y-4">
+                <FormField
+                  control={surgeryForm.control}
+                  name="procedureName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Procedimento *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Apendicectomia..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={surgeryForm.control}
+                  name="hospitalName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hospital (opcional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Hospital Albert Einstein..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={surgeryForm.control}
+                  name="surgeonName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cirurgião (opcional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Dr. Silva..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={surgeryForm.control}
+                  name="surgeryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data da Cirurgia *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={surgeryForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsSurgeryDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={addSurgeryMutation.isPending}>
+                    {addSurgeryMutation.isPending ? "Salvando..." : "Salvar Cirurgia"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para editar cirurgia existente */}
+        <Dialog open={isEditSurgeryDialogOpen} onOpenChange={setIsEditSurgeryDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Cirurgia</DialogTitle>
+            </DialogHeader>
+            <Form {...editSurgeryForm}>
+              <form onSubmit={editSurgeryForm.handleSubmit(onEditSurgerySubmit)} className="space-y-4">
+                <FormField
+                  control={editSurgeryForm.control}
+                  name="procedureName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Procedimento *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Apendicectomia..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editSurgeryForm.control}
+                  name="hospitalName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hospital (opcional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Hospital Albert Einstein..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editSurgeryForm.control}
+                  name="surgeonName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cirurgião (opcional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Dr. Silva..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editSurgeryForm.control}
+                  name="surgeryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data da Cirurgia *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editSurgeryForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações (opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Informações adicionais..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => editingSurgery && handleRemoveSurgery(editingSurgery.id)}
+                    disabled={deleteSurgeryMutation.isPending}
+                  >
+                    {deleteSurgeryMutation.isPending ? "Removendo..." : "Remover Cirurgia"}
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsEditSurgeryDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={editSurgeryMutation.isPending}>
+                      {editSurgeryMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
 
       </div >
     </div >

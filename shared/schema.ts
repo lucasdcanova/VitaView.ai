@@ -231,6 +231,27 @@ export const insertAllergySchema = createInsertSchema(allergies).pick({
   notes: true,
 });
 
+// Surgeries schema
+export const surgeries = pgTable("surgeries", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  procedureName: text("procedure_name").notNull(),
+  hospitalName: text("hospital_name"),
+  surgeonName: text("surgeon_name"),
+  surgeryDate: text("surgery_date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSurgerySchema = createInsertSchema(surgeries).pick({
+  userId: true,
+  procedureName: true,
+  hospitalName: true,
+  surgeonName: true,
+  surgeryDate: true,
+  notes: true,
+});
+
 // Subscription plans schema
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),

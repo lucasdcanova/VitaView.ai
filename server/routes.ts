@@ -2043,6 +2043,74 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // API routes for surgeries
+  app.get("/api/surgeries", ensureAuthenticated, async (req, res) => {
+    try {
+      const surgeries = await storage.getSurgeriesByUserId(req.user!.id);
+      res.json(surgeries || []);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar cirurgias" });
+    }
+  });
+
+  app.post("/api/surgeries", ensureAuthenticated, async (req, res) => {
+    try {
+      const surgeryData = {
+        userId: req.user!.id,
+        procedureName: req.body.procedureName,
+        hospitalName: req.body.hospitalName,
+        surgeonName: req.body.surgeonName,
+        surgeryDate: req.body.surgeryDate,
+        notes: req.body.notes || null,
+      };
+
+      const newSurgery = await storage.createSurgery(surgeryData);
+      res.status(201).json(newSurgery);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar cirurgia" });
+    }
+  });
+
+  app.put("/api/surgeries/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const surgeryId = parseInt(req.params.id);
+      const surgery = await storage.getSurgery(surgeryId);
+
+      if (!surgery) {
+        return res.status(404).json({ message: "Cirurgia não encontrada" });
+      }
+
+      if (surgery.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const updatedSurgery = await storage.updateSurgery(surgeryId, req.body);
+      res.json(updatedSurgery);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar cirurgia" });
+    }
+  });
+
+  app.delete("/api/surgeries/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const surgeryId = parseInt(req.params.id);
+      const surgery = await storage.getSurgery(surgeryId);
+
+      if (!surgery) {
+        return res.status(404).json({ message: "Cirurgia não encontrada" });
+      }
+
+      if (surgery.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      await storage.deleteSurgery(surgeryId);
+      res.json({ message: "Cirurgia excluída com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir cirurgia" });
+    }
+  });
+
   // Rota para gerar relatório cronológico contextual com OpenAI
   app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {

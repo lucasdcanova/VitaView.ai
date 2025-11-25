@@ -1,4 +1,4 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries } from "@shared/schema";
 import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -59,6 +59,13 @@ export interface IStorage {
   updateDiagnosis(id: number, data: Partial<any>): Promise<any | undefined>;
   deleteDiagnosis(id: number): Promise<boolean>;
 
+  // Surgery operations
+  createSurgery(surgery: any): Promise<any>;
+  getSurgery(id: number): Promise<any | undefined>;
+  getSurgeriesByUserId(userId: number): Promise<any[]>;
+  updateSurgery(id: number, data: Partial<any>): Promise<any | undefined>;
+  deleteSurgery(id: number): Promise<boolean>;
+
   // Admin operations
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<boolean>;
@@ -97,6 +104,7 @@ export class MemStorage implements IStorage {
   private subscriptionPlansMap: Map<number, SubscriptionPlan>;
   private subscriptionsMap: Map<number, Subscription>;
   private diagnosesMap: Map<number, any>;
+  private surgeriesMap: Map<number, any>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -108,6 +116,7 @@ export class MemStorage implements IStorage {
   private subscriptionPlanIdCounter: number = 1;
   private subscriptionIdCounter: number = 1;
   private diagnosisIdCounter: number = 1;
+  private surgeryIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -119,7 +128,9 @@ export class MemStorage implements IStorage {
     this.subscriptionPlansMap = new Map();
     this.subscriptionsMap = new Map();
     this.diagnosesMap = new Map();
+    this.surgeriesMap = new Map();
     this.diagnosisIdCounter = 1;
+    this.surgeryIdCounter = 1;
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -676,6 +687,36 @@ export class MemStorage implements IStorage {
 
   async deleteDiagnosis(id: number): Promise<boolean> {
     return this.diagnosesMap.delete(id);
+  }
+
+  // Surgery operations
+  async createSurgery(surgery: any): Promise<any> {
+    const id = this.surgeryIdCounter++;
+    const newSurgery = { ...surgery, id };
+    this.surgeriesMap.set(id, newSurgery);
+    return newSurgery;
+  }
+
+  async getSurgery(id: number): Promise<any | undefined> {
+    return this.surgeriesMap.get(id);
+  }
+
+  async getSurgeriesByUserId(userId: number): Promise<any[]> {
+    return Array.from(this.surgeriesMap.values()).filter(
+      (s) => s.userId === userId
+    );
+  }
+
+  async updateSurgery(id: number, data: Partial<any>): Promise<any | undefined> {
+    const surgery = await this.getSurgery(id);
+    if (!surgery) return undefined;
+    const updated = { ...surgery, ...data };
+    this.surgeriesMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteSurgery(id: number): Promise<boolean> {
+    return this.surgeriesMap.delete(id);
   }
 
   // Admin operations
@@ -1504,6 +1545,72 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error(`Error deleting diagnosis ${id}:`, error);
+      return false;
+    }
+  }
+
+  // Surgery operations
+  async createSurgery(surgery: any): Promise<any> {
+    try {
+      const [newSurgery] = await db
+        .insert(surgeries)
+        .values(surgery)
+        .returning();
+      return newSurgery;
+    } catch (error) {
+      console.error("Error creating surgery:", error);
+      throw error;
+    }
+  }
+
+  async getSurgery(id: number): Promise<any | undefined> {
+    try {
+      const [surgery] = await db
+        .select()
+        .from(surgeries)
+        .where(eq(surgeries.id, id));
+      return surgery;
+    } catch (error) {
+      console.error(`Error fetching surgery ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getSurgeriesByUserId(userId: number): Promise<any[]> {
+    try {
+      return await db
+        .select()
+        .from(surgeries)
+        .where(eq(surgeries.userId, userId))
+        .orderBy(desc(surgeries.surgeryDate));
+    } catch (error) {
+      console.error(`Error fetching surgeries for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async updateSurgery(id: number, data: Partial<any>): Promise<any | undefined> {
+    try {
+      const [updatedSurgery] = await db
+        .update(surgeries)
+        .set(data)
+        .where(eq(surgeries.id, id))
+        .returning();
+      return updatedSurgery;
+    } catch (error) {
+      console.error(`Error updating surgery ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteSurgery(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(surgeries)
+        .where(eq(surgeries.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting surgery ${id}:`, error);
       return false;
     }
   }
