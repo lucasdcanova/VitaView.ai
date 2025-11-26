@@ -46,6 +46,7 @@ export interface IStorage {
   getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]>;
   deleteHealthMetric(id: number): Promise<boolean>;
   deleteAllHealthMetricsByUserId(userId: number, profileId?: number): Promise<number>;
+  deleteHealthMetricsByExamId(examId: number): Promise<number>;
 
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -462,6 +463,19 @@ export class MemStorage implements IStorage {
 
     for (const metric of metrics) {
       if (await this.deleteHealthMetric(metric.id)) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  async deleteHealthMetricsByExamId(examId: number): Promise<number> {
+    const metrics = Array.from(this.healthMetricsMap.values()).filter(m => m.examId === examId);
+    let count = 0;
+
+    for (const metric of metrics) {
+      if (this.healthMetricsMap.delete(metric.id)) {
         count++;
       }
     }
@@ -1210,6 +1224,16 @@ export class DatabaseStorage implements IStorage {
       return result && result.rowCount ? result.rowCount : 0;
     } catch (error) {
       console.error(`Erro ao excluir métricas de saúde do usuário ${userId}:`, error);
+      return 0;
+    }
+  }
+
+  async deleteHealthMetricsByExamId(examId: number): Promise<number> {
+    try {
+      const result = await db.delete(healthMetrics).where(eq(healthMetrics.examId, examId));
+      return result && result.rowCount ? result.rowCount : 0;
+    } catch (error) {
+      console.error(`Erro ao excluir métricas de saúde do exame ${examId}:`, error);
       return 0;
     }
   }

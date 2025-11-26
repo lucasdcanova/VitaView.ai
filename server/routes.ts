@@ -1499,22 +1499,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const examResult = await storage.getExamResultByExamId(examId);
 
       if (examResult) {
-        // Buscar IDs das métricas associadas ao exame (se houver)
-        let healthMetricsIds: number[] = [];
-
-        if (examResult.healthMetrics && Array.isArray(examResult.healthMetrics)) {
-          // Extrair IDs de métricas que são objetos com um campo ID
-          healthMetricsIds = examResult.healthMetrics
-            .filter((metric: any) => metric && typeof metric === 'object' && 'id' in metric)
-            .map((metric: any) => metric.id);
-        }
-
-        // Excluir as métricas associadas
-        for (const metricId of healthMetricsIds) {
-          if (metricId) {
-            await storage.deleteHealthMetric(metricId);
-          }
-        }
+        // Excluir as métricas associadas de forma eficiente
+        await storage.deleteHealthMetricsByExamId(examId);
 
         // Excluir o resultado do exame
         await storage.deleteExamResult(examResult.id);
