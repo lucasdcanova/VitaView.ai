@@ -233,8 +233,8 @@ export default function LandingPage() {
           <motion.div className="md:w-1/2 mb-10 md:mb-0 md:pr-8" variants={itemVariants}>
 
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              VitaViewAI: <span className="text-[#1E3A5F]">Prontuário Guiado por IA</span> para Médicos do Futuro
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
+              <span className="text-[#1E3A5F] tracking-tight">VitaView</span><span className="text-[#448C9B] ml-1">AI</span>: Entenda seus exames com clareza e precisão
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
