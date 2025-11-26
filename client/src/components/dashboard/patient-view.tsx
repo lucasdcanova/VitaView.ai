@@ -66,7 +66,7 @@ export function PatientView({ activeProfile }: PatientViewProps) {
         if (!exams || exams.length === 0) return [];
 
         return [...exams]
-            .filter(exam => exam.status === 'analyzed')
+            .filter(exam => exam.status === 'analyzed' || exam.status === 'extraction_only')
             .sort((a, b) => {
                 const dateA = a.examDate ? new Date(a.examDate) : new Date(a.uploadDate);
                 const dateB = b.examDate ? new Date(b.examDate) : new Date(b.uploadDate);

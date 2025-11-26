@@ -53,6 +53,7 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                             else if (exam.status === 'processing' || exam.status === 'analyzing') newStatus = 'processing';
                             else if (exam.status === 'queued') newStatus = 'queued';
                             else if (exam.status === 'extracted') newStatus = 'processing';
+                            else if (exam.status === 'extraction_only') newStatus = 'analyzed'; // Treat partial analysis as done
 
                             if (currentStatus !== newStatus) {
                                 updatedUploads[index] = {

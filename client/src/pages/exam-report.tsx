@@ -43,7 +43,7 @@ import {
 // Função para mostrar ícone de variação baseado no valor
 function getChangeIconForMetric(change: string | null): JSX.Element {
   if (!change) return <Minus className="h-3 w-3" />;
-  
+
   if (change.startsWith('+')) {
     return <ArrowUp className="h-3 w-3" />;
   } else if (change.startsWith('-')) {
@@ -53,24 +53,24 @@ function getChangeIconForMetric(change: string | null): JSX.Element {
   }
 }
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
+import {
+  Card,
+  CardContent,
   CardDescription,
   CardFooter,
-  CardHeader, 
-  CardTitle 
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -126,7 +126,7 @@ export default function ExamReport() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const examId = match && params ? parseInt(params.id) : 0;
-  
+
   // Verificar se existe um parâmetro 'tab' na URL para definir a aba ativa inicialmente
   const getInitialTab = () => {
     if (typeof window !== "undefined") {
@@ -138,21 +138,21 @@ export default function ExamReport() {
     }
     return "summary"; // Tab padrão se não houver parâmetro válido
   };
-  
+
   const [activeTab, setActiveTab] = useState(getInitialTab());
-  
+
   const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
     enabled: !!examId,
   });
-  
+
   const { data: insights, isLoading: isLoadingInsights } = useQuery<HealthInsights>({
     queryKey: [`/api/exams/${examId}/insights`],
     queryFn: () => getExamInsights(examId),
     enabled: !!examId && !!data?.result,
   });
-  
+
   // Mutação para excluir o exame
   const deleteMutation = useMutation({
     mutationFn: () => deleteExam(examId),
@@ -162,13 +162,13 @@ export default function ExamReport() {
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
-      
+
       toast({
         title: "Exame excluído com sucesso",
         description: "O exame e todos os dados associados foram removidos.",
         variant: "default",
       });
-      
+
       // Redirecionando para a página de resultados
       setLocation("/results");
     },
@@ -180,23 +180,23 @@ export default function ExamReport() {
       });
     },
   });
-  
+
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
-  
+
   const confirmDelete = () => {
     deleteMutation.mutate();
     setDeleteDialogOpen(false);
   };
-  
+
   // Format relative date
   const formatRelativeDate = (dateString?: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
   };
-  
+
   // Get icon for a given lifestyle category
   const getLifestyleIcon = (category: string) => {
     switch (category) {
@@ -212,7 +212,7 @@ export default function ExamReport() {
         return <Activity className="h-5 w-5 text-primary-600" />;
     }
   };
-  
+
   // Get background color for lifestyle card
   const getLifestyleCardStyle = (category: string) => {
     switch (category) {
@@ -228,7 +228,7 @@ export default function ExamReport() {
         return 'bg-gray-50 border-gray-200';
     }
   };
-  
+
   // Get color for confidence level
   const getConfidenceLevelColor = (level?: string) => {
     switch (level) {
@@ -249,7 +249,7 @@ export default function ExamReport() {
       'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
       'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
     ];
-    
+
     return recommendations.filter(rec => {
       const lowerRec = rec.toLowerCase();
       return !prohibitedTerms.some(term => lowerRec.includes(term));
@@ -268,7 +268,7 @@ export default function ExamReport() {
       'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
       'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
     ];
-    
+
     let filteredText = text;
     prohibitedTerms.forEach(term => {
       const regex = new RegExp(term, 'gi');
@@ -283,10 +283,10 @@ export default function ExamReport() {
         }
       }
     });
-    
+
     return filteredText;
   };
-  
+
   const getFileIcon = (fileType?: string, iconSize: number = 16) => {
     switch (fileType) {
       case 'pdf':
@@ -298,7 +298,7 @@ export default function ExamReport() {
         return <FileText className="text-gray-500" size={16} />;
     }
   };
-  
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     const parsedDate = new Date(dateString);
@@ -307,19 +307,19 @@ export default function ExamReport() {
     }
     return parsedDate.toLocaleDateString('pt-BR');
   };
-  
+
   // Função simplificada para obter o status da métrica para a UI, independente da função implementada
   const getMetricStatusForUI = (status?: string, value?: string, referenceMin?: string | null, referenceMax?: string | null) => {
     // Valores padrão
     let position = '50%';
     let indicatorClass = 'bg-green-500';
-    
+
     // Se tem valores de referência, calcula posição com base neles
     if (referenceMin && referenceMax) {
       const min = parseFloat(referenceMin);
       const max = parseFloat(referenceMax);
       const val = value ? parseFloat(value) : 0;
-      
+
       if (!isNaN(min) && !isNaN(max) && !isNaN(val)) {
         // Normalização para visualização
         const range = max - min;
@@ -327,13 +327,13 @@ export default function ExamReport() {
         const visualMin = min - padding;
         const visualMax = max + padding;
         const visualRange = visualMax - visualMin;
-        
+
         // Porcentagem entre 10 e 90% para melhor visibilidade
         let percentage = ((val - visualMin) / visualRange) * 100;
         percentage = Math.max(10, Math.min(90, percentage));
-        
+
         position = `${percentage}%`;
-        
+
         // Cores baseadas na relação com os valores de referência
         if (val > max) {
           indicatorClass = 'bg-red-500';
@@ -367,7 +367,7 @@ export default function ExamReport() {
           indicatorClass = 'bg-green-500';
       }
     }
-    
+
     // Adicionamos propriedades adicionais para compatibilidade com o código existente
     return {
       position,
@@ -381,10 +381,10 @@ export default function ExamReport() {
       severity: 'normal'
     };
   };
-  
+
   const getChangeIcon = (change?: string) => {
     if (!change) return <Minus className="h-3 w-3 text-gray-600" />;
-    
+
     if (change.startsWith('-')) {
       return <ArrowDown className="h-3 w-3 text-green-600" />;
     } else if (change.startsWith('+')) {
@@ -392,7 +392,7 @@ export default function ExamReport() {
     }
     return <Minus className="h-3 w-3 text-gray-600" />;
   };
-  
+
   // Extract sample health metrics from the exam result
   const healthMetrics = data?.result?.healthMetrics as any[] || [];
 
@@ -412,8 +412,8 @@ export default function ExamReport() {
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >
@@ -426,10 +426,10 @@ export default function ExamReport() {
       <div className="md:hidden">
         <MobileHeader />
       </div>
-      
+
       <div className="flex flex-1 relative">
         <Sidebar className="hidden md:flex" />
-        
+
         <main className="flex-1">
           {/* Cabeçalho */}
           <div className="border-b bg-white shadow-sm">
@@ -447,7 +447,7 @@ export default function ExamReport() {
                     ) : (
                       <>
                         {data?.exam?.name || "Resultado do Exame"}
-                        {data?.exam?.status === "analyzed" && (
+                        {(data?.exam?.status === "analyzed" || data?.exam?.status === "extraction_only") && (
                           <Badge className="ml-3 bg-green-100 text-green-800 hover:bg-green-100 border border-green-200">
                             Analisado
                           </Badge>
@@ -468,19 +468,19 @@ export default function ExamReport() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="hidden md:flex"
                   onClick={async () => {
                     if (!data) return;
-                    
+
                     try {
                       const response = await fetch(`/api/export-exam-report/${examId}`, {
                         method: 'POST',
                         credentials: 'include'
                       });
-                      
+
                       if (response.ok) {
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
@@ -503,9 +503,9 @@ export default function ExamReport() {
                   <Download className="mr-2 h-4 w-4" />
                   Baixar PDF
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="hidden md:flex"
                   onClick={() => {
                     if (navigator.share) {
@@ -526,9 +526,9 @@ export default function ExamReport() {
                   <Share2 className="mr-2 h-4 w-4" />
                   Compartilhar
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={handleDeleteClick}
                 >
@@ -537,7 +537,7 @@ export default function ExamReport() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-y-2 border-t border-gray-100 bg-gray-50">
               {!isLoading && data?.exam && (
                 <>
@@ -547,14 +547,14 @@ export default function ExamReport() {
                       {formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
                     </span>
                   </div>
-                  
+
                   {data.exam.laboratoryName && (
                     <div className="flex items-center text-sm text-gray-600 mr-6">
                       <Building className="mr-2 h-4 w-4 text-primary-500" />
                       <span className="font-medium">{data.exam.laboratoryName}</span>
                     </div>
                   )}
-                  
+
                   {data.exam.requestingPhysician && (
                     <div className="flex items-center text-sm text-gray-600">
                       <UserRound className="mr-2 h-4 w-4 text-primary-500" />
@@ -565,9 +565,9 @@ export default function ExamReport() {
               )}
             </div>
           </div>
-          
+
           <div className="p-4 md:p-6">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Report Details */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
@@ -584,7 +584,7 @@ export default function ExamReport() {
                         <Skeleton className="h-9 w-9 rounded-lg" />
                       </div>
                     </div>
-                    
+
                     <div className="mb-6">
                       <Skeleton className="h-10 w-full mb-6" />
                       <Skeleton className="h-32 w-full mb-4" />
@@ -603,41 +603,41 @@ export default function ExamReport() {
                             : "Data de análise indisponível"}
                       </p>
                     </div>
-                    
+
                     <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
                       <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="summary"
                           className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
                         >
                           Resumo
                         </TabsTrigger>
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="detailed"
                           className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                         >
                           Análise Detalhada
                         </TabsTrigger>
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="recommendations"
                           className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                         >
                           Recomendações
                         </TabsTrigger>
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="evidence"
                           className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                         >
                           Evidências Científicas
                         </TabsTrigger>
                       </TabsList>
-                      
+
                       {/* Summary Tab */}
                       <TabsContent value="summary" className="mt-6">
                         <p className="text-gray-600 mb-4">
                           {data?.result?.summary}
                         </p>
-                        
+
                         <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg mb-4">
                           <div className="flex">
                             <CheckCircle2 className="text-green-600 mr-3 flex-shrink-0" size={20} />
@@ -647,7 +647,7 @@ export default function ExamReport() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
                           <div className="flex">
                             <CheckCircle2 className="text-yellow-600 mr-3 flex-shrink-0" size={20} />
@@ -661,25 +661,23 @@ export default function ExamReport() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <h3 className="font-medium text-lg text-gray-800 mt-6 mb-3">Principais parâmetros</h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {healthMetrics.slice(0, 4).map((metric, index) => (
-                            <div key={index} className={`p-4 rounded-lg ${
-                              metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 border border-red-100' :
-                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
-                              metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
-                            }`}>
+                            <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 border border-red-100' :
+                                metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
+                                  metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
+                              }`}>
                               <div className="flex justify-between mb-1">
                                 <span className="text-sm font-medium text-gray-700 flex items-center">
                                   {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
                                   {metric.status !== 'normal' && (
-                                    <Badge variant="outline" className={`ml-2 ${
-                                      metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
-                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                      'bg-amber-100 text-amber-800 border-amber-200'
-                                    }`}>
+                                    <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                                        metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                          'bg-amber-100 text-amber-800 border-amber-200'
+                                      }`}>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
                                   )}
@@ -687,62 +685,61 @@ export default function ExamReport() {
                                 <div className="flex items-center">
                                   <span className="text-sm text-gray-700 font-medium">{metric.value} {metric.unit}</span>
                                   {metric.change && (
-                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${
-                                      metric.change.startsWith('+') ? 'bg-red-50 text-red-700' : 
-                                      metric.change.startsWith('-') ? 'bg-green-50 text-green-700' : 
-                                      'bg-gray-50 text-gray-700'
-                                    }`}>
+                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
+                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
+                                          'bg-gray-50 text-gray-700'
+                                      }`}>
                                       {metric.change}
                                     </span>
                                   )}
                                 </div>
                               </div>
-                              
+
                               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 mb-1 relative">
                                 {/* Área de referência "normal" */}
                                 {(metric.referenceMin && metric.referenceMax) ? (
                                   <div className="absolute h-full bg-green-100 rounded-full opacity-60"
-                                    style={{ 
-                                      left: '30%', 
+                                    style={{
+                                      left: '30%',
                                       width: '40%'
                                     }}>
                                   </div>
                                 ) : (
                                   <div className="absolute h-full bg-gray-300 rounded-full opacity-40"
-                                    style={{ 
-                                      left: '25%', 
+                                    style={{
+                                      left: '25%',
                                       width: '50%'
                                     }}>
                                   </div>
                                 )}
-                                
+
                                 {/* Marcadores de limite para valores de referência */}
                                 {(metric.referenceMin && metric.referenceMax) && (
                                   <>
-                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50" 
-                                      style={{ left: '30%' }} 
+                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50"
+                                      style={{ left: '30%' }}
                                       title={`Valor mínimo de referência: ${metric.referenceMin}`}>
                                     </div>
-                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50" 
+                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50"
                                       style={{ left: '70%' }}
                                       title={`Valor máximo de referência: ${metric.referenceMax}`}>
                                     </div>
                                   </>
                                 )}
-                                
+
                                 {/* Indicador de valor com posição calculada pelos valores reais */}
                                 {(() => {
                                   const status = getMetricStatusForUI(
-                                    metric.status, 
-                                    metric.value, 
-                                    metric.referenceMin, 
+                                    metric.status,
+                                    metric.value,
+                                    metric.referenceMin,
                                     metric.referenceMax
                                   );
-                                  
+
                                   return (
-                                    <div 
+                                    <div
                                       className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
-                                      style={{ 
+                                      style={{
                                         left: status.position,
                                         marginLeft: '-4px',
                                         transition: 'left 0.3s ease-in-out'
@@ -752,25 +749,24 @@ export default function ExamReport() {
                                   );
                                 })()}
                               </div>
-                              
+
                               <div className="flex justify-between text-xs text-gray-500 mt-1">
                                 <div className="flex items-center">
                                   <span>
                                     Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
                                   </span>
-                                  
+
                                   {metric.change && (
-                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${
-                                      metric.change.startsWith('+') ? 'text-red-700' : 
-                                      metric.change.startsWith('-') ? 'text-green-700' : 
-                                      'text-gray-700'
-                                    }`}>
+                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700' :
+                                        metric.change.startsWith('-') ? 'text-green-700' :
+                                          'text-gray-700'
+                                      }`}>
                                       {getChangeIcon(metric.change)}
                                       <span className="ml-0.5">{metric.change}</span>
                                     </span>
                                   )}
                                 </div>
-                                
+
                                 {metric.clinical_significance && (
                                   <TooltipProvider>
                                     <Tooltip>
@@ -791,7 +787,7 @@ export default function ExamReport() {
                           ))}
                         </div>
                       </TabsContent>
-                      
+
                       {/* Detailed Analysis Tab */}
                       <TabsContent value="detailed">
                         <div className="overflow-x-auto">
@@ -814,21 +810,20 @@ export default function ExamReport() {
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <span className="font-medium">{metric.value}</span> {metric.unit}
                                     {metric.change && (
-                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${
-                                        metric.change.startsWith('+') ? 'bg-red-50 text-red-700' : 
-                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' : 
-                                        'bg-gray-50 text-gray-700'
-                                      }`}>
+                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
+                                          metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
+                                            'bg-gray-50 text-gray-700'
+                                        }`}>
                                         {getChangeIcon(metric.change)}
                                         <span className="ml-0.5">{metric.change}</span>
                                       </span>
                                     )}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {metric.referenceMin && metric.referenceMax ? 
+                                    {metric.referenceMin && metric.referenceMax ?
                                       <span className="bg-green-50 px-2 py-0.5 rounded text-green-700">
                                         {metric.referenceMin}-{metric.referenceMax} {metric.unit}
-                                      </span> : 
+                                      </span> :
                                       (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
                                       (metric.name === 'glicemia' && '70-99 mg/dL') ||
                                       (metric.name === 'colesterol' && '150-199 mg/dL') ||
@@ -839,12 +834,12 @@ export default function ExamReport() {
                                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <Badge variant={
                                       metric.status === 'normal' ? 'default' :
-                                      metric.status === 'atenção' ? 'outline' :
-                                      metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
+                                        metric.status === 'atenção' ? 'outline' :
+                                          metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
                                     } className={
                                       metric.status === 'normal' ? 'bg-green-100 text-green-800 border-green-200' :
-                                      metric.status === 'atenção' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''
+                                        metric.status === 'atenção' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''
                                     }>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
@@ -872,7 +867,7 @@ export default function ExamReport() {
                             </tbody>
                           </table>
                         </div>
-                        
+
                         <div className="mt-6">
                           <h3 className="font-medium text-lg text-gray-800 mb-3">Interpretação detalhada</h3>
                           <div className="space-y-3">
@@ -882,7 +877,7 @@ export default function ExamReport() {
                           </div>
                         </div>
                       </TabsContent>
-                      
+
                       {/* Recommendations Tab */}
                       <TabsContent value="recommendations">
                         <div className="mb-6">
@@ -890,7 +885,7 @@ export default function ExamReport() {
                           <p className="text-sm text-gray-600 mb-4">
                             ⚠️ Seguimos rigorosamente as diretrizes do Ministério da Saúde. Todas as orientações são gerais e não substituem consulta médica.
                           </p>
-                          
+
                           <div className="space-y-4">
                             {isLoadingInsights ? (
                               [...Array(3)].map((_, i) => (
@@ -930,10 +925,10 @@ export default function ExamReport() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div>
                           <h3 className="font-medium text-lg text-gray-800 mb-3">Especialistas sugeridos</h3>
-                          
+
                           <div className="bg-gray-50 p-4 rounded-lg">
                             <ul className="space-y-2">
                               {isLoadingInsights ? (
@@ -958,7 +953,7 @@ export default function ExamReport() {
                               )}
                             </ul>
                           </div>
-                          
+
                           {insights?.lifestyle && (
                             <div className="mt-4 p-4 bg-primary-50 rounded-lg">
                               <h4 className="font-medium text-gray-800 mb-2">Recomendações de estilo de vida</h4>
@@ -986,12 +981,12 @@ export default function ExamReport() {
                           )}
                         </div>
                       </TabsContent>
-                      
+
                       {/* Evidências Científicas Tab */}
                       <TabsContent value="evidence">
                         <div className="mb-6">
                           <h3 className="font-medium text-lg text-gray-800 mb-4">Parâmetros de Saúde Baseados em Evidências</h3>
-                          
+
                           {insights?.healthParameters ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                               {/* Health Score */}
@@ -1000,22 +995,22 @@ export default function ExamReport() {
                                 <div className="flex justify-center items-center mb-3">
                                   <div className="relative w-36 h-36 flex items-center justify-center">
                                     <svg className="w-full h-full" viewBox="0 0 36 36">
-                                      <circle 
-                                        cx="18" cy="18" r="16" 
-                                        fill="none" 
-                                        stroke="#e5e7eb" 
-                                        strokeWidth="3" 
+                                      <circle
+                                        cx="18" cy="18" r="16"
+                                        fill="none"
+                                        stroke="#e5e7eb"
+                                        strokeWidth="3"
                                       />
-                                      <circle 
-                                        cx="18" cy="18" r="16" 
-                                        fill="none" 
+                                      <circle
+                                        cx="18" cy="18" r="16"
+                                        fill="none"
                                         stroke={
-                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" : 
-                                          insights.healthParameters.healthScore >= 60 ? "#f59e0b" : 
-                                          "#ef4444"
-                                        } 
-                                        strokeWidth="3" 
-                                        strokeDasharray="100" 
+                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" :
+                                            insights.healthParameters.healthScore >= 60 ? "#f59e0b" :
+                                              "#ef4444"
+                                        }
+                                        strokeWidth="3"
+                                        strokeDasharray="100"
                                         strokeDashoffset={100 - insights.healthParameters.healthScore}
                                         strokeLinecap="round"
                                         transform="rotate(-90, 18, 18)"
@@ -1026,11 +1021,11 @@ export default function ExamReport() {
                                 </div>
                                 <p className="text-center text-sm text-gray-600">Pontuação baseada na análise de todos os parâmetros disponíveis</p>
                               </div>
-                              
+
                               {/* Parameters Areas */}
                               <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                                 <h4 className="text-md font-semibold text-gray-800 mb-3">Áreas de Saúde</h4>
-                                
+
                                 {insights.healthParameters.criticalAreas.length > 0 && (
                                   <div className="mb-4">
                                     <h5 className="text-sm font-medium text-red-600 mb-1">Áreas críticas</h5>
@@ -1044,7 +1039,7 @@ export default function ExamReport() {
                                     </ul>
                                   </div>
                                 )}
-                                
+
                                 {insights.healthParameters.stableAreas.length > 0 && (
                                   <div className="mb-4">
                                     <h5 className="text-sm font-medium text-green-600 mb-1">Áreas estáveis</h5>
@@ -1058,7 +1053,7 @@ export default function ExamReport() {
                                     </ul>
                                   </div>
                                 )}
-                                
+
                                 {insights.healthParameters.improvementTrends.length > 0 && (
                                   <div>
                                     <h5 className="text-sm font-medium text-blue-600 mb-1">Tendências de melhoria</h5>
@@ -1079,7 +1074,7 @@ export default function ExamReport() {
                               <p className="text-center text-gray-500">Parâmetros de saúde não disponíveis para este exame</p>
                             </div>
                           )}
-                          
+
                           {insights?.evidenceBasedAssessment ? (
                             <div className="space-y-6">
                               <div>
@@ -1095,7 +1090,7 @@ export default function ExamReport() {
                                   </ul>
                                 </div>
                               </div>
-                              
+
                               <div>
                                 <h3 className="font-medium text-lg text-gray-800 mb-3">Referências Científicas</h3>
                                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -1109,19 +1104,18 @@ export default function ExamReport() {
                                   </ul>
                                 </div>
                               </div>
-                              
+
                               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                 <h4 className="font-medium text-gray-800 mb-2">Nível de confiança na avaliação</h4>
                                 <div className="flex items-center">
                                   <div className="w-full bg-gray-200 rounded-full h-2.5 mr-4">
-                                    <div className={`h-2.5 rounded-full ${
-                                      insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
-                                      insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
-                                      'w-1/3 bg-red-500'
-                                    }`}></div>
+                                    <div className={`h-2.5 rounded-full ${insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
+                                        insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                          'w-1/3 bg-red-500'
+                                      }`}></div>
                                   </div>
                                   <span className="text-sm font-medium text-gray-700 w-16">{
-                                    insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() + 
+                                    insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() +
                                     insights.evidenceBasedAssessment.confidenceLevel.slice(1)
                                   }</span>
                                 </div>
@@ -1138,13 +1132,13 @@ export default function ExamReport() {
                   </>
                 )}
               </div>
-              
+
               {/* Additional Information */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
                 {isLoading ? (
                   <>
                     <Skeleton className="h-6 w-48 mb-4" />
-                    
+
                     <div className="space-y-4 mb-6">
                       {[...Array(4)].map((_, i) => (
                         <div key={i} className="flex items-center">
@@ -1156,11 +1150,11 @@ export default function ExamReport() {
                         </div>
                       ))}
                     </div>
-                    
+
                     <Skeleton className="h-px w-full my-4" />
-                    
+
                     <Skeleton className="h-6 w-36 mb-4" />
-                    
+
                     <div className="space-y-4 mb-6">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="flex items-center">
@@ -1172,11 +1166,11 @@ export default function ExamReport() {
                         </div>
                       ))}
                     </div>
-                    
+
                     <Skeleton className="h-px w-full my-4" />
-                    
+
                     <Skeleton className="h-6 w-24 mb-4" />
-                    
+
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
                         <Skeleton key={i} className="h-10 w-full" />
@@ -1186,7 +1180,7 @@ export default function ExamReport() {
                 ) : (
                   <>
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações do Exame</h2>
-                    
+
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
                         <Calendar className="text-primary-500 mr-3" size={18} />
@@ -1197,7 +1191,7 @@ export default function ExamReport() {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <Building className="text-primary-500 mr-3" size={18} />
                         <div>
@@ -1205,7 +1199,7 @@ export default function ExamReport() {
                           <p className="text-sm text-gray-600">{data?.exam.laboratoryName || "Laboratório Central"}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <UserRound className="text-primary-500 mr-3" size={18} />
                         <div>
@@ -1213,7 +1207,7 @@ export default function ExamReport() {
                           <p className="text-sm text-gray-600">{data?.exam.requestingPhysician || "Não informado"}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <div className="mr-3 text-primary-500">
                           {getFileIcon(data?.exam.fileType)}
@@ -1224,11 +1218,11 @@ export default function ExamReport() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <hr className="my-4 border-gray-200" />
-                    
+
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">Análise por IA</h2>
-                    
+
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
                         <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
@@ -1237,7 +1231,7 @@ export default function ExamReport() {
                           <p className="text-sm text-gray-600">OpenAI GPT-5 Vision</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
@@ -1245,7 +1239,7 @@ export default function ExamReport() {
                           <p className="text-sm text-gray-600">OpenAI GPT-4o</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <Calendar className="text-primary-500 mr-3" size={18} />
                         <div>
@@ -1254,11 +1248,11 @@ export default function ExamReport() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <hr className="my-4 border-gray-200" />
-                    
+
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações</h2>
-                    
+
                     <div className="text-sm text-gray-600 space-y-2">
                       <p><strong>Data do exame:</strong> {data?.exam.examDate || 'Não informado'}</p>
                       <p><strong>Laboratório:</strong> {data?.exam.laboratoryName || 'Não informado'}</p>

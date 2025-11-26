@@ -6,9 +6,9 @@ import { Link, useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import { 
-  FileText, 
-  AlertCircle, 
+import {
+  FileText,
+  AlertCircle,
   ArrowUpRight,
   ArrowLeft,
   Trash2,
@@ -17,12 +17,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -43,18 +43,18 @@ export default function ExamResultSingle() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
   // Pegar o ID do exame da URL
   const [match, params] = useRoute<{ id: string }>("/results/:id");
   const examId = match && params ? parseInt(params.id) : null;
-  
+
   // Se temos um ID de exame, buscamos os detalhes do exame específico
   const { data: examData, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId!),
     enabled: !!examId,
   });
-  
+
   // Mutação para excluir o exame
   const deleteMutation = useMutation({
     mutationFn: () => deleteExam(examId!),
@@ -64,13 +64,13 @@ export default function ExamResultSingle() {
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
-      
+
       toast({
         title: "Exame excluído com sucesso",
         description: "O exame e todos os dados associados foram removidos.",
         variant: "default",
       });
-      
+
       // Redirecionando para a página de resultados
       setLocation("/results");
     },
@@ -82,24 +82,24 @@ export default function ExamResultSingle() {
       });
     },
   });
-  
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
+
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
-  
+
   const confirmDelete = () => {
     deleteMutation.mutate();
     setDeleteDialogOpen(false);
   };
-  
+
   // Helper function to map status to colors
   const getStatusColor = (status: string | null | undefined) => {
     if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
-    
+
     switch (status.toLowerCase()) {
       case 'normal':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -117,7 +117,7 @@ export default function ExamResultSingle() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-  
+
   if (!examId) {
     setLocation("/results");
     return null;
@@ -126,10 +126,10 @@ export default function ExamResultSingle() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader toggleSidebar={toggleSidebar} />
-        
+
         <main className="flex-1 overflow-y-auto">
           <div className="container px-4 py-6 mx-auto max-w-7xl">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -147,7 +147,7 @@ export default function ExamResultSingle() {
                   {examData?.exam ? examData.exam.name : "Carregando detalhes..."}
                 </p>
               </div>
-              
+
               <div className="flex gap-2">
                 <Link href={`/report/${examId}`}>
                   <Button variant="outline" className="gap-1">
@@ -163,7 +163,7 @@ export default function ExamResultSingle() {
                 </Link>
               </div>
             </div>
-            
+
             {isLoading ? (
               <div className="grid grid-cols-1 gap-4">
                 <Card className="animate-pulse">
@@ -192,41 +192,41 @@ export default function ExamResultSingle() {
                         <dl className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                           <dt className="font-medium text-gray-500">Nome:</dt>
                           <dd>{examData.exam.name}</dd>
-                          
+
                           <dt className="font-medium text-gray-500">Data:</dt>
                           <dd>{examData.exam.examDate ? new Date(examData.exam.examDate).toLocaleDateString('pt-BR') : 'Não disponível'}</dd>
-                          
+
                           <dt className="font-medium text-gray-500">Laboratório:</dt>
                           <dd>{examData.exam.laboratoryName || 'Não informado'}</dd>
-                          
+
                           <dt className="font-medium text-gray-500">Médico Solicitante:</dt>
                           <dd>{examData.exam.requestingPhysician || 'Não informado'}</dd>
-                          
+
                           <dt className="font-medium text-gray-500">Status:</dt>
                           <dd>
                             <Badge className={
-                              examData.exam.status === 'analyzed' ? 'bg-green-100 text-green-800 border-green-200' :
-                              examData.exam.status === 'processing' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                              'bg-gray-100 text-gray-800 border-gray-200'
+                              (examData.exam.status === 'analyzed' || examData.exam.status === 'extraction_only') ? 'bg-green-100 text-green-800 border-green-200' :
+                                examData.exam.status === 'processing' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  'bg-gray-100 text-gray-800 border-gray-200'
                             }>
-                              {examData.exam.status === 'analyzed' ? 'Analisado' : 
-                              examData.exam.status === 'processing' ? 'Processando' : 
-                              examData.exam.status}
+                              {(examData.exam.status === 'analyzed' || examData.exam.status === 'extraction_only') ? 'Analisado' :
+                                examData.exam.status === 'processing' ? 'Processando' :
+                                  examData.exam.status}
                             </Badge>
                           </dd>
-                          
+
                           <dt className="font-medium text-gray-500">Upload:</dt>
                           <dd>{new Date(examData.exam.uploadDate).toLocaleDateString('pt-BR')}</dd>
-                          
+
                           <dt className="font-medium text-gray-500">Tipo:</dt>
                           <dd className="capitalize">{examData.exam.fileType}</dd>
                         </dl>
                       </div>
-                      
+
                       <div>
                         <h3 className="text-lg font-medium mb-4">Resumo da Análise</h3>
                         <p className="text-sm text-gray-700 mb-4">{examData.result.summary}</p>
-                        
+
                         <h4 className="font-medium text-gray-700 mb-2">Recomendações</h4>
                         <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-sm">
                           <div className="flex items-start gap-3">
@@ -236,10 +236,10 @@ export default function ExamResultSingle() {
                             <div>
                               <p className="font-medium mb-2 text-amber-800">Com base nos resultados, recomendamos:</p>
                               <ul className="space-y-1.5 list-disc pl-5 text-amber-800">
-                                {examData.result.recommendations ? 
+                                {examData.result.recommendations ?
                                   examData.result.recommendations.split('\n').filter(line => line.trim()).map((line, i) => (
                                     <li key={i}>{line}</li>
-                                  )) 
+                                  ))
                                   : <li>Nenhuma recomendação específica disponível.</li>
                                 }
                               </ul>
@@ -250,7 +250,7 @@ export default function ExamResultSingle() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <h2 className="text-xl font-bold mt-8 mb-4">Métricas de Saúde Encontradas</h2>
                 {examData.result.healthMetrics && examData.result.healthMetrics.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -266,7 +266,7 @@ export default function ExamResultSingle() {
                                 </span>
                               )}
                             </CardTitle>
-                            
+
                             <Badge className={cn("text-xs", getStatusColor(metric.status))}>
                               {metric.status}
                             </Badge>
@@ -282,35 +282,35 @@ export default function ExamResultSingle() {
                               <span className="text-sm font-normal text-gray-500">{metric.unit}</span>
                             </div>
                           </div>
-                          
+
                           {/* Visualização de faixa de referência */}
                           {metric.referenceMin && metric.referenceMax && (
                             <div className="mt-3 pt-3 border-t border-gray-100">
                               <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden mb-1">
-                                <div className="absolute inset-y-0 bg-green-200 rounded-full" style={{ 
-                                  left: '10%', 
-                                  right: '10%' 
+                                <div className="absolute inset-y-0 bg-green-200 rounded-full" style={{
+                                  left: '10%',
+                                  right: '10%'
                                 }} />
-                                
+
                                 {/* Posição do valor atual */}
                                 {(() => {
                                   const min = parseFloat(metric.referenceMin);
                                   const max = parseFloat(metric.referenceMax);
                                   const value = parseFloat(metric.value);
-                                  
+
                                   if (!isNaN(min) && !isNaN(max) && !isNaN(value)) {
                                     const range = max - min;
                                     const valuePosition = Math.min(Math.max((value - min) / range, 0), 1);
                                     const positionPercent = 10 + (valuePosition * 80);
-                                    
+
                                     return (
-                                      <div 
+                                      <div
                                         className={cn(
-                                          "absolute top-0 w-1 h-6 -mt-1.5 shadow-sm", 
-                                          value < min ? "bg-blue-500" : 
-                                          value > max ? "bg-red-500" : 
-                                          "bg-green-600"
-                                        )} 
+                                          "absolute top-0 w-1 h-6 -mt-1.5 shadow-sm",
+                                          value < min ? "bg-blue-500" :
+                                            value > max ? "bg-red-500" :
+                                              "bg-green-600"
+                                        )}
                                         style={{ left: `${positionPercent}%` }}
                                       />
                                     );
@@ -318,7 +318,7 @@ export default function ExamResultSingle() {
                                   return null;
                                 })()}
                               </div>
-                              
+
                               <div className="flex justify-between text-xs text-gray-500">
                                 <span>{metric.referenceMin}</span>
                                 <span>Faixa de Referência</span>
@@ -326,7 +326,7 @@ export default function ExamResultSingle() {
                               </div>
                             </div>
                           )}
-                          
+
                           {metric.description && (
                             <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
                               {metric.description}
@@ -345,7 +345,7 @@ export default function ExamResultSingle() {
                     </CardContent>
                   </Card>
                 )}
-                
+
                 {/* Botão de Exclusão */}
                 <div className="mt-8 border-t pt-6 flex justify-end">
                   <Button
@@ -374,7 +374,7 @@ export default function ExamResultSingle() {
           </div>
         </main>
       </div>
-      
+
       {/* Diálogo de confirmação de exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -385,15 +385,15 @@ export default function ExamResultSingle() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deleteMutation.isPending}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >

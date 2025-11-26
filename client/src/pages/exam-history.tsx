@@ -4,14 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Exam } from "@shared/schema";
-import { 
-  FileText, 
-  Image, 
-  Search, 
-  Filter, 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  FileText,
+  Image,
+  Search,
+  Filter,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
   Activity,
   Clock,
   Tag,
@@ -31,12 +31,12 @@ import { useProfiles } from "@/hooks/use-profiles";
 import PatientHeader from "@/components/patient-header";
 import { deleteExam } from "@/lib/api";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,7 +83,7 @@ export default function ExamHistory() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
-  
+
   // Mutation para excluir um exame
   const deleteMutation = useMutation({
     mutationFn: async (examId: number) => {
@@ -95,7 +95,7 @@ export default function ExamHistory() {
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
-      
+
       toast({
         title: "Exame excluído",
         description: "O exame foi removido com sucesso.",
@@ -124,7 +124,7 @@ export default function ExamHistory() {
       deleteMutation.mutate(examToDelete.id);
     }
   };
-  
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -177,7 +177,7 @@ export default function ExamHistory() {
       </div>
     );
   }
-  
+
   // Helper function to get date value (defined once here)
   const getExamDate = (exam: Exam) => {
     return exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
@@ -186,23 +186,23 @@ export default function ExamHistory() {
   // Função para extrair a categoria do nome do exame
   const getCategoryFromName = (name: string): string => {
     name = name.toLowerCase();
-    if (name.includes('hemograma') || name.includes('sanguíneo') || name.includes('sangue')) 
+    if (name.includes('hemograma') || name.includes('sanguíneo') || name.includes('sangue'))
       return 'Sangue';
-    if (name.includes('glicemia') || name.includes('diabetes') || name.includes('glicose')) 
+    if (name.includes('glicemia') || name.includes('diabetes') || name.includes('glicose'))
       return 'Glicemia';
-    if (name.includes('colesterol') || name.includes('triglicerídeos') || name.includes('lipídico')) 
+    if (name.includes('colesterol') || name.includes('triglicerídeos') || name.includes('lipídico'))
       return 'Perfil Lipídico';
-    if (name.includes('tireoide') || name.includes('tsh') || name.includes('t4') || name.includes('t3')) 
+    if (name.includes('tireoide') || name.includes('tsh') || name.includes('t4') || name.includes('t3'))
       return 'Tireoide';
-    if (name.includes('vitamina') || name.includes('mineral') || name.includes('ferro')) 
+    if (name.includes('vitamina') || name.includes('mineral') || name.includes('ferro'))
       return 'Vitaminas e Minerais';
-    if (name.includes('urina') || name.includes('renal') || name.includes('uréia') || name.includes('creatinina')) 
+    if (name.includes('urina') || name.includes('renal') || name.includes('uréia') || name.includes('creatinina'))
       return 'Renal';
-    if (name.includes('fígado') || name.includes('hepático') || name.includes('tgo') || name.includes('tgp')) 
+    if (name.includes('fígado') || name.includes('hepático') || name.includes('tgo') || name.includes('tgp'))
       return 'Hepático';
-    if (name.includes('cardíaco') || name.includes('coração') || name.includes('troponina')) 
+    if (name.includes('cardíaco') || name.includes('coração') || name.includes('troponina'))
       return 'Cardíaco';
-    
+
     // Tente extrair a categoria do nome do arquivo
     if (name.includes('hemoglobin')) return 'Sangue';
     if (name.includes('glic')) return 'Glicemia';
@@ -210,88 +210,88 @@ export default function ExamHistory() {
     if (name.includes('renal')) return 'Renal';
     if (name.includes('hepat')) return 'Hepático';
     if (name.includes('cardi')) return 'Cardíaco';
-    
+
     return 'Outros';
   };
 
   // Apply filters and sorting
   const filteredAndSortedExams = exams
     ? exams
-        .filter(exam => {
-          // Type filter
-          if (filterOptions.fileType !== "all" && exam.fileType !== filterOptions.fileType) {
-            return false;
+      .filter(exam => {
+        // Type filter
+        if (filterOptions.fileType !== "all" && exam.fileType !== filterOptions.fileType) {
+          return false;
+        }
+
+        // Status filter
+        if (filterOptions.status !== "all" && exam.status !== filterOptions.status) {
+          return false;
+        }
+
+        // Date range filter
+        if (filterOptions.dateRange !== "all") {
+          const examDate = getExamDate(exam);
+          const now = new Date();
+
+          switch (filterOptions.dateRange) {
+            case "last7days":
+              const sevenDaysAgo = new Date();
+              sevenDaysAgo.setDate(now.getDate() - 7);
+              if (examDate < sevenDaysAgo) return false;
+              break;
+
+            case "last30days":
+              const thirtyDaysAgo = new Date();
+              thirtyDaysAgo.setDate(now.getDate() - 30);
+              if (examDate < thirtyDaysAgo) return false;
+              break;
+
+            case "last3months":
+              const threeMonthsAgo = new Date();
+              threeMonthsAgo.setMonth(now.getMonth() - 3);
+              if (examDate < threeMonthsAgo) return false;
+              break;
           }
-          
-          // Status filter
-          if (filterOptions.status !== "all" && exam.status !== filterOptions.status) {
-            return false;
-          }
-          
-          // Date range filter
-          if (filterOptions.dateRange !== "all") {
-            const examDate = getExamDate(exam);
-            const now = new Date();
-            
-            switch (filterOptions.dateRange) {
-              case "last7days":
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(now.getDate() - 7);
-                if (examDate < sevenDaysAgo) return false;
-                break;
-                
-              case "last30days":
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(now.getDate() - 30);
-                if (examDate < thirtyDaysAgo) return false;
-                break;
-                
-              case "last3months":
-                const threeMonthsAgo = new Date();
-                threeMonthsAgo.setMonth(now.getMonth() - 3);
-                if (examDate < threeMonthsAgo) return false;
-                break;
-            }
-          }
-          
-          // Text search
-          if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            return (
-              exam.name.toLowerCase().includes(searchLower) ||
-              (exam.laboratoryName && exam.laboratoryName.toLowerCase().includes(searchLower)) ||
-              (exam.requestingPhysician && exam.requestingPhysician?.toLowerCase().includes(searchLower))
-            );
-          }
-          
-          return true;
-        })
-        .sort((a, b) => {
-          // Helper function to get time value for sorting
-          const getDateValue = (exam: Exam) => {
-            return getExamDate(exam).getTime();
-          };
-          
-          switch (filterOptions.sortBy) {
-            case "examDate":
-              return getDateValue(b) - getDateValue(a); // Newest first
-            case "examDateAsc":
-              return getDateValue(a) - getDateValue(b); // Oldest first
-            case "name":
-              return a.name.localeCompare(b.name); // A-Z
-            case "nameDesc":
-              return b.name.localeCompare(a.name); // Z-A
-            default:
-              return getDateValue(b) - getDateValue(a);
-          }
-        })
+        }
+
+        // Text search
+        if (searchTerm) {
+          const searchLower = searchTerm.toLowerCase();
+          return (
+            exam.name.toLowerCase().includes(searchLower) ||
+            (exam.laboratoryName && exam.laboratoryName.toLowerCase().includes(searchLower)) ||
+            (exam.requestingPhysician && exam.requestingPhysician?.toLowerCase().includes(searchLower))
+          );
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        // Helper function to get time value for sorting
+        const getDateValue = (exam: Exam) => {
+          return getExamDate(exam).getTime();
+        };
+
+        switch (filterOptions.sortBy) {
+          case "examDate":
+            return getDateValue(b) - getDateValue(a); // Newest first
+          case "examDateAsc":
+            return getDateValue(a) - getDateValue(b); // Oldest first
+          case "name":
+            return a.name.localeCompare(b.name); // A-Z
+          case "nameDesc":
+            return b.name.localeCompare(a.name); // Z-A
+          default:
+            return getDateValue(b) - getDateValue(a);
+        }
+      })
     : [];
-  
+
   // Agrupar exames por categoria
   const groupedExams = useMemo(() => {
     // Agrupar exames por categoria
     const categories: Record<string, Exam[]> = {};
-    
+
     filteredAndSortedExams.forEach(exam => {
       const category = getCategoryFromName(exam.name);
       if (!categories[category]) {
@@ -299,31 +299,31 @@ export default function ExamHistory() {
       }
       categories[category].push(exam);
     });
-    
-    return { 
-      categories, 
+
+    return {
+      categories,
       chronological: filteredAndSortedExams,
-      categoryList: Object.keys(categories).sort() 
+      categoryList: Object.keys(categories).sort()
     };
   }, [filteredAndSortedExams]);
-  
+
   // Filtrar exames por categoria ativa se necessário
   const examsToDisplay = useMemo(() => {
     if (viewMode === 'category' && activeCategory !== 'all') {
-      return filteredAndSortedExams.filter(exam => 
+      return filteredAndSortedExams.filter(exam =>
         getCategoryFromName(exam.name) === activeCategory
       );
     }
     return filteredAndSortedExams;
   }, [filteredAndSortedExams, viewMode, activeCategory]);
-  
+
   // Pagination
   const totalPages = Math.ceil((examsToDisplay?.length || 0) / itemsPerPage);
   const paginatedExams = examsToDisplay.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
+
   const getExamTypeColor = (fileType: string) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
@@ -336,7 +336,7 @@ export default function ExamHistory() {
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
-  
+
   const getFileIcon = (fileType: string, iconSize: number = 16) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
@@ -348,11 +348,11 @@ export default function ExamHistory() {
         return <FileText className="text-gray-600" size={iconSize} />;
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
-  
+
   const formatRelativeDate = (dateString: string) => {
     const date = new Date(dateString);
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
@@ -402,6 +402,7 @@ export default function ExamHistory() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'analyzed':
+      case 'extraction_only':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium">
             <Activity className="w-3 h-3 mr-1" /> Analisado
@@ -455,7 +456,7 @@ export default function ExamHistory() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Ações</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {exam.status === 'analyzed' && (
+                  {(exam.status === 'analyzed' || exam.status === 'extraction_only') && (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href={`/diagnosis/${exam.id}`} className="cursor-pointer">
@@ -484,82 +485,82 @@ export default function ExamHistory() {
             </div>
           </div>
         </CardHeader>
-      <CardContent className="flex-1 pb-2">
-        <div className="grid grid-cols-1 gap-3 text-sm">
-          <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
-            <div className="flex items-center text-gray-700">
-              <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-              <span>Data do Exame:</span>
+        <CardContent className="flex-1 pb-2">
+          <div className="grid grid-cols-1 gap-3 text-sm">
+            <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
+              <div className="flex items-center text-gray-700">
+                <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                <span>Data do Exame:</span>
+              </div>
+              <span className="font-medium">
+                {exam.examDate ? formatDate(exam.examDate) : (
+                  <span className="text-gray-400 text-xs">Não informada</span>
+                )}
+              </span>
             </div>
-            <span className="font-medium">
-              {exam.examDate ? formatDate(exam.examDate) : (
-                <span className="text-gray-400 text-xs">Não informada</span>
-              )}
-            </span>
+
+            <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
+              <div className="flex items-center text-gray-700">
+                <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                <span>Médico Solicitante:</span>
+              </div>
+              <span className="font-medium">
+                {exam.requestingPhysician || (
+                  <span className="text-gray-400 text-xs">Não informado</span>
+                )}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <div className="flex items-center text-gray-700">
+                <Microscope className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                <span>Tipo de Arquivo:</span>
+              </div>
+              <Badge variant="outline" className={cn("capitalize", getExamTypeColor(exam.fileType))}>
+                {exam.fileType}
+              </Badge>
+            </div>
           </div>
-          
-          <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
-            <div className="flex items-center text-gray-700">
-              <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-              <span>Médico Solicitante:</span>
-            </div>
-            <span className="font-medium">
-              {exam.requestingPhysician || (
-                <span className="text-gray-400 text-xs">Não informado</span>
-              )}
-            </span>
+        </CardContent>
+        <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-gray-100">
+          <div className="text-xs text-gray-500">
+            Enviado {formatRelativeDate(exam.uploadDate.toString())}
           </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center text-gray-700">
-              <Microscope className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-              <span>Tipo de Arquivo:</span>
-            </div>
-            <Badge variant="outline" className={cn("capitalize", getExamTypeColor(exam.fileType))}>
-              {exam.fileType}
-            </Badge>
+          <div className="flex flex-wrap gap-2">
+            {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? (
+              <div className="inline-flex gap-2">
+                <Link href={`/diagnosis/${exam.id}`}>
+                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                    <FileBarChart className="mr-1 h-3.5 w-3.5" />
+                    Diagnóstico
+                  </Button>
+                </Link>
+                <Link href={`/report/${exam.id}`}>
+                  <Button size="sm" className="h-8 px-3 text-xs">
+                    <Activity className="mr-1 h-3.5 w-3.5" />
+                    Detalhes
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
+                <Clock className="mr-1 h-3.5 w-3.5" />
+                Processando...
+              </Button>
+            )}
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-gray-100">
-        <div className="text-xs text-gray-500">
-          Enviado {formatRelativeDate(exam.uploadDate.toString())}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {exam.status === 'analyzed' ? (
-            <div className="inline-flex gap-2">
-              <Link href={`/diagnosis/${exam.id}`}>
-                <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
-                  <FileBarChart className="mr-1 h-3.5 w-3.5" />
-                  Diagnóstico
-                </Button>
-              </Link>
-              <Link href={`/report/${exam.id}`}>
-                <Button size="sm" className="h-8 px-3 text-xs">
-                  <Activity className="mr-1 h-3.5 w-3.5" />
-                  Detalhes
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
-              <Clock className="mr-1 h-3.5 w-3.5" />
-              Processando...
-            </Button>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
-  );
+        </CardFooter>
+      </Card>
+    );
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <MobileHeader />
-      
+
       <div className="flex flex-1 relative">
         <Sidebar />
-        
+
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
             <PatientHeader
@@ -572,7 +573,7 @@ export default function ExamHistory() {
                 <Button>Enviar novo exame</Button>
               </Link>
             </div>
-            
+
             <div className="mb-6">
               <Card>
                 <CardContent className="p-4 md:p-6">
@@ -581,25 +582,24 @@ export default function ExamHistory() {
                     <div className="w-full md:w-auto flex-grow md:flex-grow-0 md:min-w-[320px]">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input 
-                          type="text" 
-                          placeholder="Buscar por nome, laboratório ou médico..." 
+                        <Input
+                          type="text"
+                          placeholder="Buscar por nome, laboratório ou médico..."
                           className="pl-10 bg-white"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
                     </div>
-                    
+
                     {/* Visualization mode toggle */}
                     <div className="flex gap-3 ml-auto items-center">
                       <div className="flex rounded-md overflow-hidden border border-gray-200" style={{ height: "40px" }}>
-                        <button 
-                          className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
-                            viewMode === "chronological" 
-                              ? "bg-gray-100 text-gray-700" 
+                        <button
+                          className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${viewMode === "chronological"
+                              ? "bg-gray-100 text-gray-700"
                               : "bg-white text-gray-700 hover:bg-gray-50"
-                          }`}
+                            }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => {
                             setViewMode("chronological");
@@ -608,22 +608,21 @@ export default function ExamHistory() {
                         >
                           Cronológico
                         </button>
-                        <button 
-                          className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
-                            viewMode === "category" 
-                              ? "bg-gray-100 text-gray-700" 
+                        <button
+                          className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${viewMode === "category"
+                              ? "bg-gray-100 text-gray-700"
                               : "bg-white text-gray-700 hover:bg-gray-50"
-                          }`}
+                            }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => setViewMode("category")}
                         >
                           Categorias
                         </button>
                       </div>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button 
+                          <button
                             style={{
                               backgroundColor: "white",
                               color: "#374151",
@@ -647,12 +646,12 @@ export default function ExamHistory() {
                         <DropdownMenuContent align="end" className="w-[240px]">
                           <DropdownMenuLabel>Filtrar Exames</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
+
                           <div className="p-2">
                             <label className="text-xs text-gray-500 font-medium mb-1 block">Tipo de Arquivo</label>
-                            <Select 
-                              value={filterOptions.fileType} 
-                              onValueChange={(value) => setFilterOptions({...filterOptions, fileType: value})}
+                            <Select
+                              value={filterOptions.fileType}
+                              onValueChange={(value) => setFilterOptions({ ...filterOptions, fileType: value })}
                             >
                               <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Todos os tipos" />
@@ -665,12 +664,12 @@ export default function ExamHistory() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="p-2">
                             <label className="text-xs text-gray-500 font-medium mb-1 block">Período</label>
-                            <Select 
-                              value={filterOptions.dateRange} 
-                              onValueChange={(value) => setFilterOptions({...filterOptions, dateRange: value})}
+                            <Select
+                              value={filterOptions.dateRange}
+                              onValueChange={(value) => setFilterOptions({ ...filterOptions, dateRange: value })}
                             >
                               <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Todos os períodos" />
@@ -683,12 +682,12 @@ export default function ExamHistory() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="p-2">
                             <label className="text-xs text-gray-500 font-medium mb-1 block">Status</label>
-                            <Select 
-                              value={filterOptions.status} 
-                              onValueChange={(value) => setFilterOptions({...filterOptions, status: value})}
+                            <Select
+                              value={filterOptions.status}
+                              onValueChange={(value) => setFilterOptions({ ...filterOptions, status: value })}
                             >
                               <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Todos os status" />
@@ -701,12 +700,12 @@ export default function ExamHistory() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="p-2">
                             <label className="text-xs text-gray-500 font-medium mb-1 block">Ordenar por</label>
-                            <Select 
-                              value={filterOptions.sortBy} 
-                              onValueChange={(value) => setFilterOptions({...filterOptions, sortBy: value})}
+                            <Select
+                              value={filterOptions.sortBy}
+                              onValueChange={(value) => setFilterOptions({ ...filterOptions, sortBy: value })}
                             >
                               <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Data (mais recente)" />
@@ -721,7 +720,7 @@ export default function ExamHistory() {
                           </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      
+
                       <div className="flex border rounded-md overflow-hidden" style={{ height: "40px" }}>
                         <button
                           style={{
@@ -786,7 +785,7 @@ export default function ExamHistory() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="mb-6">
               {isLoading ? (
                 // Show loading skeletons
@@ -826,19 +825,19 @@ export default function ExamHistory() {
                     <FileText className="h-8 w-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    {exams && exams.length > 0 
-                      ? "Nenhum exame encontrado para os filtros selecionados" 
+                    {exams && exams.length > 0
+                      ? "Nenhum exame encontrado para os filtros selecionados"
                       : "Nenhum exame encontrado"}
                   </h3>
                   <p className="text-gray-500 mb-6 max-w-md">
-                    {exams && exams.length > 0 
+                    {exams && exams.length > 0
                       ? "Tente ajustar os filtros ou a busca para visualizar seus exames."
                       : "Comece enviando seu primeiro exame para análise e obtenha insights valiosos sobre sua saúde."}
                   </p>
-                  
+
                   {exams && exams.length > 0 ? (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setSearchTerm("");
                         setFilterOptions({
@@ -867,9 +866,9 @@ export default function ExamHistory() {
                         <Tag className="h-4 w-4 mr-2 text-primary" />
                         <h2 className="text-lg font-medium text-gray-700">Categorias de Exames</h2>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <Badge 
+                        <Badge
                           variant={activeCategory === "all" ? "default" : "outline"}
                           className={cn(
                             "px-2.5 py-1 cursor-pointer hover:bg-primary-50",
@@ -879,9 +878,9 @@ export default function ExamHistory() {
                         >
                           Todas as Categorias
                         </Badge>
-                        
+
                         {groupedExams.categoryList.map(category => (
-                          <Badge 
+                          <Badge
                             key={category}
                             variant={activeCategory === category ? "default" : "outline"}
                             className={cn(
@@ -894,7 +893,7 @@ export default function ExamHistory() {
                           </Badge>
                         ))}
                       </div>
-                      
+
                       {activeCategory !== "all" && (
                         <div className="mb-4">
                           <h3 className="text-md font-medium text-primary-700 mb-1">
@@ -907,7 +906,7 @@ export default function ExamHistory() {
                       )}
                     </div>
                   )}
-                  
+
                   {activeView === "grid" ? (
                     // Grid view
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -933,7 +932,7 @@ export default function ExamHistory() {
                                     {exam.requestingPhysician ? ` • Dr. ${exam.requestingPhysician}` : ""}
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-3 mt-1">
                                   {getStatusBadge(exam.status)}
                                   <div className="text-xs text-gray-500 ml-3 hidden md:block">
@@ -941,19 +940,19 @@ export default function ExamHistory() {
                                   </div>
                                 </div>
                               </div>
-                              
+
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mt-3">
                                 <div className="flex items-center gap-2 text-xs text-gray-500 md:hidden">
                                   <Calendar className="h-3 w-3 opacity-70" />
                                   {exam.examDate ? formatDate(exam.examDate) : "Data não informada"}
                                 </div>
-                                
+
                                 <div className="text-xs text-gray-500">
                                   Enviado {formatRelativeDate(exam.uploadDate.toString())}
                                 </div>
-                                
+
                                 <div className="flex gap-2 mt-2 md:mt-0">
-                                  {exam.status === 'analyzed' ? (
+                                  {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? (
                                     <>
                                       <Link href={`/diagnosis/${exam.id}`}>
                                         <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
@@ -985,17 +984,17 @@ export default function ExamHistory() {
                     // Timeline view
                     <div className="relative px-4 py-6 bg-white rounded-md shadow-sm">
                       <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gray-200"></div>
-                      
+
                       {paginatedExams.map((exam, index) => {
                         const examDate = exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
                         const formattedDate = formatDate(examDate.toString());
-                        
+
                         return (
                           <div key={exam.id} className="relative pl-8 mb-8 last:mb-0">
                             <div className="absolute left-0 w-3 h-3 rounded-full bg-primary border-4 border-white z-10 mt-1.5"></div>
-                            
+
                             <div className="text-sm text-gray-500 mb-1">{formattedDate}</div>
-                            
+
                             <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border-l-4 border-l-primary">
                               <CardHeader className="p-4 pb-2">
                                 <div className="flex justify-between items-start">
@@ -1014,10 +1013,10 @@ export default function ExamHistory() {
                                   {getStatusBadge(exam.status)}
                                 </div>
                               </CardHeader>
-                              
+
                               <CardContent className="p-4 pt-2">
                                 <div className="mt-2 flex flex-wrap justify-between gap-2">
-                                  {exam.status === 'analyzed' ? (
+                                  {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? (
                                     <div className="flex gap-2">
                                       <Link href={`/diagnosis/${exam.id}`}>
                                         <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
@@ -1046,7 +1045,7 @@ export default function ExamHistory() {
                       })}
                     </div>
                   )}
-                  
+
                   {/* Pagination controls */}
                   {totalPages > 1 && (
                     <div className="flex justify-center mt-6">
@@ -1059,7 +1058,7 @@ export default function ExamHistory() {
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        
+
                         {[...Array(totalPages)].map((_, i) => (
                           <Button
                             key={i}
@@ -1071,7 +1070,7 @@ export default function ExamHistory() {
                             {i + 1}
                           </Button>
                         ))}
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -1100,15 +1099,15 @@ export default function ExamHistory() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deleteMutation.isPending}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >

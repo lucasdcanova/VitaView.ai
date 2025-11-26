@@ -13,7 +13,7 @@ import { useProfiles } from "@/hooks/use-profiles";
 export default function RecentExams() {
   const { ref, isInView } = useLazyLoading(0.1, '100px');
   const { activeProfile } = useProfiles();
-  
+
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
     queryKey: ["/api/exams", activeProfile?.id],
     queryFn: async () => {
@@ -29,11 +29,11 @@ export default function RecentExams() {
     },
     enabled: isInView && !!activeProfile, // Only fetch when component is in view and patient selected
   });
-  
+
   // Use React state instead of direct localStorage access for SSR compatibility
   const [localExams, setLocalExams] = useState<Exam[]>([]);
   const isLoading = apiLoading;
-  
+
   // Combine API and localStorage exams
   useEffect(() => {
     try {
@@ -50,21 +50,21 @@ export default function RecentExams() {
       // Error reading from localStorage
     }
   }, [activeProfile]);
-  
+
   // Combine both sources of exams
   const allExams = useMemo(() => {
     const apiExamsArray = apiExams || [];
     return [...apiExamsArray, ...localExams];
   }, [apiExams, localExams]);
-  
+
   // Sort exams by upload date and limit to the most recent ones
-  const recentExams = useMemo(() => 
+  const recentExams = useMemo(() =>
     allExams
       .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
-      .slice(0, 5), 
+      .slice(0, 5),
     [allExams]
   );
-  
+
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
       case 'pdf':
@@ -76,7 +76,7 @@ export default function RecentExams() {
         return <FileText className="text-primary-500" size={20} />;
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -104,7 +104,7 @@ export default function RecentExams() {
           </Button>
         </Link>
       </div>
-      
+
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, index) => (
@@ -160,87 +160,87 @@ export default function RecentExams() {
               threshold={0.1}
               rootMargin="50px"
             >
-              <div 
+              <div
                 className={cn(
                   "border rounded-xl p-4 transition-all transform hover:-translate-y-1 hover:shadow-md duration-300",
-                  exam.status === 'analyzed' 
-                    ? "border-green-200 bg-green-50/70 hover:bg-green-50" 
+                  (exam.status === 'analyzed' || exam.status === 'extraction_only')
+                    ? "border-green-200 bg-green-50/70 hover:bg-green-50"
                     : "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
                 )}
               >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={cn(
-                    "p-2.5 rounded-lg flex items-center justify-center w-12 h-12 shadow-sm",
-                    exam.status === 'analyzed' ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                  )}>
-                    {getFileIcon(exam.fileType)}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={cn(
+                      "p-2.5 rounded-lg flex items-center justify-center w-12 h-12 shadow-sm",
+                      (exam.status === 'analyzed' || exam.status === 'extraction_only') ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                    )}>
+                      {getFileIcon(exam.fileType)}
+                    </div>
+                    <div>
+                      <div className="flex items-center mb-1">
+                        <h3 className="font-medium text-gray-800">{exam.name}</h3>
+                        <Badge
+                          className={cn(
+                            "ml-2 text-xs px-2",
+                            (exam.status === 'analyzed' || exam.status === 'extraction_only')
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                          )}
+                          variant="outline"
+                        >
+                          {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? 'Analisado' : 'Em processamento'}
+                        </Badge>
+                      </div>
+                      <div className="flex text-xs text-gray-500 mt-0.5 items-center">
+                        <span className="flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {formatDate(exam.uploadDate.toString())}
+                        </span>
+                        <span className="mx-2 text-gray-300">•</span>
+                        <span className="flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                          {exam.laboratoryName}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+
                   <div>
-                    <div className="flex items-center mb-1">
-                      <h3 className="font-medium text-gray-800">{exam.name}</h3>
-                      <Badge 
-                        className={cn(
-                          "ml-2 text-xs px-2",
-                          exam.status === 'analyzed' 
-                            ? "bg-green-100 text-green-800 hover:bg-green-200" 
-                            : "bg-amber-100 text-amber-800 hover:bg-amber-200"
-                        )}
+                    {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? (
+                      <Link href={`/report/${exam.id}`}>
+                        <Button
+                          size="sm"
+                          className="bg-primary-600 hover:bg-primary-700 shadow-sm font-medium px-3 flex items-center gap-1"
+                        >
+                          Ver análise
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        size="sm"
                         variant="outline"
+                        disabled
+                        className="text-amber-600 border-amber-200 bg-amber-50 flex items-center gap-1"
                       >
-                        {exam.status === 'analyzed' ? 'Analisado' : 'Em processamento'}
-                      </Badge>
-                    </div>
-                    <div className="flex text-xs text-gray-500 mt-0.5 items-center">
-                      <span className="flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <svg className="w-3.5 h-3.5 animate-spin mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        {formatDate(exam.uploadDate.toString())}
-                      </span>
-                      <span className="mx-2 text-gray-300">•</span>
-                      <span className="flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        {exam.laboratoryName}
-                      </span>
-                    </div>
+                        Analisando...
+                      </Button>
+                    )}
                   </div>
                 </div>
-                
-                <div>
-                  {exam.status === 'analyzed' ? (
-                    <Link href={`/report/${exam.id}`}>
-                      <Button 
-                        size="sm" 
-                        className="bg-primary-600 hover:bg-primary-700 shadow-sm font-medium px-3 flex items-center gap-1"
-                      >
-                        Ver análise
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      disabled
-                      className="text-amber-600 border-amber-200 bg-amber-50 flex items-center gap-1"
-                    >
-                      <svg className="w-3.5 h-3.5 animate-spin mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Analisando...
-                    </Button>
-                  )}
-                </div>
-              </div>
               </div>
             </LazyComponent>
           ))}
-          
+
           <div className="flex justify-center pt-4 mt-2">
             <Link href="/history">
               <Button variant="outline" className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 border-primary-100 hover:border-primary-200 font-medium flex items-center gap-2">
