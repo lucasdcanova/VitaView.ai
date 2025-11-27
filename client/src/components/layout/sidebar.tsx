@@ -34,8 +34,8 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/dashboard"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/dashboard'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <LayoutDashboard className="mr-3 h-5 w-5" />
@@ -45,8 +45,8 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/upload"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/upload'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <Upload className="mr-3 h-5 w-5" />
@@ -58,8 +58,8 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/health-trends"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/health-trends'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <Heart className="mr-3 h-5 w-5" />
@@ -69,8 +69,8 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/history"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/history'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <History className="mr-3 h-5 w-5" />
@@ -80,8 +80,8 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/results"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/results'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <LineChart className="mr-3 h-5 w-5" />
@@ -93,23 +93,12 @@ export default function Sidebar(props: SidebarProps) {
         <Link href="/subscription"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/subscription'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
             }`}
         >
           <CreditCard className="mr-3 h-5 w-5" />
           <span>Minha Assinatura</span>
-        </Link>
-
-        <Link href="/subscription-plans"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/subscription-plans'
-              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-              : 'hover:bg-gray-50 text-gray-700'
-            }`}
-        >
-          <Store className="mr-3 h-5 w-5" />
-          <span>Planos</span>
         </Link>
 
         {/* Link para o painel administrativo - visível apenas para administradores */}
@@ -117,8 +106,8 @@ export default function Sidebar(props: SidebarProps) {
           <Link href="/admin-panel"
             onClick={handleNavClick}
             className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/admin-panel'
-                ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-                : 'hover:bg-red-50 text-red-700'
+              ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+              : 'hover:bg-red-50 text-red-700'
               }`}
           >
             <ShieldCheck className="mr-3 h-5 w-5" />

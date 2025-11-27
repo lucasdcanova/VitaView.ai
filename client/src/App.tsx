@@ -27,7 +27,7 @@ const DiagnosisPage = lazy(() => import("@/pages/diagnosis-page"));
 const HealthTrends = lazy(() => import("@/pages/health-trends-new"));
 const ExamTimeline = lazy(() => import("@/pages/exam-timeline"));
 const Home = lazy(() => import("@/pages/home"));
-const SubscriptionPlans = lazy(() => import("@/pages/subscription-plans"));
+
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const QuickSummaryPage = lazy(() => import("@/pages/quick-summary-page"));
@@ -62,7 +62,7 @@ function Router() {
         <ProtectedRoute path="/health-trends" component={HealthTrends} />
         <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
         <ProtectedRoute path="/profile" component={Profile} />
-        <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
+
         <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
         <ProtectedRoute path="/admin-panel" component={AdminPanel} />
         <ProtectedRoute path="/admin" component={AdminPanel} />
