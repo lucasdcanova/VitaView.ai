@@ -42,19 +42,6 @@ export default function Sidebar(props: SidebarProps) {
           <span>Dashboard</span>
         </Link>
 
-        <Link href="/upload"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/upload'
-            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-            : 'hover:bg-gray-50 text-gray-700'
-            }`}
-        >
-          <Upload className="mr-3 h-5 w-5" />
-          <span>Enviar Exames</span>
-        </Link>
-
-
-
         <Link href="/health-trends"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/health-trends'
@@ -64,6 +51,17 @@ export default function Sidebar(props: SidebarProps) {
         >
           <Heart className="mr-3 h-5 w-5" />
           <span className="text-[#1E3A5F] font-semibold">Prontuário do paciente</span>
+        </Link>
+
+        <Link href="/upload"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/upload'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
+            }`}
+        >
+          <Upload className="mr-3 h-5 w-5" />
+          <span>Enviar Exames</span>
         </Link>
 
         <Link href="/history"
