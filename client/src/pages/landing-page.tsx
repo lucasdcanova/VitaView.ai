@@ -575,49 +575,42 @@ export default function LandingPage() {
                 </div>
 
                 {/* Conteúdo do dashboard - Lista de Pacientes */}
-                <div className="p-0 bg-white h-full overflow-hidden relative">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500">
-                    <div className="col-span-5">PACIENTE</div>
-                    <div className="col-span-3">ÚLTIMA VISITA</div>
-                    <div className="col-span-3">STATUS</div>
-                    <div className="col-span-1 text-right"></div>
-                  </div>
-
-                  {/* Patient Rows */}
-                  <div className="divide-y divide-gray-100">
-                    {/* Patient 1 - High Risk */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer group bg-blue-50/30">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold mr-2">
-                            CM
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-white h-full overflow-hidden relative">
+                  {/* Patient Cards */}
+                  <div className="space-y-3">
+                    {/* Patient 1 - Recent */}
+                    <div className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-primary-200 group">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shadow-md" style={{ backgroundColor: '#2563eb' }}>
+                            <span className="text-white">CM</span>
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Carlos Mendes</div>
-                            <div className="text-[10px] text-gray-500">58 anos • Cardiopata</div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-base font-semibold text-gray-900">Carlos Mendes</h4>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Recente
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">58 anos • Cardiopata</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Hoje, 09:30</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          Hoje, 09:30
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            Recente
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-primary-600" />
-                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors flex-shrink-0" />
                       </div>
 
                       {/* AI Data Display */}
-                      <div className="mt-3 bg-white rounded-md p-3 border border-blue-100 shadow-sm">
+                      <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
                         <div className="flex items-start gap-2">
                           <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-800 mb-1">Dados Extraídos</p>
-                            <p className="text-xs text-gray-600 leading-relaxed">
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-gray-800 mb-1">Dados Extraídos</p>
+                            <p className="text-xs text-gray-700 leading-relaxed">
                               Hemoglobina Glicada 8.2% (anterior 7.1%).
                             </p>
                           </div>
@@ -625,64 +618,62 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Patient 2 - Moderate Risk */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold mr-2">
-                            AS
+                    {/* Patient 2 - Scheduled */}
+                    <div className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-primary-200 group">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-sm font-bold shadow-md">
+                            <span className="text-white">AS</span>
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Ana Silva</div>
-                            <div className="text-[10px] text-gray-500">42 anos • Diabética</div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-base font-semibold text-gray-900">Ana Silva</h4>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Agendado
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">42 anos • Diabética</p>
+                            <div className="flex items-center gap-1 text-xs text-gray-600">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Ontem, 14:20</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          Ontem, 14:20
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                            Agendado
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors flex-shrink-0" />
                       </div>
                     </div>
 
-                    {/* Patient 3 - Stable */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold mr-2">
-                            RO
+                    {/* Patient 3 - Consultation */}
+                    <div className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-primary-200 group">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-sm font-bold shadow-md">
+                            <span className="text-white">RO</span>
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Roberto Oliveira</div>
-                            <div className="text-[10px] text-gray-500">35 anos • Check-up</div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-base font-semibold text-gray-900">Roberto Oliveira</h4>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Consulta
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">35 anos • Check-up</p>
+                            <div className="flex items-center gap-1 text-xs text-gray-600">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>25 Nov, 16:00</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          25 Nov, 16:00
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                            Consulta
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors flex-shrink-0" />
                       </div>
                     </div>
                   </div>
 
                   {/* Floating Action Button simulation */}
                   <div className="absolute bottom-4 right-4">
-                    <div className="bg-primary-600 text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-primary-700 transition-colors cursor-pointer">
+                    <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-full px-5 py-2.5 shadow-xl hover:shadow-2xl flex items-center gap-2 hover:scale-105 transition-all duration-300 cursor-pointer">
                       <Plus className="w-4 h-4" />
-                      <span className="text-xs font-bold">Novo Prontuário</span>
+                      <span className="text-sm font-bold">Novo Prontuário</span>
                     </div>
                   </div>
                 </div>
@@ -700,7 +691,7 @@ export default function LandingPage() {
                   repeatType: "reverse"
                 }}
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 text-gray-800">
                   <Users className="w-5 h-5 text-primary-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-800">Total de Pacientes: <span className="text-primary-600">127</span></span>
                 </div>
@@ -718,7 +709,7 @@ export default function LandingPage() {
                   delay: 0.5
                 }}
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 text-gray-800">
                   <BarChart4 className="w-5 h-5 text-primary-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-800">Exames Pendentes: <span className="text-amber-500">8</span></span>
                 </div>
