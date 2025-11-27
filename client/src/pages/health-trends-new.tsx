@@ -96,7 +96,7 @@ const getCIDDescription = (cidCode: string): string => {
 
 interface TimelineItem {
   id: number;
-  type: "exam" | "diagnosis";
+  type: "exam" | "diagnosis" | "surgery" | "evolution";
   date: string;
   title: string;
   description?: string;
@@ -105,6 +105,7 @@ interface TimelineItem {
   examType?: string;
   resultSummary?: string;
   originalData?: any;
+  text?: string;
 }
 
 export default function HealthTrendsNew() {
@@ -233,6 +234,10 @@ export default function HealthTrendsNew() {
 
   const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery({
     queryKey: ["/api/surgeries"],
+  });
+
+  const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery({
+    queryKey: ["/api/evolutions"],
   });
 
   // Mutation para adicionar diagnóstico
@@ -480,6 +485,24 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const deleteEvolutionMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/evolutions/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
+      toast({
+        title: "Sucesso",
+        description: "Evolução excluída com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir evolução. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const analyzeAnamnesisMutation = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
       const res = await apiRequest("POST", "/api/patient-record/analyze", { text });
@@ -491,6 +514,10 @@ export default function HealthTrendsNew() {
         title: "Anamnese analisada",
         description: "Identificamos diagnósticos, medicamentos e alergias a partir do texto.",
       });
+      // Automatically apply extraction
+      handleApplyExtraction(data);
+      // Refresh evolutions to show the new one
+      queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
     },
     onError: (error: any) => {
       toast({
@@ -554,6 +581,14 @@ export default function HealthTrendsNew() {
       title: surgery.procedureName || "Cirurgia",
       description: `${surgery.hospitalName ? `Hospital: ${surgery.hospitalName}` : ""} ${surgery.surgeonName ? `| Cirurgião: ${surgery.surgeonName}` : ""}`,
       originalData: surgery,
+    })) : []),
+    ...(Array.isArray(evolutions) ? evolutions.map((evolution: any) => ({
+      id: evolution.id,
+      type: "evolution" as const,
+      date: evolution.date,
+      title: "Evolução Clínica",
+      description: evolution.text,
+      originalData: evolution,
     })) : [])
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -689,14 +724,15 @@ export default function HealthTrendsNew() {
     setExtractedRecord(null);
   };
 
-  const handleApplyExtraction = async () => {
-    if (!extractedRecord) return;
+  const handleApplyExtraction = async (recordToApply?: any) => {
+    const record = recordToApply || extractedRecord;
+    if (!record) return;
     setIsApplyingExtraction(true);
     const today = new Date().toISOString().split("T")[0];
     const created = { diagnoses: 0, medications: 0, allergies: 0 };
 
     try {
-      for (const diagnosis of extractedRecord.diagnoses || []) {
+      for (const diagnosis of record.diagnoses || []) {
         if (!diagnosis?.cidCode) continue;
         await apiRequest("POST", "/api/diagnoses", {
           cidCode: diagnosis.cidCode,
@@ -707,7 +743,7 @@ export default function HealthTrendsNew() {
         created.diagnoses += 1;
       }
 
-      for (const medication of extractedRecord.medications || []) {
+      for (const medication of record.medications || []) {
         if (!medication?.name) continue;
         await apiRequest("POST", "/api/medications", {
           name: medication.name,
@@ -721,7 +757,7 @@ export default function HealthTrendsNew() {
         created.medications += 1;
       }
 
-      for (const allergy of extractedRecord.allergies || []) {
+      for (const allergy of record.allergies || []) {
         if (!allergy?.allergen) continue;
         await apiRequest("POST", "/api/allergies", {
           allergen: allergy.allergen,
@@ -1190,7 +1226,10 @@ export default function HealthTrendsNew() {
                         timelineItems.map((item, index) => (
                           <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
                             {/* Dot on the line */}
-                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-blue-500' : 'bg-red-500'
+                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-blue-500' :
+                                item.type === 'diagnosis' ? 'bg-red-500' :
+                                  item.type === 'surgery' ? 'bg-purple-500' :
+                                    'bg-green-500'
                               }`} />
 
                             <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group-hover:border-indigo-100">
@@ -1198,9 +1237,12 @@ export default function HealthTrendsNew() {
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                   <div className="space-y-2 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'
+                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                          item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
+                                            item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                              'bg-green-50 text-green-700 border-green-100'
                                         }`}>
-                                        {item.type === 'exam' ? 'Exame' : 'Diagnóstico'}
+                                        {item.type === 'exam' ? 'Exame' : item.type === 'diagnosis' ? 'Diagnóstico' : item.type === 'surgery' ? 'Cirurgia' : 'Evolução'}
                                       </Badge>
                                       <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
@@ -1232,6 +1274,20 @@ export default function HealthTrendsNew() {
                                       className="self-start text-gray-400 hover:text-gray-900"
                                     >
                                       Editar
+                                    </Button>
+                                  )}
+                                  {item.type === 'evolution' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm("Deseja excluir esta evolução?")) {
+                                          deleteEvolutionMutation.mutate(item.id);
+                                        }
+                                      }}
+                                      className="self-start text-red-400 hover:text-red-900"
+                                    >
+                                      Excluir
                                     </Button>
                                   )}
                                 </div>

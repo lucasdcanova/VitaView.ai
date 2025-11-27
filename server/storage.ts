@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -67,6 +67,12 @@ export interface IStorage {
   updateSurgery(id: number, data: Partial<any>): Promise<any | undefined>;
   deleteSurgery(id: number): Promise<boolean>;
 
+  // Evolution operations
+  createEvolution(evolution: InsertEvolution): Promise<Evolution>;
+  getEvolution(id: number): Promise<Evolution | undefined>;
+  getEvolutionsByUserId(userId: number): Promise<Evolution[]>;
+  deleteEvolution(id: number): Promise<boolean>;
+
   // Admin operations
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<boolean>;
@@ -106,6 +112,7 @@ export class MemStorage implements IStorage {
   private subscriptionsMap: Map<number, Subscription>;
   private diagnosesMap: Map<number, any>;
   private surgeriesMap: Map<number, any>;
+  private evolutionsMap: Map<number, Evolution>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -118,6 +125,7 @@ export class MemStorage implements IStorage {
   private subscriptionIdCounter: number = 1;
   private diagnosisIdCounter: number = 1;
   private surgeryIdCounter: number = 1;
+  private evolutionIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -130,8 +138,10 @@ export class MemStorage implements IStorage {
     this.subscriptionsMap = new Map();
     this.diagnosesMap = new Map();
     this.surgeriesMap = new Map();
+    this.evolutionsMap = new Map();
     this.diagnosisIdCounter = 1;
     this.surgeryIdCounter = 1;
+    this.evolutionIdCounter = 1;
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -733,6 +743,33 @@ export class MemStorage implements IStorage {
 
   async deleteSurgery(id: number): Promise<boolean> {
     return this.surgeriesMap.delete(id);
+  }
+
+  // Evolution operations
+  async createEvolution(evolution: InsertEvolution): Promise<Evolution> {
+    const id = this.evolutionIdCounter++;
+    const newEvolution: Evolution = {
+      ...evolution,
+      id,
+      createdAt: new Date(),
+      date: evolution.date || new Date()
+    };
+    this.evolutionsMap.set(id, newEvolution);
+    return newEvolution;
+  }
+
+  async getEvolution(id: number): Promise<Evolution | undefined> {
+    return this.evolutionsMap.get(id);
+  }
+
+  async getEvolutionsByUserId(userId: number): Promise<Evolution[]> {
+    return Array.from(this.evolutionsMap.values()).filter(
+      (e) => e.userId === userId
+    );
+  }
+
+  async deleteEvolution(id: number): Promise<boolean> {
+    return this.evolutionsMap.delete(id);
   }
 
   // Admin operations
@@ -1645,6 +1682,59 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Evolution operations
+  async createEvolution(evolution: InsertEvolution): Promise<Evolution> {
+    try {
+      const [newEvolution] = await db
+        .insert(evolutions)
+        .values(evolution)
+        .returning();
+      return newEvolution;
+    } catch (error) {
+      console.error("Error creating evolution:", error);
+      throw error;
+    }
+  }
+
+  async getEvolution(id: number): Promise<Evolution | undefined> {
+    try {
+      const [evolution] = await db
+        .select()
+        .from(evolutions)
+        .where(eq(evolutions.id, id));
+      return evolution;
+    } catch (error) {
+      console.error(`Error fetching evolution ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getEvolutionsByUserId(userId: number): Promise<Evolution[]> {
+    try {
+      return await db
+        .select()
+        .from(evolutions)
+        .where(eq(evolutions.userId, userId))
+        .orderBy(desc(evolutions.date));
+    } catch (error) {
+      console.error(`Error fetching evolutions for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async deleteEvolution(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(evolutions)
+        .where(eq(evolutions.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting evolution ${id}:`, error);
+      return false;
+    }
+  }
+
 
   // Admin operations
   async getAllUsers(): Promise<User[]> {

@@ -249,6 +249,21 @@ export const insertSurgerySchema = createInsertSchema(surgeries).pick({
   notes: true,
 });
 
+// Evolutions schema
+export const evolutions = pgTable("evolutions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  date: timestamp("date").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertEvolutionSchema = createInsertSchema(evolutions).pick({
+  userId: true,
+  text: true,
+  date: true,
+});
+
 // Subscription plans schema
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
@@ -325,3 +340,6 @@ export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type Evolution = typeof evolutions.$inferSelect;
+export type InsertEvolution = z.infer<typeof insertEvolutionSchema>;

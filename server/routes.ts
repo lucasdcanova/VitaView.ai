@@ -1951,6 +1951,18 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Texto da anamnese é obrigatório" });
       }
 
+      // Save evolution
+      try {
+        await storage.createEvolution({
+          userId: req.user!.id,
+          text: text,
+          date: new Date(),
+        });
+      } catch (err) {
+        console.error("Erro ao salvar evolução:", err);
+        // Não falhar a análise se salvar a evolução falhar
+      }
+
       const record = await extractRecordFromAnamnesis(text);
       res.json(record);
     } catch (error) {
