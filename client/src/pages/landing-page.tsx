@@ -602,9 +602,8 @@ export default function LandingPage() {
                           Hoje, 09:30
                         </div>
                         <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Crítico
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            Recente
                           </span>
                         </div>
                         <div className="col-span-1 text-right">
@@ -612,14 +611,14 @@ export default function LandingPage() {
                         </div>
                       </div>
 
-                      {/* AI Insight Expanded for this patient */}
-                      <div className="mt-3 bg-white rounded-md p-3 border border-red-100 shadow-sm">
+                      {/* AI Data Display */}
+                      <div className="mt-3 bg-white rounded-md p-3 border border-blue-100 shadow-sm">
                         <div className="flex items-start gap-2">
                           <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="text-xs font-medium text-gray-800 mb-1">Insight VitaView AI</p>
+                            <p className="text-xs font-medium text-gray-800 mb-1">Dados Extraídos</p>
                             <p className="text-xs text-gray-600 leading-relaxed">
-                              Hemoglobina Glicada 8.2% (anterior 7.1%). Controle inadequado.
+                              Hemoglobina Glicada 8.2% (anterior 7.1%).
                             </p>
                           </div>
                         </div>
@@ -642,8 +641,8 @@ export default function LandingPage() {
                           Ontem, 14:20
                         </div>
                         <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                            Atenção
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            Agendado
                           </span>
                         </div>
                         <div className="col-span-1 text-right">
@@ -668,8 +667,8 @@ export default function LandingPage() {
                           25 Nov, 16:00
                         </div>
                         <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            Estável
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            Consulta
                           </span>
                         </div>
                         <div className="col-span-1 text-right">
@@ -702,8 +701,8 @@ export default function LandingPage() {
                 }}
               >
                 <div className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span className="text-sm font-medium text-gray-800">Pacientes em Risco: <span className="text-red-500">12</span></span>
+                  <Users className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-800">Total de Pacientes: <span className="text-primary-600">127</span></span>
                 </div>
               </motion.div>
 
@@ -720,7 +719,7 @@ export default function LandingPage() {
                 }}
               >
                 <div className="flex items-center space-x-2">
-                  <BarChart4 className="w-5 h-5 text-primary-500" />
+                  <BarChart4 className="w-5 h-5 text-primary-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-800">Exames Pendentes: <span className="text-amber-500">8</span></span>
                 </div>
               </motion.div>
