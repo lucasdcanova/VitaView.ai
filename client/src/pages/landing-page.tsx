@@ -65,7 +65,8 @@ import {
   Star,
   MapPin,
   Cookie,
-  Video
+  Video,
+  Plus
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -234,7 +235,7 @@ export default function LandingPage() {
 
 
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              <span className="text-[#1E3A5F] tracking-tight">VitaView</span><span className="text-[#448C9B] ml-1">AI</span>: Entenda seus exames com clareza e precisão
+              <span className="text-[#1E3A5F] tracking-tight">VitaView</span><span className="text-[#448C9B] ml-1">AI</span>: Inteligência que simplifica seus prontuários
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
@@ -333,190 +334,124 @@ export default function LandingPage() {
               >
                 {/* Header do dashboard */}
                 <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
-                  <Activity className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Prontuário Inteligente - Dr. Silva</span>
+                  <Users className="h-5 w-5 mr-2" />
+                  <span className="font-medium">Meus Pacientes</span>
                   <div className="ml-auto flex space-x-2">
                     <Search className="h-4 w-4" />
-                    <Bell className="h-4 w-4" />
-                    <UserCircle className="h-4 w-4" />
+                    <Filter className="h-4 w-4" />
                   </div>
                 </div>
 
-                {/* Conteúdo do dashboard */}
-                <div className="p-4 bg-gray-50 h-full">
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-800">Análise Clínica Integrada</h3>
-                          <p className="text-gray-500 text-sm">Paciente: Carlos Mendes • 58 anos</p>
-                        </div>
-                        <div className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
-                          Risco Calculado: Moderado
-                        </div>
-                      </div>
+                {/* Conteúdo do dashboard - Lista de Pacientes */}
+                <div className="p-0 bg-white h-full overflow-hidden relative">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500">
+                    <div className="col-span-5">PACIENTE</div>
+                    <div className="col-span-3">ÚLTIMA VISITA</div>
+                    <div className="col-span-3">STATUS</div>
+                    <div className="col-span-1 text-right"></div>
+                  </div>
 
-                      <div className="space-y-6">
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                          <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
-                            <Sparkles className="w-4 h-4 text-primary-500 mr-2" />
-                            Resumo da IA
-                          </h4>
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            Paciente apresenta elevação progressiva nos marcadores inflamatórios (PCR) associada a dislipidemia mista.
-                            Sugere-se investigação de síndrome metabólica e ajuste na terapia hipolipemiante.
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 className="font-semibold text-gray-700 mb-3">Parâmetros Críticos</h4>
-                          <div className="space-y-3">
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">LDL Colesterol</span>
-                                <span className="font-medium text-red-500">168 mg/dL (Alto)</span>
-                              </div>
-                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-red-500 rounded-full" style={{ width: '85%' }}></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Proteína C-Reativa</span>
-                                <span className="font-medium text-amber-500">4.2 mg/L (Elevado)</span>
-                              </div>
-                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500 rounded-full" style={{ width: '65%' }}></div>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-600">Hemoglobina Glicada</span>
-                                <span className="font-medium text-green-600">5.7% (Limítrofe)</span>
-                              </div>
-                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 rounded-full" style={{ width: '55%' }}></div>
-                              </div>
-                            </div>
+                  {/* Patient Rows */}
+                  <div className="divide-y divide-gray-100">
+                    {/* Patient 1 - High Risk */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer group bg-blue-50/30">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold mr-2">
+                            CM
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Carlos Mendes</div>
+                            <div className="text-[10px] text-gray-500">58 anos • Cardiopata</div>
                           </div>
                         </div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          Hoje, 09:30
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Crítico
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-primary-600" />
+                        </div>
+                      </div>
 
-                        <div className="pt-4 border-t border-gray-100">
-                          <h4 className="font-semibold text-gray-700 mb-2 text-sm">Sugestões de Conduta (Protocolo SBC)</h4>
-                          <ul className="space-y-2">
-                            <li className="flex items-start text-sm text-gray-600">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 mr-2 flex-shrink-0"></div>
-                              Intensificar mudança de estilo de vida (MEV)
-                            </li>
-                            <li className="flex items-start text-sm text-gray-600">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 mr-2 flex-shrink-0"></div>
-                              Considerar início de estatina de alta potência
-                            </li>
-                          </ul>
+                      {/* AI Insight Expanded for this patient */}
+                      <div className="mt-3 bg-white rounded-md p-3 border border-red-100 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-medium text-gray-800 mb-1">Insight VitaView AI</p>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                              Elevação de 25% na Troponina I e alteração no segmento ST. <span className="font-medium text-red-600">Recomendada intervenção imediata.</span>
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="text-xs font-medium text-gray-600">Novos Exames</h4>
-                        <FileText className="h-4 w-4 text-primary-500" />
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-xl mr-3">
-                          12
+                    {/* Patient 2 - Moderate Risk */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold mr-2">
+                            AS
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Ana Silva</div>
+                            <div className="text-[10px] text-gray-500">42 anos • Diabética</div>
+                          </div>
                         </div>
-                        <div className="text-xs">
-                          <div className="text-blue-600 font-medium">Para análise</div>
-                          <div className="text-gray-500">3 prioritários</div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          Ontem, 14:20
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                            Atenção
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="text-xs font-medium text-gray-600">Consultas Hoje</h4>
-                        <Calendar className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-700 font-bold text-xl mr-3">
-                          8
+                    {/* Patient 3 - Stable */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold mr-2">
+                            RO
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Roberto Oliveira</div>
+                            <div className="text-[10px] text-gray-500">35 anos • Check-up</div>
+                          </div>
                         </div>
-                        <div className="text-xs">
-                          <div className="text-green-600 font-medium">Confirmadas</div>
-                          <div className="text-gray-500">Próxima: 14:00</div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          25 Nov, 16:00
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            Estável
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Gráfico principal */}
-                  <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 mb-4 relative h-28">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-xs font-medium text-gray-600">Evolução da Carteira de Pacientes</h4>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="h-2 w-2 rounded-full bg-primary-500"></span>
-                        <span className="text-gray-500 mr-2">Ativos</span>
-                        <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                        <span className="text-gray-500">Novos</span>
-                      </div>
-                    </div>
-
-                    {/* Gráfico simulado com CSS */}
-                    <div className="relative h-16 mt-1 border-b border-gray-200 flex items-end pb-1">
-                      {/* Linha de base e horizontal */}
-                      <div className="absolute bottom-0 left-0 w-full h-px bg-gray-200"></div>
-
-                      {/* Barras representando Ativos */}
-                      <div className="absolute bottom-0 left-0 h-full w-full flex justify-between items-end px-2">
-                        <div style={{ height: '40%' }} className="w-2 bg-primary-300 rounded-t-sm"></div>
-                        <div style={{ height: '50%' }} className="w-2 bg-primary-300 rounded-t-sm"></div>
-                        <div style={{ height: '45%' }} className="w-2 bg-primary-300 rounded-t-sm"></div>
-                        <div style={{ height: '60%' }} className="w-2 bg-primary-300 rounded-t-sm"></div>
-                        <div style={{ height: '70%' }} className="w-2 bg-primary-500 rounded-t-sm"></div>
-                        <div style={{ height: '65%' }} className="w-2 bg-primary-500 rounded-t-sm"></div>
-                        <div style={{ height: '80%' }} className="w-2 bg-primary-600 rounded-t-sm"></div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between text-xs text-gray-400 mt-1 px-2">
-                      <span>Seg</span>
-                      <span>Ter</span>
-                      <span>Qua</span>
-                      <span>Qui</span>
-                      <span>Sex</span>
-                      <span>Sáb</span>
-                      <span>Dom</span>
-                    </div>
-                  </div>
-
-                  {/* Lista de Alertas Recentes */}
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between px-1 mb-1">
-                      <h5 className="text-xs font-medium text-gray-700">Alertas Recentes</h5>
-                      <span className="text-xs text-primary-600 cursor-pointer">Ver todos</span>
-                    </div>
-
-                    <div className="bg-white p-2 rounded-lg shadow-sm border border-l-4 border-l-red-500 border-gray-100 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 mr-2">MS</div>
-                        <div>
-                          <h5 className="text-xs font-medium text-gray-800">Maria Silva</h5>
-                          <p className="text-[10px] text-gray-500">Glicemia: 140 mg/dL (Alto)</p>
-                        </div>
-                      </div>
-                      <button className="px-2 py-1 bg-red-50 text-red-600 text-[10px] rounded font-medium border border-red-100">Ver</button>
-                    </div>
-
-                    <div className="bg-white p-2 rounded-lg shadow-sm border border-l-4 border-l-amber-500 border-gray-100 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 mr-2">JS</div>
-                        <div>
-                          <h5 className="text-xs font-medium text-gray-800">João Santos</h5>
-                          <p className="text-[10px] text-gray-500">Pressão Arterial: 150/95</p>
-                        </div>
-                      </div>
-                      <button className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] rounded font-medium border border-amber-100">Ver</button>
+                  {/* Floating Action Button simulation */}
+                  <div className="absolute bottom-4 right-4">
+                    <div className="bg-primary-600 text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-primary-700 transition-colors cursor-pointer">
+                      <Plus className="w-4 h-4" />
+                      <span className="text-xs font-bold">Novo Prontuário</span>
                     </div>
                   </div>
                 </div>
