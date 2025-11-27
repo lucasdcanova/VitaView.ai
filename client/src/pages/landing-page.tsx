@@ -387,7 +387,7 @@ export default function LandingPage() {
                           <div>
                             <p className="text-xs font-medium text-gray-800 mb-1">Insight VitaView AI</p>
                             <p className="text-xs text-gray-600 leading-relaxed">
-                              Elevação de 25% na Troponina I e alteração no segmento ST. <span className="font-medium text-red-600">Recomendada intervenção imediata.</span>
+                              Hemoglobina Glicada 8.2% (anterior 7.1%). Controle inadequado. <span className="font-medium text-amber-600">Sugestão: Ajuste terapêutico.</span>
                             </p>
                           </div>
                         </div>
@@ -471,7 +471,7 @@ export default function LandingPage() {
               >
                 <div className="flex items-center space-x-2">
                   <Heart className="w-5 h-5 text-red-500" />
-                  <span className="text-sm font-medium">Risco Cardíaco: <span className="text-green-500">Baixo</span></span>
+                  <span className="text-sm font-medium">Pacientes em Risco: <span className="text-red-500">12</span></span>
                 </div>
               </motion.div>
 
@@ -489,7 +489,7 @@ export default function LandingPage() {
               >
                 <div className="flex items-center space-x-2">
                   <BarChart4 className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Diabetes: <span className="text-amber-500">Monitorar</span></span>
+                  <span className="text-sm font-medium">Exames Pendentes: <span className="text-amber-500">8</span></span>
                 </div>
               </motion.div>
 
