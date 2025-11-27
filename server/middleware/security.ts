@@ -175,7 +175,7 @@ export function setupSecurity(app: Express) {
   // Request size limits
   app.use((req: Request, res: Response, next: NextFunction) => {
     const contentLength = parseInt(req.get('content-length') || '0');
-    const largePayloadPaths = ['/upload', '/analyze/openai'];
+    const largePayloadPaths = ['/upload', '/analyze/openai', '/exams'];
     const isMultipart = (req.headers['content-type'] || '').includes('multipart/form-data');
     const isLargePath = largePayloadPaths.some(segment => req.path.includes(segment));
     const maxSize = (isLargePath || isMultipart)
