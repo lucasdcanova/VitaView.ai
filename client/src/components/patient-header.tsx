@@ -1,15 +1,13 @@
 import { Profile } from "@shared/schema";
-import { Calendar, FileText, ShieldCheck, User, UserCog } from "lucide-react";
+import { Calendar, FileText, ShieldCheck, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ProfileSwitcher from "@/components/profile-switcher";
 
 interface PatientHeaderProps {
   title: string;
   description?: string;
   patient?: Profile | null;
   lastExamDate?: string | null;
-  showSwitcher?: boolean;
 }
 
 export default function PatientHeader({
@@ -17,7 +15,6 @@ export default function PatientHeader({
   description,
   patient,
   lastExamDate,
-  showSwitcher = true,
 }: PatientHeaderProps) {
   const formatDate = (value?: string | null) => {
     if (!value) return null;
@@ -85,17 +82,6 @@ export default function PatientHeader({
             <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{description}</p>
           )}
         </div>
-        {showSwitcher && (
-          <div className="w-full md:w-auto bg-blue-50 border border-blue-100 rounded-xl p-3 shadow-sm">
-            <div className="flex items-center justify-center md:justify-end gap-2 mb-2">
-              <UserCog className="h-4 w-4 text-blue-600" />
-              <p className="text-sm font-semibold text-blue-700">
-                Trocar paciente
-              </p>
-            </div>
-            <ProfileSwitcher />
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">

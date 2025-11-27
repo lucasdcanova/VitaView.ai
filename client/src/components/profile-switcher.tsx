@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useProfiles } from "@/hooks/use-profiles";
-import { 
-  ChevronDown, 
-  UserPlus, 
-  Edit, 
-  Trash2, 
-  User, 
-  Users 
+import {
+  ChevronDown,
+  UserPlus,
+  Edit,
+  Trash2,
+  User,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -119,7 +119,7 @@ export default function ProfileSwitcher() {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-primary-200 bg-white shadow-sm text-primary-700 hover:text-primary-900 hover:border-primary-300"
+            className="flex w-full items-center justify-between gap-3 px-4 py-2 rounded-full border border-primary-200 bg-white shadow-sm text-primary-700 hover:text-primary-900 hover:border-primary-300"
           >
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
@@ -151,11 +151,10 @@ export default function ProfileSwitcher() {
                 </div>
               ) : (
                 profiles.map((profile) => (
-                  <div 
+                  <div
                     key={profile.id}
-                    className={`flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer ${
-                      activeProfile?.id === profile.id ? "bg-primary-50 text-primary-700" : ""
-                    }`}
+                    className={`flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer ${activeProfile?.id === profile.id ? "bg-primary-50 text-primary-700" : ""
+                      }`}
                     onClick={() => setActiveProfile(profile)}
                   >
                     <div className="flex items-center">
@@ -168,9 +167,9 @@ export default function ProfileSwitcher() {
                       </div>
                     </div>
                     <div className="flex space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-7 w-7"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -180,9 +179,9 @@ export default function ProfileSwitcher() {
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
                       {!profile.isDefault && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7 text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -322,18 +321,18 @@ export default function ProfileSwitcher() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                        <SelectValue placeholder="Selecione o gênero" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Masculino">Masculino</SelectItem>
-                      <SelectItem value="Feminino">Feminino</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+                          <SelectValue placeholder="Selecione o gênero" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Feminino">Feminino</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={editForm.control}
@@ -380,15 +379,15 @@ export default function ProfileSwitcher() {
           </DialogHeader>
           <div className="space-y-4">
             <p>
-              Tem certeza que deseja remover o paciente "{profileToDelete?.name}"? 
+              Tem certeza que deseja remover o paciente "{profileToDelete?.name}"?
               Essa ação não pode ser desfeita e todos os dados clínicos associados serão excluídos.
             </p>
             <div className="flex justify-end space-x-2 pt-2">
               <DialogClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleDeleteConfirm}
               >
                 Remover
