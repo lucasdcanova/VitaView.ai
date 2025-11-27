@@ -321,191 +321,123 @@ export default function LandingPage() {
 
             {/* Imagem principal com sobreposição de elementos */}
             <div className="relative w-full max-w-[600px]">
-              {/* Dashboard mockup simulado - design mais próximo do real */}
               <motion.div
-                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10] hidden md:block"
-                whileHover={{
-                  rotate: 2,
-                  transition: { duration: 0.3 }
-                }}
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10] flex flex-col items-center justify-center border-2 border-dashed border-primary-200 bg-primary-50/30"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                {/* Header do dashboard */}
-                <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
-                  <Users className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Meus Pacientes</span>
-                  <div className="ml-auto flex space-x-2">
-                    <Search className="h-4 w-4" />
-                    <Filter className="h-4 w-4" />
-                  </div>
+                {/* Central Upload Icon */}
+                <motion.div
+                  className="w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center mb-6 relative z-20"
+                  animate={{
+                    boxShadow: ["0 10px 25px -5px rgba(59, 130, 246, 0.1)", "0 10px 25px -5px rgba(59, 130, 246, 0.3)", "0 10px 25px -5px rgba(59, 130, 246, 0.1)"]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Upload className="w-10 h-10 text-primary-500" />
+                </motion.div>
+
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Arraste exames de pacientes aqui</h3>
+                <p className="text-gray-500 text-center max-w-xs mb-8">
+                  A IA processa PDFs e imagens automaticamente para o prontuário.
+                </p>
+
+                {/* Animated Files Floating In */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  {/* File 1 - PDF */}
+                  <motion.div
+                    className="absolute top-10 left-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-gray-100"
+                    initial={{ x: -100, y: -50, opacity: 0 }}
+                    animate={{
+                      x: [null, 150, 220],
+                      y: [null, 100, 150],
+                      opacity: [0, 1, 0],
+                      scale: [1, 1, 0.5]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 1
+                    }}
+                  >
+                    <FileText className="w-8 h-8 text-red-500" />
+                    <div className="w-16 h-2 bg-gray-100 rounded"></div>
+                  </motion.div>
+
+                  {/* File 2 - Image */}
+                  <motion.div
+                    className="absolute bottom-20 right-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-gray-100"
+                    initial={{ x: 100, y: 50, opacity: 0 }}
+                    animate={{
+                      x: [null, -120, -200],
+                      y: [null, -80, -120],
+                      opacity: [0, 1, 0],
+                      scale: [1, 1, 0.5]
+                    }}
+                    transition={{
+                      duration: 3.5,
+                      repeat: Infinity,
+                      repeatDelay: 0.5,
+                      delay: 1
+                    }}
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                      <span className="text-xs font-bold text-blue-600">JPG</span>
+                    </div>
+                    <div className="w-16 h-2 bg-gray-100 rounded"></div>
+                  </motion.div>
+
+                  {/* File 3 - Another PDF */}
+                  <motion.div
+                    className="absolute top-1/2 left-[-50px] bg-white p-2 rounded-lg shadow-sm flex items-center gap-2 border border-gray-100"
+                    initial={{ x: 0, opacity: 0 }}
+                    animate={{
+                      x: [0, 200, 280],
+                      y: [0, -20, 0],
+                      opacity: [0, 1, 0],
+                      scale: [0.8, 0.8, 0.4]
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                      delay: 0.5
+                    }}
+                  >
+                    <FileText className="w-6 h-6 text-red-400" />
+                  </motion.div>
                 </div>
 
-                {/* Conteúdo do dashboard - Lista de Pacientes */}
-                <div className="p-0 bg-white h-full overflow-hidden relative">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500">
-                    <div className="col-span-5">PACIENTE</div>
-                    <div className="col-span-3">ÚLTIMA VISITA</div>
-                    <div className="col-span-3">STATUS</div>
-                    <div className="col-span-1 text-right"></div>
-                  </div>
-
-                  {/* Patient Rows */}
-                  <div className="divide-y divide-gray-100">
-                    {/* Patient 1 - High Risk */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer group bg-blue-50/30">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold mr-2">
-                            CM
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Carlos Mendes</div>
-                            <div className="text-[10px] text-gray-500">58 anos • Cardiopata</div>
-                          </div>
-                        </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          Hoje, 09:30
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Crítico
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-primary-600" />
-                        </div>
-                      </div>
-
-                      {/* AI Insight Expanded for this patient */}
-                      <div className="mt-3 bg-white rounded-md p-3 border border-red-100 shadow-sm">
-                        <div className="flex items-start gap-2">
-                          <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-800 mb-1">Insight VitaView AI</p>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                              Hemoglobina Glicada 8.2% (anterior 7.1%). Controle inadequado. <span className="font-medium text-amber-600">Sugestão: Ajuste terapêutico.</span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Patient 2 - Moderate Risk */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold mr-2">
-                            AS
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Ana Silva</div>
-                            <div className="text-[10px] text-gray-500">42 anos • Diabética</div>
-                          </div>
-                        </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          Ontem, 14:20
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                            Atenção
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Patient 3 - Stable */}
-                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5 flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold mr-2">
-                            RO
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">Roberto Oliveira</div>
-                            <div className="text-[10px] text-gray-500">35 anos • Check-up</div>
-                          </div>
-                        </div>
-                        <div className="col-span-3 text-xs text-gray-600">
-                          25 Nov, 16:00
-                        </div>
-                        <div className="col-span-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            Estável
-                          </span>
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Action Button simulation */}
-                  <div className="absolute bottom-4 right-4">
-                    <div className="bg-primary-600 text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-primary-700 transition-colors cursor-pointer">
-                      <Plus className="w-4 h-4" />
-                      <span className="text-xs font-bold">Novo Prontuário</span>
-                    </div>
-                  </div>
-                </div>
+                {/* Scanning Line Effect */}
+                <motion.div
+                  className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-400 to-transparent opacity-50"
+                  animate={{ top: ["0%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                />
               </motion.div>
 
-              {/* Elementos decorativos flutuantes */}
+              {/* Floating Badges */}
               <motion.div
-                className="absolute -top-5 -left-5 p-4 bg-white rounded-lg shadow-lg z-20 hidden md:block"
-                animate={{
-                  y: [0, 10, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
+                className="absolute -top-5 -right-5 p-3 bg-white rounded-lg shadow-lg z-20 hidden md:block"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
               >
                 <div className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span className="text-sm font-medium">Pacientes em Risco: <span className="text-red-500">12</span></span>
+                  <Brain className="w-5 h-5 text-purple-500" />
+                  <span className="text-sm font-medium">Processamento IA</span>
                 </div>
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-4 -right-4 p-3 bg-white rounded-lg shadow-lg z-20 hidden md:block"
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: 0.5
-                }}
+                className="absolute -bottom-8 -left-8 p-3 bg-white rounded-lg shadow-lg z-20 hidden md:block"
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, repeatType: "reverse", delay: 1 }}
               >
                 <div className="flex items-center space-x-2">
-                  <BarChart4 className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Exames Pendentes: <span className="text-amber-500">8</span></span>
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-medium">Dados Extraídos</span>
                 </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute top-1/2 -right-10 p-3 bg-white rounded-full shadow-lg z-20 hidden md:flex items-center justify-center"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, 0],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-              >
-                <Sparkles className="w-6 h-6 text-amber-400" />
               </motion.div>
             </div>
           </motion.div>
@@ -620,151 +552,194 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Relatório de Exame Simulado */}
-            <motion.div
-              className="rounded-xl shadow-xl bg-white overflow-hidden"
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              whileHover={{ y: -5, boxShadow: "0 20px 30px -10px rgba(0, 0, 0, 0.1)" }}
-            >
-              {/* Header do relatório */}
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 text-white">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold">Análise Clínica Integrada</h3>
-                    <p className="text-sm opacity-90">Paciente: Carlos Mendes • 58 anos</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="p-1.5 bg-white bg-opacity-20 rounded-md">
-                      <Download className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="p-1.5 bg-white bg-opacity-20 rounded-md">
-                      <ExternalLink className="h-4 w-4 text-white" />
-                    </div>
+            <div className="relative w-full max-w-[600px]">
+              {/* Dashboard mockup simulado - design mais próximo do real */}
+              <motion.div
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10]"
+                whileHover={{
+                  rotate: 2,
+                  transition: { duration: 0.3 }
+                }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                {/* Header do dashboard */}
+                <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
+                  <Users className="h-5 w-5 mr-2" />
+                  <span className="font-medium">Meus Pacientes</span>
+                  <div className="ml-auto flex space-x-2">
+                    <Search className="h-4 w-4" />
+                    <Filter className="h-4 w-4" />
                   </div>
                 </div>
-              </div>
 
-              {/* Risco Clínico Calculado */}
-              <div className="p-4 bg-amber-50 border-b border-amber-100">
-                <div className="flex items-center">
-                  <div className="mr-3">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center bg-amber-100 border-4 border-amber-200">
-                      <span className="text-xl font-bold text-amber-700">Mod</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-amber-800">Risco Clínico Moderado</h4>
-                    <p className="text-sm text-amber-700">
-                      IA detectou correlação entre marcadores inflamatórios e perfil lipídico.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Conteúdo principal do relatório */}
-              <div className="p-6">
-                <div className="mb-6">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">Insights da IA</h4>
-
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
-                    <p className="text-sm text-blue-800 leading-relaxed">
-                      <span className="font-semibold">Resumo:</span> Paciente com dislipidemia mista e PCR ultrassensível elevada. Risco cardiovascular aumentado em 15% em 10 anos (Score Framingham ajustado).
-                    </p>
+                {/* Conteúdo do dashboard - Lista de Pacientes */}
+                <div className="p-0 bg-white h-full overflow-hidden relative">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500">
+                    <div className="col-span-5">PACIENTE</div>
+                    <div className="col-span-3">ÚLTIMA VISITA</div>
+                    <div className="col-span-3">STATUS</div>
+                    <div className="col-span-1 text-right"></div>
                   </div>
 
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">Parâmetros Críticos</h4>
-
-                  {/* Lista de métricas */}
-                  <div className="space-y-4">
-                    {/* Métrica 1 */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium text-gray-700">LDL Colesterol</span>
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium text-gray-700">168 mg/dL</span>
-                          <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">Alto</span>
+                  {/* Patient Rows */}
+                  <div className="divide-y divide-gray-100">
+                    {/* Patient 1 - High Risk */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer group bg-blue-50/30">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold mr-2">
+                            CM
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Carlos Mendes</div>
+                            <div className="text-[10px] text-gray-500">58 anos • Cardiopata</div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          Hoje, 09:30
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Crítico
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-primary-600" />
                         </div>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="relative w-full h-full">
-                          {/* Faixa de referência */}
-                          <div className="absolute h-full w-1/2 bg-green-200 left-1/4"></div>
-                          {/* Marcador */}
-                          <div className="absolute h-full bg-red-500 rounded-full" style={{ width: '85%' }}></div>
+
+                      {/* AI Insight Expanded for this patient */}
+                      <div className="mt-3 bg-white rounded-md p-3 border border-red-100 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-medium text-gray-800 mb-1">Insight VitaView AI</p>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                              Hemoglobina Glicada 8.2% (anterior 7.1%). Controle inadequado.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    {/* Posição do valor atual */}
-                    <div className="absolute h-4 w-4 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '55%' }}></div>
+
+                    {/* Patient 2 - Moderate Risk */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold mr-2">
+                            AS
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Ana Silva</div>
+                            <div className="text-[10px] text-gray-500">42 anos • Diabética</div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          Ontem, 14:20
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                            Atenção
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Patient 3 - Stable */}
+                    <div className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5 flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold mr-2">
+                            RO
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Roberto Oliveira</div>
+                            <div className="text-[10px] text-gray-500">35 anos • Check-up</div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 text-xs text-gray-600">
+                          25 Nov, 16:00
+                        </div>
+                        <div className="col-span-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            Estável
+                          </span>
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Action Button simulation */}
+                  <div className="absolute bottom-4 right-4">
+                    <div className="bg-primary-600 text-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2 hover:bg-primary-700 transition-colors cursor-pointer">
+                      <Plus className="w-4 h-4" />
+                      <span className="text-xs font-bold">Novo Prontuário</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>12.0</span>
-                  <span>Referência: 12.0-16.0 g/dL</span>
-                  <span>16.0</span>
-                </div>
-              </div>
+              </motion.div>
 
-              {/* Métrica 2 */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-gray-700">Glicose</span>
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-700">100 mg/dL</span>
-                    <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">Atenção</span>
-                  </div>
+              {/* Elementos decorativos flutuantes */}
+              <motion.div
+                className="absolute -top-5 -left-5 p-4 bg-white rounded-lg shadow-lg z-20 hidden md:block"
+                animate={{
+                  y: [0, 10, 0],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <div className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5 text-red-500" />
+                  <span className="text-sm font-medium text-gray-800">Pacientes em Risco: <span className="text-red-500">12</span></span>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="relative w-full h-full">
-                    {/* Faixa de referência */}
-                    <div className="absolute h-full w-1/3 bg-green-200 left-1/4"></div>
-                    {/* Posição do valor atual */}
-                    <div className="absolute h-4 w-4 bg-yellow-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '60%' }}></div>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>70</span>
-                  <span>Referência: 70-99 mg/dL</span>
-                  <span>120</span>
-                </div>
-              </div>
+              </motion.div>
 
-              {/* Métrica 3 */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-gray-700">Colesterol Total</span>
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-700">165 mg/dL</span>
-                    <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Normal</span>
-                  </div>
+              <motion.div
+                className="absolute -bottom-4 -right-4 p-3 bg-white rounded-lg shadow-lg z-20 hidden md:block"
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  duration: 3.5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  delay: 0.5
+                }}
+              >
+                <div className="flex items-center space-x-2">
+                  <BarChart4 className="w-5 h-5 text-primary-500" />
+                  <span className="text-sm font-medium text-gray-800">Exames Pendentes: <span className="text-amber-500">8</span></span>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="relative w-full h-full">
-                    {/* Faixa de referência */}
-                    <div className="absolute h-full w-1/2 bg-green-200 left-1/5"></div>
-                    {/* Posição do valor atual */}
-                    <div className="absolute h-4 w-4 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2 -translate-x-1/2" style={{ left: '40%' }}></div>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>120</span>
-                  <span>Referência: 150-199 mg/dL</span>
-                  <span>260</span>
-                </div>
-              </div>
+              </motion.div>
 
-
-              {/* Resumo da IA */}
-              <div className="bg-primary-50 p-3 rounded-lg border border-primary-100">
-                <h5 className="font-medium text-primary-800 mb-1">Análise da IA</h5>
-                <p className="text-sm text-gray-700">
-                  Resultados dentro dos parâmetros normais. Glicose no limite superior - recomendamos monitoramento e cuidados alimentares.
-                </p>
-              </div>
-
-            </motion.div >
+              <motion.div
+                className="absolute top-1/2 -right-10 p-3 bg-white rounded-full shadow-lg z-20 hidden md:flex items-center justify-center"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, 0],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <Sparkles className="w-6 h-6 text-amber-400" />
+              </motion.div>
+            </div>
 
             <div className="space-y-6">
               <motion.div
