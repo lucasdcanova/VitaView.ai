@@ -11,13 +11,13 @@ export function setupSecurity(app: Express) {
 
   // CSP violation reporting
   app.use(handleCSPViolation);
-  
+
   // Add nonce middleware for inline scripts
   app.use(nonceMiddleware);
 
   // Define CSP directives based on environment
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   // CSP configuration
   if (isDevelopment) {
     // Development: Disable CSP enforcement, only report violations
@@ -37,11 +37,11 @@ export function setupSecurity(app: Express) {
         "form-action 'self'",
         "frame-ancestors 'none'"
       ].join('; ');
-      
+
       // Only report violations in development, don't block
-      res.setHeader('Content-Security-Policy-Report-Only', 
+      res.setHeader('Content-Security-Policy-Report-Only',
         `${cspPolicy}; report-uri /api/csp-violation-report`);
-      
+
       console.log('[CSP Dev] Using permissive CSP for development');
       next();
     });
@@ -145,12 +145,12 @@ export function setupSecurity(app: Express) {
         req.query[key] = (req.query[key] as string[])[0];
       }
     }
-    
+
     // Basic input validation and sanitization
     if (req.body) {
       sanitizeInput(req.body);
     }
-    
+
     next();
   });
 
@@ -164,11 +164,11 @@ export function setupSecurity(app: Express) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    
+
     // Remove potentially revealing headers
     res.removeHeader('X-Powered-By');
     res.removeHeader('Server');
-    
+
     next();
   });
 
@@ -181,14 +181,14 @@ export function setupSecurity(app: Express) {
     const maxSize = (isLargePath || isMultipart)
       ? 50 * 1024 * 1024
       : 1024 * 1024; // 50MB for uploads/analysis, 1MB for others
-    
+
     if (contentLength > maxSize) {
       return res.status(413).json({
         error: 'Payload too large',
         message: `Request size exceeds limit of ${Math.round(maxSize / 1024 / 1024)}MB`
       });
     }
-    
+
     next();
   });
 
@@ -203,7 +203,7 @@ export function setupSecurity(app: Express) {
         'text/plain',
         'application/csp-report'
       ];
-      
+
       if (!allowedTypes.some(type => contentType.includes(type))) {
         return res.status(415).json({
           error: 'Unsupported Media Type',
@@ -211,7 +211,7 @@ export function setupSecurity(app: Express) {
         });
       }
     }
-    
+
     next();
   });
 
@@ -228,14 +228,14 @@ export function setupSecurity(app: Express) {
       /cmd\.exe/i,
       /powershell/i
     ];
-    
+
     const requestContent = JSON.stringify({
       url: req.url,
       body: req.body,
       query: req.query,
       headers: req.headers
     });
-    
+
     if (suspiciousPatterns.some(pattern => pattern.test(requestContent))) {
       console.warn(`[Security] Suspicious request detected from ${req.ip}:`, {
         url: req.url,
@@ -244,7 +244,7 @@ export function setupSecurity(app: Express) {
         userAgent: req.get('user-agent')
       });
     }
-    
+
     next();
   });
 }
@@ -252,22 +252,27 @@ export function setupSecurity(app: Express) {
 // Input sanitization helper function
 function sanitizeInput(obj: any): void {
   if (typeof obj !== 'object' || obj === null) return;
-  
+
   for (const key in obj) {
     if (typeof obj[key] === 'string') {
+      // Skip password fields
+      if (key.toLowerCase().includes('password')) {
+        continue;
+      }
+
       // Basic XSS prevention
       obj[key] = obj[key]
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/javascript:/gi, '')
         .replace(/on\w+\s*=/gi, '');
-        
+
       // SQL injection basic prevention (additional to parameterized queries)
       const sqlPatterns = [
         /(\s|^)(select|insert|update|delete|drop|create|alter|exec|execute)\s/gi,
         /(\s|^)(union|or|and)\s+\d+\s*=\s*\d+/gi,
         /(\s|^)(\d+\s*=\s*\d+|true|false)(\s|$)/gi
       ];
-      
+
       sqlPatterns.forEach(pattern => {
         if (pattern.test(obj[key])) {
           console.warn(`[Security] Potential SQL injection attempt: ${obj[key]}`);
