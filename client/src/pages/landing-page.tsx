@@ -177,10 +177,10 @@ export default function LandingPage() {
           <div className="hidden md:flex space-x-8 text-gray-700">
             {[
               { id: "demonstracoes", label: "Ferramentas" },
+              { id: "agenda", label: "Agenda" },
               { id: "beneficios", label: "Benefícios" },
               { id: "para-quem", label: "Para Quem" },
-              { id: "depoimentos", label: "Depoimentos" },
-              { id: "precos", label: "Preços" }
+              { id: "depoimentos", label: "Depoimentos" }
             ].map((item) => (
               <motion.a
                 key={item.id}
@@ -224,7 +224,7 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* Hero Section - increased top padding to avoid header overlap */}
-      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5]">
+      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5] min-h-screen flex flex-col justify-center">
         <motion.div
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
@@ -519,7 +519,7 @@ export default function LandingPage() {
       </section>
 
       {/* Simulação de Relatórios Section */}
-      <section id="demonstracoes" className="py-16 mt-[0] bg-gradient-to-br from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden">
+      <section id="demonstracoes" className="py-16 mt-[0] bg-gradient-to-br from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
@@ -843,7 +843,7 @@ export default function LandingPage() {
       </section >
 
       {/* Appointment Scheduler Calendar */}
-      < section className="py-16 bg-[#448C9B] text-white relative overflow-hidden" >
+      <section id="agenda" className="py-16 bg-[#448C9B] text-white relative overflow-hidden scroll-mt-16" >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1392,7 +1392,7 @@ export default function LandingPage() {
       </section >
 
       {/* Benefits Section */}
-      < section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden" >
+      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
@@ -1525,7 +1525,7 @@ export default function LandingPage() {
 
       {/* For Whom Section */}
       {/* Seção: Para quem é o VitaView AI */}
-      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#5AADBF] to-[#448C9B] text-white relative overflow-hidden">
+      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#5AADBF] to-[#448C9B] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -left-20 bottom-0 w-96 h-96 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
@@ -1771,7 +1771,7 @@ export default function LandingPage() {
       </section>
 
       {/* Nova seção de demonstrações interativas */}
-      <section id="demonstracoes" className="py-20 bg-[#A0D8EF] relative overflow-hidden">
+      <section id="demos-interativas" className="py-20 bg-[#A0D8EF] relative overflow-hidden min-h-screen flex flex-col justify-center">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -2073,7 +2073,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="depoimentos" className="py-20 bg-[#A5E1D2] relative overflow-hidden">
+      <section id="depoimentos" className="py-20 bg-[#A5E1D2] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-10 w-72 h-72 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
@@ -2245,130 +2245,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="precos" className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Planos Flexíveis para sua Prática
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Escolha a opção ideal para o seu consultório ou clínica.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Professional Plan */}
-            <motion.div
-              className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100"
-              whileHover={{ y: -10 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Profissional</h3>
-                <p className="text-gray-500 mb-6">Para médicos individuais</p>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold text-primary-600">R$ 299</span>
-                  <span className="text-gray-500 ml-2">/mês</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Até 200 pacientes
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Extração de dados ilimitada
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Dashboard clínico
-                  </li>
-                </ul>
-                <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white">
-                  Começar Teste Grátis
-                </Button>
-              </div>
-            </motion.div>
-
-            {/* Clinic Plan */}
-            <motion.div
-              className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-primary-500 relative"
-              whileHover={{ y: -10 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                MAIS POPULAR
-              </div>
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Clínica</h3>
-                <p className="text-gray-500 mb-6">Para pequenas equipes</p>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold text-primary-600">R$ 899</span>
-                  <span className="text-gray-500 ml-2">/mês</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Até 5 médicos
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Pacientes ilimitados
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Gestão de acessos
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Suporte prioritário
-                  </li>
-                </ul>
-                <Button className="w-full bg-gradient-to-r from-primary-600 to-primary-800 hover:from-primary-700 hover:to-primary-900 text-white shadow-md">
-                  Solicitar Demo
-                </Button>
-              </div>
-            </motion.div>
-
-            {/* Enterprise Plan */}
-            <motion.div
-              className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100"
-              whileHover={{ y: -10 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
-                <p className="text-gray-500 mb-6">Hospitais e Redes</p>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-3xl font-bold text-gray-900">Sob Consulta</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Usuários ilimitados
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Integração via API
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> SLA garantido
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" /> Gerente de conta
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full border-primary-600 text-primary-600 hover:bg-primary-50">
-                  Falar com Vendas
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       {/* Seção FAQ Accordions */}
-      <section id="faq" className="py-24 bg-gradient-to-b from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden">
+      <section id="faq" className="py-24 bg-gradient-to-b from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-20 w-64 h-64 bg-primary-50 rounded-full opacity-10 blur-3xl"></div>
