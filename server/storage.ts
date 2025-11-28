@@ -795,9 +795,14 @@ export class MemStorage implements IStorage {
       // Find latest exam date
       let lastExamDate: Date | null = null;
       if (profileExams.length > 0) {
-        const dates = profileExams.map(e => e.examDate ? new Date(e.examDate).getTime() : new Date(e.uploadDate).getTime());
-        const maxDate = Math.max(...dates);
-        lastExamDate = new Date(maxDate);
+        const dates = profileExams
+          .map(e => e.examDate ? new Date(e.examDate).getTime() : new Date(e.uploadDate).getTime())
+          .filter(t => !isNaN(t));
+
+        if (dates.length > 0) {
+          const maxDate = Math.max(...dates);
+          lastExamDate = new Date(maxDate);
+        }
       }
 
       return {
@@ -1766,9 +1771,14 @@ export class DatabaseStorage implements IStorage {
 
       let lastExamDate: Date | null = null;
       if (profileExams.length > 0) {
-        const dates = profileExams.map(e => e.examDate ? new Date(e.examDate).getTime() : new Date(e.uploadDate).getTime());
-        const maxDate = Math.max(...dates);
-        lastExamDate = new Date(maxDate);
+        const dates = profileExams
+          .map(e => e.examDate ? new Date(e.examDate).getTime() : new Date(e.uploadDate).getTime())
+          .filter(t => !isNaN(t));
+
+        if (dates.length > 0) {
+          const maxDate = Math.max(...dates);
+          lastExamDate = new Date(maxDate);
+        }
       }
 
       return {
