@@ -290,25 +290,27 @@ export default function LandingPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/auth?tab=register">
+              <Link href="/auth">
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Button size="lg" className="bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-primary-950 px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto font-medium border border-primary-300">
-                    Solicitar Demonstração
+                    Começar Teste Grátis
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </motion.div>
               </Link>
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center font-medium">
-                  <Play className="mr-2 h-5 w-5" /> Ver Como Funciona
-                </Button>
-              </motion.div>
+              <a href="#demonstracoes">
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center font-medium">
+                    <Play className="mr-2 h-5 w-5" /> Explorar Ferramentas
+                  </Button>
+                </motion.div>
+              </a>
             </div>
           </motion.div>
 
@@ -1766,308 +1768,6 @@ export default function LandingPage() {
               <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">100%</h3>
               <p className="text-gray-700 font-medium">Seguro e em conformidade com a LGPD</p>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Nova seção de demonstrações interativas */}
-      <section id="demos-interativas" className="py-20 bg-[#A0D8EF] relative overflow-hidden min-h-screen flex flex-col justify-center">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto mb-16"
-          >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-800 mb-4">
-              <Play className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Demonstrações interativas</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-900 mb-4">
-              Explore exemplos reais de como o VitaView AI funciona
-            </h2>
-            <p className="text-xl text-primary-800">
-              Veja simulações de exames reais e como nossa plataforma fornece insights valiosos.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-            {/* Demo 1: Upload e extração */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
-            >
-              <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-700"></div>
-              <div className="p-6">
-                <div className="rounded-full bg-primary-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                  <Upload className="h-5 w-5 text-primary-700" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">1. Upload e extração inteligente</h3>
-                <p className="text-gray-600 mb-5">A IA analisa seu exame e extrai automaticamente todos os dados relevantes.</p>
-
-                {/* Demonstração animada de upload e extração */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200 overflow-hidden">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-sm font-medium text-gray-700">Simulação de extração:</div>
-                    <div className="text-xs text-gray-400">processando...</div>
-                  </div>
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    whileInView={{ width: "100%" }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 2,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatDelay: 1
-                    }}
-                    className="h-2 bg-gradient-to-r from-primary-500 to-primary-300 rounded-full mb-4"
-                  ></motion.div>
-
-                  <div className="space-y-3">
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.5 }}
-                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
-                    >
-                      <span className="text-gray-700 font-medium">Hemoglobina:</span>
-                      <span className="font-semibold text-primary-700">14.2 g/dL</span>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.8 }}
-                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
-                    >
-                      <span className="text-gray-700 font-medium">Glicemia:</span>
-                      <span className="font-semibold text-primary-700">92 mg/dL</span>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.1 }}
-                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
-                    >
-                      <span className="text-gray-700 font-medium">Colesterol total:</span>
-                      <span className="font-semibold text-primary-700">198 mg/dL</span>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.4 }}
-                      className="flex justify-between text-xs bg-white p-2 rounded border border-gray-100"
-                    >
-                      <span className="text-gray-700 font-medium">Triglicérides:</span>
-                      <span className="font-semibold text-primary-700">120 mg/dL</span>
-                    </motion.div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
-                    Ver mais detalhes <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Demo 2: Análise e contexto */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
-            >
-              <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-              <div className="p-6">
-                <div className="rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                  <Brain className="h-5 w-5 text-blue-700" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">2. Análise contextualizada</h3>
-                <p className="text-gray-600 mb-5">Nossa IA analisa seus resultados considerando seu histórico e perfil médico.</p>
-
-                {/* Demonstração de análise contextualizada */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-sm font-medium text-gray-700">Interpretação inteligente:</div>
-                    <div className="text-xs text-blue-600 font-medium">IA Avançada</div>
-                  </div>
-
-                  <div className="rounded-lg bg-white p-3 border border-gray-200 mb-3 shadow-sm">
-                    <div className="flex items-start mb-2">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2 flex-shrink-0 shadow-sm">
-                        <Brain className="h-4 w-4 text-indigo-600" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-800">Análise da Glicemia</div>
-                        <motion.div
-                          initial={{ width: 0, opacity: 0 }}
-                          whileInView={{ width: "100%", opacity: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1.5 }}
-                          className="text-xs text-gray-600 mt-1"
-                        >
-                          Seu nível de glicose está dentro da faixa normal (70-99 mg/dL), indicando controle glicêmico adequado.
-                        </motion.div>
-                      </div>
-                    </div>
-
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      whileInView={{ opacity: 1, height: "auto" }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 1 }}
-                    >
-                      <div className="ml-10 pl-2 border-l border-dashed border-indigo-200 mt-2">
-                        <div className="text-xs text-indigo-700 font-medium mb-2">Comparação com exames anteriores:</div>
-                        <div className="flex items-center">
-                          <div className="h-3 bg-gradient-to-r from-indigo-200 to-indigo-500 rounded-full w-full">
-                            <div className="relative">
-                              <div className="absolute top-3 left-1/4 h-3 w-0.5 bg-indigo-700"></div>
-                              <div className="absolute top-7 left-1/4 text-xs text-indigo-800 -ml-3 font-medium">90</div>
-
-                              <div className="absolute top-3 left-1/2 h-3 w-0.5 bg-indigo-700"></div>
-                              <div className="absolute top-7 left-1/2 text-xs text-indigo-800 -ml-3 font-medium">95</div>
-
-                              <div className="absolute top-3 left-3/4 h-3 w-0.5 bg-indigo-700"></div>
-                              <div className="absolute top-7 left-3/4 text-xs text-indigo-800 -ml-3 font-medium">92</div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="h-8"></div> {/* Espaço para acomodar os rótulos */}
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 2 }}
-                    className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-100"
-                  >
-                    <div className="flex items-center">
-                      <Sparkles className="h-3 w-3 text-blue-700 mr-1" />
-                      <span className="text-xs font-medium text-blue-800">IA sugere:</span>
-                    </div>
-                    <div className="text-xs text-blue-600 mt-1">
-                      Manter alimentação equilibrada e atividade física regular.
-                    </div>
-                  </motion.div>
-                </div>
-
-                <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
-                    Ver mais análises <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Demo 3: Visualização histórica */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300"
-            >
-              <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-              <div className="p-6">
-                <div className="rounded-full bg-amber-100 w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                  <LineChart className="h-5 w-5 text-amber-700" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">3. Visualização histórica</h3>
-                <p className="text-gray-600 mb-5">Acompanhe a evolução dos seus exames ao longo do tempo com gráficos interativos.</p>
-
-                {/* Demonstração de visualização histórica */}
-                <div className="relative p-4 bg-gray-50 rounded-lg mb-5 border border-gray-200">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-sm font-medium text-gray-700">Timeline de exames:</div>
-                    <div className="text-xs text-amber-600 font-medium">Histórico Completo</div>
-                  </div>
-
-                  <div className="relative pl-2">
-                    {/* Linha de tempo vertical mais espessa e colorida */}
-                    <div className="absolute left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-300 via-primary-300 to-blue-300 rounded-full z-0"></div>
-
-                    <div className="space-y-4 relative z-10 pl-4">
-                      <motion.div
-                        initial={{ opacity: 0, x: -10, y: 10 }}
-                        whileInView={{ opacity: 1, x: 0, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
-                        className="relative"
-                      >
-                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-amber-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
-                          3
-                        </div>
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-amber-100 ml-2">
-                          <div className="text-xs font-semibold text-amber-800">Mai 2025</div>
-                          <div className="text-xs text-gray-600">Hemograma completo</div>
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, x: -10, y: 10 }}
-                        whileInView={{ opacity: 1, x: 0, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="relative"
-                      >
-                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-primary-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
-                          2
-                        </div>
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-primary-100 ml-2">
-                          <div className="text-xs font-semibold text-primary-800">Mar 2025</div>
-                          <div className="text-xs text-gray-600">Perfil lipídico</div>
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, x: -10, y: 10 }}
-                        whileInView={{ opacity: 1, x: 0, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                        className="relative"
-                      >
-                        <div className="absolute -left-8 w-8 h-8 rounded-full bg-blue-500 shadow-md flex items-center justify-center text-white text-xs font-bold">
-                          1
-                        </div>
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-blue-100 ml-2">
-                          <div className="text-xs font-semibold text-blue-800">Jan 2025</div>
-                          <div className="text-xs text-gray-600">Glicemia em jejum</div>
-                        </div>
-                      </motion.div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="text-xs font-medium shadow-sm">
-                    Ver histórico completo <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="flex justify-center">
-            <Link href="/auth?tab=register">
-              <Button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800">
-                Experimente grátis <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
