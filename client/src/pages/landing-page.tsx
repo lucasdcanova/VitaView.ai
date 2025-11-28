@@ -176,11 +176,11 @@ export default function LandingPage() {
           {/* Desktop navigation with enhanced hover effects */}
           <div className="hidden md:flex space-x-8 text-gray-700">
             {[
-              { id: "demonstracoes", label: "Demonstrações" },
-              { id: "como-funciona", label: "Como Funciona" },
+              { id: "demonstracoes", label: "Ferramentas" },
               { id: "beneficios", label: "Benefícios" },
               { id: "para-quem", label: "Para Quem" },
-              { id: "depoimentos", label: "Depoimentos" }
+              { id: "depoimentos", label: "Depoimentos" },
+              { id: "precos", label: "Preços" }
             ].map((item) => (
               <motion.a
                 key={item.id}
