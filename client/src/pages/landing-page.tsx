@@ -246,7 +246,7 @@ export default function LandingPage() {
             <div className="mb-8 space-y-3">
               {[
                 { icon: <ShieldCheck className="h-5 w-5 text-green-500" />, text: "Conformidade HIPAA e LGPD" },
-                { icon: <Brain className="h-5 w-5 text-purple-500" />, text: "Suporte à Decisão Clínica com IA" },
+                { icon: <Brain className="h-5 w-5 text-purple-500" />, text: "Organização Inteligente de Dados Clínicos" },
                 { icon: <Activity className="h-5 w-5 text-blue-500" />, text: "Monitoramento Remoto de Pacientes" }
               ].map((item, index) => (
                 <motion.div
@@ -814,8 +814,8 @@ export default function LandingPage() {
                     },
                     {
                       icon: <FileHeart className="h-5 w-5 text-primary-600" />,
-                      title: "Suporte à Decisão",
-                      description: "Insights baseados em diretrizes médicas para apoiar suas condutas."
+                      title: "Organização de Dados",
+                      description: "Visualize informações clínicas de forma estruturada e acessível."
                     }
                   ].map((item, index) => (
                     <motion.li
@@ -1037,7 +1037,7 @@ export default function LandingPage() {
       </section >
 
 
-      {/* How it Works Section */}
+      {/* Lab Results Analyzer Section */}
       < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
@@ -1060,113 +1060,318 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              Simples e Intuitivo
+              Análise Inteligente
             </motion.span>
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Fluxo de Trabalho <span className="text-[#1E3A5F]">Inteligente</span>
+              Analisador de <span className="text-[#1E3A5F]">Resultados Laboratoriais</span>
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Transforme documentos médicos em dados estruturados e insights clínicos em poucos segundos.
+              Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
             </p>
           </motion.div>
 
-          {/* Timeline visual do processo */}
-          <div className="relative max-w-5xl mx-auto pb-8">
-            {/* Linha do tempo conectando os passos */}
-            <div className="absolute hidden md:block top-24 left-0 right-0 h-1 bg-gradient-to-r from-primary-200 via-primary-400 to-primary-200 rounded-full"></div>
+          {/* Lab Results Analyzer Interface */}
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            {/* Analyzer Header */}
+            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <LineChart className="w-8 h-8" />
+                  <div>
+                    <h3 className="text-2xl font-bold">Análise Comparativa</h3>
+                    <p className="text-sm text-primary-100">Paciente: Maria Silva - Últimos 6 meses</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-4 py-2 bg-primary-500 hover:bg-primary-400 rounded-lg text-sm font-medium transition-colors">
+                    Exportar PDF
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6 relative">
-              {[
-                {
-                  icon: <FileText className="w-6 h-6 text-primary-600" />,
-                  title: "Centralização de Exames",
-                  description: "Importe resultados de laboratório e exames de imagem dos seus pacientes em diversos formatos.",
-                  badge: "Passo 1"
-                },
-                {
-                  icon: <Sparkles className="w-6 h-6 text-primary-600" />,
-                  title: "Processamento Inteligente",
-                  description: "Nossa IA extrai, classifica e estrutura os dados clínicos automaticamente, eliminando a digitação manual.",
-                  badge: "Passo 2"
-                },
-                {
-                  icon: <BookOpen className="w-6 h-6 text-primary-600" />,
-                  title: "Análise de Risco",
-                  description: "Identificação automática de valores alterados e correlações clínicas relevantes para o diagnóstico.",
-                  badge: "Passo 3"
-                },
-                {
-                  icon: <LineChart className="w-6 h-6 text-primary-600" />,
-                  title: "Decisão Baseada em Dados",
-                  description: "Visualize a evolução do paciente com gráficos consolidados e tome decisões mais assertivas.",
-                  badge: "Passo 4"
-                }
-              ].map((step, index) => (
+            {/* Lab Results Grid */}
+            <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Hemoglobina Chart */}
                 <motion.div
-                  key={index}
-                  className="relative"
-                  initial={{ opacity: 0, y: 30 }}
+                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ delay: 0.1 }}
                 >
-                  {/* Círculo na linha do tempo */}
-                  <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                    <motion.div
-                      className="w-12 h-12 rounded-full bg-white border-4 border-primary-400 flex items-center justify-center shadow-md"
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ type: "spring", delay: 0.3 + index * 0.1 }}
-                    >
-                      <span className="text-sm font-bold text-primary-700">{index + 1}</span>
-                    </motion.div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Hemoglobina</h4>
+                      <p className="text-sm text-gray-500">Referência: 12.0 - 16.0 g/dL</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                      Normal
+                    </span>
                   </div>
 
-                  {/* Card do passo */}
-                  <motion.div
-                    className="bg-white rounded-xl shadow-md p-6 flex flex-col h-full relative overflow-hidden border border-gray-100"
-                    whileHover={{ y: -8, boxShadow: "0 20px 30px -10px rgba(0, 0, 0, 0.1)" }}
-                  >
-                    {/* Badge do passo (visível apenas em mobile) */}
-                    <div className="md:hidden inline-block px-2.5 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-4">
-                      {step.badge}
+                  {/* Simple Bar Chart */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Mar</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "75%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                          <span className="text-xs font-semibold text-white">13.2</span>
+                        </motion.div>
+                      </div>
                     </div>
-
-                    <div className="rounded-full p-3 bg-primary-50 mb-5 w-14 h-14 flex items-center justify-center">
-                      {step.icon}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Abr</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "80%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.3 }}
+                        >
+                          <span className="text-xs font-semibold text-white">14.2</span>
+                        </motion.div>
+                      </div>
                     </div>
+                  </div>
 
-                    <h3 className="text-xl font-bold text-gray-800 mb-3">{step.title}</h3>
-                    <p className="text-gray-600 text-sm">{step.description}</p>
-
-                    {/* Seta indicando próximo passo (visível apenas em desktop) */}
-                    {index < 3 && (
-                      <motion.div
-                        className="absolute hidden md:block"
-                        style={{
-                          top: '45%',
-                          right: -18,
-                          zIndex: 10
-                        }}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.6 + index * 0.1 }}
-                      >
-                        <div className="bg-white rounded-full p-1 shadow-md">
-                          <ChevronRight className="w-5 h-5 text-primary-500" />
-                        </div>
-                      </motion.div>
-                    )}
-                  </motion.div>
+                  <div className="mt-4 flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-green-600">
+                      <span className="text-lg">↗</span>
+                      <span className="font-semibold">+7.6%</span>
+                    </div>
+                    <span className="text-gray-500">vs. mês anterior</span>
+                  </div>
                 </motion.div>
-              ))}
-            </div>
-          </div>
 
-          {/* CTA após explicação dos passos */}
+                {/* Glicemia Chart */}
+                <motion.div
+                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Glicemia em Jejum</h4>
+                      <p className="text-sm text-gray-500">Referência: 70 - 100 mg/dL</p>
+                    </div>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
+                      Atenção
+                    </span>
+                  </div>
+
+                  {/* Simple Bar Chart */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Mar</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "85%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                          <span className="text-xs font-semibold text-white">102</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Abr</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "90%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.3 }}
+                        >
+                          <span className="text-xs font-semibold text-white">108</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <span className="text-lg">↗</span>
+                      <span className="font-semibold">+5.9%</span>
+                    </div>
+                    <span className="text-gray-500">vs. mês anterior</span>
+                  </div>
+                </motion.div>
+
+                {/* Colesterol Total Chart */}
+                <motion.div
+                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Colesterol Total</h4>
+                      <p className="text-sm text-gray-500">Referência: {'<'} 200 mg/dL</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                      Normal
+                    </span>
+                  </div>
+
+                  {/* Simple Bar Chart */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Mar</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-purple-400 to-purple-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "78%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                          <span className="text-xs font-semibold text-white">195</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Abr</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-purple-400 to-purple-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "72%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.3 }}
+                        >
+                          <span className="text-xs font-semibold text-white">180</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-green-600">
+                      <span className="text-lg">↘</span>
+                      <span className="font-semibold">-7.7%</span>
+                    </div>
+                    <span className="text-gray-500">vs. mês anterior</span>
+                  </div>
+                </motion.div>
+
+                {/* Creatinina Chart */}
+                <motion.div
+                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Creatinina</h4>
+                      <p className="text-sm text-gray-500">Referência: 0.6 - 1.2 mg/dL</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                      Normal
+                    </span>
+                  </div>
+
+                  {/* Simple Bar Chart */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Mar</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-teal-400 to-teal-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "65%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                          <span className="text-xs font-semibold text-white">0.9</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-16">Abr</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <motion.div
+                          className="bg-gradient-to-r from-teal-400 to-teal-500 h-full rounded-full flex items-center justify-end pr-2"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "67%" }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.3 }}
+                        >
+                          <span className="text-xs font-semibold text-white">0.92</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <span className="text-lg">→</span>
+                      <span className="font-semibold">+2.2%</span>
+                    </div>
+                    <span className="text-gray-500">vs. mês anterior</span>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Summary Section */}
+              <motion.div
+                className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-gray-200 rounded-lg">
+                    <LineChart className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">Resumo da Análise</h4>
+                    <p className="text-gray-700 text-sm mb-3">
+                      Visualização comparativa dos últimos 2 meses. Os dados apresentados são apenas informativos e não substituem a avaliação médica profissional.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                        3 valores normais
+                      </span>
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                        1 requer atenção
+                      </span>
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                        Período: Mar-Abr 2025
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* CTA após análise */}
           <motion.div
             className="mt-16 text-center"
             initial={{ opacity: 0, y: 20 }}
