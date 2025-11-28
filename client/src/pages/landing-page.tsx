@@ -566,219 +566,164 @@ export default function LandingPage() {
               >
                 {/* Header do dashboard */}
                 <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
-                  <FileText className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Seus Exames (12)</span>
+                  <Calendar className="h-5 w-5 mr-2" />
+                  <span className="font-medium">Linha do Tempo - Maria Silva</span>
                   <div className="ml-auto flex space-x-2">
                     <div className="flex items-center bg-primary-800 rounded px-2 py-1 text-xs cursor-pointer hover:bg-primary-900 transition-colors">
-                      <span className="mr-1 opacity-70">Ordenar por:</span>
-                      <span className="font-medium">Data (recente)</span>
+                      <span className="mr-1 opacity-70">Período:</span>
+                      <span className="font-medium">Últimos 6 meses</span>
                       <ChevronDown className="w-3 h-3 ml-1 opacity-70" />
                     </div>
                   </div>
                 </div>
 
-                {/* Conteúdo do dashboard - Exames com Filtros */}
-                <div className="flex h-full overflow-hidden bg-white">
-                  {/* Sidebar de Filtros */}
-                  <div className="w-48 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto hidden md:block">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-gray-900">Filtros</h3>
-                      <span className="text-xs text-primary-600 cursor-pointer hover:underline">Limpar</span>
-                    </div>
+                {/* Conteúdo do dashboard - Timeline */}
+                <div className="h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-white p-6">
+                  <div className="max-w-3xl mx-auto">
+                    {/* Timeline Items */}
+                    <div className="relative">
+                      {/* Vertical Line */}
+                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-200 via-primary-300 to-primary-200"></div>
 
-                    {/* Tipo de Exame */}
-                    <div className="mb-6">
-                      <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Tipo de Exame</h4>
-                      <div className="space-y-2">
-                        {['Hemograma', 'Glicemia', 'Colesterol', 'Tireoide', 'Vitaminas', 'Outros'].map((item) => (
-                          <label key={item} className="flex items-center text-xs text-gray-600 cursor-pointer hover:text-gray-900">
-                            <input type="checkbox" className="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500" defaultChecked={['Hemograma', 'Glicemia'].includes(item)} />
-                            {item}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Período */}
-                    <div className="mb-6">
-                      <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Período</h4>
-                      <div className="space-y-2">
-                        <input type="text" placeholder="Selecionar data" className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:border-primary-500" />
-                      </div>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Status</h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center text-xs text-gray-600 cursor-pointer hover:text-gray-900">
-                          <input type="checkbox" className="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500" defaultChecked />
-                          <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                          Normal
-                        </label>
-                        <label className="flex items-center text-xs text-gray-600 cursor-pointer hover:text-gray-900">
-                          <input type="checkbox" className="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500" defaultChecked />
-                          <span className="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
-                          Atenção
-                        </label>
-                        <label className="flex items-center text-xs text-gray-600 cursor-pointer hover:text-gray-900">
-                          <input type="checkbox" className="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500" defaultChecked />
-                          <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-                          Alterado
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Lista de Exames */}
-                  <div className="flex-1 overflow-y-auto bg-gray-50/30 p-4">
-                    <div className="space-y-3">
-                      {/* Exam 1 - Hemograma Completo */}
-                      <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                      {/* Timeline Event 1 - Recent Lab Result */}
+                      <div className="relative flex gap-4 mb-8 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                            <FileText className="w-7 h-7 text-white" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">Hemograma Completo</h4>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                15/04/2025
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                Laboratório Central
-                              </span>
+                          <span className="text-xs text-gray-500 mt-2 font-medium">15 Abr</span>
+                        </div>
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Hemograma Completo</h4>
+                              <p className="text-xs text-gray-500 mt-1">Laboratório Central</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                              Normal
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Todos os parâmetros dentro da normalidade</p>
+                          <div className="flex gap-2 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                              Hemoglobina: 14.2 g/dL
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                              Leucócitos: 7.200/mm³
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline Event 2 - Medication */}
+                      <div className="relative flex gap-4 mb-8 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                            <span className="text-2xl">💊</span>
+                          </div>
+                          <span className="text-xs text-gray-500 mt-2 font-medium">10 Abr</span>
+                        </div>
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Prescrição Atualizada</h4>
+                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                              Ativo
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Ajuste na dosagem de medicação para hipertensão</p>
+                          <div className="space-y-1 text-xs text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Losartana 50mg</span>
+                              <span className="text-gray-400">•</span>
+                              <span>1x ao dia (manhã)</span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                            Normal
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-primary-600 transition-colors" />
+                      </div>
+
+                      {/* Timeline Event 3 - Appointment */}
+                      <div className="relative flex gap-4 mb-8 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                            <span className="text-2xl">🏥</span>
+                          </div>
+                          <span className="text-xs text-gray-500 mt-2 font-medium">05 Abr</span>
+                        </div>
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Consulta de Retorno</h4>
+                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700 border border-teal-200">
+                              Concluída
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">Avaliação de controle pressórico e ajuste terapêutico</p>
                         </div>
                       </div>
 
-                      {/* Exam 2 - Perfil Lipídico */}
-                      <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                            <FileText className="w-5 h-5 text-purple-600" />
+                      {/* Timeline Event 4 - Lab Result with Alert */}
+                      <div className="relative flex gap-4 mb-8 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                            <FileText className="w-7 h-7 text-white" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">Perfil Lipídico</h4>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                15/04/2025
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                Laboratório Central
-                              </span>
-                            </div>
-                          </div>
+                          <span className="text-xs text-gray-500 mt-2 font-medium">28 Mar</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                            Atenção
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-primary-600 transition-colors" />
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Glicemia em Jejum</h4>
+                              <p className="text-xs text-gray-500 mt-1">Laboratório Central</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                              Atenção
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Valor ligeiramente elevado - acompanhamento necessário</p>
+                          <div className="flex gap-2 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                              Glicemia: 108 mg/dL
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Exam 3 - Glicemia em Jejum */}
-                      <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                            <FileText className="w-5 h-5 text-amber-600" />
+                      {/* Timeline Event 5 - Diagnosis */}
+                      <div className="relative flex gap-4 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                            <span className="text-2xl">📋</span>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">Glicemia em Jejum</h4>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                15/04/2025
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                Laboratório Central
-                              </span>
+                          <span className="text-xs text-gray-500 mt-2 font-medium">15 Mar</span>
+                        </div>
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Diagnóstico Registrado</h4>
+                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
                             </div>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                              Ativo
+                            </span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                            Atenção
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-primary-600 transition-colors" />
-                        </div>
-                      </div>
-
-                      {/* Exam 4 - TSH e T4 Livre */}
-                      <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
-                            <FileText className="w-5 h-5 text-teal-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">TSH e T4 Livre</h4>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                10/02/2025
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                Laboratório QualiVida
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                            Normal
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-primary-600 transition-colors" />
-                        </div>
-                      </div>
-
-                      {/* Exam 5 - Vitamina D */}
-                      <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                            <FileText className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">Vitamina D</h4>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                10/02/2025
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Building className="w-3 h-3" />
-                                Laboratório QualiVida
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                            Alterado
-                          </span>
-                          <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-primary-600 transition-colors" />
+                          <p className="text-sm text-gray-600">Hipertensão Arterial Sistêmica (CID I10)</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* View All Link */}
-                    <div className="mt-4 text-center">
-                      <span className="text-xs font-medium text-primary-600 hover:text-primary-700 cursor-pointer flex items-center justify-center gap-1 transition-colors">
-                        Ver todos os exames
-                        <ChevronRight className="w-3 h-3" />
+                    {/* View More Link */}
+                    <div className="mt-8 text-center">
+                      <span className="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer flex items-center justify-center gap-1 transition-colors">
+                        Ver histórico completo
+                        <ChevronRight className="w-4 h-4" />
                       </span>
                     </div>
                   </div>
@@ -897,7 +842,7 @@ export default function LandingPage() {
         </div >
       </section >
 
-      {/* Simulação de Histórico de Exames */}
+      {/* Appointment Scheduler Calendar */}
       < section className="py-16 bg-[#448C9B] text-white relative overflow-hidden" >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -907,179 +852,187 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Histórico Clínico Centralizado</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Agenda Inteligente</h2>
             <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
-              Acesse o histórico completo dos seus pacientes em um só lugar, com organização cronológica e filtros inteligentes para agilizar sua análise.
+              Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina médica de forma eficiente.
             </p>
           </motion.div>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Sidebar de filtros */}
-            <motion.div
-              className="lg:w-1/4 bg-white p-5 rounded-xl shadow-md border border-gray-100"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h3 className="font-medium text-lg text-gray-800 mb-4">Filtros</h3>
-
-              <div className="space-y-5">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tipo de Exame</h4>
-                  <div className="space-y-2">
-                    {["Hemograma", "Glicemia", "Colesterol", "Tireoide", "Vitaminas", "Outros"].map((type, i) => (
-                      <div key={i} className="flex items-center">
-                        <div className={`w-4 h-4 rounded border ${i < 3 ? 'bg-primary-100 border-primary-300' : 'border-gray-300'}`}>
-                          {i < 3 && <CheckCircle2 className="h-3 w-3 text-primary-500" />}
-                        </div>
-                        <span className="ml-2 text-sm text-gray-700">{type}</span>
-                      </div>
-                    ))}
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            {/* Calendar Header */}
+            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Calendar className="w-8 h-8" />
+                  <div>
+                    <h3 className="text-2xl font-bold">Abril 2025</h3>
+                    <p className="text-sm text-primary-100">Semana 14 - 20 de Abril</p>
                   </div>
                 </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Período</h4>
-                  <div className="flex items-center p-2 bg-primary-50 rounded-md border border-primary-100 text-sm text-primary-700">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>Últimos 12 meses</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
-                  <div className="space-y-2">
-                    {[
-                      { name: "Normal", color: "bg-green-100 border-green-300" },
-                      { name: "Atenção", color: "bg-yellow-100 border-yellow-300" },
-                      { name: "Alterado", color: "bg-red-100 border-red-300" }
-                    ].map((status, i) => (
-                      <div key={i} className="flex items-center">
-                        <div className={`w-4 h-4 rounded border ${status.color}`}></div>
-                        <span className="ml-2 text-sm text-gray-700">{status.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <button className="w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
-                    Aplicar Filtros
+                <div className="flex gap-2">
+                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                    <ChevronDown className="w-5 h-5 rotate-90" />
+                  </button>
+                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                    <ChevronDown className="w-5 h-5 -rotate-90" />
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Lista de exames */}
-            <motion.div
-              className="lg:w-3/4 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden"
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 className="font-medium text-gray-800">Seus Exames (12)</h3>
-                <div className="flex items-center text-sm text-gray-500">
-                  <span>Ordenar por:</span>
-                  <select className="ml-2 p-1 border border-gray-200 rounded bg-white">
-                    <option>Data (recente)</option>
-                    <option>Tipo</option>
-                    <option>Status</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="divide-y divide-gray-100">
-                {[
-                  {
-                    name: "Hemograma Completo",
-                    date: "15/04/2025",
-                    lab: "Laboratório Central",
-                    status: "Normal",
-                    statusColor: "bg-green-100 text-green-800 border-green-200",
-                    highlight: true
-                  },
-                  {
-                    name: "Perfil Lipídico",
-                    date: "15/04/2025",
-                    lab: "Laboratório Central",
-                    status: "Atenção",
-                    statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
-                    highlight: true
-                  },
-                  {
-                    name: "Glicemia em Jejum",
-                    date: "15/04/2025",
-                    lab: "Laboratório Central",
-                    status: "Atenção",
-                    statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
-                    highlight: true
-                  },
-                  {
-                    name: "TSH e T4 Livre",
-                    date: "10/02/2025",
-                    lab: "Laboratório QualiVida",
-                    status: "Normal",
-                    statusColor: "bg-green-100 text-green-800 border-green-200"
-                  },
-                  {
-                    name: "Vitamina D",
-                    date: "10/02/2025",
-                    lab: "Laboratório QualiVida",
-                    status: "Alterado",
-                    statusColor: "bg-red-100 text-red-800 border-red-200"
-                  }
-                ].map((exam, i) => (
-                  <motion.div
-                    key={i}
-                    className={`p-4 flex items-center justify-between transition-colors ${exam.highlight ? 'hover:bg-primary-50' : 'hover:bg-gray-50'}`}
-                    whileHover={{ x: 5 }}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-2.5 rounded-lg mr-3 ${exam.name.includes("Hemograma") ? "bg-blue-100" :
-                        exam.name.includes("Lipídico") ? "bg-purple-100" :
-                          exam.name.includes("Glicemia") ? "bg-amber-100" :
-                            exam.name.includes("TSH") ? "bg-cyan-100" : "bg-emerald-100"
-                        }`}>
-                        <FileText className={`h-6 w-6 ${exam.name.includes("Hemograma") ? "text-blue-600" :
-                          exam.name.includes("Lipídico") ? "text-purple-600" :
-                            exam.name.includes("Glicemia") ? "text-amber-600" :
-                              exam.name.includes("TSH") ? "text-cyan-600" : "text-emerald-600"
-                          }`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{exam.name}</h4>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="h-3.5 w-3.5 mr-1" />
-                          <span>{exam.date}</span>
-                          <span className="mx-2">•</span>
-                          <Building className="h-3.5 w-3.5 mr-1" />
-                          <span>{exam.lab}</span>
-                        </div>
-                      </div>
+            {/* Calendar Grid */}
+            <div className="p-6">
+              {/* Week Days Header */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
+                    <div className={`text-sm font-medium ${i === 1 ? 'text-primary-600' : 'text-gray-700'}`}>
+                      {14 + i}
                     </div>
-                    <div className="flex items-center">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${exam.statusColor}`}>
-                        {exam.status}
-                      </span>
-                      <button className="ml-4 p-2 text-gray-400 hover:text-primary-600 rounded-full hover:bg-primary-50">
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
-              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-center">
-                <button className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center">
-                  Ver todos os exames
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </button>
+              {/* Time Slots Grid */}
+              <div className="grid grid-cols-7 gap-2">
+                {/* Sunday - Empty */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
+
+                {/* Monday - 2 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">09:00</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Maria Silva</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">14:30</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">João Santos</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Tuesday - 1 appointment */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                  <motion.div
+                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-purple-900">10:00</div>
+                    <div className="text-xs font-medium text-purple-800 mt-1">Ana Costa</div>
+                    <div className="text-xs text-purple-600">Exames</div>
+                  </motion.div>
+                </div>
+
+                {/* Wednesday - 3 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-amber-100 border-l-4 border-amber-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-amber-900">08:00</div>
+                    <div className="text-xs font-medium text-amber-800 mt-1">Pedro Lima</div>
+                    <div className="text-xs text-amber-600">Urgência</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">11:00</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Carla Mendes</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">15:00</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">Roberto Silva</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Thursday - 2 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">09:30</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Lucia Alves</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-purple-900">13:00</div>
+                    <div className="text-xs font-medium text-purple-800 mt-1">Fernando Costa</div>
+                    <div className="text-xs text-purple-600">Exames</div>
+                  </motion.div>
+                </div>
+
+                {/* Friday - 1 appointment */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">10:30</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">Beatriz Souza</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Saturday - Empty */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
               </div>
-            </motion.div>
-          </div>
+
+              {/* Legend */}
+              <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Consulta</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Retorno</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Exames</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Urgência</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold">10 consultas</span> agendadas esta semana
+              </div>
+              <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <span>Nova Consulta</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section >
 
