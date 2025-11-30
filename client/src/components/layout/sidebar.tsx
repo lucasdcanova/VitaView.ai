@@ -11,7 +11,7 @@ import {
   Heart
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
-import ProfileSwitcher from "@/components/profile-switcher";
+
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -55,9 +55,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
           </div>
         </div>
 
-        <div className="w-full">
-          <ProfileSwitcher />
-        </div>
+
       </div>
 
       <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
@@ -94,17 +92,6 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
           <span>Enviar Exames</span>
         </Link>
 
-        <Link href="/history"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/history'
-            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-            : 'hover:bg-gray-50 text-gray-700'
-            }`}
-        >
-          <History className="mr-3 h-5 w-5" />
-          <span>Histórico</span>
-        </Link>
-
         <Link href="/results"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/results'
@@ -114,6 +101,17 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
         >
           <LineChart className="mr-3 h-5 w-5" />
           <span>Resultados</span>
+        </Link>
+
+        <Link href="/history"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/history'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
+            }`}
+        >
+          <History className="mr-3 h-5 w-5" />
+          <span>Histórico</span>
         </Link>
 
         <Link href="/subscription"

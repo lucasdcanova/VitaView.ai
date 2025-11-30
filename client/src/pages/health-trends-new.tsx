@@ -36,6 +36,7 @@ import { useProfiles } from "@/hooks/use-profiles";
 import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
 import { CID10_DATABASE } from "@/data/cid10-database";
+import ProfileSwitcher from "@/components/profile-switcher";
 import {
   FileText,
   Calendar,
@@ -888,12 +889,15 @@ export default function HealthTrendsNew() {
               {/* Header com Nome do Paciente */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                    Prontuário de <span className="text-primary-600">{profileName}</span>
+                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                    Prontuário do Paciente
                   </h1>
-                  <p className="text-gray-500 mt-1">
-                    Visão geral, histórico clínico e monitoramento de saúde
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <ProfileSwitcher />
+                    <p className="text-gray-500">
+                      Visão geral, histórico clínico e monitoramento de saúde
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
@@ -1227,9 +1231,9 @@ export default function HealthTrendsNew() {
                           <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
                             {/* Dot on the line */}
                             <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-blue-500' :
-                                item.type === 'diagnosis' ? 'bg-red-500' :
-                                  item.type === 'surgery' ? 'bg-purple-500' :
-                                    'bg-green-500'
+                              item.type === 'diagnosis' ? 'bg-red-500' :
+                                item.type === 'surgery' ? 'bg-purple-500' :
+                                  'bg-green-500'
                               }`} />
 
                             <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group-hover:border-indigo-100">
@@ -1238,9 +1242,9 @@ export default function HealthTrendsNew() {
                                   <div className="space-y-2 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                          item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
-                                            item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                                              'bg-green-50 text-green-700 border-green-100'
+                                        item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
+                                          item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                            'bg-green-50 text-green-700 border-green-100'
                                         }`}>
                                         {item.type === 'exam' ? 'Exame' : item.type === 'diagnosis' ? 'Diagnóstico' : item.type === 'surgery' ? 'Cirurgia' : 'Evolução'}
                                       </Badge>
