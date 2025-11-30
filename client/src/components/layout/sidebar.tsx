@@ -1,9 +1,39 @@
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  LayoutDashboard,
+  Upload,
+  History,
+  LineChart,
+  LogOut,
+  CreditCard,
+  ShieldCheck,
+  Heart
+} from "lucide-react";
+import Logo from "@/components/ui/logo";
 import ProfileSwitcher from "@/components/profile-switcher";
 
-// ... imports
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
+}
 
-export default function Sidebar(props: SidebarProps) {
-  // ... existing code ...
+export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+  const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  const handleNavClick = () => {
+    // Fecha a sidebar em mobile ao clicar em um link
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const displayDoctor = user?.fullName || user?.username || "Doutor";
 
   return (
     <aside
@@ -20,7 +50,7 @@ export default function Sidebar(props: SidebarProps) {
             {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div>
-            <h3 className="font-medium text-sm">{displayDoctor}</h3>
+            <h3 className="font-medium text-sm truncate max-w-[140px]" title={displayDoctor}>{displayDoctor}</h3>
             <p className="text-xs text-[#707070]">Profissional de saúde</p>
           </div>
         </div>
@@ -30,7 +60,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
       </div>
 
-      <nav className="p-4 space-y-1">
+      <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
         <Link href="/dashboard"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/dashboard'
@@ -85,8 +115,6 @@ export default function Sidebar(props: SidebarProps) {
           <LineChart className="mr-3 h-5 w-5" />
           <span>Resultados</span>
         </Link>
-
-
 
         <Link href="/subscription"
           onClick={handleNavClick}
