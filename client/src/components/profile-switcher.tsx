@@ -127,10 +127,10 @@ export default function ProfileSwitcher() {
               </div>
               <div className="flex flex-col items-start overflow-hidden">
                 <span className="font-semibold text-sm truncate max-w-[180px]">
-                  {activeProfile?.name || "Selecione um paciente"}
+                  {activeProfile?.name || "Selecionar paciente"}
                 </span>
                 <span className="text-xs text-gray-500 truncate max-w-[180px]">
-                  {activeProfile?.planType ? `Plano: ${activeProfile.planType}` : "Adicionar ou selecionar paciente"}
+                  {activeProfile?.planType ? `Plano: ${activeProfile.planType}` : "Gerenciar lista"}
                 </span>
               </div>
             </div>
