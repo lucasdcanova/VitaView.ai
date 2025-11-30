@@ -3,12 +3,12 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   LayoutDashboard,
   Upload,
-  History,
   LineChart,
   LogOut,
   CreditCard,
   ShieldCheck,
-  Heart
+  Heart,
+  Calendar
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 
@@ -70,6 +70,17 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
           <span>Dashboard</span>
         </Link>
 
+        <Link href="/agenda"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/agenda'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
+            }`}
+        >
+          <Calendar className="mr-3 h-5 w-5" />
+          <span>Agenda</span>
+        </Link>
+
         <Link href="/health-trends"
           onClick={handleNavClick}
           className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/health-trends'
@@ -78,7 +89,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
             }`}
         >
           <Heart className="mr-3 h-5 w-5" />
-          <span className="text-[#1E3A5F] font-semibold">Prontuário do paciente</span>
+          <span className="text-[#1E3A5F] font-semibold">Vita Timeline</span>
         </Link>
 
         <Link href="/upload"
@@ -100,18 +111,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
             }`}
         >
           <LineChart className="mr-3 h-5 w-5" />
-          <span>Resultados</span>
-        </Link>
-
-        <Link href="/history"
-          onClick={handleNavClick}
-          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/history'
-            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
-            : 'hover:bg-gray-50 text-gray-700'
-            }`}
-        >
-          <History className="mr-3 h-5 w-5" />
-          <span>Histórico</span>
+          <span>View Laboratorial</span>
         </Link>
 
         <Link href="/subscription"

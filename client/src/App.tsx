@@ -27,6 +27,7 @@ const DiagnosisPage = lazy(() => import("@/pages/diagnosis-page"));
 const HealthTrends = lazy(() => import("@/pages/health-trends-new"));
 const ExamTimeline = lazy(() => import("@/pages/exam-timeline"));
 const Home = lazy(() => import("@/pages/home"));
+const Agenda = lazy(() => import("@/pages/agenda"));
 
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
@@ -51,6 +52,7 @@ function Router() {
 
         {/* Área autenticada */}
         <ProtectedRoute path="/dashboard" component={Dashboard} />
+        <ProtectedRoute path="/agenda" component={Agenda} />
         <ProtectedRoute path="/upload" component={UploadExams} />
         <ProtectedRoute path="/upload-exams" component={UploadExams} />
         <ProtectedRoute path="/history" component={ExamHistory} />

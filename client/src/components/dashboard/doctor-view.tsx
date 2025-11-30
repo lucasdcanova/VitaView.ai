@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, User } from "lucide-react";
 import PatientHeader from "@/components/patient-header";
+import { AgendaWidget } from "@/components/agenda/agenda-widget";
 
 interface DoctorViewProps {
     stats: any;
@@ -87,7 +88,8 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                                     </Card>
                                 </div>
 
-                                {/* Patients Needing Attention List */}
+                                {/* Agenda Widget */}
+                                <AgendaWidget />
                                 {stats?.patientsList && stats.patientsList.length > 0 && (
                                     <Card>
                                         <CardHeader>
