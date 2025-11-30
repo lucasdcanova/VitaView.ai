@@ -42,31 +42,6 @@ export default function UploadExams() {
     );
   }
 
-  if (!activeProfile) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <MobileHeader />
-        <div className="flex flex-1 relative">
-          <Sidebar />
-          <main className="flex-1 bg-gray-50 px-6 py-8">
-            <div className="max-w-6xl mx-auto">
-              <PatientHeader
-                title="Envio de exames"
-                description="Selecione ou cadastre um paciente para direcionar o upload dos exames."
-                patient={activeProfile}
-              />
-              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
-                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
-                <p className="text-sm text-gray-500 mt-2">
-                  Utilize o seletor acima para criar ou escolher um paciente antes de enviar documentos clínicos.
-                </p>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,8 +54,9 @@ export default function UploadExams() {
           <div className="p-4 md:p-6">
             <PatientHeader
               title="Envio de exames"
-              description={`Os novos documentos serão vinculados ao prontuário de ${activeProfile.name}.`}
+              description="Envie exames e nossa IA identificará automaticamente o paciente."
               patient={activeProfile}
+              showTitleAsMain={true}
             />
 
             {/* Informação sobre limites de upload */}
@@ -120,7 +96,7 @@ export default function UploadExams() {
 
                 <div className="mt-6">
                   <p className="text-sm text-gray-500 text-center">
-                    Seus exames serão processados automaticamente pela nossa IA.
+                    Nossa IA identificará automaticamente o paciente do exame e vinculará ao prontuário correto.
                   </p>
                 </div>
               </div>

@@ -182,7 +182,7 @@ const formatRecordItem = (value?: string | null, fallback = "Não informado") =>
 
 const formatPatientContext = (patientData?: any) => {
   if (!patientData) return "";
-  
+
   const inferredAge = patientData.age ?? calculateAgeFromBirthDate(patientData.birthDate);
   const diseasesText = Array.isArray(patientData.diseases) && patientData.diseases.length > 0
     ? patientData.diseases.join(", ")
@@ -196,35 +196,35 @@ const formatPatientContext = (patientData?: any) => {
   const medicationsText = Array.isArray(patientData.medications) && patientData.medications.length > 0
     ? patientData.medications.join(", ")
     : "Nenhum informado";
-  
+
   const diagnosesDetails = Array.isArray(patientData.medicalRecord?.diagnoses) && patientData.medicalRecord.diagnoses.length > 0
     ? patientData.medicalRecord.diagnoses.map((diagnosis: any) => {
-        const code = diagnosis.cidCode || diagnosis.cid_code || "CID não informado";
-        const status = diagnosis.status ? ` - ${diagnosis.status}` : "";
-        const date = diagnosis.diagnosisDate || diagnosis.diagnosis_date;
-        const formattedDate = date ? ` (${date})` : "";
-        return `${code}${status}${formattedDate}`.trim();
-      }).join("; ")
+      const code = diagnosis.cidCode || diagnosis.cid_code || "CID não informado";
+      const status = diagnosis.status ? ` - ${diagnosis.status}` : "";
+      const date = diagnosis.diagnosisDate || diagnosis.diagnosis_date;
+      const formattedDate = date ? ` (${date})` : "";
+      return `${code}${status}${formattedDate}`.trim();
+    }).join("; ")
     : "Nenhum registrado";
-  
+
   const medicationsDetails = Array.isArray(patientData.medicalRecord?.medications) && patientData.medicalRecord.medications.length > 0
     ? patientData.medicalRecord.medications.map((medication: any) => {
-        const name = medication.name || "Medicamento";
-        const dosage = medication.dosage ? ` - ${medication.dosage}` : "";
-        const frequency = medication.frequency ? ` (${medication.frequency})` : "";
-        return `${name}${dosage}${frequency}`.trim();
-      }).join("; ")
+      const name = medication.name || "Medicamento";
+      const dosage = medication.dosage ? ` - ${medication.dosage}` : "";
+      const frequency = medication.frequency ? ` (${medication.frequency})` : "";
+      return `${name}${dosage}${frequency}`.trim();
+    }).join("; ")
     : "Nenhum registrado";
-  
+
   const allergiesDetails = Array.isArray(patientData.medicalRecord?.allergies) && patientData.medicalRecord.allergies.length > 0
     ? patientData.medicalRecord.allergies.map((allergy: any) => {
-        const name = allergy.allergen || "Alergia";
-        const severity = allergy.severity ? ` - ${allergy.severity}` : "";
-        const reaction = allergy.reaction ? ` (${allergy.reaction})` : "";
-        return `${name}${severity}${reaction}`.trim();
-      }).join("; ")
+      const name = allergy.allergen || "Alergia";
+      const severity = allergy.severity ? ` - ${allergy.severity}` : "";
+      const reaction = allergy.reaction ? ` (${allergy.reaction})` : "";
+      return `${name}${severity}${reaction}`.trim();
+    }).join("; ")
     : "Nenhum registrado";
-  
+
   return `
       Dados do paciente:
       - Sexo: ${formatRecordItem(patientData.gender)}
@@ -322,7 +322,7 @@ const OPENAI_MAX_OUTPUT_TOKENS = Number(process.env.OPENAI_ANALYSIS_MAX_OUTPUT_T
 let openai: OpenAI | null = null;
 
 if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ 
+  openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
   });
 } else {
@@ -331,9 +331,9 @@ if (process.env.OPENAI_API_KEY) {
 
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any) {
   try {
-    
+
     const patientContext = formatPatientContext(patientData);
-    
+
     // Prompt aprimorado para OpenAI com análise holística e personalizada
     const prompt = `
       Você é um especialista médico altamente qualificado em medicina laboratorial, diagnóstico clínico e medicina preventiva.
@@ -446,12 +446,12 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       - Considere sempre a integração de múltiplos marcadores em vez de análise isolada
       - O JSON DEVE ser válido, sem erros de formatação ou campos duplicados
     `;
-    
+
     // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
       return getFallbackInsights(patientData);
     }
-    
+
     try {
       // Call the actual OpenAI API
       return await callOpenAIApi(prompt);
@@ -469,24 +469,24 @@ async function callOpenAIApi(prompt: string) {
     if (!openai) {
       throw new Error("OpenAI client not initialized");
     }
-    
+
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       max_tokens: OPENAI_MAX_OUTPUT_TOKENS
     });
-    
+
     const content = response.choices[0].message.content;
     if (!content) {
       throw new Error("Empty response from OpenAI API");
     }
-    
+
     try {
       // Tentar analisar a resposta como JSON
       return JSON.parse(content);
     } catch (parseError) {
-      
+
       // Se não for um JSON válido, tente extrair um JSON válido do conteúdo
       try {
         // Tentar localizar um objeto JSON na resposta
@@ -498,7 +498,7 @@ async function callOpenAIApi(prompt: string) {
       } catch (extractError) {
         // Failed to extract JSON from response
       }
-      
+
       // Se ainda falhar, retorne um objeto estruturado básico
       return {
         contextualAnalysis: "Não foi possível analisar a resposta da IA. Por favor, tente novamente.",
@@ -520,7 +520,7 @@ async function callOpenAIApi(prompt: string) {
 
 // Fallback response if OpenAI API is unavailable
 function getFallbackInsights(patientData?: any) {
-  
+
   // Base response com estrutura atualizada conforme novo formato, incluindo diagnósticos possíveis
   const response = {
     possibleDiagnoses: [
@@ -561,7 +561,7 @@ function getFallbackInsights(patientData?: any) {
       "Fatores de risco cardiovascular - siga orientações do Ministério da Saúde"
     ],
     contextualAnalysis: "Análise contextual não disponível no momento. Consulte um médico para uma avaliação personalizada.",
-    
+
     // Novos campos adicionados conforme o formato atualizado
     healthParameters: {
       healthScore: 75,
@@ -582,7 +582,7 @@ function getFallbackInsights(patientData?: any) {
       confidenceLevel: "médio"
     }
   };
-  
+
   // If we have patient data, add some customization to the response
   if (patientData) {
     if (patientData.gender === 'feminino') {
@@ -602,7 +602,7 @@ function getFallbackInsights(patientData?: any) {
         );
       }
     }
-    
+
     if (patientData.diseases && patientData.diseases.includes('diabetes')) {
       response.riskFactors.push("Diabetes diagnosticada - necessita monitoramento rigoroso da glicemia (evidência forte)");
       response.lifestyle.diet = "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde, priorizando alimentos in natura";
@@ -612,15 +612,15 @@ function getFallbackInsights(patientData?: any) {
         "The New England Journal of Medicine, 2024 - Estratégias personalizadas para manejo de diabetes tipo 2"
       );
     }
-    
+
     if (patientData.allergies && patientData.allergies.length > 0) {
       response.riskFactors.push(`Alergias a ${patientData.allergies.join(', ')} - considerar em qualquer tratamento (evidência forte)`);
       response.healthParameters.criticalAreas.push("Manejo de alergias");
     }
-    
+
     response.contextualAnalysis = "Análise baseada no perfil do paciente. Os parâmetros de saúde foram ajustados considerando as condições pré-existentes, histórico e demografia. Recomenda-se consulta médica para avaliação completa e individualizada.";
   }
-  
+
   return response;
 }
 
@@ -640,37 +640,37 @@ function getFallbackInsights(patientData?: any) {
  */
 export async function analyzeExtractedExam(examId: number, userId: number, storage: IStorage, patientData?: any) {
   try {
-    
+
     // 1. Obter o exame e resultado da extração inicial
     const exam = await storage.getExam(examId);
     if (!exam || exam.userId !== userId) {
       throw new Error("Exame não encontrado ou acesso não autorizado");
     }
-    
+
     if (exam.status !== "ready_for_analysis" && exam.status !== "extracted") {
       throw new Error(`Exame com status inválido para análise: ${exam.status}`);
     }
-    
+
     // 2. Obter resultado da extração prévia armazenado no banco
     const extractionResult = await storage.getExamResultByExamId(examId);
     if (!extractionResult) {
       throw new Error("Resultado da extração não encontrado");
     }
-    
+
     // 3. Obter métricas diretamente do resultado da extração, não de health_metrics
-    const examDateStr = exam?.examDate ? new Date(exam.examDate).toISOString().split('T')[0] : 
-                        exam?.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
-    
+    const examDateStr = exam?.examDate ? new Date(exam.examDate).toISOString().split('T')[0] :
+      exam?.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
+
     // Usar as métricas que já foram extraídas e armazenadas em examResults
     // em vez de tentar buscar da tabela health_metrics que está incompleta
     let metricsFromThisExam = [];
-    
+
     if (extractionResult.healthMetrics && Array.isArray(extractionResult.healthMetrics)) {
       metricsFromThisExam = extractionResult.healthMetrics;
     } else {
       // Nenhuma métrica encontrada no resultado da extração. Usando array vazio.
     }
-    
+
     // 4. Organizar métricas por categoria para uma análise mais estruturada
     const metricsByCategory = new Map();
     metricsFromThisExam.forEach(metric => {
@@ -680,9 +680,9 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       }
       metricsByCategory.get(category).push(metric);
     });
-    
+
     const patientContext = formatPatientContext(patientData);
-    
+
     // Criar prompt mais estruturado para a OpenAI com base nas categorias de exames
     let metricsDescriptionByCategory = "";
     metricsByCategory.forEach((metrics, category) => {
@@ -690,7 +690,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       metrics.forEach((metric: any) => {
         const status = metric.status ? ` (${metric.status.toUpperCase()})` : '';
         const reference = (metric.referenceMin && metric.referenceMax)
-          ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ''}]` 
+          ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ''}]`
           : '';
         metricsDescriptionByCategory += `- ${metric.name}: ${metric.value} ${metric.unit || ''}${status}${reference}\n`;
         if (metric.clinical_significance) {
@@ -698,7 +698,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
         }
       });
     });
-    
+
     // 5. Criar prompt para OpenAI com análise holística e categorizada
     const prompt = `
       Você é um especialista médico altamente qualificado em medicina laboratorial e diagnóstico clínico.
@@ -778,15 +778,15 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       
       Importante: Respeite RIGOROSAMENTE o formato JSON acima. Sua análise deve ser integrada e holística, considerando TODAS as categorias de exames em conjunto.
     `;
-    
+
     // 6. Chamar a API da OpenAI
     const insightsResponse = await callOpenAIApi(prompt);
-    
+
     // 7. Atualizar o exame para refletir a análise completa
-    await storage.updateExam(examId, { 
-      status: "analyzed" 
+    await storage.updateExam(examId, {
+      status: "analyzed"
     });
-    
+
     // 8. Criar um novo resultado com a análise completa
     const analysisResult = await storage.createExamResult({
       examId: examId,
@@ -796,7 +796,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       healthMetrics: extractionResult.healthMetrics as any, // Mantém as métricas da extração
       aiProvider: "openai:analysis"
     });
-    
+
     // 9. Notificar o usuário
     await storage.createNotification({
       userId,
@@ -804,14 +804,14 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       message: `A análise detalhada do exame "${exam?.name || 'sem nome'}" está pronta para visualização`,
       read: false
     });
-    
+
     return {
       exam,
       extractionResult,
       analysisResult,
       insights: insightsResponse
     };
-    
+
   } catch (error: any) {
     // Em caso de falha, retornar um erro estruturado
     return {
@@ -850,8 +850,8 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
 
   const mimeType =
     fileType === "jpeg" ? "image/jpeg" :
-    fileType === "png" ? "image/png" :
-    "application/pdf";
+      fileType === "png" ? "image/png" :
+        "application/pdf";
 
   const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
                 Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
@@ -1087,7 +1087,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
 // Interface específica para o usuário requerido na função
 interface UserInfo {
   id: number;
-  username: string; 
+  username: string;
   fullName?: string | null;
   email?: string | null;
   birthDate?: string | null;
@@ -1100,7 +1100,7 @@ interface UserInfo {
 
 export async function generateChronologicalReport(examResults: ExamResult[], user: UserInfo) {
   try {
-    
+
     // Prepara informações do paciente para contextualização
     const patientInfo = `
       Dados do paciente:
@@ -1111,12 +1111,12 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
       - Telefone: ${user.phoneNumber || 'Não informado'}
       - Endereço: ${user.address || 'Não informado'}
     `;
-    
+
     // Prepara informações dos exames em ordem cronológica
     const examsInfo = examResults.map((result, index) => {
       // Usamos analysisDate diretamente, que é uma propriedade garantida pelo modelo
       const examDate = result.analysisDate || new Date();
-      
+
       return `
         Exame #${index + 1} - Data: ${new Date(examDate).toLocaleDateString('pt-BR')}
         ID: ${result.id}
@@ -1126,7 +1126,7 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
         Métricas principais: ${JSON.stringify(result.healthMetrics)}
       `;
     }).join('\n\n');
-    
+
     // Prompt aprimorado para a OpenAI focado em análise baseada em evidências
     const prompt = `
       Você é um médico especialista em análise de tendências de saúde e histórico médico.
@@ -1167,17 +1167,17 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
           confidenceLevel: nível de confiança na avaliação (alto, médio, baixo)
        }
     `;
-    
+
     // Verifica se a API key está disponível
     if (!process.env.OPENAI_API_KEY) {
       return getFallbackChronologicalReport(examResults, user);
     }
-    
+
     try {
       if (!openai) {
         throw new Error("OpenAI client not initialized");
       }
-      
+
       // Chama a API da OpenAI
       const response = await openai.chat.completions.create({
         model: OPENAI_MODEL,
@@ -1186,12 +1186,12 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
         temperature: 0.2,
         max_tokens: OPENAI_MAX_OUTPUT_TOKENS
       });
-      
+
       const content = response.choices[0].message.content;
       if (!content) {
         throw new Error("Empty response from OpenAI API");
       }
-      
+
       return JSON.parse(content);
     } catch (apiError) {
       return getFallbackChronologicalReport(examResults, user);
@@ -1272,32 +1272,32 @@ Anamnese:
  * Resposta de fallback para o relatório cronológico quando a API da OpenAI não está disponível
  */
 function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInfo) {
-  
+
   // Calcula algumas tendências básicas baseadas nos dados disponíveis
   let hasTrendData = examResults.length > 1;
   let trendsDirection = "estável";
-  
+
   if (hasTrendData) {
     // Tenta identificar alguma tendência simples olhando para o primeiro e último exame
     const firstExam = examResults[0];
     const lastExam = examResults[examResults.length - 1];
-    
+
     // Verificar se healthMetrics está disponível e é um array
     const firstMetrics = Array.isArray(firstExam.healthMetrics) ? firstExam.healthMetrics : [];
     const lastMetrics = Array.isArray(lastExam.healthMetrics) ? lastExam.healthMetrics : [];
-    
+
     if (firstMetrics.length > 0 && lastMetrics.length > 0) {
       // Conta melhorias e pioras em métricas comuns
       let improvements = 0;
       let declines = 0;
-      
+
       // Análise simplificada das métricas
       firstMetrics.forEach((firstMetric: any) => {
         const matchingLastMetric = lastMetrics.find((m: any) => m.name === firstMetric.name);
         if (matchingLastMetric) {
           const firstStatus = firstMetric.status;
           const lastStatus = matchingLastMetric.status;
-          
+
           if (firstStatus === 'alto' || firstStatus === 'baixo') {
             if (lastStatus === 'normal') {
               improvements++;
@@ -1309,7 +1309,7 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInf
           }
         }
       });
-      
+
       if (improvements > declines) {
         trendsDirection = "melhora";
       } else if (declines > improvements) {
@@ -1317,7 +1317,7 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInf
       }
     }
   }
-  
+
   // Retorna uma resposta de fallback estruturada conforme o novo formato
   return {
     summary: `Análise de ${examResults.length} exame(s) realizados pelo paciente ${user.fullName || 'sem nome'}, mostrando tendência de ${trendsDirection} em seus indicadores de saúde.`,
@@ -1339,7 +1339,7 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInf
       "Considere a realização de exames de acompanhamento específicos baseados nos resultados anteriores"
     ],
     overallAssessment: `Com base nos dados disponíveis, o estado de saúde geral parece ${trendsDirection}. As métricas avaliadas sugerem a necessidade de acompanhamento médico regular e adoção de medidas preventivas.`,
-    
+
     // Novos campos adicionados conforme a estrutura atualizada
     healthParameters: {
       healthScore: hasTrendData && trendsDirection === "melhora" ? 75 : hasTrendData && trendsDirection === "piora" ? 60 : 70,
@@ -1361,4 +1361,61 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInf
       confidenceLevel: "médio"
     }
   };
+}
+
+/**
+ * Extrai o nome do paciente de um documento de exame usando OpenAI
+ * @param fileContent Conteúdo do arquivo (texto extraído ou base64)
+ * @param fileType Tipo do arquivo (pdf, jpeg, png)
+ * @returns Nome do paciente extraído ou null se não encontrado
+ */
+export async function extractPatientNameFromExam(fileContent: string, fileType: string): Promise<string | null> {
+  try {
+    if (!openai) {
+      logger.warn("OpenAI client not initialized, cannot extract patient name");
+      return null;
+    }
+
+    const prompt = `
+      Você é um assistente especializado em extrair informações de documentos médicos.
+      
+      TAREFA: Extraia APENAS o nome completo do paciente deste documento de exame médico.
+      
+      INSTRUÇÕES:
+      1. Procure por campos como "Paciente:", "Nome:", "Patient:", etc.
+      2. Retorne APENAS o nome completo do paciente, sem títulos (Sr., Sra., Dr., etc.)
+      3. Se não encontrar o nome do paciente, retorne "NOT_FOUND"
+      4. Não inclua nenhuma explicação adicional, apenas o nome
+      
+      FORMATO DA RESPOSTA:
+      Retorne apenas o nome do paciente ou "NOT_FOUND"
+      
+      Exemplo de resposta válida: "João Silva Santos"
+      Exemplo de resposta quando não encontrado: "NOT_FOUND"
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: OPENAI_FALLBACK_MODEL, // Usar modelo mais rápido para esta tarefa simples
+      messages: [
+        { role: "system", content: prompt },
+        { role: "user", content: `Documento de exame:\n\n${fileContent.substring(0, 2000)}` } // Limitar a 2000 caracteres para economizar tokens
+      ],
+      temperature: 0.1, // Baixa temperatura para respostas mais determinísticas
+      max_tokens: 50 // Nome do paciente não deve precisar de muitos tokens
+    });
+
+    const extractedName = response.choices[0].message.content?.trim();
+
+    if (!extractedName || extractedName === "NOT_FOUND" || extractedName.length < 3) {
+      logger.info("Patient name not found in exam document");
+      return null;
+    }
+
+    logger.info(`Extracted patient name: ${extractedName}`);
+    return extractedName;
+
+  } catch (error) {
+    logger.error("Error extracting patient name from exam:", error);
+    return null;
+  }
 }

@@ -709,6 +709,10 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Verificar se temos dados suficientes
       const { name, fileType, fileContent, laboratoryName, examDate, profileId: rawProfileId } = req.body;
 
+      if (!name || !fileType || !fileContent) {
+        return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
+      }
+
       // Determinar paciente ativo
       const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
         const parts = cookie.trim().split('=');
@@ -728,8 +732,66 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       }
 
+      // Se não tiver profileId, tentar extrair nome do paciente do exame
       if (!profileId || Number.isNaN(profileId)) {
-        return res.status(400).json({ message: "Selecione um paciente antes de enviar o exame." });
+        logger.info("No profileId provided, attempting to extract patient name from exam");
+
+        try {
+          // Decodificar o conteúdo do arquivo se for base64
+          let textContent = fileContent;
+          if (fileContent.startsWith('data:')) {
+            // Remove data URL prefix
+            const base64Data = fileContent.split(',')[1] || fileContent;
+            textContent = Buffer.from(base64Data, 'base64').toString('utf-8');
+          } else if (fileContent.length > 100 && !fileContent.includes(' ')) {
+            // Provavelmente é base64
+            textContent = Buffer.from(fileContent, 'base64').toString('utf-8');
+          }
+
+          // Extrair nome do paciente usando IA
+          const { extractPatientNameFromExam } = await import('./services/openai');
+          const extractedName = await extractPatientNameFromExam(textContent, fileType);
+
+          if (extractedName) {
+            logger.info(`Extracted patient name: ${extractedName}`);
+
+            // Buscar perfil existente por nome
+            const profiles = await storage.getProfilesByUserId(userId);
+            const matchingProfile = profiles.find((p: any) =>
+              p.name.toLowerCase().trim() === extractedName.toLowerCase().trim()
+            );
+
+            if (matchingProfile) {
+              logger.info(`Found matching profile: ${matchingProfile.id}`);
+              profileId = matchingProfile.id;
+            } else {
+              // Criar novo perfil para o paciente
+              logger.info(`Creating new profile for patient: ${extractedName}`);
+              const newProfile = await storage.createProfile({
+                userId,
+                name: extractedName,
+                // Outros campos podem ser preenchidos depois pelo médico
+              });
+              profileId = newProfile.id;
+              logger.info(`Created new profile with ID: ${profileId}`);
+            }
+          } else {
+            logger.warn("Could not extract patient name from exam");
+            return res.status(400).json({
+              message: "Não foi possível identificar o paciente no exame. Por favor, selecione um paciente manualmente ou verifique se o nome do paciente está claramente visível no documento."
+            });
+          }
+        } catch (extractError) {
+          logger.error("Error during patient name extraction:", extractError);
+          return res.status(400).json({
+            message: "Erro ao identificar o paciente no exame. Por favor, selecione um paciente manualmente."
+          });
+        }
+      }
+
+      // Validar que temos um profileId válido agora
+      if (!profileId || Number.isNaN(profileId)) {
+        return res.status(400).json({ message: "Não foi possível determinar o paciente para este exame." });
       }
 
       const profile = await storage.getProfile(profileId);
@@ -737,21 +799,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Paciente inválido para este profissional." });
       }
 
-      if (!name || !fileType || !fileContent) {
-        return res.status(400).json({ message: "Dados incompletos para análise. Nome, tipo de arquivo e conteúdo são obrigatórios." });
-      }
-
       // Upload para S3/Local
       const s3Result = await S3Service.uploadExamDocument({
         userId,
         profileId,
-        buffer: Buffer.from(fileContent, 'base64'), // fileContent vem como base64 do frontend?
-        // Wait, fileContent in body usually means text content or base64 string.
-        // If using multer, it should be req.file.
-        // The current implementation seems to expect JSON body with fileContent string.
-        // Let's assume fileContent is base64 string.
+        buffer: Buffer.from(fileContent, 'base64'),
         originalName: name,
-        mimeType: fileType === 'pdf' ? 'application/pdf' : 'image/jpeg' // Simplificação
+        mimeType: fileType === 'pdf' ? 'application/pdf' : 'image/jpeg'
       });
 
       // Criar registro do exame
@@ -771,11 +825,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         logger.error(`Erro no processamento em background do exame ${exam.id}:`, err);
       });
 
-      // Retornar resultado imediato
+      // Retornar resultado imediato com informação do paciente
       res.status(200).json({
-        message: "Upload realizado com sucesso. O processamento continuará em segundo plano.",
+        message: `Upload realizado com sucesso para o paciente ${profile.name}. O processamento continuará em segundo plano.`,
         examId: exam.id,
-        status: "queued"
+        status: "queued",
+        patientName: profile.name,
+        patientId: profileId
       });
 
     } catch (error: unknown) {
