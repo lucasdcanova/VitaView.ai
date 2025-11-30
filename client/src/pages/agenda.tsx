@@ -3,13 +3,25 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar";
+import { NewAppointmentModal } from "@/components/agenda/new-appointment-modal";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Agenda() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+    const { toast } = useToast();
 
     const handleNewAppointment = () => {
-        // TODO: Implementar modal ou navegação para criar nova consulta
-        console.log("Nova consulta");
+        setIsNewAppointmentOpen(true);
+    };
+
+    const handleAppointmentSuccess = (data: any) => {
+        console.log("Nova consulta agendada:", data);
+        toast({
+            title: "Consulta agendada",
+            description: `Agendamento confirmado para ${data.patientName} às ${data.time}.`,
+        });
+        // Aqui você adicionaria a lógica para atualizar a lista de consultas
     };
 
     return (
@@ -35,6 +47,12 @@ export default function Agenda() {
                     </div>
                 </main>
             </div>
+
+            <NewAppointmentModal
+                open={isNewAppointmentOpen}
+                onOpenChange={setIsNewAppointmentOpen}
+                onSuccess={handleAppointmentSuccess}
+            />
         </div>
     );
 }
