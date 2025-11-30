@@ -8,7 +8,8 @@ import {
   CreditCard,
   ShieldCheck,
   Heart,
-  Calendar
+  Calendar,
+  Settings
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 
@@ -55,6 +56,12 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
           </div>
         </div>
 
+        <Link href="/profile">
+          <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm">
+            <Settings className="h-4 w-4" />
+            <span>Configurações</span>
+          </button>
+        </Link>
 
       </div>
 
