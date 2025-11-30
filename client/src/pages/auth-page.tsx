@@ -147,8 +147,8 @@ export default function AuthPage() {
         </Button>
       </Link>
 
-      {/* Left side - Form */}
-      <div className="md:w-3/5 w-full flex flex-col justify-center items-center p-6 min-h-screen">
+      {/* Main Content - Centered Form */}
+      <div className="w-full flex flex-col justify-center items-center p-6 min-h-screen relative z-10">
         {/* Cabeçalho com logo VitaView acima do card */}
         <div className="w-full max-w-md mb-0 flex flex-col items-center">
           <motion.div
@@ -168,31 +168,31 @@ export default function AuthPage() {
           </motion.div>
         </div>
 
-        <Card className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative mt-3">
+        <Card className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative mt-3">
           {/* Banner de branding no topo do card */}
-          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-2 px-4 text-center">
-            <span className="text-white font-medium text-sm">Sua plataforma de saúde inteligente</span>
+          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-3 px-4 text-center">
+            <span className="text-white font-medium text-sm tracking-wide">Gestão Clínica Inteligente</span>
           </div>
 
-          <CardHeader className="text-center pt-6">
+          <CardHeader className="text-center pt-8 pb-4">
             <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
               <span>Acesse sua conta</span>
             </CardTitle>
-            <CardDescription className="text-gray-600 text-center">
-              Faça login para gerenciar seus exames de saúde
+            <CardDescription className="text-gray-600 text-center mt-2">
+              Bem-vindo ao VitaView AI
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="pb-8 px-8">
             <Tabs defaultValue="login" value={tab} onValueChange={(value) => setTab(value as "login" | "register")}>
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="register">Cadastrar</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="username"
@@ -204,6 +204,7 @@ export default function AuthPage() {
                               placeholder="Digite seu usuário"
                               {...field}
                               autoComplete="username"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -223,6 +224,7 @@ export default function AuthPage() {
                               placeholder="Digite sua senha"
                               {...field}
                               autoComplete="current-password"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -231,7 +233,7 @@ export default function AuthPage() {
                     />
 
                     <div className="flex justify-end">
-                      <Link href="/forgot-password" className="text-sm text-[#1E3A5F] hover:underline px-0">
+                      <Link href="/forgot-password" className="text-sm text-[#1E3A5F] hover:underline px-0 font-medium">
                         Esqueceu a senha?
                       </Link>
                     </div>
@@ -240,7 +242,7 @@ export default function AuthPage() {
                       ref={submitButtonRef}
                       type="submit"
                       size="lg"
-                      className="w-full h-14 bg-[#448C9B] hover:bg-[#336D7A] font-bold text-lg text-white shadow-md rounded-lg"
+                      className="w-full h-12 bg-[#448C9B] hover:bg-[#336D7A] font-bold text-lg text-white shadow-md rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -255,10 +257,10 @@ export default function AuthPage() {
                   </form>
                 </Form>
 
-                <div className="mt-4 text-center">
+                <div className="mt-6 text-center">
                   <p className="text-gray-600 text-sm">
                     Não tem uma conta?{" "}
-                    <Button variant="link" className="p-0 text-[#448C9B] hover:text-[#336D7A]" onClick={() => setTab("register")}>
+                    <Button variant="link" className="p-0 text-[#448C9B] hover:text-[#336D7A] font-semibold" onClick={() => setTab("register")}>
                       Cadastre-se
                     </Button>
                   </p>
@@ -279,6 +281,7 @@ export default function AuthPage() {
                               placeholder="Escolha um nome de usuário"
                               {...field}
                               autoComplete="username"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -301,6 +304,7 @@ export default function AuthPage() {
                               name={field.name}
                               ref={field.ref}
                               autoComplete="name"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -324,6 +328,7 @@ export default function AuthPage() {
                               name={field.name}
                               ref={field.ref}
                               autoComplete="email"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -343,6 +348,7 @@ export default function AuthPage() {
                               placeholder="Crie uma senha"
                               {...field}
                               autoComplete="new-password"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -362,6 +368,7 @@ export default function AuthPage() {
                               placeholder="Confirme sua senha"
                               {...field}
                               autoComplete="new-password"
+                              className="h-11"
                             />
                           </FormControl>
                           <FormMessage />
@@ -372,7 +379,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-[#1E3A5F] hover:bg-[#152D48] font-medium text-white"
+                      className="w-full h-12 bg-[#1E3A5F] hover:bg-[#152D48] font-medium text-white shadow-md rounded-lg mt-2"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? (
@@ -387,10 +394,10 @@ export default function AuthPage() {
                   </form>
                 </Form>
 
-                <div className="mt-4 text-center">
+                <div className="mt-6 text-center">
                   <p className="text-gray-600 text-sm">
                     Já tem uma conta?{" "}
-                    <Button variant="link" className="p-0" onClick={() => setTab("login")}>
+                    <Button variant="link" className="p-0 text-[#1E3A5F] font-semibold" onClick={() => setTab("login")}>
                       Faça login
                     </Button>
                   </p>
@@ -399,258 +406,9 @@ export default function AuthPage() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Right side - Hero with interactive graphics */}
-      <div className="md:w-2/5 w-full bg-gradient-to-br from-primary-50 to-primary-100 md:flex flex-col justify-center items-center p-8 hidden min-h-screen">
-        <div className="max-w-lg">
-          {/* Title section - Removido o logo grande do topo */}
-          <div className="text-center mb-8 bg-white rounded-xl p-6 shadow-md">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              <span className="text-primary-600">Mais controle,</span> <span className="text-primary-800">menos papel</span>
-            </h2>
-            <p className="text-base text-gray-600 mb-2">
-              Todos os seus exames e informações de saúde reunidos em um só lugar, sempre ao seu alcance.
-            </p>
-          </div>
-
-          {/* Interactive graphics with 2 rows of charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Interactive Chart 1: Line Chart with animation */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary-500" />
-                  <h3 className="font-medium text-gray-800">Glicemia</h3>
-                </div>
-                <span className="text-xs bg-primary-50 text-primary-700 px-2 py-1 rounded-full">
-                  Últimos 6 meses
-                </span>
-              </div>
-
-              <div className="h-[90px] flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={healthData}
-                    margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                  >
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-white p-2 border border-gray-200 shadow-sm rounded-md text-xs">
-                              <p className="font-medium">{`${payload[0].payload.name}: ${payload[0].value}`}</p>
-                              <p className="text-xs capitalize">{`Status: ${payload[0].payload.status}`}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#4F46E5"
-                      strokeWidth={2}
-                      activeDot={{ r: 6, fill: "#4F46E5", stroke: "white", strokeWidth: 2 }}
-                      dot={{ r: 4, fill: "white", stroke: "#4F46E5", strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Interactive Chart 2: Area Chart with animation */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  <h3 className="font-medium text-gray-800">Perfil Lipídico</h3>
-                </div>
-                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full text-center">
-                  Análise recente
-                </span>
-              </div>
-
-              <div className="h-[80px] flex items-center justify-center px-2">
-                <div className="w-16 h-16 flex-shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={cholesterolData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={12}
-                        outerRadius={26}
-                        paddingAngle={1}
-                        dataKey="value"
-                      >
-                        {cholesterolData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name) => [`${value}`, name]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="ml-3 space-y-1 flex-1">
-                  {cholesterolData.map((entry, index) => (
-                    <div key={entry.name} className="flex items-center text-xs">
-                      <div
-                        className="w-2 h-2 rounded-full mr-2 flex-shrink-0"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      ></div>
-                      <span className="text-gray-700 truncate">{entry.name}: {entry.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Interactive Chart 3: Bar Chart with animation */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <BarChart2 className="h-5 w-5 text-amber-500" />
-                  <h3 className="font-medium text-gray-800">Status de Resultados</h3>
-                </div>
-                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-center">
-                  Último exame
-                </span>
-              </div>
-
-              <div className="h-[160px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { name: 'Normal', value: 12 },
-                      { name: 'Alto', value: 3 },
-                      { name: 'Baixo', value: 2 },
-                    ]}
-                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
-                  >
-                    <XAxis dataKey="name" />
-                    <YAxis hide />
-                    <Tooltip />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {[
-                        { name: 'Normal', fill: HEALTH_COLORS.normal },
-                        { name: 'Alto', fill: HEALTH_COLORS.alto },
-                        { name: 'Baixo', fill: HEALTH_COLORS.baixo },
-                      ].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Interactive element 4: Health Card */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl shadow-md p-4 overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-green-600" />
-                  <h3 className="font-medium text-gray-800">Perfil de Saúde</h3>
-                </div>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                  Personalizado
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-3 mt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm">Índice de Saúde</span>
-                  <div className="flex items-center">
-                    <span className="text-green-600 font-bold text-lg">87</span>
-                    <span className="text-xs text-gray-500 ml-1">/100</span>
-                  </div>
-                </div>
-
-                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: "87%" }}
-                    transition={{ delay: 0.6, duration: 0.8 }}
-                    className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
-                  />
-                </div>
-
-                {/* Categorias de exames - Simulação */}
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Glicemia: Normal</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                    <span className="text-gray-600">Colesterol: Atenção</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Hemoglobina: Normal</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Vitamina D: Normal</span>
-                  </div>
-                </div>
-
-
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Features section */}
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-center"
-            >
-              <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              </div>
-              <span className="ml-2 text-gray-700">Seguro e privado</span>
-            </motion.div>
-
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="flex items-center"
-            >
-              <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-                </svg>
-              </div>
-              <span className="ml-2 text-gray-700">Alertas de saúde</span>
-            </motion.div>
-          </div>
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>&copy; 2025 VitaView AI. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>
