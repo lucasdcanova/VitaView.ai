@@ -2201,20 +2201,24 @@ export default function LandingPage() {
               >
                 <h3 className="text-white font-semibold mb-4">Plataforma</h3>
                 <ul className="space-y-2">
-                  {["Como funciona", "Recursos", "Preços", "FAQ"].map((item, i) => (
+                  {[
+                    { label: "View Laboratorial", href: "#como-funciona" },
+                    { label: "Vita Timeline", href: "#demonstracoes" },
+                    { label: "FAQ", href: "#faq" }
+                  ].map((item, i) => (
                     <motion.li
-                      key={item}
+                      key={item.label}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: 0.1 + (i * 0.05) }}
                     >
                       <motion.a
-                        href="#"
+                        href={item.href}
                         className="hover:text-white transition-colors relative group inline-block"
                         whileHover={{ x: 3 }}
                       >
-                        {item}
+                        {item.label}
                         <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
