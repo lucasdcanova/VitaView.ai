@@ -340,6 +340,7 @@ export function PatientView({ activeProfile }: PatientViewProps) {
                 description="Acompanhe os indicadores e análises do paciente selecionado."
                 patient={activeProfile}
                 lastExamDate={latestExamDate}
+                showTitleAsMain={true}
             />
             <div className="flex flex-wrap items-center gap-3 mb-6">
                 <Link href="/upload-exams">

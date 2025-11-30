@@ -8,6 +8,7 @@ interface PatientHeaderProps {
   description?: string;
   patient?: Profile | null;
   lastExamDate?: string | null;
+  showTitleAsMain?: boolean;
 }
 
 export default function PatientHeader({
@@ -15,6 +16,7 @@ export default function PatientHeader({
   description,
   patient,
   lastExamDate,
+  showTitleAsMain = false,
 }: PatientHeaderProps) {
   const formatDate = (value?: string | null) => {
     if (!value) return null;
@@ -76,30 +78,21 @@ export default function PatientHeader({
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-6 mb-6">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary-600">{title}</p>
-          <h1 className="text-3xl font-semibold text-gray-900">{patientName}</h1>
+          {showTitleAsMain ? (
+            <>
+              {patient && <p className="text-xs uppercase tracking-[0.2em] text-primary-600">PACIENTE: {patientName}</p>}
+              <h1 className="text-3xl font-semibold text-gray-900">{title}</h1>
+            </>
+          ) : (
+            <>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary-600">{title}</p>
+              <h1 className="text-3xl font-semibold text-gray-900">{patientName}</h1>
+            </>
+          )}
           {description && (
             <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{description}</p>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {highlightItems.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4"
-          >
-            <div className="rounded-full bg-white p-2 text-primary-600 shadow-sm">
-              <item.icon className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500">{item.label}</p>
-              <p className="text-base font-semibold text-gray-900">{item.value}</p>
-              {item.helper && <p className="text-xs text-gray-500 mt-1">{item.helper}</p>}
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

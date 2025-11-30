@@ -18,10 +18,11 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                 <main className="flex-1 bg-gray-50 px-6 py-8">
                     <div className="max-w-6xl mx-auto">
                         <PatientHeader
-                            title="Visão Geral do Consultório"
+                            title="Visão Geral"
                             description="Resumo dos seus pacientes e atividades recentes."
                             patient={undefined}
                             lastExamDate={null}
+                            showTitleAsMain={true}
                         />
 
                         {isLoading ? (
@@ -126,9 +127,9 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                                 )}
 
                                 <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
-                                    <h2 className="text-lg font-semibold text-gray-800">Selecione um paciente</h2>
+                                    <h2 className="text-lg font-semibold text-gray-800">Visão geral do consultório</h2>
                                     <p className="text-sm text-gray-500 mt-2">
-                                        Use o seletor na barra lateral para visualizar o painel clínico detalhado de um paciente específico.
+                                        Acesse "Prontuário do paciente" no menu para visualizar informações detalhadas de um paciente específico.
                                     </p>
                                 </div>
                             </div>
