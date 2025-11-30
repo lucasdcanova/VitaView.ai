@@ -176,7 +176,8 @@ export default function LandingPage() {
           {/* Desktop navigation with enhanced hover effects */}
           <div className="hidden md:flex space-x-8 text-gray-700">
             {[
-              { id: "demonstracoes", label: "Ferramentas" },
+              { id: "demonstracoes", label: "Vita Timeline" },
+              { id: "como-funciona", label: "View Laboratorial" },
               { id: "agenda", label: "Agenda" },
               { id: "beneficios", label: "Benefícios" },
               { id: "para-quem", label: "Para Quem" },
@@ -307,7 +308,7 @@ export default function LandingPage() {
                   whileTap={{ scale: 0.97 }}
                 >
                   <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center font-medium">
-                    <Play className="mr-2 h-5 w-5" /> Explorar Ferramentas
+                    <Play className="mr-2 h-5 w-5" /> Ver Demonstração
                   </Button>
                 </motion.div>
               </a>
@@ -454,7 +455,7 @@ export default function LandingPage() {
             <Brain className="w-4 h-4 mr-1 text-primary-600" /> Análise com IA
           </span>
           <span className="flex items-center">
-            <FlaskConical className="w-4 h-4 mr-1 text-primary-600" /> Interpretação médica
+            <FlaskConical className="w-4 h-4 mr-1 text-primary-600" /> Interpretação clínica
           </span>
         </div>
       </section>
@@ -543,12 +544,14 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              Prontuário Eletrônico
+              Vita Timeline
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Prontuário Inteligente Unificado</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              Linha de <span className="text-[#A5E1D2]">Vida</span> do Paciente
+            </h2>
             <p className="text-lg text-white text-opacity-90 max-w-3xl mx-auto">
-              Tenha uma visão holística da saúde do seu paciente. Acesse exames, métricas vitais e histórico clínico em um dashboard centralizado e seguro.
+              Tenha uma visão holística da jornada de saúde do seu paciente. Acesse exames, métricas vitais e histórico clínico em um dashboard centralizado e seguro.
             </p>
           </motion.div>
 
@@ -845,201 +848,6 @@ export default function LandingPage() {
       </section >
 
       {/* Appointment Scheduler Calendar */}
-      <section id="agenda" className="py-16 bg-[#448C9B] text-white relative overflow-hidden scroll-mt-16" >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Agenda Inteligente</h2>
-            <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
-              Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina médica de forma eficiente.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {/* Calendar Header */}
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Calendar className="w-8 h-8" />
-                  <div>
-                    <h3 className="text-2xl font-bold">Abril 2025</h3>
-                    <p className="text-sm text-primary-100">Semana 14 - 20 de Abril</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
-                    <ChevronDown className="w-5 h-5 rotate-90" />
-                  </button>
-                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
-                    <ChevronDown className="w-5 h-5 -rotate-90" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="p-6">
-              {/* Week Days Header */}
-              <div className="grid grid-cols-7 gap-2 mb-4">
-                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
-                  <div key={i} className="text-center">
-                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
-                    <div className={`text-sm font-medium ${i === 1 ? 'text-primary-600' : 'text-gray-700'}`}>
-                      {14 + i}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Time Slots Grid */}
-              <div className="grid grid-cols-7 gap-2">
-                {/* Sunday - Empty */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
-
-                {/* Monday - 2 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
-                  <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-blue-900">09:00</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Maria Silva</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
-                  </motion.div>
-                  <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-green-900">14:30</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">João Santos</div>
-                    <div className="text-xs text-green-600">Retorno</div>
-                  </motion.div>
-                </div>
-
-                {/* Tuesday - 1 appointment */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
-                  <motion.div
-                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-purple-900">10:00</div>
-                    <div className="text-xs font-medium text-purple-800 mt-1">Ana Costa</div>
-                    <div className="text-xs text-purple-600">Exames</div>
-                  </motion.div>
-                </div>
-
-                {/* Wednesday - 3 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
-                  <motion.div
-                    className="bg-amber-100 border-l-4 border-amber-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-amber-900">08:00</div>
-                    <div className="text-xs font-medium text-amber-800 mt-1">Pedro Lima</div>
-                    <div className="text-xs text-amber-600">Urgência</div>
-                  </motion.div>
-                  <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-blue-900">11:00</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Carla Mendes</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
-                  </motion.div>
-                  <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-green-900">15:00</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">Roberto Silva</div>
-                    <div className="text-xs text-green-600">Retorno</div>
-                  </motion.div>
-                </div>
-
-                {/* Thursday - 2 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
-                  <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-blue-900">09:30</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Lucia Alves</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
-                  </motion.div>
-                  <motion.div
-                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-purple-900">13:00</div>
-                    <div className="text-xs font-medium text-purple-800 mt-1">Fernando Costa</div>
-                    <div className="text-xs text-purple-600">Exames</div>
-                  </motion.div>
-                </div>
-
-                {/* Friday - 1 appointment */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
-                  <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="text-xs font-semibold text-green-900">10:30</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">Beatriz Souza</div>
-                    <div className="text-xs text-green-600">Retorno</div>
-                  </motion.div>
-                </div>
-
-                {/* Saturday - Empty */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
-              </div>
-
-              {/* Legend */}
-              <div className="mt-6 flex flex-wrap gap-4 justify-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Consulta</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Retorno</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Exames</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Urgência</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Calendar Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">10 consultas</span> agendadas esta semana
-              </div>
-              <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                <span>Nova Consulta</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section >
-
-
-      {/* Lab Results Analyzer Section */}
       < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
@@ -1066,7 +874,7 @@ export default function LandingPage() {
             </motion.span>
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Analisador de <span className="text-[#1E3A5F]">Resultados Laboratoriais</span>
+              <span className="text-[#1E3A5F]">View Laboratorial</span>
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
@@ -1354,7 +1162,7 @@ export default function LandingPage() {
                   <div className="flex-1">
                     <h4 className="text-lg font-bold text-gray-900 mb-2">Resumo da Análise</h4>
                     <p className="text-gray-700 text-sm mb-3">
-                      Visualização comparativa dos últimos 2 meses. Os dados apresentados são apenas informativos e não substituem a avaliação médica profissional.
+                      Visualização comparativa dos últimos 2 meses. Os dados apresentados são apenas informativos e não substituem a avaliação clínica profissional.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
@@ -1393,6 +1201,201 @@ export default function LandingPage() {
         </div>
       </section >
 
+
+      {/* Appointment Scheduler Calendar */}
+      <section id="agenda" className="py-16 bg-[#448C9B] text-white relative overflow-hidden scroll-mt-16" >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Agenda Inteligente</h2>
+            <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
+              Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica de forma eficiente.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            {/* Calendar Header */}
+            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Calendar className="w-8 h-8" />
+                  <div>
+                    <h3 className="text-2xl font-bold">Abril 2025</h3>
+                    <p className="text-sm text-primary-100">Semana 14 - 20 de Abril</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                    <ChevronDown className="w-5 h-5 rotate-90" />
+                  </button>
+                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                    <ChevronDown className="w-5 h-5 -rotate-90" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="p-6">
+              {/* Week Days Header */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
+                    <div className={`text-sm font-medium ${i === 1 ? 'text-primary-600' : 'text-gray-700'}`}>
+                      {14 + i}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Time Slots Grid */}
+              <div className="grid grid-cols-7 gap-2">
+                {/* Sunday - Empty */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
+
+                {/* Monday - 2 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">09:00</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Maria Silva</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">14:30</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">João Santos</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Tuesday - 1 appointment */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                  <motion.div
+                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-purple-900">10:00</div>
+                    <div className="text-xs font-medium text-purple-800 mt-1">Ana Costa</div>
+                    <div className="text-xs text-purple-600">Exames</div>
+                  </motion.div>
+                </div>
+
+                {/* Wednesday - 3 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-amber-100 border-l-4 border-amber-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-amber-900">08:00</div>
+                    <div className="text-xs font-medium text-amber-800 mt-1">Pedro Lima</div>
+                    <div className="text-xs text-amber-600">Urgência</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">11:00</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Carla Mendes</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">15:00</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">Roberto Silva</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Thursday - 2 appointments */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <motion.div
+                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-blue-900">09:30</div>
+                    <div className="text-xs font-medium text-blue-800 mt-1">Lucia Alves</div>
+                    <div className="text-xs text-blue-600">Consulta</div>
+                  </motion.div>
+                  <motion.div
+                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-purple-900">13:00</div>
+                    <div className="text-xs font-medium text-purple-800 mt-1">Fernando Costa</div>
+                    <div className="text-xs text-purple-600">Exames</div>
+                  </motion.div>
+                </div>
+
+                {/* Friday - 1 appointment */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                  <motion.div
+                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-green-900">10:30</div>
+                    <div className="text-xs font-medium text-green-800 mt-1">Beatriz Souza</div>
+                    <div className="text-xs text-green-600">Retorno</div>
+                  </motion.div>
+                </div>
+
+                {/* Saturday - Empty */}
+                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
+              </div>
+
+              {/* Legend */}
+              <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Consulta</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Retorno</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Exames</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                  <span className="text-xs text-gray-600">Urgência</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold">10 consultas</span> agendadas esta semana
+              </div>
+              <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <span>Nova Consulta</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section >
+
       {/* Benefits Section */}
       <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
         {/* Elementos decorativos de fundo */}
@@ -1418,14 +1421,14 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              Vantagens Exclusivas
+              Visão Completa
             </motion.span>
 
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Benefícios para sua <span className="text-[#A5E1D2]">Prática Médica</span>
+              Uma Nova <span className="text-[#A5E1D2]">Visão</span> para a Saúde
             </h2>
             <p className="text-lg text-white text-opacity-90 mb-12 max-w-2xl mx-auto">
-              O VitaView AI transforma dados clínicos em eficiência operacional e precisão diagnóstica para seu consultório.
+              O VitaView AI amplia sua capacidade de análise, transformando dados complexos em uma visão clara e acionável da vida do paciente.
             </p>
           </motion.div>
 
@@ -1433,38 +1436,38 @@ export default function LandingPage() {
             {[
               {
                 icon: <Clock className="w-6 h-6 text-[#1E3A5F]" />,
-                title: "Linha do Tempo Clínica",
-                description: "Visualize o histórico completo do paciente em uma timeline interativa e organizada.",
+                title: "Visão Cronológica",
+                description: "Visualize toda a jornada de saúde do paciente em uma linha do tempo intuitiva e unificada.",
                 delay: 0
               },
               {
-                icon: <BellRing className="w-6 h-6 text-amber-500" />,
-                title: "Monitoramento Ativo",
-                description: "Identifique rapidamente valores críticos e tendências que exigem intervenção imediata.",
+                icon: <Eye className="w-6 h-6 text-amber-500" />,
+                title: "Olhar Preventivo",
+                description: "Identifique tendências sutis e riscos potenciais antes que se tornem problemas críticos.",
                 delay: 0.1
               },
               {
-                icon: <BookOpen className="w-6 h-6 text-blue-600" />,
-                title: "Eficiência Administrativa",
-                description: "Reduza o tempo gasto na transcrição e análise manual de exames laboratoriais.",
+                icon: <UserCircle className="w-6 h-6 text-blue-600" />,
+                title: "Foco no Paciente",
+                description: "Reduza o tempo em telas e burocracia para dedicar mais atenção visual e humana ao seu paciente.",
                 delay: 0.2
               },
               {
-                icon: <AreaChart className="w-6 h-6 text-purple-600" />,
-                title: "Análise Evolutiva",
-                description: "Acompanhe a progressão de patologias com gráficos comparativos automáticos.",
+                icon: <TrendingUp className="w-6 h-6 text-purple-600" />,
+                title: "Panorama Evolutivo",
+                description: "Compreenda a evolução clínica com gráficos comparativos que revelam o progresso do tratamento.",
                 delay: 0.3
               },
               {
-                icon: <HeartPulse className="w-6 h-6 text-red-500" />,
-                title: "Engajamento do Paciente",
-                description: "Gere relatórios visuais que facilitam a explicação de diagnósticos aos pacientes.",
+                icon: <Lightbulb className="w-6 h-6 text-teal-500" />,
+                title: "Clareza Visual",
+                description: "Transforme diagnósticos complexos em visualizações claras que facilitam o entendimento do paciente.",
                 delay: 0.4
               },
               {
                 icon: <ShieldCheck className="w-6 h-6 text-green-600" />,
-                title: "Segurança e Compliance",
-                description: "Segurança de dados garantida com criptografia de ponta a ponta e conformidade LGPD.",
+                title: "Segurança Total",
+                description: "Seus dados protegidos com os mais altos padrões de segurança, garantindo confidencialidade absoluta.",
                 delay: 0.5
               },
             ].map((benefit, index) => (
@@ -1556,7 +1559,7 @@ export default function LandingPage() {
               Soluções para cada <span className="text-white">Cenário</span>
             </h2>
             <p className="text-lg text-white text-opacity-90 max-w-2xl mx-auto">
-              Nossa plataforma se adapta a diferentes modelos de atuação médica, potencializando resultados em cada contexto.
+              Nossa plataforma se adapta a diferentes modelos de atuação clínica, potencializando resultados em cada contexto.
             </p>
           </motion.div>
 
@@ -1581,7 +1584,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Consultórios Privados</h3>
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Clínicas e Consultórios</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
@@ -1659,7 +1662,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Telemedicina</h3>
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Teleconsulta</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
@@ -1976,24 +1979,24 @@ export default function LandingPage() {
             <div className="lg:col-span-7 space-y-4">
               {[
                 {
-                  question: "Como o VitaView AI analisa meus exames de sangue?",
-                  answer: "O VitaView AI utiliza inteligência artificial avançada para analisar seus exames. Nosso sistema extrai automaticamente os valores dos documentos, compara com as referências médicas, identifica tendências históricas e fornece interpretações em linguagem simples para você entender o significado dos resultados."
+                  question: "Como o VitaView AI processa os exames dos pacientes?",
+                  answer: "Nossa IA extrai automaticamente dados de PDFs e imagens de exames laboratoriais, estruturando as informações em uma linha do tempo clínica. O sistema identifica valores de referência, sinaliza alterações e gera gráficos evolutivos, permitindo que você foque na análise clínica e não na digitação de dados."
                 },
                 {
-                  question: "Meus dados médicos estão seguros na plataforma?",
-                  answer: "Absolutamente. Implementamos as mais rigorosas medidas de segurança digital. Todos os dados são criptografados em trânsito e em repouso, seguimos as normas LGPD/HIPAA, nossos servidores possuem certificação de segurança e você sempre mantém total controle sobre quem pode acessar suas informações."
+                  question: "A plataforma garante a conformidade com a LGPD?",
+                  answer: "Sim. O VitaView AI foi desenvolvido seguindo rigorosos protocolos de segurança e privacidade. Utilizamos criptografia de ponta a ponta, controle de acesso granular e trilhas de auditoria, garantindo que sua clínica esteja em total conformidade com a LGPD e normas do setor de saúde."
                 },
                 {
-                  question: "Posso compartilhar meus resultados com meu médico?",
-                  answer: "Sim! O VitaView AI permite que você compartilhe facilmente relatórios e gráficos com seus médicos. Você pode gerar um link temporário de acesso ou exportar relatórios em PDF para levar à consulta, facilitando a comunicação com profissionais de saúde."
+                  question: "É possível compartilhar casos com outros especialistas?",
+                  answer: "Com certeza. A plataforma facilita a colaboração multidisciplinar. Você pode gerar relatórios seguros e anonimizados para discussão de casos ou compartilhar o acesso controlado ao prontuário com outros profissionais da equipe de saúde, agilizando a segunda opinião."
                 },
                 {
-                  question: "Como o VitaView AI me ajuda a acompanhar minha saúde ao longo do tempo?",
-                  answer: "Nossa plataforma cria automaticamente gráficos de tendência para todos os seus biomarcadores importantes. Você receberá alertas sobre mudanças significativas, e nosso sistema sugerirá correlações entre diferentes parâmetros, criando uma visão holística da sua saúde que evolui com o tempo."
+                  question: "Como a plataforma auxilia no acompanhamento de pacientes crônicos?",
+                  answer: "O VitaView AI cria automaticamente gráficos de tendência para qualquer biomarcador ao longo do tempo. Isso permite visualizar rapidamente a progressão de condições crônicas, a eficácia de tratamentos e identificar padrões sutis que poderiam passar despercebidos em uma análise isolada."
                 },
                 {
-                  question: "Que tipos de arquivos posso carregar no VitaView AI?",
-                  answer: "O VitaView AI suporta arquivos em formato PDF, JPG, PNG e TIFF. Você pode carregar exames digitalizados, fotografias de resultados impressos ou arquivos digitais fornecidos diretamente pelos laboratórios. Nosso sistema é treinado para reconhecer formatos de diversos laboratórios."
+                  question: "Quais formatos de exames são compatíveis com a importação?",
+                  answer: "O sistema aceita os formatos mais comuns utilizados por laboratórios, incluindo PDF, JPG e PNG. Nossa tecnologia de OCR (Reconhecimento Óptico de Caracteres) é otimizada para layouts de laudos laboratoriais variados, garantindo alta precisão na extração dos dados."
                 }
               ].map((faq, index) => (
                 <motion.div
@@ -2089,15 +2092,16 @@ export default function LandingPage() {
                 <div className="mt-8 pt-8 border-t border-white/10">
                   <p className="text-sm text-gray-300 text-center mb-4">Siga-nos nas redes sociais</p>
                   <div className="flex justify-center space-x-4">
-                    {['Instagram', 'LinkedIn', 'Twitter'].map((social) => (
+                    {['Instagram', 'Twitter'].map((social) => (
                       <a
                         key={social}
-                        href="#"
+                        href={social === 'Instagram' ? "https://instagram.com/vitaview.ai" : "#"}
+                        target={social === 'Instagram' ? "_blank" : undefined}
+                        rel={social === 'Instagram' ? "noopener noreferrer" : undefined}
                         className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#A5E1D2] hover:text-[#1E3A5F] transition-all duration-300"
                       >
                         <span className="sr-only">{social}</span>
                         {social === 'Instagram' && <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>}
-                        {social === 'LinkedIn' && <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>}
                         {social === 'Twitter' && <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>}
                       </a>
                     ))}
