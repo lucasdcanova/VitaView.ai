@@ -49,7 +49,9 @@ import {
   Sparkles,
   Loader2,
   Users,
-  Save
+  Save,
+  AlertTriangle,
+  ShieldCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,10 +89,21 @@ const surgerySchema = z.object({
   notes: z.string().optional(),
 });
 
+const habitSchema = z.object({
+  habitType: z.enum(["etilismo", "tabagismo", "drogas_ilicitas"]),
+  status: z.enum(["nunca", "ex_usuario", "usuario_ativo"]),
+  frequency: z.string().optional(),
+  quantity: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 type DiagnosisForm = z.infer<typeof diagnosisSchema>;
 type MedicationForm = z.infer<typeof medicationSchema>;
 type AllergyForm = z.infer<typeof allergySchema>;
 type SurgeryForm = z.infer<typeof surgerySchema>;
+type HabitForm = z.infer<typeof habitSchema>;
 
 // Função para buscar a descrição do código CID-10
 const getCIDDescription = (cidCode: string): string => {
@@ -129,6 +142,9 @@ export default function HealthTrendsNew() {
   const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
   const [isEditSurgeryDialogOpen, setIsEditSurgeryDialogOpen] = useState(false);
   const [editingSurgery, setEditingSurgery] = useState<any>(null);
+  const [isHabitDialogOpen, setIsHabitDialogOpen] = useState(false);
+  const [isEditHabitDialogOpen, setIsEditHabitDialogOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<any>(null);
   const [anamnesisText, setAnamnesisText] = useState("");
   const [extractedRecord, setExtractedRecord] = useState<any | null>(null);
   const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
@@ -221,6 +237,32 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const habitForm = useForm<HabitForm>({
+    resolver: zodResolver(habitSchema),
+    defaultValues: {
+      habitType: "etilismo",
+      status: "nunca",
+      frequency: "",
+      quantity: "",
+      startDate: "",
+      endDate: "",
+      notes: "",
+    },
+  });
+
+  const editHabitForm = useForm<HabitForm>({
+    resolver: zodResolver(habitSchema),
+    defaultValues: {
+      habitType: "etilismo",
+      status: "nunca",
+      frequency: "",
+      quantity: "",
+      startDate: "",
+      endDate: "",
+      notes: "",
+    },
+  });
+
   const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
@@ -233,12 +275,16 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/medications"],
   });
 
-  const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
+  const { data: allergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
     queryKey: ["/api/allergies"],
   });
 
   const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery({
     queryKey: ["/api/surgeries"],
+  });
+
+  const { data: habits = [] } = useQuery<any[]>({
+    queryKey: ["/api/habits"],
   });
 
   const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery({
@@ -490,6 +536,70 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const createHabitMutation = useMutation({
+    mutationFn: async (data: HabitForm) => {
+      await apiRequest("POST", "/api/habits", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      setIsHabitDialogOpen(false);
+      habitForm.reset();
+      toast({
+        title: "Hábito registrado",
+        description: "O hábito foi registrado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao registrar",
+        description: "Ocorreu um erro ao registrar o hábito.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateHabitMutation = useMutation({
+    mutationFn: async (data: HabitForm) => {
+      await apiRequest("PUT", `/api/habits/${editingHabit.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      setIsEditHabitDialogOpen(false);
+      setEditingHabit(null);
+      toast({
+        title: "Hábito atualizado",
+        description: "O hábito foi atualizado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao atualizar o hábito.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteHabitMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/habits/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      toast({
+        title: "Hábito excluído",
+        description: "O hábito foi removido com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir",
+        description: "Ocorreu um erro ao excluir o hábito.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addEvolutionMutation = useMutation({
     mutationFn: (data: { text: string; date?: string }) => apiRequest("POST", "/api/evolutions", data),
     onSuccess: () => {
@@ -731,6 +841,34 @@ export default function HealthTrendsNew() {
     }
   };
 
+  const onHabitSubmit = (data: HabitForm) => {
+    createHabitMutation.mutate(data);
+  };
+
+  const onEditHabitSubmit = (data: HabitForm) => {
+    updateHabitMutation.mutate(data);
+  };
+
+  const handleEditHabit = (habit: any) => {
+    setEditingHabit(habit);
+    editHabitForm.reset({
+      habitType: habit.habitType,
+      status: habit.status,
+      frequency: habit.frequency || "",
+      quantity: habit.quantity || "",
+      startDate: habit.startDate || "",
+      endDate: habit.endDate || "",
+      notes: habit.notes || "",
+    });
+    setIsEditHabitDialogOpen(true);
+  };
+
+  const handleRemoveHabit = (id: number) => {
+    if (confirm("Deseja remover este hábito?")) {
+      deleteHabitMutation.mutate(id);
+    }
+  };
+
   const handleAnalyzeAnamnesis = () => {
     if (!anamnesisText.trim()) {
       toast({
@@ -933,9 +1071,73 @@ export default function HealthTrendsNew() {
                     Importar Pacientes
                   </Button>
                   <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
-                    {timelineItems.length} registros no histórico
+                    {timelineItems.length} registros
                   </Badge>
                 </div>
+              </div>
+
+              {/* Banner de Alertas de Alergias */}
+              <div className="w-full">
+                {allergies.length > 0 ? (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-red-100 rounded-full text-red-600 mt-0.5">
+                        <AlertTriangle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-red-800 flex items-center gap-2">
+                          ALERGIAS CONHECIDAS
+                          <span className="text-sm font-normal text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                            {allergies.length}
+                          </span>
+                        </h3>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {allergies.map((allergy: any) => (
+                            <div key={allergy.id} className="flex items-center gap-1.5 bg-white border border-red-200 px-3 py-1.5 rounded-md shadow-sm">
+                              <span className={`w-2.5 h-2.5 rounded-full ${allergy.severity === 'grave' ? 'bg-red-600 animate-pulse' :
+                                allergy.severity === 'moderada' ? 'bg-orange-500' : 'bg-yellow-500'
+                                }`} title={`Gravidade: ${allergy.severity || 'não informada'}`} />
+                              <span className="font-bold text-gray-800">{allergy.allergen}</span>
+                              {allergy.reaction && (
+                                <span className="text-xs text-gray-500 border-l border-gray-200 pl-1.5 ml-1">
+                                  {allergy.reaction}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="bg-white border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-300 whitespace-nowrap"
+                      onClick={() => setIsAllergyDialogOpen(true)}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Adicionar Alergia
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-full text-green-600">
+                        <ShieldCheck className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-800">Nenhuma alergia conhecida</h3>
+                        <p className="text-sm text-green-600">O paciente não possui registros de alergias.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="text-green-700 hover:bg-green-100 hover:text-green-800"
+                      onClick={() => setIsAllergyDialogOpen(true)}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Registrar
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Situação Atual de Saúde - Banner Superior */}
@@ -961,7 +1163,18 @@ export default function HealthTrendsNew() {
                           <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                           Diagnósticos
                         </h4>
-                        <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600"
+                            onClick={() => setIsDialogOpen(true)}
+                            title="Adicionar diagnóstico"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
@@ -997,7 +1210,18 @@ export default function HealthTrendsNew() {
                           <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
                           Alergias
                         </h4>
-                        <Badge variant="outline" className="bg-gray-50">{allergies.length}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-gray-50">{allergies.length}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-orange-50 hover:text-orange-600"
+                            onClick={() => setIsAllergyDialogOpen(true)}
+                            title="Adicionar alergia"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {Array.isArray(allergies) && allergies.length > 0 ? (
@@ -1035,7 +1259,18 @@ export default function HealthTrendsNew() {
                           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           Medicamentos
                         </h4>
-                        <Badge variant="outline" className="bg-gray-50">{medications.filter((m: any) => m.isActive).length}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-gray-50">{medications.filter((m: any) => m.isActive).length}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-600"
+                            onClick={() => setIsMedicationDialogOpen(true)}
+                            title="Adicionar medicamento"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {Array.isArray(medications) && medications.filter((m: any) => m.isActive).length > 0 ? (
@@ -1071,7 +1306,18 @@ export default function HealthTrendsNew() {
                           <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                           Cirurgias
                         </h4>
-                        <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600"
+                            onClick={() => setIsSurgeryDialogOpen(true)}
+                            title="Adicionar cirurgia"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {Array.isArray(surgeries) && surgeries.length > 0 ? (
@@ -1096,6 +1342,55 @@ export default function HealthTrendsNew() {
                         <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                           <Activity className="h-6 w-6 mb-1 opacity-50" />
                           <p className="text-xs">Nenhuma registrada</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hábitos */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-slate-500 rounded-full"></span>
+                          Hábitos
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-gray-50">{habits.length}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-slate-50 hover:text-slate-600"
+                            onClick={() => setIsHabitDialogOpen(true)}
+                            title="Adicionar hábito"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {Array.isArray(habits) && habits.length > 0 ? (
+                        <div className="space-y-3">
+                          {habits.slice(0, 3).map((habit: any) => (
+                            <div key={habit.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="bg-slate-50 p-1.5 rounded-md mt-0.5">
+                                <Activity className="h-3 w-3 text-slate-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                                  {habit.habitType === 'etilismo' ? 'Etilismo' :
+                                    habit.habitType === 'tabagismo' ? 'Tabagismo' : 'Drogas Ilícitas'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {habit.status === 'nunca' ? 'Nunca usou' :
+                                    habit.status === 'ex_usuario' ? 'Ex-usuário' : 'Usuário ativo'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                          <Activity className="h-6 w-6 mb-1 opacity-50" />
+                          <p className="text-xs">Nenhum registro</p>
                         </div>
                       )}
                     </div>

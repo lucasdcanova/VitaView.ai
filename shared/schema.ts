@@ -421,3 +421,35 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+
+// Habits schema
+export const habits = pgTable("habits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id),
+  habitType: text("habit_type").notNull(), // etilismo, tabagismo, udi
+  status: text("status").notNull(), // nunca, ex, ativo
+  frequency: text("frequency"), // diariamente, socialmente, etc.
+  quantity: text("quantity"), // quantidade aproximada
+  startDate: text("start_date"), // quando começou o hábito
+  endDate: text("end_date"), // quando parou (para ex-usuários)
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertHabitSchema = createInsertSchema(habits).pick({
+  userId: true,
+  habitType: true,
+  status: true,
+  frequency: true,
+  quantity: true,
+  startDate: true,
+  endDate: true,
+  notes: true,
+}).extend({
+  profileId: z.number().int().optional().nullable()
+});
+
+export type Habit = typeof habits.$inferSelect;
+export type InsertHabit = z.infer<typeof insertHabitSchema>;

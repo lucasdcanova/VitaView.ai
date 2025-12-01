@@ -2267,6 +2267,77 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // API routes for habits (Hábitos: etilismo, tabagismo, UDI)
+  app.get("/api/habits", ensureAuthenticated, async (req, res) => {
+    try {
+      const habits = await storage.getHabitsByUserId(req.user!.id);
+      res.json(habits || []);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar hábitos" });
+    }
+  });
+
+  app.post("/api/habits", ensureAuthenticated, async (req, res) => {
+    try {
+      const habitData = {
+        userId: req.user!.id,
+        profileId: req.body.profileId || null,
+        habitType: req.body.habitType,
+        status: req.body.status,
+        frequency: req.body.frequency || null,
+        quantity: req.body.quantity || null,
+        startDate: req.body.startDate || null,
+        endDate: req.body.endDate || null,
+        notes: req.body.notes || null,
+      };
+
+      const newHabit = await storage.createHabit(habitData);
+      res.status(201).json(newHabit);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar hábito" });
+    }
+  });
+
+  app.put("/api/habits/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const habitId = parseInt(req.params.id);
+      const habit = await storage.getHabit(habitId);
+
+      if (!habit) {
+        return res.status(404).json({ message: "Hábito não encontrado" });
+      }
+
+      if (habit.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const updatedHabit = await storage.updateHabit(habitId, req.body);
+      res.json(updatedHabit);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar hábito" });
+    }
+  });
+
+  app.delete("/api/habits/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const habitId = parseInt(req.params.id);
+      const habit = await storage.getHabit(habitId);
+
+      if (!habit) {
+        return res.status(404).json({ message: "Hábito não encontrado" });
+      }
+
+      if (habit.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      await storage.deleteHabit(habitId);
+      res.json({ message: "Hábito excluído com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir hábito" });
+    }
+  });
+
   // Rota para gerar relatório cronológico contextual com OpenAI
   app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {

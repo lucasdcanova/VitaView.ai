@@ -78,6 +78,13 @@ export interface IStorage {
   getEvolutionsByUserId(userId: number): Promise<Evolution[]>;
   deleteEvolution(id: number): Promise<boolean>;
 
+  // Habit operations
+  createHabit(habit: any): Promise<any>;
+  getHabit(id: number): Promise<any | undefined>;
+  getHabitsByUserId(userId: number): Promise<any[]>;
+  updateHabit(id: number, data: Partial<any>): Promise<any | undefined>;
+  deleteHabit(id: number): Promise<boolean>;
+
   // Admin operations
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<boolean>;
@@ -125,6 +132,7 @@ export class MemStorage implements IStorage {
   private surgeriesMap: Map<number, any>;
   private evolutionsMap: Map<number, Evolution>;
   private appointmentsMap: Map<number, Appointment>;
+  private habitsMap: Map<number, any>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -139,6 +147,7 @@ export class MemStorage implements IStorage {
   private surgeryIdCounter: number = 1;
   private evolutionIdCounter: number = 1;
   private appointmentIdCounter: number = 1;
+  private habitIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -153,10 +162,12 @@ export class MemStorage implements IStorage {
     this.surgeriesMap = new Map();
     this.evolutionsMap = new Map();
     this.appointmentsMap = new Map();
+    this.habitsMap = new Map();
     this.diagnosisIdCounter = 1;
     this.surgeryIdCounter = 1;
     this.evolutionIdCounter = 1;
     this.appointmentIdCounter = 1;
+    this.habitIdCounter = 1;
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -832,6 +843,36 @@ export class MemStorage implements IStorage {
 
   async deleteEvolution(id: number): Promise<boolean> {
     return this.evolutionsMap.delete(id);
+  }
+
+  // Habit operations
+  async createHabit(habit: any): Promise<any> {
+    const id = this.habitIdCounter++;
+    const newHabit = { ...habit, id, createdAt: new Date(), updatedAt: new Date() };
+    this.habitsMap.set(id, newHabit);
+    return newHabit;
+  }
+
+  async getHabit(id: number): Promise<any | undefined> {
+    return this.habitsMap.get(id);
+  }
+
+  async getHabitsByUserId(userId: number): Promise<any[]> {
+    return Array.from(this.habitsMap.values()).filter(
+      (h) => h.userId === userId
+    );
+  }
+
+  async updateHabit(id: number, data: Partial<any>): Promise<any | undefined> {
+    const habit = await this.getHabit(id);
+    if (!habit) return undefined;
+    const updated = { ...habit, ...data, updatedAt: new Date() };
+    this.habitsMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteHabit(id: number): Promise<boolean> {
+    return this.habitsMap.delete(id);
   }
 
   // Admin operations
