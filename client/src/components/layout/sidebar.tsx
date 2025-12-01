@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Heart,
   Calendar,
-  Settings
+  Settings,
+  Users
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 
@@ -108,6 +109,17 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
         >
           <Upload className="mr-3 h-5 w-5" />
           <span>Enviar Exames</span>
+        </Link>
+
+        <Link href="/bulk-import"
+          onClick={handleNavClick}
+          className={`w-full flex items-center p-3 rounded-lg transition-colors ${location === '/bulk-import'
+            ? 'bg-[#E0E9F5] text-[#1E3A5F]'
+            : 'hover:bg-gray-50 text-gray-700'
+            }`}
+        >
+          <Users className="mr-3 h-5 w-5" />
+          <span>Importar Pacientes</span>
         </Link>
 
         <Link href="/results"
