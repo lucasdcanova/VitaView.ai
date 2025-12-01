@@ -872,77 +872,398 @@ export default function ProfileSwitcher() {
 
       {/* Edit Patient Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar paciente</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome completo *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do paciente" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gênero *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+              {/* Dados Básicos */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Dados Básicos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome completo *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome do paciente" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 00000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gênero *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o gênero" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Feminino">Feminino</SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="birthDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de nascimento *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Identificação */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Identificação</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="cpf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CPF</FormLabel>
+                        <FormControl>
+                          <Input placeholder="000.000.000-00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="rg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>RG</FormLabel>
+                        <FormControl>
+                          <Input placeholder="00.000.000-0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="email@exemplo.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="landline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone fixo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 0000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Endereço */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Endereço</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="cep"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CEP</FormLabel>
+                        <FormControl>
+                          <Input placeholder="00000-000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="street"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Rua</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome da rua" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="complement"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Complemento</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Apto, bloco..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="neighborhood"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bairro</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Bairro" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Cidade" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado</FormLabel>
+                        <FormControl>
+                          <Input placeholder="UF" maxLength={2} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Dados Complementares */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Dados Complementares</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="guardianName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do responsável</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="emergencyPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone de emergência</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 00000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="profession"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profissão</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Profissão" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="maritalStatus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado civil</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                            <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                            <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                            <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                            <SelectItem value="União estável">União estável</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Informações do Plano */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Informações do Plano</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="planType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de plano</FormLabel>
+                        <FormControl>
+                          <Input placeholder="SUS, particular, convênio..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="insuranceName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do convênio</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome do convênio" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="insuranceCardNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número da carteirinha</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Número da carteirinha" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="insuranceValidity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Validade do plano</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Observações */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Observações</h3>
+                <FormField
+                  control={editForm.control}
+                  name="referralSource"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Como conheceu a clínica</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o gênero" />
-                        </SelectTrigger>
+                        <Input placeholder="Indicação, internet, etc." {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="birthDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de nascimento *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="planType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de plano (opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="SUS, particular, convênio..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end space-x-2 pt-2">
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações gerais</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Anotações adicionais..." rows={3} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <DialogClose asChild>
                   <Button variant="outline">Cancelar</Button>
                 </DialogClose>
