@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useLocation } from "wouter";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, Image, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ExtractedPatient {
@@ -25,6 +26,7 @@ interface ExtractedPatient {
 }
 
 export default function BulkImportPage() {
+    const [, setLocation] = useLocation();
     const [files, setFiles] = useState<File[]>([]);
     const [extractedPatients, setExtractedPatients] = useState<ExtractedPatient[]>([]);
     const [selectedPatients, setSelectedPatients] = useState<Set<number>>(new Set());
@@ -219,6 +221,14 @@ export default function BulkImportPage() {
     return (
         <div className="container mx-auto py-8 px-4 max-w-7xl">
             <div className="mb-8">
+                <Button
+                    variant="ghost"
+                    className="mb-4 pl-0 hover:bg-transparent hover:text-primary"
+                    onClick={() => setLocation("/health-trends")}
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar para Vita Timeline
+                </Button>
                 <h1 className="text-3xl font-bold mb-2">Importação em Massa de Pacientes</h1>
                 <p className="text-muted-foreground">
                     Importe múltiplos pacientes de uma vez usando fotos, PDFs ou planilhas. A IA extrairá automaticamente os dados.
