@@ -624,8 +624,26 @@ function getFallbackInsights(patientData?: any) {
   return response;
 }
 
-export async function parseAppointmentCommand(command: string) {
+export async function parseAppointmentCommand(command: string, files?: Express.Multer.File[]) {
   try {
+    let existingAppointments = "";
+
+    // Process uploaded files if any
+    if (files && files.length > 0) {
+      const fileAnalyses = await Promise.all(
+        files.map(async (file) => {
+          if (file.mimetype.startsWith('image/')) {
+            return await extractAppointmentsFromImage(file);
+          } else if (file.mimetype === 'application/pdf') {
+            return await extractAppointmentsFromPDF(file);
+          }
+          return "";
+        })
+      );
+
+      existingAppointments = fileAnalyses.filter(Boolean).join("\n");
+    }
+
     const prompt = `
       Você é uma assistente de agendamento médico inteligente.
       Sua tarefa é extrair informações de um comando de texto para criar um agendamento.
@@ -634,12 +652,15 @@ export async function parseAppointmentCommand(command: string) {
       
       DATA ATUAL: ${new Date().toISOString().split('T')[0]}
       
+      ${existingAppointments ? `COMPROMISSOS EXISTENTES NA AGENDA:\n${existingAppointments}\n\nIMPORTANTE: Verifique se há conflitos de horário e sugira alternativas se necessário.` : ''}
+      
       INSTRUÇÕES:
       1. Extraia o nome do paciente.
       2. Determine a data do agendamento (formato YYYY-MM-DD). Se for relativo (ex: "daqui a 30 dias"), calcule a data.
       3. Determine o horário (formato HH:mm). Se não especificado, sugira um horário comercial padrão (ex: 09:00, 14:00).
       4. Determine o tipo de consulta: "consulta", "retorno", "exames" ou "urgencia".
       5. Extraia observações adicionais.
+      6. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
       
       RESPONDA APENAS COM O JSON:
       {
@@ -647,7 +668,9 @@ export async function parseAppointmentCommand(command: string) {
         "date": "YYYY-MM-DD",
         "time": "HH:mm",
         "type": "tipo_identificado",
-        "notes": "observações"
+        "notes": "observações",
+        "conflicts": ["lista de conflitos se houver"],
+        "suggestedAlternatives": ["horários alternativos se houver conflitos"]
       }
     `;
 
@@ -663,7 +686,9 @@ export async function parseAppointmentCommand(command: string) {
         date: nextWeek.toISOString().split('T')[0],
         time: "14:00",
         type: "consulta",
-        notes: "Agendamento automático (Mock)"
+        notes: "Agendamento automático (Mock)",
+        conflicts: [],
+        suggestedAlternatives: []
       };
     }
 

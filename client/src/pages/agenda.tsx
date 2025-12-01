@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Paperclip, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -29,6 +29,8 @@ export default function Agenda() {
     const [aiCommand, setAiCommand] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiProposal, setAiProposal] = useState<any>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Create appointment mutation
     const createAppointmentMutation = useMutation({
@@ -54,13 +56,59 @@ export default function Agenda() {
         },
     });
 
+    // File upload handlers
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const validFiles = files.filter(file => {
+            const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
+            const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+
+            if (!isValidType) {
+                toast({
+                    title: "Tipo de arquivo inválido",
+                    description: `${file.name} não é uma imagem ou PDF.`,
+                    variant: "destructive",
+                });
+            }
+            if (!isValidSize) {
+                toast({
+                    title: "Arquivo muito grande",
+                    description: `${file.name} excede o limite de 10MB.`,
+                    variant: "destructive",
+                });
+            }
+
+            return isValidType && isValidSize;
+        });
+
+        setUploadedFiles(prev => [...prev, ...validFiles].slice(0, 5)); // max 5 files
+    };
+
+    const removeFile = (index: number) => {
+        setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
     // AI Command handler
     const handleAiCommand = async () => {
-        if (!aiCommand.trim()) return;
+        if (!aiCommand.trim() && uploadedFiles.length === 0) return;
 
         setIsAiLoading(true);
         try {
-            const res = await apiRequest("POST", "/api/appointments/ai-schedule", { command: aiCommand });
+            const formData = new FormData();
+            formData.append('command', aiCommand);
+
+            uploadedFiles.forEach((file, index) => {
+                formData.append(`file${index}`, file);
+            });
+
+            const res = await fetch('/api/appointments/ai-schedule', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+            });
+
+            if (!res.ok) throw new Error('Failed to process');
+
             const data = await res.json();
             setAiProposal(data);
         } catch (error) {
@@ -103,22 +151,70 @@ export default function Agenda() {
                             lastExamDate={null}
                             showTitleAsMain={true}
                         >
-                            <div className="w-full md:w-[400px] relative">
-                                <Input
-                                    placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
-                                    className="bg-white border-blue-200 focus:border-blue-500 text-gray-800 placeholder:text-gray-400 pr-10 shadow-sm"
-                                    value={aiCommand}
-                                    onChange={(e) => setAiCommand(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
-                                    disabled={isAiLoading}
-                                />
-                                <button
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
-                                    onClick={handleAiCommand}
-                                    disabled={isAiLoading}
-                                >
-                                    {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                </button>
+                            <div className="w-full md:w-[500px] space-y-2">
+                                <div className="relative">
+                                    <Input
+                                        placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
+                                        className="bg-white border-blue-200 focus:border-blue-500 text-gray-800 placeholder:text-gray-400 pr-20 shadow-sm"
+                                        value={aiCommand}
+                                        onChange={(e) => setAiCommand(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
+                                        disabled={isAiLoading}
+                                    />
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                                        <button
+                                            className="text-gray-500 hover:text-gray-700 p-1"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isAiLoading}
+                                            title="Anexar arquivo (imagem ou PDF)"
+                                        >
+                                            <Paperclip className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            className="text-blue-500 hover:text-blue-700 p-1"
+                                            onClick={handleAiCommand}
+                                            disabled={isAiLoading}
+                                        >
+                                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        multiple
+                                        className="hidden"
+                                        onChange={handleFileSelect}
+                                    />
+                                </div>
+
+                                {/* File previews */}
+                                {uploadedFiles.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {uploadedFiles.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm"
+                                            >
+                                                <span className="text-blue-700">
+                                                    {file.type.startsWith('image/') ? '🖼️' : '📄'}
+                                                </span>
+                                                <span className="text-gray-700 max-w-[150px] truncate">
+                                                    {file.name}
+                                                </span>
+                                                <span className="text-gray-500 text-xs">
+                                                    ({(file.size / 1024).toFixed(0)} KB)
+                                                </span>
+                                                <button
+                                                    onClick={() => removeFile(index)}
+                                                    className="text-gray-500 hover:text-red-600 ml-1"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </PatientHeader>
 

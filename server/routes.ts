@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { pool } from "./db";
 import Stripe from "stripe";
+import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
 import { biometricTwoFactorAuth } from "./auth/biometric-2fa";
 import { advancedSecurity } from "./middleware/advanced-security";
@@ -700,14 +701,33 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  app.post("/api/appointments/ai-schedule", ensureAuthenticated, async (req, res) => {
+  // Configure multer for AI scheduling file uploads
+  const aiScheduleUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo de arquivo não suportado'));
+      }
+    }
+  });
+
+  app.post("/api/appointments/ai-schedule", ensureAuthenticated, aiScheduleUpload.array('files', 5), async (req, res) => {
     try {
       const { command } = req.body;
-      if (!command) return res.status(400).json({ message: "Comando não fornecido" });
+      const files = req.files as Express.Multer.File[];
 
-      const parsedData = await parseAppointmentCommand(command);
+      if (!command && (!files || files.length === 0)) {
+        return res.status(400).json({ message: "Comando ou arquivos devem ser fornecidos" });
+      }
+
+      const parsedData = await parseAppointmentCommand(command || "", files);
       res.json(parsedData);
     } catch (error) {
+      console.error('Error in AI schedule:', error);
       res.status(500).json({ message: "Erro ao processar comando de agendamento" });
     }
   });
