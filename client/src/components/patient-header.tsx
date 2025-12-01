@@ -9,6 +9,7 @@ interface PatientHeaderProps {
   patient?: Profile | null;
   lastExamDate?: string | null;
   showTitleAsMain?: boolean;
+  children?: React.ReactNode;
 }
 
 export default function PatientHeader({
@@ -17,6 +18,7 @@ export default function PatientHeader({
   patient,
   lastExamDate,
   showTitleAsMain = false,
+  children,
 }: PatientHeaderProps) {
   const formatDate = (value?: string | null) => {
     if (!value) return null;
@@ -93,6 +95,11 @@ export default function PatientHeader({
             <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{description}</p>
           )}
         </div>
+        {children && (
+          <div className="flex-shrink-0 mt-4 md:mt-0">
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -343,3 +343,27 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
 export type Evolution = typeof evolutions.$inferSelect;
 export type InsertEvolution = z.infer<typeof insertEvolutionSchema>;
+
+// Appointments schema
+export const appointments = pgTable("appointments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  patientName: text("patient_name").notNull(),
+  date: text("date").notNull(), // YYYY-MM-DD
+  time: text("time").notNull(), // HH:mm
+  type: text("type").notNull(), // consulta, retorno, exames, urgencia
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAppointmentSchema = createInsertSchema(appointments).pick({
+  userId: true,
+  patientName: true,
+  date: true,
+  time: true,
+  type: true,
+  notes: true,
+});
+
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;

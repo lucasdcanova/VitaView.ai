@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -77,6 +77,12 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<boolean>;
 
+  // Appointment operations
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  getAppointmentsByUserId(userId: number): Promise<Appointment[]>;
+  updateAppointment(id: number, appointment: Partial<Appointment>): Promise<Appointment | undefined>;
+  deleteAppointment(id: number): Promise<boolean>;
+
   // Subscription operations
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
@@ -113,6 +119,7 @@ export class MemStorage implements IStorage {
   private diagnosesMap: Map<number, any>;
   private surgeriesMap: Map<number, any>;
   private evolutionsMap: Map<number, Evolution>;
+  private appointmentsMap: Map<number, Appointment>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -126,6 +133,7 @@ export class MemStorage implements IStorage {
   private diagnosisIdCounter: number = 1;
   private surgeryIdCounter: number = 1;
   private evolutionIdCounter: number = 1;
+  private appointmentIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -139,9 +147,11 @@ export class MemStorage implements IStorage {
     this.diagnosesMap = new Map();
     this.surgeriesMap = new Map();
     this.evolutionsMap = new Map();
+    this.appointmentsMap = new Map();
     this.diagnosisIdCounter = 1;
     this.surgeryIdCounter = 1;
     this.evolutionIdCounter = 1;
+    this.appointmentIdCounter = 1;
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -779,6 +789,43 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     return this.users.delete(id);
+  }
+
+  // Appointment operations
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const id = this.appointmentIdCounter++;
+    const newAppointment: Appointment = {
+      ...appointment,
+      id,
+      notes: appointment.notes || null,
+      createdAt: new Date()
+    };
+    this.appointmentsMap.set(id, newAppointment);
+    return newAppointment;
+  }
+
+  async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
+    return Array.from(this.appointmentsMap.values())
+      .filter(app => app.userId === userId)
+      .sort((a, b) => {
+        // Sort by date and time
+        const dateA = new Date(`${a.date}T${a.time}`);
+        const dateB = new Date(`${b.date}T${b.time}`);
+        return dateA.getTime() - dateB.getTime();
+      });
+  }
+
+  async updateAppointment(id: number, appointmentData: Partial<Appointment>): Promise<Appointment | undefined> {
+    const appointment = this.appointmentsMap.get(id);
+    if (!appointment) return undefined;
+
+    const updatedAppointment = { ...appointment, ...appointmentData };
+    this.appointmentsMap.set(id, updatedAppointment);
+    return updatedAppointment;
+  }
+
+  async deleteAppointment(id: number): Promise<boolean> {
+    return this.appointmentsMap.delete(id);
   }
 
   async getDoctorDashboardStats(userId: number): Promise<{

@@ -624,6 +624,57 @@ function getFallbackInsights(patientData?: any) {
   return response;
 }
 
+export async function parseAppointmentCommand(command: string) {
+  try {
+    const prompt = `
+      Você é uma assistente de agendamento médico inteligente.
+      Sua tarefa é extrair informações de um comando de texto para criar um agendamento.
+      
+      COMANDO: "${command}"
+      
+      DATA ATUAL: ${new Date().toISOString().split('T')[0]}
+      
+      INSTRUÇÕES:
+      1. Extraia o nome do paciente.
+      2. Determine a data do agendamento (formato YYYY-MM-DD). Se for relativo (ex: "daqui a 30 dias"), calcule a data.
+      3. Determine o horário (formato HH:mm). Se não especificado, sugira um horário comercial padrão (ex: 09:00, 14:00).
+      4. Determine o tipo de consulta: "consulta", "retorno", "exames" ou "urgencia".
+      5. Extraia observações adicionais.
+      
+      RESPONDA APENAS COM O JSON:
+      {
+        "patientName": "Nome do Paciente",
+        "date": "YYYY-MM-DD",
+        "time": "HH:mm",
+        "type": "tipo_identificado",
+        "notes": "observações"
+      }
+    `;
+
+    if (!process.env.OPENAI_API_KEY) {
+      // Fallback for dev without API key
+      console.log("Mocking OpenAI response for appointment parsing");
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+
+      return {
+        patientName: "Paciente Identificado",
+        date: nextWeek.toISOString().split('T')[0],
+        time: "14:00",
+        type: "consulta",
+        notes: "Agendamento automático (Mock)"
+      };
+    }
+
+    const response = await callOpenAIApi(prompt);
+    return response;
+  } catch (error) {
+    console.error("Error parsing appointment command:", error);
+    throw new Error("Falha ao processar comando de agendamento");
+  }
+}
+
 /**
  * Gera um relatório cronológico contextual baseado nos exames do paciente ao longo do tempo
  * @param examResults - Lista de resultados de exames em ordem cronológica

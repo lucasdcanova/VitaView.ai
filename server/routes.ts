@@ -12,7 +12,7 @@ import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
-import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis } from "./services/openai";
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis, parseAppointmentCommand } from "./services/openai";
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
@@ -673,6 +673,42 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
     } catch (error) {
       res.status(500).json({ message: "Erro ao alterar plano" });
+    }
+  });
+
+  // Appointment Routes
+  app.get("/api/appointments", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const appointments = await storage.getAppointmentsByUserId(req.user.id);
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar agendamentos" });
+    }
+  });
+
+  app.post("/api/appointments", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const appointment = await storage.createAppointment({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(appointment);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar agendamento" });
+    }
+  });
+
+  app.post("/api/appointments/ai-schedule", ensureAuthenticated, async (req, res) => {
+    try {
+      const { command } = req.body;
+      if (!command) return res.status(400).json({ message: "Comando não fornecido" });
+
+      const parsedData = await parseAppointmentCommand(command);
+      res.json(parsedData);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao processar comando de agendamento" });
     }
   });
 

@@ -19,16 +19,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-interface Appointment {
-  time: string;
-  patient: string;
-  type: "consulta" | "retorno" | "exames" | "urgencia";
-  notes?: string;
-}
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import type { Appointment } from "@shared/schema";
 
 interface AgendaCalendarProps {
-  appointments?: Record<number, Appointment[]>; // day index -> appointments
+  appointments?: Record<number, Appointment[]>; // day index -> appointments (legacy prop, now using query)
   weekStart?: Date;
   onNewAppointment?: () => void;
 }
@@ -41,30 +39,42 @@ export function AgendaCalendar({
   const [currentWeek, setCurrentWeek] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
 
-  // Mock data - substituir com dados reais da API
-  const mockAppointments: Record<number, Appointment[]> = {
-    1: [ // Monday
-      { time: "09:00", patient: "Maria Silva", type: "consulta", notes: "Primeira consulta, queixa de dores de cabeça." },
-      { time: "14:30", patient: "João Santos", type: "retorno", notes: "Retorno após exames de sangue." }
-    ],
-    2: [ // Tuesday
-      { time: "10:00", patient: "Ana Costa", type: "exames", notes: "Check-up anual." }
-    ],
-    3: [ // Wednesday
-      { time: "08:00", patient: "Pedro Lima", type: "urgencia", notes: "Febre alta e dor no corpo." },
-      { time: "11:00", patient: "Carla Mendes", type: "consulta" },
-      { time: "15:00", patient: "Roberto Silva", type: "retorno" }
-    ],
-    4: [ // Thursday
-      { time: "09:30", patient: "Lucia Alves", type: "consulta" },
-      { time: "13:00", patient: "Fernando Costa", type: "exames" }
-    ],
-    5: [ // Friday
-      { time: "10:30", patient: "Beatriz Souza", type: "retorno" }
-    ]
-  };
+  const { toast } = useToast();
 
-  const displayAppointments = Object.keys(appointments).length > 0 ? appointments : mockAppointments;
+  // Fetch appointments
+  const { data: appointmentsList = [] } = useQuery<Appointment[]>({
+    queryKey: ["/api/appointments"],
+  });
+
+  // Group appointments by day of week (0-6)
+  const groupedAppointments: Record<number, Appointment[]> = {};
+  appointmentsList.forEach(app => {
+    const date = new Date(app.date + 'T00:00:00');
+    // Adjust for timezone if necessary, but simple day extraction:
+    // We need to map specific date to the day index relative to current week view?
+    // Or just map to day of week (0=Sun, 1=Mon...)
+    // The calendar view shows a specific week. We should filter by that week.
+
+    const appDate = new Date(app.date);
+    // Check if appDate is in currentWeek
+    const start = startOfWeek(currentWeek, { weekStartsOn: 0 });
+    const end = endOfWeek(currentWeek, { weekStartsOn: 0 });
+
+    // Simple check: is it in the displayed week?
+    // Note: app.date is YYYY-MM-DD string.
+    // Let's create a date object at noon to avoid timezone shifts affecting the day
+    const d = new Date(app.date + 'T12:00:00');
+
+    if (d >= start && d <= end) {
+      const dayIndex = d.getDay();
+      if (!groupedAppointments[dayIndex]) {
+        groupedAppointments[dayIndex] = [];
+      }
+      groupedAppointments[dayIndex].push(app);
+    }
+  });
+
+  const displayAppointments = groupedAppointments;
 
   const getTypeStyles = (type: string) => {
     switch (type) {
@@ -221,14 +231,14 @@ export function AgendaCalendar({
                         whileHover={{ scale: 1.02 }}
                       >
                         <div className={`text-xs font-semibold ${styles.text}`}>{appointment.time}</div>
-                        <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>{appointment.patient}</div>
+                        <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>{appointment.patientName}</div>
                         <div className={`text-xs ${styles.label} capitalize`}>{appointment.type}</div>
                       </motion.div>
                     </PopoverTrigger>
                     <PopoverContent className="w-80">
                       <div className="grid gap-4">
                         <div className="space-y-2">
-                          <h4 className="font-medium leading-none">{appointment.patient}</h4>
+                          <h4 className="font-medium leading-none">{appointment.patientName}</h4>
                           <p className="text-sm text-muted-foreground capitalize flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
                             {appointment.type}
