@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +47,8 @@ import {
   Activity,
   FileDown,
   Sparkles,
-  Loader2
+  Loader2,
+  Users
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,6 +113,7 @@ interface TimelineItem {
 
 export default function HealthTrendsNew() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { activeProfile } = useProfiles();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -900,6 +903,15 @@ export default function HealthTrendsNew() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white"
+                    onClick={() => setLocation("/bulk-import")}
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Importar Pacientes
+                  </Button>
                   <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
                     {timelineItems.length} registros no histórico
                   </Badge>
