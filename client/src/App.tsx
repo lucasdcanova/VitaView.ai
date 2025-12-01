@@ -32,6 +32,7 @@ const Agenda = lazy(() => import("@/pages/agenda"));
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const QuickSummaryPage = lazy(() => import("@/pages/quick-summary-page"));
+const BulkImport = lazy(() => import("@/pages/bulk-import"));
 
 // Loading fallback component
 const PageLoadingFallback = () => (
@@ -64,6 +65,7 @@ function Router() {
         <ProtectedRoute path="/health-trends" component={HealthTrends} />
         <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
         <ProtectedRoute path="/profile" component={Profile} />
+        <ProtectedRoute path="/bulk-import" component={BulkImport} />
 
         <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
         <ProtectedRoute path="/admin-panel" component={AdminPanel} />

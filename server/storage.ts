@@ -4,7 +4,8 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, asc, and, or, inArray, sql } from "drizzle-orm";
+import logger from "./logger";
 
 // Fix for type issues - use any to bypass complex type definitions
 type SessionStore = any;
@@ -27,6 +28,10 @@ export interface IStorage {
   updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined>;
   deleteProfile(id: number): Promise<boolean>;
   getDefaultProfileForUser(userId: number): Promise<Profile | undefined>;
+
+  // Bulk import operations
+  createProfilesBulk(profiles: Partial<InsertProfile>[]): Promise<Profile[]>;
+  findDuplicateProfiles(userId: number, names: string[], cpfs: (string | null)[]): Promise<Profile[]>;
 
   // Exam operations
   createExam(exam: InsertExam): Promise<Exam>;
@@ -349,6 +354,53 @@ export class MemStorage implements IStorage {
     return Array.from(this.profiles.values()).find(
       (profile) => profile.userId === userId && profile.isDefault
     );
+  }
+
+  // Bulk import operations
+  async createProfilesBulk(profiles: Partial<InsertProfile>[]): Promise<Profile[]> {
+    const createdProfiles: Profile[] = [];
+
+    for (const profileData of profiles) {
+      try {
+        // Ensure required fields are present
+        if (!profileData.userId || !profileData.name) {
+          logger.warn('Skipping profile creation: missing required fields', profileData);
+          continue;
+        }
+
+        const profile = await this.createProfile(profileData as InsertProfile);
+        createdProfiles.push(profile);
+      } catch (error) {
+        logger.error('Error creating profile in bulk:', error);
+      }
+    }
+
+    return createdProfiles;
+  }
+
+  async findDuplicateProfiles(userId: number, names: string[], cpfs: (string | null)[]): Promise<Profile[]> {
+    const userProfiles = await this.getProfilesByUserId(userId);
+    const duplicates: Profile[] = [];
+
+    for (const profile of userProfiles) {
+      // Check for CPF match (exact)
+      if (profile.cpf && cpfs.includes(profile.cpf)) {
+        duplicates.push(profile);
+        continue;
+      }
+
+      // Check for name similarity (case-insensitive)
+      const profileNameLower = profile.name.toLowerCase().trim();
+      for (const name of names) {
+        const nameLower = name.toLowerCase().trim();
+        if (profileNameLower === nameLower) {
+          duplicates.push(profile);
+          break;
+        }
+      }
+    }
+
+    return duplicates;
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {

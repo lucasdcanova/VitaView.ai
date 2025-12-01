@@ -17,6 +17,7 @@ import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
+import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
 import { nanoid } from "nanoid";
 
@@ -2374,6 +2375,219 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao alterar perfil ativo" });
     }
   });
+
+  // ============================================================================
+  // BULK PATIENT IMPORT ROUTES
+  // ============================================================================
+
+  // Configure multer for bulk import file uploads
+  const bulkImportUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB per file
+      files: 10 // Max 10 files at once
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'application/pdf',
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo de arquivo não suportado. Use imagens (JPG, PNG), PDF ou CSV.'));
+      }
+    }
+  });
+
+  /**
+   * POST /api/patients/bulk-import/extract
+   * Extract patient data from uploaded files using AI
+   */
+  app.post("/api/patients/bulk-import/extract",
+    ensureAuthenticated,
+    bulkImportUpload.array('files', 10),
+    async (req, res) => {
+      try {
+        const files = req.files as Express.Multer.File[];
+
+        if (!files || files.length === 0) {
+          return res.status(400).json({
+            message: "Nenhum arquivo foi enviado"
+          });
+        }
+
+        logger.info(`[BulkImport] Processing ${files.length} files for user ${req.user!.id}`);
+
+        // Separate files by type
+        const imageFiles: Array<{ buffer: Buffer; filename: string; mimetype: string }> = [];
+        const pdfFiles: Array<{ buffer: Buffer; filename: string }> = [];
+        const csvFiles: Array<{ buffer: Buffer; filename: string }> = [];
+
+        for (const file of files) {
+          if (file.mimetype.startsWith('image/')) {
+            imageFiles.push({
+              buffer: file.buffer,
+              filename: file.originalname,
+              mimetype: file.mimetype
+            });
+          } else if (file.mimetype === 'application/pdf') {
+            pdfFiles.push({
+              buffer: file.buffer,
+              filename: file.originalname
+            });
+          } else if (file.mimetype.includes('csv') || file.mimetype.includes('spreadsheet')) {
+            csvFiles.push({
+              buffer: file.buffer,
+              filename: file.originalname
+            });
+          }
+        }
+
+        // Process files in parallel
+        const results = await Promise.allSettled([
+          imageFiles.length > 0 ? extractPatientsFromImages(imageFiles) : Promise.resolve({ patients: [], totalExtracted: 0, errors: [] }),
+          pdfFiles.length > 0 ? extractPatientsFromPDF(pdfFiles) : Promise.resolve({ patients: [], totalExtracted: 0, errors: [] }),
+          csvFiles.length > 0 ? extractPatientsFromCSV(csvFiles) : Promise.resolve({ patients: [], totalExtracted: 0, errors: [] })
+        ]);
+
+        // Combine results
+        let allPatients: ExtractedPatient[] = [];
+        let allErrors: Array<{ file: string; error: string }> = [];
+
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            allPatients = allPatients.concat(result.value.patients);
+            allErrors = allErrors.concat(result.value.errors);
+          } else {
+            const fileType = index === 0 ? 'imagens' : index === 1 ? 'PDFs' : 'CSVs';
+            allErrors.push({
+              file: fileType,
+              error: result.reason?.message || 'Erro desconhecido'
+            });
+          }
+        });
+
+        // Normalize all extracted patients
+        const normalizedPatients = allPatients.map(p => normalizePatientData(p));
+
+        // Check for duplicates
+        const names = normalizedPatients.map(p => p.name);
+        const cpfs = normalizedPatients.map(p => p.cpf).filter((cpf): cpf is string | null => cpf !== undefined);
+        const duplicates = await storage.findDuplicateProfiles(req.user!.id, names, cpfs);
+
+        logger.info(`[BulkImport] Extracted ${normalizedPatients.length} patients, found ${duplicates.length} potential duplicates`);
+
+        res.json({
+          success: true,
+          patients: normalizedPatients,
+          totalExtracted: normalizedPatients.length,
+          duplicates: duplicates.map(d => ({
+            id: d.id,
+            name: d.name,
+            cpf: d.cpf,
+            birthDate: d.birthDate
+          })),
+          errors: allErrors,
+          summary: {
+            totalFiles: files.length,
+            imagesProcessed: imageFiles.length,
+            pdfsProcessed: pdfFiles.length,
+            csvsProcessed: csvFiles.length,
+            patientsExtracted: normalizedPatients.length,
+            duplicatesFound: duplicates.length,
+            errorsCount: allErrors.length
+          }
+        });
+
+      } catch (error) {
+        logger.error('[BulkImport] Error extracting patients:', error);
+        res.status(500).json({
+          message: "Erro ao processar arquivos",
+          error: error instanceof Error ? error.message : "Erro desconhecido"
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/patients/bulk-import/confirm
+   * Create multiple patient profiles from extracted data
+   */
+  app.post("/api/patients/bulk-import/confirm",
+    ensureAuthenticated,
+    async (req, res) => {
+      try {
+        const { patients, skipDuplicates } = req.body;
+
+        if (!patients || !Array.isArray(patients) || patients.length === 0) {
+          return res.status(400).json({
+            message: "Nenhum paciente foi fornecido para importação"
+          });
+        }
+
+        logger.info(`[BulkImport] Confirming import of ${patients.length} patients for user ${req.user!.id}`);
+
+        // Convert extracted patients to InsertProfile format
+        const profilesToCreate = patients.map((patient: ExtractedPatient) =>
+          convertToInsertProfile(patient, req.user!.id)
+        );
+
+        // Filter out duplicates if requested
+        let filteredProfiles = profilesToCreate;
+        if (skipDuplicates) {
+          const names = patients.map((p: ExtractedPatient) => p.name);
+          const cpfs = patients.map((p: ExtractedPatient) => p.cpf).filter((cpf): cpf is string | null => cpf !== undefined);
+          const duplicates = await storage.findDuplicateProfiles(req.user!.id, names, cpfs);
+
+          const duplicateNames = new Set(duplicates.map(d => d.name.toLowerCase()));
+          const duplicateCpfs = new Set(duplicates.map(d => d.cpf).filter(Boolean));
+
+          filteredProfiles = profilesToCreate.filter((profile: any) => {
+            const nameMatch = duplicateNames.has(profile.name.toLowerCase());
+            const cpfMatch = profile.cpf && duplicateCpfs.has(profile.cpf);
+            return !nameMatch && !cpfMatch;
+          });
+
+          logger.info(`[BulkImport] Filtered ${profilesToCreate.length - filteredProfiles.length} duplicates`);
+        }
+
+        if (filteredProfiles.length === 0) {
+          return res.json({
+            success: true,
+            created: [],
+            skipped: profilesToCreate.length,
+            message: "Todos os pacientes já existem no sistema"
+          });
+        }
+
+        // Create profiles in bulk
+        const createdProfiles = await storage.createProfilesBulk(filteredProfiles);
+
+        logger.info(`[BulkImport] Successfully created ${createdProfiles.length} profiles`);
+
+        res.json({
+          success: true,
+          created: createdProfiles,
+          skipped: profilesToCreate.length - filteredProfiles.length,
+          message: `${createdProfiles.length} paciente(s) importado(s) com sucesso`
+        });
+
+      } catch (error) {
+        logger.error('[BulkImport] Error confirming import:', error);
+        res.status(500).json({
+          message: "Erro ao importar pacientes",
+          error: error instanceof Error ? error.message : "Erro desconhecido"
+        });
+      }
+    }
+  );
 
   // API routes for subscription management
   app.get("/api/subscription-plans", async (req, res) => {
