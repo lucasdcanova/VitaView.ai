@@ -32,6 +32,35 @@ export const profiles = pgTable("profiles", {
   planType: text("plan_type"),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+
+  // Identification
+  cpf: text("cpf"),
+  rg: text("rg"),
+  phone: text("phone"),
+  landline: text("landline"),
+  email: text("email"),
+
+  // Address
+  cep: text("cep"),
+  street: text("street"),
+  number: text("number"),
+  complement: text("complement"),
+  neighborhood: text("neighborhood"),
+  city: text("city"),
+  state: text("state"),
+
+  // Complementary
+  guardianName: text("guardian_name"),
+  emergencyPhone: text("emergency_phone"),
+  profession: text("profession"),
+  maritalStatus: text("marital_status"),
+
+  // Administrative
+  insuranceCardNumber: text("insurance_card_number"),
+  insuranceValidity: text("insurance_validity"),
+  insuranceName: text("insurance_name"),
+  referralSource: text("referral_source"),
+  notes: text("notes"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -49,10 +78,35 @@ export const insertProfileSchema = createInsertSchema(profiles)
     gender: true,
     planType: true,
     isDefault: true,
+    phone: true,
   })
   .extend({
     relationship: z.string().optional().nullable(),
     bloodType: z.string().optional().nullable(),
+    // Identification
+    cpf: z.string().optional().nullable(),
+    rg: z.string().optional().nullable(),
+    landline: z.string().optional().nullable(),
+    email: z.string().email().optional().or(z.literal("")).nullable(),
+    // Address
+    cep: z.string().optional().nullable(),
+    street: z.string().optional().nullable(),
+    number: z.string().optional().nullable(),
+    complement: z.string().optional().nullable(),
+    neighborhood: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    state: z.string().optional().nullable(),
+    // Complementary
+    guardianName: z.string().optional().nullable(),
+    emergencyPhone: z.string().optional().nullable(),
+    profession: z.string().optional().nullable(),
+    maritalStatus: z.string().optional().nullable(),
+    // Administrative
+    insuranceCardNumber: z.string().optional().nullable(),
+    insuranceValidity: z.string().optional().nullable(),
+    insuranceName: z.string().optional().nullable(),
+    referralSource: z.string().optional().nullable(),
+    notes: z.string().optional().nullable(),
   });
 
 // Medical exam schema
