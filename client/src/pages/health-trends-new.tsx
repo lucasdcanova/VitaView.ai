@@ -48,7 +48,8 @@ import {
   FileDown,
   Sparkles,
   Loader2,
-  Users
+  Users,
+  Save
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -489,6 +490,25 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const addEvolutionMutation = useMutation({
+    mutationFn: (data: { text: string; date?: string }) => apiRequest("POST", "/api/evolutions", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
+      toast({
+        title: "Consulta registrada",
+        description: "Histórico salvo com sucesso!",
+      });
+      setAnamnesisText("");
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar consulta. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteEvolutionMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/evolutions/${id}`, {}),
     onSuccess: () => {
@@ -590,7 +610,7 @@ export default function HealthTrendsNew() {
       id: evolution.id,
       type: "evolution" as const,
       date: evolution.date,
-      title: "Evolução Clínica",
+      title: "Consulta/Anamnese",
       description: evolution.text,
       originalData: evolution,
     })) : [])
@@ -1107,6 +1127,29 @@ export default function HealthTrendsNew() {
                       <div className="flex flex-wrap items-center gap-3">
                         <Button
                           type="button"
+                          onClick={() => {
+                            if (!anamnesisText.trim()) {
+                              toast({
+                                title: "Texto vazio",
+                                description: "Escreva algo para salvar.",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            addEvolutionMutation.mutate({ text: anamnesisText });
+                          }}
+                          disabled={addEvolutionMutation.isPending || !anamnesisText.trim()}
+                          className="gap-2 bg-green-600 hover:bg-green-700"
+                        >
+                          {addEvolutionMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          Salvar como Consulta
+                        </Button>
+                        <Button
+                          type="button"
                           onClick={handleAnalyzeAnamnesis}
                           disabled={analyzeAnamnesisMutation.isPending}
                           className="gap-2"
@@ -1258,7 +1301,7 @@ export default function HealthTrendsNew() {
                                           item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                             'bg-green-50 text-green-700 border-green-100'
                                         }`}>
-                                        {item.type === 'exam' ? 'Exame' : item.type === 'diagnosis' ? 'Diagnóstico' : item.type === 'surgery' ? 'Cirurgia' : 'Evolução'}
+                                        {item.type === 'exam' ? 'Exame' : item.type === 'diagnosis' ? 'Diagnóstico' : item.type === 'surgery' ? 'Cirurgia' : 'Consulta'}
                                       </Badge>
                                       <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />

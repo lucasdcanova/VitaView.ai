@@ -2222,6 +2222,51 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // API routes for evolutions (Consultas/Anamnese)
+  app.get("/api/evolutions", ensureAuthenticated, async (req, res) => {
+    try {
+      const evolutions = await storage.getEvolutionsByUserId(req.user!.id);
+      res.json(evolutions || []);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar evoluções" });
+    }
+  });
+
+  app.post("/api/evolutions", ensureAuthenticated, async (req, res) => {
+    try {
+      const evolutionData = {
+        userId: req.user!.id,
+        text: req.body.text,
+        date: req.body.date ? new Date(req.body.date) : new Date(),
+      };
+
+      const newEvolution = await storage.createEvolution(evolutionData);
+      res.status(201).json(newEvolution);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar evolução" });
+    }
+  });
+
+  app.delete("/api/evolutions/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const evolutionId = parseInt(req.params.id);
+      const evolution = await storage.getEvolution(evolutionId);
+
+      if (!evolution) {
+        return res.status(404).json({ message: "Evolução não encontrada" });
+      }
+
+      if (evolution.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      await storage.deleteEvolution(evolutionId);
+      res.json({ message: "Evolução excluída com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir evolução" });
+    }
+  });
+
   // Rota para gerar relatório cronológico contextual com OpenAI
   app.get("/api/reports/chronological", ensureAuthenticated, async (req, res) => {
     try {
