@@ -2001,7 +2001,7 @@ export const CID10_DATABASE = [
   },
   {
     "code": "E75",
-    "description": "Disturb metab esfingolip e outras depos lipid",
+    "description": "Distúrbios do metabolismo de esfingolipídios e outros depósitos de lipídios",
     "category": "Endócrinas e Metabólicas"
   },
   {
@@ -2016,7 +2016,7 @@ export const CID10_DATABASE = [
   },
   {
     "code": "E78",
-    "description": "Disturbios metab lipoproteinas e out lipidem",
+    "description": "Distúrbios do metabolismo de lipoproteínas e outras lipidemias",
     "category": "Endócrinas e Metabólicas"
   },
   {
@@ -19576,7 +19576,7 @@ export const CID10_DATABASE = [
   },
   {
     "code": "E75.3",
-    "description": "Esfingolipidose não especificado",
+    "description": "Esfingolipidose não especificada",
     "category": "Endócrinas e Metabólicas"
   },
   {
@@ -19586,12 +19586,12 @@ export const CID10_DATABASE = [
   },
   {
     "code": "E75.5",
-    "description": "Outras disturbios do deposito de lipides",
+    "description": "Outros distúrbios do depósito de lipídios",
     "category": "Endócrinas e Metabólicas"
   },
   {
     "code": "E75.6",
-    "description": "Disturbio não especificado do deposito de lipides",
+    "description": "Distúrbio não especificado do depósito de lipídios",
     "category": "Endócrinas e Metabólicas"
   },
   {

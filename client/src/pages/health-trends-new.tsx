@@ -1203,55 +1203,6 @@ export default function HealthTrendsNew() {
                       )}
                     </div>
 
-                    {/* Alergias */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                          Alergias
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{allergies.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-orange-50 hover:text-orange-600"
-                            onClick={() => setIsAllergyDialogOpen(true)}
-                            title="Adicionar alergia"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {Array.isArray(allergies) && allergies.length > 0 ? (
-                        <div className="space-y-3">
-                          {allergies.slice(0, 3).map((allergy: any) => (
-                            <div key={allergy.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="mt-1">
-                                <div className={`w-2 h-2 rounded-full ${allergy.severity === 'grave' ? 'bg-red-500' :
-                                  allergy.severity === 'moderada' ? 'bg-orange-400' : 'bg-yellow-400'
-                                  }`} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={allergy.allergen}>
-                                  {allergy.allergen}
-                                </p>
-                                <p className="text-xs text-gray-500 line-clamp-1">
-                                  {allergy.reaction || "Sem reação descrita"}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <Sparkles className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhuma registrada</p>
-                        </div>
-                      )}
-                    </div>
-
                     {/* Medicamentos */}
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">

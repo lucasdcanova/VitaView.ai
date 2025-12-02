@@ -33,10 +33,10 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
   // Carregar base apenas quando necessário
   const searchCodes = useMemo(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     return (term: string) => {
       clearTimeout(timeoutId);
-      
+
       timeoutId = setTimeout(async () => {
         if (!term.trim() || term.length < 2) {
           setFilteredCodes([]);
@@ -44,11 +44,11 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
         }
 
         setIsLoading(true);
-        
+
         try {
           // Importação dinâmica para carregar apenas quando necessário
           const { CID10_DATABASE } = await import("@/data/cid10-database");
-          
+
           const searchTerm = term.toLowerCase();
           const filtered = CID10_DATABASE.filter((item) => {
             return (
@@ -75,13 +75,13 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
 
   // Buscar código selecionado dinamicamente quando necessário
   const [selectedCode, setSelectedCode] = useState<CID10Code | null>(null);
-  
+
   useEffect(() => {
     if (!value) {
       setSelectedCode(null);
       return;
     }
-    
+
     // Carregar base apenas para encontrar o código selecionado
     import("@/data/cid10-database").then(({ CID10_DATABASE }) => {
       const found = CID10_DATABASE.find((code) => code.code === value);
@@ -122,7 +122,7 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
+        <PopoverContent className="w-[600px] p-0">
           <div className="flex flex-col">
             <div className="p-3 border-b">
               <Input
@@ -132,10 +132,10 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                 className="w-full"
               />
             </div>
-            <div 
-              className="p-1" 
-              style={{ 
-                maxHeight: '256px', 
+            <div
+              className="p-1"
+              style={{
+                maxHeight: '256px',
                 overflowY: 'scroll',
                 WebkitOverflowScrolling: 'touch',
                 scrollBehavior: 'smooth'
@@ -198,15 +198,15 @@ export function CID10Selector({ value, onValueChange, placeholder = "Buscar CID-
                     )}
                   />
                   <div className="flex flex-col flex-1">
-                    <div className="flex items-center">
-                      <span className="font-mono text-xs bg-gray-100 px-1 rounded mr-2">
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span className="font-mono text-xs bg-gray-100 px-1 rounded">
                         {code.code}
                       </span>
                       <span className="text-xs text-gray-500 bg-blue-50 px-1 rounded">
                         {code.category}
                       </span>
                     </div>
-                    <span className="text-sm text-left">{code.description}</span>
+                    <span className="text-sm text-left break-words">{code.description}</span>
                   </div>
                 </div>
               ))}
