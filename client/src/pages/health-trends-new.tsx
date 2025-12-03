@@ -145,6 +145,11 @@ export default function HealthTrendsNew() {
   const [isHabitDialogOpen, setIsHabitDialogOpen] = useState(false);
   const [isEditHabitDialogOpen, setIsEditHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<any>(null);
+  const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false);
+  const [selectedMedicationIds, setSelectedMedicationIds] = useState<number[]>([]);
+  const [prescriptionValidityDays, setPrescriptionValidityDays] = useState(30);
+  const [prescriptionObservations, setPrescriptionObservations] = useState("");
+  const [doctorInfo, setDoctorInfo] = useState({ name: "", crm: "", specialty: "" });
   const [anamnesisText, setAnamnesisText] = useState("");
   const [extractedRecord, setExtractedRecord] = useState<any | null>(null);
   const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
@@ -176,7 +181,7 @@ export default function HealthTrendsNew() {
       format: "",
       dosage: "",
       frequency: "",
-      startDate: "",
+      startDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       notes: "",
     },
   });
@@ -1677,10 +1682,21 @@ export default function HealthTrendsNew() {
                   {medications.length > 0 && (
                     <Card>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Activity className="h-5 w-5 text-[#48C9B0]" />
-                          Medicamentos
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-[#48C9B0]" />
+                            Medicamentos
+                          </CardTitle>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsPrescriptionDialogOpen(true)}
+                            className="text-xs"
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
+                            Renovar Prescrições
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="grid gap-2">
@@ -2612,6 +2628,238 @@ export default function HealthTrendsNew() {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para Renovar Prescrições */}
+        <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Renovar Prescrições</DialogTitle>
+              <DialogDescription>
+                Selecione os medicamentos para renovação e configure o receituário
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Informações do Médico */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Dados do Médico</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Nome Completo *</label>
+                    <Input
+                      value={doctorInfo.name}
+                      onChange={(e) => setDoctorInfo({ ...doctorInfo, name: e.target.value })}
+                      placeholder="Dr(a). Nome Completo"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">CRM *</label>
+                    <Input
+                      value={doctorInfo.crm}
+                      onChange={(e) => setDoctorInfo({ ...doctorInfo, crm: e.target.value })}
+                      placeholder="123456/UF"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Especialidade (opcional)</label>
+                  <Input
+                    value={doctorInfo.specialty}
+                    onChange={(e) => setDoctorInfo({ ...doctorInfo, specialty: e.target.value })}
+                    placeholder="Ex: Cardiologia"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Seleção de Medicamentos */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">Medicamentos para Renovação</h3>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const allIds = medications.map((m: any) => m.id);
+                      setSelectedMedicationIds(
+                        selectedMedicationIds.length === medications.length ? [] : allIds
+                      );
+                    }}
+                    className="text-xs"
+                  >
+                    {selectedMedicationIds.length === medications.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                  </Button>
+                </div>
+                <div className="border rounded-lg p-3 space-y-2 max-h-60 overflow-y-auto">
+                  {medications.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      Nenhum medicamento ativo encontrado
+                    </p>
+                  ) : (
+                    medications.map((medication: any) => (
+                      <div
+                        key={medication.id}
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMedicationIds.includes(medication.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedMedicationIds([...selectedMedicationIds, medication.id]);
+                            } else {
+                              setSelectedMedicationIds(
+                                selectedMedicationIds.filter((id) => id !== medication.id)
+                              );
+                            }
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-gray-300"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm">{medication.name}</h4>
+                            <Badge variant="outline" className="text-[10px]">
+                              {medication.format}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {medication.dosage} • {medication.frequency}
+                          </p>
+                          {medication.notes && (
+                            <p className="text-xs text-gray-500 mt-1">{medication.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Configurações da Prescrição */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Configurações da Prescrição</h3>
+                <div>
+                  <label className="text-sm font-medium">Validade</label>
+                  <Select
+                    value={prescriptionValidityDays.toString()}
+                    onValueChange={(value) => setPrescriptionValidityDays(parseInt(value))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">30 dias</SelectItem>
+                      <SelectItem value="60">60 dias</SelectItem>
+                      <SelectItem value="90">90 dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Observações (opcional)</label>
+                  <Textarea
+                    value={prescriptionObservations}
+                    onChange={(e) => setPrescriptionObservations(e.target.value)}
+                    placeholder="Informações adicionais para o paciente..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsPrescriptionDialogOpen(false);
+                  setSelectedMedicationIds([]);
+                  setPrescriptionObservations("");
+                  setDoctorInfo({ name: "", crm: "", specialty: "" });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (selectedMedicationIds.length === 0) {
+                    toast({
+                      title: "Erro",
+                      description: "Selecione pelo menos um medicamento",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  if (!doctorInfo.name || !doctorInfo.crm) {
+                    toast({
+                      title: "Erro",
+                      description: "Preencha os dados do médico (nome e CRM)",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch("/api/prescriptions/generate", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        medicationIds: selectedMedicationIds,
+                        validityDays: prescriptionValidityDays,
+                        observations: prescriptionObservations,
+                        doctorName: doctorInfo.name,
+                        doctorCrm: doctorInfo.crm,
+                        doctorSpecialty: doctorInfo.specialty,
+                      }),
+                    });
+
+                    if (!response.ok) {
+                      throw new Error("Erro ao gerar prescrição");
+                    }
+
+                    // Download do PDF
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `receituario-${new Date().toISOString().split("T")[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    toast({
+                      title: "Sucesso!",
+                      description: "Receituário gerado e baixado com sucesso",
+                    });
+
+                    setIsPrescriptionDialogOpen(false);
+                    setSelectedMedicationIds([]);
+                    setPrescriptionObservations("");
+                    setDoctorInfo({ name: "", crm: "", specialty: "" });
+                  } catch (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Não foi possível gerar o receituário",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                disabled={selectedMedicationIds.length === 0 || !doctorInfo.name || !doctorInfo.crm}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Gerar Receituário
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 

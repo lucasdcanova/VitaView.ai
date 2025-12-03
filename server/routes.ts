@@ -3424,6 +3424,305 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Temporary migration endpoint (remove after running once)
+  app.post("/api/run-prescription-migration", ensureAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin (you might want to add this check)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS prescriptions (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          doctor_name TEXT NOT NULL,
+          doctor_crm TEXT NOT NULL,
+          doctor_specialty TEXT,
+          medications JSONB NOT NULL,
+          issue_date TIMESTAMP NOT NULL DEFAULT NOW(),
+          valid_until TIMESTAMP NOT NULL,
+          observations TEXT,
+          pdf_path TEXT,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_prescriptions_user_id ON prescriptions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_prescriptions_issue_date ON prescriptions(issue_date DESC);
+      `);
+
+      res.json({ success: true, message: "Migration executed successfully" });
+    } catch (error) {
+      console.error('Migration error:', error);
+      res.status(500).json({ message: "Migration failed", error: error.message });
+    }
+  });
+
+  // Prescription generation route
+  app.post("/api/prescriptions/generate", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { medicationIds, validityDays, observations, doctorName, doctorCrm, doctorSpecialty } = req.body;
+
+      if (!medicationIds || medicationIds.length === 0) {
+        return res.status(400).json({ message: "Selecione pelo menos um medicamento" });
+      }
+
+      if (!doctorName || !doctorCrm) {
+        return res.status(400).json({ message: "Dados do médico são obrigatórios" });
+      }
+
+      // Buscar medicamentos selecionados
+      const medicationsResult = await pool.query(`
+        SELECT * FROM medications 
+        WHERE id = ANY($1) AND user_id = $2 AND is_active = true
+      `, [medicationIds, user.id]);
+
+      if (medicationsResult.rows.length === 0) {
+        return res.status(404).json({ message: "Nenhum medicamento encontrado" });
+      }
+
+      const medications = medicationsResult.rows;
+      const issueDate = new Date();
+      const validUntil = new Date(issueDate.getTime() + (validityDays || 30) * 24 * 60 * 60 * 1000);
+
+      // Gerar HTML da prescrição
+      const prescriptionHTML = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Receituário Médico</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Arial', sans-serif; 
+              padding: 40px; 
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              border-bottom: 3px solid #48C9B0;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              color: #2C3E50;
+              font-size: 24px;
+              margin-bottom: 10px;
+            }
+            .doctor-info {
+              color: #555;
+              font-size: 14px;
+            }
+            .doctor-info p {
+              margin: 5px 0;
+            }
+            .patient-info {
+              background: #f8f9fa;
+              padding: 15px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+            }
+            .patient-info h2 {
+              color: #2C3E50;
+              font-size: 16px;
+              margin-bottom: 10px;
+            }
+            .patient-info p {
+              font-size: 14px;
+              color: #555;
+            }
+            .prescription-title {
+              color: #2C3E50;
+              font-size: 18px;
+              margin-bottom: 20px;
+              padding-bottom: 10px;
+              border-bottom: 2px solid #e0e0e0;
+            }
+            .medication {
+              margin-bottom: 25px;
+              padding: 15px;
+              background: #ffffff;
+              border-left: 4px solid #48C9B0;
+              border-radius: 4px;
+            }
+            .medication-name {
+              font-size: 16px;
+              font-weight: bold;
+              color: #2C3E50;
+              margin-bottom: 8px;
+            }
+            .medication-details {
+              font-size: 14px;
+              color: #555;
+              margin: 5px 0;
+            }
+            .medication-details strong {
+              color: #333;
+            }
+            .observations {
+              margin-top: 30px;
+              padding: 15px;
+              background: #fff8e1;
+              border-radius: 8px;
+              border-left: 4px solid #ffc107;
+            }
+            .observations h3 {
+              color: #f57c00;
+              font-size: 14px;
+              margin-bottom: 10px;
+            }
+            .observations p {
+              font-size: 13px;
+              color: #555;
+            }
+            .footer {
+              margin-top: 50px;
+              padding-top: 30px;
+              border-top: 2px solid #e0e0e0;
+            }
+            .validity {
+              font-size: 13px;
+              color: #666;
+              margin-bottom: 40px;
+            }
+            .signature {
+              margin-top: 60px;
+              text-align: center;
+            }
+            .signature-line {
+              border-top: 2px solid #333;
+              width: 300px;
+              margin: 0 auto 10px;
+            }
+            .signature-text {
+              font-size: 13px;
+              color: #555;
+            }
+            .date {
+              font-size: 13px;
+              color: #666;
+              margin-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>RECEITUÁRIO MÉDICO</h1>
+            <div class="doctor-info">
+              <p><strong>Dr(a). ${doctorName}</strong></p>
+              <p>CRM: ${doctorCrm}</p>
+              ${doctorSpecialty ? `<p>Especialidade: ${doctorSpecialty}</p>` : ''}
+            </div>
+          </div>
+
+          <div class="patient-info">
+            <h2>Dados do Paciente</h2>
+            <p><strong>Nome:</strong> ${user.fullName || user.username}</p>
+            ${user.birthDate ? `<p><strong>Data de Nascimento:</strong> ${new Date(user.birthDate).toLocaleDateString('pt-BR')}</p>` : ''}
+          </div>
+
+          <h2 class="prescription-title">Prescrição de Medicamentos</h2>
+
+          ${medications.map((med: any, index: number) => `
+            <div class="medication">
+              <div class="medication-name">${index + 1}. ${med.name}</div>
+              <div class="medication-details"><strong>Forma:</strong> ${med.format}</div>
+              <div class="medication-details"><strong>Dosagem:</strong> ${med.dosage}</div>
+              <div class="medication-details"><strong>Posologia:</strong> ${med.frequency}</div>
+              ${med.notes ? `<div class="medication-details"><strong>Observações:</strong> ${med.notes}</div>` : ''}
+            </div>
+          `).join('')}
+
+          ${observations ? `
+            <div class="observations">
+              <h3>Observações Gerais</h3>
+              <p>${observations}</p>
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            <div class="validity">
+              <p><strong>Data de Emissão:</strong> ${issueDate.toLocaleDateString('pt-BR')}</p>
+              <p><strong>Válido até:</strong> ${validUntil.toLocaleDateString('pt-BR')}</p>
+            </div>
+
+            <div class="signature">
+              <div class="signature-line"></div>
+              <div class="signature-text">
+                <p><strong>Dr(a). ${doctorName}</strong></p>
+                <p>CRM: ${doctorCrm}</p>
+              </div>
+            </div>
+
+            <div class="date">
+              <p style="text-align: center;">${issueDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })}</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Configurações do PDF
+      const options = {
+        format: 'A4',
+        margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
+        printBackground: true
+      };
+
+      // Gerar PDF
+      const { generatePdf } = await import('html-pdf-node');
+      const file = { content: prescriptionHTML };
+      const pdfBuffer = await generatePdf(file, options);
+
+      // Salvar registro da prescrição no banco
+      const prescriptionData = {
+        userId: user.id,
+        doctorName,
+        doctorCrm,
+        doctorSpecialty: doctorSpecialty || null,
+        medications: JSON.stringify(medications.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          format: m.format,
+          dosage: m.dosage,
+          frequency: m.frequency,
+          notes: m.notes
+        }))),
+        issueDate,
+        validUntil,
+        observations: observations || null,
+        pdfPath: null // Não estamos salvando o arquivo, apenas gerando
+      };
+
+      await pool.query(`
+        INSERT INTO prescriptions (user_id, doctor_name, doctor_crm, doctor_specialty, medications, issue_date, valid_until, observations, pdf_path)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, [
+        prescriptionData.userId,
+        prescriptionData.doctorName,
+        prescriptionData.doctorCrm,
+        prescriptionData.doctorSpecialty,
+        prescriptionData.medications,
+        prescriptionData.issueDate,
+        prescriptionData.validUntil,
+        prescriptionData.observations,
+        prescriptionData.pdfPath
+      ]);
+
+      // Retornar PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="receituario-${user.username}-${issueDate.toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Erro ao gerar prescrição:', error);
+      res.status(500).json({ message: "Erro ao gerar prescrição", error: error.message });
+    }
+  });
+
   // CSP violation reporting endpoint
   app.post("/api/csp-violation-report", (req: Request, res: Response) => {
     try {

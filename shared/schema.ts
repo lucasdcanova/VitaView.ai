@@ -453,3 +453,33 @@ export const insertHabitSchema = createInsertSchema(habits).pick({
 
 export type Habit = typeof habits.$inferSelect;
 export type InsertHabit = z.infer<typeof insertHabitSchema>;
+
+// Prescriptions schema
+export const prescriptions = pgTable("prescriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  doctorName: text("doctor_name").notNull(),
+  doctorCrm: text("doctor_crm").notNull(),
+  doctorSpecialty: text("doctor_specialty"),
+  medications: json("medications").notNull(), // Array de medication IDs e detalhes
+  issueDate: timestamp("issue_date").defaultNow().notNull(),
+  validUntil: timestamp("valid_until").notNull(),
+  observations: text("observations"),
+  pdfPath: text("pdf_path"), // Caminho do PDF gerado
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPrescriptionSchema = createInsertSchema(prescriptions).pick({
+  userId: true,
+  doctorName: true,
+  doctorCrm: true,
+  doctorSpecialty: true,
+  medications: true,
+  issueDate: true,
+  validUntil: true,
+  observations: true,
+  pdfPath: true,
+});
+
+export type Prescription = typeof prescriptions.$inferSelect;
+export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
