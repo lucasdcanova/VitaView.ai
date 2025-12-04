@@ -20,6 +20,8 @@ import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
 import { nanoid } from "nanoid";
+import fs from "fs";
+import path from "path";
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -31,6 +33,37 @@ const normalizeFileType = (type?: string | null) => {
 
   return undefined;
 };
+
+// Assuming this code block is intended to be placed within a function that has access to `app` and returns `httpServer`.
+// Since the provided content does not show such a function, I'm placing it here as a standalone block.
+// If this is part of a larger `setupServer` or similar function, please provide that context for a more accurate placement.
+// Temporary route to run migration from within the app
+// This route needs to be placed inside a function that receives `app` as an argument, e.g., `export const setupServer = (app: Express) => { ... }`
+// For now, I'm placing it here, but it will cause a syntax error if `app` is not defined in this scope.
+/*
+app.post("/api/run-migration-internal", async (req, res) => {
+  try {
+    console.log("Running internal migration...");
+    const sqlPath = path.join(process.cwd(), "create_all_missing_tables.sql");
+    
+    if (!fs.existsSync(sqlPath)) {
+      return res.status(404).json({ message: "Migration file not found" });
+    }
+    
+    const sql = fs.readFileSync(sqlPath, "utf8");
+    await pool.query(sql);
+    console.log("Internal migration completed successfully!");
+    res.json({ success: true, message: "Migration executed successfully" });
+  } catch (error: any) {
+    console.error("Internal migration failed:", error);
+    res.status(500).json({ message: "Migration failed", error: error.message });
+  }
+});
+*/
+// The `return httpServer;` and `};` also indicate this code is part of a function definition.
+// As these are not present in the provided document, I'm commenting out the route to avoid syntax errors.
+// Please ensure this code is placed within the correct function scope.
+
 
 // Função para gerar HTML do relatório de saúde
 function generateExamReportHTML({ user, exam, metrics }: any) {
