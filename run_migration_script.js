@@ -1,13 +1,11 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import pkg from 'pg';
+const { Pool } = pkg;
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
-neonConfig.webSocketConstructor = ws;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
