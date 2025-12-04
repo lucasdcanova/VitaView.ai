@@ -137,6 +137,7 @@ export default function HealthTrendsNew() {
   const [isEditMedicationDialogOpen, setIsEditMedicationDialogOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<any>(null);
   const [isAllergyDialogOpen, setIsAllergyDialogOpen] = useState(false);
+  const [isManageAllergiesDialogOpen, setIsManageAllergiesDialogOpen] = useState(false);
   const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<any>(null);
   const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
@@ -1074,7 +1075,7 @@ export default function HealthTrendsNew() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                        onClick={() => setIsAllergyDialogOpen(true)}
+                        onClick={() => setIsManageAllergiesDialogOpen(true)}
                         title="Gerenciar alergias"
                       >
                         <PlusCircle className="h-4 w-4" />
@@ -2259,6 +2260,91 @@ export default function HealthTrendsNew() {
             </Form>
           </DialogContent>
         </Dialog >
+{/* Dialog para gerenciar alergias (listar, editar, excluir) */ }
+<Dialog open={isManageAllergiesDialogOpen} onOpenChange={setIsManageAllergiesDialogOpen}>
+    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+            <DialogTitle>Gerenciar Alergias</DialogTitle>
+            <DialogDescription>
+                Visualize, edite ou remova alergias registradas
+            </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+            {Array.isArray(allergies) && allergies.length > 0 ? (
+                <div className="space-y-3">
+                    {allergies.map((allergy: any) => (
+                        <div
+                            key={allergy.id}
+                            className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                                    <h4 className="font-semibold text-gray-900">{allergy.allergen}</h4>
+                                    <Badge variant="outline" className="text-xs">
+                                        {allergy.allergen_type === 'medication' ? 'Medicamento' :
+                                            allergy.allergen_type === 'food' ? 'Alimento' : 'Ambiental'}
+                                    </Badge>
+                                </div>
+                                {allergy.reaction && (
+                                    <p className="text-sm text-gray-600 mb-1">
+                                        <span className="font-medium">Reação:</span> {allergy.reaction}
+                                    </p>
+                                )}
+                                {allergy.severity && (
+                                    <p className="text-sm text-gray-600">
+                                        <span className="font-medium">Gravidade:</span> {allergy.severity}
+                                    </p>
+                                )}
+                                {allergy.notes && (
+                                    <p className="text-sm text-gray-500 mt-1">{allergy.notes}</p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        openEditAllergyDialog(allergy);
+                                        setIsManageAllergiesDialogOpen(false);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                    Editar
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveAllergy(allergy.id)}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                    Excluir
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-8 text-gray-500">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p>Nenhuma alergia registrada</p>
+                </div>
+            )}
+            <div className="pt-4 border-t">
+                <Button
+                    onClick={() => {
+                        setIsManageAllergiesDialogOpen(false);
+                        setIsAllergyDialogOpen(true);
+                    }}
+                    className="w-full"
+                >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Adicionar Nova Alergia
+                </Button>
+            </div>
+        </div>
+    </DialogContent>
+</Dialog>
 
         {/* Dialog para adicionar nova cirurgia */}
         <Dialog open={isSurgeryDialogOpen} onOpenChange={setIsSurgeryDialogOpen}>
