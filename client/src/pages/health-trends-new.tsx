@@ -1145,216 +1145,102 @@ export default function HealthTrendsNew() {
                 )}
               </div>
 
-              {/* Situação Atual de Saúde - Banner Superior */}
-              <Card className="border-none shadow-md bg-gradient-to-br from-white to-gray-50 overflow-hidden">
-                <div className="h-1.5 bg-[#48C9B0] w-full" />
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#48C9B0]/10 rounded-lg">
-                      <Activity className="h-5 w-5 text-[#48C9B0]" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg text-gray-900">Resumo de Saúde</CardTitle>
-                      <CardDescription>Estado atual baseado nos registros ativos</CardDescription>
+              {/* Comorbidades - Independent Card */}
+              <Card className="border border-gray-200 bg-white shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                      Comorbidades
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => setIsDialogOpen(true)}
+                        title="Adicionar comorbidade"
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-4 gap-6">
-                    {/* Diagnósticos */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                          Diagnósticos
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600"
-                            onClick={() => setIsDialogOpen(true)}
-                            title="Adicionar diagnóstico"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
+                <CardContent className="pt-0">
+                  {Array.isArray(diagnoses) && diagnoses.length > 0 ? (
+                    <div className="grid md:grid-cols-3 gap-2">
+                      {diagnoses.slice(0, 9).map((diagnosis: any) => (
+                        <div key={diagnosis.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 line-clamp-1" title={getCIDDescription(diagnosis.cidCode)}>
+                              {getCIDDescription(diagnosis.cidCode)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-
-                      {Array.isArray(diagnoses) && diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").length > 0 ? (
-                        <div className="space-y-3">
-                          {diagnoses.filter((d: any) => d.status === "ativo" || d.status === "em_tratamento" || d.status === "cronico").slice(0, 3).map((diagnosis: any) => (
-                            <div key={diagnosis.id} className="group flex items-start justify-between gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={getCIDDescription(diagnosis.cidCode)}>
-                                  {getCIDDescription(diagnosis.cidCode)}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {format(parseISO(diagnosis.diagnosisDate), "dd/MM/yy", { locale: ptBR })}
-                                </p>
-                              </div>
-                              <Badge className={`${getStatusColor(diagnosis.status)} text-[10px] px-1.5 py-0 h-5`} variant="secondary">
-                                {getStatusLabel(diagnosis.status)}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <FileText className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhum ativo</p>
-                        </div>
-                      )}
+                      ))}
                     </div>
-
-                    {/* Medicamentos */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                          Medicamentos
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{medications.filter((m: any) => m.isActive).length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-600"
-                            onClick={() => setIsMedicationDialogOpen(true)}
-                            title="Adicionar medicamento"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {Array.isArray(medications) && medications.filter((m: any) => m.isActive).length > 0 ? (
-                        <div className="space-y-3">
-                          {medications.filter((m: any) => m.isActive).slice(0, 3).map((medication: any) => (
-                            <div key={medication.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="bg-blue-50 p-1.5 rounded-md mt-0.5">
-                                <ClipboardList className="h-3 w-3 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={medication.name}>
-                                  {medication.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {medication.dosage} • {medication.frequency}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <ClipboardList className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhum ativo</p>
-                        </div>
-                      )}
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                      <FileText className="h-5 w-5 mb-1 opacity-50" />
+                      <p className="text-xs">Nenhuma ativa</p>
                     </div>
-
-                    {/* Cirurgias */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                          Cirurgias
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600"
-                            onClick={() => setIsSurgeryDialogOpen(true)}
-                            title="Adicionar cirurgia"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {Array.isArray(surgeries) && surgeries.length > 0 ? (
-                        <div className="space-y-3">
-                          {surgeries.slice(0, 3).map((surgery: any) => (
-                            <div key={surgery.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="bg-purple-50 p-1.5 rounded-md mt-0.5">
-                                <Activity className="h-3 w-3 text-purple-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={surgery.procedureName}>
-                                  {surgery.procedureName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {format(parseISO(surgery.surgeryDate), "dd/MM/yy", { locale: ptBR })}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <Activity className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhuma registrada</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Hábitos */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-slate-500 rounded-full"></span>
-                          Hábitos
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{habits.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-slate-50 hover:text-slate-600"
-                            onClick={() => setIsHabitDialogOpen(true)}
-                            title="Adicionar hábito"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {Array.isArray(habits) && habits.length > 0 ? (
-                        <div className="space-y-3">
-                          {habits.slice(0, 3).map((habit: any) => (
-                            <div key={habit.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="bg-slate-50 p-1.5 rounded-md mt-0.5">
-                                <Activity className="h-3 w-3 text-slate-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1">
-                                  {habit.habitType === 'etilismo' ? 'Etilismo' :
-                                    habit.habitType === 'tabagismo' ? 'Tabagismo' : 'Drogas Ilícitas'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {habit.status === 'nunca' ? 'Nunca usou' :
-                                    habit.status === 'ex_usuario' ? 'Ex-usuário' : 'Usuário ativo'}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-24 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <Activity className="h-6 w-6 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhum registro</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
-              <div className="grid gap-8 md:grid-cols-[1fr,300px]">
+              {/* Cirurgias Prévias - Independent Card */}
+              <Card className="border border-gray-200 bg-white shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      Cirurgias Prévias
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600"
+                        onClick={() => setIsSurgeryDialogOpen(true)}
+                        title="Adicionar cirurgia"
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {Array.isArray(surgeries) && surgeries.length > 0 ? (
+                    <div className="grid md:grid-cols-3 gap-2">
+                      {surgeries.slice(0, 6).map((surgery: any) => (
+                        <div key={surgery.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="bg-purple-50 p-1.5 rounded-md mt-0.5 flex-shrink-0">
+                            <Activity className="h-3 w-3 text-purple-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 line-clamp-1" title={surgery.procedureName}>
+                              {surgery.procedureName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {format(parseISO(surgery.surgeryDate), "dd/MM/yy", { locale: ptBR })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                      <Activity className="h-5 w-5 mb-1 opacity-50" />
+                      <p className="text-xs">Nenhuma registrada</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-8 md:grid-cols-[1fr,360px]">
                 {/* Coluna Principal */}
                 <div className="space-y-8">
 
@@ -1622,105 +1508,83 @@ export default function HealthTrendsNew() {
 
                 {/* Right Column (Sidebar) */}
                 <div className="space-y-6">
-                  {/* Ações Rápidas */}
+                  {/* Medicamentos de Uso Contínuo - Always Visible */}
                   <Card className="border border-primary-100 bg-white shadow-md">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-gray-900">Ações rápidas</CardTitle>
-                      <CardDescription>Cadastre informações</CardDescription>
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start gap-2 mb-1">
+                        <Activity className="h-5 w-5 text-[#48C9B0] flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-base text-gray-900 leading-tight">
+                            Medicamentos de Uso Contínuo
+                          </CardTitle>
+                          <CardDescription className="text-xs mt-1">Gerenciar medicamentos e prescrições</CardDescription>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button onClick={() => setIsMedicationDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 transition-all">
-                          <div className="p-2 bg-primary-100 rounded-full text-primary-600">
-                            <Activity className="h-4 w-4" />
+                      {medications.length > 0 ? (
+                        <>
+                          <div className="grid gap-2">
+                            {medications.map((medication: any) => (
+                              <div
+                                key={medication.id}
+                                className="p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
+                                onClick={() => openEditMedicationDialog(medication)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-sm text-gray-900">{medication.name}</h4>
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {medication.format}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  {medication.dosage} • {medication.frequency}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Medicamento</span>
-                            <span className="text-xs text-gray-500 font-normal">Registrar uso</span>
-                          </div>
-                        </Button>
 
-                        <Button onClick={() => setIsAllergyDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 transition-all">
-                          <div className="p-2 bg-orange-100 rounded-full text-orange-600">
-                            <ClipboardList className="h-4 w-4" />
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                            <Button
+                              onClick={() => setIsMedicationDialogOpen(true)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 hover:bg-primary-50 hover:text-primary-700"
+                            >
+                              <PlusCircle className="h-4 w-4" />
+                              Adicionar
+                            </Button>
+                            <Button
+                              onClick={() => setIsPrescriptionDialogOpen(true)}
+                              variant="default"
+                              size="sm"
+                              className="gap-2 bg-[#48C9B0] hover:bg-[#3ab89f]"
+                            >
+                              <FileText className="h-4 w-4" />
+                              Renovar Receitas
+                            </Button>
                           </div>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Alergia</span>
-                            <span className="text-xs text-gray-500 font-normal">Registrar alergia</span>
+                        </>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <Activity className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-sm font-medium">Nenhum medicamento cadastrado</p>
+                            <p className="text-xs text-gray-500 mt-1">Adicione medicamentos de uso contínuo</p>
                           </div>
-                        </Button>
-
-                        <Button onClick={() => setIsDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all">
-                          <div className="p-2 bg-red-100 rounded-full text-red-600">
-                            <FileText className="h-4 w-4" />
-                          </div>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Diagnóstico</span>
-                            <span className="text-xs text-gray-500 font-normal">Adicionar condição</span>
-                          </div>
-                        </Button>
-
-                        <Button onClick={() => setIsSurgeryDialogOpen(true)} variant="outline" className="justify-start gap-2 h-auto py-3 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all">
-                          <div className="p-2 bg-purple-100 rounded-full text-purple-600">
-                            <Activity className="h-4 w-4" />
-                          </div>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Cirurgia</span>
-                            <span className="text-xs text-gray-500 font-normal">Registrar procedimento</span>
-                          </div>
-                        </Button>
-                      </div>
-
-                      <Button onClick={handleExportToPDF} variant="secondary" className="w-full justify-center gap-2 mt-2">
-                        <FileDown className="h-4 w-4" />
-                        Exportar PDF
-                      </Button>
+                          <Button
+                            onClick={() => setIsMedicationDialogOpen(true)}
+                            variant="default"
+                            className="w-full gap-2 bg-[#48C9B0] hover:bg-[#3ab89f]"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                            Adicionar Medicamento
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
-                  {/* Medicamentos em Uso */}
-                  {medications.length > 0 && (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Activity className="h-5 w-5 text-[#48C9B0]" />
-                            Medicamentos
-                          </CardTitle>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsPrescriptionDialogOpen(true)}
-                            className="text-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 mr-1.5" />
-                            Renovar Prescrições
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid gap-2">
-                          {medications.map((medication: any) => (
-                            <div
-                              key={medication.id}
-                              className="p-2 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
-                              onClick={() => openEditMedicationDialog(medication)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-medium text-sm text-gray-900">{medication.name}</h4>
-                                <Badge variant="outline" className="text-[10px]">
-                                  {medication.format}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-gray-600 mt-1">
-                                {medication.dosage} • {medication.frequency}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
                 </div>
               </div >
             </div >
