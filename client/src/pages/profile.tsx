@@ -21,16 +21,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
+import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -50,19 +68,27 @@ const securitySchema = z.object({
   path: ["confirmPassword"],
 });
 
+const doctorSchema = z.object({
+  name: z.string().min(1, "Nome do médico é obrigatório"),
+  crm: z.string().min(1, "CRM é obrigatório"),
+  specialty: z.string().optional(),
+  isDefault: z.boolean().optional(),
+});
+
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type SecurityFormValues = z.infer<typeof securitySchema>;
+type DoctorFormValues = z.infer<typeof doctorSchema>;
 
 export default function Profile() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
+
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -74,7 +100,7 @@ export default function Profile() {
       address: user?.address || "",
     },
   });
-  
+
   const securityForm = useForm<SecurityFormValues>({
     resolver: zodResolver(securitySchema),
     defaultValues: {
@@ -83,7 +109,7 @@ export default function Profile() {
       confirmPassword: "",
     },
   });
-  
+
   const updateProfileMutation = useMutation({
     mutationFn: updateUserProfile,
     onSuccess: () => {
@@ -101,7 +127,7 @@ export default function Profile() {
       });
     },
   });
-  
+
   const updatePasswordMutation = useMutation({
     mutationFn: (data: SecurityFormValues) => updateUserProfile({ password: data.newPassword }),
     onSuccess: () => {
@@ -119,15 +145,141 @@ export default function Profile() {
       });
     },
   });
-  
+
   const onProfileSubmit = (values: ProfileFormValues) => {
     updateProfileMutation.mutate(values);
   };
-  
+
   const onSecuritySubmit = (values: SecurityFormValues) => {
     updatePasswordMutation.mutate(values);
   };
-  
+
+  // Doctor management state and hooks
+  const [isDoctorDialogOpen, setIsDoctorDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<any>(null);
+
+  const doctorForm = useForm<DoctorFormValues>({
+    resolver: zodResolver(doctorSchema),
+    defaultValues: {
+      name: "",
+      crm: "",
+      specialty: "",
+      isDefault: false,
+    },
+  });
+
+  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
+    queryKey: ["/api/doctors"],
+  });
+
+  const createDoctorMutation = useMutation({
+    mutationFn: (data: DoctorFormValues) => apiRequest("POST", "/api/doctors", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico cadastrado",
+        description: "O médico foi adicionado com sucesso.",
+      });
+      setIsDoctorDialogOpen(false);
+      doctorForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cadastrar médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateDoctorMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: DoctorFormValues }) =>
+      apiRequest("PUT", `/api/doctors/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico atualizado",
+        description: "Os dados do médico foram atualizados com sucesso.",
+      });
+      setIsDoctorDialogOpen(false);
+      setEditingDoctor(null);
+      doctorForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteDoctorMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/doctors/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico removido",
+        description: "O médico foi removido com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const setDefaultDoctorMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("PUT", `/api/doctors/${id}/set-default`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico padrão definido",
+        description: "Este médico foi definido como padrão.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao definir médico padrão",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onDoctorSubmit = (values: DoctorFormValues) => {
+    if (editingDoctor) {
+      updateDoctorMutation.mutate({ id: editingDoctor.id, data: values });
+    } else {
+      createDoctorMutation.mutate(values);
+    }
+  };
+
+  const handleEditDoctor = (doctor: any) => {
+    setEditingDoctor(doctor);
+    doctorForm.reset({
+      name: doctor.name,
+      crm: doctor.crm,
+      specialty: doctor.specialty || "",
+      isDefault: doctor.isDefault,
+    });
+    setIsDoctorDialogOpen(true);
+  };
+
+  const handleAddDoctor = () => {
+    setEditingDoctor(null);
+    doctorForm.reset({
+      name: "",
+      crm: "",
+      specialty: "",
+      isDefault: false,
+    });
+    setIsDoctorDialogOpen(true);
+  };
+
   // Medical conditions state
   const [conditions, setConditions] = useState({
     hypertension: false,
@@ -135,7 +287,7 @@ export default function Profile() {
     asthma: true,
     highCholesterol: false
   });
-  
+
   // Settings and notification preferences state
   const [settings, setSettings] = useState({
     emailNotifications: true,
@@ -148,17 +300,17 @@ export default function Profile() {
   return (
     <div className="min-h-screen flex flex-col">
       <MobileHeader toggleSidebar={toggleSidebar} />
-      
+
       <div className="flex flex-1 relative">
         <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        
+
         <main className="flex-1">
           <div className="p-4 md:p-6">
             <header className="mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Conta profissional</h1>
               <p className="text-gray-600">Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma</p>
             </header>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* User Information */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
@@ -180,29 +332,35 @@ export default function Profile() {
                     </div>
                   </div>
                 </div>
-                
+
                 <Tabs defaultValue="personal" value={activeTab} onValueChange={(value) => setActiveTab(value)}>
                   <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
-                    <TabsTrigger 
+                    <TabsTrigger
                       value="personal"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
                     >
                       Dados Pessoais
                     </TabsTrigger>
-                    <TabsTrigger 
+                    <TabsTrigger
+                      value="doctors"
+                      className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                    >
+                      Meus Médicos
+                    </TabsTrigger>
+                    <TabsTrigger
                       value="medical"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                     >
                       Histórico Médico
                     </TabsTrigger>
-                    <TabsTrigger 
+                    <TabsTrigger
                       value="security"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                     >
                       Segurança
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   {/* Personal Data Tab */}
                   <TabsContent value="personal">
                     <Form {...profileForm}>
@@ -221,7 +379,7 @@ export default function Profile() {
                               </FormItem>
                             )}
                           />
-                          
+
                           <FormField
                             control={profileForm.control}
                             name="email"
@@ -235,7 +393,7 @@ export default function Profile() {
                               </FormItem>
                             )}
                           />
-                          
+
                           <FormField
                             control={profileForm.control}
                             name="phoneNumber"
@@ -249,7 +407,7 @@ export default function Profile() {
                               </FormItem>
                             )}
                           />
-                          
+
                           <FormField
                             control={profileForm.control}
                             name="birthDate"
@@ -263,7 +421,7 @@ export default function Profile() {
                               </FormItem>
                             )}
                           />
-                          
+
                           <FormField
                             control={profileForm.control}
                             name="gender"
@@ -292,7 +450,7 @@ export default function Profile() {
                             )}
                           />
                         </div>
-                        
+
                         <div className="mt-6">
                           <FormField
                             control={profileForm.control}
@@ -308,13 +466,13 @@ export default function Profile() {
                             )}
                           />
                         </div>
-                        
+
                         <div className="mt-6 flex justify-end">
                           <Button type="button" variant="outline" className="mr-3">
                             Cancelar
                           </Button>
-                          <Button 
-                            type="submit" 
+                          <Button
+                            type="submit"
                             disabled={updateProfileMutation.isPending}
                           >
                             {updateProfileMutation.isPending ? (
@@ -330,56 +488,232 @@ export default function Profile() {
                       </form>
                     </Form>
                   </TabsContent>
-                  
-                  {/* Medical History Tab */}
+
+                  {/* Doctors Tab */}
+                  <TabsContent value="doctors">
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">Meus Médicos</h3>
+                          <p className="text-sm text-gray-500">Gerencie os médicos responsáveis pelos seus tratamentos</p>
+                        </div>
+                        <Button onClick={handleAddDoctor} className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Adicionar Médico
+                        </Button>
+                      </div>
+
+                      {doctorsLoading ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+                        </div>
+                      ) : doctors.length === 0 ? (
+                        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                          <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                          <h3 className="text-lg font-medium text-gray-900">Nenhum médico cadastrado</h3>
+                          <p className="text-gray-500 mb-4">Adicione seus médicos para facilitar a renovação de prescrições</p>
+                          <Button variant="outline" onClick={handleAddDoctor}>
+                            Cadastrar primeiro médico
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {doctors.map((doctor) => (
+                            <div key={doctor.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow relative">
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-start gap-3">
+                                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <Stethoscope className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">{doctor.name}</h4>
+                                    <p className="text-sm text-gray-500">CRM: {doctor.crm}</p>
+                                    {doctor.specialty && (
+                                      <p className="text-sm text-gray-500">{doctor.specialty}</p>
+                                    )}
+                                    {doctor.isDefault && (
+                                      <Badge variant="secondary" className="mt-2 bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                        <Star className="h-3 w-3 mr-1 fill-blue-700" />
+                                        Padrão
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditDoctor(doctor)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Editar
+                                    </DropdownMenuItem>
+                                    {!doctor.isDefault && (
+                                      <DropdownMenuItem onClick={() => setDefaultDoctorMutation.mutate(doctor.id)}>
+                                        <Star className="h-4 w-4 mr-2" />
+                                        Definir como padrão
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem
+                                      className="text-red-600 focus:text-red-600"
+                                      onClick={() => {
+                                        if (confirm("Tem certeza que deseja remover este médico?")) {
+                                          deleteDoctorMutation.mutate(doctor.id);
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Remover
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <Dialog open={isDoctorDialogOpen} onOpenChange={setIsDoctorDialogOpen}>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{editingDoctor ? "Editar Médico" : "Adicionar Médico"}</DialogTitle>
+                            <DialogDescription>
+                              Preencha os dados do médico para facilitar suas prescrições.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <Form {...doctorForm}>
+                            <form onSubmit={doctorForm.handleSubmit(onDoctorSubmit)} className="space-y-4">
+                              <FormField
+                                control={doctorForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome Completo *</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Dr(a). Fulano de Tal" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                  control={doctorForm.control}
+                                  name="crm"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>CRM *</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="123456/UF" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={doctorForm.control}
+                                  name="specialty"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Especialidade</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Ex: Cardiologia" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              <FormField
+                                control={doctorForm.control}
+                                name="isDefault"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel>
+                                        Médico Padrão
+                                      </FormLabel>
+                                      <p className="text-sm text-muted-foreground">
+                                        Este médico será selecionado automaticamente em novas prescrições.
+                                      </p>
+                                    </div>
+                                  </FormItem>
+                                )}
+                              />
+                              <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsDoctorDialogOpen(false)}>
+                                  Cancelar
+                                </Button>
+                                <Button type="submit" disabled={createDoctorMutation.isPending || updateDoctorMutation.isPending}>
+                                  {(createDoctorMutation.isPending || updateDoctorMutation.isPending) && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  )}
+                                  Salvar
+                                </Button>
+                              </DialogFooter>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="medical">
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Condições médicas</h3>
                         <div className="space-y-2">
                           <div className="flex items-center">
-                            <Checkbox 
-                              id="condition-hypertension" 
+                            <Checkbox
+                              id="condition-hypertension"
                               checked={conditions.hypertension}
-                              onCheckedChange={(checked) => 
-                                setConditions({...conditions, hypertension: checked === true})
+                              onCheckedChange={(checked) =>
+                                setConditions({ ...conditions, hypertension: checked === true })
                               }
                             />
                             <label htmlFor="condition-hypertension" className="ml-3 text-sm text-gray-700">Hipertensão</label>
                           </div>
                           <div className="flex items-center">
-                            <Checkbox 
-                              id="condition-diabetes" 
+                            <Checkbox
+                              id="condition-diabetes"
                               checked={conditions.diabetes}
-                              onCheckedChange={(checked) => 
-                                setConditions({...conditions, diabetes: checked === true})
+                              onCheckedChange={(checked) =>
+                                setConditions({ ...conditions, diabetes: checked === true })
                               }
                             />
                             <label htmlFor="condition-diabetes" className="ml-3 text-sm text-gray-700">Diabetes</label>
                           </div>
                           <div className="flex items-center">
-                            <Checkbox 
-                              id="condition-asthma" 
+                            <Checkbox
+                              id="condition-asthma"
                               checked={conditions.asthma}
-                              onCheckedChange={(checked) => 
-                                setConditions({...conditions, asthma: checked === true})
+                              onCheckedChange={(checked) =>
+                                setConditions({ ...conditions, asthma: checked === true })
                               }
                             />
                             <label htmlFor="condition-asthma" className="ml-3 text-sm text-gray-700">Asma</label>
                           </div>
                           <div className="flex items-center">
-                            <Checkbox 
-                              id="condition-cholesterol" 
+                            <Checkbox
+                              id="condition-cholesterol"
                               checked={conditions.highCholesterol}
-                              onCheckedChange={(checked) => 
-                                setConditions({...conditions, highCholesterol: checked === true})
+                              onCheckedChange={(checked) =>
+                                setConditions({ ...conditions, highCholesterol: checked === true })
                               }
                             />
                             <label htmlFor="condition-cholesterol" className="ml-3 text-sm text-gray-700">Colesterol alto</label>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Alergias</h3>
                         <div className="flex flex-wrap gap-2">
@@ -406,7 +740,7 @@ export default function Profile() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Medicamentos atuais</h3>
                         <div className="space-y-3">
@@ -432,7 +766,7 @@ export default function Profile() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="mt-6 flex justify-end">
                         <Button type="button">
                           Salvar histórico médico
@@ -440,7 +774,7 @@ export default function Profile() {
                       </div>
                     </div>
                   </TabsContent>
-                  
+
                   {/* Security Tab */}
                   <TabsContent value="security">
                     <div className="space-y-6">
@@ -461,7 +795,7 @@ export default function Profile() {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={securityForm.control}
                               name="newPassword"
@@ -475,7 +809,7 @@ export default function Profile() {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={securityForm.control}
                               name="confirmPassword"
@@ -489,9 +823,9 @@ export default function Profile() {
                                 </FormItem>
                               )}
                             />
-                            
-                            <Button 
-                              type="submit" 
+
+                            <Button
+                              type="submit"
                               disabled={updatePasswordMutation.isPending}
                             >
                               {updatePasswordMutation.isPending ? (
@@ -506,7 +840,7 @@ export default function Profile() {
                           </form>
                         </Form>
                       </div>
-                      
+
                       <div className="pt-4 border-t border-gray-200">
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Verificação em duas etapas</h3>
                         <div className="flex items-center justify-between">
@@ -519,7 +853,7 @@ export default function Profile() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="pt-4 border-t border-gray-200">
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Dispositivos conectados</h3>
                         <div className="space-y-3">
@@ -537,7 +871,7 @@ export default function Profile() {
                               Desconectar
                             </Button>
                           </div>
-                          
+
                           <div className="flex items-start justify-between">
                             <div className="flex items-start">
                               <svg className="h-5 w-5 text-gray-500 mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -554,7 +888,7 @@ export default function Profile() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="pt-4 border-t border-gray-200">
                         <h3 className="text-lg font-medium text-red-600 mb-3">Zona de perigo</h3>
                         <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos.</p>
@@ -566,11 +900,11 @@ export default function Profile() {
                   </TabsContent>
                 </Tabs>
               </div>
-              
+
               {/* Settings and Preferences */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Configurações</h2>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -578,53 +912,53 @@ export default function Profile() {
                       <p className="text-xs text-gray-500 mt-1">Receba atualizações sobre suas análises</p>
                     </div>
                     <div className="flex items-center">
-                      <Switch 
-                        id="email-notifications" 
+                      <Switch
+                        id="email-notifications"
                         checked={settings.emailNotifications}
-                        onCheckedChange={(checked) => 
-                          setSettings({...settings, emailNotifications: checked})
+                        onCheckedChange={(checked) =>
+                          setSettings({ ...settings, emailNotifications: checked })
                         }
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-700">Notificações push</h3>
                       <p className="text-xs text-gray-500 mt-1">Receba alertas no seu dispositivo</p>
                     </div>
                     <div className="flex items-center">
-                      <Switch 
-                        id="push-notifications" 
+                      <Switch
+                        id="push-notifications"
                         checked={settings.pushNotifications}
-                        onCheckedChange={(checked) => 
-                          setSettings({...settings, pushNotifications: checked})
+                        onCheckedChange={(checked) =>
+                          setSettings({ ...settings, pushNotifications: checked })
                         }
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-700">Lembretes de exames</h3>
                       <p className="text-xs text-gray-500 mt-1">Lembretes para repetir seus exames</p>
                     </div>
                     <div className="flex items-center">
-                      <Switch 
-                        id="exam-reminders" 
+                      <Switch
+                        id="exam-reminders"
                         checked={settings.examReminders}
-                        onCheckedChange={(checked) => 
-                          setSettings({...settings, examReminders: checked})
+                        onCheckedChange={(checked) =>
+                          setSettings({ ...settings, examReminders: checked })
                         }
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 <hr className="my-6 border-gray-200" />
-                
+
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Privacidade</h2>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -632,37 +966,37 @@ export default function Profile() {
                       <p className="text-xs text-gray-500 mt-1">Permite compartilhar suas análises com profissionais de saúde</p>
                     </div>
                     <div className="flex items-center">
-                      <Switch 
-                        id="share-doctors" 
+                      <Switch
+                        id="share-doctors"
                         checked={settings.shareDoctors}
-                        onCheckedChange={(checked) => 
-                          setSettings({...settings, shareDoctors: checked})
+                        onCheckedChange={(checked) =>
+                          setSettings({ ...settings, shareDoctors: checked })
                         }
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-700">Dados anônimos para pesquisa</h3>
                       <p className="text-xs text-gray-500 mt-1">Compartilha dados anônimos para melhorar o sistema</p>
                     </div>
                     <div className="flex items-center">
-                      <Switch 
-                        id="anonymous-data" 
+                      <Switch
+                        id="anonymous-data"
                         checked={settings.anonymousData}
-                        onCheckedChange={(checked) => 
-                          setSettings({...settings, anonymousData: checked})
+                        onCheckedChange={(checked) =>
+                          setSettings({ ...settings, anonymousData: checked })
                         }
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 <hr className="my-6 border-gray-200" />
-                
+
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Idioma e Região</h2>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
@@ -677,7 +1011,7 @@ export default function Profile() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <label htmlFor="units-select" className="block text-sm font-medium text-gray-700 mb-1">Unidades de medida</label>
                     <Select defaultValue="metric">
@@ -691,7 +1025,7 @@ export default function Profile() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
                   <Button type="button">
                     Salvar configurações
