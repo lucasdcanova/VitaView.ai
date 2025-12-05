@@ -1947,6 +1947,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Switch from MemStorage to DatabaseStorage
-// Switch from MemStorage to DatabaseStorage
-export const storage = new MemStorage();
+// Use DatabaseStorage for persistent data
+export const storage = new DatabaseStorage();
