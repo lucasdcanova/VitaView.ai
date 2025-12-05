@@ -3530,6 +3530,134 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Doctor routes
+  app.get("/api/doctors", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const doctors = await storage.getDoctorsByUserId(user.id);
+      res.json(doctors);
+    } catch (error) {
+      console.error("Erro ao buscar médicos:", error);
+      res.status(500).json({ message: "Erro ao buscar médicos" });
+    }
+  });
+
+  app.post("/api/doctors", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { name, crm, specialty, isDefault } = req.body;
+
+      if (!name || !crm) {
+        return res.status(400).json({ message: "Nome e CRM são obrigatórios" });
+      }
+
+      const newDoctor = await storage.createDoctor({
+        userId: user.id,
+        name,
+        crm,
+        specialty: specialty || null,
+        isDefault: isDefault || false,
+      });
+
+      console.log("✅ Médico criado com sucesso:", newDoctor);
+      res.status(201).json(newDoctor);
+    } catch (error) {
+      console.error("Erro ao criar médico:", error);
+      res.status(500).json({ message: "Erro ao criar médico" });
+    }
+  });
+
+  app.put("/api/doctors/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      const { name, crm, specialty, isDefault } = req.body;
+
+      // Verify doctor belongs to user
+      const doctor = await storage.getDoctor(id);
+      if (!doctor) {
+        return res.status(404).json({ message: "Médico não encontrado" });
+      }
+
+      if (doctor.userId !== user.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      if (!name || !crm) {
+        return res.status(400).json({ message: "Nome e CRM são obrigatórios" });
+      }
+
+      const updatedDoctor = await storage.updateDoctor(id, {
+        name,
+        crm,
+        specialty: specialty || null,
+        isDefault: isDefault || false,
+      });
+
+      console.log("✅ Médico atualizado com sucesso:", updatedDoctor);
+      res.json(updatedDoctor);
+    } catch (error) {
+      console.error("Erro ao atualizar médico:", error);
+      res.status(500).json({ message: "Erro ao atualizar médico" });
+    }
+  });
+
+  app.delete("/api/doctors/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+
+      // Verify doctor belongs to user
+      const doctor = await storage.getDoctor(id);
+      if (!doctor) {
+        return res.status(404).json({ message: "Médico não encontrado" });
+      }
+
+      if (doctor.userId !== user.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const deleted = await storage.deleteDoctor(id);
+      if (!deleted) {
+        return res.status(500).json({ message: "Erro ao excluir médico" });
+      }
+
+      console.log("✅ Médico excluído com sucesso");
+      res.json({ message: "Médico excluído com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir médico:", error);
+      res.status(500).json({ message: "Erro ao excluir médico" });
+    }
+  });
+
+  app.put("/api/doctors/:id/set-default", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+
+      // Verify doctor belongs to user
+      const doctor = await storage.getDoctor(id);
+      if (!doctor) {
+        return res.status(404).json({ message: "Médico não encontrado" });
+      }
+
+      if (doctor.userId !== user.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const success = await storage.setDefaultDoctor(user.id, id);
+      if (!success) {
+        return res.status(500).json({ message: "Erro ao definir médico padrão" });
+      }
+
+      console.log("✅ Médico definido como padrão");
+      res.json({ message: "Médico definido como padrão com sucesso" });
+    } catch (error) {
+      console.error("Erro ao definir médico padrão:", error);
+      res.status(500).json({ message: "Erro ao definir médico padrão" });
+    }
+  });
+
   // Temporary migration endpoint (remove after running once)
   app.post("/api/run-prescription-migration", ensureAuthenticated, async (req, res) => {
     try {

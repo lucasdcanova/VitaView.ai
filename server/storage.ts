@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -115,6 +115,15 @@ export interface IStorage {
     patientsList: { id: number; name: string; lastExamDate: Date | null }[];
   }>;
 
+  // Doctor operations
+  createDoctor(doctor: InsertDoctor): Promise<Doctor>;
+  getDoctor(id: number): Promise<Doctor | undefined>;
+  getDoctorsByUserId(userId: number): Promise<Doctor[]>;
+  updateDoctor(id: number, data: Partial<Doctor>): Promise<Doctor | undefined>;
+  deleteDoctor(id: number): Promise<boolean>;
+  getDefaultDoctorForUser(userId: number): Promise<Doctor | undefined>;
+  setDefaultDoctor(userId: number, doctorId: number): Promise<boolean>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -133,6 +142,7 @@ export class MemStorage implements IStorage {
   private evolutionsMap: Map<number, Evolution>;
   private appointmentsMap: Map<number, Appointment>;
   private habitsMap: Map<number, any>;
+  private doctorsMap: Map<number, Doctor>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -148,6 +158,7 @@ export class MemStorage implements IStorage {
   private evolutionIdCounter: number = 1;
   private appointmentIdCounter: number = 1;
   private habitIdCounter: number = 1;
+  private doctorIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -163,11 +174,13 @@ export class MemStorage implements IStorage {
     this.evolutionsMap = new Map();
     this.appointmentsMap = new Map();
     this.habitsMap = new Map();
+    this.doctorsMap = new Map();
     this.diagnosisIdCounter = 1;
     this.surgeryIdCounter = 1;
     this.evolutionIdCounter = 1;
     this.appointmentIdCounter = 1;
     this.habitIdCounter = 1;
+    this.doctorIdCounter = 1;
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -873,6 +886,92 @@ export class MemStorage implements IStorage {
 
   async deleteHabit(id: number): Promise<boolean> {
     return this.habitsMap.delete(id);
+  }
+
+  // Doctor operations
+  async createDoctor(doctor: InsertDoctor): Promise<Doctor> {
+    const id = this.doctorIdCounter++;
+    const newDoctor: Doctor = {
+      id,
+      userId: doctor.userId,
+      name: doctor.name,
+      crm: doctor.crm,
+      specialty: doctor.specialty || null,
+      isDefault: doctor.isDefault || false,
+      createdAt: new Date(),
+    };
+
+    // If this is set as default, unset default on other doctors
+    if (newDoctor.isDefault) {
+      const userDoctors = await this.getDoctorsByUserId(doctor.userId);
+      for (const d of userDoctors) {
+        if (d.isDefault) {
+          await this.updateDoctor(d.id, { isDefault: false });
+        }
+      }
+    }
+
+    this.doctorsMap.set(id, newDoctor);
+    return newDoctor;
+  }
+
+  async getDoctor(id: number): Promise<Doctor | undefined> {
+    return this.doctorsMap.get(id);
+  }
+
+  async getDoctorsByUserId(userId: number): Promise<Doctor[]> {
+    return Array.from(this.doctorsMap.values()).filter(
+      (doctor) => doctor.userId === userId
+    );
+  }
+
+  async updateDoctor(id: number, data: Partial<Doctor>): Promise<Doctor | undefined> {
+    const doctor = await this.getDoctor(id);
+    if (!doctor) return undefined;
+
+    // If setting this as default, unset other defaults
+    if (data.isDefault) {
+      const userDoctors = await this.getDoctorsByUserId(doctor.userId);
+      for (const d of userDoctors) {
+        if (d.id !== id && d.isDefault) {
+          d.isDefault = false;
+          this.doctorsMap.set(d.id, d);
+        }
+      }
+    }
+
+    const updatedDoctor = { ...doctor, ...data };
+    this.doctorsMap.set(id, updatedDoctor);
+    return updatedDoctor;
+  }
+
+  async deleteDoctor(id: number): Promise<boolean> {
+    return this.doctorsMap.delete(id);
+  }
+
+  async getDefaultDoctorForUser(userId: number): Promise<Doctor | undefined> {
+    return Array.from(this.doctorsMap.values()).find(
+      (doctor) => doctor.userId === userId && doctor.isDefault
+    );
+  }
+
+  async setDefaultDoctor(userId: number, doctorId: number): Promise<boolean> {
+    const doctor = await this.getDoctor(doctorId);
+    if (!doctor || doctor.userId !== userId) return false;
+
+    // Unset all other defaults for this user
+    const userDoctors = await this.getDoctorsByUserId(userId);
+    for (const d of userDoctors) {
+      if (d.isDefault) {
+        d.isDefault = false;
+        this.doctorsMap.set(d.id, d);
+      }
+    }
+
+    // Set this doctor as default
+    doctor.isDefault = true;
+    this.doctorsMap.set(doctorId, doctor);
+    return true;
   }
 
   // Admin operations
@@ -1947,5 +2046,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use DatabaseStorage for persistent data
-export const storage = new DatabaseStorage();
+// Use MemStorage for local development (no database required)
+// Switch to DatabaseStorage when you have a working PostgreSQL connection
+export const storage = new MemStorage();

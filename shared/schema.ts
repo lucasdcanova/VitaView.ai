@@ -485,3 +485,25 @@ export const insertPrescriptionSchema = createInsertSchema(prescriptions).pick({
 
 export type Prescription = typeof prescriptions.$inferSelect;
 export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+
+// Doctors schema
+export const doctors = pgTable("doctors", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  crm: text("crm").notNull(),
+  specialty: text("specialty"),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDoctorSchema = createInsertSchema(doctors).pick({
+  userId: true,
+  name: true,
+  crm: true,
+  specialty: true,
+  isDefault: true,
+});
+
+export type Doctor = typeof doctors.$inferSelect;
+export type InsertDoctor = z.infer<typeof insertDoctorSchema>;

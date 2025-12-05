@@ -100,11 +100,19 @@ const habitSchema = z.object({
   notes: z.string().optional(),
 });
 
+const doctorSchema = z.object({
+  name: z.string().min(1, "Nome do médico é obrigatório"),
+  crm: z.string().min(1, "CRM é obrigatório"),
+  specialty: z.string().optional(),
+  isDefault: z.boolean().optional(),
+});
+
 type DiagnosisForm = z.infer<typeof diagnosisSchema>;
 type MedicationForm = z.infer<typeof medicationSchema>;
 type AllergyForm = z.infer<typeof allergySchema>;
 type SurgeryForm = z.infer<typeof surgerySchema>;
 type HabitForm = z.infer<typeof habitSchema>;
+type DoctorForm = z.infer<typeof doctorSchema>;
 
 // Função para buscar a descrição do código CID-10
 const getCIDDescription = (cidCode: string): string => {
@@ -152,6 +160,11 @@ export default function HealthTrendsNew() {
   const [prescriptionValidityDays, setPrescriptionValidityDays] = useState(30);
   const [prescriptionObservations, setPrescriptionObservations] = useState("");
   const [doctorInfo, setDoctorInfo] = useState({ name: "", crm: "", specialty: "" });
+  const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
+  const [isDoctorManagementDialogOpen, setIsDoctorManagementDialogOpen] = useState(false);
+  const [isDoctorFormDialogOpen, setIsDoctorFormDialogOpen] = useState(false);
+  const [isEditDoctorDialogOpen, setIsEditDoctorDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<any>(null);
   const [anamnesisText, setAnamnesisText] = useState("");
   const [extractedRecord, setExtractedRecord] = useState<any | null>(null);
   const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
@@ -272,6 +285,26 @@ export default function HealthTrendsNew() {
     },
   });
 
+  const doctorForm = useForm<DoctorForm>({
+    resolver: zodResolver(doctorSchema),
+    defaultValues: {
+      name: "",
+      crm: "",
+      specialty: "",
+      isDefault: false,
+    },
+  });
+
+  const editDoctorForm = useForm<DoctorForm>({
+    resolver: zodResolver(doctorSchema),
+    defaultValues: {
+      name: "",
+      crm: "",
+      specialty: "",
+      isDefault: false,
+    },
+  });
+
   const { data: exams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
   });
@@ -294,6 +327,10 @@ export default function HealthTrendsNew() {
 
   const { data: habits = [] } = useQuery<any[]>({
     queryKey: ["/api/habits"],
+  });
+
+  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
+    queryKey: ["/api/doctors"],
   });
 
   const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery({
@@ -604,6 +641,84 @@ export default function HealthTrendsNew() {
       toast({
         title: "Erro ao excluir",
         description: "Ocorreu um erro ao excluir o hábito.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Doctor mutations
+  const createDoctorMutation = useMutation({
+    mutationFn: (data: DoctorForm) => apiRequest("POST", "/api/doctors", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico cadastrado",
+        description: "O médico foi adicionado com sucesso.",
+      });
+      setIsDoctorFormDialogOpen(false);
+      doctorForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cadastrar médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateDoctorMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: DoctorForm }) =>
+      apiRequest("PUT", `/api/doctors/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico atualizado",
+        description: "Os dados do médico foram atualizados com sucesso.",
+      });
+      setIsEditDoctorDialogOpen(false);
+      setEditingDoctor(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteDoctorMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/doctors/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico removido",
+        description: "O médico foi removido com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover médico",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const setDefaultDoctorMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("PUT", `/api/doctors/${id}/set-default`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      toast({
+        title: "Médico padrão definido",
+        description: "Este médico foi definido como padrão.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao definir médico padrão",
+        description: error.message || "Tente novamente.",
         variant: "destructive",
       });
     },
@@ -2609,38 +2724,65 @@ export default function HealthTrendsNew() {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              {/* Informações do Médico */}
+              {/* Seleção de Médico */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Dados do Médico</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Nome Completo *</label>
-                    <Input
-                      value={doctorInfo.name}
-                      onChange={(e) => setDoctorInfo({ ...doctorInfo, name: e.target.value })}
-                      placeholder="Dr(a). Nome Completo"
-                      className="mt-1"
-                    />
+                <h3 className="text-sm font-medium">Médico Responsável</h3>
+                {doctors.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      ⚠️ Você ainda não cadastrou nenhum médico.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsDoctorFormDialogOpen(true)}
+                        className="underline font-medium hover:text-yellow-900"
+                      >
+                        Cadastrar agora
+                      </button>
+                    </p>
                   </div>
+                ) : (
                   <div>
-                    <label className="text-sm font-medium">CRM *</label>
-                    <Input
-                      value={doctorInfo.crm}
-                      onChange={(e) => setDoctorInfo({ ...doctorInfo, crm: e.target.value })}
-                      placeholder="123456/UF"
-                      className="mt-1"
-                    />
+                    <label className="text-sm font-medium">Selecione o Médico *</label>
+                    <Select
+                      value={selectedDoctorId?.toString() || ""}
+                      onValueChange={(value) => {
+                        setSelectedDoctorId(parseInt(value));
+                        const doctor = doctors.find((d: any) => d.id === parseInt(value));
+                        if (doctor) {
+                          setDoctorInfo({
+                            name: doctor.name,
+                            crm: doctor.crm,
+                            specialty: doctor.specialty || "",
+                          });
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione um médico" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {doctors.map((doctor: any) => (
+                          <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <span>{doctor.name}</span>
+                              <span className="text-xs text-gray-500">CRM: {doctor.crm}</span>
+                              {doctor.isDefault && (
+                                <Badge variant="outline" className="text-xs">Padrão</Badge>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedDoctorId && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm">
+                        <p><strong>Nome:</strong> {doctorInfo.name}</p>
+                        <p><strong>CRM:</strong> {doctorInfo.crm}</p>
+                        {doctorInfo.specialty && <p><strong>Especialidade:</strong> {doctorInfo.specialty}</p>}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Especialidade (opcional)</label>
-                  <Input
-                    value={doctorInfo.specialty}
-                    onChange={(e) => setDoctorInfo({ ...doctorInfo, specialty: e.target.value })}
-                    placeholder="Ex: Cardiologia"
-                    className="mt-1"
-                  />
-                </div>
+                )}
               </div>
 
               {/* Seleção de Medicamentos */}
