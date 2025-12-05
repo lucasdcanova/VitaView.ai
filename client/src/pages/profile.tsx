@@ -50,6 +50,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
+const MEDICAL_SPECIALTIES = [
+  "Alergia e Imunologia",
+  "Anestesiologia",
+  "Angiologia",
+  "Cardiologia",
+  "Cirurgia Geral",
+  "Cirurgia Plástica",
+  "Clínica Médica",
+  "Dermatologia",
+  "Endocrinologia e Metabologia",
+  "Gastroenterologia",
+  "Geriatria",
+  "Ginecologia e Obstetrícia",
+  "Hematologia e Hemoterapia",
+  "Infectologia",
+  "Medicina de Família e Comunidade",
+  "Nefrologia",
+  "Neurologia",
+  "Oftalmologia",
+  "Ortopedia e Traumatologia",
+  "Otorrinolaringologia",
+  "Pediatria",
+  "Pneumologia",
+  "Psiquiatria",
+  "Radiologia e Diagnóstico por Imagem",
+  "Reumatologia",
+  "Urologia"
+];
+
 const profileSchema = z.object({
   fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
@@ -281,12 +310,7 @@ export default function Profile() {
   };
 
   // Medical conditions state
-  const [conditions, setConditions] = useState({
-    hypertension: false,
-    diabetes: false,
-    asthma: true,
-    highCholesterol: false
-  });
+
 
   // Settings and notification preferences state
   const [settings, setSettings] = useState({
@@ -302,7 +326,7 @@ export default function Profile() {
       <MobileHeader toggleSidebar={toggleSidebar} />
 
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
         <main className="flex-1">
           <div className="p-4 md:p-6">
@@ -347,12 +371,7 @@ export default function Profile() {
                     >
                       Meus Médicos
                     </TabsTrigger>
-                    <TabsTrigger
-                      value="medical"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                    >
-                      Histórico Médico
-                    </TabsTrigger>
+
                     <TabsTrigger
                       value="security"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
@@ -618,9 +637,25 @@ export default function Profile() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Especialidade</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Ex: Cardiologia" {...field} />
-                                      </FormControl>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        value={field.value}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Selecione a especialidade" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent className="max-h-[200px]">
+                                          {MEDICAL_SPECIALTIES.map((specialty) => (
+                                            <SelectItem key={specialty} value={specialty}>
+                                              {specialty}
+                                            </SelectItem>
+                                          ))}
+                                          <SelectItem value="Outra">Outra</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -666,114 +701,7 @@ export default function Profile() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="medical">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Condições médicas</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center">
-                            <Checkbox
-                              id="condition-hypertension"
-                              checked={conditions.hypertension}
-                              onCheckedChange={(checked) =>
-                                setConditions({ ...conditions, hypertension: checked === true })
-                              }
-                            />
-                            <label htmlFor="condition-hypertension" className="ml-3 text-sm text-gray-700">Hipertensão</label>
-                          </div>
-                          <div className="flex items-center">
-                            <Checkbox
-                              id="condition-diabetes"
-                              checked={conditions.diabetes}
-                              onCheckedChange={(checked) =>
-                                setConditions({ ...conditions, diabetes: checked === true })
-                              }
-                            />
-                            <label htmlFor="condition-diabetes" className="ml-3 text-sm text-gray-700">Diabetes</label>
-                          </div>
-                          <div className="flex items-center">
-                            <Checkbox
-                              id="condition-asthma"
-                              checked={conditions.asthma}
-                              onCheckedChange={(checked) =>
-                                setConditions({ ...conditions, asthma: checked === true })
-                              }
-                            />
-                            <label htmlFor="condition-asthma" className="ml-3 text-sm text-gray-700">Asma</label>
-                          </div>
-                          <div className="flex items-center">
-                            <Checkbox
-                              id="condition-cholesterol"
-                              checked={conditions.highCholesterol}
-                              onCheckedChange={(checked) =>
-                                setConditions({ ...conditions, highCholesterol: checked === true })
-                              }
-                            />
-                            <label htmlFor="condition-cholesterol" className="ml-3 text-sm text-gray-700">Colesterol alto</label>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Alergias</h3>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-0.5 text-sm font-medium text-red-800">
-                            Penicilina
-                            <button type="button" className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-red-400 hover:bg-red-200 hover:text-red-500 focus:outline-none">
-                              <span className="sr-only">Remove</span>
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                              </svg>
-                            </button>
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-0.5 text-sm font-medium text-red-800">
-                            Amendoim
-                            <button type="button" className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-red-400 hover:bg-red-200 hover:text-red-500 focus:outline-none">
-                              <span className="sr-only">Remove</span>
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                              </svg>
-                            </button>
-                          </span>
-                          <Button variant="outline" size="sm" className="text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-full">
-                            + Adicionar alergia
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Medicamentos atuais</h3>
-                        <div className="space-y-3">
-                          <div className="flex items-start">
-                            <svg className="h-5 w-5 text-gray-500 mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                            </svg>
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">Loratadina 10mg</p>
-                              <p className="text-xs text-gray-500">1 comprimido diário pela manhã</p>
-                            </div>
-                            <button className="ml-auto text-gray-400 hover:text-gray-500">
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                              </svg>
-                            </button>
-                          </div>
-                          <Button variant="link" size="sm" className="text-primary-600 hover:text-primary-700 px-0">
-                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Adicionar medicamento
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 flex justify-end">
-                        <Button type="button">
-                          Salvar histórico médico
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
 
                   {/* Security Tab */}
                   <TabsContent value="security">
