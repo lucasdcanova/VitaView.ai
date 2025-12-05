@@ -3545,10 +3545,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/doctors", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const { name, crm, specialty, isDefault } = req.body;
+      const { name, crm, specialty, professionalType, isDefault } = req.body;
 
       if (!name || !crm) {
-        return res.status(400).json({ message: "Nome e CRM são obrigatórios" });
+        return res.status(400).json({ message: "Nome e Número do Conselho são obrigatórios" });
       }
 
       const newDoctor = await storage.createDoctor({
@@ -3556,6 +3556,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         name,
         crm,
         specialty: specialty || null,
+        professionalType: professionalType || "doctor",
         isDefault: isDefault || false,
       });
 
@@ -3571,12 +3572,12 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
-      const { name, crm, specialty, isDefault } = req.body;
+      const { name, crm, specialty, professionalType, isDefault } = req.body;
 
       // Verify doctor belongs to user
       const doctor = await storage.getDoctor(id);
       if (!doctor) {
-        return res.status(404).json({ message: "Médico não encontrado" });
+        return res.status(404).json({ message: "Profissional não encontrado" });
       }
 
       if (doctor.userId !== user.id) {
@@ -3584,13 +3585,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       if (!name || !crm) {
-        return res.status(400).json({ message: "Nome e CRM são obrigatórios" });
+        return res.status(400).json({ message: "Nome e Número do Conselho são obrigatórios" });
       }
 
       const updatedDoctor = await storage.updateDoctor(id, {
         name,
         crm,
         specialty: specialty || null,
+        professionalType: professionalType || "doctor",
         isDefault: isDefault || false,
       });
 

@@ -493,6 +493,7 @@ export const doctors = pgTable("doctors", {
   name: text("name").notNull(),
   crm: text("crm").notNull(),
   specialty: text("specialty"),
+  professionalType: text("professional_type").default("doctor").notNull(),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -502,6 +503,7 @@ export const insertDoctorSchema = createInsertSchema(doctors).pick({
   name: true,
   crm: true,
   specialty: true,
+  professionalType: true,
   isDefault: true,
 });
 

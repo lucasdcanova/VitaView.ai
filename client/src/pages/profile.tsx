@@ -79,6 +79,15 @@ const MEDICAL_SPECIALTIES = [
   "Urologia"
 ];
 
+const PROFESSIONAL_TYPES = [
+  { value: "doctor", label: "Médico", council: "CRM" },
+  { value: "nurse", label: "Enfermeiro", council: "COREN" },
+  { value: "physiotherapist", label: "Fisioterapeuta", council: "CREFITO" },
+  { value: "nutritionist", label: "Nutricionista", council: "CRN" },
+  { value: "psychologist", label: "Psicólogo", council: "CRP" },
+  { value: "other", label: "Outro", council: "Documento" },
+];
+
 const profileSchema = z.object({
   fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
@@ -98,9 +107,10 @@ const securitySchema = z.object({
 });
 
 const doctorSchema = z.object({
-  name: z.string().min(1, "Nome do médico é obrigatório"),
-  crm: z.string().min(1, "CRM é obrigatório"),
+  name: z.string().min(1, "Nome do profissional é obrigatório"),
+  crm: z.string().min(1, "Número do registro é obrigatório"),
   specialty: z.string().optional(),
+  professionalType: z.string().min(1, "Tipo de profissional é obrigatório"),
   isDefault: z.boolean().optional(),
 });
 
@@ -193,6 +203,7 @@ export default function Profile() {
       name: "",
       crm: "",
       specialty: "",
+      professionalType: "doctor",
       isDefault: false,
     },
   });
@@ -206,8 +217,8 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       toast({
-        title: "Médico cadastrado",
-        description: "O médico foi adicionado com sucesso.",
+        title: "Profissional cadastrado",
+        description: "O profissional foi adicionado com sucesso.",
       });
       setIsDoctorDialogOpen(false);
       doctorForm.reset();
@@ -227,8 +238,8 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       toast({
-        title: "Médico atualizado",
-        description: "Os dados do médico foram atualizados com sucesso.",
+        title: "Profissional atualizado",
+        description: "Os dados do profissional foram atualizados com sucesso.",
       });
       setIsDoctorDialogOpen(false);
       setEditingDoctor(null);
@@ -248,8 +259,8 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       toast({
-        title: "Médico removido",
-        description: "O médico foi removido com sucesso.",
+        title: "Profissional removido",
+        description: "O profissional foi removido com sucesso.",
       });
     },
     onError: (error: any) => {
@@ -266,8 +277,8 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       toast({
-        title: "Médico padrão definido",
-        description: "Este médico foi definido como padrão.",
+        title: "Profissional padrão definido",
+        description: "Este profissional foi definido como padrão.",
       });
     },
     onError: (error: any) => {
@@ -293,6 +304,7 @@ export default function Profile() {
       name: doctor.name,
       crm: doctor.crm,
       specialty: doctor.specialty || "",
+      professionalType: doctor.professionalType || "doctor",
       isDefault: doctor.isDefault,
     });
     setIsDoctorDialogOpen(true);
@@ -304,6 +316,7 @@ export default function Profile() {
       name: "",
       crm: "",
       specialty: "",
+      professionalType: "doctor",
       isDefault: false,
     });
     setIsDoctorDialogOpen(true);
@@ -357,7 +370,7 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <Tabs defaultValue="personal" value={activeTab} onValueChange={(value) => setActiveTab(value)}>
+                <Tabs defaultValue="personal">
                   <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
                     <TabsTrigger
                       value="personal"
@@ -369,7 +382,7 @@ export default function Profile() {
                       value="doctors"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
                     >
-                      Meus Médicos
+                      Meus Profissionais
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -513,12 +526,12 @@ export default function Profile() {
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">Meus Médicos</h3>
-                          <p className="text-sm text-gray-500">Gerencie os médicos responsáveis pelos seus tratamentos</p>
+                          <h3 className="text-lg font-medium text-gray-900">Profissionais de Saúde</h3>
+                          <p className="text-sm text-gray-500">Gerencie os profissionais responsáveis pelos seus tratamentos</p>
                         </div>
                         <Button onClick={handleAddDoctor} className="flex items-center gap-2">
                           <Plus className="h-4 w-4" />
-                          Adicionar Médico
+                          Adicionar Profissional
                         </Button>
                       </div>
 
@@ -529,10 +542,10 @@ export default function Profile() {
                       ) : doctors.length === 0 ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                           <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                          <h3 className="text-lg font-medium text-gray-900">Nenhum médico cadastrado</h3>
-                          <p className="text-gray-500 mb-4">Adicione seus médicos para facilitar a renovação de prescrições</p>
+                          <h3 className="text-lg font-medium text-gray-900">Nenhum profissional cadastrado</h3>
+                          <p className="text-gray-500 mb-4">Adicione seus médicos, nutricionistas ou fisioterapeutas para facilitar o acompanhamento</p>
                           <Button variant="outline" onClick={handleAddDoctor}>
-                            Cadastrar primeiro médico
+                            Cadastrar primeiro profissional
                           </Button>
                         </div>
                       ) : (
@@ -545,15 +558,24 @@ export default function Profile() {
                                     <Stethoscope className="h-5 w-5" />
                                   </div>
                                   <div>
-                                    <h4 className="font-medium text-gray-900">{doctor.name}</h4>
-                                    <p className="text-sm text-gray-500">CRM: {doctor.crm}</p>
+                                    <h4 className="font-medium text-gray-900">
+                                      {doctor.professionalType === 'doctor' && !doctor.name.startsWith('Dr') ? `Dr(a). ${doctor.name}` : doctor.name}
+                                    </h4>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Badge variant="outline" className="text-xs font-normal">
+                                        {PROFESSIONAL_TYPES.find(t => t.value === (doctor.professionalType || 'doctor'))?.label || 'Profissional'}
+                                      </Badge>
+                                      <p className="text-sm text-gray-500">
+                                        {PROFESSIONAL_TYPES.find(t => t.value === (doctor.professionalType || 'doctor'))?.council || 'Registro'}: {doctor.crm}
+                                      </p>
+                                    </div>
                                     {doctor.specialty && (
                                       <p className="text-sm text-gray-500">{doctor.specialty}</p>
                                     )}
                                     {doctor.isDefault && (
                                       <Badge variant="secondary" className="mt-2 bg-blue-50 text-blue-700 hover:bg-blue-100">
                                         <Star className="h-3 w-3 mr-1 fill-blue-700" />
-                                        Padrão
+                                        Principal
                                       </Badge>
                                     )}
                                   </div>
@@ -597,33 +619,65 @@ export default function Profile() {
                       <Dialog open={isDoctorDialogOpen} onOpenChange={setIsDoctorDialogOpen}>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>{editingDoctor ? "Editar Médico" : "Adicionar Médico"}</DialogTitle>
+                            <DialogTitle>{editingDoctor ? "Editar Profissional" : "Adicionar Profissional"}</DialogTitle>
                             <DialogDescription>
-                              Preencha os dados do médico para facilitar suas prescrições.
+                              Cadastre o profissional de saúde para facilitar o registro de informações.
                             </DialogDescription>
                           </DialogHeader>
                           <Form {...doctorForm}>
                             <form onSubmit={doctorForm.handleSubmit(onDoctorSubmit)} className="space-y-4">
-                              <FormField
-                                control={doctorForm.control}
-                                name="name"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Nome Completo *</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="Dr(a). Fulano de Tal" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                  control={doctorForm.control}
+                                  name="professionalType"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Tipo de Profissional</FormLabel>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        value={field.value}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Selecione o tipo" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {PROFESSIONAL_TYPES.map((type) => (
+                                            <SelectItem key={type.value} value={type.value}>
+                                              {type.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={doctorForm.control}
+                                  name="name"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Nome Completo *</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Nome do profissional" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                   control={doctorForm.control}
                                   name="crm"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>CRM *</FormLabel>
+                                      <FormLabel>
+                                        {PROFESSIONAL_TYPES.find(t => t.value === doctorForm.watch('professionalType'))?.council || 'Registro'} *
+                                      </FormLabel>
                                       <FormControl>
                                         <Input placeholder="123456/UF" {...field} />
                                       </FormControl>
@@ -674,10 +728,10 @@ export default function Profile() {
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
                                       <FormLabel>
-                                        Médico Padrão
+                                        Profissional Principal
                                       </FormLabel>
                                       <p className="text-sm text-muted-foreground">
-                                        Este médico será selecionado automaticamente em novas prescrições.
+                                        Este profissional será sugerido como primeira opção.
                                       </p>
                                     </div>
                                   </FormItem>

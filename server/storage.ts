@@ -897,6 +897,7 @@ export class MemStorage implements IStorage {
       name: doctor.name,
       crm: doctor.crm,
       specialty: doctor.specialty || null,
+      professionalType: doctor.professionalType || "doctor",
       isDefault: doctor.isDefault || false,
       createdAt: new Date(),
     };
