@@ -3143,28 +3143,46 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Medications routes
+  // Temporary in-memory storage for medications
+  const medicationsStore = new Map<number, any[]>();
+  let medicationIdCounter = 1;
+
   app.post("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const medicationData = { ...req.body, userId: user.id };
+      const { name, format, dosage, dosageUnit, frequency, notes, startDate, isActive } = req.body;
 
-      const result = await pool.query(`
-        INSERT INTO medications (user_id, name, format, dosage, frequency, notes, start_date, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
-      `, [
-        medicationData.userId,
-        medicationData.name,
-        medicationData.format,
-        medicationData.dosage,
-        medicationData.frequency,
-        medicationData.notes || null,
-        medicationData.startDate,
-        medicationData.isActive !== false
-      ]);
+      if (!name) {
+        return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
+      }
 
-      res.json(result.rows[0]);
+      // Create medication object
+      const newMedication = {
+        id: medicationIdCounter++,
+        user_id: user.id,
+        name,
+        format,
+        dosage,
+        dosage_unit: dosageUnit || 'mg',
+        dosageUnit: dosageUnit || 'mg', // Add camelCase version for frontend
+        frequency,
+        notes,
+        start_date: startDate,
+        startDate, // Add camelCase version for frontend
+        is_active: isActive !== false,
+        created_at: new Date().toISOString()
+      };
+
+      // Store in memory
+      if (!medicationsStore.has(user.id)) {
+        medicationsStore.set(user.id, []);
+      }
+      medicationsStore.get(user.id)!.push(newMedication);
+
+      console.log("✅ Medicamento criado com sucesso (em memória):", newMedication);
+      res.status(201).json(newMedication);
     } catch (error) {
+      console.error("Erro ao criar medicamento:", error);
       res.status(500).json({ message: "Erro ao criar medicamento" });
     }
   });
@@ -3172,15 +3190,16 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
+      const userMedications = medicationsStore.get(user.id) || [];
 
-      const result = await pool.query(`
-        SELECT * FROM medications 
-        WHERE user_id = $1 AND is_active = true
-        ORDER BY created_at DESC
-      `, [user.id]);
+      // Filter active medications and sort by created_at DESC
+      const activeMedications = userMedications
+        .filter(m => m.is_active !== false)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      res.json(result.rows);
+      res.json(activeMedications);
     } catch (error) {
+      console.error("Erro ao buscar medicamentos:", error);
       res.status(500).json({ message: "Erro ao buscar medicamentos" });
     }
   });
@@ -3189,29 +3208,39 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
+      const { name, format, dosage, dosageUnit, frequency, notes, startDate } = req.body;
 
-      const result = await pool.query(`
-        UPDATE medications 
-        SET name = $1, format = $2, dosage = $3, frequency = $4, notes = $5, start_date = $6
-        WHERE id = $7 AND user_id = $8
-        RETURNING *
-      `, [
-        req.body.name,
-        req.body.format,
-        req.body.dosage,
-        req.body.frequency,
-        req.body.notes || null,
-        req.body.startDate,
-        id,
-        user.id
-      ]);
+      if (!name) {
+        return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
+      }
 
-      if (result.rows.length === 0) {
+      // Find and update medication in memory
+      const userMedications = medicationsStore.get(user.id) || [];
+      const medicationIndex = userMedications.findIndex(m => m.id === id && m.user_id === user.id);
+
+      if (medicationIndex === -1) {
         return res.status(404).json({ message: "Medicamento não encontrado" });
       }
 
-      res.json(result.rows[0]);
+      // Update the medication
+      userMedications[medicationIndex] = {
+        ...userMedications[medicationIndex],
+        name,
+        format,
+        dosage,
+        dosage_unit: dosageUnit || 'mg',
+        dosageUnit: dosageUnit || 'mg',
+        frequency,
+        notes,
+        start_date: startDate,
+        startDate
+      };
+
+      medicationsStore.set(user.id, userMedications);
+      console.log("✅ Medicamento atualizado com sucesso (em memória):", userMedications[medicationIndex]);
+      res.json(userMedications[medicationIndex]);
     } catch (error) {
+      console.error("Erro ao atualizar medicamento:", error);
       res.status(500).json({ message: "Erro ao atualizar medicamento" });
     }
   });
@@ -3221,13 +3250,22 @@ export async function registerRoutes(app: Express): Promise<void> {
       const user = req.user as any;
       const id = parseInt(req.params.id);
 
-      await pool.query(`
-        UPDATE medications SET is_active = false 
-        WHERE id = $1 AND user_id = $2
-      `, [id, user.id]);
+      // Find and mark medication as inactive in memory
+      const userMedications = medicationsStore.get(user.id) || [];
+      const medicationIndex = userMedications.findIndex(m => m.id === id && m.user_id === user.id);
 
+      if (medicationIndex === -1) {
+        return res.status(404).json({ message: "Medicamento não encontrado" });
+      }
+
+      // Mark as inactive instead of removing
+      userMedications[medicationIndex].is_active = false;
+      medicationsStore.set(user.id, userMedications);
+
+      console.log("✅ Medicamento marcado como inativo (em memória)");
       res.json({ message: "Medicamento excluído com sucesso" });
     } catch (error) {
+      console.error("Erro ao excluir medicamento:", error);
       res.status(500).json({ message: "Erro ao excluir medicamento" });
     }
   });

@@ -66,8 +66,9 @@ const diagnosisSchema = z.object({
 
 const medicationSchema = z.object({
   name: z.string().min(1, "Nome do medicamento é obrigatório"),
-  format: z.string().min(1, "Formato é obrigatório"),
+  format: z.string().default("comprimido"),
   dosage: z.string().min(1, "Dosagem é obrigatória"),
+  dosageUnit: z.string().default("mg"),
   frequency: z.string().min(1, "Frequência é obrigatória"),
   startDate: z.string().min(1, "Data de início é obrigatória"),
   notes: z.string().optional(),
@@ -179,8 +180,9 @@ export default function HealthTrendsNew() {
     resolver: zodResolver(medicationSchema),
     defaultValues: {
       name: "",
-      format: "",
+      format: "comprimido",
       dosage: "",
+      dosageUnit: "mg",
       frequency: "",
       startDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       notes: "",
@@ -191,8 +193,9 @@ export default function HealthTrendsNew() {
     resolver: zodResolver(medicationSchema),
     defaultValues: {
       name: "",
-      format: "",
+      format: "comprimido",
       dosage: "",
+      dosageUnit: "mg",
       frequency: "",
       startDate: "",
       notes: "",
@@ -776,6 +779,7 @@ export default function HealthTrendsNew() {
       name: medication.name || "",
       format: medication.format || "",
       dosage: medication.dosage || "",
+      dosageUnit: medication.dosageUnit || medication.dosage_unit || "mg",
       frequency: medication.frequency || "",
       startDate: medication.start_date || medication.startDate || "",
       notes: medication.notes || "",
@@ -1496,7 +1500,7 @@ export default function HealthTrendsNew() {
                                   </Badge>
                                 </div>
                                 <div className="text-xs text-gray-600 mt-1">
-                                  {medication.dosage} • {medication.frequency}
+                                  {medication.dosage}{medication.dosageUnit || medication.dosage_unit ? ` ${medication.dosageUnit || medication.dosage_unit}` : ''} • {medication.frequency}
                                 </div>
                               </div>
                             ))}
@@ -1811,7 +1815,35 @@ export default function HealthTrendsNew() {
                       <FormItem>
                         <FormLabel>Dosagem *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: 50mg" {...field} />
+                          <Input type="number" placeholder="Ex: 50" min="0" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={medicationForm.control}
+                    name="dosageUnit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unidade *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a unidade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mg">mg (miligramas)</SelectItem>
+                              <SelectItem value="g">g (gramas)</SelectItem>
+                              <SelectItem value="mcg">mcg (microgramas)</SelectItem>
+                              <SelectItem value="ml">ml (mililitros)</SelectItem>
+                              <SelectItem value="UI">UI (unidades internacionais)</SelectItem>
+                              <SelectItem value="%">% (porcentagem)</SelectItem>
+                              <SelectItem value="gotas">gotas</SelectItem>
+                              <SelectItem value="comprimido(s)">comprimido(s)</SelectItem>
+                              <SelectItem value="cápsula(s)">cápsula(s)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1946,7 +1978,35 @@ export default function HealthTrendsNew() {
                       <FormItem>
                         <FormLabel>Dosagem *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: 50mg" {...field} />
+                          <Input type="number" placeholder="Ex: 50" min="0" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editMedicationForm.control}
+                    name="dosageUnit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unidade *</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a unidade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mg">mg (miligramas)</SelectItem>
+                              <SelectItem value="g">g (gramas)</SelectItem>
+                              <SelectItem value="mcg">mcg (microgramas)</SelectItem>
+                              <SelectItem value="ml">ml (mililitros)</SelectItem>
+                              <SelectItem value="UI">UI (unidades internacionais)</SelectItem>
+                              <SelectItem value="%">% (porcentagem)</SelectItem>
+                              <SelectItem value="gotas">gotas</SelectItem>
+                              <SelectItem value="comprimido(s)">comprimido(s)</SelectItem>
+                              <SelectItem value="cápsula(s)">cápsula(s)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -2260,91 +2320,91 @@ export default function HealthTrendsNew() {
             </Form>
           </DialogContent>
         </Dialog >
-{/* Dialog para gerenciar alergias (listar, editar, excluir) */ }
-<Dialog open={isManageAllergiesDialogOpen} onOpenChange={setIsManageAllergiesDialogOpen}>
-    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-            <DialogTitle>Gerenciar Alergias</DialogTitle>
-            <DialogDescription>
+        {/* Dialog para gerenciar alergias (listar, editar, excluir) */}
+        <Dialog open={isManageAllergiesDialogOpen} onOpenChange={setIsManageAllergiesDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Gerenciar Alergias</DialogTitle>
+              <DialogDescription>
                 Visualize, edite ou remova alergias registradas
-            </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-            {Array.isArray(allergies) && allergies.length > 0 ? (
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {Array.isArray(allergies) && allergies.length > 0 ? (
                 <div className="space-y-3">
-                    {allergies.map((allergy: any) => (
-                        <div
-                            key={allergy.id}
-                            className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                                    <h4 className="font-semibold text-gray-900">{allergy.allergen}</h4>
-                                    <Badge variant="outline" className="text-xs">
-                                        {allergy.allergen_type === 'medication' ? 'Medicamento' :
-                                            allergy.allergen_type === 'food' ? 'Alimento' : 'Ambiental'}
-                                    </Badge>
-                                </div>
-                                {allergy.reaction && (
-                                    <p className="text-sm text-gray-600 mb-1">
-                                        <span className="font-medium">Reação:</span> {allergy.reaction}
-                                    </p>
-                                )}
-                                {allergy.severity && (
-                                    <p className="text-sm text-gray-600">
-                                        <span className="font-medium">Gravidade:</span> {allergy.severity}
-                                    </p>
-                                )}
-                                {allergy.notes && (
-                                    <p className="text-sm text-gray-500 mt-1">{allergy.notes}</p>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 ml-4">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        openEditAllergyDialog(allergy);
-                                        setIsManageAllergiesDialogOpen(false);
-                                    }}
-                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                >
-                                    Editar
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveAllergy(allergy.id)}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                    Excluir
-                                </Button>
-                            </div>
+                  {allergies.map((allergy: any) => (
+                    <div
+                      key={allergy.id}
+                      className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                          <h4 className="font-semibold text-gray-900">{allergy.allergen}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {allergy.allergen_type === 'medication' ? 'Medicamento' :
+                              allergy.allergen_type === 'food' ? 'Alimento' : 'Ambiental'}
+                          </Badge>
                         </div>
-                    ))}
+                        {allergy.reaction && (
+                          <p className="text-sm text-gray-600 mb-1">
+                            <span className="font-medium">Reação:</span> {allergy.reaction}
+                          </p>
+                        )}
+                        {allergy.severity && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Gravidade:</span> {allergy.severity}
+                          </p>
+                        )}
+                        {allergy.notes && (
+                          <p className="text-sm text-gray-500 mt-1">{allergy.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            openEditAllergyDialog(allergy);
+                            setIsManageAllergiesDialogOpen(false);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveAllergy(allergy.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-            ) : (
+              ) : (
                 <div className="text-center py-8 text-gray-500">
-                    <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Nenhuma alergia registrada</p>
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>Nenhuma alergia registrada</p>
                 </div>
-            )}
-            <div className="pt-4 border-t">
+              )}
+              <div className="pt-4 border-t">
                 <Button
-                    onClick={() => {
-                        setIsManageAllergiesDialogOpen(false);
-                        setIsAllergyDialogOpen(true);
-                    }}
-                    className="w-full"
+                  onClick={() => {
+                    setIsManageAllergiesDialogOpen(false);
+                    setIsAllergyDialogOpen(true);
+                  }}
+                  className="w-full"
                 >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Adicionar Nova Alergia
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Adicionar Nova Alergia
                 </Button>
+              </div>
             </div>
-        </div>
-    </DialogContent>
-</Dialog>
+          </DialogContent>
+        </Dialog>
 
         {/* Dialog para adicionar nova cirurgia */}
         <Dialog open={isSurgeryDialogOpen} onOpenChange={setIsSurgeryDialogOpen}>

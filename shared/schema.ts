@@ -242,7 +242,8 @@ export const medications = pgTable("medications", {
   userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   format: text("format").notNull(), // comprimido, xarope, cápsula, etc.
-  dosage: text("dosage").notNull(), // ex: 500mg, 10ml, etc.
+  dosage: text("dosage").notNull(), // ex: 500, 10, etc. (valor numérico)
+  dosageUnit: text("dosage_unit").default("mg"), // mg, g, ml, mcg, UI, etc.
   frequency: text("frequency").notNull(), // ex: 1x ao dia, 2x ao dia, etc.
   notes: text("notes"),
   startDate: text("start_date").notNull(),
@@ -255,6 +256,7 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   name: true,
   format: true,
   dosage: true,
+  dosageUnit: true,
   frequency: true,
   notes: true,
   startDate: true,

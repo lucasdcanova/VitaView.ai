@@ -38,12 +38,12 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
+
   // Responder às requisições OPTIONS do preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
@@ -71,7 +71,7 @@ app.use((req, res, next) => {
         duration,
         response: capturedJsonResponse
       };
-      
+
       if (res.statusCode >= 400) {
         logger.error(`${req.method} ${path} ${res.statusCode} in ${duration}ms`, meta);
       } else {
@@ -86,7 +86,20 @@ app.use((req, res, next) => {
 (async () => {
   // First register all routes
   await registerRoutes(app);
-  
+
+  // Run database migration for dosage_unit column
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      ALTER TABLE medications 
+      ADD COLUMN IF NOT EXISTS dosage_unit TEXT DEFAULT 'mg'
+    `);
+    logInfo("✅ Database migration: dosage_unit column verified/added");
+  } catch (error) {
+    logError("⚠️ Database migration warning (non-critical):", error);
+  }
+
+
   // Then setup HTTPS server with the configured app
   const server = await httpsConfig.setupHTTPSServer(app);
 
