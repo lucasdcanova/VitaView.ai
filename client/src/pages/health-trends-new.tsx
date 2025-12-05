@@ -1,4 +1,6 @@
 import { useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -2895,7 +2897,10 @@ export default function HealthTrendsNew() {
                 Cancelar
               </Button>
               <Button
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
                   if (selectedMedicationIds.length === 0) {
                     toast({
                       title: "Erro",
@@ -2922,6 +2927,8 @@ export default function HealthTrendsNew() {
                       },
                       credentials: "include",
                       body: JSON.stringify({
+                        // Enviar objetos completos de medicamentos para evitar query no backend
+                        medications: medications?.filter(m => selectedMedicationIds.includes(m.id)),
                         medicationIds: selectedMedicationIds,
                         validityDays: prescriptionValidityDays,
                         observations: prescriptionObservations,
@@ -2935,34 +2942,117 @@ export default function HealthTrendsNew() {
                       throw new Error("Erro ao gerar prescrição");
                     }
 
-                    // Download do PDF
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `receituario-${new Date().toISOString().split("T")[0]}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+                    const data = await response.json();
 
-                    toast({
-                      title: "Sucesso!",
-                      description: "Receituário gerado e baixado com sucesso",
-                    });
+                    if (data.success && data.pdfData) {
+                      const { pdfData } = data;
+                      const doc = new jsPDF();
 
-                    setIsPrescriptionDialogOpen(false);
-                    setSelectedMedicationIds([]);
-                    setPrescriptionObservations("");
-                    setDoctorInfo({ name: "", crm: "", specialty: "" });
-                  } catch (error) {
+                      // Header
+                      doc.setFontSize(22);
+                      doc.setTextColor(44, 62, 80); // #2C3E50
+                      doc.text("RECEITUÁRIO MÉDICO", 105, 20, { align: "center" });
+
+                      // Doctor Info
+                      doc.setFontSize(12);
+                      doc.setTextColor(0, 0, 0);
+                      doc.setFont("helvetica", "bold");
+                      doc.text(`Dr(a). ${pdfData.doctorName}`, 20, 40);
+                      doc.setFont("helvetica", "normal");
+                      doc.text(`CRM: ${pdfData.doctorCrm}`, 20, 46);
+                      if (pdfData.doctorSpecialty) {
+                        doc.text(`Especialidade: ${pdfData.doctorSpecialty}`, 20, 52);
+                      }
+
+                      // Patient Info
+                      doc.setDrawColor(200, 200, 200);
+                      doc.line(20, 60, 190, 60);
+                      doc.setFontSize(14);
+                      doc.setTextColor(44, 62, 80);
+                      doc.text("Dados do Paciente", 20, 70);
+                      doc.setFontSize(12);
+                      doc.setTextColor(0, 0, 0);
+                      doc.text(`Nome: ${pdfData.patientName}`, 20, 80);
+                      if (pdfData.patientBirthDate) {
+                        const birthDate = new Date(pdfData.patientBirthDate).toLocaleDateString('pt-BR');
+                        doc.text(`Data de Nascimento: ${birthDate}`, 120, 80);
+                      }
+
+                      // Medications
+                      doc.line(20, 90, 190, 90);
+                      doc.setFontSize(14);
+                      doc.setTextColor(44, 62, 80);
+                      doc.text("Prescrição de Medicamentos", 20, 100);
+
+                      let yPos = 110;
+                      pdfData.medications.forEach((med: any, index: number) => {
+                        doc.setFontSize(12);
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`${index + 1}. ${med.name}`, 20, yPos);
+
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(10);
+                        yPos += 5;
+                        doc.text(`Forma: ${med.format} | Dosagem: ${med.dosage}`, 25, yPos);
+                        yPos += 5;
+                        doc.text(`Posologia: ${med.frequency}`, 25, yPos);
+
+                        if (med.notes) {
+                          yPos += 5;
+                          doc.setFont("helvetica", "italic");
+                          doc.text(`Obs: ${med.notes}`, 25, yPos);
+                          doc.setFont("helvetica", "normal");
+                        }
+
+                        yPos += 12; // Spacing between medications
+                      });
+
+                      // Observations
+                      if (pdfData.observations) {
+                        doc.line(20, yPos - 5, 190, yPos - 5);
+                        yPos += 5;
+                        doc.setFontSize(14);
+                        doc.setTextColor(44, 62, 80);
+                        doc.text("Observações", 20, yPos);
+                        yPos += 10;
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(pdfData.observations, 20, yPos, { maxWidth: 170 });
+                        yPos = doc.lastAutoTable.finalY || yPos; // Adjust yPos after text
+                      }
+
+                      // Footer
+                      doc.line(20, doc.internal.pageSize.height - 40, 190, doc.internal.pageSize.height - 40);
+                      doc.setFontSize(10);
+                      doc.setTextColor(0, 0, 0);
+                      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 20, doc.internal.pageSize.height - 30);
+                      doc.text(`Validade: ${pdfData.validityDays} dias`, 20, doc.internal.pageSize.height - 25);
+                      doc.text("Assinatura do Médico: ___________________________________", 105, doc.internal.pageSize.height - 30, { align: "center" });
+
+                      doc.save(`receituario_${pdfData.patientName.replace(/\s/g, '_')}.pdf`);
+
+                      toast({
+                        title: "Sucesso",
+                        description: "Receituário gerado com sucesso!",
+                      });
+                      setIsPrescriptionDialogOpen(false);
+                      setSelectedMedicationIds([]);
+                      setPrescriptionObservations("");
+                      setDoctorInfo({ name: "", crm: "", specialty: "" });
+                    } else {
+                      throw new Error(data.message || "Erro desconhecido ao gerar PDF");
+                    }
+                  } catch (error: any) {
+                    console.error("Erro ao gerar receituário:", error);
                     toast({
                       title: "Erro",
-                      description: "Não foi possível gerar o receituário",
+                      description: error.message || "Falha ao gerar receituário. Tente novamente.",
                       variant: "destructive",
                     });
                   }
                 }}
+                type="button"
                 disabled={selectedMedicationIds.length === 0 || !doctorInfo.name || !doctorInfo.crm}
               >
                 <FileText className="h-4 w-4 mr-2" />
