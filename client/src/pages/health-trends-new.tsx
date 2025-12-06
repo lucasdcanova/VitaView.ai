@@ -2920,6 +2920,11 @@ export default function HealthTrendsNew() {
                   }
 
                   try {
+                    toast({
+                      title: "Gerando receituário...",
+                      description: "Aguarde enquanto geramos o documento.",
+                    });
+
                     const response = await fetch("/api/prescriptions/generate", {
                       method: "POST",
                       headers: {
@@ -2928,7 +2933,7 @@ export default function HealthTrendsNew() {
                       credentials: "include",
                       body: JSON.stringify({
                         // Enviar objetos completos de medicamentos para evitar query no backend
-                        medications: medications?.filter(m => selectedMedicationIds.includes(m.id)),
+                        medications: medications?.filter((m: any) => selectedMedicationIds.includes(m.id)),
                         medicationIds: selectedMedicationIds,
                         validityDays: prescriptionValidityDays,
                         observations: prescriptionObservations,
@@ -2939,110 +2944,29 @@ export default function HealthTrendsNew() {
                     });
 
                     if (!response.ok) {
-                      throw new Error("Erro ao gerar prescrição");
+                      const errorData = await response.json();
+                      throw new Error(errorData.message || "Erro ao gerar prescrição");
                     }
 
-                    const data = await response.json();
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
 
-                    if (data.success && data.pdfData) {
-                      const { pdfData } = data;
-                      const doc = new jsPDF();
+                    // Abrir em nova aba
+                    window.open(url, '_blank');
 
-                      // Header
-                      doc.setFontSize(22);
-                      doc.setTextColor(44, 62, 80); // #2C3E50
-                      doc.text("RECEITUÁRIO MÉDICO", 105, 20, { align: "center" });
+                    toast({
+                      title: "Sucesso",
+                      description: "Receituário gerado e aberto em nova aba!",
+                    });
 
-                      // Doctor Info
-                      doc.setFontSize(12);
-                      doc.setTextColor(0, 0, 0);
-                      doc.setFont("helvetica", "bold");
-                      doc.text(`Dr(a). ${pdfData.doctorName}`, 20, 40);
-                      doc.setFont("helvetica", "normal");
-                      doc.text(`CRM: ${pdfData.doctorCrm}`, 20, 46);
-                      if (pdfData.doctorSpecialty) {
-                        doc.text(`Especialidade: ${pdfData.doctorSpecialty}`, 20, 52);
-                      }
+                    setIsPrescriptionDialogOpen(false);
+                    setSelectedMedicationIds([]);
+                    setPrescriptionObservations("");
+                    setDoctorInfo({ name: "", crm: "", specialty: "" });
 
-                      // Patient Info
-                      doc.setDrawColor(200, 200, 200);
-                      doc.line(20, 60, 190, 60);
-                      doc.setFontSize(14);
-                      doc.setTextColor(44, 62, 80);
-                      doc.text("Dados do Paciente", 20, 70);
-                      doc.setFontSize(12);
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(`Nome: ${pdfData.patientName}`, 20, 80);
-                      if (pdfData.patientBirthDate) {
-                        const birthDate = new Date(pdfData.patientBirthDate).toLocaleDateString('pt-BR');
-                        doc.text(`Data de Nascimento: ${birthDate}`, 120, 80);
-                      }
+                    // Limpar URL após um tempo para garantir que abriu
+                    setTimeout(() => window.URL.revokeObjectURL(url), 5000);
 
-                      // Medications
-                      doc.line(20, 90, 190, 90);
-                      doc.setFontSize(14);
-                      doc.setTextColor(44, 62, 80);
-                      doc.text("Prescrição de Medicamentos", 20, 100);
-
-                      let yPos = 110;
-                      pdfData.medications.forEach((med: any, index: number) => {
-                        doc.setFontSize(12);
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFont("helvetica", "bold");
-                        doc.text(`${index + 1}. ${med.name}`, 20, yPos);
-
-                        doc.setFont("helvetica", "normal");
-                        doc.setFontSize(10);
-                        yPos += 5;
-                        doc.text(`Forma: ${med.format} | Dosagem: ${med.dosage}`, 25, yPos);
-                        yPos += 5;
-                        doc.text(`Posologia: ${med.frequency}`, 25, yPos);
-
-                        if (med.notes) {
-                          yPos += 5;
-                          doc.setFont("helvetica", "italic");
-                          doc.text(`Obs: ${med.notes}`, 25, yPos);
-                          doc.setFont("helvetica", "normal");
-                        }
-
-                        yPos += 12; // Spacing between medications
-                      });
-
-                      // Observations
-                      if (pdfData.observations) {
-                        doc.line(20, yPos - 5, 190, yPos - 5);
-                        yPos += 5;
-                        doc.setFontSize(14);
-                        doc.setTextColor(44, 62, 80);
-                        doc.text("Observações", 20, yPos);
-                        yPos += 10;
-                        doc.setFontSize(10);
-                        doc.setTextColor(0, 0, 0);
-                        doc.text(pdfData.observations, 20, yPos, { maxWidth: 170 });
-                        yPos = doc.lastAutoTable.finalY || yPos; // Adjust yPos after text
-                      }
-
-                      // Footer
-                      doc.line(20, doc.internal.pageSize.height - 40, 190, doc.internal.pageSize.height - 40);
-                      doc.setFontSize(10);
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 20, doc.internal.pageSize.height - 30);
-                      doc.text(`Validade: ${pdfData.validityDays} dias`, 20, doc.internal.pageSize.height - 25);
-                      doc.text("Assinatura do Médico: ___________________________________", 105, doc.internal.pageSize.height - 30, { align: "center" });
-
-                      doc.save(`receituario_${pdfData.patientName.replace(/\s/g, '_')}.pdf`);
-
-                      toast({
-                        title: "Sucesso",
-                        description: "Receituário gerado com sucesso!",
-                      });
-                      setIsPrescriptionDialogOpen(false);
-                      setSelectedMedicationIds([]);
-                      setPrescriptionObservations("");
-                      setDoctorInfo({ name: "", crm: "", specialty: "" });
-                    } else {
-                      throw new Error(data.message || "Erro desconhecido ao gerar PDF");
-                    }
                   } catch (error: any) {
                     console.error("Erro ao gerar receituário:", error);
                     toast({

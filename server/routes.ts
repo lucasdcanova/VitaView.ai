@@ -68,6 +68,81 @@ app.post("/api/run-migration-internal", async (req, res) => {
 
 
 // Função para gerar HTML do relatório de saúde
+function generatePrescriptionHTML({ doctorName, doctorCrm, doctorSpecialty, patientName, medications, observations, issueDate, validUntil }: any) {
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #48C9B0; padding-bottom: 20px; }
+        .header h1 { color: #2C3E50; margin: 0; font-size: 24px; }
+        .doctor-info { font-size: 14px; color: #555; margin-top: 10px; }
+        .content { margin: 0 40px; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 16px; font-weight: bold; color: #48C9B0; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
+        .patient-info { font-size: 16px; font-weight: bold; margin-bottom: 30px; }
+        .medication-item { margin-bottom: 15px; padding-left: 20px; border-left: 3px solid #eee; }
+        .medication-name { font-weight: bold; font-size: 15px; }
+        .medication-details { font-size: 14px; color: #666; }
+        .observations { background-color: #f9f9f9; padding: 15px; border-radius: 5px; font-size: 14px; }
+        .footer { position: fixed; bottom: 40px; left: 40px; right: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+        .signature-line { width: 60%; margin: 0 auto 10px auto; border-top: 1px solid #333; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>RECEITUÁRIO MÉDICO</h1>
+        <div class="doctor-info">
+          <strong>Dr(a). ${doctorName}</strong><br>
+          CRM: ${doctorCrm} ${doctorSpecialty ? `• ${doctorSpecialty}` : ''}
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="patient-info">
+          Paciente: ${patientName}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Prescrição de Medicamentos</div>
+          ${medications.map((med: any, index: number) => `
+            <div class="medication-item">
+              <div class="medication-name">${index + 1}. ${med.name}</div>
+              <div class="medication-details">
+                ${med.format ? `Forma: ${med.format} | ` : ''}Dosagem: ${med.dosage || 'N/A'}<br>
+                Posologia: ${med.frequency}<br>
+                ${med.notes ? `<em>Obs: ${med.notes}</em>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${observations ? `
+          <div class="section">
+            <div class="section-title">Observações</div>
+            <div class="observations">${observations}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="footer">
+        <div class="signature-line"></div>
+        <p>Assinatura e Carimbo do Médico</p>
+        <p>Data de Emissão: ${formatDate(issueDate)} • Validade: ${formatDate(validUntil)}</p>
+        <p>VitaView AI • Documento gerado eletronicamente</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Função para gerar HTML do relatório de saúde
 function generateExamReportHTML({ user, exam, metrics }: any) {
   const formatDate = (dateString: string) => {
     return dateString ? new Date(dateString).toLocaleDateString('pt-BR') : 'Não informado';
@@ -3761,24 +3836,39 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Retornar sucesso para que o frontend gere o PDF
-      // Note: We return success: true even if DB failed, because the PRIMARY goal is the PDF.
-      res.json({
-        success: true,
-        message: prescription ? "Prescrição registrada com sucesso" : "Prescrição gerada (não salva no histórico)",
-        prescription,
-        // Enviar os dados completos necessários para o frontend gerar o PDF
-        pdfData: {
-          doctorName,
-          doctorCrm,
-          doctorSpecialty,
-          patientName: user.fullName || user.username,
-          patientBirthDate: user.birthDate,
-          medications: medicationsList,
-          observations,
-          issueDate,
-          validUntil
-        }
+      // Em vez de retornar JSON, vamos gerar o PDF aqui mesmo
+      const htmlContent = generatePrescriptionHTML({
+        doctorName,
+        doctorCrm,
+        doctorSpecialty,
+        patientName: user.fullName || user.username || "Paciente",
+        medications: medicationsList,
+        observations,
+        issueDate,
+        validUntil
       });
+
+      // Configurações do PDF
+      const options = {
+        format: 'A4',
+        margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' }, // Margins handled by CSS
+        printBackground: true
+      };
+
+      // Gerar PDF usando html-pdf-node (dynamic import to avoid build issues if missing)
+      const { generatePdf } = await import('html-pdf-node');
+      const file = { content: htmlContent };
+
+      console.log('Gerando PDF de prescrição no backend...');
+      const pdfBuffer = await generatePdf(file, options);
+      console.log('PDF gerado, tamanho:', pdfBuffer.length);
+
+      // Enviar o PDF como resposta
+      res.setHeader('Content-Type', 'application/pdf');
+      // Content-Disposition: inline faz abrir no navegador (nova aba) se solicitado via window.open
+      // Se fosse attachment, forçaria download.
+      res.setHeader('Content-Disposition', `inline; filename="receita-${user.username}-${new Date().getTime()}.pdf"`);
+      res.send(pdfBuffer);
 
     } catch (error) {
       console.error('Erro fatal ao processar solicitação:', error);
