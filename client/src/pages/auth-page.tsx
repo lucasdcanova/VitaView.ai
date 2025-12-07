@@ -16,32 +16,27 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, ChevronRight, Activity, Heart, BarChart2, User } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip
-} from "recharts";
+
+/**
+ * VitaView AI Auth Page
+ * 
+ * Design Language:
+ * - Fundo Background Gray (#F4F4F4)
+ * - Card branco com bordas Light Gray
+ * - Tipografia: Montserrat Bold para títulos, Open Sans para corpo
+ * - Botões: Charcoal Gray (#212121) primário
+ * - Minimalista, limpo, focado em conteúdo
+ */
 
 const loginSchema = z.object({
   username: z.string().min(3, { message: "Usuário deve ter pelo menos 3 caracteres" }),
@@ -59,35 +54,10 @@ const registerSchema = insertUserSchema.extend({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-// Dados de exemplo para gráficos interativos
-const healthData = [
-  { name: 'Jan', value: 135, status: 'normal' },
-  { name: 'Fev', value: 128, status: 'normal' },
-  { name: 'Mar', value: 146, status: 'alto' },
-  { name: 'Abr', value: 142, status: 'alto' },
-  { name: 'Mai', value: 138, status: 'normal' },
-  { name: 'Jun', value: 130, status: 'normal' },
-];
-
-const cholesterolData = [
-  { name: 'HDL', value: 55 },
-  { name: 'LDL', value: 120 },
-  { name: 'Triglicerídeos', value: 150 },
-];
-
-const COLORS = ['#4F46E5', '#8884d8', '#0088FE', '#00C49F', '#FFBB28'];
-const HEALTH_COLORS = {
-  normal: '#10B981',
-  alto: '#EF4444',
-  baixo: '#3B82F6',
-  atenção: '#F59E0B'
-};
-
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
-  // Removemos a variável showQuickLogin que não é mais necessária
   const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   // Redirect if user is already logged in
@@ -104,19 +74,6 @@ export default function AuthPage() {
       password: "",
     },
   });
-
-  // Monitorar os campos do formulário de login 
-  const username = useWatch({
-    control: loginForm.control,
-    name: "username",
-  });
-
-  const password = useWatch({
-    control: loginForm.control,
-    name: "password",
-  });
-
-  // Removemos a lógica do botão rápido para simplificar a interface
 
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -139,7 +96,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex md:flex-row flex-col bg-gradient-to-br from-primary-50 to-white relative">
+    <div className="min-h-screen flex md:flex-row flex-col bg-[#F4F4F4] relative">
       {/* Botão para voltar para a landing page */}
       <Link href="/" className="absolute top-4 left-4 z-10">
         <Button variant="outline" className="rounded-full w-10 h-10 p-0 flex items-center justify-center">
@@ -168,26 +125,38 @@ export default function AuthPage() {
           </motion.div>
         </div>
 
-        <Card className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden border-t-4 border-t-[#1E3A5F] border border-gray-100 relative mt-3">
+        <Card className="max-w-md w-full bg-white rounded-lg border border-[#E0E0E0] overflow-hidden relative mt-3">
           {/* Banner de branding no topo do card */}
-          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] py-3 px-4 text-center">
-            <span className="text-white font-medium text-sm tracking-wide">Gestão Clínica Inteligente</span>
+          <div className="bg-[#212121] py-3 px-4 text-center">
+            <span className="text-white font-heading font-bold text-sm tracking-wide">
+              O Prontuário que Pensa com Você
+            </span>
           </div>
 
           <CardHeader className="text-center pt-8 pb-4">
-            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+            <CardTitle className="text-2xl font-heading font-bold text-[#212121] flex items-center justify-center gap-2">
               <span>Acesse sua conta</span>
             </CardTitle>
-            <CardDescription className="text-gray-600 text-center mt-2">
+            <CardDescription className="text-[#9E9E9E] text-center mt-2 font-body">
               Bem-vindo ao VitaView AI
             </CardDescription>
           </CardHeader>
 
           <CardContent className="pb-8 px-8">
             <Tabs defaultValue="login" value={tab} onValueChange={(value) => setTab(value as "login" | "register")}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="register">Cadastrar</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-[#E0E0E0] p-1 rounded-lg">
+                <TabsTrigger
+                  value="login"
+                  className="rounded-md font-heading font-bold data-[state=active]:bg-[#212121] data-[state=active]:text-white text-[#212121]"
+                >
+                  Entrar
+                </TabsTrigger>
+                <TabsTrigger
+                  value="register"
+                  className="rounded-md font-heading font-bold data-[state=active]:bg-[#212121] data-[state=active]:text-white text-[#212121]"
+                >
+                  Cadastrar
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -198,7 +167,7 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Usuário</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Usuário</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Digite seu usuário"
@@ -207,7 +176,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -217,7 +186,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Senha</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Senha</FormLabel>
                           <FormControl>
                             <Input
                               type="password"
@@ -227,13 +196,13 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
 
                     <div className="flex justify-end">
-                      <Link href="/forgot-password" className="text-sm text-[#1E3A5F] hover:underline px-0 font-medium">
+                      <Link href="/forgot-password" className="text-sm text-[#212121] hover:underline px-0 font-body">
                         Esqueceu a senha?
                       </Link>
                     </div>
@@ -242,7 +211,7 @@ export default function AuthPage() {
                       ref={submitButtonRef}
                       type="submit"
                       size="lg"
-                      className="w-full h-12 bg-[#448C9B] hover:bg-[#336D7A] font-bold text-lg text-white shadow-md rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
+                      className="w-full h-12 bg-[#212121] hover:bg-[#424242] font-heading font-bold text-lg text-white rounded-lg transition-all duration-200"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -258,9 +227,13 @@ export default function AuthPage() {
                 </Form>
 
                 <div className="mt-6 text-center">
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-[#9E9E9E] text-sm font-body">
                     Não tem uma conta?{" "}
-                    <Button variant="link" className="p-0 text-[#448C9B] hover:text-[#336D7A] font-semibold" onClick={() => setTab("register")}>
+                    <Button
+                      variant="link"
+                      className="p-0 text-[#212121] hover:text-[#424242] font-heading font-bold"
+                      onClick={() => setTab("register")}
+                    >
                       Cadastre-se
                     </Button>
                   </p>
@@ -275,7 +248,7 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Usuário</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Usuário</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Escolha um nome de usuário"
@@ -284,7 +257,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -294,7 +267,7 @@ export default function AuthPage() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome Completo</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Nome Completo</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Digite seu nome completo"
@@ -307,7 +280,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -317,7 +290,7 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Email</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
@@ -331,7 +304,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -341,7 +314,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Senha</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Senha</FormLabel>
                           <FormControl>
                             <Input
                               type="password"
@@ -351,7 +324,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -361,7 +334,7 @@ export default function AuthPage() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirme a Senha</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Confirme a Senha</FormLabel>
                           <FormControl>
                             <Input
                               type="password"
@@ -371,7 +344,7 @@ export default function AuthPage() {
                               className="h-11"
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[#D32F2F]" />
                         </FormItem>
                       )}
                     />
@@ -379,7 +352,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full h-12 bg-[#1E3A5F] hover:bg-[#152D48] font-medium text-white shadow-md rounded-lg mt-2"
+                      className="w-full h-12 bg-[#212121] hover:bg-[#424242] font-heading font-bold text-white rounded-lg mt-2"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? (
@@ -395,9 +368,13 @@ export default function AuthPage() {
                 </Form>
 
                 <div className="mt-6 text-center">
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-[#9E9E9E] text-sm font-body">
                     Já tem uma conta?{" "}
-                    <Button variant="link" className="p-0 text-[#1E3A5F] font-semibold" onClick={() => setTab("login")}>
+                    <Button
+                      variant="link"
+                      className="p-0 text-[#212121] font-heading font-bold"
+                      onClick={() => setTab("login")}
+                    >
                       Faça login
                     </Button>
                   </p>
@@ -407,7 +384,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-8 text-center text-gray-500 text-sm">
+        <div className="mt-8 text-center text-[#9E9E9E] text-sm font-body">
           <p>&copy; 2025 VitaView AI. Todos os direitos reservados.</p>
         </div>
       </div>

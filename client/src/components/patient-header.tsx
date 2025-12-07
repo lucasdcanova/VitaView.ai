@@ -3,6 +3,16 @@ import { Calendar, FileText, ShieldCheck, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+/**
+ * VitaView AI Patient Header Component
+ * 
+ * Design Language:
+ * - Fundo Pure White (#FFFFFF)
+ * - Bordas Light Gray (#E0E0E0)
+ * - Tipografia: Montserrat Bold para títulos, Open Sans para corpo
+ * - Ícones de linha (outline) em Charcoal Gray (#212121)
+ */
+
 interface PatientHeaderProps {
   title: string;
   description?: string;
@@ -77,22 +87,26 @@ export default function PatientHeader({
   ];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-6 mb-6">
+    <div className="bg-pureWhite border border-lightGray rounded-lg p-4 md:p-6 mb-6">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           {showTitleAsMain ? (
             <>
-              {patient && <p className="text-xs uppercase tracking-[0.2em] text-primary-600">PACIENTE: {patientName}</p>}
-              <h1 className="text-3xl font-semibold text-gray-900">{title}</h1>
+              {patient && (
+                <p className="text-xs uppercase tracking-[0.2em] text-mediumGray font-body">
+                  PACIENTE: {patientName}
+                </p>
+              )}
+              <h1 className="text-3xl font-heading font-bold text-charcoal">{title}</h1>
             </>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-[0.2em] text-primary-600">{title}</p>
-              <h1 className="text-3xl font-semibold text-gray-900">{patientName}</h1>
+              <p className="text-xs uppercase tracking-[0.2em] text-mediumGray font-body">{title}</p>
+              <h1 className="text-3xl font-heading font-bold text-charcoal">{patientName}</h1>
             </>
           )}
           {description && (
-            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{description}</p>
+            <p className="text-sm text-mediumGray leading-relaxed max-w-3xl font-body">{description}</p>
           )}
         </div>
         {children && (

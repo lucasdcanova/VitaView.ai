@@ -10,59 +10,94 @@ interface LogoProps {
 
 const sizeClasses = {
   sm: "h-8 w-8",
-  md: "h-12 w-12", 
+  md: "h-12 w-12",
   lg: "h-16 w-16",
   xl: "h-20 w-20"
 };
 
 const textSizeClasses = {
   sm: "text-lg",
-  md: "text-xl", 
+  md: "text-xl",
   lg: "text-2xl",
   xl: "text-3xl"
 };
 
-export function Logo({ 
-  size = "md", 
-  className, 
-  showText = true, 
+/**
+ * VitaView AI Logo Component
+ * 
+ * Design Language:
+ * - Logotipo textual minimalista
+ * - Duas letras 'V' maiúsculas estilizadas (VV) entrelaçadas
+ * - Geométrico, limpo, moderno
+ * - Cor Charcoal Gray (#212121) sobre fundos claros
+ */
+export function Logo({
+  size = "md",
+  className,
+  showText = true,
   textSize = "md",
-  onClick 
+  onClick
 }: LogoProps) {
   const isColumn = className?.includes('flex-col');
-  
+
   return (
-    <div 
+    <div
       className={cn("flex items-center", onClick && "cursor-pointer", className)}
       onClick={onClick}
     >
+      {/* Symbol: Duas letras V estilizadas */}
       <div className={cn(
-        "flex items-center justify-center", 
+        "flex items-center justify-center",
         sizeClasses[size],
         isColumn ? "mb-2" : "mr-3"
       )}>
-        <img 
-          src="/assets/vitaview_logo_icon.png" 
-          alt="VitaView AI Logo" 
-          className="w-full h-full object-contain" 
-          onError={(e) => {
-            console.warn('Primary logo failed to load, trying fallback');
-            e.currentTarget.src = "/assets/vitaview_logo_new.png";
-            e.currentTarget.onerror = (fallbackError) => {
-              console.error('Both logo files failed to load:', fallbackError);
-              // Could set a default SVG or text fallback here
-              fallbackError.currentTarget.onerror = null;
-            };
-          }}
-        />
+        <svg
+          viewBox="0 0 48 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+        >
+          {/* Primeiro V */}
+          <path
+            d="M8 12L18 36L28 12"
+            stroke="#212121"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          {/* Segundo V entrelaçado */}
+          <path
+            d="M20 12L30 36L40 12"
+            stroke="#212121"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        </svg>
       </div>
-      
+
       {showText && (
-        <div className="text-center">
-          <span className={cn("font-semibold text-[#1E3A5F]", textSizeClasses[textSize])}>
+        <div className={cn("text-center", isColumn ? "" : "flex items-baseline")}>
+          <span
+            className={cn(
+              "font-heading font-bold text-[#212121]",
+              textSizeClasses[textSize]
+            )}
+          >
             VitaView
           </span>
-          <span className={cn("font-semibold text-[#448C9B] ml-1", textSizeClasses[textSize])}>
+          <span
+            className={cn(
+              "font-heading font-bold text-[#9E9E9E] ml-0.5",
+              // AI em tamanho menor (sobrescrito)
+              textSize === "xl" ? "text-lg" :
+                textSize === "lg" ? "text-base" :
+                  textSize === "md" ? "text-sm" : "text-xs",
+              "align-super"
+            )}
+          >
             AI
           </span>
         </div>

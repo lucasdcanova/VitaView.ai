@@ -5,12 +5,38 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ["Montserrat", "system-ui", "sans-serif"],
+        body: ["Open Sans", "system-ui", "sans-serif"],
+        sans: ["Open Sans", "system-ui", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        // VitaView Design Language Colors
+        charcoal: "#212121", // Charcoal Gray
+        mediumGray: "#9E9E9E", // Medium Gray
+        lightGray: "#E0E0E0", // Light Gray
+        pureWhite: "#FFFFFF", // Pure White
+        backgroundGray: "#F4F4F4", // Light Background Gray
+
+        // Legacy/Compatibility maps
+        gray: {
+          50: "#F4F4F4",
+          100: "#E0E0E0",
+          200: "#BDBDBD",
+          300: "#9E9E9E",
+          400: "#757575",
+          500: "#616161",
+          600: "#424242",
+          700: "#212121",
+          800: "#1A1A1A",
+          900: "#121212",
+        },
+        // System Colors
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -24,6 +50,17 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          50: "#F4F4F4",
+          100: "#E0E0E0",
+          200: "#BDBDBD",
+          300: "#9E9E9E",
+          400: "#757575",
+          500: "#616161",
+          600: "#424242",
+          700: "#212121",
+          800: "#1A1A1A",
+          900: "#121212",
+          950: "#0A0A0A",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -45,11 +82,11 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
+          "1": "#212121",
+          "2": "#424242",
+          "3": "#616161",
+          "4": "#9E9E9E",
+          "5": "#BDBDBD",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

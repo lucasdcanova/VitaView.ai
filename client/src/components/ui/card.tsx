@@ -2,6 +2,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * VitaView AI Card Component
+ * 
+ * Design Language:
+ * - Fundo Pure White (#FFFFFF) sobre fundo de aplicação (#F4F4F4)
+ * - Bordas limpas em Light Gray (#E0E0E0)
+ * - Cantos arredondados (rounded-lg)
+ * - Sem sombras pesadas (shadow-sm sutil)
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -9,7 +18,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      "rounded-lg border border-lightGray bg-pureWhite text-charcoal shadow-sm",
       className
     )}
     {...props}
@@ -36,7 +45,7 @@ const CardTitle = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-xl font-bold leading-none tracking-tight font-heading text-charcoal",
       className
     )}
     {...props}
@@ -50,7 +59,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-mediumGray font-body", className)}
     {...props}
   />
 ))
@@ -60,7 +69,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div ref={ref} className={cn("p-6 pt-0 font-body", className)} {...props} />
 ))
 CardContent.displayName = "CardContent"
 

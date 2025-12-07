@@ -1,91 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* VitaView AI - Paleta de Cores */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  /* VitaView AI - Nova Linguagem de Design Minimalista */
+  /* Paleta Monocromática em Escala de Cinza */
   
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  /* Cores Primárias */
+  --charcoal-gray: #212121;
+  --medium-gray: #9E9E9E;
+  --light-gray: #E0E0E0;
+  --pure-white: #FFFFFF;
+  --background-gray: #F4F4F4;
+  --alert-red: #D32F2F;
+  
+  /* Mapeamento para variáveis do sistema */
+  --background: 0 0% 96%; /* #F4F4F4 */
+  --foreground: 0 0% 13%; /* #212121 */
+  
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 0 0% 13%; /* #212121 */
   
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
+  --popover-foreground: 0 0% 13%;
   
-  /* Azul Profundo #1E3A5F - cor principal */
-  --primary: 216 55% 25%;
-  --primary-foreground: 0 0% 100%;
+  /* Primary: Charcoal Gray */
+  --primary: 0 0% 13%; /* #212121 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
   
-  /* Turquesa Suave #48C9B0 - cor secundária */
-  --secondary: 168 45% 54%;
-  --secondary-foreground: 216 55% 25%;
+  /* Secondary: Medium Gray */
+  --secondary: 0 0% 62%; /* #9E9E9E */
+  --secondary-foreground: 0 0% 13%;
   
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 0 0% 88%; /* #E0E0E0 */
+  --muted-foreground: 0 0% 62%; /* #9E9E9E */
   
-  /* Cores Complementares */
-  --accent: 168 45% 75%;
-  --accent-foreground: 216 55% 25%;
+  --accent: 0 0% 88%;
+  --accent-foreground: 0 0% 13%;
   
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 72% 51%; /* #D32F2F */
+  --destructive-foreground: 0 0% 100%;
   
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  --border: 0 0% 88%; /* #E0E0E0 */
+  --input: 0 0% 88%; /* #E0E0E0 */
+  --ring: 0 0% 13%; /* #212121 */
   --radius: 0.5rem;
   
   /* VitaView - Valores Hexadecimais para Uso Direto */
-  --vitaview-primary: #1E3A5F;
-  --vitaview-primary-dark: #152D48;
-  --vitaview-primary-light: #2A4F7C;
-  --vitaview-secondary: #48C9B0;
-  --vitaview-secondary-dark: #3BA393;
-  --vitaview-secondary-light: #6BD4C1;
-  --vitaview-accent-blue: #A0D8EF;
-  --vitaview-accent-green: #A5E1D2;
+  --vitaview-primary: #212121;
+  --vitaview-primary-dark: #121212;
+  --vitaview-primary-light: #424242;
+  --vitaview-secondary: #9E9E9E;
+  --vitaview-secondary-dark: #757575;
+  --vitaview-secondary-light: #BDBDBD;
+  --vitaview-accent: #E0E0E0;
+  --vitaview-background: #F4F4F4;
+  --vitaview-error: #D32F2F;
 }
+
 .dark {
-  /* VitaView AI - Tema Escuro */
-  --background: 222 47% 11%;
+  /* VitaView AI - Tema Escuro Minimalista */
+  --background: 0 0% 8%;
   --foreground: 0 0% 98%;
   
-  --card: 222 47% 11%;
+  --card: 0 0% 12%;
   --card-foreground: 0 0% 98%;
   
-  --popover: 222 47% 11%;
+  --popover: 0 0% 12%;
   --popover-foreground: 0 0% 98%;
   
-  /* Azul Profundo - adaptado para modo escuro */
-  --primary: 212 47% 45%; 
-  --primary-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 13%;
   
-  /* Verde-Azulado - adaptado para modo escuro */
-  --secondary: 187 36% 55%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 0 0% 45%;
+  --secondary-foreground: 0 0% 98%;
   
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 65%;
   
-  /* Cores Complementares - adaptadas para modo escuro */
-  --accent: 187 36% 30%;
+  --accent: 0 0% 20%;
   --accent-foreground: 0 0% 98%;
   
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 62% 40%;
   --destructive-foreground: 0 0% 98%;
   
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 212.7 26.8% 83.9%;
-  
-  /* VitaView - Valores Hexadecimais Adaptados para Tema Escuro */
-  --vitaview-primary: #2A4F7C;
-  --vitaview-primary-dark: #1E3A5F; 
-  --vitaview-primary-light: #3B6DAA;
-  --vitaview-secondary: #5AADBF;
-  --vitaview-secondary-dark: #448C9B;
-  --vitaview-secondary-light: #7ACAD9;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 83%;
 }
 
 @layer base {
@@ -95,11 +98,38 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    /* Improved mobile experience */
+    font-family: 'Open Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent horizontal scroll on mobile */
     overflow-x: hidden;
+    background-color: var(--background-gray);
+  }
+
+  /* Tipografia baseada na linguagem de design */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
+    color: var(--charcoal-gray);
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h4 {
+    @apply text-lg md:text-xl;
+  }
+
+  p, span, label, input, textarea, select {
+    font-family: 'Open Sans', system-ui, sans-serif;
   }
 
   /* Mobile-first responsive typography */
@@ -134,7 +164,7 @@
 
   /* Focus management for accessibility */
   .focus-visible {
-    outline: 2px solid hsl(var(--primary));
+    outline: 2px solid var(--charcoal-gray);
     outline-offset: 2px;
   }
 
@@ -148,13 +178,83 @@
 }
 
 @layer components {
+  /* VitaView Design System - Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+    background-color: var(--charcoal-gray);
+    color: var(--pure-white);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--vitaview-primary-light);
+  }
+  
+  .btn-primary:disabled {
+    background-color: var(--medium-gray);
+    color: var(--light-gray);
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+    background-color: transparent;
+    color: var(--charcoal-gray);
+    border: 1px solid var(--charcoal-gray);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--light-gray);
+  }
+
+  /* VitaView Design System - Cards */
+  .vitaview-card {
+    @apply rounded-lg;
+    background-color: var(--pure-white);
+    border: 1px solid var(--light-gray);
+  }
+
+  /* VitaView Design System - Forms */
+  .vitaview-input {
+    @apply w-full rounded-lg px-3 py-2 text-sm transition-all duration-200;
+    background-color: var(--pure-white);
+    border: 1px solid var(--light-gray);
+    color: var(--charcoal-gray);
+    font-family: 'Open Sans', system-ui, sans-serif;
+  }
+  
+  .vitaview-input:focus {
+    border-color: var(--charcoal-gray);
+    outline: none;
+  }
+  
+  .vitaview-input::placeholder {
+    color: var(--medium-gray);
+  }
+  
+  .vitaview-input-error {
+    border-color: var(--alert-red);
+  }
+
+  /* VitaView Design System - Labels */
+  .vitaview-label {
+    @apply text-sm font-medium mb-1.5 block;
+    color: var(--charcoal-gray);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
+  }
+
   /* Mobile navigation improvements */
   .mobile-nav-backdrop {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity;
+    @apply fixed inset-0 backdrop-blur-sm z-40 transition-opacity;
+    background-color: rgba(33, 33, 33, 0.5);
   }
 
   .mobile-nav-panel {
-    @apply fixed inset-y-0 left-0 w-64 bg-background shadow-xl z-50 transform transition-transform;
+    @apply fixed inset-y-0 left-0 w-64 shadow-xl z-50 transform transition-transform;
+    background-color: var(--pure-white);
   }
 
   .mobile-nav-panel.closed {
@@ -163,8 +263,9 @@
 
   /* Mobile-optimized cards */
   .mobile-card {
-    @apply rounded-lg border bg-card p-4 shadow-sm;
-    /* Better spacing on mobile */
+    @apply rounded-lg p-4;
+    background-color: var(--pure-white);
+    border: 1px solid var(--light-gray);
     margin-bottom: 0.75rem;
   }
 
@@ -200,8 +301,9 @@
   }
 
   .mobile-form-input {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm;
-    /* Mobile-specific improvements */
+    @apply flex h-10 w-full rounded-lg px-3 py-2 text-sm;
+    border: 1px solid var(--light-gray);
+    background-color: var(--pure-white);
     font-size: 16px; /* Prevents zoom on iOS */
     -webkit-appearance: none;
   }
@@ -212,7 +314,8 @@
   }
 
   .mobile-loading-spinner {
-    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4;
+    @apply animate-spin rounded-full h-8 w-8 mb-4;
+    border-bottom: 2px solid var(--charcoal-gray);
   }
 
   /* Mobile table improvements */
@@ -222,12 +325,13 @@
 
   .mobile-table {
     @apply w-full text-sm;
-    min-width: 600px; /* Ensures table doesn't get too cramped */
+    min-width: 600px;
   }
 
   /* Mobile modal improvements */
   .mobile-modal {
-    @apply fixed inset-x-4 top-8 bottom-8 bg-background rounded-lg shadow-xl z-50;
+    @apply fixed inset-x-4 top-8 bottom-8 rounded-lg shadow-xl z-50;
+    background-color: var(--pure-white);
     max-height: calc(100vh - 4rem);
     overflow-y: auto;
   }
@@ -243,9 +347,11 @@
 
   /* Improved mobile buttons */
   .mobile-button {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-    min-height: 44px; /* Better touch targets */
+    @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50;
+    min-height: 44px;
     padding: 0.5rem 1rem;
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
   }
 
   .mobile-button-lg {
@@ -297,9 +403,50 @@
       @apply px-8 py-12;
     }
   }
+
+  /* Sidebar navigation item */
+  .sidebar-nav-item {
+    @apply w-full flex items-center p-3 rounded-lg transition-all duration-200;
+    color: var(--charcoal-gray);
+  }
+  
+  .sidebar-nav-item:hover {
+    background-color: var(--light-gray);
+  }
+  
+  .sidebar-nav-item.active {
+    background-color: var(--charcoal-gray);
+    color: var(--pure-white);
+  }
 }
 
 @layer utilities {
+  /* VitaView Text Colors */
+  .text-vitaview-primary {
+    color: var(--charcoal-gray);
+  }
+  
+  .text-vitaview-secondary {
+    color: var(--medium-gray);
+  }
+  
+  .text-vitaview-error {
+    color: var(--alert-red);
+  }
+
+  /* VitaView Background Colors */
+  .bg-vitaview-primary {
+    background-color: var(--charcoal-gray);
+  }
+  
+  .bg-vitaview-card {
+    background-color: var(--pure-white);
+  }
+  
+  .bg-vitaview-background {
+    background-color: var(--background-gray);
+  }
+
   /* Mobile-specific utilities */
   .text-mobile {
     font-size: 14px;
@@ -330,13 +477,14 @@
 
   @media (hover: hover) {
     .hover-mobile:hover {
-      @apply bg-accent;
+      background-color: var(--light-gray);
     }
   }
 
   /* Active states for mobile */
   .active-mobile:active {
-    @apply bg-accent scale-95;
+    background-color: var(--light-gray);
+    transform: scale(0.95);
     transition: transform 0.1s;
   }
 
@@ -401,5 +549,14 @@
     backface-visibility: hidden;
     perspective: 1000px;
   }
-}
 
+  /* Montserrat font utility */
+  .font-heading {
+    font-family: 'Montserrat', system-ui, sans-serif;
+  }
+
+  /* Open Sans font utility */
+  .font-body {
+    font-family: 'Open Sans', system-ui, sans-serif;
+  }
+}
