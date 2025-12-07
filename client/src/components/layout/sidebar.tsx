@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useSidebar } from "@/hooks/use-sidebar";
 import {
   LayoutDashboard,
   Upload,
@@ -16,11 +17,13 @@ import Logo from "@/components/ui/logo";
 
 
 interface SidebarProps {
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (isOpen: boolean) => void;
+  isSidebarOpen?: boolean;
+  setIsSidebarOpen?: (isOpen: boolean) => void;
 }
 
-export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
+export default function Sidebar(props: SidebarProps) {
+  const sidebarContext = useSidebar();
+  const isSidebarOpen = props.isSidebarOpen ?? sidebarContext.isSidebarOpen;
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
 
@@ -31,17 +34,40 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
   const handleNavClick = () => {
     // Fecha a sidebar em mobile ao clicar em um link
     if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
+      if (props.setIsSidebarOpen) {
+        props.setIsSidebarOpen(false);
+      } else {
+        sidebarContext.closeSidebar();
+      }
     }
   };
 
   const displayDoctor = user?.fullName || user?.username || "Doutor";
 
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 768) {
+      if (props.setIsSidebarOpen) {
+        props.setIsSidebarOpen(false);
+      } else {
+        sidebarContext.closeSidebar();
+      }
+    }
+  };
+
   return (
-    <aside
-      className={`bg-white shadow-md w-64 flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-    >
+    <>
+      {/* Overlay/Backdrop - apenas no mobile quando sidebar está aberta */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
+          onClick={closeSidebarOnMobile}
+        />
+      )}
+
+      <aside
+        className={`bg-white shadow-md w-64 flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+      >
       <div className="p-4 border-b border-gray-100">
         <Logo size="md" showText={true} textSize="md" />
       </div>
@@ -156,5 +182,6 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProp
         </button>
       </nav>
     </aside>
+    </>
   );
 }
