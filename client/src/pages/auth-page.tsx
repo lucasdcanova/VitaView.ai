@@ -117,8 +117,8 @@ export default function AuthPage() {
             <div className="flex justify-center w-full my-4">
               <Logo
                 size="xl"
-                showText={true}
-                textSize="lg"
+                showText={false}
+                variant="full"
                 className="flex-col items-center"
               />
             </div>

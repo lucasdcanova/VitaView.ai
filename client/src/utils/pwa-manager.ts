@@ -25,8 +25,8 @@ class PWAManager {
   private checkInstallation() {
     // Check if app is installed (PWA)
     this.isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-                     window.matchMedia('(display-mode: fullscreen)').matches ||
-                     (window.navigator as any).standalone === true;
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      (window.navigator as any).standalone === true;
   }
 
   private setupEventListeners() {
@@ -34,7 +34,8 @@ class PWAManager {
     window.addEventListener('beforeinstallprompt', (e: Event) => {
       e.preventDefault();
       this.deferredPrompt = e as BeforeInstallPromptEvent;
-      this.showInstallBanner();
+      // Banner de instalação desabilitado - pode ser ativado manualmente se necessário
+      // this.showInstallBanner();
     });
 
     // Listen for app installed event
@@ -72,7 +73,7 @@ class PWAManager {
       }
       return;
     }
-    
+
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -80,7 +81,7 @@ class PWAManager {
         });
 
         this.swRegistration = registration;
-        
+
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
@@ -108,9 +109,9 @@ class PWAManager {
     try {
       await this.deferredPrompt.prompt();
       const { outcome } = await this.deferredPrompt.userChoice;
-      
+
       this.deferredPrompt = null;
-      
+
       if (outcome === 'accepted') {
         console.log('[PWA] User accepted the install prompt');
         return true;
@@ -190,7 +191,7 @@ class PWAManager {
       body: 'Sua conexão foi restaurada. Sincronizando dados...',
       icon: '/assets/vitaview_logo_icon.png'
     });
-    
+
     // Trigger background sync for offline actions
     this.requestBackgroundSync('offline-actions');
   }
@@ -456,7 +457,7 @@ class PWAManager {
   }
 
   // Utility methods for storage management
-  public async getStorageUsage(): Promise<{used: number, quota: number}> {
+  public async getStorageUsage(): Promise<{ used: number, quota: number }> {
     if ('storage' in navigator && 'estimate' in navigator.storage) {
       const estimate = await navigator.storage.estimate();
       return {

@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,18 +35,18 @@ export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: "",
     },
   });
-  
+
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       const response = await fetch("/api/forgot-password", {
         method: "POST",
@@ -55,12 +55,12 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify(values),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || "Erro ao enviar email de recuperação");
       }
-      
+
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao processar solicitação");
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
           <ArrowLeft size={18} />
         </Button>
       </Link>
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -86,14 +86,14 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo VitaView */}
         <div className="flex justify-center mb-6">
-          <Logo 
-            size="lg" 
-            showText={true} 
-            textSize="md" 
+          <Logo
+            size="lg"
+            showText={false}
+            variant="full"
             className="flex-col items-center"
           />
         </div>
-        
+
         <Card className="bg-white rounded-xl shadow-lg border-t-4 border-t-[#1E3A5F] border border-gray-100">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
@@ -101,12 +101,12 @@ export default function ForgotPasswordPage() {
               Recuperar Senha
             </CardTitle>
             <CardDescription className="text-gray-600 mt-2">
-              {submitted 
-                ? "Verifique seu email para continuar" 
+              {submitted
+                ? "Verifique seu email para continuar"
                 : "Digite seu email para receber as instruções de recuperação"}
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             {!submitted ? (
               <>
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
@@ -136,7 +136,7 @@ export default function ForgotPasswordPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <Button
                       type="submit"
                       size="lg"
@@ -154,7 +154,7 @@ export default function ForgotPasswordPage() {
                     </Button>
                   </form>
                 </Form>
-                
+
                 <div className="mt-6 text-center">
                   <Link href="/auth">
                     <Button variant="link" className="text-sm text-[#1E3A5F]">
@@ -175,17 +175,17 @@ export default function ForgotPasswordPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                
+
                 <Alert className="bg-green-50 border-green-200">
                   <AlertDescription className="text-green-800">
                     Um email com instruções para redefinir sua senha foi enviado para <strong>{form.getValues("email")}</strong>
                   </AlertDescription>
                 </Alert>
-                
+
                 <p className="text-sm text-gray-600">
                   Não recebeu o email? Verifique sua pasta de spam ou{" "}
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 text-[#448C9B]"
                     onClick={() => {
                       setSubmitted(false);
@@ -195,7 +195,7 @@ export default function ForgotPasswordPage() {
                     tente novamente
                   </Button>
                 </p>
-                
+
                 <Link href="/auth">
                   <Button variant="outline" className="mt-4">
                     Voltar para o login

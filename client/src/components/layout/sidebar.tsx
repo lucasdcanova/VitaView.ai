@@ -96,7 +96,7 @@ export default function Sidebar(props: SidebarProps) {
       >
         {/* Logo Section */}
         <div className="p-4 border-b border-lightGray">
-          <Logo size="md" showText={true} textSize="md" />
+          <Logo size="md" showText={true} textSize="md" variant="icon" />
         </div>
 
         {/* User Profile Section */}

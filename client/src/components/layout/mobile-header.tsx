@@ -29,7 +29,7 @@ export default function MobileHeader(props: MobileHeaderProps) {
         <Menu className="h-5 w-5 text-[#212121]" />
       </button>
 
-      <Logo size="sm" showText={true} textSize="sm" />
+      <Logo size="sm" showText={true} textSize="sm" variant="icon" />
 
       <NotificationDropdown />
     </header>

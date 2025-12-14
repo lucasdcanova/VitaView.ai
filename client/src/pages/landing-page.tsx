@@ -139,21 +139,17 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white overflow-hidden">
-      {/* Background elements */}
+    <div className="min-h-screen bg-[#F4F4F4] overflow-hidden">
+      {/* Background elements - minimalista, sem gradientes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Gradient shapes with reduced opacity and controlled positioning */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
-        <div className="absolute top-1/3 -left-32 w-80 h-80 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-indigo-100 rounded-full opacity-15 blur-3xl"></div>
-
-
-
+        {/* Elementos decorativos sutis em escala de cinza */}
+        <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl"></div>
+        <div className="absolute top-1/3 -left-32 w-80 h-80 bg-[#E0E0E0] rounded-full opacity-20 blur-3xl"></div>
       </div>
 
-      {/* Navbar - improved with backdrop filter and better shadow */}
+      {/* Navbar - design minimalista */}
       <motion.nav
-        className="bg-white shadow-md py-3 fixed top-0 left-0 right-0 z-50"
+        className="bg-pureWhite border-b border-[#E0E0E0] py-3 fixed top-0 left-0 right-0 z-50"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
@@ -168,13 +164,14 @@ export default function LandingPage() {
                 size="md"
                 showText={true}
                 textSize="lg"
+                variant="icon"
                 className="font-bold tracking-tight"
               />
             </motion.div>
           </Link>
 
-          {/* Desktop navigation with enhanced hover effects */}
-          <div className="hidden md:flex space-x-8 text-gray-700">
+          {/* Desktop navigation - design minimalista */}
+          <div className="hidden md:flex space-x-8 text-[#212121]">
             {[
               { id: "demonstracoes", label: "Vita Timeline" },
               { id: "como-funciona", label: "View Laboratorial" },
@@ -186,12 +183,12 @@ export default function LandingPage() {
               <motion.a
                 key={item.id}
                 href={`#${item.id}`}
-                className="hover:text-[#448C9B] transition-colors relative group py-2 text-sm font-medium"
+                className="hover:text-[#9E9E9E] transition-colors relative group py-2 text-sm font-body font-medium"
                 whileHover={{ scale: 1.03 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
                 {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#448C9B] group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
               </motion.a>
             ))}
           </div>
@@ -202,7 +199,7 @@ export default function LandingPage() {
               <Button
                 variant="default"
                 size="sm"
-                className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] hover:from-[#152D48] hover:to-[#1E3A5F] shadow-md text-white"
+                className="bg-[#212121] hover:bg-[#424242] text-white font-heading font-bold"
               >
                 Acessar <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -216,7 +213,7 @@ export default function LandingPage() {
             whileTap={{ scale: 0.97 }}
           >
             <Link href="/auth">
-              <Button variant="default" className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] hover:from-[#152D48] hover:to-[#1E3A5F] shadow-md text-white px-6 py-2">
+              <Button variant="default" className="bg-[#212121] hover:bg-[#424242] text-white px-6 py-2 font-heading font-bold rounded-lg">
                 Acessar <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
@@ -224,8 +221,8 @@ export default function LandingPage() {
         </div>
       </motion.nav>
 
-      {/* Hero Section - increased top padding to avoid header overlap */}
-      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white to-[#E0E9F5] min-h-screen flex flex-col justify-center">
+      {/* Hero Section - design minimalista */}
+      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-pureWhite min-h-screen flex flex-col justify-center">
         <motion.div
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
@@ -235,20 +232,20 @@ export default function LandingPage() {
           <motion.div className="md:w-1/2 mb-10 md:mb-0 md:pr-8" variants={itemVariants}>
 
 
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              <span className="text-[#1E3A5F] tracking-tight">VitaView</span><span className="text-[#448C9B] ml-1">AI</span>: Inteligência que simplifica seus prontuários
+            <h1 className="text-4xl sm:text-5xl font-heading font-bold text-[#212121] leading-tight mb-6">
+              <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: Inteligência que simplifica seus prontuários
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
+            <p className="text-lg md:text-xl text-[#9E9E9E] font-body mb-8 max-w-lg">
               Centralize os dados clínicos, otimize diagnósticos com inteligência artificial e monitore a evolução da saúde dos seus pacientes em uma única plataforma.
             </p>
 
             {/* Benefícios em lista */}
             <div className="mb-8 space-y-3">
               {[
-                { icon: <ShieldCheck className="h-5 w-5 text-green-500" />, text: "Conformidade HIPAA e LGPD" },
-                { icon: <Brain className="h-5 w-5 text-purple-500" />, text: "Organização Inteligente de Dados Clínicos" },
-                { icon: <Activity className="h-5 w-5 text-blue-500" />, text: "Monitoramento Remoto de Pacientes" }
+                { icon: <ShieldCheck className="h-5 w-5 text-[#212121]" />, text: "Conformidade HIPAA e LGPD" },
+                { icon: <Brain className="h-5 w-5 text-[#212121]" />, text: "Organização Inteligente de Dados Clínicos" },
+                { icon: <Activity className="h-5 w-5 text-[#212121]" />, text: "Monitoramento Remoto de Pacientes" }
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -257,10 +254,10 @@ export default function LandingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + (index * 0.1) }}
                 >
-                  <div className="flex-shrink-0 p-1.5 bg-white rounded-full shadow-sm">
+                  <div className="flex-shrink-0 p-1.5 bg-[#E0E0E0] rounded-full">
                     {item.icon}
                   </div>
-                  <p className="text-gray-700">{item.text}</p>
+                  <p className="text-[#212121] font-body">{item.text}</p>
                 </motion.div>
               ))}
             </div>
@@ -268,25 +265,25 @@ export default function LandingPage() {
             {/* Estatísticas animadas */}
             <div className="grid grid-cols-3 gap-4 mb-8 hidden md:grid">
               <motion.div
-                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                className="text-center p-4 bg-pureWhite rounded-lg border border-[#E0E0E0]"
+                whileHover={{ y: -5 }}
               >
-                <h3 className="text-2xl md:text-3xl font-bold text-primary-600">98%</h3>
-                <p className="text-sm text-gray-600">Precisão na Extração</p>
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-[#212121]">98%</h3>
+                <p className="text-sm text-[#9E9E9E] font-body">Precisão na Extração</p>
               </motion.div>
               <motion.div
-                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                className="text-center p-4 bg-pureWhite rounded-lg border border-[#E0E0E0]"
+                whileHover={{ y: -5 }}
               >
-                <h3 className="text-2xl md:text-3xl font-bold text-primary-600">30%</h3>
-                <p className="text-sm text-gray-600">Menos Tempo Desperdiçado</p>
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-[#212121]">30%</h3>
+                <p className="text-sm text-[#9E9E9E] font-body">Menos Tempo Desperdiçado</p>
               </motion.div>
               <motion.div
-                className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                className="text-center p-4 bg-pureWhite rounded-lg border border-[#E0E0E0]"
+                whileHover={{ y: -5 }}
               >
-                <h3 className="text-2xl md:text-3xl font-bold text-primary-600">24/7</h3>
-                <p className="text-sm text-gray-600">Acesso Seguro a Todo Instante</p>
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-[#212121]">24/7</h3>
+                <p className="text-sm text-[#9E9E9E] font-body">Acesso Seguro a Todo Instante</p>
               </motion.div>
             </div>
 
@@ -296,7 +293,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" className="bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 text-primary-950 px-8 py-6 rounded-lg shadow-lg w-full sm:w-auto font-medium border border-primary-300">
+                  <Button size="lg" className="bg-[#212121] hover:bg-[#424242] text-white px-8 py-6 rounded-lg w-full sm:w-auto font-heading font-bold">
                     Começar Teste Grátis
                     <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -307,7 +304,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" variant="outline" className="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-8 py-6 rounded-lg flex items-center font-medium">
+                  <Button size="lg" variant="outline" className="border-2 border-[#212121] text-[#212121] hover:bg-[#E0E0E0] px-8 py-6 rounded-lg flex items-center font-heading font-bold">
                     <Play className="mr-2 h-5 w-5" /> Ver Demonstração
                   </Button>
                 </motion.div>
@@ -319,13 +316,13 @@ export default function LandingPage() {
             className="md:w-1/2 flex justify-center relative mt-10 md:mt-0"
             variants={itemVariants}
           >
-            {/* Elemento decorativo */}
-            <div className="absolute -z-10 w-64 h-64 bg-primary-100 rounded-full opacity-50 blur-xl -top-10 -right-10"></div>
+            {/* Elemento decorativo minimalista */}
+            <div className="absolute -z-10 w-64 h-64 bg-[#E0E0E0] rounded-full opacity-30 blur-xl -top-10 -right-10"></div>
 
             {/* Imagem principal com sobreposição de elementos */}
             <div className="relative w-full max-w-[600px]">
               <motion.div
-                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10] flex flex-col items-center justify-center border-2 border-dashed border-primary-200 bg-primary-50/30"
+                className="rounded-xl shadow-2xl relative z-10 bg-white overflow-hidden w-full max-w-[600px] h-auto aspect-[16/10] flex flex-col items-center justify-center border-2 border-dashed border-[#E0E0E0]200 bg-[#F4F4F4]/30"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -338,11 +335,11 @@ export default function LandingPage() {
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <Upload className="w-10 h-10 text-primary-500" />
+                  <Upload className="w-10 h-10 text-[#212121]" />
                 </motion.div>
 
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Arraste exames de pacientes aqui</h3>
-                <p className="text-gray-500 text-center max-w-xs mb-8">
+                <h3 className="text-xl font-semibold text-[#212121] mb-2">Arraste exames de pacientes aqui</h3>
+                <p className="text-[#9E9E9E] text-center max-w-xs mb-8">
                   A IA processa PDFs e imagens automaticamente para o prontuário.
                 </p>
 
@@ -350,7 +347,7 @@ export default function LandingPage() {
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   {/* File 1 - PDF */}
                   <motion.div
-                    className="absolute top-10 left-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-gray-100"
+                    className="absolute top-10 left-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-[#E0E0E0]"
                     initial={{ x: -100, y: -50, opacity: 0 }}
                     animate={{
                       x: [null, 150, 220],
@@ -364,13 +361,13 @@ export default function LandingPage() {
                       repeatDelay: 1
                     }}
                   >
-                    <FileText className="w-8 h-8 text-red-500" />
-                    <div className="w-16 h-2 bg-gray-100 rounded"></div>
+                    <FileText className="w-8 h-8 text-[#212121]" />
+                    <div className="w-16 h-2 bg-[#E0E0E0] rounded"></div>
                   </motion.div>
 
                   {/* File 2 - Image */}
                   <motion.div
-                    className="absolute bottom-20 right-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-gray-100"
+                    className="absolute bottom-20 right-10 bg-white p-3 rounded-lg shadow-md flex items-center gap-2 border border-[#E0E0E0]"
                     initial={{ x: 100, y: 50, opacity: 0 }}
                     animate={{
                       x: [null, -120, -200],
@@ -385,15 +382,15 @@ export default function LandingPage() {
                       delay: 1
                     }}
                   >
-                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                      <span className="text-xs font-bold text-blue-600">JPG</span>
+                    <div className="w-8 h-8 bg-[#E0E0E0] rounded flex items-center justify-center">
+                      <span className="text-xs font-bold text-[#212121]">JPG</span>
                     </div>
-                    <div className="w-16 h-2 bg-gray-100 rounded"></div>
+                    <div className="w-16 h-2 bg-[#E0E0E0] rounded"></div>
                   </motion.div>
 
                   {/* File 3 - Another PDF */}
                   <motion.div
-                    className="absolute top-1/2 left-[-50px] bg-white p-2 rounded-lg shadow-sm flex items-center gap-2 border border-gray-100"
+                    className="absolute top-1/2 left-[-50px] bg-white p-2 rounded-lg shadow-sm flex items-center gap-2 border border-[#E0E0E0]"
                     initial={{ x: 0, opacity: 0 }}
                     animate={{
                       x: [0, 200, 280],
@@ -408,13 +405,13 @@ export default function LandingPage() {
                       delay: 0.5
                     }}
                   >
-                    <FileText className="w-6 h-6 text-red-400" />
+                    <FileText className="w-6 h-6 text-[#9E9E9E]" />
                   </motion.div>
                 </div>
 
                 {/* Scanning Line Effect */}
                 <motion.div
-                  className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-400 to-transparent opacity-50"
+                  className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#9E9E9E] to-transparent opacity-50"
                   animate={{ top: ["0%", "100%"] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 />
@@ -427,7 +424,7 @@ export default function LandingPage() {
                 transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
               >
                 <div className="flex items-center space-x-2">
-                  <Brain className="w-5 h-5 text-purple-500" />
+                  <Brain className="w-5 h-5 text-[#212121]" />
                   <span className="text-sm font-medium">Processamento IA</span>
                 </div>
               </motion.div>
@@ -438,7 +435,7 @@ export default function LandingPage() {
                 transition={{ duration: 5, repeat: Infinity, repeatType: "reverse", delay: 1 }}
               >
                 <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-[#212121]" />
                   <span className="text-sm font-medium">Dados Extraídos</span>
                 </div>
               </motion.div>
@@ -446,22 +443,22 @@ export default function LandingPage() {
           </motion.div>
         </motion.div>
 
-        {/* Badges flutuantes na parte de baixo */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-2 px-6 bg-white bg-opacity-80 backdrop-blur-sm rounded-t-xl shadow-sm text-xs md:text-sm text-gray-600 hidden sm:flex">
+        {/* Badges flutuantes na parte de baixo - design minimalista */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-2 px-6 bg-pureWhite border border-[#E0E0E0] rounded-t-xl text-xs md:text-sm text-[#212121] hidden sm:flex">
           <span className="flex items-center">
-            <Shield className="w-4 h-4 mr-1 text-primary-600" /> Dados protegidos
+            <Shield className="w-4 h-4 mr-1 text-[#212121]" /> Dados protegidos
           </span>
           <span className="flex items-center">
-            <Brain className="w-4 h-4 mr-1 text-primary-600" /> Análise com IA
+            <Brain className="w-4 h-4 mr-1 text-[#212121]" /> Análise com IA
           </span>
           <span className="flex items-center">
-            <FlaskConical className="w-4 h-4 mr-1 text-primary-600" /> Interpretação clínica
+            <FlaskConical className="w-4 h-4 mr-1 text-[#212121]" /> Interpretação clínica
           </span>
         </div>
       </section>
 
       {/* Pain Point Section */}
-      <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-16 mt-[-3rem] hidden relative overflow-hidden">
+      <section className="bg-gradient-to-r from-[#212121] to-[#424242] text-white py-16 mt-[-3rem] hidden relative overflow-hidden">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -521,12 +518,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Simulação de Relatórios Section */}
-      <section id="demonstracoes" className="py-16 mt-[0] bg-gradient-to-br from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
-        {/* Elementos decorativos */}
+      {/* Simulação de Relatórios Section - design minimalista */}
+      <section id="demonstracoes" className="py-16 mt-[0] bg-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        {/* Elementos decorativos minimalistas */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 right-10 w-56 h-56 bg-primary-100 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute top-20 right-10 w-56 h-56 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -538,7 +535,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] rounded-full text-sm font-heading font-bold mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -547,10 +544,10 @@ export default function LandingPage() {
               Vita Timeline
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Linha de <span className="text-[#A5E1D2]">Vida</span> do Paciente
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-6">
+              Linha de <span className="text-[#9E9E9E]">Vida</span> do Paciente
             </h2>
-            <p className="text-lg text-white text-opacity-90 max-w-3xl mx-auto">
+            <p className="text-lg text-[#E0E0E0] font-body max-w-3xl mx-auto">
               Tenha uma visão holística da jornada de saúde do seu paciente. Acesse exames, métricas vitais e histórico clínico em um dashboard centralizado e seguro.
             </p>
           </motion.div>
@@ -569,12 +566,12 @@ export default function LandingPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                {/* Header do dashboard */}
-                <div className="bg-primary-700 h-12 flex items-center px-4 text-white">
+                {/* Header do dashboard - design minimalista */}
+                <div className="bg-[#212121] h-12 flex items-center px-4 text-white">
                   <Calendar className="h-5 w-5 mr-2" />
-                  <span className="font-medium">Linha do Tempo - Maria Silva</span>
+                  <span className="font-heading font-bold">Linha do Tempo - Maria Silva</span>
                   <div className="ml-auto flex space-x-2">
-                    <div className="flex items-center bg-primary-800 rounded px-2 py-1 text-xs cursor-pointer hover:bg-primary-900 transition-colors">
+                    <div className="flex items-center bg-[#424242] rounded px-2 py-1 text-xs cursor-pointer hover:bg-[#525252] transition-colors">
                       <span className="mr-1 opacity-70">Período:</span>
                       <span className="font-medium">Últimos 6 meses</span>
                       <ChevronDown className="w-3 h-3 ml-1 opacity-70" />
@@ -588,34 +585,34 @@ export default function LandingPage() {
                     {/* Timeline Items */}
                     <div className="relative">
                       {/* Vertical Line */}
-                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-200 via-primary-300 to-primary-200"></div>
+                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#212121] via-[#9E9E9E] to-[#424242]"></div>
 
                       {/* Timeline Event 1 - Recent Lab Result */}
                       <div className="relative flex gap-4 mb-8 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#212121] to-[#424242] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
                             <FileText className="w-7 h-7 text-white" />
                           </div>
-                          <span className="text-xs text-gray-500 mt-2 font-medium">15 Abr</span>
+                          <span className="text-xs text-[#9E9E9E] mt-2 font-medium">15 Abr</span>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-[#E0E0E0] p-4 group-hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-900">Hemograma Completo</h4>
-                              <p className="text-xs text-gray-500 mt-1">Laboratório Central</p>
+                              <h4 className="font-semibold text-[#212121]">Hemograma Completo</h4>
+                              <p className="text-xs text-[#9E9E9E] mt-1">Laboratório Central</p>
                             </div>
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0E0E0] text-[#212121] border border-[#E0E0E0]">
                               Normal
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">Todos os parâmetros dentro da normalidade</p>
-                          <div className="flex gap-2 text-xs text-gray-500">
+                          <p className="text-sm text-[#9E9E9E] mb-2">Todos os parâmetros dentro da normalidade</p>
+                          <div className="flex gap-2 text-xs text-[#9E9E9E]">
                             <span className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#212121]"></div>
                               Hemoglobina: 14.2 g/dL
                             </span>
                             <span className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#212121]"></div>
                               Leucócitos: 7.200/mm³
                             </span>
                           </div>
@@ -625,26 +622,26 @@ export default function LandingPage() {
                       {/* Timeline Event 2 - Medication */}
                       <div className="relative flex gap-4 mb-8 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#212121] to-[#424242] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
                             <span className="text-2xl">💊</span>
                           </div>
-                          <span className="text-xs text-gray-500 mt-2 font-medium">10 Abr</span>
+                          <span className="text-xs text-[#9E9E9E] mt-2 font-medium">10 Abr</span>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-[#E0E0E0] p-4 group-hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-900">Prescrição Atualizada</h4>
-                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
+                              <h4 className="font-semibold text-[#212121]">Prescrição Atualizada</h4>
+                              <p className="text-xs text-[#9E9E9E] mt-1">Dr. João Santos - Cardiologia</p>
                             </div>
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0E0E0] text-[#212121] border border-[#E0E0E0]">
                               Ativo
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">Ajuste na dosagem de medicação para hipertensão</p>
-                          <div className="space-y-1 text-xs text-gray-600">
+                          <p className="text-sm text-[#9E9E9E] mb-2">Ajuste na dosagem de medicação para hipertensão</p>
+                          <div className="space-y-1 text-xs text-[#9E9E9E]">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">Losartana 50mg</span>
-                              <span className="text-gray-400">•</span>
+                              <span className="text-[#9E9E9E]">•</span>
                               <span>1x ao dia (manhã)</span>
                             </div>
                           </div>
@@ -654,47 +651,47 @@ export default function LandingPage() {
                       {/* Timeline Event 3 - Appointment */}
                       <div className="relative flex gap-4 mb-8 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#212121] to-[#424242] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
                             <span className="text-2xl">🏥</span>
                           </div>
-                          <span className="text-xs text-gray-500 mt-2 font-medium">05 Abr</span>
+                          <span className="text-xs text-[#9E9E9E] mt-2 font-medium">05 Abr</span>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-[#E0E0E0] p-4 group-hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-900">Consulta de Retorno</h4>
-                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
+                              <h4 className="font-semibold text-[#212121]">Consulta de Retorno</h4>
+                              <p className="text-xs text-[#9E9E9E] mt-1">Dr. João Santos - Cardiologia</p>
                             </div>
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700 border border-teal-200">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0E0E0] text-[#212121] border border-[#E0E0E0]">
                               Concluída
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">Avaliação de controle pressórico e ajuste terapêutico</p>
+                          <p className="text-sm text-[#9E9E9E]">Avaliação de controle pressórico e ajuste terapêutico</p>
                         </div>
                       </div>
 
                       {/* Timeline Event 4 - Lab Result with Alert */}
                       <div className="relative flex gap-4 mb-8 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#9E9E9E] to-[#424242] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
                             <FileText className="w-7 h-7 text-white" />
                           </div>
-                          <span className="text-xs text-gray-500 mt-2 font-medium">28 Mar</span>
+                          <span className="text-xs text-[#9E9E9E] mt-2 font-medium">28 Mar</span>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-[#E0E0E0] p-4 group-hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-900">Glicemia em Jejum</h4>
-                              <p className="text-xs text-gray-500 mt-1">Laboratório Central</p>
+                              <h4 className="font-semibold text-[#212121]">Glicemia em Jejum</h4>
+                              <p className="text-xs text-[#9E9E9E] mt-1">Laboratório Central</p>
                             </div>
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0E0E0] text-[#212121] border border-[#E0E0E0]">
                               Atenção
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">Valor ligeiramente elevado - acompanhamento necessário</p>
-                          <div className="flex gap-2 text-xs text-gray-500">
+                          <p className="text-sm text-[#9E9E9E] mb-2">Valor ligeiramente elevado - acompanhamento necessário</p>
+                          <div className="flex gap-2 text-xs text-[#9E9E9E]">
                             <span className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#9E9E9E]"></div>
                               Glicemia: 108 mg/dL
                             </span>
                           </div>
@@ -704,29 +701,29 @@ export default function LandingPage() {
                       {/* Timeline Event 5 - Diagnosis */}
                       <div className="relative flex gap-4 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#212121] to-[#424242] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
                             <span className="text-2xl">📋</span>
                           </div>
-                          <span className="text-xs text-gray-500 mt-2 font-medium">15 Mar</span>
+                          <span className="text-xs text-[#9E9E9E] mt-2 font-medium">15 Mar</span>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-100 p-4 group-hover:shadow-lg transition-all">
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-[#E0E0E0] p-4 group-hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-gray-900">Diagnóstico Registrado</h4>
-                              <p className="text-xs text-gray-500 mt-1">Dr. João Santos - Cardiologia</p>
+                              <h4 className="font-semibold text-[#212121]">Diagnóstico Registrado</h4>
+                              <p className="text-xs text-[#9E9E9E] mt-1">Dr. João Santos - Cardiologia</p>
                             </div>
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0E0E0] text-[#212121] border border-[#E0E0E0]">
                               Ativo
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">Hipertensão Arterial Sistêmica (CID I10)</p>
+                          <p className="text-sm text-[#9E9E9E]">Hipertensão Arterial Sistêmica (CID I10)</p>
                         </div>
                       </div>
                     </div>
 
                     {/* View More Link */}
                     <div className="mt-8 text-center">
-                      <span className="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer flex items-center justify-center gap-1 transition-colors">
+                      <span className="text-sm font-medium text-[#212121] hover:text-[#212121] cursor-pointer flex items-center justify-center gap-1 transition-colors">
                         Ver histórico completo
                         <ChevronRight className="w-4 h-4" />
                       </span>
@@ -747,9 +744,9 @@ export default function LandingPage() {
                   repeatType: "reverse"
                 }}
               >
-                <div className="flex items-center space-x-2 text-gray-800">
-                  <Users className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-800">Total de Pacientes: <span className="text-primary-600">127</span></span>
+                <div className="flex items-center space-x-2 text-[#212121]">
+                  <Users className="w-5 h-5 text-[#212121] flex-shrink-0" />
+                  <span className="text-sm font-medium text-[#212121]">Total de Pacientes: <span className="text-[#212121]">127</span></span>
                 </div>
               </motion.div>
 
@@ -765,9 +762,9 @@ export default function LandingPage() {
                   delay: 0.5
                 }}
               >
-                <div className="flex items-center space-x-2 text-gray-800">
-                  <BarChart4 className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-800">Exames Pendentes: <span className="text-amber-500">8</span></span>
+                <div className="flex items-center space-x-2 text-[#212121]">
+                  <BarChart4 className="w-5 h-5 text-[#212121] flex-shrink-0" />
+                  <span className="text-sm font-medium text-[#212121]">Exames Pendentes: <span className="text-[#9E9E9E]">8</span></span>
                 </div>
               </motion.div>
 
@@ -783,7 +780,7 @@ export default function LandingPage() {
                   repeatType: "reverse"
                 }}
               >
-                <Sparkles className="w-6 h-6 text-amber-400" />
+                <Sparkles className="w-6 h-6 text-[#9E9E9E]" />
               </motion.div>
             </div>
 
@@ -803,22 +800,22 @@ export default function LandingPage() {
                 <ul className="space-y-4">
                   {[
                     {
-                      icon: <GraduationCap className="h-5 w-5 text-primary-600" />,
+                      icon: <GraduationCap className="h-5 w-5 text-[#212121]" />,
                       title: "Contexto Clínico Imediato",
                       description: "Visualize métricas com referências automáticas e histórico do paciente."
                     },
                     {
-                      icon: <LineChart className="h-5 w-5 text-primary-600" />,
+                      icon: <LineChart className="h-5 w-5 text-[#212121]" />,
                       title: "Evolução do Paciente",
                       description: "Acompanhe a evolução dos resultados ao longo do tempo e identifique padrões clínicos."
                     },
                     {
-                      icon: <Bell className="h-5 w-5 text-primary-600" />,
+                      icon: <Bell className="h-5 w-5 text-[#212121]" />,
                       title: "Alertas de Risco",
                       description: "Receba notificações automáticas sobre parâmetros críticos que necessitam de atenção."
                     },
                     {
-                      icon: <FileHeart className="h-5 w-5 text-primary-600" />,
+                      icon: <FileHeart className="h-5 w-5 text-[#212121]" />,
                       title: "Organização de Dados",
                       description: "Visualize informações clínicas de forma estruturada e acessível."
                     }
@@ -831,7 +828,7 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: 0.1 * index }}
                     >
-                      <div className="p-2 bg-primary-100 rounded-full mr-3 mt-0.5">
+                      <div className="p-2 bg-[#E0E0E0] rounded-full mr-3 mt-0.5">
                         {item.icon}
                       </div>
                       <div>
@@ -851,8 +848,8 @@ export default function LandingPage() {
       < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
-          <div className="absolute left-0 top-20 w-72 h-72 bg-blue-50 rounded-full opacity-40 blur-3xl"></div>
-          <div className="absolute right-0 bottom-20 w-80 h-80 bg-primary-50 rounded-full opacity-40 blur-3xl"></div>
+          <div className="absolute left-0 top-20 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
+          <div className="absolute right-0 bottom-20 w-80 h-80 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
         </div >
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -864,7 +861,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6"
+              className="inline-block px-4 py-1.5 bg-[#F4F4F4] text-[#212121] rounded-full text-sm font-medium mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -873,10 +870,10 @@ export default function LandingPage() {
               Análise Inteligente
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">
               <span className="text-[#1E3A5F]">View Laboratorial</span>
             </h2>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-[#9E9E9E] mb-8 max-w-2xl mx-auto">
               Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
             </p>
           </motion.div>
@@ -890,17 +887,17 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Analyzer Header */}
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
+            <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <LineChart className="w-8 h-8" />
                   <div>
                     <h3 className="text-2xl font-bold">Análise Comparativa</h3>
-                    <p className="text-sm text-primary-100">Paciente: Maria Silva - Últimos 6 meses</p>
+                    <p className="text-sm text-[#E0E0E0]">Paciente: Maria Silva - Últimos 6 meses</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="px-4 py-2 bg-primary-500 hover:bg-primary-400 rounded-lg text-sm font-medium transition-colors">
+                  <button className="px-4 py-2 bg-[#212121] hover:bg-[#9E9E9E] rounded-lg text-sm font-medium transition-colors">
                     Exportar PDF
                   </button>
                 </div>
@@ -912,7 +909,7 @@ export default function LandingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Hemoglobina Chart */}
                 <motion.div
-                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -920,10 +917,10 @@ export default function LandingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Hemoglobina</h4>
-                      <p className="text-sm text-gray-500">Referência: 12.0 - 16.0 g/dL</p>
+                      <h4 className="text-lg font-bold text-[#212121]">Hemoglobina</h4>
+                      <p className="text-sm text-[#9E9E9E]">Referência: 12.0 - 16.0 g/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
                       Normal
                     </span>
                   </div>
@@ -931,10 +928,10 @@ export default function LandingPage() {
                   {/* Simple Bar Chart */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Mar</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#F4F4F4]0 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "75%" }}
                           viewport={{ once: true }}
@@ -945,10 +942,10 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Abr</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#F4F4F4]0 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "80%" }}
                           viewport={{ once: true }}
@@ -961,17 +958,17 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-green-600">
+                    <div className="flex items-center gap-1 text-[#212121]">
                       <span className="text-lg">↗</span>
                       <span className="font-semibold">+7.6%</span>
                     </div>
-                    <span className="text-gray-500">vs. mês anterior</span>
+                    <span className="text-[#9E9E9E]">vs. mês anterior</span>
                   </div>
                 </motion.div>
 
                 {/* Glicemia Chart */}
                 <motion.div
-                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -979,10 +976,10 @@ export default function LandingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Glicemia em Jejum</h4>
-                      <p className="text-sm text-gray-500">Referência: 70 - 100 mg/dL</p>
+                      <h4 className="text-lg font-bold text-[#212121]">Glicemia em Jejum</h4>
+                      <p className="text-sm text-[#9E9E9E]">Referência: 70 - 100 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
+                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
                       Atenção
                     </span>
                   </div>
@@ -990,10 +987,10 @@ export default function LandingPage() {
                   {/* Simple Bar Chart */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Mar</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#9E9E9E] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "85%" }}
                           viewport={{ once: true }}
@@ -1004,10 +1001,10 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Abr</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#9E9E9E] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "90%" }}
                           viewport={{ once: true }}
@@ -1020,17 +1017,17 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-amber-600">
+                    <div className="flex items-center gap-1 text-[#424242]">
                       <span className="text-lg">↗</span>
                       <span className="font-semibold">+5.9%</span>
                     </div>
-                    <span className="text-gray-500">vs. mês anterior</span>
+                    <span className="text-[#9E9E9E]">vs. mês anterior</span>
                   </div>
                 </motion.div>
 
                 {/* Colesterol Total Chart */}
                 <motion.div
-                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1038,10 +1035,10 @@ export default function LandingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Colesterol Total</h4>
-                      <p className="text-sm text-gray-500">Referência: {'<'} 200 mg/dL</p>
+                      <h4 className="text-lg font-bold text-[#212121]">Colesterol Total</h4>
+                      <p className="text-sm text-[#9E9E9E]">Referência: {'<'} 200 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
                       Normal
                     </span>
                   </div>
@@ -1049,10 +1046,10 @@ export default function LandingPage() {
                   {/* Simple Bar Chart */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Mar</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-purple-400 to-purple-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "78%" }}
                           viewport={{ once: true }}
@@ -1063,10 +1060,10 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Abr</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-purple-400 to-purple-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "72%" }}
                           viewport={{ once: true }}
@@ -1079,17 +1076,17 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-green-600">
+                    <div className="flex items-center gap-1 text-[#212121]">
                       <span className="text-lg">↘</span>
                       <span className="font-semibold">-7.7%</span>
                     </div>
-                    <span className="text-gray-500">vs. mês anterior</span>
+                    <span className="text-[#9E9E9E]">vs. mês anterior</span>
                   </div>
                 </motion.div>
 
                 {/* Creatinina Chart */}
                 <motion.div
-                  className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1097,10 +1094,10 @@ export default function LandingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Creatinina</h4>
-                      <p className="text-sm text-gray-500">Referência: 0.6 - 1.2 mg/dL</p>
+                      <h4 className="text-lg font-bold text-[#212121]">Creatinina</h4>
+                      <p className="text-sm text-[#9E9E9E]">Referência: 0.6 - 1.2 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
                       Normal
                     </span>
                   </div>
@@ -1108,10 +1105,10 @@ export default function LandingPage() {
                   {/* Simple Bar Chart */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Mar</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-teal-400 to-teal-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "65%" }}
                           viewport={{ once: true }}
@@ -1122,10 +1119,10 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-16">Abr</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
+                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-teal-400 to-teal-500 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "67%" }}
                           viewport={{ once: true }}
@@ -1138,40 +1135,40 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-[#9E9E9E]">
                       <span className="text-lg">→</span>
                       <span className="font-semibold">+2.2%</span>
                     </div>
-                    <span className="text-gray-500">vs. mês anterior</span>
+                    <span className="text-[#9E9E9E]">vs. mês anterior</span>
                   </div>
                 </motion.div>
               </div>
 
               {/* Summary Section */}
               <motion.div
-                className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200"
+                className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-[#E0E0E0]"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.5 }}
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-200 rounded-lg">
-                    <LineChart className="w-6 h-6 text-gray-600" />
+                  <div className="p-3 bg-[#E0E0E0] rounded-lg">
+                    <LineChart className="w-6 h-6 text-[#9E9E9E]" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">Resumo da Análise</h4>
-                    <p className="text-gray-700 text-sm mb-3">
+                    <h4 className="text-lg font-bold text-[#212121] mb-2">Resumo da Análise</h4>
+                    <p className="text-[#212121] text-sm mb-3">
                       Visualização comparativa dos últimos 2 meses. Os dados apresentados são apenas informativos e não substituem a avaliação clínica profissional.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
                         3 valores normais
                       </span>
-                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
                         1 requer atenção
                       </span>
-                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
+                      <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
                         Período: Mar-Abr 2025
                       </span>
                     </div>
@@ -1191,7 +1188,7 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <button
-                className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-8 rounded-lg shadow-lg text-lg"
+                className="bg-[#212121] hover:bg-[#212121] text-white font-bold py-4 px-8 rounded-lg shadow-lg text-lg"
               >
                 Comece agora gratuitamente
                 <ArrowRight className="ml-2 h-5 w-5 inline" />
@@ -1226,20 +1223,20 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Calendar Header */}
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
+            <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Calendar className="w-8 h-8" />
                   <div>
                     <h3 className="text-2xl font-bold">Abril 2025</h3>
-                    <p className="text-sm text-primary-100">Semana 14 - 20 de Abril</p>
+                    <p className="text-sm text-[#E0E0E0]">Semana 14 - 20 de Abril</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                  <button className="p-2 hover:bg-[#212121] rounded-lg transition-colors">
                     <ChevronDown className="w-5 h-5 rotate-90" />
                   </button>
-                  <button className="p-2 hover:bg-primary-500 rounded-lg transition-colors">
+                  <button className="p-2 hover:bg-[#212121] rounded-lg transition-colors">
                     <ChevronDown className="w-5 h-5 -rotate-90" />
                   </button>
                 </div>
@@ -1252,8 +1249,8 @@ export default function LandingPage() {
               <div className="grid grid-cols-7 gap-2 mb-4">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
                   <div key={i} className="text-center">
-                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
-                    <div className={`text-sm font-medium ${i === 1 ? 'text-primary-600' : 'text-gray-700'}`}>
+                    <div className="text-xs font-semibold text-[#9E9E9E] uppercase mb-2">{day}</div>
+                    <div className={`text-sm font-medium ${i === 1 ? 'text-[#212121]' : 'text-[#212121]'}`}>
                       {14 + i}
                     </div>
                   </div>
@@ -1263,131 +1260,131 @@ export default function LandingPage() {
               {/* Time Slots Grid */}
               <div className="grid grid-cols-7 gap-2">
                 {/* Sunday - Empty */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]"></div>
 
                 {/* Monday - 2 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
                   <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-blue-900">09:00</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Maria Silva</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
+                    <div className="text-xs font-semibold text-[#212121]">09:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Maria Silva</div>
+                    <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-green-900">14:30</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">João Santos</div>
-                    <div className="text-xs text-green-600">Retorno</div>
+                    <div className="text-xs font-semibold text-[#212121]">14:30</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">João Santos</div>
+                    <div className="text-xs text-[#212121]">Retorno</div>
                   </motion.div>
                 </div>
 
                 {/* Tuesday - 1 appointment */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]">
                   <motion.div
-                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-purple-900">10:00</div>
-                    <div className="text-xs font-medium text-purple-800 mt-1">Ana Costa</div>
-                    <div className="text-xs text-purple-600">Exames</div>
+                    <div className="text-xs font-semibold text-[#212121]">10:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Ana Costa</div>
+                    <div className="text-xs text-[#424242]">Exames</div>
                   </motion.div>
                 </div>
 
                 {/* Wednesday - 3 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
                   <motion.div
-                    className="bg-amber-100 border-l-4 border-amber-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#9E9E9E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-amber-900">08:00</div>
-                    <div className="text-xs font-medium text-amber-800 mt-1">Pedro Lima</div>
-                    <div className="text-xs text-amber-600">Urgência</div>
+                    <div className="text-xs font-semibold text-[#212121]">08:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Pedro Lima</div>
+                    <div className="text-xs text-[#424242]">Urgência</div>
                   </motion.div>
                   <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-blue-900">11:00</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Carla Mendes</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
+                    <div className="text-xs font-semibold text-[#212121]">11:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Carla Mendes</div>
+                    <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-green-900">15:00</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">Roberto Silva</div>
-                    <div className="text-xs text-green-600">Retorno</div>
+                    <div className="text-xs font-semibold text-[#212121]">15:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Roberto Silva</div>
+                    <div className="text-xs text-[#212121]">Retorno</div>
                   </motion.div>
                 </div>
 
                 {/* Thursday - 2 appointments */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
                   <motion.div
-                    className="bg-blue-100 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-blue-900">09:30</div>
-                    <div className="text-xs font-medium text-blue-800 mt-1">Lucia Alves</div>
-                    <div className="text-xs text-blue-600">Consulta</div>
+                    <div className="text-xs font-semibold text-[#212121]">09:30</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Lucia Alves</div>
+                    <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-purple-100 border-l-4 border-purple-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-purple-900">13:00</div>
-                    <div className="text-xs font-medium text-purple-800 mt-1">Fernando Costa</div>
-                    <div className="text-xs text-purple-600">Exames</div>
+                    <div className="text-xs font-semibold text-[#212121]">13:00</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Fernando Costa</div>
+                    <div className="text-xs text-[#424242]">Exames</div>
                   </motion.div>
                 </div>
 
                 {/* Friday - 1 appointment */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]">
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]">
                   <motion.div
-                    className="bg-green-100 border-l-4 border-green-500 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="text-xs font-semibold text-green-900">10:30</div>
-                    <div className="text-xs font-medium text-green-800 mt-1">Beatriz Souza</div>
-                    <div className="text-xs text-green-600">Retorno</div>
+                    <div className="text-xs font-semibold text-[#212121]">10:30</div>
+                    <div className="text-xs font-medium text-[#212121] mt-1">Beatriz Souza</div>
+                    <div className="text-xs text-[#212121]">Retorno</div>
                   </motion.div>
                 </div>
 
                 {/* Saturday - Empty */}
-                <div className="bg-gray-50 rounded-lg p-2 min-h-[200px]"></div>
+                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]"></div>
               </div>
 
               {/* Legend */}
               <div className="mt-6 flex flex-wrap gap-4 justify-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Consulta</span>
+                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <span className="text-xs text-[#9E9E9E]">Consulta</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Retorno</span>
+                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <span className="text-xs text-[#9E9E9E]">Retorno</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Exames</span>
+                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <span className="text-xs text-[#9E9E9E]">Exames</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                  <span className="text-xs text-gray-600">Urgência</span>
+                  <div className="w-3 h-3 bg-[#9E9E9E] rounded"></div>
+                  <span className="text-xs text-[#9E9E9E]">Urgência</span>
                 </div>
               </div>
             </div>
 
             {/* Calendar Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-              <div className="text-sm text-gray-600">
+            <div className="bg-[#F4F4F4] px-6 py-4 border-t border-[#E0E0E0] flex justify-between items-center">
+              <div className="text-sm text-[#9E9E9E]">
                 <span className="font-semibold">10 consultas</span> agendadas esta semana
               </div>
-              <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <button className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <span>Nova Consulta</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -1400,8 +1397,8 @@ export default function LandingPage() {
       <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
-          <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
-          <div className="absolute left-1/3 -top-48 w-64 h-64 bg-green-50 rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute left-1/3 -top-48 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
 
 
         </div >
@@ -1415,7 +1412,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-green-100 text-green-800 border border-green-300 shadow-sm rounded-full text-sm font-medium mb-6"
+              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] border border-[#9E9E9E] shadow-sm rounded-full text-sm font-medium mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1441,31 +1438,31 @@ export default function LandingPage() {
                 delay: 0
               },
               {
-                icon: <Eye className="w-6 h-6 text-amber-500" />,
+                icon: <Eye className="w-6 h-6 text-[#9E9E9E]" />,
                 title: "Olhar Preventivo",
                 description: "Identifique tendências sutis e riscos potenciais antes que se tornem problemas críticos.",
                 delay: 0.1
               },
               {
-                icon: <UserCircle className="w-6 h-6 text-blue-600" />,
+                icon: <UserCircle className="w-6 h-6 text-[#212121]" />,
                 title: "Foco no Paciente",
                 description: "Reduza o tempo em telas e burocracia para dedicar mais atenção visual e humana ao seu paciente.",
                 delay: 0.2
               },
               {
-                icon: <TrendingUp className="w-6 h-6 text-purple-600" />,
+                icon: <TrendingUp className="w-6 h-6 text-[#424242]" />,
                 title: "Panorama Evolutivo",
                 description: "Compreenda a evolução clínica com gráficos comparativos que revelam o progresso do tratamento.",
                 delay: 0.3
               },
               {
-                icon: <Lightbulb className="w-6 h-6 text-teal-500" />,
+                icon: <Lightbulb className="w-6 h-6 text-[#212121]" />,
                 title: "Clareza Visual",
                 description: "Transforme diagnósticos complexos em visualizações claras que facilitam o entendimento do paciente.",
                 delay: 0.4
               },
               {
-                icon: <ShieldCheck className="w-6 h-6 text-green-600" />,
+                icon: <ShieldCheck className="w-6 h-6 text-[#212121]" />,
                 title: "Segurança Total",
                 description: "Seus dados protegidos com os mais altos padrões de segurança, garantindo confidencialidade absoluta.",
                 delay: 0.5
@@ -1473,7 +1470,7 @@ export default function LandingPage() {
             ].map((benefit, index) => (
               <motion.div
                 key={index}
-                className="relative bg-white p-7 rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:border-primary-300 group"
+                className="relative bg-white p-7 rounded-xl shadow-lg overflow-hidden border border-[#E0E0E0] hover:border-[#E0E0E0]300 group"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1485,22 +1482,22 @@ export default function LandingPage() {
                 }}
               >
                 {/* Ícone estilizado */}
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center mb-5 group-hover:from-primary-50 group-hover:to-primary-100 group-hover:border-primary-200 transition-colors duration-300">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-[#E0E0E0] flex items-center justify-center mb-5 group-hover:from-[#212121] group-hover:to-[#424242] group-hover:border-[#E0E0E0]200 transition-colors duration-300">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white shadow-sm">
                     {benefit.icon}
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary-700 transition-colors duration-300">
+                <h3 className="text-xl font-bold text-[#212121] mb-3 group-hover:text-[#212121] transition-colors duration-300">
                   {benefit.title}
                 </h3>
 
-                <p className="text-gray-600 mb-4 text-sm">
+                <p className="text-[#9E9E9E] mb-4 text-sm">
                   {benefit.description}
                 </p>
 
                 {/* Indicador de hover */}
-                <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-primary-400 to-primary-600 group-hover:w-full transition-all duration-300 ease-out"></div>
+                <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-[#212121] to-[#424242] group-hover:w-full transition-all duration-300 ease-out"></div>
               </motion.div>
             ))}
           </div>
@@ -1533,10 +1530,10 @@ export default function LandingPage() {
       <section id="para-quem" className="py-20 bg-gradient-to-r from-[#5AADBF] to-[#448C9B] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -left-20 bottom-0 w-96 h-96 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
-          <div className="absolute right-0 top-1/4 w-80 h-80 bg-indigo-50 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute -left-20 bottom-0 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute right-0 top-1/4 w-80 h-80 bg-[#F4F4F4] rounded-full opacity-20 blur-3xl"></div>
           <motion.div
-            className="absolute top-1/2 left-1/3 w-8 h-8 bg-primary-100 rounded-full opacity-50"
+            className="absolute top-1/2 left-1/3 w-8 h-8 bg-[#E0E0E0] rounded-full opacity-50"
             animate={{ y: [0, 30, 0], x: [0, 15, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -1551,7 +1548,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-700 mb-4">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-[#E0E0E0] text-[#212121] mb-4">
               <Users className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Versatilidade Profissional</span>
             </div>
@@ -1567,7 +1564,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {/* Card 1: Consultórios Privados */}
             <motion.div
-              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1584,21 +1581,21 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Clínicas e Consultórios</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Clínicas e Consultórios</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Gestão eficiente de prontuários</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Gestão eficiente de prontuários</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Fidelização de pacientes</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Fidelização de pacientes</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Redução de tempo administrativo</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Redução de tempo administrativo</span>
                   </li>
                 </ul>
               </div>
@@ -1606,7 +1603,7 @@ export default function LandingPage() {
 
             {/* Card 2: Clínicas Multidisciplinares */}
             <motion.div
-              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1614,30 +1611,30 @@ export default function LandingPage() {
               whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
               {/* Barra superior colorida */}
-              <div className="h-2 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
+              <div className="h-2 bg-gradient-to-r from-[#212121] to-[#424242]"></div>
 
               <div className="p-6">
                 {/* Ícone com fundo */}
-                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Users className="h-7 w-7 text-indigo-600" />
+                <div className="w-16 h-16 rounded-full bg-[#F4F4F4] flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-7 w-7 text-[#424242]" />
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Clínicas Multidisciplinares</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Clínicas Multidisciplinares</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Centralização de dados do paciente</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Centralização de dados do paciente</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Colaboração entre especialistas</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Colaboração entre especialistas</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-indigo-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Padronização de condutas</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Padronização de condutas</span>
                   </li>
                 </ul>
               </div>
@@ -1645,7 +1642,7 @@ export default function LandingPage() {
 
             {/* Card 3: Telemedicina */}
             <motion.div
-              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1653,30 +1650,30 @@ export default function LandingPage() {
               whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
               {/* Barra superior colorida */}
-              <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+              <div className="h-2 bg-gradient-to-r from-[#212121] to-[#424242]"></div>
 
               <div className="p-6">
                 {/* Ícone com fundo */}
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Video className="h-7 w-7 text-blue-600" />
+                <div className="w-16 h-16 rounded-full bg-[#F4F4F4] flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Video className="h-7 w-7 text-[#212121]" />
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Teleconsulta</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Teleconsulta</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Monitoramento remoto eficaz</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Monitoramento remoto eficaz</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Acesso a exames em tempo real</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Acesso a exames em tempo real</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Histórico disponível na nuvem</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Histórico disponível na nuvem</span>
                   </li>
                 </ul>
               </div>
@@ -1684,7 +1681,7 @@ export default function LandingPage() {
 
             {/* Card 4: Hospitais */}
             <motion.div
-              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-gray-100"
+              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1701,21 +1698,21 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Hospitais</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Hospitais</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Triagem automatizada de riscos</span>
+                    <span className="text-[#9E9E9E] text-sm">Triagem automatizada de riscos</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Integração com sistemas legados</span>
+                    <span className="text-[#9E9E9E] text-sm">Integração com sistemas legados</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">Analytics populacional</span>
+                    <span className="text-[#9E9E9E] text-sm">Analytics populacional</span>
                   </li>
                 </ul>
               </div>
@@ -1726,7 +1723,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {/* Estatística 1 */}
             <motion.div
-              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -1737,12 +1734,12 @@ export default function LandingPage() {
                 <Star className="w-6 h-6 text-[#1E3A5F]" />
               </div>
               <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">+40%</h3>
-              <p className="text-gray-700 font-medium">Aumento na produtividade clínica</p>
+              <p className="text-[#212121] font-medium">Aumento na produtividade clínica</p>
             </motion.div>
 
             {/* Estatística 2 */}
             <motion.div
-              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -1753,12 +1750,12 @@ export default function LandingPage() {
                 <Clock className="w-6 h-6 text-[#48C9B0]" />
               </div>
               <h3 className="text-3xl font-bold text-[#48C9B0] mb-2">30%</h3>
-              <p className="text-gray-700 font-medium">Redução no tempo de consulta</p>
+              <p className="text-[#212121] font-medium">Redução no tempo de consulta</p>
             </motion.div>
 
             {/* Estatística 3 */}
             <motion.div
-              className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center"
+              className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -1769,7 +1766,7 @@ export default function LandingPage() {
                 <ShieldCheck className="w-6 h-6 text-[#1E3A5F]" />
               </div>
               <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">100%</h3>
-              <p className="text-gray-700 font-medium">Seguro e em conformidade com a LGPD</p>
+              <p className="text-[#212121] font-medium">Seguro e em conformidade com a LGPD</p>
             </motion.div>
           </div>
         </div>
@@ -1779,14 +1776,14 @@ export default function LandingPage() {
       <section id="depoimentos" className="py-20 bg-[#A5E1D2] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute right-0 top-10 w-72 h-72 bg-primary-50 rounded-full opacity-30 blur-3xl"></div>
-          <div className="absolute left-0 bottom-10 w-64 h-64 bg-blue-50 rounded-full opacity-30 blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-50 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute right-0 top-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute left-0 bottom-10 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-20 blur-3xl"></div>
 
           {/* Elementos decorativos minimalistas */}
-          <div className="absolute top-20 left-[15%] w-3 h-3 bg-primary-300 rounded-full opacity-70"></div>
-          <div className="absolute top-1/2 right-[10%] w-5 h-5 bg-blue-300 rounded-full opacity-70"></div>
-          <div className="absolute bottom-40 left-[30%] w-4 h-4 bg-indigo-300 rounded-full opacity-70"></div>
+          <div className="absolute top-20 left-[15%] w-3 h-3 bg-[#9E9E9E] rounded-full opacity-70"></div>
+          <div className="absolute top-1/2 right-[10%] w-5 h-5 bg-[#9E9E9E] rounded-full opacity-70"></div>
+          <div className="absolute bottom-40 left-[30%] w-4 h-4 bg-[#9E9E9E] rounded-full opacity-70"></div>
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -1796,10 +1793,10 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-              O Que Dizem Nossos <span className="text-primary-600">Usuários</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-[#212121] mb-4">
+              O Que Dizem Nossos <span className="text-[#212121]">Usuários</span>
             </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-[#9E9E9E] mb-12 max-w-2xl mx-auto">
               Centenas de pessoas já transformaram sua relação com a saúde através do VitaView AI.
             </p>
           </motion.div>
@@ -1874,7 +1871,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Texto do depoimento */}
-                  <p className="text-gray-700 mb-8 text-lg leading-relaxed relative">
+                  <p className="text-[#212121] mb-8 text-lg leading-relaxed relative">
                     {testimonial.quote}
                     <span className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#48C9B0]/30 to-transparent rounded-full"></span>
                   </p>
@@ -1907,14 +1904,14 @@ export default function LandingPage() {
                         </div>
                       ) : (
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative z-10 border-2 border-white">
-                          <span className="text-lg font-bold text-gray-700">{testimonial.name.charAt(0)}</span>
+                          <span className="text-lg font-bold text-[#212121]">{testimonial.name.charAt(0)}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="ml-5">
                       <h4 className="font-bold text-[#1E3A5F] text-lg">{testimonial.name}</h4>
-                      <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                      <p className="text-[#9E9E9E] text-sm">{testimonial.role}</p>
                     </div>
                   </div>
                 </div>
@@ -1939,8 +1936,8 @@ export default function LandingPage() {
               ].map((stat, index) => (
                 <div key={index} className="p-6 text-center">
                   <div className="text-2xl mb-1">{stat.icon}</div>
-                  <h3 className="text-3xl font-bold text-primary-600 mb-1">{stat.value}</h3>
-                  <p className="text-gray-500 text-sm">{stat.label}</p>
+                  <h3 className="text-3xl font-bold text-[#212121] mb-1">{stat.value}</h3>
+                  <p className="text-[#9E9E9E] text-sm">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -1954,8 +1951,8 @@ export default function LandingPage() {
       <section id="faq" className="py-24 bg-gradient-to-b from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute right-0 top-20 w-64 h-64 bg-primary-50 rounded-full opacity-10 blur-3xl"></div>
-          <div className="absolute left-20 bottom-10 w-72 h-72 bg-blue-50 rounded-full opacity-10 blur-3xl"></div>
+          <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
+          <div className="absolute left-20 bottom-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -2032,7 +2029,7 @@ export default function LandingPage() {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden"
                         >
-                          <p className="text-gray-200 leading-relaxed">{faq.answer}</p>
+                          <p className="text-[#9E9E9E] leading-relaxed">{faq.answer}</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -2051,7 +2048,7 @@ export default function LandingPage() {
                 className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 sticky top-24"
               >
                 <h3 className="text-2xl font-bold text-white mb-6">Estamos aqui para ajudar</h3>
-                <p className="text-gray-200 mb-8">
+                <p className="text-[#9E9E9E] mb-8">
                   Não encontrou o que procurava? Nossa equipe de suporte está pronta para atender você.
                 </p>
 
@@ -2066,31 +2063,31 @@ export default function LandingPage() {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-300">Email de Suporte</div>
+                      <div className="text-sm text-[#9E9E9E]">Email de Suporte</div>
                       <div className="text-lg font-semibold text-white group-hover:text-[#A5E1D2] transition-colors">contato@vitaview.ai</div>
                     </div>
                   </a>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
-                      <div className="w-10 h-10 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-3">
-                        <Clock className="w-5 h-5 text-blue-300" />
+                      <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
+                        <Clock className="w-5 h-5 text-[#9E9E9E]" />
                       </div>
                       <div className="text-sm font-medium text-white">Resposta em 24h</div>
-                      <div className="text-xs text-gray-400 mt-1">Dias úteis</div>
+                      <div className="text-xs text-[#9E9E9E] mt-1">Dias úteis</div>
                     </div>
                     <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
-                      <div className="w-10 h-10 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-3">
-                        <ShieldCheck className="w-5 h-5 text-green-300" />
+                      <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
+                        <ShieldCheck className="w-5 h-5 text-[#9E9E9E]" />
                       </div>
                       <div className="text-sm font-medium text-white">Suporte Seguro</div>
-                      <div className="text-xs text-gray-400 mt-1">Dados protegidos</div>
+                      <div className="text-xs text-[#9E9E9E] mt-1">Dados protegidos</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-white/10">
-                  <p className="text-sm text-gray-300 text-center mb-4">Siga-nos nas redes sociais</p>
+                  <p className="text-sm text-[#9E9E9E] text-center mb-4">Siga-nos nas redes sociais</p>
                   <div className="flex justify-center space-x-4">
                     {['Instagram', 'Twitter'].map((social) => (
                       <a
@@ -2114,11 +2111,11 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 relative overflow-hidden">
+      <footer className="bg-[#212121] text-[#9E9E9E] py-12 relative overflow-hidden">
         {/* Elementos decorativos do footer */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
-            className="absolute top-0 left-0 w-96 h-96 bg-primary-800 rounded-full opacity-5 blur-3xl"
+            className="absolute top-0 left-0 w-96 h-96 bg-[#424242] rounded-full opacity-5 blur-3xl"
             animate={{
               x: [0, 10, 0],
               y: [0, -10, 0],
@@ -2131,7 +2128,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-800 rounded-full opacity-5 blur-3xl"
+            className="absolute bottom-0 right-0 w-96 h-96 bg-[#212121] rounded-full opacity-5 blur-3xl"
             animate={{
               x: [0, -10, 0],
               y: [0, 10, 0],
@@ -2160,11 +2157,15 @@ export default function LandingPage() {
             >
               <div className="flex items-center mb-4">
                 <motion.div
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center mr-3 shadow-md"
+                  className="w-10 h-10 rounded-md mr-3 shadow-md overflow-hidden"
                   whileHover={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Activity className="w-6 h-6" />
+                  <img
+                    src="/LOGO SEM TEXTO.jpg"
+                    alt="VitaView AI"
+                    className="w-full h-full object-contain"
+                  />
                 </motion.div>
                 <span className="text-xl font-bold text-white">VitaView AI</span>
               </div>
@@ -2174,15 +2175,15 @@ export default function LandingPage() {
 
               {/* Inscrição na newsletter */}
               <div className="mt-6 hidden md:block">
-                <p className="text-sm mb-2 font-medium text-gray-300">Fique atualizado:</p>
+                <p className="text-sm mb-2 font-medium text-[#9E9E9E]">Fique atualizado:</p>
                 <div className="flex">
                   <input
                     type="email"
                     placeholder="Seu e-mail"
-                    className="bg-gray-800 border border-gray-700 px-3 py-2 rounded-l-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 text-white w-full max-w-[200px]"
+                    className="bg-[#212121] border border-[#424242] px-3 py-2 rounded-l-md text-sm focus:outline-none focus:ring-1 focus:ring-[#212121] text-white w-full max-w-[200px]"
                   />
                   <motion.button
-                    className="bg-primary-600 hover:bg-primary-700 px-3 py-2 rounded-r-md text-white text-sm"
+                    className="bg-[#212121] hover:bg-[#424242] px-3 py-2 rounded-r-md text-white text-sm"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -2219,7 +2220,7 @@ export default function LandingPage() {
                         whileHover={{ x: 3 }}
                       >
                         {item.label}
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
                   ))}
@@ -2248,7 +2249,7 @@ export default function LandingPage() {
                         whileHover={{ x: 3 }}
                       >
                         {item}
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
                   ))}
@@ -2277,7 +2278,7 @@ export default function LandingPage() {
                         whileHover={{ x: 3 }}
                       >
                         {item}
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover:w-full transition-all duration-300"></span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
                   ))}
@@ -2299,7 +2300,7 @@ export default function LandingPage() {
                 href="https://instagram.com/vitaview.ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors group"
+                className="text-[#9E9E9E] hover:text-white transition-colors group"
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -2311,7 +2312,7 @@ export default function LandingPage() {
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                   </svg>
-                  <span className="text-sm font-medium group-hover:text-teal-200 transition-colors">
+                  <span className="text-sm font-medium group-hover:text-[#E0E0E0] transition-colors">
                     @vitaview.ai
                   </span>
                 </div>
@@ -2326,7 +2327,7 @@ export default function LandingPage() {
         {showScrollTop && (
           <motion.button
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg hover:bg-primary-700"
+            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-[#212121] text-white flex items-center justify-center shadow-lg hover:bg-[#424242]"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
@@ -2343,7 +2344,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {showCookieConsent && (
           <motion.div
-            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 shadow-xl"
+            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[#E0E0E0] shadow-xl"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -2352,14 +2353,14 @@ export default function LandingPage() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-start md:items-center space-x-3">
-                  <div className="flex-shrink-0 bg-primary-100 p-2 rounded-full">
-                    <Lock className="h-5 w-5 text-primary-600" />
+                  <div className="flex-shrink-0 bg-[#E0E0E0] p-2 rounded-full">
+                    <Lock className="h-5 w-5 text-[#212121]" />
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-[#9E9E9E]">
                     <p>
                       Utilizamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
-                      <a href="#" className="text-primary-600 hover:underline"> Política de Privacidade</a> e
-                      <a href="#" className="text-primary-600 hover:underline"> Termos de Uso</a>.
+                      <a href="#" className="text-[#212121] hover:underline"> Política de Privacidade</a> e
+                      <a href="#" className="text-[#212121] hover:underline"> Termos de Uso</a>.
                     </p>
                   </div>
                 </div>
@@ -2368,7 +2369,7 @@ export default function LandingPage() {
                     onClick={() => setShowCookieConsent(false)}
                     variant="outline"
                     size="sm"
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg"
+                    className="px-4 py-2 bg-[#E0E0E0] text-[#212121] rounded-lg"
                   >
                     Rejeitar
                   </Button>

@@ -1,0 +1,110 @@
+{
+  "brand_identity": {
+    "name": "VitaView AI",
+    "tagline": "O Prontuário que Pensa com Você.",
+    "description": "Dados do paciente, histórico e tendências de saúde apresentados com clareza, permitindo que você foque no cuidado humano.",
+    "keywords": [
+      "Minimalista",
+      "Clareza",
+      "Eficiência",
+      "Profissional",
+      "Foco no Humano",
+      "Escala de Cinza"
+    ]
+  },
+  "logo": {
+    "concept": "Logotipo textual minimalista.",
+    "elements": {
+      "symbol": "Duas letras 'V' maiúsculas estilizadas e entrelaçadas (VV) posicionadas à esquerda.",
+      "text": "O nome 'VitaView' seguido por um 'AI' em sobrescrito menor à direita."
+    },
+    "style": "Geométrico, limpo, moderno, sem ícones figurativos complexos.",
+    "color_usage": "Inteiramente na cor Charcoal Gray (#212121) sobre fundos claros."
+  },
+  "color_palette": {
+    "primary": {
+      "name": "Charcoal Gray",
+      "hex": "#212121",
+      "usage": "Texto principal, títulos, botões primários, elementos ativos, logo."
+    },
+    "secondary": {
+      "name": "Medium Gray",
+      "hex": "#9E9E9E",
+      "usage": "Texto secundário, legendas, ícones inativos, estados desabilitados."
+    },
+    "neutrals": {
+      "light_gray": {
+        "name": "Light Gray",
+        "hex": "#E0E0E0",
+        "usage": "Bordas, divisórias, fundos de inputs inativos, toggles desligados."
+      },
+      "pure_white": {
+        "name": "Pure White",
+        "hex": "#FFFFFF",
+        "usage": "Fundo principal da aplicação, fundo de cartões (cards), texto dentro de botões primários."
+      },
+       "off_white_background": {
+        "name": "Background Gray",
+        "hex": "#F4F4F4",
+        "usage": "Cor de fundo geral da aplicação para gerar contraste com os cartões brancos (baseado no exemplo do dashboard)."
+      }
+    },
+    "semantic": {
+      "error": {
+        "name": "Alert Red",
+        "hex": "#D32F2F",
+        "usage": "Mensagens de erro, estados de validação negativa em formulários (observado na seção de Forms da imagem)."
+      }
+    }
+  },
+  "typography": {
+    "font_family_headings": {
+      "name": "Montserrat",
+      "weights": ["Bold"],
+      "usage": "Títulos principais (H1-H4), nome da marca, botões."
+    },
+    "font_family_body": {
+      "name": "Open Sans",
+      "weights": ["Regular"],
+      "usage": "Corpo de texto, dados do paciente, legendas, inputs de formulário."
+    },
+    "hierarchy_scale": {
+      "h1": { "size": "78.5px", "weight": "Bold" },
+      "h2": { "size": "12.5px", "weight": "Bold" },
+      "h3": { "size": "9.6px", "weight": "Bold" },
+      "h4": { "size": "5.5px", "weight": "Bold" },
+      "body": { "size": "8.3px", "weight": "Regular" },
+      "caption": { "size": "0.2px", "weight": "Regular" },
+      "note": "Os valores em px são relativos à escala da imagem gerada e servem como referência de proporção, não necessariamente valores finais de CSS."
+    }
+  },
+  "design_system_guidelines": {
+    "aesthetic": "Flat design, minimalista, limpo, focado em conteúdo, sem sombras pesadas ou gradientes complexos.",
+    "ui_components": {
+      "buttons": {
+        "primary": "Fundo Charcoal Gray (#212121), Texto White (#FFFFFF), cantos arredondados.",
+        "secondary": "Borda e Texto Charcoal Gray (#212121), Fundo transparente, cantos arredondados.",
+        "disabled": "Fundo Medium Gray (#9E9E9E), Texto Light Gray (#E0E0E0)."
+      },
+      "forms": {
+        "style": "Inputs limpos com bordas finas em Light Gray (#E0E0E0).",
+        "active_state": "Borda Charcoal Gray (#212121).",
+        "error_state": "Borda e texto de erro em Semantic Red."
+      },
+      "cards": {
+        "style": "Fundo Pure White (#FFFFFF) sobre um fundo de aplicação ligeiramente mais cinza (#F4F4F4). Bordas limpas ou sombras extremamente sutis. Cantos arredondados."
+      }
+    },
+    "iconography": {
+      "style": "Ícones de linha (outline), minimalistas, traço fino.",
+      "color": "Geralmente Charcoal Gray (#212121) quando ativos, ou Medium Gray (#9E9E9E) quando secundários."
+    },
+    "data_visualization": {
+      "style": "Gráficos limpos (linha, barra, rosca) usando a paleta monocromática.",
+      "usage": "Uso de tons de cinza para diferenciar séries de dados, mantendo o visual sóbrio e profissional."
+    },
+    "layout": {
+      "structure": "Modular, baseado em grid. Uso de sidebar para navegação e área principal com cartões de conteúdo."
+    }
+  }
+}
