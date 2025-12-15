@@ -155,7 +155,7 @@ export default function Agenda() {
                                 <div className="relative">
                                     <Input
                                         placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
-                                        className="bg-white border-blue-200 focus:border-blue-500 text-gray-800 placeholder:text-gray-400 pr-20 shadow-sm"
+                                        className="bg-white border-gray-200 focus:border-gray-500 text-gray-800 placeholder:text-gray-400 pr-20 shadow-sm"
                                         value={aiCommand}
                                         onChange={(e) => setAiCommand(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
@@ -171,7 +171,7 @@ export default function Agenda() {
                                             <Paperclip className="w-4 h-4" />
                                         </button>
                                         <button
-                                            className="text-blue-500 hover:text-blue-700 p-1"
+                                            className="text-gray-900 hover:text-black p-1"
                                             onClick={handleAiCommand}
                                             disabled={isAiLoading}
                                         >
@@ -194,9 +194,9 @@ export default function Agenda() {
                                         {uploadedFiles.map((file, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm"
+                                                className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 text-sm"
                                             >
-                                                <span className="text-blue-700">
+                                                <span className="text-gray-700">
                                                     {file.type.startsWith('image/') ? '🖼️' : '📄'}
                                                 </span>
                                                 <span className="text-gray-700 max-w-[150px] truncate">
@@ -236,7 +236,7 @@ export default function Agenda() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-blue-500" />
+                            <Sparkles className="w-5 h-5 text-gray-900" />
                             Confirmar Agendamento Sugerido
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -273,7 +273,7 @@ export default function Agenda() {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => createAppointmentMutation.mutate(aiProposal)}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-gray-900 hover:bg-black"
                         >
                             Confirmar Agendamento
                         </AlertDialogAction>

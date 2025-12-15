@@ -78,7 +78,7 @@ export function AgendaCalendar({
 
   const getTypeStyles = (type: string) => {
     switch (type) {
-      case "consulta": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
+      case "consulta": return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-900", subtext: "text-gray-800", label: "text-gray-600", dot: "bg-gray-500" };
       case "retorno": return { bg: "bg-green-100", border: "border-green-500", text: "text-green-900", subtext: "text-green-800", label: "text-green-600", dot: "bg-green-500" };
       case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
       case "urgencia": return { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-900", subtext: "text-amber-800", label: "text-amber-600", dot: "bg-amber-500" };
@@ -103,18 +103,18 @@ export function AgendaCalendar({
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2A4F7C] p-6 text-white">
+      <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" className="p-0 hover:bg-transparent text-white hover:text-white/90">
-                  <CalendarIcon className="w-8 h-8 mr-4" />
+                <Button variant="ghost" className="p-0 hover:bg-transparent !text-white hover:text-white/90">
+                  <CalendarIcon className="w-8 h-8 mr-4 !text-white" />
                   <div className="text-left">
-                    <h3 className="text-2xl font-bold capitalize">
+                    <h3 className="text-2xl font-bold capitalize !text-white">
                       {format(currentWeek, "MMMM yyyy", { locale: ptBR })}
                     </h3>
-                    <p className="text-sm text-blue-100">
+                    <p className="text-sm text-gray-400">
                       Semana {format(startOfCurrentWeek, "dd")} - {format(endOfWeek(currentWeek), "dd 'de' MMMM", { locale: ptBR })}
                     </p>
                   </div>
@@ -134,7 +134,7 @@ export function AgendaCalendar({
           <div className="flex flex-wrap items-center gap-3">
             <Button
               onClick={onNewAppointment}
-              className="bg-white text-[#1E3A5F] hover:bg-blue-50 border-0 font-semibold"
+              className="bg-white text-[#212121] hover:bg-gray-100 border-0 font-semibold"
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -205,10 +205,10 @@ export function AgendaCalendar({
                 <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
                 <div className={cn(
                   "text-sm font-medium flex flex-col items-center justify-center mx-auto rounded-lg py-1 px-2",
-                  isToday ? "bg-[#1E3A5F] text-white" : "text-gray-700"
+                  isToday ? "bg-[#212121] text-white" : "text-gray-700"
                 )}>
                   <span className="text-lg font-bold">{format(date, "d")}</span>
-                  <span className={cn("text-[10px] uppercase", isToday ? "text-blue-100" : "text-gray-400")}>
+                  <span className={cn("text-[10px] uppercase", isToday ? "text-gray-300" : "text-gray-400")}>
                     {format(date, "MMM", { locale: ptBR })}
                   </span>
                 </div>
@@ -275,7 +275,7 @@ export function AgendaCalendar({
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <div className="w-3 h-3 bg-gray-500 rounded"></div>
             <span className="text-xs text-gray-600">Consulta</span>
           </div>
           <div className="flex items-center gap-2">
