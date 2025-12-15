@@ -1008,6 +1008,11 @@ export default function HealthTrendsNew() {
     analyzeAnamnesisMutation.mutate({ text: anamnesisText.trim() });
   };
 
+  const onDoctorSubmit = (data: DoctorForm) => {
+    createDoctorMutation.mutate(data);
+  };
+
+
   const handleResetAnamnesis = () => {
     setAnamnesisText("");
     setExtractedRecord(null);
@@ -1640,7 +1645,7 @@ export default function HealthTrendsNew() {
                               className="gap-2 bg-gray-900 hover:bg-black text-white"
                             >
                               <FileText className="h-4 w-4" />
-                              Renovar Receitas
+                              Renovar Receita
                             </Button>
                           </div>
                         </>
@@ -2983,6 +2988,69 @@ export default function HealthTrendsNew() {
                 Gerar Receituário
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para Cadastrar Médico */}
+        <Dialog open={isDoctorFormDialogOpen} onOpenChange={setIsDoctorFormDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cadastrar Novo Médico</DialogTitle>
+              <DialogDescription>
+                Adicione um médico para usar nas prescrições
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...doctorForm}>
+              <form onSubmit={doctorForm.handleSubmit(onDoctorSubmit)} className="space-y-4">
+                <FormField
+                  control={doctorForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Médico *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dr. João Silva" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={doctorForm.control}
+                  name="crm"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CRM *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="12345/SP" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={doctorForm.control}
+                  name="specialty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Especialidade (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Cardiologia" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsDoctorFormDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createDoctorMutation.isPending}>
+                    {createDoctorMutation.isPending ? "Cadastrando..." : "Cadastrar Médico"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
 

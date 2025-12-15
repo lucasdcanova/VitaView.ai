@@ -68,74 +68,414 @@ app.post("/api/run-migration-internal", async (req, res) => {
 
 
 // Função para gerar HTML do relatório de saúde
+// List of common controlled medications in Brazil (can be expanded)
+const CONTROLLED_MEDICATIONS = [
+  'rivotril', 'clonazepam', 'alprazolam', 'diazepam', 'lorazepam', 'bromazepam',
+  'zolpidem', 'ritalina', 'metilfenidato', 'concerta', 'venvanse', 'lisdexanfetamina',
+  'morfina', 'codeina', 'tramadol', 'oxicodona', 'fentanil',
+  'fluoxetina', 'sertralina', 'escitalopram', 'paroxetina', 'venlafaxina',
+  'amitriptilina', 'nortriptilina', 'imipramina',
+  'quetiapina', 'olanzapina', 'risperidona', 'aripiprazol',
+  'carbonato de lítio', 'lítio', 'ácido valproico', 'valproato'
+];
+
+function isControlledMedication(medicationName: string): boolean {
+  const nameLower = medicationName.toLowerCase();
+  return CONTROLLED_MEDICATIONS.some(controlled => nameLower.includes(controlled));
+}
+
 function generatePrescriptionHTML({ doctorName, doctorCrm, doctorSpecialty, patientName, medications, observations, issueDate, validUntil }: any) {
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    return new Date(date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
+
+  const formatDateTime = (date: Date) => {
+    return new Date(date).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Check if any medication is controlled
+  const hasControlled = medications.some((med: any) => isControlledMedication(med.name));
+  const prescriptionType = hasControlled ? 'CONTROLADA' : 'COMUM';
 
   return `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Receituário Médico - ${prescriptionType}</title>
       <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #48C9B0; padding-bottom: 20px; }
-        .header h1 { color: #2C3E50; margin: 0; font-size: 24px; }
-        .doctor-info { font-size: 14px; color: #555; margin-top: 10px; }
-        .content { margin: 0 40px; }
-        .section { margin-bottom: 30px; }
-        .section-title { font-size: 16px; font-weight: bold; color: #48C9B0; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-        .patient-info { font-size: 16px; font-weight: bold; margin-bottom: 30px; }
-        .medication-item { margin-bottom: 15px; padding-left: 20px; border-left: 3px solid #eee; }
-        .medication-name { font-weight: bold; font-size: 15px; }
-        .medication-details { font-size: 14px; color: #666; }
-        .observations { background-color: #f9f9f9; padding: 15px; border-radius: 5px; font-size: 14px; }
-        .footer { position: fixed; bottom: 40px; left: 40px; right: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
-        .signature-line { width: 60%; margin: 0 auto 10px auto; border-top: 1px solid #333; }
+        @page {
+          size: A4;
+          margin: 0;
+        }
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Arial', 'Helvetica', sans-serif;
+          color: #000;
+          line-height: 1.5;
+          padding: 20mm;
+          background: white;
+        }
+        
+        .prescription-container {
+          max-width: 170mm;
+          margin: 0 auto;
+          background: white;
+        }
+        
+        /* Header Styles */
+        .header {
+          text-align: center;
+          border: 2px solid ${hasControlled ? '#dc2626' : '#2563eb'};
+          padding: 15px;
+          margin-bottom: 20px;
+          background: ${hasControlled ? '#fee2e2' : '#eff6ff'};
+        }
+        
+        .prescription-type {
+          font-size: 20px;
+          font-weight: bold;
+          color: ${hasControlled ? '#dc2626' : '#2563eb'};
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          margin-bottom: 8px;
+        }
+        
+        .header h1 {
+          font-size: 16px;
+          color: #1f2937;
+          margin: 5px 0;
+        }
+        
+        /* Doctor Info */
+        .doctor-info {
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          margin-bottom: 15px;
+          background: #f9fafb;
+        }
+        
+        .doctor-info h2 {
+          font-size: 14px;
+          color: #374151;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #d1d5db;
+          padding-bottom: 5px;
+        }
+        
+        .doctor-details {
+          font-size: 12px;
+          line-height: 1.6;
+        }
+        
+        .doctor-details strong {
+          color: #1f2937;
+        }
+        
+        /* Patient Info */
+        .patient-info {
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          margin-bottom: 20px;
+          background: #ffffff;
+        }
+        
+        .patient-info h2 {
+          font-size: 14px;
+          color: #374151;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #d1d5db;
+          padding-bottom: 5px;
+        }
+        
+        .patient-details {
+          font-size: 12px;
+        }
+        
+        /* Medications Section */
+        .medications-section {
+          margin-bottom: 20px;
+        }
+        
+        .medications-section h2 {
+          font-size: 14px;
+          color: #1f2937;
+          margin-bottom: 12px;
+          padding: 8px;
+          background: ${hasControlled ? '#fee2e2' : '#eff6ff'};
+          border-left: 4px solid ${hasControlled ? '#dc2626' : '#2563eb'};
+        }
+        
+        .medication-item {
+          margin-bottom: 15px;
+          padding: 12px;
+          border: 1px solid #e5e7eb;
+          border-left: 3px solid ${hasControlled ? '#dc2626' : '#2563eb'};
+          background: white;
+          page-break-inside: avoid;
+        }
+        
+        .medication-number {
+          display: inline-block;
+          width: 25px;
+          height: 25px;
+          background: ${hasControlled ? '#dc2626' : '#2563eb'};
+          color: white;
+          text-align: center;
+          line-height: 25px;
+          border-radius: 50%;
+          font-weight: bold;
+          font-size: 12px;
+          margin-right: 8px;
+        }
+        
+        .medication-name {
+          font-size: 14px;
+          font-weight: bold;
+          color: #1f2937;
+          margin-bottom: 6px;
+        }
+        
+        .medication-controlled-badge {
+          display: inline-block;
+          background: #dc2626;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 3px;
+          font-size: 9px;
+          font-weight: bold;
+          margin-left: 8px;
+          text-transform: uppercase;
+        }
+        
+        .medication-details {
+          font-size: 12px;
+          color: #4b5563;
+          line-height: 1.7;
+          margin-left: 33px;
+        }
+        
+        .medication-details div {
+          margin-bottom: 3px;
+        }
+        
+        .medication-details strong {
+          color: #1f2937;
+          font-weight: 600;
+        }
+        
+        /* Observations */
+        .observations {
+          margin-bottom: 20px;
+          padding: 12px;
+          background: #fef3c7;
+          border: 1px solid #fbbf24;
+          border-radius: 4px;
+        }
+        
+        .observations h3 {
+          font-size: 12px;
+          color: #92400e;
+          margin-bottom: 8px;
+          font-weight: bold;
+        }
+        
+        .observations p {
+          font-size: 11px;
+          color: #78350f;
+          line-height: 1.6;
+        }
+        
+        /* Legal Disclaimer for Controlled */
+        .controlled-warning {
+          background: #fee2e2;
+          border: 2px solid #dc2626;
+          padding: 12px;
+          margin-bottom: 20px;
+          border-radius: 4px;
+        }
+        
+        .controlled-warning h3 {
+          font-size: 12px;
+          color: #991b1b;
+          margin-bottom: 6px;
+          font-weight: bold;
+        }
+        
+        .controlled-warning p {
+          font-size: 10px;
+          color: #7f1d1d;
+          line-height: 1.5;
+        }
+        
+        /* Validity Info */
+        .validity-info {
+          margin-bottom: 25px;
+          padding: 10px;
+          background: #f3f4f6;
+          border-left: 3px solid #6b7280;
+          font-size: 11px;
+        }
+        
+        /* Signature Area */
+        .signature-area {
+          margin-top: 40px;
+          page-break-inside: avoid;
+        }
+        
+        .signature-line {
+          width: 300px;
+          margin: 0 auto 8px auto;
+          border-top: 1px solid #000;
+          padding-top: 5px;
+          text-align: center;
+        }
+        
+        .signature-text {
+          font-size: 11px;
+          text-align: center;
+          color: #4b5563;
+          line-height: 1.6;
+        }
+        
+        /* Footer */
+        .footer {
+          margin-top: 30px;
+          padding-top: 15px;
+          border-top: 1px solid #d1d5db;
+          text-align: center;
+          font-size: 9px;
+          color: #6b7280;
+        }
+        
+        /* Print Styles */
+        @media print {
+          body {
+            padding: 15mm;
+          }
+          
+          .prescription-container {
+            max-width: 100%;
+          }
+          
+          .medication-item {
+            page-break-inside: avoid;
+          }
+        }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>RECEITUÁRIO MÉDICO</h1>
+      <div class="prescription-container">
+        <!-- Header -->
+        <div class="header">
+          <div class="prescription-type">Receituário ${prescriptionType}</div>
+          <h1>Prescrição Médica</h1>
+        </div>
+        
+        <!-- Doctor Information -->
         <div class="doctor-info">
-          <strong>Dr(a). ${doctorName}</strong><br>
-          CRM: ${doctorCrm} ${doctorSpecialty ? `• ${doctorSpecialty}` : ''}
+          <h2>Dados do Médico Prescritor</h2>
+          <div class="doctor-details">
+            <div><strong>Nome:</strong> ${doctorName}</div>
+            <div><strong>CRM:</strong> ${doctorCrm}</div>
+            ${doctorSpecialty ? `<div><strong>Especialidade:</strong> ${doctorSpecialty}</div>` : ''}
+          </div>
         </div>
-      </div>
-
-      <div class="content">
+        
+        <!-- Patient Information -->
         <div class="patient-info">
-          Paciente: ${patientName}
+          <h2>Dados do Paciente</h2>
+          <div class="patient-details">
+            <div><strong>Nome:</strong> ${patientName}</div>
+            <div><strong>Data da Prescrição:</strong> ${formatDateTime(issueDate)}</div>
+          </div>
         </div>
-
-        <div class="section">
-          <div class="section-title">Prescrição de Medicamentos</div>
-          ${medications.map((med: any, index: number) => `
-            <div class="medication-item">
-              <div class="medication-name">${index + 1}. ${med.name}</div>
-              <div class="medication-details">
-                ${med.format ? `Forma: ${med.format} | ` : ''}Dosagem: ${med.dosage || 'N/A'}<br>
-                Posologia: ${med.frequency}<br>
-                ${med.notes ? `<em>Obs: ${med.notes}</em>` : ''}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-
-        ${observations ? `
-          <div class="section">
-            <div class="section-title">Observações</div>
-            <div class="observations">${observations}</div>
+        
+        ${hasControlled ? `
+          <!-- Controlled Medication Warning -->
+          <div class="controlled-warning">
+            <h3>⚠️ ATENÇÃO - MEDICAMENTO(S) CONTROLADO(S)</h3>
+            <p>
+              Esta receita contém medicamento(s) sujeito(s) a controle especial conforme Portaria SVS/MS nº 344/1998.
+              A dispensação deve ser realizada mediante apresentação e retenção desta receita.
+              Válida em todo território nacional.
+            </p>
           </div>
         ` : ''}
-      </div>
-
-      <div class="footer">
-        <div class="signature-line"></div>
-        <p>Assinatura e Carimbo do Médico</p>
-        <p>Data de Emissão: ${formatDate(issueDate)} • Validade: ${formatDate(validUntil)}</p>
-        <p>VitaView AI • Documento gerado eletronicamente</p>
+        
+        <!-- Medications List -->
+        <div class="medications-section">
+          <h2>Medicamentos Prescritos</h2>
+          ${medications.map((med: any, index: number) => {
+    const isControlled = isControlledMedication(med.name);
+    return `
+              <div class="medication-item">
+                <div class="medication-name">
+                  <span class="medication-number">${index + 1}</span>
+                  ${med.name}
+                  ${isControlled ? '<span class="medication-controlled-badge">Controlado</span>' : ''}
+                </div>
+                <div class="medication-details">
+                  ${med.format ? `<div><strong>Forma Farmacêutica:</strong> ${med.format}</div>` : ''}
+                  <div><strong>Dosagem:</strong> ${med.dosage || 'Conforme orientação'}${med.dosageUnit ? ` ${med.dosageUnit}` : ''}</div>
+                  <div><strong>Posologia:</strong> ${med.frequency || 'Conforme orientação médica'}</div>
+                  ${med.notes ? `<div><strong>Observações:</strong> ${med.notes}</div>` : ''}
+                </div>
+              </div>
+            `;
+  }).join('')}
+        </div>
+        
+        ${observations ? `
+          <!-- Observations -->
+          <div class="observations">
+            <h3>Observações Gerais</h3>
+            <p>${observations}</p>
+          </div>
+        ` : ''}
+        
+        <!-- Validity Information -->
+        <div class="validity-info">
+          <strong>Validade da Prescrição:</strong> ${formatDate(validUntil)}
+          ${hasControlled ? ' • Receita de medicamento controlado válida por 30 dias' : ''}
+        </div>
+        
+        <!-- Signature Area -->
+        <div class="signature-area">
+          <div class="signature-line">
+            <div class="signature-text">
+              <strong>${doctorName}</strong><br>
+              CRM: ${doctorCrm}${doctorSpecialty ? ` - ${doctorSpecialty}` : ''}
+            </div>
+          </div>
+          <div class="signature-text">
+            Assinatura e Carimbo do Médico
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+          <p>Documento gerado eletronicamente por VitaView AI em ${formatDateTime(issueDate)}</p>
+          <p>Esta prescrição deve ser validada e assinada pelo médico responsável</p>
+          ${hasControlled ? '<p><strong>ATENÇÃO:</strong> Medicamento de uso controlado - Venda sob prescrição médica - Retenção de receita</p>' : ''}
+        </div>
       </div>
     </body>
     </html>
@@ -3776,46 +4116,66 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/prescriptions/generate", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const { medicationIds, validityDays, observations, doctorName, doctorCrm, doctorSpecialty } = req.body;
+      const { medicationIds, validityDays, observations, doctorName, doctorCrm, doctorSpecialty, medications: medicationsFromBody } = req.body;
 
+      console.log('📋 Iniciando geração de receituário...');
+      console.log('User ID:', user.id);
+      console.log('Medication IDs:', medicationIds);
+      console.log('Doctor:', doctorName, doctorCrm);
+
+      // Validation
       if (!medicationIds || medicationIds.length === 0) {
+        console.error('❌ Erro: Nenhum medicamento selecionado');
         return res.status(400).json({ message: "Selecione pelo menos um medicamento" });
       }
 
       if (!doctorName || !doctorCrm) {
+        console.error('❌ Erro: Dados do médico incompletos');
         return res.status(400).json({ message: "Dados do médico são obrigatórios" });
       }
 
-      // Buscar medicamentos selecionados usando Drizzle
-      // Se o frontend enviou os medicamentos completos, usar esses dados e pular query do banco
-      // Isso torna a geração do PDF resiliente a falhas de banco de dados
-      let medicationsList = req.body.medications;
+      // Get active patient profile for patient name
+      let patientName = user.fullName || user.username || "Paciente";
+      try {
+        // Try to get active profile from the profiles system
+        const activeProfileId = req.body.activeProfileId;
+        if (activeProfileId) {
+          const profile = await storage.getProfile(activeProfileId);
+          if (profile && profile.userId === user.id) {
+            patientName = profile.name;
+            console.log('✅ Perfil ativo encontrado:', patientName);
+          }
+        }
+      } catch (profileError) {
+        console.warn('⚠️ Não foi possível buscar perfil ativo, usando nome do usuário:', profileError);
+      }
+
+      // Get medications list
+      let medicationsList = medicationsFromBody;
 
       if (!medicationsList || medicationsList.length === 0) {
-        // Fallback: Tentar buscar do banco se não enviado (comportamento antigo legada/segurança)
-        try {
-          const medicationsResult = await db.select().from(medications)
-            .where(and(
-              inArray(medications.id, medicationIds),
-              eq(medications.userId, user.id),
-              eq(medications.isActive, true)
-            ));
+        console.log('📦 Buscando medicamentos do armazenamento em memória...');
+        // Try to get from in-memory storage first
+        const userMedications = medicationsStore.get(user.id) || [];
+        medicationsList = userMedications.filter((m: any) =>
+          medicationIds.includes(m.id) && m.is_active !== false
+        );
+        console.log(`✅ Encontrados ${medicationsList.length} medicamentos na memória`);
+      }
 
-          medicationsList = medicationsResult;
-        } catch (error) {
-          console.error("Erro ao buscar medicamentos no banco:", error);
-          // Se falhar e não veio do body, retorne erro ou lista vazia dependendo da severidade
-          // Para garantir PDF, retornamos lista vazia se falhar tudo
-          medicationsList = [];
-        }
+      if (!medicationsList || medicationsList.length === 0) {
+        console.error('❌ Erro: Nenhum medicamento encontrado');
+        return res.status(400).json({ message: "Medicamentos não encontrados" });
       }
 
       const issueDate = new Date();
       const validUntil = new Date(issueDate.getTime() + (validityDays || 30) * 24 * 60 * 60 * 1000);
 
-      let prescription = null;
+      console.log('📅 Data de emissão:', issueDate);
+      console.log('📅 Válido até:', validUntil);
+
+      // Try to save prescription record (optional, don't fail if it doesn't work)
       try {
-        // Inserir registro no banco usando Drizzle
         const [insertedPrescription] = await db.insert(prescriptions).values({
           userId: user.id,
           doctorName,
@@ -3825,7 +4185,8 @@ export async function registerRoutes(app: Express): Promise<void> {
             id: m.id,
             name: m.name,
             format: m.format,
-            dosage: m.dosage, // Drizzle returns camelCase columns matching schema
+            dosage: m.dosage,
+            dosageUnit: m.dosageUnit || m.dosage_unit,
             frequency: m.frequency,
             notes: m.notes
           })),
@@ -3833,51 +4194,63 @@ export async function registerRoutes(app: Express): Promise<void> {
           validUntil: new Date(validUntil),
           observations: observations || null
         }).returning();
-        prescription = insertedPrescription;
+        console.log('✅ Prescrição salva no banco:', insertedPrescription.id);
       } catch (dbError) {
-        // Log the error but continue to allow PDF generation
-        console.error('Erro ao salvar no banco (permitindo geração de PDF):', dbError);
-        // Create a dummy prescription object to satisfy response structure if needed, or just let it be null
+        console.warn('⚠️ Erro ao salvar no banco (continuando com geração de PDF):', dbError);
       }
 
-      // Retornar sucesso para que o frontend gere o PDF
-      // Em vez de retornar JSON, vamos gerar o PDF aqui mesmo
+      // Generate PDF HTML
+      console.log('🎨 Gerando HTML da prescrição...');
       const htmlContent = generatePrescriptionHTML({
         doctorName,
         doctorCrm,
         doctorSpecialty,
-        patientName: user.fullName || user.username || "Paciente",
-        medications: medicationsList,
+        patientName,
+        medications: medicationsList.map((m: any) => ({
+          name: m.name,
+          format: m.format,
+          dosage: m.dosage,
+          dosageUnit: m.dosageUnit || m.dosage_unit,
+          frequency: m.frequency,
+          notes: m.notes
+        })),
         observations,
         issueDate,
         validUntil
       });
 
-      // Configurações do PDF
+      console.log('✅ HTML gerado, tamanho:', htmlContent.length, 'caracteres');
+
+      // PDF generation options
       const options = {
         format: 'A4',
-        margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' }, // Margins handled by CSS
+        margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' },
         printBackground: true
       };
 
-      // Gerar PDF usando html-pdf-node (dynamic import to avoid build issues if missing)
+      // Generate PDF
+      console.log('📄 Gerando PDF...');
       const { generatePdf } = await import('html-pdf-node');
       const file = { content: htmlContent };
 
-      console.log('Gerando PDF de prescrição no backend...');
       const pdfBuffer = await generatePdf(file, options);
-      console.log('PDF gerado, tamanho:', pdfBuffer.length);
+      console.log('✅ PDF gerado com sucesso! Tamanho:', pdfBuffer.length, 'bytes');
 
-      // Enviar o PDF como resposta
+      // Send PDF response
       res.setHeader('Content-Type', 'application/pdf');
-      // Content-Disposition: inline faz abrir no navegador (nova aba) se solicitado via window.open
-      // Se fosse attachment, forçaria download.
-      res.setHeader('Content-Disposition', `inline; filename="receita-${user.username}-${new Date().getTime()}.pdf"`);
+      res.setHeader('Content-Disposition', `inline; filename="receita-${patientName.replace(/\s+/g, '_')}-${Date.now()}.pdf"`);
       res.send(pdfBuffer);
 
-    } catch (error) {
-      console.error('Erro fatal ao processar solicitação:', error);
-      res.status(500).json({ message: "Erro ao processar solicitação", error: error.message });
+      console.log('✅ PDF enviado ao cliente com sucesso!');
+
+    } catch (error: any) {
+      console.error('❌ Erro fatal ao gerar prescrição:', error);
+      console.error('Stack trace:', error.stack);
+      res.status(500).json({
+        message: "Erro ao gerar receituário",
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 

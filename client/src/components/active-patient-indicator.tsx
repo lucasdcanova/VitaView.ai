@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useProfiles } from "@/hooks/use-profiles";
-import { User, ChevronRight, Calendar, Activity, Users, Search, X } from "lucide-react";
+import { User, ChevronRight, Calendar, Activity, Users, Search, X, UserPlus } from "lucide-react";
 import { differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Profile } from "@shared/schema";
-import ProfileSwitcher from "@/components/profile-switcher";
+import CreatePatientDialog from "@/components/create-patient-dialog";
 
 /**
  * VitaView AI Active Patient Indicator Component
@@ -30,7 +31,13 @@ export default function ActivePatientIndicator({
 }: ActivePatientIndicatorProps) {
     const { activeProfile, profiles, setActiveProfile } = useProfiles();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const handleCreatePatient = () => {
+        setIsDialogOpen(false);
+        setIsCreateDialogOpen(true);
+    };
 
     const getAge = (birthDate?: string | null) => {
         if (!birthDate) return null;
@@ -99,6 +106,12 @@ export default function ActivePatientIndicator({
                     getAge={getAge}
                     getInitials={getInitials}
                     totalProfiles={profiles.length}
+                    onCreatePatient={handleCreatePatient}
+                />
+
+                <CreatePatientDialog
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
                 />
             </>
         );
@@ -143,6 +156,12 @@ export default function ActivePatientIndicator({
                     getAge={getAge}
                     getInitials={getInitials}
                     totalProfiles={profiles.length}
+                    onCreatePatient={handleCreatePatient}
+                />
+
+                <CreatePatientDialog
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
                 />
             </>
         );
@@ -227,6 +246,12 @@ export default function ActivePatientIndicator({
                 getAge={getAge}
                 getInitials={getInitials}
                 totalProfiles={profiles.length}
+                onCreatePatient={handleCreatePatient}
+            />
+
+            <CreatePatientDialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
             />
         </>
     );
@@ -244,6 +269,7 @@ interface PatientSelectionDialogProps {
     getAge: (birthDate?: string | null) => number | null;
     getInitials: (name: string) => string;
     totalProfiles: number;
+    onCreatePatient: () => void;
 }
 
 function PatientSelectionDialog({
@@ -257,6 +283,7 @@ function PatientSelectionDialog({
     getAge,
     getInitials,
     totalProfiles,
+    onCreatePatient,
 }: PatientSelectionDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -389,7 +416,17 @@ function PatientSelectionDialog({
 
                 {/* Footer with Add Button */}
                 <div className="p-4 border-t border-lightGray bg-backgroundGray">
-                    <ProfileSwitcher />
+                    <Button
+                        onClick={() => {
+                            onClose();
+                            onCreatePatient();
+                        }}
+                        className="w-full"
+                        variant="outline"
+                    >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Cadastrar novo paciente
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
