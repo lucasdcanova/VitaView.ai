@@ -1,166 +1,175 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
-    
-    <!-- Primary Meta Tags -->
-    <title>VitaView AI - Plataforma de Análise Bioquímica com IA</title>
-    <meta name="title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
-    <meta name="description" content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
-    <meta name="keywords" content="exames médicos, análise bioquímica, inteligência artificial, saúde, laboratório, diagnóstico">
-    <meta name="robots" content="index, follow">
-    <meta name="language" content="Portuguese">
-    <meta name="author" content="VitaView AI">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
-    <meta property="og:description" content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
-    <meta property="og:image" content="/assets/vitaview_ai_transparent_2k.png">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
-    <meta property="twitter:description" content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
-    <meta property="twitter:image" content="/assets/vitaview_ai_transparent_2k.png">
-    
-    <!-- Theme and Icons -->
-    <meta name="theme-color" content="#1E3A5F">
-    <meta name="msapplication-TileColor" content="#1E3A5F">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/vitaview_logo_icon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/vitaview_logo_icon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/vitaview_logo_icon.png">
-    <meta name="msapplication-TileImage" content="/assets/vitaview_logo_icon.png">
-    
-    <!-- Preload critical assets (only the most essential) -->
-    <link rel="preload" href="/assets/vitaview_logo_icon.png" as="image" type="image/png">
-    
-    <!-- DNS prefetch for external resources -->
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//api.openai.com">
-    <link rel="dns-prefetch" href="//generativelanguage.googleapis.com">
-    <link rel="dns-prefetch" href="//api.stripe.com">
-    
-    <!-- Preconnect to critical external origins -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="/manifest.json">
-    
-    <!-- CSP Nonce (will be set by server) -->
-    <meta name="csp-nonce" content="">
-    
-    <!-- Critical CSS inline (will be added by build process) -->
-    <style>
-      /* Critical above-the-fold styles */
-      body {
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        background-color: #f8fafc;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+
+  <!-- Primary Meta Tags -->
+  <title>VitaView AI - Plataforma de Análise Bioquímica com IA</title>
+  <meta name="title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
+  <meta name="description"
+    content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
+  <meta name="keywords"
+    content="exames médicos, análise bioquímica, inteligência artificial, saúde, laboratório, diagnóstico">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="Portuguese">
+  <meta name="author" content="VitaView AI">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
+  <meta property="og:description"
+    content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
+  <meta property="og:image" content="/assets/vitaview_ai_transparent_2k.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:title" content="VitaView AI - Plataforma de Análise Bioquímica com IA">
+  <meta property="twitter:description"
+    content="Plataforma avançada de análise de exames médicos que utiliza inteligência artificial para extrair, analisar e interpretar dados de documentos médicos.">
+  <meta property="twitter:image" content="/assets/vitaview_ai_transparent_2k.png">
+
+  <!-- Theme and Icons -->
+  <meta name="theme-color" content="#1E3A5F">
+  <meta name="msapplication-TileColor" content="#1E3A5F">
+
+  <link rel="icon" type="image/png" href="/logo_rounded.png" />
+  <link rel="apple-touch-icon" href="/logo_rounded.png" />
+  <meta name="msapplication-TileImage" content="/logo_rounded.png">
+
+  <link rel="preload" href="/logo_rounded.png" as="image" type="image/png" />
+
+  <!-- DNS prefetch for external resources -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//fonts.gstatic.com">
+  <link rel="dns-prefetch" href="//api.openai.com">
+  <link rel="dns-prefetch" href="//generativelanguage.googleapis.com">
+  <link rel="dns-prefetch" href="//api.stripe.com">
+
+  <!-- Preconnect to critical external origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- CSP Nonce (will be set by server) -->
+  <meta name="csp-nonce" content="">
+
+  <!-- Critical CSS inline (will be added by build process) -->
+  <style>
+    /* Critical above-the-fold styles */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f8fafc;
+    }
+
+    #root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Loading state styles */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #1e3a5f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
       }
-      
-      #root {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+
+      100% {
+        transform: rotate(360deg);
       }
-      
-      /* Loading state styles */
-      .loading-spinner {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        flex-direction: column;
-      }
-      
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #e5e7eb;
-        border-top: 4px solid #1e3a5f;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      .loading-text {
-        margin-top: 16px;
-        color: #6b7280;
-        font-size: 14px;
-      }
-      
-      /* Hide scrollbar but keep functionality */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      
-      ::-webkit-scrollbar-track {
-        background: #f1f5f9;
-      }
-      
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-      }
-      
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <!-- Loading state while React loads -->
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <div class="loading-text">Carregando VitaView AI...</div>
-      </div>
+    }
+
+    .loading-text {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <!-- Loading state while React loads -->
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <div class="loading-text">Carregando VitaView AI...</div>
     </div>
-    
-    <!-- Main application script -->
-    <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker Registration (handled by pwa-manager.ts) -->
-    <script>
-      // Service Worker registration is handled by the PWA manager
-      // which includes development mode checks
-      console.log('[SW] Registration delegated to PWA Manager');
-      
-      // Performance monitoring
-      window.addEventListener('load', () => {
-        if ('performance' in window) {
-          const timing = performance.timing;
-          const loadTime = timing.loadEventEnd - timing.navigationStart;
-          console.log(`[Perf] Page load time: ${loadTime}ms`);
-          
-          // Send to analytics if configured
-          if (window.gtag) {
-            gtag('event', 'timing_complete', {
-              name: 'load',
-              value: loadTime
-            });
-          }
+  </div>
+
+  <!-- Main application script -->
+  <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Service Worker Registration (handled by pwa-manager.ts) -->
+  <script>
+    // Service Worker registration is handled by the PWA manager
+    // which includes development mode checks
+    console.log('[SW] Registration delegated to PWA Manager');
+
+    // Performance monitoring
+    window.addEventListener('load', () => {
+      if ('performance' in window) {
+        const timing = performance.timing;
+        const loadTime = timing.loadEventEnd - timing.navigationStart;
+        console.log(`[Perf] Page load time: ${loadTime}ms`);
+
+        // Send to analytics if configured
+        if (window.gtag) {
+          gtag('event', 'timing_complete', {
+            name: 'load',
+            value: loadTime
+          });
         }
-      });
-    </script>
-    
-    <!-- Development banner (loaded by ExternalScriptLoader) -->
-    <script type="text/javascript">
-      // Development banner will be loaded automatically by ExternalScriptLoader
-      // This is now handled in load-external-scripts.ts
-      console.log('[Dev] External script loading delegated to ExternalScriptLoader');
-    </script>
-  </body>
+      }
+    });
+  </script>
+
+  <!-- Development banner (loaded by ExternalScriptLoader) -->
+  <script type="text/javascript">
+    // Development banner will be loaded automatically by ExternalScriptLoader
+    // This is now handled in load-external-scripts.ts
+    console.log('[Dev] External script loading delegated to ExternalScriptLoader');
+  </script>
+</body>
+
 </html>

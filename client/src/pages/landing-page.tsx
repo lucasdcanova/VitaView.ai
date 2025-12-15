@@ -233,11 +233,11 @@ export default function LandingPage() {
 
 
             <h1 className="text-4xl sm:text-5xl font-heading font-bold text-[#212121] leading-tight mb-6">
-              <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: Inteligência que simplifica seus prontuários
+              <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: O Prontuário que pensa com você.
             </h1>
 
             <p className="text-lg md:text-xl text-[#9E9E9E] font-body mb-8 max-w-lg">
-              Centralize os dados clínicos, otimize diagnósticos com inteligência artificial e monitore a evolução da saúde dos seus pacientes em uma única plataforma.
+              Dados do paciente, histórico e tendências de saúde apresentados com clareza, permitindo que você foque no cuidado humano.
             </p>
 
             {/* Benefícios em lista */}
@@ -845,7 +845,7 @@ export default function LandingPage() {
       </section >
 
       {/* Appointment Scheduler Calendar */}
-      < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#A5E1D2] to-[#5AADBF] relative overflow-hidden" >
+      < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#E0E0E0] to-[#F4F4F4] relative overflow-hidden" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
           <div className="absolute left-0 top-20 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
@@ -871,7 +871,7 @@ export default function LandingPage() {
             </motion.span>
 
             <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">
-              <span className="text-[#1E3A5F]">View Laboratorial</span>
+              <span className="text-[#212121]">View Laboratorial</span>
             </h2>
             <p className="text-lg text-[#9E9E9E] mb-8 max-w-2xl mx-auto">
               Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
@@ -1200,7 +1200,7 @@ export default function LandingPage() {
 
 
       {/* Appointment Scheduler Calendar */}
-      <section id="agenda" className="py-16 bg-[#448C9B] text-white relative overflow-hidden scroll-mt-16" >
+      <section id="agenda" className="py-16 bg-[#212121] text-white relative overflow-hidden scroll-mt-16" >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1394,7 +1394,7 @@ export default function LandingPage() {
       </section >
 
       {/* Benefits Section */}
-      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#1E3A5F] to-[#152D48] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
+      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#F4F4F4] to-[#E0E0E0] text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1421,10 +1421,10 @@ export default function LandingPage() {
               Visão Completa
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Uma Nova <span className="text-[#A5E1D2]">Visão</span> para a Saúde
+            <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">
+              Uma Nova <span className="text-[#424242]">Visão</span> para a Saúde
             </h2>
-            <p className="text-lg text-white text-opacity-90 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg text-[#212121] text-opacity-90 mb-12 max-w-2xl mx-auto">
               O VitaView AI amplia sua capacidade de análise, transformando dados complexos em uma visão clara e acionável da vida do paciente.
             </p>
           </motion.div>
@@ -1432,7 +1432,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                icon: <Clock className="w-6 h-6 text-[#1E3A5F]" />,
+                icon: <Clock className="w-6 h-6 text-[#212121]" />,
                 title: "Visão Cronológica",
                 description: "Visualize toda a jornada de saúde do paciente em uma linha do tempo intuitiva e unificada.",
                 delay: 0
@@ -1514,7 +1514,7 @@ export default function LandingPage() {
           >
             <Link href="/auth?tab=register">
               <Button
-                className="bg-[#1E3A5F] hover:bg-[#48C9B0] text-white border-2 border-white px-8 py-4 text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                className="bg-[#212121] hover:bg-[#424242] text-white border-2 border-[#212121] px-8 py-4 text-lg font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 size="lg"
               >
                 Otimize seu Atendimento
@@ -1527,7 +1527,7 @@ export default function LandingPage() {
 
       {/* For Whom Section */}
       {/* Seção: Para quem é o VitaView AI */}
-      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#5AADBF] to-[#448C9B] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -left-20 bottom-0 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1730,10 +1730,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-6 h-6 text-[#1E3A5F]" />
+              <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-6 h-6 text-[#212121]" />
               </div>
-              <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">+40%</h3>
+              <h3 className="text-3xl font-bold text-[#212121] mb-2">+40%</h3>
               <p className="text-[#212121] font-medium">Aumento na produtividade clínica</p>
             </motion.div>
 
@@ -1746,10 +1746,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-[#48C9B0]" />
+              <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-6 h-6 text-[#212121]" />
               </div>
-              <h3 className="text-3xl font-bold text-[#48C9B0] mb-2">30%</h3>
+              <h3 className="text-3xl font-bold text-[#212121] mb-2">30%</h3>
               <p className="text-[#212121] font-medium">Redução no tempo de consulta</p>
             </motion.div>
 
@@ -1762,10 +1762,10 @@ export default function LandingPage() {
               transition={{ duration: 0.4, delay: 0.2 }}
               whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
             >
-              <div className="w-14 h-14 bg-[#E8F8F5] rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShieldCheck className="w-6 h-6 text-[#1E3A5F]" />
+              <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-6 h-6 text-[#212121]" />
               </div>
-              <h3 className="text-3xl font-bold text-[#1E3A5F] mb-2">100%</h3>
+              <h3 className="text-3xl font-bold text-[#212121] mb-2">100%</h3>
               <p className="text-[#212121] font-medium">Seguro e em conformidade com a LGPD</p>
             </motion.div>
           </div>
@@ -1773,7 +1773,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="depoimentos" className="py-20 bg-[#A5E1D2] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+      <section id="depoimentos" className="py-20 bg-[#F4F4F4] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1808,10 +1808,10 @@ export default function LandingPage() {
                 name: "Dr. Ricardo Mendes",
                 role: "Cardiologista",
                 delay: 0,
-                gradient: "from-[#1E3A5F] to-[#48C9B0]",
-                avatarBg: "bg-[#E8F8F5]",
-                avatarText: "text-[#1E3A5F]",
-                avatarBorder: "border-[#48C9B0]",
+                gradient: "from-[#212121] to-[#424242]",
+                avatarBg: "bg-[#E0E0E0]",
+                avatarText: "text-[#212121]",
+                avatarBorder: "border-[#424242]",
                 image: true
               },
               {
@@ -1819,10 +1819,10 @@ export default function LandingPage() {
                 name: "Dra. Juliana Costa",
                 role: "Endocrinologista",
                 delay: 0.1,
-                gradient: "from-[#48C9B0] to-[#1E3A5F]",
-                avatarBg: "bg-[#E8F8F5]",
-                avatarText: "text-[#1E3A5F]",
-                avatarBorder: "border-[#48C9B0]",
+                gradient: "from-[#424242] to-[#212121]",
+                avatarBg: "bg-[#E0E0E0]",
+                avatarText: "text-[#212121]",
+                avatarBorder: "border-[#424242]",
                 image: true
               }
             ].map((testimonial, index) => (
@@ -1841,9 +1841,9 @@ export default function LandingPage() {
                 {/* Elementos decorativos de fundo */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#48C9B0]/10 to-transparent rounded-bl-full z-0 opacity-70"></div>
                 {index === 0 ? (
-                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#1E3A5F]/10 to-transparent rounded-tr-full z-0"></div>
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#212121]/10 to-transparent rounded-tr-full z-0"></div>
                 ) : (
-                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#48C9B0]/10 to-transparent rounded-tr-full z-0"></div>
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#9E9E9E]/10 to-transparent rounded-tr-full z-0"></div>
                 )}
 
                 {/* Barra gradiente superior */}
@@ -1863,7 +1863,7 @@ export default function LandingPage() {
                       transition={{ duration: 0.5, delay: testimonial.delay + 0.2 }}
                     >
                       <path d="M14 24H6C6 18.5 7 11.9 14 11V17C11 17.5 10.5 19 10.5 21.5H14V24ZM28 24H20C20 18.5 21 11.9 28 11V17C25 17.5 24.5 19 24.5 21.5H28V24Z"
-                        className={`fill-[${index === 0 ? '#48C9B0' : '#1E3A5F'}]`}
+                        className={`fill-[${index === 0 ? '#424242' : '#212121'}]`}
                         style={{ opacity: 0.3 }}
                       />
                     </motion.svg>
@@ -1873,7 +1873,7 @@ export default function LandingPage() {
                   {/* Texto do depoimento */}
                   <p className="text-[#212121] mb-8 text-lg leading-relaxed relative">
                     {testimonial.quote}
-                    <span className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#48C9B0]/30 to-transparent rounded-full"></span>
+                    <span className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[#9E9E9E]/30 to-transparent rounded-full"></span>
                   </p>
 
                   <div className="flex items-center">
@@ -1894,9 +1894,9 @@ export default function LandingPage() {
                       {testimonial.image ? (
                         <div className={`w-16 h-16 rounded-full ${testimonial.avatarBg} flex items-center justify-center relative z-10 border-3 ${testimonial.avatarBorder} overflow-hidden shadow-lg`}>
                           {index === 0 ? (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#48C9B0]/10 to-[#1E3A5F]/10"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#9E9E9E]/10 to-[#212121]/10"></div>
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A5F]/10 to-[#48C9B0]/10"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#212121]/10 to-[#9E9E9E]/10"></div>
                           )}
                           <div className={`w-full h-full rounded-full flex items-center justify-center ${testimonial.avatarText} font-bold text-xl bg-gradient-to-br from-white/90 to-white/70 z-10`}>
                             {testimonial.name.charAt(0)}{testimonial.name.split(' ')[1]?.charAt(0)}
@@ -1910,7 +1910,7 @@ export default function LandingPage() {
                     </div>
 
                     <div className="ml-5">
-                      <h4 className="font-bold text-[#1E3A5F] text-lg">{testimonial.name}</h4>
+                      <h4 className="font-bold text-[#212121] text-lg">{testimonial.name}</h4>
                       <p className="text-[#9E9E9E] text-sm">{testimonial.role}</p>
                     </div>
                   </div>
@@ -1948,7 +1948,7 @@ export default function LandingPage() {
 
 
       {/* Seção FAQ Accordions */}
-      <section id="faq" className="py-24 bg-gradient-to-b from-[#2A4F7C] to-[#1E3A5F] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
+      <section id="faq" className="py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
@@ -1964,7 +1964,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Perguntas <span className="text-[#A5E1D2]">Frequentes</span>
+              Perguntas <span className="text-[#9E9E9E]">Frequentes</span>
             </h2>
             <p className="text-xl text-white text-opacity-90 max-w-2xl mx-auto">
               Tire suas dúvidas sobre o VitaView AI e como nossa plataforma pode ajudar você a entender melhor sua saúde.
@@ -2008,13 +2008,13 @@ export default function LandingPage() {
                     onClick={() => toggleFaq(index)}
                   >
                     <div className="flex justify-between items-center">
-                      <h3 className={`font-semibold text-lg ${activeFaq === index ? 'text-[#A5E1D2]' : 'text-white'}`}>
+                      <h3 className={`font-semibold text-lg ${activeFaq === index ? 'text-[#E0E0E0]' : 'text-white'}`}>
                         {faq.question}
                       </h3>
                       <motion.div
                         animate={{ rotate: activeFaq === index ? 180 : 0 }}
                         transition={{ duration: 0.3 }}
-                        className={`flex items-center justify-center w-8 h-8 rounded-full ${activeFaq === index ? 'bg-[#A5E1D2] text-[#1E3A5F]' : 'bg-white/10 text-white'}`}
+                        className={`flex items-center justify-center w-8 h-8 rounded-full ${activeFaq === index ? 'bg-[#E0E0E0] text-[#212121]' : 'bg-white/10 text-white'}`}
                       >
                         <ChevronDown className="w-5 h-5" />
                       </motion.div>
@@ -2057,14 +2057,14 @@ export default function LandingPage() {
                     href="mailto:contato@vitaview.ai"
                     className="flex items-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#A5E1D2]/20 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <svg className="w-6 h-6 text-[#A5E1D2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-12 h-12 rounded-full bg-[#E0E0E0]/20 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <svg className="w-6 h-6 text-[#E0E0E0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
                       <div className="text-sm text-[#9E9E9E]">Email de Suporte</div>
-                      <div className="text-lg font-semibold text-white group-hover:text-[#A5E1D2] transition-colors">contato@vitaview.ai</div>
+                      <div className="text-lg font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
                     </div>
                   </a>
 
@@ -2095,7 +2095,7 @@ export default function LandingPage() {
                         href={social === 'Instagram' ? "https://instagram.com/vitaview.ai" : "#"}
                         target={social === 'Instagram' ? "_blank" : undefined}
                         rel={social === 'Instagram' ? "noopener noreferrer" : undefined}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#A5E1D2] hover:text-[#1E3A5F] transition-all duration-300"
+                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#E0E0E0] hover:text-[#212121] transition-all duration-300"
                       >
                         <span className="sr-only">{social}</span>
                         {social === 'Instagram' && <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>}
@@ -2157,12 +2157,12 @@ export default function LandingPage() {
             >
               <div className="flex items-center mb-4">
                 <motion.div
-                  className="w-10 h-10 rounded-md mr-3 shadow-md overflow-hidden"
+                  className="w-10 h-10 rounded-xl mr-3 shadow-md overflow-hidden"
                   whileHover={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 0.5 }}
                 >
                   <img
-                    src="/LOGO SEM TEXTO.jpg"
+                    src="/logo_rounded.png"
                     alt="VitaView AI"
                     className="w-full h-full object-contain"
                   />
@@ -2377,7 +2377,7 @@ export default function LandingPage() {
                     onClick={() => setShowCookieConsent(false)}
                     variant="default"
                     size="sm"
-                    className="px-4 py-2 bg-[#48C9B0] hover:bg-[#3BB59A] text-white rounded-lg font-medium"
+                    className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg font-medium"
                   >
                     Aceitar
                   </Button>
