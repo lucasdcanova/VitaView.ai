@@ -634,7 +634,47 @@ function parseLocalCommand(command: string, availablePatients: { id: number; nam
   else if (lower.includes("exame")) type = "exames";
   else if (lower.includes("urgencia") || lower.includes("urgência")) type = "urgencia";
 
-  // 2. Identify Time
+  // 2. Identify Patient (Priority: Known Patients)
+  let patientName = "Paciente";
+  let patientId: number | undefined;
+
+  // Try to find a known patient in the command string directly
+  if (availablePatients.length > 0) {
+    // Sort by length desc to match longer names first ("Ricardo Silva" before "Ricardo")
+    const sortedPatients = [...availablePatients].sort((a, b) => b.name.length - a.name.length);
+
+    for (const p of sortedPatients) {
+      const pNameLower = p.name.toLowerCase();
+      // Check full name or first name
+      const pFirstName = pNameLower.split(' ')[0];
+
+      // We look for the name in the command, ensuring it's a whole word match
+      // regex: \bname\b
+      if (new RegExp(`\\b${pNameLower}\\b`).test(lower) || new RegExp(`\\b${pFirstName}\\b`).test(lower)) {
+        patientName = p.name;
+        patientId = p.id;
+        break; // Match found
+      }
+    }
+  }
+
+  // If no known patient found, try to extract from text
+  if (!patientId) {
+    // Remove date/time keywords to avoid capturing them as name
+    let cleanCommand = command
+      .replace(/\bhoje\b/gi, "")
+      .replace(/\bamanh[ãa]\b/gi, "")
+      .replace(/\bdia\s+\d+\b/gi, "")
+      .replace(/\b(?:às|as|at)\s*\d+[:h]?\d*/gi, "")
+      .replace(/\d+\s*h(?:oras)?/gi, "");
+
+    const patientMatch = cleanCommand.match(/(?:para|com|paciente)\s+(?:o\s+|a\s+)?([A-Z][a-z\u00C0-\u00FF]+(?:\s+[A-Z][a-z\u00C0-\u00FF]+)*)/i);
+    if (patientMatch) {
+      patientName = patientMatch[1].trim();
+    }
+  }
+
+  // 3. Identify Time
   let time = "09:00";
   const timeMatch = lower.match(/(?:às|as|at)?\s*(\d{1,2})[:h](\d{2})?/) || lower.match(/(\d{1,2})\s*h(?:oras)?/);
 
@@ -646,7 +686,7 @@ function parseLocalCommand(command: string, availablePatients: { id: number; nam
     }
   }
 
-  // 3. Identify Date
+  // 4. Identify Date
   let date = now;
   // Check for "hoje"
   if (lower.includes("hoje")) {
@@ -670,31 +710,6 @@ function parseLocalCommand(command: string, availablePatients: { id: number; nam
   }
 
   const dateStr = date.toISOString().split('T')[0];
-
-  // 4. Identify Patient with Fuzzy Matching
-  // Matches: "para o X", "para X", "com X"
-  const patientMatch = command.match(/(?:para|com|paciente)\s+(?:o\s+|a\s+)?([A-Z][a-z\u00C0-\u00FF]+(?:\s+[A-Z][a-z\u00C0-\u00FF]+)*)/i);
-  let extractedName = patientMatch ? patientMatch[1] : "Paciente";
-
-  let patientName = extractedName;
-  let patientId: number | undefined;
-
-  // Try to find best match in availablePatients
-  if (availablePatients.length > 0 && extractedName !== "Paciente") {
-    const searchName = extractedName.toLowerCase();
-
-    // Exact match or includes
-    const match = availablePatients.find(p => p.name.toLowerCase().includes(searchName)) ||
-      availablePatients.find(p => {
-        const parts = p.name.toLowerCase().split(' ');
-        return parts.some(part => part === searchName);
-      });
-
-    if (match) {
-      patientName = match.name;
-      patientId = match.id;
-    }
-  }
 
   return {
     patientName,

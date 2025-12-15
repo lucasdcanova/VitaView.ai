@@ -401,9 +401,11 @@ export type Evolution = typeof evolutions.$inferSelect;
 export type InsertEvolution = z.infer<typeof insertEvolutionSchema>;
 
 // Appointments schema
+
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   patientName: text("patient_name").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
   time: text("time").notNull(), // HH:mm
@@ -414,6 +416,7 @@ export const appointments = pgTable("appointments", {
 
 export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   userId: true,
+  profileId: true,
   patientName: true,
   date: true,
   time: true,

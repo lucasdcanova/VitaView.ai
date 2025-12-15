@@ -991,6 +991,7 @@ export class MemStorage implements IStorage {
       ...appointment,
       id,
       notes: appointment.notes || null,
+      profileId: appointment.profileId ?? null,
       createdAt: new Date()
     };
     this.appointmentsMap.set(id, newAppointment);

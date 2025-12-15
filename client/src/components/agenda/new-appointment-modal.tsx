@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -41,9 +50,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
-    patientName: z.string().min(2, {
-        message: "Nome do paciente deve ter pelo menos 2 caracteres.",
+    profileId: z.string({
+        required_error: "Selecione um paciente.",
     }),
+    patientName: z.string().optional(),
     type: z.enum(["consulta", "retorno", "exames", "urgencia"], {
         required_error: "Selecione o tipo de consulta.",
     }),
@@ -59,26 +69,42 @@ const formSchema = z.object({
 interface NewAppointmentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSuccess?: (data: z.infer<typeof formSchema>) => void;
+    onSuccess?: (data: any) => void;
 }
 
 export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppointmentModalProps) {
+    const [openCombobox, setOpenCombobox] = useState(false);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            patientName: "",
             time: "09:00",
             notes: "",
         },
     });
 
+    const { data: profiles = [] } = useQuery<any[]>({
+        queryKey: ["/api/profiles"],
+        enabled: open, // Only fetch when modal is open
+    });
+
     function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
+        // Find the patient name based on profileId
+        const selectedProfile = profiles.find((p: any) => p.id.toString() === values.profileId);
+
+        const submissionData = {
+            ...values,
+            profileId: parseInt(values.profileId),
+            patientName: selectedProfile ? selectedProfile.name : "Paciente",
+        };
+
+        console.log(submissionData);
         if (onSuccess) {
-            onSuccess(values);
+            onSuccess(submissionData);
         }
         onOpenChange(false);
         form.reset();
+        setOpenCombobox(false);
     }
 
     return (
@@ -87,20 +113,67 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppoin
                 <DialogHeader>
                     <DialogTitle>Nova Consulta</DialogTitle>
                     <DialogDescription>
-                        Preencha os dados para agendar uma nova consulta.
+                        Selecione um paciente e preencha os dados da consulta.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
-                            name="patientName"
+                            name="profileId"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nome do Paciente</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Ex: Maria Silva" {...field} />
-                                    </FormControl>
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Paciente</FormLabel>
+                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={openCombobox}
+                                                    className={cn(
+                                                        "w-full justify-between",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {field.value
+                                                        ? profiles.find((profile) => profile.id.toString() === field.value)?.name
+                                                        : "Selecione o paciente"}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Buscar paciente..." />
+                                                <CommandList>
+                                                    <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {profiles.map((profile) => (
+                                                            <CommandItem
+                                                                value={profile.name}
+                                                                key={profile.id}
+                                                                onSelect={() => {
+                                                                    form.setValue("profileId", profile.id.toString());
+                                                                    setOpenCombobox(false);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        profile.id.toString() === field.value
+                                                                            ? "opacity-100"
+                                                                            : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {profile.name}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
                                 </FormItem>
                             )}

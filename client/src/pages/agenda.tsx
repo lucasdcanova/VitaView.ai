@@ -272,7 +272,10 @@ export default function Agenda() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => createAppointmentMutation.mutate(aiProposal)}
+                            onClick={() => createAppointmentMutation.mutate({
+                                ...aiProposal,
+                                profileId: aiProposal.patientId
+                            })}
                             className="bg-gray-900 hover:bg-black"
                         >
                             Confirmar Agendamento
