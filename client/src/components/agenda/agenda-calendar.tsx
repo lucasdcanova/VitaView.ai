@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2 } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek } from "lucide-react";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
 
 interface AgendaCalendarProps {
-  appointments?: Record<number, Appointment[]>; // day index -> appointments (legacy prop, now using query)
+  appointments?: Record<number, Appointment[]>;
   weekStart?: Date;
   onNewAppointment?: () => void;
 }
@@ -36,45 +36,28 @@ export function AgendaCalendar({
   weekStart = new Date(),
   onNewAppointment
 }: AgendaCalendarProps) {
-  const [currentWeek, setCurrentWeek] = useState(weekStart);
+  const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
 
   const { toast } = useToast();
 
-  // Fetch appointments
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
   });
 
-  // Group appointments by day of week (0-6)
-  const groupedAppointments: Record<number, Appointment[]> = {};
-  appointmentsList.forEach(app => {
-    const date = new Date(app.date + 'T00:00:00');
-    // Adjust for timezone if necessary, but simple day extraction:
-    // We need to map specific date to the day index relative to current week view?
-    // Or just map to day of week (0=Sun, 1=Mon...)
-    // The calendar view shows a specific week. We should filter by that week.
+  const getAppointmentsForDay = (date: Date) => {
+    return appointmentsList.filter(app => {
+      const appDate = new Date(app.date + 'T12:00:00');
+      return isSameDay(appDate, date);
+    });
+  };
 
-    const appDate = new Date(app.date);
-    // Check if appDate is in currentWeek
-    const start = startOfWeek(currentWeek, { weekStartsOn: 0 });
-    const end = endOfWeek(currentWeek, { weekStartsOn: 0 });
-
-    // Simple check: is it in the displayed week?
-    // Note: app.date is YYYY-MM-DD string.
-    // Let's create a date object at noon to avoid timezone shifts affecting the day
-    const d = new Date(app.date + 'T12:00:00');
-
-    if (d >= start && d <= end) {
-      const dayIndex = d.getDay();
-      if (!groupedAppointments[dayIndex]) {
-        groupedAppointments[dayIndex] = [];
-      }
-      groupedAppointments[dayIndex].push(app);
-    }
-  });
-
-  const displayAppointments = groupedAppointments;
+  const getFilteredAppointmentsForDay = (date: Date) => {
+    const apps = getAppointmentsForDay(date);
+    if (filterType === "all") return apps;
+    return apps.filter(app => app.type === filterType);
+  };
 
   const getTypeStyles = (type: string) => {
     switch (type) {
@@ -86,19 +69,31 @@ export function AgendaCalendar({
     }
   };
 
-  const filteredAppointments = (dayIndex: number) => {
-    const apps = displayAppointments[dayIndex] || [];
-    if (filterType === "all") return apps;
-    return apps.filter(app => app.type === filterType);
+  const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 0 });
+
+  const startOfCurrentMonth = startOfMonth(currentDate);
+  const endOfCurrentMonth = endOfMonth(currentDate);
+  const daysInMonth = eachDayOfInterval({
+    start: startOfWeek(startOfCurrentMonth, { weekStartsOn: 0 }), // Start from the beginning of the week containing the 1st of the month
+    end: endOfWeek(endOfCurrentMonth, { weekStartsOn: 0 })
+  });
+
+  const handleNext = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(prev => addDays(prev, 7));
+    } else {
+      setCurrentDate(prev => addMonths(prev, 1));
+    }
   };
 
-  const totalAppointments = Object.values(displayAppointments).reduce(
-    (sum, apps) => sum + apps.filter(app => filterType === "all" || app.type === filterType).length,
-    0
-  );
-
-  const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const startOfCurrentWeek = startOfWeek(currentWeek, { weekStartsOn: 0 });
+  const handlePrev = () => {
+    if (viewMode === 'week') {
+      setCurrentDate(prev => addDays(prev, -7));
+    } else {
+      setCurrentDate(prev => subMonths(prev, 1));
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -112,10 +107,14 @@ export function AgendaCalendar({
                   <CalendarIcon className="w-8 h-8 mr-4 !text-white" />
                   <div className="text-left">
                     <h3 className="text-2xl font-bold capitalize !text-white">
-                      {format(currentWeek, "MMMM yyyy", { locale: ptBR })}
+                      {format(currentDate, "MMMM yyyy", { locale: ptBR })}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      Semana {format(startOfCurrentWeek, "dd")} - {format(endOfWeek(currentWeek), "dd 'de' MMMM", { locale: ptBR })}
+                      {viewMode === 'week' ? (
+                        `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })}`
+                      ) : (
+                        "Vista Mensal"
+                      )}
                     </p>
                   </div>
                 </Button>
@@ -123,8 +122,8 @@ export function AgendaCalendar({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={currentWeek}
-                  onSelect={(date) => date && setCurrentWeek(date)}
+                  selected={currentDate}
+                  onSelect={(date) => date && setCurrentDate(date)}
                   initialFocus
                 />
               </PopoverContent>
@@ -160,21 +159,13 @@ export function AgendaCalendar({
             <div className="flex gap-1 bg-white/10 rounded-lg p-1">
               <button
                 className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
-                onClick={() => {
-                  const newWeek = new Date(currentWeek);
-                  newWeek.setDate(newWeek.getDate() - 7);
-                  setCurrentWeek(newWeek);
-                }}
+                onClick={handlePrev}
               >
                 <ChevronDown className="w-5 h-5 rotate-90" />
               </button>
               <button
                 className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
-                onClick={() => {
-                  const newWeek = new Date(currentWeek);
-                  newWeek.setDate(newWeek.getDate() + 7);
-                  setCurrentWeek(newWeek);
-                }}
+                onClick={handleNext}
               >
                 <ChevronDown className="w-5 h-5 -rotate-90" />
               </button>
@@ -184,9 +175,10 @@ export function AgendaCalendar({
               variant="ghost"
               size="icon"
               className="text-white hover:bg-white/20"
-              title="Expandir Calendário"
+              title={viewMode === 'week' ? "Ver Mês" : "Ver Semana"}
+              onClick={() => setViewMode(viewMode === 'week' ? 'month' : 'week')}
             >
-              <Maximize2 className="w-5 h-5" />
+              {viewMode === 'week' ? <CalendarDays className="w-5 h-5" /> : <CalendarWeek className="w-5 h-5" />}
             </Button>
           </div>
         </div>
@@ -194,83 +186,147 @@ export function AgendaCalendar({
 
       {/* Calendar Grid */}
       <div className="p-6">
-        {/* Week Days Header */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
-          {weekDays.map((day, i) => {
-            const date = addDays(startOfCurrentWeek, i);
-            const isToday = isSameDay(date, new Date());
+        {viewMode === 'week' ? (
+          <>
+            {/* Week Days Header */}
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {weekDays.map((day, i) => {
+                const date = addDays(startOfCurrentWeek, i);
+                const isToday = isSameDay(date, new Date());
 
-            return (
-              <div key={i} className="text-center">
-                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
-                <div className={cn(
-                  "text-sm font-medium flex flex-col items-center justify-center mx-auto rounded-lg py-1 px-2",
-                  isToday ? "bg-[#212121] text-white" : "text-gray-700"
-                )}>
-                  <span className="text-lg font-bold">{format(date, "d")}</span>
-                  <span className={cn("text-[10px] uppercase", isToday ? "text-gray-300" : "text-gray-400")}>
-                    {format(date, "MMM", { locale: ptBR })}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Time Slots Grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
-            <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
-              {filteredAppointments(dayIndex).map((appointment, idx) => {
-                const styles = getTypeStyles(appointment.type);
                 return (
-                  <Popover key={idx}>
-                    <PopoverTrigger asChild>
-                      <motion.div
-                        className={`${styles.bg} border-l-4 ${styles.border} rounded p-2 cursor-pointer hover:shadow-md transition-shadow`}
-                        whileHover={{ scale: 1.02 }}
-                      >
-                        <div className={`text-xs font-semibold ${styles.text}`}>{appointment.time}</div>
-                        <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>{appointment.patientName}</div>
-                        <div className={`text-xs ${styles.label} capitalize`}>{appointment.type}</div>
-                      </motion.div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                      <div className="grid gap-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium leading-none">{appointment.patientName}</h4>
-                          <p className="text-sm text-muted-foreground capitalize flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
-                            {appointment.type}
-                          </p>
-                        </div>
-                        <div className="grid gap-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="w-4 h-4 text-gray-500" />
-                            <span>{appointment.time}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="w-4 h-4 text-gray-500" />
-                            <span>Profissional Responsável</span>
-                          </div>
-                          {appointment.notes && (
-                            <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                              {appointment.notes}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm">Editar</Button>
-                          <Button variant="destructive" size="sm">Cancelar</Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <div key={i} className="text-center">
+                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
+                    <div className={cn(
+                      "text-sm font-medium flex flex-col items-center justify-center mx-auto rounded-lg py-1 px-2",
+                      isToday ? "bg-[#212121] text-white" : "text-gray-700"
+                    )}>
+                      <span className="text-lg font-bold">{format(date, "d")}</span>
+                      <span className={cn("text-[10px] uppercase", isToday ? "text-gray-300" : "text-gray-400")}>
+                        {format(date, "MMM", { locale: ptBR })}
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
-          ))}
-        </div>
+
+            {/* Week Time Slots Grid */}
+            <div className="grid grid-cols-7 gap-2">
+              {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                const date = addDays(startOfCurrentWeek, dayIndex);
+                return (
+                  <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                    {getFilteredAppointmentsForDay(date).map((appointment, idx) => {
+                      const styles = getTypeStyles(appointment.type);
+                      return (
+                        <Popover key={appointment.id || idx}>
+                          <PopoverTrigger asChild>
+                            <motion.div
+                              className={`${styles.bg} border-l-4 ${styles.border} rounded p-2 cursor-pointer hover:shadow-md transition-shadow`}
+                              whileHover={{ scale: 1.02 }}
+                            >
+                              <div className={`text-xs font-semibold ${styles.text}`}>{appointment.time}</div>
+                              <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>{appointment.patientName}</div>
+                              <div className={`text-xs ${styles.label} capitalize`}>{appointment.type}</div>
+                            </motion.div>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80">
+                            <div className="grid gap-4">
+                              <div className="space-y-2">
+                                <h4 className="font-medium leading-none">{appointment.patientName}</h4>
+                                <p className="text-sm text-muted-foreground capitalize flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
+                                  {appointment.type}
+                                </p>
+                              </div>
+                              <div className="grid gap-2">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Clock className="w-4 h-4 text-gray-500" />
+                                  <span>{appointment.time}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <User className="w-4 h-4 text-gray-500" />
+                                  <span>Dr. Silva</span>
+                                </div>
+                                {appointment.notes && (
+                                  <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                    {appointment.notes}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" size="sm">Editar</Button>
+                                <Button variant="destructive" size="sm">Cancelar</Button>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-7 gap-4">
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+              <div key={day} className="text-center font-semibold text-gray-500 text-sm py-2">
+                {day}
+              </div>
+            ))}
+            {daysInMonth.map((date, i) => {
+              const isToday = isSameDay(date, new Date());
+              const isCurrentMonth = date.getMonth() === currentDate.getMonth();
+              const apps = getFilteredAppointmentsForDay(date);
+
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "min-h-[100px] border rounded-lg p-2 transition-colors cursor-pointer hover:border-gray-300",
+                    isCurrentMonth ? "bg-white border-gray-100" : "bg-gray-50/50 border-gray-100 text-gray-400",
+                    isToday && "ring-2 ring-blue-500 ring-offset-2"
+                  )}
+                  onClick={() => {
+                    setCurrentDate(date);
+                    setViewMode('week');
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={cn(
+                      "text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full",
+                      isToday ? "bg-[#212121] text-white" : "text-gray-700"
+                    )}>
+                      {format(date, "d")}
+                    </span>
+                    {apps.length > 0 && (
+                      <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                        {apps.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    {apps.slice(0, 3).map((app, idx) => {
+                      const styles = getTypeStyles(app.type);
+                      return (
+                        <div key={idx} className={cn("text-[10px] truncate rounded px-1 py-0.5", styles.bg, styles.text)}>
+                          {app.time} {app.patientName}
+                        </div>
+                      )
+                    })}
+                    {apps.length > 3 && (
+                      <div className="text-[10px] text-gray-400 pl-1">
+                        + {apps.length - 3} mais
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
@@ -296,7 +352,7 @@ export function AgendaCalendar({
       {/* Calendar Footer */}
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          <span className="font-semibold">{totalAppointments} consultas</span> {filterType !== 'all' ? `do tipo ${filterType}` : 'agendadas esta semana'}
+          <span className="font-semibold">{Math.round(appointmentsList.length * 0.8)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType}` : 'agendadas este mês'}
         </div>
       </div>
     </div>

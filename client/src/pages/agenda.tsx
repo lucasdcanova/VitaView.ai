@@ -53,7 +53,7 @@ export default function Agenda() {
                 description: "Não foi possível criar o agendamento.",
                 variant: "destructive",
             });
-        },
+        }
     });
 
     // File upload handlers
