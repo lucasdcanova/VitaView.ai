@@ -1406,7 +1406,7 @@ export default function HealthTrendsNew() {
                         timelineItems.map((item, index) => (
                           <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
                             {/* Dot on the line */}
-                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-blue-500' :
+                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-gray-500' :
                               item.type === 'diagnosis' ? 'bg-red-500' :
                                 item.type === 'surgery' ? 'bg-purple-500' :
                                   'bg-green-500'
@@ -1417,7 +1417,7 @@ export default function HealthTrendsNew() {
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                   <div className="space-y-2 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-gray-100 text-gray-700 border-gray-200' :
                                         item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
                                           item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                             'bg-green-50 text-green-700 border-green-100'
@@ -1591,7 +1591,7 @@ export default function HealthTrendsNew() {
                   <Card className="border border-primary-100 bg-white shadow-md">
                     <CardHeader className="pb-4">
                       <div className="flex items-start gap-2 mb-1">
-                        <Activity className="h-5 w-5 text-[#48C9B0] flex-shrink-0 mt-0.5" />
+                        <Activity className="h-5 w-5 text-gray-900 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-base text-gray-900 leading-tight">
                             Medicamentos de Uso Contínuo
@@ -1637,7 +1637,7 @@ export default function HealthTrendsNew() {
                               onClick={() => setIsPrescriptionDialogOpen(true)}
                               variant="default"
                               size="sm"
-                              className="gap-2 bg-[#48C9B0] hover:bg-[#3ab89f]"
+                              className="gap-2 bg-gray-900 hover:bg-black text-white"
                             >
                               <FileText className="h-4 w-4" />
                               Renovar Receitas
@@ -1654,7 +1654,7 @@ export default function HealthTrendsNew() {
                           <Button
                             onClick={() => setIsMedicationDialogOpen(true)}
                             variant="default"
-                            className="w-full gap-2 bg-[#48C9B0] hover:bg-[#3ab89f]"
+                            className="w-full gap-2 bg-gray-900 hover:bg-black text-white"
                           >
                             <PlusCircle className="h-4 w-4" />
                             Adicionar Medicamento

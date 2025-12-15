@@ -187,10 +187,13 @@ export default function Sidebar(props: SidebarProps) {
             <Link
               href="/admin-panel"
               onClick={handleNavClick}
-              className={getNavItemClass('/admin-panel')}
+              className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${location === '/admin-panel'
+                  ? 'bg-red-600 text-white'
+                  : 'text-red-600 hover:bg-red-50'
+                }`}
             >
-              <ShieldCheck className={getIconClass('/admin-panel')} />
-              <span className="font-body">Painel Admin</span>
+              <ShieldCheck className={`mr-3 h-5 w-5 ${location === '/admin-panel' ? 'text-white' : 'text-red-600'}`} />
+              <span className="font-body font-bold">Painel Admin</span>
             </Link>
           )}
 

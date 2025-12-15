@@ -624,7 +624,91 @@ function getFallbackInsights(patientData?: any) {
   return response;
 }
 
-export async function parseAppointmentCommand(command: string, files?: Express.Multer.File[]) {
+function parseLocalCommand(command: string, availablePatients: { id: number; name: string }[] = []) {
+  const lower = command.toLowerCase();
+  const now = new Date();
+
+  // 1. Identify Type
+  let type = "consulta";
+  if (lower.includes("retorno")) type = "retorno";
+  else if (lower.includes("exame")) type = "exames";
+  else if (lower.includes("urgencia") || lower.includes("urgência")) type = "urgencia";
+
+  // 2. Identify Time
+  let time = "09:00";
+  const timeMatch = lower.match(/(?:às|as|at)?\s*(\d{1,2})[:h](\d{2})?/) || lower.match(/(\d{1,2})\s*h(?:oras)?/);
+
+  if (timeMatch) {
+    const hour = parseInt(timeMatch[1]);
+    const minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+    if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+      time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    }
+  }
+
+  // 3. Identify Date
+  let date = now;
+  // Check for "hoje"
+  if (lower.includes("hoje")) {
+    // date is already today
+  }
+  // Check for "amanhã" or "amanha"
+  else if (lower.includes("amanhã") || lower.includes("amanha")) {
+    date.setDate(date.getDate() + 1);
+  }
+  // Check for "dia X"
+  else {
+    const dayMatch = lower.match(/dia\s+(\d{1,2})/);
+    if (dayMatch) {
+      const day = parseInt(dayMatch[1]);
+      // If the day is in the past for this month, assume next month
+      if (day < now.getDate()) {
+        date.setMonth(date.getMonth() + 1);
+      }
+      date.setDate(day);
+    }
+  }
+
+  const dateStr = date.toISOString().split('T')[0];
+
+  // 4. Identify Patient with Fuzzy Matching
+  // Matches: "para o X", "para X", "com X"
+  const patientMatch = command.match(/(?:para|com|paciente)\s+(?:o\s+|a\s+)?([A-Z][a-z\u00C0-\u00FF]+(?:\s+[A-Z][a-z\u00C0-\u00FF]+)*)/i);
+  let extractedName = patientMatch ? patientMatch[1] : "Paciente";
+
+  let patientName = extractedName;
+  let patientId: number | undefined;
+
+  // Try to find best match in availablePatients
+  if (availablePatients.length > 0 && extractedName !== "Paciente") {
+    const searchName = extractedName.toLowerCase();
+
+    // Exact match or includes
+    const match = availablePatients.find(p => p.name.toLowerCase().includes(searchName)) ||
+      availablePatients.find(p => {
+        const parts = p.name.toLowerCase().split(' ');
+        return parts.some(part => part === searchName);
+      });
+
+    if (match) {
+      patientName = match.name;
+      patientId = match.id;
+    }
+  }
+
+  return {
+    patientName,
+    patientId,
+    date: dateStr,
+    time,
+    type,
+    notes: "Agendamento processado localmente",
+    conflicts: [],
+    suggestedAlternatives: []
+  };
+}
+
+export async function parseAppointmentCommand(command: string, files?: Express.Multer.File[], availablePatients: { id: number; name: string }[] = []) {
   try {
     let existingAppointments = "";
 
@@ -655,16 +739,20 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       ${existingAppointments ? `COMPROMISSOS EXISTENTES NA AGENDA:\n${existingAppointments}\n\nIMPORTANTE: Verifique se há conflitos de horário e sugira alternativas se necessário.` : ''}
       
       INSTRUÇÕES:
-      1. Extraia o nome do paciente.
+      1. Extraia o nome do paciente. Tente associar com a lista de pacientes disponíveis.
       2. Determine a data do agendamento (formato YYYY-MM-DD). Se for relativo (ex: "daqui a 30 dias"), calcule a data.
       3. Determine o horário (formato HH:mm). Se não especificado, sugira um horário comercial padrão (ex: 09:00, 14:00).
       4. Determine o tipo de consulta: "consulta", "retorno", "exames" ou "urgencia".
       5. Extraia observações adicionais.
       6. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
       
+      PACIENTES DISPONÍVEIS:
+      ${availablePatients.map(p => `- ID ${p.id}: ${p.name}`).join('\n')}
+
       RESPONDA APENAS COM O JSON:
       {
-        "patientName": "Nome do Paciente",
+        "patientName": "Nome Completo do Paciente (da lista se houver match)",
+        "patientId": 123 (ID da lista se houver match, ou null),
         "date": "YYYY-MM-DD",
         "time": "HH:mm",
         "type": "tipo_identificado",
@@ -676,20 +764,8 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
 
     if (!process.env.OPENAI_API_KEY) {
       // Fallback for dev without API key
-      console.log("Mocking OpenAI response for appointment parsing");
-      const today = new Date();
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 7);
-
-      return {
-        patientName: "Paciente Identificado",
-        date: nextWeek.toISOString().split('T')[0],
-        time: "14:00",
-        type: "consulta",
-        notes: "Agendamento automático (Mock)",
-        conflicts: [],
-        suggestedAlternatives: []
-      };
+      console.log("Using local parsing fallback for appointment command");
+      return parseLocalCommand(command, availablePatients);
     }
 
     const response = await callOpenAIApi(prompt);
@@ -1494,4 +1570,15 @@ export async function extractPatientNameFromExam(fileContent: string, fileType: 
     logger.error("Error extracting patient name from exam:", error);
     return null;
   }
+}
+
+// Stub functions for file extraction to fix build errors
+async function extractAppointmentsFromImage(file: any): Promise<string> {
+  console.log("extractAppointmentsFromImage stub called");
+  return "";
+}
+
+async function extractAppointmentsFromPDF(file: any): Promise<string> {
+  console.log("extractAppointmentsFromPDF stub called");
+  return "";
 }

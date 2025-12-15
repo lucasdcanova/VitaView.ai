@@ -835,7 +835,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Comando ou arquivos devem ser fornecidos" });
       }
 
-      const parsedData = await parseAppointmentCommand(command || "", files);
+
+      // Fetch available patients (profiles) for context awareness
+      const profiles = await storage.getProfilesByUserId(req.user!.id);
+      const availablePatients = profiles.map(p => ({ id: p.id, name: p.name }));
+
+      const parsedData = await parseAppointmentCommand(command || "", files, availablePatients);
       res.json(parsedData);
     } catch (error) {
       console.error('Error in AI schedule:', error);
