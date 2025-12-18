@@ -65,7 +65,34 @@ export async function extractPatientsFromImages(
     const errors: Array<{ file: string; error: string }> = [];
 
     if (!openai) {
-        logger.error("OpenAI client not initialized");
+        logger.warn(`OpenAI client not initialized (NODE_ENV: ${process.env.NODE_ENV}) - using fallback for non-production`);
+
+        // Em ambiente de desenvolvimento ou se não estiver explicitamente em produção, fornecer retorno de exemplo
+        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined') {
+            return {
+                patients: [
+                    {
+                        name: "Ricardo Schroeder Canova",
+                        gender: "masculino",
+                        birthDate: "2000-01-01",
+                        phone: "(11) 98765-4321",
+                        source: "mock-extraction",
+                        confidence: 0.99
+                    },
+                    {
+                        name: "Sahra Suzana Schroeder Canova",
+                        gender: "feminino",
+                        birthDate: "1960-01-01",
+                        phone: "(11) 91234-5678",
+                        source: "mock-extraction",
+                        confidence: 0.99
+                    }
+                ],
+                totalExtracted: 2,
+                errors: [{ file: "AI (Aviso)", error: "OpenAI API key não configurada no arquivo .env. Usando dados de demonstração para teste." }]
+            };
+        }
+
         throw new Error("OpenAI API key not configured");
     }
 
@@ -218,7 +245,24 @@ export async function extractPatientsFromPDF(
     const errors: Array<{ file: string; error: string }> = [];
 
     if (!openai) {
-        logger.error("OpenAI client not initialized");
+        logger.warn(`OpenAI client not initialized (NODE_ENV: ${process.env.NODE_ENV}) - using fallback for non-production`);
+
+        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined') {
+            return {
+                patients: [
+                    {
+                        name: "Paciente de Teste PDF",
+                        gender: "masculino",
+                        birthDate: "1985-05-20",
+                        source: "mock-pdf-extraction",
+                        confidence: 0.9
+                    }
+                ],
+                totalExtracted: 1,
+                errors: [{ file: "PDFs (Aviso)", error: "OpenAI API key não configurada no arquivo .env. Usando dados de demonstração para teste." }]
+            };
+        }
+
         throw new Error("OpenAI API key not configured");
     }
 

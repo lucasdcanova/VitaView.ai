@@ -1560,9 +1560,9 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          {/* Cards de público-alvo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {/* Card 1: Consultórios Privados */}
+          {/* Cards de público-alvo - Centralizados em 3 colunas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto">
+            {/* Card 1: Profissional Solo */}
             <motion.div
               className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
@@ -1572,26 +1572,26 @@ export default function LandingPage() {
               whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
               {/* Barra superior colorida */}
-              <div className="h-2 bg-red-500"></div>
+              <div className="h-2 bg-[#212121]"></div>
 
               <div className="p-6">
                 {/* Ícone com fundo */}
-                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Stethoscope className="h-7 w-7 text-red-600" />
+                <div className="w-16 h-16 rounded-full bg-[#F4F4F4] flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Stethoscope className="h-7 w-7 text-[#212121]" />
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Clínicas e Consultórios</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Profissional de Saúde</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Gestão eficiente de prontuários</span>
+                    <span className="text-[#9E9E9E] text-sm">Prontuário inteligente automatizado</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Fidelização de pacientes</span>
+                    <span className="text-[#9E9E9E] text-sm">Agenda e lembretes inteligentes</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
@@ -1640,7 +1640,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Card 3: Telemedicina */}
+            {/* Card 3: Hospitais */}
             <motion.div
               className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
               initial={{ opacity: 0, y: 20 }}
@@ -1650,51 +1650,12 @@ export default function LandingPage() {
               whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
             >
               {/* Barra superior colorida */}
-              <div className="h-2 bg-gradient-to-r from-[#212121] to-[#424242]"></div>
+              <div className="h-2 bg-[#9E9E9E]"></div>
 
               <div className="p-6">
                 {/* Ícone com fundo */}
                 <div className="w-16 h-16 rounded-full bg-[#F4F4F4] flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Video className="h-7 w-7 text-[#212121]" />
-                </div>
-
-                {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Teleconsulta</h3>
-
-                {/* Lista de benefícios */}
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Monitoramento remoto eficaz</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Acesso a exames em tempo real</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Histórico disponível na nuvem</span>
-                  </li>
-                </ul>
-              </div>
-            </motion.div>
-
-            {/* Card 4: Hospitais */}
-            <motion.div
-              className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
-            >
-              {/* Barra superior colorida */}
-              <div className="h-2 bg-gradient-to-r from-sky-500 to-sky-600"></div>
-
-              <div className="p-6">
-                {/* Ícone com fundo */}
-                <div className="w-16 h-16 rounded-full bg-sky-50 flex items-center justify-center mx-auto mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Building className="h-7 w-7 text-sky-600" />
+                  <Building className="h-7 w-7 text-[#212121]" />
                 </div>
 
                 {/* Título do card */}
@@ -1703,16 +1664,16 @@ export default function LandingPage() {
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Triagem automatizada de riscos</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Integração com sistemas legacy (HIS)</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Integração com sistemas legados</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Dashboard de saúde populacional</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-sky-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Analytics populacional</span>
+                    <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-[#9E9E9E] text-sm">Segurança e conformidade enterprise</span>
                   </li>
                 </ul>
               </div>

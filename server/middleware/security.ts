@@ -127,9 +127,9 @@ export function setupSecurity(app: Express) {
     enhancedRateLimit.applyEnhancedRateLimiting(app);
   } else {
     // Development fallback with basic rate limiting
-    app.use('/api/login', strictAuthLimiter);
-    app.use('/api/register', strictAuthLimiter);
-    app.use('/api/forgot-password', strictAuthLimiter);
+    // app.use('/api/login', strictAuthLimiter);
+    // app.use('/api/register', strictAuthLimiter);
+    // app.use('/api/forgot-password', strictAuthLimiter);
     app.use('/api/exams/upload', uploadLimiter);
     app.use('/api/upload', uploadLimiter);
     app.use('/api/analyze', aiAnalysisLimiter);

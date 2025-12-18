@@ -321,8 +321,8 @@ export default function BulkImportPage() {
 
             {/* Errors */}
             {errors.length > 0 && (
-                <Alert variant="destructive" className="mb-6">
-                    <XCircle className="h-4 w-4" />
+                <Alert variant={extractedPatients.length > 0 ? "warning" : "destructive"} className="mb-6">
+                    {extractedPatients.length > 0 ? <AlertCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                     <AlertDescription>
                         <strong>Erros encontrados:</strong>
                         <ul className="mt-2 list-disc list-inside">
