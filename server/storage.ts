@@ -909,6 +909,13 @@ export class DatabaseStorage implements IStorage {
 
   private async setupDefaultSubscriptionPlans() {
     try {
+      // Ensure columns exist first
+      await db.execute(sql`
+        ALTER TABLE subscription_plans 
+        ADD COLUMN IF NOT EXISTS promo_price INTEGER,
+        ADD COLUMN IF NOT EXISTS promo_description TEXT
+      `);
+
       const existingPlans = await this.getSubscriptionPlans();
       const standardPlans = [
         {
@@ -919,6 +926,8 @@ export class DatabaseStorage implements IStorage {
           price: 0,
           interval: "month",
           features: ["Limite de 20 pacientes", "10 uploads por paciente", "Análise de 1 página por upload", "Agenda básica"],
+          promoPrice: null,
+          promoDescription: null,
           isActive: true
         },
         {
@@ -929,6 +938,8 @@ export class DatabaseStorage implements IStorage {
           price: 9900,
           interval: "month",
           features: ["Pacientes ilimitados", "Extrações por IA ilimitadas", "Prontuário inteligente completo", "Agenda inteligente com lembretes", "Suporte prioritário via WhatsApp"],
+          promoPrice: 4900,
+          promoDescription: "no 1º mês",
           isActive: true
         },
         {
@@ -939,6 +950,8 @@ export class DatabaseStorage implements IStorage {
           price: 29900,
           interval: "month",
           features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Agenda compartilhada e salas", "Dashboard administrativo", "Relatórios de produtividade"],
+          promoPrice: null,
+          promoDescription: null,
           isActive: true
         },
         {
@@ -949,6 +962,8 @@ export class DatabaseStorage implements IStorage {
           price: 99900,
           interval: "month",
           features: ["Profissionais ilimitados", "Integração HL7/FHIR", "Análise de dados populacional", "Gestor de conta dedicado", "SLA de suporte 24/7"],
+          promoPrice: null,
+          promoDescription: null,
           isActive: true
         }
       ];

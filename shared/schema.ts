@@ -331,6 +331,8 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   interval: varchar("interval", { length: 20 }).notNull().default("month"), // month, year
   stripePriceId: varchar("stripe_price_id", { length: 100 }),
   features: json("features"),
+  promoPrice: integer("promo_price"), // in cents
+  promoDescription: text("promo_description"),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -360,6 +362,8 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   interval: true,
   stripePriceId: true,
   features: true,
+  promoPrice: true,
+  promoDescription: true,
   isActive: true,
 });
 

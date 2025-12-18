@@ -1,4 +1,6 @@
-import 'dotenv/config';
+// import 'dotenv/config';
+console.log("🚀 DATABASE_URL at startup:", process.env.DATABASE_URL ? (process.env.DATABASE_URL.substring(0, 15) + "...") : "NOT SET");
+console.log("🚀 Server is starting/restarting with new promotional logic...");
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -84,21 +86,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // First register all routes
+  // Then register all routes
   await registerRoutes(app);
-
-  // Run database migration for dosage_unit column
-  try {
-    const { pool } = await import("./db");
-    await pool.query(`
-      ALTER TABLE medications 
-      ADD COLUMN IF NOT EXISTS dosage_unit TEXT DEFAULT 'mg'
-    `);
-    logInfo("✅ Database migration: dosage_unit column verified/added");
-  } catch (error) {
-    logError("⚠️ Database migration warning (non-critical):", error);
-  }
-
 
   // Then setup HTTPS server with the configured app
   const server = await httpsConfig.setupHTTPSServer(app);

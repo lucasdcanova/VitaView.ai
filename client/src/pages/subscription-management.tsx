@@ -38,6 +38,8 @@ interface SubscriptionPlan {
   maxProfiles: number;
   maxUploadsPerProfile: number;
   price: number;
+  promoPrice?: number | null;
+  promoDescription?: string | null;
   interval: string;
   features: string[] | string; // Can be array or string depending on API
   isActive: boolean;
@@ -505,7 +507,14 @@ const SubscriptionManagement = () => {
 
                       <CardHeader>
                         <div className="flex justify-between items-start">
-                          <CardTitle className="text-xl">{plan.name}</CardTitle>
+                          <div className="flex flex-col gap-1">
+                            <CardTitle className="text-xl">{plan.name}</CardTitle>
+                            {plan.promoPrice && (
+                              <Badge className="w-fit bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5">
+                                Promoção
+                              </Badge>
+                            )}
+                          </div>
                           {plan.name === 'Profissional de Saúde' && !isCurrentPlan && (
                             <Badge className="bg-[#212121] text-white">Popular</Badge>
                           )}
@@ -515,14 +524,27 @@ const SubscriptionManagement = () => {
 
                       <CardContent className="flex-grow">
                         <div className="mb-6">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold">
-                              {plan.price === 0 ? 'Grátis' :
-                                plan.name === 'Hospitais' ? 'Sob consulta' :
-                                  `R$${(plan.price / 100).toFixed(2)}`}
-                            </span>
-                            {plan.price > 0 && plan.name !== 'Hospitais' && (
-                              <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                          <div className="flex flex-col">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-bold">
+                                {plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
+                                  plan.price === 0 ? 'Grátis' :
+                                    plan.name === 'Hospitais' ? 'Sob consulta' :
+                                      `R$${(plan.price / 100).toFixed(2)}`}
+                              </span>
+                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && (
+                                <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                              )}
+                            </div>
+                            {plan.promoPrice && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground line-through">
+                                  R$${(plan.price / 100).toFixed(2)}
+                                </span>
+                                <span className="text-xs font-semibold text-red-500">
+                                  {plan.promoDescription || 'no primeiro mês'}
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -622,9 +644,15 @@ const SubscriptionManagement = () => {
                     </Badge>
                   </div>
                   <div className="text-2xl font-bold text-primary">
-                    {selectedPlan.price === 0 ? 'Grátis' : `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
+                    {selectedPlan.promoPrice ? `R$ ${(selectedPlan.promoPrice / 100).toFixed(2)}` :
+                      selectedPlan.price === 0 ? 'Grátis' : `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
                     <span className="text-sm font-normal text-muted-foreground">/mês</span>
                   </div>
+                  {selectedPlan.promoPrice && (
+                    <div className="text-xs text-red-500 font-medium mt-1">
+                      Preço promocional válido para o 1º mês
+                    </div>
+                  )}
                 </div>
               )}
             </DialogDescription>
