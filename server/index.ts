@@ -1,4 +1,4 @@
-// import 'dotenv/config';
+import 'dotenv/config';
 console.log("🚀 DATABASE_URL at startup:", process.env.DATABASE_URL ? (process.env.DATABASE_URL.substring(0, 15) + "...") : "NOT SET");
 console.log("🚀 Server is starting/restarting with new promotional logic...");
 import express, { type Request, Response, NextFunction } from "express";
