@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowLeft } from "lucide-react";
 import {
   Card,
@@ -46,6 +47,9 @@ const loginSchema = z.object({
 const registerSchema = insertUserSchema.extend({
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string(),
+  acceptedTerms: z.boolean().refine(val => val === true, {
+    message: "Você deve aceitar os Termos de Uso para continuar",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -83,6 +87,7 @@ export default function AuthPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      acceptedTerms: false,
     },
   });
 
@@ -91,8 +96,13 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
-    const { confirmPassword, ...registerData } = values;
-    registerMutation.mutate(registerData);
+    const { confirmPassword, acceptedTerms, ...registerData } = values;
+    // Add timestamp of terms acceptance
+    const dataWithTerms = {
+      ...registerData,
+      acceptedTermsAt: new Date().toISOString(),
+    };
+    registerMutation.mutate(dataWithTerms as any);
   };
 
   return (
@@ -345,6 +355,35 @@ export default function AuthPage() {
                             />
                           </FormControl>
                           <FormMessage className="text-[#D32F2F]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={registerForm.control}
+                      name="acceptedTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-[#E0E0E0] p-4 mt-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-[#212121] data-[state=checked]:border-[#212121]"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-body text-[#424242] cursor-pointer">
+                              Li e aceito os{" "}
+                              <Link href="/termos" target="_blank" className="text-[#212121] underline font-semibold hover:text-[#424242]">
+                                Termos de Uso
+                              </Link>{" "}
+                              e a{" "}
+                              <Link href="/privacidade" target="_blank" className="text-[#212121] underline font-semibold hover:text-[#424242]">
+                                Política de Privacidade
+                              </Link>
+                            </FormLabel>
+                            <FormMessage className="text-[#D32F2F]" />
+                          </div>
                         </FormItem>
                       )}
                     />

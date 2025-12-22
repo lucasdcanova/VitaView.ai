@@ -33,6 +33,8 @@ const SubscriptionManagement = lazy(() => import("@/pages/subscription-managemen
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const QuickSummaryPage = lazy(() => import("@/pages/quick-summary-page"));
 const BulkImport = lazy(() => import("@/pages/bulk-import"));
+const TermsPage = lazy(() => import("@/pages/terms-page"));
+const PrivacyPage = lazy(() => import("@/pages/privacy-page"));
 
 // Loading fallback component
 const PageLoadingFallback = () => (
@@ -75,6 +77,8 @@ function Router() {
         <Route path="/auth" component={AuthPage} />
         <Route path="/forgot-password" component={ForgotPasswordPage} />
         <Route path="/quick-summary" component={QuickSummaryPage} />
+        <Route path="/termos" component={TermsPage} />
+        <Route path="/privacidade" component={PrivacyPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
