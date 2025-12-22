@@ -1221,7 +1221,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Agenda Inteligente</h2>
             <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
-              Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica de forma eficiente.
+              Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica com a ajuda de um <span className="font-bold text-[#E0E0E0]">assistente de IA</span> que entende comandos de texto e fotos da sua agenda.
             </p>
           </motion.div>
 
@@ -1398,6 +1398,45 @@ export default function LandingPage() {
                 <span>Nova Consulta</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
+            </div>
+          </motion.div>
+
+          {/* AI Scheduling Features */}
+          <motion.div
+            className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
+              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+                <Brain className="w-6 h-6 text-[#212121]" />
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Assistente IA de Agendamento</h4>
+              <p className="text-white/80 text-sm">
+                Envie fotos da sua agenda atual e a IA organiza automaticamente seus compromissos, evitando conflitos de horários.
+              </p>
+            </div>
+
+            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
+              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+                <MessageSquare className="w-6 h-6 text-[#212121]" />
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Comandos por Texto</h4>
+              <p className="text-white/80 text-sm">
+                Digite comandos como "agende retorno do João para próxima terça às 10h" e a IA cria o agendamento para você.
+              </p>
+            </div>
+
+            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
+              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+                <Zap className="w-6 h-6 text-[#212121]" />
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Sugestões Inteligentes</h4>
+              <p className="text-white/80 text-sm">
+                Receba sugestões de horários otimizados baseados no seu padrão de atendimento e disponibilidade.
+              </p>
             </div>
           </motion.div>
         </div>
