@@ -1,5 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -126,6 +126,22 @@ export interface IStorage {
   getDefaultDoctorForUser(userId: number): Promise<Doctor | undefined>;
   setDefaultDoctor(userId: number, doctorId: number): Promise<boolean>;
 
+  // Clinic operations
+  createClinic(clinic: InsertClinic): Promise<Clinic>;
+  getClinic(id: number): Promise<Clinic | undefined>;
+  getClinicByAdminId(userId: number): Promise<Clinic | undefined>;
+  updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
+  addClinicMember(clinicId: number, userId: number): Promise<boolean>;
+  removeClinicMember(clinicId: number, userId: number): Promise<boolean>;
+  getClinicMembers(clinicId: number): Promise<User[]>;
+
+  // Clinic invitation operations
+  createClinicInvitation(invitation: InsertClinicInvitation): Promise<ClinicInvitation>;
+  getClinicInvitation(id: number): Promise<ClinicInvitation | undefined>;
+  getClinicInvitationByToken(token: string): Promise<ClinicInvitation | undefined>;
+  updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined>;
+  getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -145,6 +161,8 @@ export class MemStorage implements IStorage {
   private appointmentsMap: Map<number, Appointment>;
   private habitsMap: Map<number, any>;
   private doctorsMap: Map<number, Doctor>;
+  private clinicsMap: Map<number, Clinic>;
+  private clinicInvitationsMap: Map<number, ClinicInvitation>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -161,6 +179,8 @@ export class MemStorage implements IStorage {
   private appointmentIdCounter: number = 1;
   private habitIdCounter: number = 1;
   private doctorIdCounter: number = 1;
+  private clinicIdCounter: number = 1;
+  private clinicInvitationIdCounter: number = 1;
 
   constructor() {
     this.users = new Map();
@@ -177,6 +197,8 @@ export class MemStorage implements IStorage {
     this.appointmentsMap = new Map();
     this.habitsMap = new Map();
     this.doctorsMap = new Map();
+    this.clinicsMap = new Map();
+    this.clinicInvitationsMap = new Map();
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -217,9 +239,9 @@ export class MemStorage implements IStorage {
       description: "Gestão completa para clínicas e consultórios",
       maxProfiles: -1,
       maxUploadsPerProfile: -1,
-      price: 29900, // R$ 299,00
+      price: 49900, // R$ 499,00
       interval: "month",
-      features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Agenda compartilhada e salas", "Dashboard administrativo", "Relatórios de produtividade"],
+      features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
       isActive: true
     });
 
@@ -263,7 +285,9 @@ export class MemStorage implements IStorage {
       activeProfileId: null,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
-      role: (user as any).role || "user"
+      role: (user as any).role || "user",
+      clinicId: null,
+      clinicRole: null
     };
     this.users.set(id, newUser);
 
@@ -894,6 +918,106 @@ export class MemStorage implements IStorage {
     }
     return true;
   }
+
+  // Clinic operations
+  async createClinic(clinic: InsertClinic): Promise<Clinic> {
+    const id = this.clinicIdCounter++;
+    const newClinic: Clinic = {
+      id,
+      name: clinic.name,
+      adminUserId: clinic.adminUserId,
+      subscriptionId: clinic.subscriptionId || null,
+      maxProfessionals: clinic.maxProfessionals || 5,
+      createdAt: new Date()
+    };
+    this.clinicsMap.set(id, newClinic);
+
+    // Update admin user to reference this clinic
+    const adminUser = await this.getUser(clinic.adminUserId);
+    if (adminUser) {
+      await this.updateUser(clinic.adminUserId, { clinicId: id, clinicRole: 'admin' });
+    }
+    return newClinic;
+  }
+
+  async getClinic(id: number): Promise<Clinic | undefined> {
+    return this.clinicsMap.get(id);
+  }
+
+  async getClinicByAdminId(userId: number): Promise<Clinic | undefined> {
+    return Array.from(this.clinicsMap.values()).find(c => c.adminUserId === userId);
+  }
+
+  async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
+    const clinic = this.clinicsMap.get(id);
+    if (!clinic) return undefined;
+    const updated = { ...clinic, ...data };
+    this.clinicsMap.set(id, updated);
+    return updated;
+  }
+
+  async addClinicMember(clinicId: number, userId: number): Promise<boolean> {
+    const clinic = await this.getClinic(clinicId);
+    if (!clinic) return false;
+
+    const members = await this.getClinicMembers(clinicId);
+    if (members.length >= clinic.maxProfessionals) return false;
+
+    const user = await this.getUser(userId);
+    if (!user) return false;
+
+    await this.updateUser(userId, { clinicId, clinicRole: 'member' });
+    return true;
+  }
+
+  async removeClinicMember(clinicId: number, userId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user || user.clinicId !== clinicId) return false;
+    if (user.clinicRole === 'admin') return false; // Can't remove admin
+
+    await this.updateUser(userId, { clinicId: null, clinicRole: null });
+    return true;
+  }
+
+  async getClinicMembers(clinicId: number): Promise<User[]> {
+    return Array.from(this.users.values()).filter(u => u.clinicId === clinicId);
+  }
+
+  // Clinic invitation operations
+  async createClinicInvitation(invitation: InsertClinicInvitation): Promise<ClinicInvitation> {
+    const id = this.clinicInvitationIdCounter++;
+    const newInvitation: ClinicInvitation = {
+      id,
+      clinicId: invitation.clinicId,
+      email: invitation.email,
+      token: invitation.token,
+      status: invitation.status || 'pending',
+      createdAt: new Date(),
+      expiresAt: invitation.expiresAt
+    };
+    this.clinicInvitationsMap.set(id, newInvitation);
+    return newInvitation;
+  }
+
+  async getClinicInvitation(id: number): Promise<ClinicInvitation | undefined> {
+    return this.clinicInvitationsMap.get(id);
+  }
+
+  async getClinicInvitationByToken(token: string): Promise<ClinicInvitation | undefined> {
+    return Array.from(this.clinicInvitationsMap.values()).find(i => i.token === token);
+  }
+
+  async updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined> {
+    const invitation = this.clinicInvitationsMap.get(id);
+    if (!invitation) return undefined;
+    const updated = { ...invitation, ...data };
+    this.clinicInvitationsMap.set(id, updated);
+    return updated;
+  }
+
+  async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
+    return Array.from(this.clinicInvitationsMap.values()).filter(i => i.clinicId === clinicId);
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1358,6 +1482,78 @@ export class DatabaseStorage implements IStorage {
     await db.update(doctors).set({ isDefault: false }).where(eq(doctors.userId, userId));
     await db.update(doctors).set({ isDefault: true }).where(eq(doctors.id, doctorId));
     return true;
+  }
+
+  // Clinic operations
+  async createClinic(clinic: InsertClinic): Promise<Clinic> {
+    const [newClinic] = await db.insert(clinics).values(clinic).returning();
+    // Update admin user to reference this clinic
+    await db.update(users).set({ clinicId: newClinic.id, clinicRole: 'admin' }).where(eq(users.id, clinic.adminUserId));
+    return newClinic;
+  }
+
+  async getClinic(id: number): Promise<Clinic | undefined> {
+    const [c] = await db.select().from(clinics).where(eq(clinics.id, id));
+    return c;
+  }
+
+  async getClinicByAdminId(userId: number): Promise<Clinic | undefined> {
+    const [c] = await db.select().from(clinics).where(eq(clinics.adminUserId, userId));
+    return c;
+  }
+
+  async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
+    const [updated] = await db.update(clinics).set(data).where(eq(clinics.id, id)).returning();
+    return updated;
+  }
+
+  async addClinicMember(clinicId: number, userId: number): Promise<boolean> {
+    const clinic = await this.getClinic(clinicId);
+    if (!clinic) return false;
+
+    const members = await this.getClinicMembers(clinicId);
+    if (members.length >= clinic.maxProfessionals) return false;
+
+    await db.update(users).set({ clinicId, clinicRole: 'member' }).where(eq(users.id, userId));
+    return true;
+  }
+
+  async removeClinicMember(clinicId: number, userId: number): Promise<boolean> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user || user.clinicId !== clinicId) return false;
+    if (user.clinicRole === 'admin') return false;
+
+    await db.update(users).set({ clinicId: null, clinicRole: null }).where(eq(users.id, userId));
+    return true;
+  }
+
+  async getClinicMembers(clinicId: number): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.clinicId, clinicId));
+  }
+
+  // Clinic invitation operations
+  async createClinicInvitation(invitation: InsertClinicInvitation): Promise<ClinicInvitation> {
+    const [newInvitation] = await db.insert(clinicInvitations).values(invitation).returning();
+    return newInvitation;
+  }
+
+  async getClinicInvitation(id: number): Promise<ClinicInvitation | undefined> {
+    const [i] = await db.select().from(clinicInvitations).where(eq(clinicInvitations.id, id));
+    return i;
+  }
+
+  async getClinicInvitationByToken(token: string): Promise<ClinicInvitation | undefined> {
+    const [i] = await db.select().from(clinicInvitations).where(eq(clinicInvitations.token, token));
+    return i;
+  }
+
+  async updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined> {
+    const [updated] = await db.update(clinicInvitations).set(data).where(eq(clinicInvitations.id, id)).returning();
+    return updated;
+  }
+
+  async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
+    return await db.select().from(clinicInvitations).where(eq(clinicInvitations.clinicId, clinicId));
   }
 }
 

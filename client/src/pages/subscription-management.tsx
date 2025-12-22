@@ -125,7 +125,7 @@ const SubscriptionManagement = () => {
     {
       id: 'clinic' as PlanCategory,
       title: 'Clínica Multiprofissional',
-      description: 'Planos a partir de R$ 299/mês',
+      description: 'Planos a partir de R$ 499/mês',
       icon: Building,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
@@ -564,7 +564,7 @@ const SubscriptionManagement = () => {
                           <Button className="w-full text-xs" variant="outline" disabled>
                             {isCurrentPlan ? 'Seu plano atual' : 'Plano Básico'}
                           </Button>
-                        ) : selectedCategory === 'clinic' || selectedCategory === 'hospital' ? (
+                        ) : selectedCategory === 'hospital' ? (
                           <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white text-xs">
                             Falar com Consultor
                           </Button>

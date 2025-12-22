@@ -18,6 +18,8 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   role: text("role").default("user").notNull(), // 'user', 'admin'
+  clinicId: integer("clinic_id"), // Reference to clinic (set after clinic creation)
+  clinicRole: text("clinic_role"), // 'admin' | 'member'
 });
 
 // Profiles schema
@@ -353,6 +355,42 @@ export const subscriptions = pgTable("subscriptions", {
   uploadsCount: json("uploads_count").default("{}"), // JSON object storing uploads count per profile
 });
 
+// Clinics schema for multi-professional subscriptions
+export const clinics = pgTable("clinics", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  adminUserId: integer("admin_user_id").notNull().references(() => users.id),
+  subscriptionId: integer("subscription_id").references(() => subscriptions.id),
+  maxProfessionals: integer("max_professionals").notNull().default(5),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Clinic invitations schema
+export const clinicInvitations = pgTable("clinic_invitations", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'expired'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const insertClinicSchema = createInsertSchema(clinics).pick({
+  name: true,
+  adminUserId: true,
+  subscriptionId: true,
+  maxProfessionals: true,
+});
+
+export const insertClinicInvitationSchema = createInsertSchema(clinicInvitations).pick({
+  clinicId: true,
+  email: true,
+  token: true,
+  status: true,
+  expiresAt: true,
+});
+
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).pick({
   name: true,
   description: true,
@@ -400,6 +438,12 @@ export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type Clinic = typeof clinics.$inferSelect;
+export type InsertClinic = z.infer<typeof insertClinicSchema>;
+
+export type ClinicInvitation = typeof clinicInvitations.$inferSelect;
+export type InsertClinicInvitation = z.infer<typeof insertClinicInvitationSchema>;
 
 export type Evolution = typeof evolutions.$inferSelect;
 export type InsertEvolution = z.infer<typeof insertEvolutionSchema>;

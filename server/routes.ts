@@ -3564,6 +3564,299 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // =========================================
+  // CLINIC MANAGEMENT ROUTES
+  // =========================================
+
+  // Get current user's clinic (if any)
+  app.get("/api/my-clinic", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = req.user!;
+
+      // Check if user is part of a clinic
+      if (!user.clinicId) {
+        return res.json({ clinic: null, members: [], isAdmin: false });
+      }
+
+      const clinic = await storage.getClinic(user.clinicId);
+      if (!clinic) {
+        return res.json({ clinic: null, members: [], isAdmin: false });
+      }
+
+      const members = await storage.getClinicMembers(clinic.id);
+      const invitations = await storage.getClinicInvitations(clinic.id);
+
+      res.json({
+        clinic,
+        members: members.map(m => ({
+          id: m.id,
+          username: m.username,
+          fullName: m.fullName,
+          email: m.email,
+          clinicRole: m.clinicRole
+        })),
+        invitations: invitations.filter(i => i.status === 'pending'),
+        isAdmin: user.clinicRole === 'admin'
+      });
+    } catch (error) {
+      logger.error("Error fetching user clinic:", error);
+      res.status(500).json({ message: "Erro ao buscar dados da clínica" });
+    }
+  });
+
+  // Create clinic (after subscribing to clinic plan)
+  app.post("/api/clinics", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { name } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ message: "Nome da clínica é obrigatório" });
+      }
+
+      // Check if user already has a clinic
+      const existingClinic = await storage.getClinicByAdminId(userId);
+      if (existingClinic) {
+        return res.status(400).json({ message: "Usuário já possui uma clínica" });
+      }
+
+      // Get user's subscription
+      const subscription = await storage.getUserSubscription(userId);
+      if (!subscription) {
+        return res.status(400).json({ message: "Assinatura não encontrada" });
+      }
+
+      // Verify user has clinic plan
+      const plan = await storage.getSubscriptionPlan(subscription.planId);
+      if (!plan || !plan.name.toLowerCase().includes('clínica')) {
+        return res.status(400).json({ message: "Seu plano não inclui recursos de clínica" });
+      }
+
+      // Create clinic
+      const clinic = await storage.createClinic({
+        name,
+        adminUserId: userId,
+        subscriptionId: subscription.id,
+        maxProfessionals: 5
+      });
+
+      res.status(201).json({
+        success: true,
+        clinic
+      });
+    } catch (error) {
+      logger.error("Error creating clinic:", error);
+      res.status(500).json({ message: "Erro ao criar clínica" });
+    }
+  });
+
+  // Update clinic
+  app.put("/api/clinics/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { name } = req.body;
+
+      const clinic = await storage.getClinic(clinicId);
+      if (!clinic) {
+        return res.status(404).json({ message: "Clínica não encontrada" });
+      }
+
+      // Only admin can update
+      if (clinic.adminUserId !== userId) {
+        return res.status(403).json({ message: "Apenas o administrador pode editar a clínica" });
+      }
+
+      const updated = await storage.updateClinic(clinicId, { name });
+      res.json({ success: true, clinic: updated });
+    } catch (error) {
+      logger.error("Error updating clinic:", error);
+      res.status(500).json({ message: "Erro ao atualizar clínica" });
+    }
+  });
+
+  // Invite member to clinic
+  app.post("/api/clinics/:id/invite", ensureAuthenticated, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
+      }
+
+      const clinic = await storage.getClinic(clinicId);
+      if (!clinic) {
+        return res.status(404).json({ message: "Clínica não encontrada" });
+      }
+
+      // Only admin can invite
+      if (clinic.adminUserId !== userId) {
+        return res.status(403).json({ message: "Apenas o administrador pode convidar membros" });
+      }
+
+      // Check member limit
+      const members = await storage.getClinicMembers(clinicId);
+      if (members.length >= clinic.maxProfessionals) {
+        return res.status(400).json({
+          message: `Limite de ${clinic.maxProfessionals} profissionais atingido`
+        });
+      }
+
+      // Generate invitation token
+      const token = require('crypto').randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+
+      const invitation = await storage.createClinicInvitation({
+        clinicId,
+        email,
+        token,
+        status: 'pending',
+        expiresAt
+      });
+
+      // Here you would send an email with the invitation link
+      // For now, we just return the token
+      res.status(201).json({
+        success: true,
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          token: invitation.token,
+          expiresAt: invitation.expiresAt
+        },
+        inviteUrl: `/accept-invitation/${token}`
+      });
+    } catch (error) {
+      logger.error("Error inviting member:", error);
+      res.status(500).json({ message: "Erro ao enviar convite" });
+    }
+  });
+
+  // Accept clinic invitation
+  app.post("/api/clinic-invitations/:token/accept", ensureAuthenticated, async (req, res) => {
+    try {
+      const { token } = req.params;
+      const userId = req.user!.id;
+
+      const invitation = await storage.getClinicInvitationByToken(token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Convite não encontrado" });
+      }
+
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ message: "Este convite já foi utilizado" });
+      }
+
+      if (new Date() > invitation.expiresAt) {
+        await storage.updateClinicInvitation(invitation.id, { status: 'expired' });
+        return res.status(400).json({ message: "Este convite expirou" });
+      }
+
+      // Check if user's email matches invitation
+      const user = req.user!;
+      if (user.email && user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+        return res.status(400).json({
+          message: "Este convite foi enviado para outro email"
+        });
+      }
+
+      // Add user to clinic
+      const success = await storage.addClinicMember(invitation.clinicId, userId);
+      if (!success) {
+        return res.status(400).json({
+          message: "Não foi possível adicionar ao clinic. Limite de membros pode ter sido atingido."
+        });
+      }
+
+      // Mark invitation as accepted
+      await storage.updateClinicInvitation(invitation.id, { status: 'accepted' });
+
+      const clinic = await storage.getClinic(invitation.clinicId);
+
+      res.json({
+        success: true,
+        message: "Você foi adicionado à clínica com sucesso",
+        clinic
+      });
+    } catch (error) {
+      logger.error("Error accepting invitation:", error);
+      res.status(500).json({ message: "Erro ao aceitar convite" });
+    }
+  });
+
+  // Get clinic members
+  app.get("/api/clinics/:id/members", ensureAuthenticated, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const user = req.user!;
+
+      // Check user belongs to this clinic
+      if (user.clinicId !== clinicId) {
+        return res.status(403).json({ message: "Você não pertence a esta clínica" });
+      }
+
+      const clinic = await storage.getClinic(clinicId);
+      if (!clinic) {
+        return res.status(404).json({ message: "Clínica não encontrada" });
+      }
+
+      const members = await storage.getClinicMembers(clinicId);
+
+      res.json({
+        members: members.map(m => ({
+          id: m.id,
+          username: m.username,
+          fullName: m.fullName,
+          email: m.email,
+          clinicRole: m.clinicRole
+        })),
+        maxProfessionals: clinic.maxProfessionals
+      });
+    } catch (error) {
+      logger.error("Error fetching clinic members:", error);
+      res.status(500).json({ message: "Erro ao buscar membros da clínica" });
+    }
+  });
+
+  // Remove clinic member
+  app.delete("/api/clinics/:clinicId/members/:userId", ensureAuthenticated, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.clinicId);
+      const memberUserId = parseInt(req.params.userId);
+      const adminUserId = req.user!.id;
+
+      const clinic = await storage.getClinic(clinicId);
+      if (!clinic) {
+        return res.status(404).json({ message: "Clínica não encontrada" });
+      }
+
+      // Only admin can remove members
+      if (clinic.adminUserId !== adminUserId) {
+        return res.status(403).json({ message: "Apenas o administrador pode remover membros" });
+      }
+
+      // Can't remove admin
+      if (memberUserId === clinic.adminUserId) {
+        return res.status(400).json({ message: "O administrador não pode ser removido" });
+      }
+
+      const success = await storage.removeClinicMember(clinicId, memberUserId);
+      if (!success) {
+        return res.status(400).json({ message: "Não foi possível remover o membro" });
+      }
+
+      res.json({ success: true, message: "Membro removido com sucesso" });
+    } catch (error) {
+      logger.error("Error removing clinic member:", error);
+      res.status(500).json({ message: "Erro ao remover membro" });
+    }
+  });
+
   // Medications routes
   // Temporary in-memory storage for medications
   const medicationsStore = new Map<number, any[]>();

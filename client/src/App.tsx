@@ -30,6 +30,7 @@ const Home = lazy(() => import("@/pages/home"));
 const Agenda = lazy(() => import("@/pages/agenda"));
 
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
+const ClinicManagement = lazy(() => import("@/pages/clinic-management"));
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const QuickSummaryPage = lazy(() => import("@/pages/quick-summary-page"));
 const BulkImport = lazy(() => import("@/pages/bulk-import"));
@@ -68,6 +69,7 @@ function Router() {
         <ProtectedRoute path="/bulk-import" component={BulkImport} />
 
         <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
+        <ProtectedRoute path="/clinic" component={ClinicManagement} />
         <ProtectedRoute path="/admin-panel" component={AdminPanel} />
         <ProtectedRoute path="/admin" component={AdminPanel} />
 
