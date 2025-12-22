@@ -16,6 +16,7 @@ import {
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
  * VitaView AI Sidebar Component
@@ -114,7 +115,10 @@ export default function Sidebar(props: SidebarProps) {
                 <p className="text-xs text-mediumGray font-body">Profissional de saúde</p>
               </div>
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
           </div>
 
           <Link href="/profile">

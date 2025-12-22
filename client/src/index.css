@@ -7,7 +7,7 @@
 :root {
   /* VitaView AI - Nova Linguagem de Design Minimalista */
   /* Paleta Monocromática em Escala de Cinza */
-  
+
   /* Cores Primárias */
   --charcoal-gray: #212121;
   --medium-gray: #9E9E9E;
@@ -15,39 +15,52 @@
   --pure-white: #FFFFFF;
   --background-gray: #F4F4F4;
   --alert-red: #D32F2F;
-  
+
   /* Mapeamento para variáveis do sistema */
-  --background: 0 0% 96%; /* #F4F4F4 */
-  --foreground: 0 0% 13%; /* #212121 */
-  
-  --card: 0 0% 100%; /* #FFFFFF */
-  --card-foreground: 0 0% 13%; /* #212121 */
-  
+  --background: 0 0% 96%;
+  /* #F4F4F4 */
+  --foreground: 0 0% 13%;
+  /* #212121 */
+
+  --card: 0 0% 100%;
+  /* #FFFFFF */
+  --card-foreground: 0 0% 13%;
+  /* #212121 */
+
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 13%;
-  
+
   /* Primary: Charcoal Gray */
-  --primary: 0 0% 13%; /* #212121 */
-  --primary-foreground: 0 0% 100%; /* #FFFFFF */
-  
+  --primary: 0 0% 13%;
+  /* #212121 */
+  --primary-foreground: 0 0% 100%;
+  /* #FFFFFF */
+
   /* Secondary: Medium Gray */
-  --secondary: 0 0% 62%; /* #9E9E9E */
+  --secondary: 0 0% 62%;
+  /* #9E9E9E */
   --secondary-foreground: 0 0% 13%;
-  
-  --muted: 0 0% 88%; /* #E0E0E0 */
-  --muted-foreground: 0 0% 62%; /* #9E9E9E */
-  
+
+  --muted: 0 0% 88%;
+  /* #E0E0E0 */
+  --muted-foreground: 0 0% 62%;
+  /* #9E9E9E */
+
   --accent: 0 0% 88%;
   --accent-foreground: 0 0% 13%;
-  
-  --destructive: 0 72% 51%; /* #D32F2F */
+
+  --destructive: 0 72% 51%;
+  /* #D32F2F */
   --destructive-foreground: 0 0% 100%;
-  
-  --border: 0 0% 88%; /* #E0E0E0 */
-  --input: 0 0% 88%; /* #E0E0E0 */
-  --ring: 0 0% 13%; /* #212121 */
+
+  --border: 0 0% 88%;
+  /* #E0E0E0 */
+  --input: 0 0% 88%;
+  /* #E0E0E0 */
+  --ring: 0 0% 13%;
+  /* #212121 */
   --radius: 0.5rem;
-  
+
   /* VitaView - Valores Hexadecimais para Uso Direto */
   --vitaview-primary: #212121;
   --vitaview-primary-dark: #121212;
@@ -64,28 +77,28 @@
   /* VitaView AI - Tema Escuro Minimalista */
   --background: 0 0% 8%;
   --foreground: 0 0% 98%;
-  
+
   --card: 0 0% 12%;
   --card-foreground: 0 0% 98%;
-  
+
   --popover: 0 0% 12%;
   --popover-foreground: 0 0% 98%;
-  
+
   --primary: 0 0% 98%;
   --primary-foreground: 0 0% 13%;
-  
+
   --secondary: 0 0% 45%;
   --secondary-foreground: 0 0% 98%;
-  
+
   --muted: 0 0% 20%;
   --muted-foreground: 0 0% 65%;
-  
+
   --accent: 0 0% 20%;
   --accent-foreground: 0 0% 98%;
-  
+
   --destructive: 0 62% 40%;
   --destructive-foreground: 0 0% 98%;
-  
+
   --border: 0 0% 20%;
   --input: 0 0% 20%;
   --ring: 0 0% 83%;
@@ -102,14 +115,20 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    background-color: var(--background-gray);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   /* Tipografia baseada na linguagem de design */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 700;
-    color: var(--charcoal-gray);
+    color: hsl(var(--foreground));
   }
 
   h1 {
@@ -128,7 +147,12 @@
     @apply text-lg md:text-xl;
   }
 
-  p, span, label, input, textarea, select {
+  p,
+  span,
+  label,
+  input,
+  textarea,
+  select {
     font-family: 'Open Sans', system-ui, sans-serif;
   }
 
@@ -145,7 +169,7 @@
   }
 
   /* Touch optimization */
-  button, 
+  button,
   [role="button"],
   input[type="submit"],
   input[type="button"] {
@@ -178,33 +202,34 @@
 }
 
 @layer components {
+
   /* VitaView Design System - Buttons */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
-    background-color: var(--charcoal-gray);
-    color: var(--pure-white);
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
     font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 700;
   }
-  
+
   .btn-primary:hover {
     background-color: var(--vitaview-primary-light);
   }
-  
+
   .btn-primary:disabled {
     background-color: var(--medium-gray);
     color: var(--light-gray);
   }
-  
+
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
     background-color: transparent;
-    color: var(--charcoal-gray);
-    border: 1px solid var(--charcoal-gray);
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
     font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 700;
   }
-  
+
   .btn-secondary:hover {
     background-color: var(--light-gray);
   }
@@ -212,28 +237,28 @@
   /* VitaView Design System - Cards */
   .vitaview-card {
     @apply rounded-lg;
-    background-color: var(--pure-white);
-    border: 1px solid var(--light-gray);
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
   }
 
   /* VitaView Design System - Forms */
   .vitaview-input {
     @apply w-full rounded-lg px-3 py-2 text-sm transition-all duration-200;
-    background-color: var(--pure-white);
-    border: 1px solid var(--light-gray);
-    color: var(--charcoal-gray);
+    background-color: hsl(var(--background));
+    border: 1px solid hsl(var(--input));
+    color: hsl(var(--foreground));
     font-family: 'Open Sans', system-ui, sans-serif;
   }
-  
+
   .vitaview-input:focus {
-    border-color: var(--charcoal-gray);
+    border-color: hsl(var(--ring));
     outline: none;
   }
-  
+
   .vitaview-input::placeholder {
-    color: var(--medium-gray);
+    color: hsl(var(--muted-foreground));
   }
-  
+
   .vitaview-input-error {
     border-color: var(--alert-red);
   }
@@ -241,7 +266,7 @@
   /* VitaView Design System - Labels */
   .vitaview-label {
     @apply text-sm font-medium mb-1.5 block;
-    color: var(--charcoal-gray);
+    color: hsl(var(--foreground));
     font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 700;
   }
@@ -304,7 +329,8 @@
     @apply flex h-10 w-full rounded-lg px-3 py-2 text-sm;
     border: 1px solid var(--light-gray);
     background-color: var(--pure-white);
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
     -webkit-appearance: none;
   }
 
@@ -368,6 +394,7 @@
       transform: translateY(100%);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
@@ -382,6 +409,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -409,11 +437,11 @@
     @apply w-full flex items-center p-3 rounded-lg transition-all duration-200;
     color: var(--charcoal-gray);
   }
-  
+
   .sidebar-nav-item:hover {
     background-color: var(--light-gray);
   }
-  
+
   .sidebar-nav-item.active {
     background-color: var(--charcoal-gray);
     color: var(--pure-white);
@@ -421,15 +449,16 @@
 }
 
 @layer utilities {
+
   /* VitaView Text Colors */
   .text-vitaview-primary {
     color: var(--charcoal-gray);
   }
-  
+
   .text-vitaview-secondary {
     color: var(--medium-gray);
   }
-  
+
   .text-vitaview-error {
     color: var(--alert-red);
   }
@@ -438,11 +467,11 @@
   .bg-vitaview-primary {
     background-color: var(--charcoal-gray);
   }
-  
+
   .bg-vitaview-card {
     background-color: var(--pure-white);
   }
-  
+
   .bg-vitaview-background {
     background-color: var(--background-gray);
   }
@@ -563,6 +592,7 @@
 
 /* Accessibility: Respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -571,18 +601,18 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Framer Motion animations will also be reduced */
   [data-framer-component-type] {
     animation: none !important;
     transition: none !important;
   }
-  
+
   .slide-up,
   .fade-in {
     animation: none !important;
   }
-  
+
   /* Keep essential transitions but make them instant */
   .hover-mobile,
   .active-mobile,
@@ -602,7 +632,7 @@
     --light-gray: #CCCCCC;
     --border: 0 0% 40%;
   }
-  
+
   .btn-primary,
   .mobile-button {
     border: 2px solid currentColor;

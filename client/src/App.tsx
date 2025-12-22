@@ -12,6 +12,7 @@ import ErrorBoundary from "@/components/ui/error-boundary";
 import { usePerformance, webVitals } from "@/hooks/use-performance";
 import { Suspense, lazy, useEffect } from "react";
 import { CommandPalette } from "@/components/command-palette/command-palette";
+import { ThemeProvider } from "@/hooks/use-theme";
 
 // Lazy load components for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -118,11 +119,13 @@ function AppWithPerformance() {
           <ProfileProvider>
             <UploadManagerProvider>
               <SidebarProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Router />
-                  <CommandPalette />
-                </TooltipProvider>
+                <ThemeProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Router />
+                    <CommandPalette />
+                  </TooltipProvider>
+                </ThemeProvider>
               </SidebarProvider>
             </UploadManagerProvider>
           </ProfileProvider>
