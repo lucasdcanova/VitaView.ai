@@ -3163,7 +3163,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   // API routes for subscription management
   app.get("/api/subscription-plans", async (req, res) => {
     try {
-      const plans = await storage.getSubscriptionPlans();
+      const allPlans = await storage.getSubscriptionPlans();
+      // Filter only active plans
+      const plans = allPlans.filter(plan => plan.isActive);
       res.json(plans);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar planos de assinatura" });

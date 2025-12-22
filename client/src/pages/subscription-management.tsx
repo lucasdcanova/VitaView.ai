@@ -451,6 +451,51 @@ const SubscriptionManagement = () => {
               )}
             </section>
 
+            {/* SECTION 2: Clinic Management (only for clinic plans) */}
+            {hasActiveSubscription && currentPlan?.name?.toLowerCase().includes('clínica') && (
+              <section className="space-y-6">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Building className="h-5 w-5 text-primary" />
+                  Gestão da Clínica
+                </h2>
+
+                <Card className="border-primary/20 bg-gradient-to-br from-white to-gray-50">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Users className="h-5 w-5" />
+                          Equipe Multiprofissional
+                        </CardTitle>
+                        <CardDescription>
+                          Gerencie os profissionais vinculados ao seu plano de clínica
+                        </CardDescription>
+                      </div>
+                      <Badge className="bg-primary">
+                        {currentPlan?.name?.includes('+') ? '5+ profissionais' : 'Até 5 profissionais'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Como administrador do plano de clínica, você pode convidar outros profissionais
+                      para utilizarem a plataforma VitaView AI com recursos compartilhados.
+                    </p>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={() => navigate('/clinic')}
+                        className="bg-[#212121] hover:bg-[#424242]"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Gerenciar Equipe
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
 
             {/* SECTION 3: Plan Catalog */}
             <section className="space-y-8" ref={plansRef}>
