@@ -560,3 +560,73 @@
     font-family: 'Open Sans', system-ui, sans-serif;
   }
 }
+
+/* Accessibility: Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Framer Motion animations will also be reduced */
+  [data-framer-component-type] {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .slide-up,
+  .fade-in {
+    animation: none !important;
+  }
+  
+  /* Keep essential transitions but make them instant */
+  .hover-mobile,
+  .active-mobile,
+  .transition-colors,
+  .transition-all,
+  .transition-transform,
+  .transition-opacity {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* Accessibility: High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --charcoal-gray: #000000;
+    --medium-gray: #555555;
+    --light-gray: #CCCCCC;
+    --border: 0 0% 40%;
+  }
+  
+  .btn-primary,
+  .mobile-button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Accessibility: Focus visible improvements */
+:focus-visible {
+  outline: 3px solid var(--charcoal-gray);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--charcoal-gray);
+  color: var(--pure-white);
+  padding: 8px 16px;
+  z-index: 9999;
+  font-weight: bold;
+}
+
+.skip-link:focus {
+  top: 0;
+}
