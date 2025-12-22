@@ -20,6 +20,7 @@ export const users = pgTable("users", {
   role: text("role").default("user").notNull(), // 'user', 'admin'
   clinicId: integer("clinic_id"), // Reference to clinic (set after clinic creation)
   clinicRole: text("clinic_role"), // 'admin' | 'member'
+  preferences: json("preferences"), // Store user preferences like dashboard layout
 });
 
 // Profiles schema

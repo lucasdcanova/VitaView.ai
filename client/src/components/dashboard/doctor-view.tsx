@@ -29,6 +29,25 @@ import { VitalsWidget } from "@/components/dashboard/vitals-widget";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import { DraggableWidget } from "@/components/dashboard/draggable-widget";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 /**
  * VitaView AI Doctor View Dashboard - Redesigned
@@ -60,6 +79,64 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
             return data.exams || [];
         },
     });
+
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [widgetOrder, setWidgetOrder] = useState<string[]>([
+        "quick-actions",
+        "vitals",
+        "stats-row",
+        "getting-started",
+        "agenda",
+        "recent-exams",
+        "attention"
+    ]);
+
+    useEffect(() => {
+        if (user?.preferences && (user.preferences as any).dashboardLayout) {
+            setWidgetOrder((user.preferences as any).dashboardLayout);
+        }
+    }, [user]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            setWidgetOrder((items) => {
+                const oldIndex = items.indexOf(active.id as string);
+                const newIndex = items.indexOf(over!.id as string);
+                const newOrder = arrayMove(items, oldIndex, newIndex);
+
+                // Save to backend
+                fetch("/api/user/preferences", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        preferences: {
+                            ...(user?.preferences as object || {}),
+                            dashboardLayout: newOrder
+                        }
+                    })
+                }).catch(err => {
+                    console.error("Failed to save layout", err);
+                    toast({
+                        title: "Erro ao salvar layout",
+                        description: "Não foi possível salvar a organização do dashboard.",
+                        variant: "destructive"
+                    });
+                });
+
+                return newOrder;
+            });
+        }
+    }
 
     const isNewUser = !profiles || profiles.length === 0;
     const hasExams = recentExams && recentExams.length > 0;
@@ -158,300 +235,331 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="space-y-8">
-                                {/* Quick Actions */}
-                                <section data-tour="quick-actions">
-                                    <h2 className="text-lg font-heading font-bold text-[#212121] mb-4">
-                                        Ações Rápidas
-                                    </h2>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {quickActions.map((action, index) => (
-                                            <motion.div
-                                                key={action.label}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.05 }}
-                                            >
-                                                {action.onClick ? (
-                                                    <button
-                                                        onClick={action.onClick}
-                                                        className={`w-full p-4 rounded-xl flex flex-col items-center text-center transition-all duration-200 ${action.color}`}
-                                                    >
-                                                        <div className="mb-2">{action.icon}</div>
-                                                        <span className="font-heading font-bold text-sm">{action.label}</span>
-                                                        <span className="text-xs opacity-70 mt-1">{action.description}</span>
-                                                    </button>
-                                                ) : (
-                                                    <Link href={action.href}>
-                                                        <div className={`p-4 rounded-xl flex flex-col items-center text-center transition-all duration-200 cursor-pointer ${action.color}`}>
-                                                            <div className="mb-2">{action.icon}</div>
-                                                            <span className="font-heading font-bold text-sm">{action.label}</span>
-                                                            <span className="text-xs opacity-70 mt-1">{action.description}</span>
-                                                        </div>
-                                                    </Link>
-                                                )}
-                                            </motion.div>
-                                        ))}
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={widgetOrder}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="space-y-8">
+                                        {widgetOrder.map((id) => {
+                                            switch (id) {
+                                                case "quick-actions":
+                                                    return (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <section data-tour="quick-actions">
+                                                                <h2 className="text-lg font-heading font-bold text-[#212121] mb-4">
+                                                                    Ações Rápidas
+                                                                </h2>
+                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                                    {quickActions.map((action, index) => (
+                                                                        <motion.div
+                                                                            key={action.label}
+                                                                            initial={{ opacity: 0, y: 10 }}
+                                                                            animate={{ opacity: 1, y: 0 }}
+                                                                            transition={{ delay: index * 0.05 }}
+                                                                        >
+                                                                            {action.onClick ? (
+                                                                                <button
+                                                                                    onClick={action.onClick}
+                                                                                    className={`w-full p-4 rounded-xl flex flex-col items-center text-center transition-all duration-200 ${action.color}`}
+                                                                                >
+                                                                                    <div className="mb-2">{action.icon}</div>
+                                                                                    <span className="font-heading font-bold text-sm">{action.label}</span>
+                                                                                    <span className="text-xs opacity-70 mt-1">{action.description}</span>
+                                                                                </button>
+                                                                            ) : (
+                                                                                <Link href={action.href}>
+                                                                                    <div className={`p-4 rounded-xl flex flex-col items-center text-center transition-all duration-200 cursor-pointer ${action.color}`}>
+                                                                                        <div className="mb-2">{action.icon}</div>
+                                                                                        <span className="font-heading font-bold text-sm">{action.label}</span>
+                                                                                        <span className="text-xs opacity-70 mt-1">{action.description}</span>
+                                                                                    </div>
+                                                                                </Link>
+                                                                            )}
+                                                                        </motion.div>
+                                                                    ))}
+                                                                </div>
+                                                            </section>
+                                                        </DraggableWidget>
+                                                    );
+                                                case "vitals":
+                                                    return (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <VitalsWidget />
+                                                        </DraggableWidget>
+                                                    );
+                                                case "stats-row":
+                                                    return (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <section>
+                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                                    <Card className="border-[#E0E0E0]">
+                                                                        <CardHeader className="pb-2">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <CardTitle className="text-sm font-body text-[#9E9E9E]">
+                                                                                    Total de Pacientes
+                                                                                </CardTitle>
+                                                                                <Users className="h-5 w-5 text-[#9E9E9E]" />
+                                                                            </div>
+                                                                        </CardHeader>
+                                                                        <CardContent>
+                                                                            <div className="text-3xl font-heading font-bold text-[#212121]">
+                                                                                {stats?.totalPatients || profiles?.length || 0}
+                                                                            </div>
+                                                                            <p className="text-xs text-[#9E9E9E] mt-1 font-body">
+                                                                                Cadastrados na plataforma
+                                                                            </p>
+                                                                        </CardContent>
+                                                                    </Card>
+
+                                                                    <Card className={`border-[#E0E0E0] ${stats?.patientsNeedingCheckup > 0
+                                                                        ? "border-l-4 border-l-[#D32F2F]"
+                                                                        : ""
+                                                                        }`}>
+                                                                        <CardHeader className="pb-2">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <CardTitle className="text-sm font-body text-[#9E9E9E]">
+                                                                                    Check-up Pendente
+                                                                                </CardTitle>
+                                                                                <Clock className="h-5 w-5 text-[#9E9E9E]" />
+                                                                            </div>
+                                                                        </CardHeader>
+                                                                        <CardContent>
+                                                                            <div className={`text-3xl font-heading font-bold ${stats?.patientsNeedingCheckup > 0
+                                                                                ? "text-[#D32F2F]"
+                                                                                : "text-[#212121]"
+                                                                                }`}>
+                                                                                {stats?.patientsNeedingCheckup || 0}
+                                                                            </div>
+                                                                            <p className={`text-xs mt-1 font-body ${stats?.patientsNeedingCheckup > 0
+                                                                                ? "text-[#D32F2F]"
+                                                                                : "text-[#9E9E9E]"
+                                                                                }`}>
+                                                                                Sem exames há mais de 1 ano
+                                                                            </p>
+                                                                        </CardContent>
+                                                                    </Card>
+
+                                                                    <Card className="border-[#E0E0E0]">
+                                                                        <CardHeader className="pb-2">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <CardTitle className="text-sm font-body text-[#9E9E9E]">
+                                                                                    Exames Recentes
+                                                                                </CardTitle>
+                                                                                <FileText className="h-5 w-5 text-[#9E9E9E]" />
+                                                                            </div>
+                                                                        </CardHeader>
+                                                                        <CardContent>
+                                                                            <div className="text-3xl font-heading font-bold text-[#212121]">
+                                                                                {recentExams?.length || 0}
+                                                                            </div>
+                                                                            <p className="text-xs text-[#9E9E9E] mt-1 font-body">
+                                                                                Últimos 30 dias
+                                                                            </p>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                </div>
+                                                            </section>
+                                                        </DraggableWidget>
+                                                    );
+                                                case "getting-started":
+                                                    return isNewUser ? (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <motion.section
+                                                                initial={{ opacity: 0, y: 20 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                transition={{ delay: 0.2 }}
+                                                            >
+                                                                <Card className="border-2 border-[#212121] bg-gradient-to-br from-white to-[#F4F4F4]">
+                                                                    <CardHeader>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="p-2 bg-[#212121] rounded-lg">
+                                                                                <Lightbulb className="h-5 w-5 text-white" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <CardTitle className="font-heading text-[#212121]">
+                                                                                    Comece por aqui!
+                                                                                </CardTitle>
+                                                                                <CardDescription className="text-[#9E9E9E]">
+                                                                                    Siga os passos abaixo para começar a usar o VitaView AI
+                                                                                </CardDescription>
+                                                                            </div>
+                                                                        </div>
+                                                                    </CardHeader>
+                                                                    <CardContent>
+                                                                        <div className="space-y-4">
+                                                                            {gettingStartedSteps.map((item, index) => (
+                                                                                <div
+                                                                                    key={item.step}
+                                                                                    className={`flex items-center gap-4 p-4 rounded-lg transition-all ${item.completed
+                                                                                        ? "bg-green-50 border border-green-200"
+                                                                                        : "bg-white border border-[#E0E0E0]"
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${item.completed
+                                                                                        ? "bg-green-500 text-white"
+                                                                                        : "bg-[#E0E0E0] text-[#212121]"
+                                                                                        }`}>
+                                                                                        {item.completed ? (
+                                                                                            <CheckCircle2 className="h-5 w-5" />
+                                                                                        ) : (
+                                                                                            <span className="font-bold">{item.step}</span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="flex-1">
+                                                                                        <h4 className={`font-heading font-bold ${item.completed ? "text-green-700" : "text-[#212121]"
+                                                                                            }`}>
+                                                                                            {item.title}
+                                                                                        </h4>
+                                                                                        <p className="text-sm text-[#9E9E9E]">
+                                                                                            {item.description}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    {!item.completed && (
+                                                                                        item.onClick ? (
+                                                                                            <Button
+                                                                                                size="sm"
+                                                                                                className="bg-[#212121] hover:bg-[#424242] text-white"
+                                                                                                onClick={item.onClick}
+                                                                                            >
+                                                                                                {item.action}
+                                                                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                                                                            </Button>
+                                                                                        ) : (
+                                                                                            <Link href={item.href}>
+                                                                                                <Button size="sm" className="bg-[#212121] hover:bg-[#424242] text-white">
+                                                                                                    {item.action}
+                                                                                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                                                                                </Button>
+                                                                                            </Link>
+                                                                                        )
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            </motion.section>
+                                                        </DraggableWidget>
+                                                    ) : null;
+                                                case "agenda":
+                                                    return (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <AgendaWidget />
+                                                        </DraggableWidget>
+                                                    );
+                                                case "recent-exams":
+                                                    return hasExams ? (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <Card className="border-[#E0E0E0]">
+                                                                <CardHeader>
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div>
+                                                                            <CardTitle className="font-heading text-[#212121]">
+                                                                                Últimos Exames
+                                                                            </CardTitle>
+                                                                            <CardDescription className="text-[#9E9E9E] font-body">
+                                                                                Exames enviados recentemente
+                                                                            </CardDescription>
+                                                                        </div>
+                                                                        <Link href="/history">
+                                                                            <Button variant="outline" size="sm">
+                                                                                Ver Todos
+                                                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                                                            </Button>
+                                                                        </Link>
+                                                                    </div>
+                                                                </CardHeader>
+                                                                <CardContent>
+                                                                    <div className="space-y-3">
+                                                                        {recentExams.slice(0, 5).map((exam: any) => (
+                                                                            <div
+                                                                                key={exam.id}
+                                                                                className="flex items-center justify-between p-3 border border-[#E0E0E0] rounded-lg hover:bg-[#F4F4F4] transition-colors"
+                                                                            >
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="h-10 w-10 rounded-lg bg-[#E0E0E0] flex items-center justify-center">
+                                                                                        <FileText className="h-5 w-5 text-[#9E9E9E]" />
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="font-heading font-bold text-[#212121] text-sm">
+                                                                                            {exam.examType || "Exame"}
+                                                                                        </p>
+                                                                                        <p className="text-xs text-[#9E9E9E] font-body">
+                                                                                            {new Date(exam.createdAt).toLocaleDateString('pt-BR')}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <Link href={`/results/${exam.id}`}>
+                                                                                    <Button variant="ghost" size="sm">
+                                                                                        Ver
+                                                                                    </Button>
+                                                                                </Link>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </DraggableWidget>
+                                                    ) : null;
+                                                case "attention":
+                                                    return stats?.patientsList && stats.patientsList.length > 0 ? (
+                                                        <DraggableWidget key={id} id={id}>
+                                                            <Card className="border-[#E0E0E0]">
+                                                                <CardHeader>
+                                                                    <CardTitle className="flex items-center gap-2 font-heading text-[#212121]">
+                                                                        <AlertCircle className="h-5 w-5 text-[#D32F2F]" />
+                                                                        Pacientes Precisando de Atenção
+                                                                    </CardTitle>
+                                                                    <CardDescription className="text-[#9E9E9E] font-body">
+                                                                        Pacientes que não realizam exames há mais de 1 ano.
+                                                                    </CardDescription>
+                                                                </CardHeader>
+                                                                <CardContent>
+                                                                    <div className="space-y-4">
+                                                                        {stats.patientsList.map((patient: any) => (
+                                                                            <div
+                                                                                key={patient.id}
+                                                                                className="flex items-center justify-between p-4 border border-[#E0E0E0] rounded-lg bg-white hover:bg-[#F4F4F4] transition-all duration-200"
+                                                                            >
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="h-10 w-10 rounded-full bg-[#E0E0E0] flex items-center justify-center">
+                                                                                        <User className="h-5 w-5 text-[#9E9E9E]" />
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="font-heading font-bold text-[#212121]">
+                                                                                            {patient.name}
+                                                                                        </p>
+                                                                                        <p className="text-sm text-[#9E9E9E] font-body">
+                                                                                            Último exame: {patient.lastExamDate
+                                                                                                ? new Date(patient.lastExamDate).toLocaleDateString()
+                                                                                                : "Nunca"}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <Button variant="outline" size="sm" asChild>
+                                                                                    <Link href={`/patients?id=${patient.id}`}>
+                                                                                        Ver Detalhes
+                                                                                    </Link>
+                                                                                </Button>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </DraggableWidget>
+                                                    ) : null;
+                                                default:
+                                                    return null;
+                                            }
+                                        })}
                                     </div>
-                                </section>
-
-                                <VitalsWidget />
-
-                                {/* Stats Row */}
-                                <section>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Total Patients Card */}
-                                        <Card className="border-[#E0E0E0]">
-                                            <CardHeader className="pb-2">
-                                                <div className="flex items-center justify-between">
-                                                    <CardTitle className="text-sm font-body text-[#9E9E9E]">
-                                                        Total de Pacientes
-                                                    </CardTitle>
-                                                    <Users className="h-5 w-5 text-[#9E9E9E]" />
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="text-3xl font-heading font-bold text-[#212121]">
-                                                    {stats?.totalPatients || profiles?.length || 0}
-                                                </div>
-                                                <p className="text-xs text-[#9E9E9E] mt-1 font-body">
-                                                    Cadastrados na plataforma
-                                                </p>
-                                            </CardContent>
-                                        </Card>
-
-                                        {/* Patients Needing Checkup Card */}
-                                        <Card className={`border-[#E0E0E0] ${stats?.patientsNeedingCheckup > 0
-                                            ? "border-l-4 border-l-[#D32F2F]"
-                                            : ""
-                                            }`}>
-                                            <CardHeader className="pb-2">
-                                                <div className="flex items-center justify-between">
-                                                    <CardTitle className="text-sm font-body text-[#9E9E9E]">
-                                                        Check-up Pendente
-                                                    </CardTitle>
-                                                    <Clock className="h-5 w-5 text-[#9E9E9E]" />
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className={`text-3xl font-heading font-bold ${stats?.patientsNeedingCheckup > 0
-                                                    ? "text-[#D32F2F]"
-                                                    : "text-[#212121]"
-                                                    }`}>
-                                                    {stats?.patientsNeedingCheckup || 0}
-                                                </div>
-                                                <p className={`text-xs mt-1 font-body ${stats?.patientsNeedingCheckup > 0
-                                                    ? "text-[#D32F2F]"
-                                                    : "text-[#9E9E9E]"
-                                                    }`}>
-                                                    Sem exames há mais de 1 ano
-                                                </p>
-                                            </CardContent>
-                                        </Card>
-
-                                        {/* Recent Exams Card */}
-                                        <Card className="border-[#E0E0E0]">
-                                            <CardHeader className="pb-2">
-                                                <div className="flex items-center justify-between">
-                                                    <CardTitle className="text-sm font-body text-[#9E9E9E]">
-                                                        Exames Recentes
-                                                    </CardTitle>
-                                                    <FileText className="h-5 w-5 text-[#9E9E9E]" />
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="text-3xl font-heading font-bold text-[#212121]">
-                                                    {recentExams?.length || 0}
-                                                </div>
-                                                <p className="text-xs text-[#9E9E9E] mt-1 font-body">
-                                                    Últimos 30 dias
-                                                </p>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </section>
-
-                                {/* Getting Started Guide - Show for new users */}
-                                {isNewUser && (
-                                    <motion.section
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.2 }}
-                                    >
-                                        <Card className="border-2 border-[#212121] bg-gradient-to-br from-white to-[#F4F4F4]">
-                                            <CardHeader>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-[#212121] rounded-lg">
-                                                        <Lightbulb className="h-5 w-5 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <CardTitle className="font-heading text-[#212121]">
-                                                            Comece por aqui!
-                                                        </CardTitle>
-                                                        <CardDescription className="text-[#9E9E9E]">
-                                                            Siga os passos abaixo para começar a usar o VitaView AI
-                                                        </CardDescription>
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-4">
-                                                    {gettingStartedSteps.map((item, index) => (
-                                                        <div
-                                                            key={item.step}
-                                                            className={`flex items-center gap-4 p-4 rounded-lg transition-all ${item.completed
-                                                                ? "bg-green-50 border border-green-200"
-                                                                : "bg-white border border-[#E0E0E0]"
-                                                                }`}
-                                                        >
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${item.completed
-                                                                ? "bg-green-500 text-white"
-                                                                : "bg-[#E0E0E0] text-[#212121]"
-                                                                }`}>
-                                                                {item.completed ? (
-                                                                    <CheckCircle2 className="h-5 w-5" />
-                                                                ) : (
-                                                                    <span className="font-bold">{item.step}</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <h4 className={`font-heading font-bold ${item.completed ? "text-green-700" : "text-[#212121]"
-                                                                    }`}>
-                                                                    {item.title}
-                                                                </h4>
-                                                                <p className="text-sm text-[#9E9E9E]">
-                                                                    {item.description}
-                                                                </p>
-                                                            </div>
-                                                            {!item.completed && (
-                                                                item.onClick ? (
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="bg-[#212121] hover:bg-[#424242] text-white"
-                                                                        onClick={item.onClick}
-                                                                    >
-                                                                        {item.action}
-                                                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                                                    </Button>
-                                                                ) : (
-                                                                    <Link href={item.href}>
-                                                                        <Button size="sm" className="bg-[#212121] hover:bg-[#424242] text-white">
-                                                                            {item.action}
-                                                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                                                        </Button>
-                                                                    </Link>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </motion.section>
-                                )}
-
-                                {/* Agenda Widget */}
-                                <AgendaWidget />
-
-                                {/* Recent Exams List */}
-                                {hasExams && (
-                                    <Card className="border-[#E0E0E0]">
-                                        <CardHeader>
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <CardTitle className="font-heading text-[#212121]">
-                                                        Últimos Exames
-                                                    </CardTitle>
-                                                    <CardDescription className="text-[#9E9E9E] font-body">
-                                                        Exames enviados recentemente
-                                                    </CardDescription>
-                                                </div>
-                                                <Link href="/history">
-                                                    <Button variant="outline" size="sm">
-                                                        Ver Todos
-                                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-3">
-                                                {recentExams.slice(0, 5).map((exam: any) => (
-                                                    <div
-                                                        key={exam.id}
-                                                        className="flex items-center justify-between p-3 border border-[#E0E0E0] rounded-lg hover:bg-[#F4F4F4] transition-colors"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 rounded-lg bg-[#E0E0E0] flex items-center justify-center">
-                                                                <FileText className="h-5 w-5 text-[#9E9E9E]" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-heading font-bold text-[#212121] text-sm">
-                                                                    {exam.examType || "Exame"}
-                                                                </p>
-                                                                <p className="text-xs text-[#9E9E9E] font-body">
-                                                                    {new Date(exam.createdAt).toLocaleDateString('pt-BR')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <Link href={`/results/${exam.id}`}>
-                                                            <Button variant="ghost" size="sm">
-                                                                Ver
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {/* Patients Needing Attention List */}
-                                {stats?.patientsList && stats.patientsList.length > 0 && (
-                                    <Card className="border-[#E0E0E0]">
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2 font-heading text-[#212121]">
-                                                <AlertCircle className="h-5 w-5 text-[#D32F2F]" />
-                                                Pacientes Precisando de Atenção
-                                            </CardTitle>
-                                            <CardDescription className="text-[#9E9E9E] font-body">
-                                                Pacientes que não realizam exames há mais de 1 ano.
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                {stats.patientsList.map((patient: any) => (
-                                                    <div
-                                                        key={patient.id}
-                                                        className="flex items-center justify-between p-4 border border-[#E0E0E0] rounded-lg bg-white hover:bg-[#F4F4F4] transition-all duration-200"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 rounded-full bg-[#E0E0E0] flex items-center justify-center">
-                                                                <User className="h-5 w-5 text-[#9E9E9E]" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-heading font-bold text-[#212121]">
-                                                                    {patient.name}
-                                                                </p>
-                                                                <p className="text-sm text-[#9E9E9E] font-body">
-                                                                    Último exame: {patient.lastExamDate
-                                                                        ? new Date(patient.lastExamDate).toLocaleDateString()
-                                                                        : "Nunca"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <Button variant="outline" size="sm" asChild>
-                                                            <Link href={`/patients?id=${patient.id}`}>
-                                                                Ver Detalhes
-                                                            </Link>
-                                                        </Button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </div>
+                                </SortableContext>
+                            </DndContext>
                         )}
                     </div>
                 </main>

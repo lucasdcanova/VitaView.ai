@@ -9,7 +9,7 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser { }
   }
 }
 
@@ -114,7 +114,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
     const { password, ...userWithoutPassword } = req.user as SelectUser;
-    
+
     // Definir um cookie auxiliar simplificado para autenticação
     res.cookie('auth_user_id', req.user!.id.toString(), {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
@@ -123,34 +123,34 @@ export function setupAuth(app: Express) {
       sameSite: 'lax',
       path: '/'
     });
-    
+
     // Manter o cookie original também por compatibilidade
-    res.cookie('auth_token', JSON.stringify({id: req.user!.id}), {
+    res.cookie('auth_token', JSON.stringify({ id: req.user!.id }), {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
       httpOnly: false, // Acessível via JavaScript
       secure: false,
       sameSite: 'lax',
       path: '/'
     });
-    
+
     res.status(200).json(userWithoutPassword);
   });
 
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      
+
       // Limpar os cookies auxiliares
       res.clearCookie('auth_token', {
         path: '/',
         sameSite: 'lax'
       });
-      
+
       res.clearCookie('auth_user_id', {
         path: '/',
         sameSite: 'lax'
       });
-      
+
       res.sendStatus(200);
     });
   });
@@ -165,7 +165,7 @@ export function setupAuth(app: Express) {
   app.post("/api/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ message: "Email é obrigatório" });
       }
@@ -176,16 +176,43 @@ export function setupAuth(app: Express) {
       // 2. Gerar um token único de recuperação
       // 3. Salvar o token no banco com tempo de expiração
       // 4. Enviar email real com link de recuperação
-      
+
       console.log(`Email de recuperação de senha seria enviado para: ${email}`);
-      
+
       // Simula sucesso no envio
-      res.status(200).json({ 
-        message: "Se este email estiver cadastrado, você receberá instruções de recuperação de senha." 
+      res.status(200).json({
+        message: "Se este email estiver cadastrado, você receberá instruções de recuperação de senha."
       });
     } catch (error) {
       console.error("Erro ao processar recuperação de senha:", error);
       res.status(500).json({ message: "Erro ao processar solicitação" });
     }
   });
+
+  // Update user preferences
+  app.patch("/api/user/preferences", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const userId = req.user!.id;
+      const { preferences } = req.body;
+
+      if (!preferences) {
+        return res.status(400).json({ message: "Preferences object is required" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, { preferences });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
 }
