@@ -815,9 +815,19 @@ export default function LandingPage() {
                       description: "Receba notificações automáticas sobre parâmetros críticos que necessitam de atenção."
                     },
                     {
-                      icon: <FileHeart className="h-5 w-5 text-[#212121]" />,
-                      title: "Organização de Dados",
-                      description: "Visualize informações clínicas de forma estruturada e acessível."
+                      icon: <ScrollText className="h-5 w-5 text-[#212121]" />,
+                      title: "Registro de Anamneses",
+                      description: "Documente consultas e evoluções clínicas de forma estruturada e pesquisável."
+                    },
+                    {
+                      icon: <HeartPulse className="h-5 w-5 text-[#212121]" />,
+                      title: "Medicamentos de Uso Contínuo",
+                      description: "Gerencie prescrições ativas, acompanhe adesão e receba alertas de interações."
+                    },
+                    {
+                      icon: <RefreshCw className="h-5 w-5 text-[#212121]" />,
+                      title: "Renovação Automática de Receitas",
+                      description: "Gere receitas de medicamentos contínuos automaticamente com um clique."
                     }
                   ].map((item, index) => (
                     <motion.li
