@@ -23,6 +23,7 @@ import PatientHeader from "@/components/patient-header";
 import { AgendaWidget } from "@/components/agenda/agenda-widget";
 import FloatingPatientBar from "@/components/floating-patient-bar";
 import CreatePatientDialog from "@/components/create-patient-dialog";
+import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -157,7 +158,7 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                         ) : (
                             <div className="space-y-8">
                                 {/* Quick Actions */}
-                                <section>
+                                <section data-tour="quick-actions">
                                     <h2 className="text-lg font-heading font-bold text-[#212121] mb-4">
                                         Ações Rápidas
                                     </h2>
@@ -457,6 +458,9 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                 open={isCreatePatientOpen}
                 onOpenChange={setIsCreatePatientOpen}
             />
+
+            {/* Onboarding Tour */}
+            <OnboardingTour />
         </div>
     );
 }

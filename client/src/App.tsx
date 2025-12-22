@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { usePerformance, webVitals } from "@/hooks/use-performance";
 import { Suspense, lazy, useEffect } from "react";
+import { CommandPalette } from "@/components/command-palette/command-palette";
 
 // Lazy load components for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -120,6 +121,7 @@ function AppWithPerformance() {
                 <TooltipProvider>
                   <Toaster />
                   <Router />
+                  <CommandPalette />
                 </TooltipProvider>
               </SidebarProvider>
             </UploadManagerProvider>

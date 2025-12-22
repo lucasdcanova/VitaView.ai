@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 /**
  * VitaView AI Sidebar Component
@@ -95,22 +96,25 @@ export default function Sidebar(props: SidebarProps) {
           }`}
       >
         {/* Logo Section */}
-        <div className="p-4 border-b border-lightGray">
+        <div className="p-4 border-b border-lightGray" data-tour="sidebar-logo">
           <Logo size="md" showText={true} textSize="md" variant="icon" />
         </div>
 
         {/* User Profile Section */}
         <div className="p-4 border-b border-lightGray">
-          <div className="flex items-center mb-4">
-            <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center mr-3 font-heading font-bold">
-              {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center mr-3 font-heading font-bold">
+                {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[100px]" title={displayDoctor}>
+                  {displayDoctor}
+                </h3>
+                <p className="text-xs text-mediumGray font-body">Profissional de saúde</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[140px]" title={displayDoctor}>
-                {displayDoctor}
-              </h3>
-              <p className="text-xs text-mediumGray font-body">Profissional de saúde</p>
-            </div>
+            <NotificationBell />
           </div>
 
           <Link href="/profile">
@@ -122,7 +126,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Patient Selector */}
-        <div className="p-3 border-b border-lightGray">
+        <div className="p-3 border-b border-lightGray" data-tour="patient-selector">
           <ActivePatientIndicator className="w-full" />
         </div>
 
@@ -132,6 +136,7 @@ export default function Sidebar(props: SidebarProps) {
             href="/dashboard"
             onClick={handleNavClick}
             className={getNavItemClass('/dashboard')}
+            data-tour="nav-dashboard"
           >
             <LayoutDashboard className={getIconClass('/dashboard')} />
             <span className="font-body">Dashboard</span>
@@ -141,6 +146,7 @@ export default function Sidebar(props: SidebarProps) {
             href="/agenda"
             onClick={handleNavClick}
             className={getNavItemClass('/agenda')}
+            data-tour="nav-agenda"
           >
             <Calendar className={getIconClass('/agenda')} />
             <span className="font-body">Agenda</span>
@@ -150,6 +156,7 @@ export default function Sidebar(props: SidebarProps) {
             href="/health-trends"
             onClick={handleNavClick}
             className={getNavItemClass('/health-trends')}
+            data-tour="nav-timeline"
           >
             <Heart className={getIconClass('/health-trends')} />
             <span className="font-heading font-bold">Vita Timeline</span>
@@ -159,6 +166,7 @@ export default function Sidebar(props: SidebarProps) {
             href="/upload"
             onClick={handleNavClick}
             className={getNavItemClass('/upload')}
+            data-tour="nav-upload"
           >
             <Upload className={getIconClass('/upload')} />
             <span className="font-body">Enviar Exames</span>

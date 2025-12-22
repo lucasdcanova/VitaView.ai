@@ -2498,6 +2498,16 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Mark all notifications as read
+  app.post("/api/notifications/read-all", ensureAuthenticated, async (req, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao marcar notificações como lidas" });
+    }
+  });
+
   // API routes for user profile
   app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {

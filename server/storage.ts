@@ -57,6 +57,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
 
   // Diagnosis operations
   createDiagnosis(diagnosis: any): Promise<any>;
@@ -608,6 +609,14 @@ export class MemStorage implements IStorage {
     const updatedNotification = { ...notification, read: true };
     this.notificationsMap.set(id, updatedNotification);
     return updatedNotification;
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    Array.from(this.notificationsMap.entries()).forEach(([id, notification]) => {
+      if (notification.userId === userId && !notification.read) {
+        this.notificationsMap.set(id, { ...notification, read: true });
+      }
+    });
   }
 
   // Diagnosis operations
@@ -1276,6 +1285,9 @@ export class DatabaseStorage implements IStorage {
   async markNotificationAsRead(id: number): Promise<Notification | undefined> {
     const [updated] = await db.update(notifications).set({ read: true }).where(eq(notifications.id, id)).returning();
     return updated;
+  }
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db.update(notifications).set({ read: true }).where(eq(notifications.userId, userId));
   }
 
   // Diagnoses
