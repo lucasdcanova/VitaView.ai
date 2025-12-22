@@ -1404,40 +1404,94 @@ export default function LandingPage() {
           {/* AI Scheduling Features */}
           <motion.div
             className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.15,
+                  delayChildren: 0.2
+                }
+              }
+            }}
           >
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
-              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+            <motion.div
+              className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+              }}
+              whileHover={{
+                scale: 1.03,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderColor: "rgba(255,255,255,0.4)"
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <motion.div
+                className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
                 <Brain className="w-6 h-6 text-[#212121]" />
-              </div>
-              <h4 className="text-lg font-bold text-white mb-2">Assistente IA de Agendamento</h4>
+              </motion.div>
+              <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Assistente IA de Agendamento</h4>
               <p className="text-white/80 text-sm">
                 Envie fotos da sua agenda atual e a IA organiza automaticamente seus compromissos, evitando conflitos de horários.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
-              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+            <motion.div
+              className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+              }}
+              whileHover={{
+                scale: 1.03,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderColor: "rgba(255,255,255,0.4)"
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <motion.div
+                className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
+                whileHover={{ scale: 1.1, rotate: -5 }}
+              >
                 <MessageSquare className="w-6 h-6 text-[#212121]" />
-              </div>
-              <h4 className="text-lg font-bold text-white mb-2">Comandos por Texto</h4>
+              </motion.div>
+              <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Comandos por Texto</h4>
               <p className="text-white/80 text-sm">
                 Digite comandos como "agende retorno do João para próxima terça às 10h" e a IA cria o agendamento para você.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20">
-              <div className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4">
+            <motion.div
+              className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+              }}
+              whileHover={{
+                scale: 1.03,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderColor: "rgba(255,255,255,0.4)"
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <motion.div
+                className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
                 <Zap className="w-6 h-6 text-[#212121]" />
-              </div>
-              <h4 className="text-lg font-bold text-white mb-2">Sugestões Inteligentes</h4>
+              </motion.div>
+              <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Sugestões Inteligentes</h4>
               <p className="text-white/80 text-sm">
                 Receba sugestões de horários otimizados baseados no seu padrão de atendimento e disponibilidade.
               </p>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section >
