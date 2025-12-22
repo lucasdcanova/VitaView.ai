@@ -384,31 +384,38 @@ const SubscriptionManagement = () => {
 
               {!hasActiveSubscription ? (
                 <Card className="border-dashed border-2">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                      <h2 className="text-xl font-semibold mb-2">Plano Básico (Gratuito)</h2>
-                      <p className="text-muted-foreground mb-6 max-w-md">
-                        Você possui o plano básico com limite de <strong>20 pacientes</strong>, <strong>10 uploads</strong> por perfil mensais e <strong>1 página por upload</strong>.
-                      </p>
-                      <div className="grid grid-cols-3 gap-4 w-full max-w-lg mb-6">
-                        <div className="bg-gray-50 p-3 rounded-lg border text-center">
-                          <div className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Pacientes</div>
-                          <div className="text-xl font-bold">20</div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg border text-center">
-                          <div className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Uploads / Perfil</div>
-                          <div className="text-xl font-bold">10</div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg border text-center">
-                          <div className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Páginas / Upload</div>
-                          <div className="text-xl font-bold">1</div>
+                  <CardContent className="py-4 px-6">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      {/* Left: Plan info */}
+                      <div className="flex items-center gap-3 flex-1">
+                        <AlertCircle className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        <div>
+                          <h2 className="text-lg font-semibold">Plano Básico (Gratuito)</h2>
+                          <p className="text-sm text-muted-foreground">
+                            Limite de <strong>20 pacientes</strong>, <strong>10 uploads</strong>/perfil e <strong>1 página</strong>/upload
+                          </p>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Assine um plano profissional para desbloquear recursos ilimitados de IA e gestão.
-                      </p>
+
+                      {/* Right: Stats */}
+                      <div className="flex gap-3">
+                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
+                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Pacientes</div>
+                          <div className="text-lg font-bold">20</div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
+                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Uploads</div>
+                          <div className="text-lg font-bold">10</div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
+                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Páginas</div>
+                          <div className="text-lg font-bold">1</div>
+                        </div>
+                      </div>
                     </div>
+                    <p className="text-xs text-muted-foreground text-center md:text-right mt-3">
+                      Assine um plano profissional para desbloquear recursos ilimitados.
+                    </p>
                   </CardContent>
                 </Card>
               ) : (
