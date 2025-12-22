@@ -22,6 +22,7 @@ import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
 import { nanoid } from "nanoid";
+import { randomBytes } from "crypto";
 import fs from "fs";
 import path from "path";
 
@@ -3708,7 +3709,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Generate invitation token
-      const token = require('crypto').randomBytes(32).toString('hex');
+      const token = randomBytes(32).toString('hex');
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
 
