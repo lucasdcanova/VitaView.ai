@@ -934,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const backup = await encryptedBackup.createFullBackup(type || 'manual');
       res.json(backup);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao criar backup", error: error.message });
+      res.status(500).json({ message: "Erro ao criar backup", error: (error as Error).message });
     }
   });
 
@@ -954,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const result = await encryptedBackup.restoreBackup(backupId, { tables, dryRun, overwrite });
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao restaurar backup", error: error.message });
+      res.status(500).json({ message: "Erro ao restaurar backup", error: (error as Error).message });
     }
   });
 
@@ -964,7 +964,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const result = await encryptedBackup.verifyBackup(backupId);
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao verificar backup", error: error.message });
+      res.status(500).json({ message: "Erro ao verificar backup", error: (error as Error).message });
     }
   });
 
@@ -3422,7 +3422,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       res.json({ received: true });
     } catch (error) {
-      res.status(400).send(`Webhook Error: ${error.message}`);
+      res.status(400).send(`Webhook Error: ${(error as Error).message}`);
     }
   });
 
@@ -4197,7 +4197,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
     } catch (error) {
       console.error('Erro detalhado na geração do PDF:', error);
-      res.status(500).json({ message: "Erro ao gerar relatório de saúde", error: error.message });
+      res.status(500).json({ message: "Erro ao gerar relatório de saúde", error: (error as Error).message });
     }
   });
 
@@ -4260,7 +4260,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
     } catch (error) {
       console.error('Erro detalhado na geração do PDF do exame:', error);
-      res.status(500).json({ message: "Erro ao gerar relatório do exame", error: error.message });
+      res.status(500).json({ message: "Erro ao gerar relatório do exame", error: (error as Error).message });
     }
   });
 
@@ -4420,7 +4420,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json({ success: true, message: "Migration executed successfully" });
     } catch (error) {
       console.error('Migration error:', error);
-      res.status(500).json({ message: "Migration failed", error: error.message });
+      res.status(500).json({ message: "Migration failed", error: (error as Error).message });
     }
   });
 
