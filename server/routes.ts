@@ -23,6 +23,7 @@ import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromC
 import logger from "./logger";
 import { nanoid } from "nanoid";
 import { randomBytes } from "crypto";
+import { sendClinicInvitationEmail } from "./services/email.service";
 import fs from "fs";
 import path from "path";
 
@@ -3721,8 +3722,22 @@ export async function registerRoutes(app: Express): Promise<void> {
         expiresAt
       });
 
-      // Here you would send an email with the invitation link
-      // For now, we just return the token
+      // Get admin user info for email
+      const adminUser = await storage.getUser(userId);
+      const invitedByName = adminUser?.fullName || adminUser?.username || 'Administrador';
+
+      // Send invitation email
+      const emailSent = await sendClinicInvitationEmail(
+        email,
+        clinic.name,
+        token,
+        invitedByName
+      );
+
+      if (!emailSent) {
+        logger.warn(`Failed to send invitation email to ${email}, but invitation was created`);
+      }
+
       res.status(201).json({
         success: true,
         invitation: {
@@ -3731,7 +3746,8 @@ export async function registerRoutes(app: Express): Promise<void> {
           token: invitation.token,
           expiresAt: invitation.expiresAt
         },
-        inviteUrl: `/accept-invitation/${token}`
+        inviteUrl: `/accept-invitation/${token}`,
+        emailSent
       });
     } catch (error) {
       logger.error("Error inviting member:", error);
