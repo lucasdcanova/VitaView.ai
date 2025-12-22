@@ -12,61 +12,31 @@ import {
   Activity,
   Building,
   ChevronRight,
-  Heart,
   HeartPulse,
-  Circle,
   Stethoscope,
   Clock,
   Eye,
-  Filter,
   RefreshCw,
   BarChart4,
   Sparkles,
   Play,
   FlaskConical,
   Zap,
-  Search,
-  List,
   ScrollText,
-  BarChart,
   TrendingUp,
-  FileBarChart,
-  AreaChart,
   Bell,
-  BellRing,
-  Settings,
   UserCircle,
   Calendar,
-  Dumbbell,
-  BookOpen,
   GraduationCap,
-  FileHeart,
-  Medal,
-  Timer,
+  Lightbulb,
   Upload,
-  Download,
-  ExternalLink,
-  BarChart3,
-  PieChart,
   ArrowUp,
   X,
   ChevronDown,
-  Mail,
-  Phone,
   Lock,
   MessageSquare,
-  Lightbulb,
-  LifeBuoy,
-  AlertCircle,
-  InfoIcon,
-  HelpCircle,
-  Share,
-  Check,
   Star,
-  MapPin,
-  Cookie,
-  Video,
-  Plus
+  Menu
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -78,6 +48,17 @@ export default function LandingPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showCookieConsent, setShowCookieConsent] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Navigation items for reuse
+  const navItems = [
+    { id: "demonstracoes", label: "Vita Timeline" },
+    { id: "como-funciona", label: "View Laboratorial" },
+    { id: "agenda", label: "Agenda" },
+    { id: "beneficios", label: "Benefícios" },
+    { id: "para-quem", label: "Para Quem" },
+    { id: "depoimentos", label: "Depoimentos" }
+  ];
 
   // Efeito para detectar scroll
   useEffect(() => {
@@ -116,6 +97,38 @@ export default function LandingPage() {
       setActiveFaq(index);
     }
   };
+
+  // SEO: Set document title and meta description
+  useEffect(() => {
+    document.title = "VitaView AI - Plataforma de Gestão de Saúde Inteligente";
+
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', 'VitaView AI: Prontuário inteligente que organiza exames, histórico e tendências de saúde do paciente. HIPAA e LGPD compliant. Automatize a gestão clínica com IA.');
+
+    // Update og:title
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (!ogTitle) {
+      ogTitle = document.createElement('meta');
+      ogTitle.setAttribute('property', 'og:title');
+      document.head.appendChild(ogTitle);
+    }
+    ogTitle.setAttribute('content', 'VitaView AI - Plataforma de Gestão de Saúde Inteligente');
+
+    // Update og:description
+    let ogDescription = document.querySelector('meta[property="og:description"]');
+    if (!ogDescription) {
+      ogDescription = document.createElement('meta');
+      ogDescription.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDescription);
+    }
+    ogDescription.setAttribute('content', 'Prontuário inteligente que organiza exames, histórico e tendências de saúde. HIPAA e LGPD compliant.');
+  }, []);
 
   // Variáveis de animação
   const containerVariants = {
@@ -193,17 +206,24 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Mobile access button - only visible on mobile */}
-          <div className="md:hidden">
+          {/* Mobile hamburger menu button */}
+          <div className="md:hidden flex items-center gap-2">
             <Link href="/auth">
               <Button
                 variant="default"
                 size="sm"
                 className="bg-[#212121] hover:bg-[#424242] text-white font-heading font-bold"
               >
-                Acessar <ChevronRight className="ml-1 h-4 w-4" />
+                Acessar
               </Button>
             </Link>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
 
           {/* Login/Access button with improved animation */}
@@ -220,6 +240,62 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </motion.nav>
+
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setIsMobileMenuOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+
+            {/* Slide-out menu */}
+            <motion.div
+              className="absolute right-0 top-0 h-full w-72 bg-white shadow-xl"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="p-6 pt-20">
+                <nav className="space-y-4">
+                  {navItems.map((item, index) => (
+                    <motion.a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block py-3 px-4 text-[#212121] hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {item.label}
+                    </motion.a>
+                  ))}
+                </nav>
+
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <Link href="/auth">
+                    <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white font-bold">
+                      Acessar <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section - design minimalista */}
       <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-pureWhite min-h-screen flex flex-col justify-center">
@@ -454,67 +530,6 @@ export default function LandingPage() {
           <span className="flex items-center">
             <FlaskConical className="w-4 h-4 mr-1 text-[#212121]" /> Interpretação clínica
           </span>
-        </div>
-      </section>
-
-      {/* Pain Point Section */}
-      <section className="bg-gradient-to-r from-[#212121] to-[#424242] text-white py-16 mt-[-3rem] hidden relative overflow-hidden">
-        {/* Elementos decorativos de fundo */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5" opacity="0.3" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#smallGrid)" />
-          </svg>
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Reduza o tempo gasto analisando pilhas de exames.
-            </h2>
-            <p className="text-xl max-w-3xl mx-auto mb-10">
-              Automatize a extração de dados de exames PDF e imagens. O VitaView AI organiza o histórico do paciente em uma linha do tempo intuitiva, permitindo que você foque no diagnóstico e no tratamento.
-            </p>
-
-            {/* Ícones animados */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mt-12">
-              {[
-                { icon: <Search className="w-8 h-8 text-white" />, text: "Busca inteligente em exames" },
-                { icon: <FileBarChart className="w-8 h-8 text-white" />, text: "Análise detalhada de valores" },
-                { icon: <TrendingUp className="w-8 h-8 text-white" />, text: "Acompanhamento de tendências" },
-                { icon: <Zap className="w-8 h-8 text-white" />, text: "Alertas em tempo real" }
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  className="flex flex-col items-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 * index }}
-                >
-                  <motion.div
-                    className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3"
-                    whileHover={{
-                      scale: 1.1,
-                      backgroundColor: "rgba(255,255,255,0.2)"
-                    }}
-                  >
-                    {item.icon}
-                  </motion.div>
-                  <p className="text-sm font-medium">{item.text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -2297,22 +2312,27 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <h3 className="text-white font-semibold mb-4">Empresa</h3>
+                <h3 className="text-white font-semibold mb-4">Contato</h3>
                 <ul className="space-y-2">
-                  {["Sobre nós", "Blog", "Carreiras", "Contato"].map((item, i) => (
+                  {[
+                    { label: "contato@vitaview.ai", href: "mailto:contato@vitaview.ai" },
+                    { label: "Instagram", href: "https://instagram.com/vitaview.ai" }
+                  ].map((item, i) => (
                     <motion.li
-                      key={item}
+                      key={item.label}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: 0.2 + (i * 0.05) }}
                     >
                       <motion.a
-                        href="#"
+                        href={item.href}
+                        target={item.href.startsWith('http') ? '_blank' : undefined}
+                        rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                         className="hover:text-white transition-colors relative group inline-block"
                         whileHover={{ x: 3 }}
                       >
-                        {item}
+                        {item.label}
                         <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
@@ -2328,20 +2348,24 @@ export default function LandingPage() {
               >
                 <h3 className="text-white font-semibold mb-4">Legal</h3>
                 <ul className="space-y-2">
-                  {["Termos de Uso", "Privacidade", "Segurança"].map((item, i) => (
+                  {[
+                    { label: "Termos de Uso", href: "/termos" },
+                    { label: "Privacidade", href: "/privacidade" },
+                    { label: "Segurança", href: "#beneficios" }
+                  ].map((item, i) => (
                     <motion.li
-                      key={item}
+                      key={item.label}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: 0.3 + (i * 0.05) }}
                     >
                       <motion.a
-                        href="#"
+                        href={item.href}
                         className="hover:text-white transition-colors relative group inline-block"
                         whileHover={{ x: 3 }}
                       >
-                        {item}
+                        {item.label}
                         <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                       </motion.a>
                     </motion.li>
