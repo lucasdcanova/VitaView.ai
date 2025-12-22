@@ -1071,9 +1071,9 @@ export class DatabaseStorage implements IStorage {
           description: "Gestão completa para clínicas e consultórios",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
-          price: 29900,
+          price: 49900,
           interval: "month",
-          features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Agenda compartilhada e salas", "Dashboard administrativo", "Relatórios de produtividade"],
+          features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
           promoPrice: null,
           promoDescription: null,
           isActive: true
