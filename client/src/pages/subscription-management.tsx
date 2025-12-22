@@ -125,7 +125,7 @@ const SubscriptionManagement = () => {
     {
       id: 'clinic' as PlanCategory,
       title: 'Clínica Multiprofissional',
-      description: 'Planos a partir de R$ 499/mês',
+      description: 'Planos a partir de R$ 299/mês',
       icon: Building,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
@@ -156,7 +156,8 @@ const SubscriptionManagement = () => {
       case 'clinic':
         return normalizedPlans.filter(plan =>
           plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'clínica multiprofissional'
+          plan.normalizedName === 'clínica multiprofissional' ||
+          plan.normalizedName === 'clínica multiprofissional+'
         );
       case 'hospital':
         return normalizedPlans.filter(plan =>

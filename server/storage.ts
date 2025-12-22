@@ -233,15 +233,27 @@ export class MemStorage implements IStorage {
       isActive: true
     });
 
-    // Plano Clínica Multiprofissional
+    // Plano Clínica Multiprofissional (até 5 profissionais)
     await this.createSubscriptionPlan({
       name: "Clínica Multiprofissional",
-      description: "Gestão completa para clínicas e consultórios",
+      description: "Gestão completa para clínicas pequenas",
+      maxProfiles: -1,
+      maxUploadsPerProfile: -1,
+      price: 29900, // R$ 299,00
+      interval: "month",
+      features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+      isActive: true
+    });
+
+    // Plano Clínica Multiprofissional+ (5+ profissionais)
+    await this.createSubscriptionPlan({
+      name: "Clínica Multiprofissional+",
+      description: "Gestão completa para clínicas maiores",
       maxProfiles: -1,
       maxUploadsPerProfile: -1,
       price: 49900, // R$ 499,00
       interval: "month",
-      features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+      features: ["Tudo do plano Profissional", "Profissionais ilimitados (5+)", "Conta administradora", "Gerenciamento de equipe avançado", "Relatórios consolidados", "Suporte prioritário"],
       isActive: true
     });
 
@@ -1068,12 +1080,24 @@ export class DatabaseStorage implements IStorage {
         },
         {
           name: "Clínica Multiprofissional",
-          description: "Gestão completa para clínicas e consultórios",
+          description: "Gestão completa para clínicas pequenas",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 29900,
+          interval: "month",
+          features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+          promoPrice: null,
+          promoDescription: null,
+          isActive: true
+        },
+        {
+          name: "Clínica Multiprofissional+",
+          description: "Gestão completa para clínicas maiores",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
           price: 49900,
           interval: "month",
-          features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+          features: ["Tudo do plano Profissional", "Profissionais ilimitados (5+)", "Conta administradora", "Gerenciamento de equipe avançado", "Relatórios consolidados", "Suporte prioritário"],
           promoPrice: null,
           promoDescription: null,
           isActive: true
