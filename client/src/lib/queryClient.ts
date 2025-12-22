@@ -12,18 +12,18 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  
+
   const requestOptions: RequestInit = {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include" as RequestCredentials,
   };
-  
-  
+
+
   try {
     const res = await fetch(url, requestOptions);
-    
+
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
@@ -36,25 +36,25 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    
-    try {
-      const res = await fetch(queryKey[0] as string, {
-        credentials: "include" as RequestCredentials,
-      });
-      
-      
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+    async ({ queryKey }) => {
+
+      try {
+        const res = await fetch(queryKey[0] as string, {
+          credentials: "include" as RequestCredentials,
+        });
+
+
+        if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+          return null;
+        }
+
+        await throwIfResNotOk(res);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        throw error;
       }
-      
-      await throwIfResNotOk(res);
-      const data = await res.json();
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  };
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,8 +62,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
     mutations: {
       retry: false,

@@ -26,6 +26,7 @@ import { randomBytes } from "crypto";
 import { sendClinicInvitationEmail } from "./services/email.service";
 import fs from "fs";
 import path from "path";
+import { notificationScheduler } from "./services/notification-scheduler";
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -4583,6 +4584,19 @@ export async function registerRoutes(app: Express): Promise<void> {
         error: error.message,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
+    }
+  });
+
+  // Analytics
+  app.get("/api/analytics", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const range = req.query.range as string || '30d';
+      const data = await storage.getAnalyticsData(userId, range);
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
 

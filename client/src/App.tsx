@@ -28,6 +28,7 @@ const Profile = lazy(() => import("@/pages/profile"));
 const DiagnosisPage = lazy(() => import("@/pages/diagnosis-page"));
 const HealthTrends = lazy(() => import("@/pages/health-trends-new"));
 const ExamTimeline = lazy(() => import("@/pages/exam-timeline"));
+const ReportsPage = lazy(() => import("@/pages/reports-page"));
 const Home = lazy(() => import("@/pages/home"));
 const Agenda = lazy(() => import("@/pages/agenda"));
 
@@ -70,6 +71,7 @@ function Router() {
         <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
         <ProtectedRoute path="/profile" component={Profile} />
         <ProtectedRoute path="/bulk-import" component={BulkImport} />
+        <ProtectedRoute path="/reports" component={ReportsPage} />
 
         <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
         <ProtectedRoute path="/admin-panel" component={AdminPanel} />

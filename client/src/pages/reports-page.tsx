@@ -1,0 +1,199 @@
+
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Loader2, TrendingUp, PieChart as PieChartIcon, Activity, FileText, Users } from "lucide-react";
+
+export default function ReportsPage() {
+    const [range, setRange] = useState("30d");
+
+    const { data: analytics, isLoading } = useQuery({
+        queryKey: ["/api/analytics", range],
+        queryFn: async () => {
+            const res = await fetch(`/api/analytics?range=${range}`);
+            if (!res.ok) throw new Error("Failed to fetch analytics");
+            return res.json();
+        }
+    });
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+    return (
+        <div className="flex h-screen bg-gray-50">
+            <Sidebar />
+            <div className="flex-1 flex flex-col md:pl-64 h-screen overflow-hidden">
+                <MobileHeader />
+                <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                    <div className="max-w-7xl mx-auto space-y-8">
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Relatórios e Analytics</h1>
+                                <p className="text-gray-500 mt-1">Visualize tendências e métricas de saúde.</p>
+                            </div>
+
+                            <Select value={range} onValueChange={setRange}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Período" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                                    <SelectItem value="1y">Último ano</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : (
+                            <>
+                                {/* Summary Cards */}
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Total de Pacientes</CardTitle>
+                                            <Users className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{analytics?.summary?.totalPatients || 0}</div>
+                                            <p className="text-xs text-muted-foreground">Pacientes cadastrados</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Exames Realizados</CardTitle>
+                                            <FileText className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">{analytics?.summary?.totalExams || 0}</div>
+                                            <p className="text-xs text-muted-foreground">No período selecionado</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Exame Mais Comum</CardTitle>
+                                            <Activity className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold truncate" title={analytics?.summary?.mostFrequentExam}>{analytics?.summary?.mostFrequentExam || "N/A"}</div>
+                                            <p className="text-xs text-muted-foreground">Mais frequente</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Charts Grid */}
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+
+                                    {/* Activity Bar Chart */}
+                                    <Card className="col-span-4">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <TrendingUp className="h-5 w-5 text-primary" />
+                                                Atividade Mensal
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Volume de exames e novos pacientes nos últimos meses
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="pl-2">
+                                            <div className="h-[300px]">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={analytics?.activityData || []}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                        <XAxis
+                                                            dataKey="name"
+                                                            stroke="#888888"
+                                                            fontSize={12}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                        />
+                                                        <YAxis
+                                                            stroke="#888888"
+                                                            fontSize={12}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickFormatter={(value) => `${value}`}
+                                                        />
+                                                        <Tooltip
+                                                            cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                        />
+                                                        <Legend />
+                                                        <Bar
+                                                            dataKey="exames"
+                                                            name="Exames"
+                                                            fill="#0ea5e9"
+                                                            radius={[4, 4, 0, 0]}
+                                                            maxBarSize={50}
+                                                        />
+                                                        <Bar
+                                                            dataKey="pacientes"
+                                                            name="Novos Pacientes"
+                                                            fill="#10b981"
+                                                            radius={[4, 4, 0, 0]}
+                                                            maxBarSize={50}
+                                                        />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Exam Types Pie Chart */}
+                                    <Card className="col-span-3">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <PieChartIcon className="h-5 w-5 text-primary" />
+                                                Tipos de Exames
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Distribuição por categoria
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="h-[300px] flex items-center justify-center">
+                                                {analytics?.examsByType?.length > 0 ? (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie
+                                                                data={analytics?.examsByType}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={60}
+                                                                outerRadius={80}
+                                                                paddingAngle={5}
+                                                                dataKey="value"
+                                                            >
+                                                                {analytics?.examsByType.map((entry: any, index: number) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip />
+                                                            <Legend />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                ) : (
+                                                    <div className="text-center text-gray-500">
+                                                        <p>Sem dados suficientes para exibir o gráfico.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
+}

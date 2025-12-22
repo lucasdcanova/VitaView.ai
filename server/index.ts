@@ -4,6 +4,7 @@ console.log("🚀 Server is starting/restarting with new promotional logic...");
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { notificationScheduler } from "./services/notification-scheduler";
 import { setupSecurity } from "./middleware/security";
 import { advancedCompression } from "./middleware/compression";
 import { httpsConfig } from "./security/https-config";
@@ -86,6 +87,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Start notification scheduler
+  notificationScheduler.start();
+
   // Then register all routes
   await registerRoutes(app);
 

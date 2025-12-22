@@ -4,7 +4,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, asc, and, or, inArray, sql } from "drizzle-orm";
+import { eq, desc, asc, and, or, inArray, sql, gt, ne } from "drizzle-orm";
 import logger from "./logger";
 
 // Fix for type issues - use any to bypass complex type definitions
@@ -98,6 +98,19 @@ export interface IStorage {
 
   // Subscription operations
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscriptionByUserId(userId: number): Promise<Subscription | undefined>;
+  updateSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined>;
+
+  // Analytics operations
+  getAnalyticsData(userId: number, range?: string): Promise<any>;
+
+  // Notification operations
+  getAppointmentsByDate(date: string): Promise<Appointment[]>;
+  getRecentAbnormalMetrics(since: Date): Promise<HealthMetric[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
   getUserSubscription(userId: number): Promise<Subscription | undefined>;
   createUserSubscription(subscription: InsertSubscription): Promise<Subscription>;
@@ -183,6 +196,7 @@ export class MemStorage implements IStorage {
   private clinicIdCounter: number = 1;
   private clinicInvitationIdCounter: number = 1;
 
+
   constructor() {
     this.users = new Map();
     this.profiles = new Map();
@@ -190,6 +204,7 @@ export class MemStorage implements IStorage {
     this.examResults = new Map();
     this.healthMetricsMap = new Map();
     this.notificationsMap = new Map();
+
     this.subscriptionPlansMap = new Map();
     this.subscriptionsMap = new Map();
     this.diagnosesMap = new Map();
@@ -270,6 +285,19 @@ export class MemStorage implements IStorage {
       isActive: true
     });
   }
+
+  // Notification Helpers - MemStorage
+  async getAppointmentsByDate(date: string): Promise<Appointment[]> {
+    return Array.from(this.appointmentsMap.values()).filter(a => a.date === date);
+  }
+
+  async getRecentAbnormalMetrics(since: Date): Promise<HealthMetric[]> {
+    return Array.from(this.healthMetricsMap.values()).filter(m =>
+      new Date(m.date) > since && m.status !== 'normal'
+    );
+  }
+
+
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
@@ -1039,9 +1067,66 @@ export class MemStorage implements IStorage {
   async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
     return Array.from(this.clinicInvitationsMap.values()).filter(i => i.clinicId === clinicId);
   }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const id = this.subscriptionIdCounter++;
+    const newSubscription: Subscription = {
+      ...subscription,
+      id,
+      createdAt: new Date(),
+      stripeCustomerId: subscription.stripeCustomerId || null,
+      stripeSubscriptionId: subscription.stripeSubscriptionId || null,
+      status: subscription.status || 'active',
+      canceledAt: null,
+      profilesCreated: 0,
+      uploadsCount: {}
+    };
+    this.subscriptionsMap.set(id, newSubscription);
+    return newSubscription;
+  }
+
+  async getSubscriptionByUserId(userId: number): Promise<Subscription | undefined> {
+    return Array.from(this.subscriptionsMap.values()).find(s => s.userId === userId);
+  }
+
+  async updateSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    const sub = this.subscriptionsMap.get(id);
+    if (!sub) return undefined;
+    const updated = { ...sub, ...data };
+    this.subscriptionsMap.set(id, updated);
+    return updated;
+  }
+
+  async getAnalyticsData(userId: number, range: string = '30d'): Promise<any> {
+    return {
+      examsByType: [],
+      activityData: [],
+      summary: {
+        totalPatients: 0,
+        totalExams: 0,
+        mostFrequentExam: "N/A"
+      }
+    };
+  }
 }
 
 export class DatabaseStorage implements IStorage {
+
+  // Notification Helpers - DatabaseStorage
+  async getAppointmentsByDate(date: string): Promise<Appointment[]> {
+    return await db.select().from(appointments).where(eq(appointments.date, date));
+  }
+
+  async getRecentAbnormalMetrics(since: Date): Promise<HealthMetric[]> {
+    return await db.select().from(healthMetrics).where(
+      and(
+        gt(healthMetrics.date, since),
+        ne(healthMetrics.status, 'normal')
+      )
+    );
+  }
+
+
   sessionStore: SessionStore;
 
   constructor() {
@@ -1590,6 +1675,107 @@ export class DatabaseStorage implements IStorage {
 
   async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
     return await db.select().from(clinicInvitations).where(eq(clinicInvitations.clinicId, clinicId));
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [newSubscription] = await db.insert(subscriptions).values(subscription).returning();
+    return newSubscription;
+  }
+
+  async getSubscriptionByUserId(userId: number): Promise<Subscription | undefined> {
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+    return sub;
+  }
+
+  async updateSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    const [updated] = await db.update(subscriptions).set(data).where(eq(subscriptions.id, id)).returning();
+    return updated;
+  }
+
+  async getAnalyticsData(userId: number, range: string = '30d'): Promise<any> {
+    const now = new Date();
+    let startDate = new Date();
+
+    // Calculate start date based on range
+    if (range === '7d') startDate.setDate(now.getDate() - 7);
+    else if (range === '90d') startDate.setDate(now.getDate() - 90);
+    else if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
+    else startDate.setDate(now.getDate() - 30); // Default 30d
+
+    // 1. Exam Counts by Type (for Pie Chart)
+    const userExams = await db.select()
+      .from(exams)
+      .where(and(
+        eq(exams.userId, userId),
+        sql`${exams.uploadDate} >= ${startDate.toISOString()}`
+      ));
+
+    const examTypeCount: Record<string, number> = {};
+    userExams.forEach(exam => {
+      // Try to parse original content to get type, or use a default
+      let type = "Outros";
+      try {
+        if (exam.originalContent) {
+          const content = JSON.parse(exam.originalContent);
+          if (content.examType) type = content.examType;
+        }
+      } catch (e) { }
+
+      examTypeCount[type] = (examTypeCount[type] || 0) + 1;
+    });
+
+    const examsByType = Object.entries(examTypeCount).map(([name, value]) => ({ name, value }));
+
+    // 2. Activity Trends (Exams & Patients over time)
+    // Group by month for longer ranges, or day for shorter? keeping simple: Group by Month/Day
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const activityData: any[] = [];
+
+    // Mocking some trend data structure for now based on actual timestamps could be complex in SQL
+    // Let's do a simple JS aggregation for the last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthName = months[d.getMonth()];
+
+      // Count exams in this month
+      const examsInMonth = await db.select({ count: sql<number>`count(*)` })
+        .from(exams)
+        .where(and(
+          eq(exams.userId, userId),
+          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${d.getMonth() + 1}`,
+          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${d.getFullYear()}`
+        ));
+
+      // Count patients (profiles) created in this month
+      const patientsInMonth = await db.select({ count: sql<number>`count(*)` })
+        .from(profiles)
+        .where(and(
+          eq(profiles.userId, userId),
+          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${d.getMonth() + 1}`,
+          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${d.getFullYear()}`
+        ));
+
+      activityData.push({
+        name: monthName,
+        exames: Number(examsInMonth[0].count),
+        pacientes: Number(patientsInMonth[0].count)
+      });
+    }
+
+    // 3. Totals
+    const totalPatients = (await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.userId, userId)))[0].count;
+    const totalExams = (await db.select({ count: sql<number>`count(*)` }).from(exams).where(eq(exams.userId, userId)))[0].count;
+
+    return {
+      examsByType,
+      activityData,
+      summary: {
+        totalPatients: Number(totalPatients),
+        totalExams: Number(totalExams),
+        mostFrequentExam: examsByType.sort((a, b) => b.value - a.value)[0]?.name || "N/A"
+      }
+    };
   }
 }
 

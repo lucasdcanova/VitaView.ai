@@ -12,6 +12,7 @@ import {
   Heart,
   Calendar,
   Settings,
+  BarChart2,
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
@@ -122,7 +123,10 @@ export default function Sidebar(props: SidebarProps) {
           </div>
 
           <Link href="/profile">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-charcoal bg-transparent text-charcoal rounded-lg transition-all duration-200 hover:bg-lightGray text-sm font-heading font-bold">
+            <button
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-charcoal bg-transparent text-charcoal rounded-lg transition-all duration-200 hover:bg-lightGray text-sm font-heading font-bold"
+              aria-label="Configurações do perfil"
+            >
               <Settings className="h-4 w-4" />
               <span>Configurações</span>
             </button>
@@ -186,6 +190,15 @@ export default function Sidebar(props: SidebarProps) {
           </Link>
 
           <Link
+            href="/reports"
+            onClick={handleNavClick}
+            className={getNavItemClass('/reports')}
+          >
+            <BarChart2 className={getIconClass('/reports')} />
+            <span className="font-body">Relatórios</span>
+          </Link>
+
+          <Link
             href="/subscription"
             onClick={handleNavClick}
             className={getNavItemClass('/subscription')}
@@ -214,6 +227,7 @@ export default function Sidebar(props: SidebarProps) {
             <button
               onClick={handleLogout}
               className="w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-lightGray transition-all duration-200"
+              aria-label="Sair da conta"
             >
               <LogOut className="mr-3 h-5 w-5" />
               <span className="font-body">Sair</span>

@@ -17,7 +17,8 @@ import {
     CheckCircle2,
     TrendingUp,
     Activity,
-    Stethoscope
+    Stethoscope,
+    Settings2
 } from "lucide-react";
 import PatientHeader from "@/components/patient-header";
 import { AgendaWidget } from "@/components/agenda/agenda-widget";
@@ -26,6 +27,7 @@ import FloatingPatientBar from "@/components/floating-patient-bar";
 import CreatePatientDialog from "@/components/create-patient-dialog";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { VitalsWidget } from "@/components/dashboard/vitals-widget";
+import { DashboardCustomizeDialog } from "@/components/dashboard/dashboard-customize-dialog";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -68,6 +70,7 @@ interface DoctorViewProps {
 export function DoctorView({ stats, isLoading }: DoctorViewProps) {
     const { activeProfile, profiles } = useProfiles();
     const [isCreatePatientOpen, setIsCreatePatientOpen] = useState(false);
+    const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
 
     // Fetch recent exams
     const { data: recentExams } = useQuery({
@@ -91,12 +94,45 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
         "recent-exams",
         "attention"
     ]);
+    const [hiddenWidgets, setHiddenWidgets] = useState<string[]>([]);
 
     useEffect(() => {
         if (user?.preferences && (user.preferences as any).dashboardLayout) {
             setWidgetOrder((user.preferences as any).dashboardLayout);
         }
+        if (user?.preferences && (user.preferences as any).hiddenWidgets) {
+            setHiddenWidgets((user.preferences as any).hiddenWidgets);
+        }
     }, [user]);
+
+    const handleToggleWidget = async (widgetId: string, isHidden: boolean) => {
+        const newHiddenWidgets = isHidden
+            ? [...hiddenWidgets, widgetId]
+            : hiddenWidgets.filter(id => id !== widgetId);
+
+        setHiddenWidgets(newHiddenWidgets);
+
+        // Save to backend
+        try {
+            await fetch("/api/user/preferences", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    preferences: {
+                        ...(user?.preferences as object || {}),
+                        hiddenWidgets: newHiddenWidgets
+                    }
+                })
+            });
+        } catch (err) {
+            console.error("Failed to save preferences", err);
+            toast({
+                title: "Erro ao salvar preferências",
+                description: "Não foi possível salvar suas configurações de visualização.",
+                variant: "destructive"
+            });
+        }
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -215,13 +251,27 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
             <div className="flex flex-1 relative">
                 <main className="flex-1 px-6 py-8">
                     <div className="max-w-6xl mx-auto">
-                        <PatientHeader
-                            title="Bem-vindo ao VitaView AI"
-                            description="Gerencie seus pacientes, exames e consultas em um só lugar."
-                            patient={undefined}
-                            lastExamDate={null}
-                            showTitleAsMain={true}
-                        />
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+                            <div className="flex-1">
+                                <PatientHeader
+                                    title="Bem-vindo ao VitaView AI"
+                                    description="Gerencie seus pacientes, exames e consultas em um só lugar."
+                                    patient={undefined}
+                                    lastExamDate={null}
+                                    showTitleAsMain={true}
+                                />
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="self-start md:self-center gap-2"
+                                onClick={() => setIsCustomizeOpen(true)}
+                                aria-label="Personalizar dashboard"
+                            >
+                                <Settings2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Personalizar</span>
+                            </Button>
+                        </div>
 
                         {isLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -241,11 +291,13 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
-                                    items={widgetOrder}
+                                    items={widgetOrder.filter(id => !hiddenWidgets.includes(id))}
                                     strategy={verticalListSortingStrategy}
                                 >
                                     <div className="space-y-8">
                                         {widgetOrder.map((id) => {
+                                            if (hiddenWidgets.includes(id)) return null;
+
                                             switch (id) {
                                                 case "quick-actions":
                                                     return (
@@ -573,6 +625,14 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
 
             {/* Onboarding Tour */}
             <OnboardingTour />
+
+            {/* Customize Dashboard Dialog */}
+            <DashboardCustomizeDialog
+                open={isCustomizeOpen}
+                onOpenChange={setIsCustomizeOpen}
+                hiddenWidgets={hiddenWidgets}
+                onToggleWidget={handleToggleWidget}
+            />
         </div>
     );
 }
