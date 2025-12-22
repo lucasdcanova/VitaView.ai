@@ -12,7 +12,6 @@ import {
   Heart,
   Calendar,
   Settings,
-  Building,
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
@@ -182,18 +181,6 @@ export default function Sidebar(props: SidebarProps) {
             <CreditCard className={getIconClass('/subscription')} />
             <span className="font-body">Minha Assinatura</span>
           </Link>
-
-          {/* Link para gerenciamento de clínica - visível apenas para membros de clínica */}
-          {user?.clinicId && (
-            <Link
-              href="/clinic"
-              onClick={handleNavClick}
-              className={getNavItemClass('/clinic')}
-            >
-              <Building className={getIconClass('/clinic')} />
-              <span className="font-body">Minha Clínica</span>
-            </Link>
-          )}
 
           {/* Link para o painel administrativo - visível apenas para administradores */}
           {user?.role === 'admin' && (
