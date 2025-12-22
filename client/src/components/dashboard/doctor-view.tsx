@@ -21,9 +21,11 @@ import {
 } from "lucide-react";
 import PatientHeader from "@/components/patient-header";
 import { AgendaWidget } from "@/components/agenda/agenda-widget";
+
 import FloatingPatientBar from "@/components/floating-patient-bar";
 import CreatePatientDialog from "@/components/create-patient-dialog";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
+import { VitalsWidget } from "@/components/dashboard/vitals-widget";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -192,6 +194,8 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                                         ))}
                                     </div>
                                 </section>
+
+                                <VitalsWidget />
 
                                 {/* Stats Row */}
                                 <section>
