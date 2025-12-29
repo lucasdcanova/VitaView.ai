@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
 import { TriageDialog } from "@/components/triage/triage-dialog";
 import { Stethoscope } from "lucide-react";
+import { AppointmentCard } from "./appointment-card";
+import { AppointmentPopoverHeader } from "./appointment-popover-header";
 
 interface AgendaCalendarProps {
   appointments?: Record<number, Appointment[]>;
@@ -226,70 +228,11 @@ export function AgendaCalendar({
                       return (
                         <Popover key={appointment.id || idx}>
                           <PopoverTrigger asChild>
-                            <motion.div
-                              className={`${styles.bg} border-l-4 ${styles.border} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative`}
-                              whileHover={{ scale: 1.02 }}
-                            >
-                              <div className={`text-xs font-semibold ${styles.text}`}>{appointment.time}</div>
-                              <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>{appointment.patientName}</div>
-                              <div className={`text-xs ${styles.label} capitalize`}>{appointment.type}</div>
-                              {/* Manchester Priority Indicator on Card */}
-                              {(() => {
-                                const { data: triageData } = useQuery<any>({
-                                  queryKey: [`/api/triage/appointment/${appointment.id}`],
-                                  enabled: !!appointment.id,
-                                });
-                                if (triageData?.manchesterPriority) {
-                                  const priorityColors: Record<string, string> = {
-                                    emergent: "bg-red-500",
-                                    very_urgent: "bg-orange-500",
-                                    urgent: "bg-yellow-500",
-                                    standard: "bg-green-500",
-                                    non_urgent: "bg-blue-500",
-                                  };
-                                  return (
-                                    <div className={`absolute top-1 right-1 w-3 h-3 rounded-full ${priorityColors[triageData.manchesterPriority]} ring-2 ring-white`} />
-                                  );
-                                }
-                                return null;
-                              })()}
-                            </motion.div>
+                            <AppointmentCard appointment={appointment} styles={styles} />
                           </PopoverTrigger>
                           <PopoverContent className="w-80">
                             <div className="grid gap-4">
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <h4 className="font-medium leading-none">{appointment.patientName}</h4>
-                                  {/* Manchester Priority Badge in Popover */}
-                                  {(() => {
-                                    const { data: triageData } = useQuery<any>({
-                                      queryKey: [`/api/triage/appointment/${appointment.id}`],
-                                      enabled: !!appointment.id,
-                                    });
-                                    if (triageData?.manchesterPriority) {
-                                      const priorityConfig: Record<string, { color: string; label: string }> = {
-                                        emergent: { color: "bg-red-500", label: "Emergente" },
-                                        very_urgent: { color: "bg-orange-500", label: "Muito Urgente" },
-                                        urgent: { color: "bg-yellow-500", label: "Urgente" },
-                                        standard: { color: "bg-green-500", label: "Pouco Urgente" },
-                                        non_urgent: { color: "bg-blue-500", label: "Não Urgente" },
-                                      };
-                                      const config = priorityConfig[triageData.manchesterPriority];
-                                      return (
-                                        <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100">
-                                          <div className={`w-3 h-3 rounded-full ${config.color}`} />
-                                          <span className="text-xs font-medium text-gray-700">{config.label}</span>
-                                        </div>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
-                                </div>
-                                <p className="text-sm text-muted-foreground capitalize flex items-center gap-2">
-                                  <span className={`w-2 h-2 rounded-full ${styles.dot}`}></span>
-                                  {appointment.type}
-                                </p>
-                              </div>
+                              <AppointmentPopoverHeader appointment={appointment} styles={styles} />
                               <div className="grid gap-2">
                                 <div className="flex items-center gap-2 text-sm">
                                   <Clock className="w-4 h-4 text-gray-500" />
