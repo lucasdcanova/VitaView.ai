@@ -25,9 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
 import { TriageDialog } from "@/components/triage/triage-dialog";
-import { TriageBadge } from "@/components/triage/triage-badge";
 import { Stethoscope } from "lucide-react";
-import { AppointmentPopoverContent } from "./appointment-popover-content";
 
 interface AgendaCalendarProps {
   appointments?: Record<number, Appointment[]>;
