@@ -1,4 +1,5 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords } from "@shared/schema";
+export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
 import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -156,6 +157,12 @@ export interface IStorage {
   updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined>;
   getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]>;
 
+  // Triage operations
+  createTriageRecord(record: any): Promise<any>;
+  getTriageByAppointmentId(appointmentId: number): Promise<any | null>;
+  updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined>;
+  getTriageHistoryByProfileId(profileId: number): Promise<any[]>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -177,6 +184,7 @@ export class MemStorage implements IStorage {
   private doctorsMap: Map<number, Doctor>;
   private clinicsMap: Map<number, Clinic>;
   private clinicInvitationsMap: Map<number, ClinicInvitation>;
+  private triageRecordsMap: Map<number, any>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -195,6 +203,7 @@ export class MemStorage implements IStorage {
   private doctorIdCounter: number = 1;
   private clinicIdCounter: number = 1;
   private clinicInvitationIdCounter: number = 1;
+  private triageIdCounter: number = 1;
 
 
   constructor() {
@@ -215,6 +224,7 @@ export class MemStorage implements IStorage {
     this.doctorsMap = new Map();
     this.clinicsMap = new Map();
     this.clinicInvitationsMap = new Map();
+    this.triageRecordsMap = new Map();
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -1068,6 +1078,40 @@ export class MemStorage implements IStorage {
     return Array.from(this.clinicInvitationsMap.values()).filter(i => i.clinicId === clinicId);
   }
 
+  // Triage operations
+  async createTriageRecord(record: any): Promise<any> {
+    const id = this.triageIdCounter++;
+    const newRecord = {
+      ...record,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.triageRecordsMap.set(id, newRecord);
+    return newRecord;
+  }
+
+  async getTriageByAppointmentId(appointmentId: number): Promise<any | null> {
+    const triage = Array.from(this.triageRecordsMap.values()).find(
+      t => t.appointmentId === appointmentId
+    );
+    return triage || null;
+  }
+
+  async updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined> {
+    const existing = this.triageRecordsMap.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...record, updatedAt: new Date() };
+    this.triageRecordsMap.set(id, updated);
+    return updated;
+  }
+
+  async getTriageHistoryByProfileId(profileId: number): Promise<any[]> {
+    return Array.from(this.triageRecordsMap.values())
+      .filter(t => t.profileId === profileId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
     const id = this.subscriptionIdCounter++;
     const newSubscription: Subscription = {
@@ -1675,6 +1719,32 @@ export class DatabaseStorage implements IStorage {
 
   async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
     return await db.select().from(clinicInvitations).where(eq(clinicInvitations.clinicId, clinicId));
+  }
+
+  // Triage operations
+  async createTriageRecord(record: any): Promise<any> {
+    const [newRecord] = await db.insert(triageRecords).values(record).returning();
+    return newRecord;
+  }
+
+  async getTriageByAppointmentId(appointmentId: number): Promise<any | null> {
+    const [triage] = await db.select().from(triageRecords).where(eq(triageRecords.appointmentId, appointmentId));
+    return triage || null;
+  }
+
+  async updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined> {
+    const [updated] = await db.update(triageRecords)
+      .set({ ...record, updatedAt: new Date() })
+      .where(eq(triageRecords.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getTriageHistoryByProfileId(profileId: number): Promise<any[]> {
+    return await db.select()
+      .from(triageRecords)
+      .where(eq(triageRecords.profileId, profileId))
+      .orderBy(desc(triageRecords.createdAt));
   }
 
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {

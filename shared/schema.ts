@@ -559,5 +559,68 @@ export const insertDoctorSchema = createInsertSchema(doctors).pick({
   isDefault: true,
 });
 
+
 export type Doctor = typeof doctors.$inferSelect;
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
+
+// Triage records schema
+export const triageRecords = pgTable("triage_records", {
+  id: serial("id").primaryKey(),
+  appointmentId: integer("appointment_id").notNull().references(() => appointments.id),
+  profileId: integer("profile_id").references(() => profiles.id),
+  performedByUserId: integer("performed_by_user_id").notNull().references(() => users.id),
+  performedByName: text("performed_by_name").notNull(),
+
+  // Anamnese
+  chiefComplaint: text("chief_complaint").notNull(),
+  currentIllnessHistory: text("current_illness_history"),
+  painScale: integer("pain_scale"),
+
+  // Sinais vitais
+  systolicBp: integer("systolic_bp"),
+  diastolicBp: integer("diastolic_bp"),
+  heartRate: integer("heart_rate"),
+  respiratoryRate: integer("respiratory_rate"),
+  temperature: text("temperature"),
+  oxygenSaturation: integer("oxygen_saturation"),
+  bloodGlucose: integer("blood_glucose"),
+  weight: text("weight"),
+  height: integer("height"),
+
+  // Manchester
+  manchesterPriority: text("manchester_priority").notNull(),
+  manchesterDiscriminator: text("manchester_discriminator"),
+
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertTriageRecordSchema = createInsertSchema(triageRecords).pick({
+  appointmentId: true,
+  profileId: true,
+  performedByUserId: true,
+  performedByName: true,
+  chiefComplaint: true,
+  currentIllnessHistory: true,
+  painScale: true,
+  systolicBp: true,
+  diastolicBp: true,
+  heartRate: true,
+  respiratoryRate: true,
+  temperature: true,
+  oxygenSaturation: true,
+  bloodGlucose: true,
+  weight: true,
+  height: true,
+  manchesterPriority: true,
+  manchesterDiscriminator: true,
+  notes: true,
+}).extend({
+  painScale: z.number().int().min(0).max(10).optional().nullable(),
+  oxygenSaturation: z.number().int().min(0).max(100).optional().nullable(),
+  manchesterPriority: z.enum(['emergent', 'very_urgent', 'urgent', 'standard', 'non_urgent']),
+});
+
+export type TriageRecord = typeof triageRecords.$inferSelect;
+export type InsertTriageRecord = z.infer<typeof insertTriageRecordSchema>;

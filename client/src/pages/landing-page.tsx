@@ -1748,11 +1748,11 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Colaboração entre especialistas</span>
+                    <span className="text-[#9E9E9E] text-sm">Compartilhamento seguro de dados</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-[#9E9E9E] text-sm">Padronização de condutas</span>
+                    <span className="text-[#9E9E9E] text-sm">Fluxo de trabalho otimizado</span>
                   </li>
                 </ul>
               </div>
@@ -2235,17 +2235,7 @@ export default function LandingPage() {
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <div className="flex items-center mb-4">
-                <motion.div
-                  className="w-10 h-10 rounded-xl mr-3 shadow-md overflow-hidden"
-                  whileHover={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <img
-                    src="/logo_rounded.png"
-                    alt="VitaView AI"
-                    className="w-full h-full object-contain"
-                  />
-                </motion.div>
+                <Logo variant="icon" size="sm" showText={false} className="mr-3" />
                 <span className="text-xl font-bold text-white">VitaView AI</span>
               </div>
               <p className="max-w-xs">

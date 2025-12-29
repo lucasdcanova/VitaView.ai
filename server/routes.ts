@@ -1191,6 +1191,80 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Triage Routes
+  app.post("/api/triage", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      const triageData = {
+        ...req.body,
+        performedByUserId: req.user.id,
+        performedByName: req.user.fullName || req.user.username
+      };
+
+      const triage = await storage.createTriageRecord(triageData);
+      res.json(triage);
+    } catch (error) {
+      console.error('Error creating triage:', error);
+      res.status(500).json({ message: "Erro ao criar registro de triagem" });
+    }
+  });
+
+  app.get("/api/triage/appointment/:appointmentId", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      const appointmentId = parseInt(req.params.appointmentId);
+      if (isNaN(appointmentId)) {
+        return res.status(400).json({ message: "ID de consulta inválido" });
+      }
+
+      const triage = await storage.getTriageByAppointmentId(appointmentId);
+      res.json(triage);
+    } catch (error) {
+      console.error('Error fetching triage:', error);
+      res.status(500).json({ message: "Erro ao buscar triagem" });
+    }
+  });
+
+  app.patch("/api/triage/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const updated = await storage.updateTriageRecord(id, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "Triagem não encontrada" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating triage:', error);
+      res.status(500).json({ message: "Erro ao atualizar triagem" });
+    }
+  });
+
+  app.get("/api/triage/history/:profileId", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      const profileId = parseInt(req.params.profileId);
+      if (isNaN(profileId)) {
+        return res.status(400).json({ message: "ID de paciente inválido" });
+      }
+
+      const history = await storage.getTriageHistoryByProfileId(profileId);
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching triage history:', error);
+      res.status(500).json({ message: "Erro ao buscar histórico de triagens" });
+    }
+  });
+
   // Doctor Dashboard Stats
   app.get("/api/doctor/dashboard-stats", ensureAuthenticated, async (req, res) => {
     try {

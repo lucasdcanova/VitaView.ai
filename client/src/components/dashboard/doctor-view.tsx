@@ -135,7 +135,11 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
     };
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Só inicia o drag após mover 8 pixels
+            },
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
@@ -144,34 +148,37 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
 
-        if (active.id !== over?.id) {
-            setWidgetOrder((items) => {
-                const oldIndex = items.indexOf(active.id as string);
-                const newIndex = items.indexOf(over!.id as string);
-                const newOrder = arrayMove(items, oldIndex, newIndex);
-
-                // Save to backend
-                fetch("/api/user/preferences", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        preferences: {
-                            ...(user?.preferences as object || {}),
-                            dashboardLayout: newOrder
-                        }
-                    })
-                }).catch(err => {
-                    console.error("Failed to save layout", err);
-                    toast({
-                        title: "Erro ao salvar layout",
-                        description: "Não foi possível salvar a organização do dashboard.",
-                        variant: "destructive"
-                    });
-                });
-
-                return newOrder;
-            });
+        // Verificação de segurança: se não há 'over' (destino do drag), não fazer nada
+        if (!over || active.id === over.id) {
+            return;
         }
+
+        setWidgetOrder((items) => {
+            const oldIndex = items.indexOf(active.id as string);
+            const newIndex = items.indexOf(over.id as string);
+            const newOrder = arrayMove(items, oldIndex, newIndex);
+
+            // Save to backend
+            fetch("/api/user/preferences", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    preferences: {
+                        ...(user?.preferences as object || {}),
+                        dashboardLayout: newOrder
+                    }
+                })
+            }).catch(err => {
+                console.error("Failed to save layout", err);
+                toast({
+                    title: "Erro ao salvar layout",
+                    description: "Não foi possível salvar a organização do dashboard.",
+                    variant: "destructive"
+                });
+            });
+
+            return newOrder;
+        });
     }
 
     const isNewUser = !profiles || profiles.length === 0;
