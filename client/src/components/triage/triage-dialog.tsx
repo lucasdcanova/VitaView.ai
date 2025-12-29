@@ -295,6 +295,53 @@ export function TriageDialog({ open, onOpenChange, appointmentId, patientName, p
                                 />
                             </div>
                         </div>
+
+                        {/* IMC Calculation */}
+                        {weight && height && parseFloat(weight) > 0 && parseFloat(height) > 0 && (
+                            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-sm font-medium text-blue-900">IMC (Índice de Massa Corporal)</div>
+                                        <div className="text-xs text-blue-700 mt-1">
+                                            {(() => {
+                                                const bmi = parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2);
+                                                let classification = "";
+                                                let color = "";
+
+                                                if (bmi < 18.5) {
+                                                    classification = "Abaixo do peso";
+                                                    color = "text-yellow-700";
+                                                } else if (bmi < 25) {
+                                                    classification = "Peso normal";
+                                                    color = "text-green-700";
+                                                } else if (bmi < 30) {
+                                                    classification = "Sobrepeso";
+                                                    color = "text-orange-700";
+                                                } else if (bmi < 35) {
+                                                    classification = "Obesidade Grau I";
+                                                    color = "text-red-700";
+                                                } else if (bmi < 40) {
+                                                    classification = "Obesidade Grau II";
+                                                    color = "text-red-800";
+                                                } else {
+                                                    classification = "Obesidade Grau III";
+                                                    color = "text-red-900";
+                                                }
+
+                                                return (
+                                                    <span className={color}>
+                                                        {classification}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-blue-900">
+                                        {(parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2)).toFixed(1)}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="manchester" className="space-y-4 mt-4">
@@ -307,8 +354,8 @@ export function TriageDialog({ open, onOpenChange, appointmentId, patientName, p
                                         type="button"
                                         onClick={() => setManchesterPriority(priority.value)}
                                         className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${manchesterPriority === priority.value
-                                                ? "border-primary bg-primary/5"
-                                                : "border-gray-200 hover:border-gray-300"
+                                            ? "border-primary bg-primary/5"
+                                            : "border-gray-200 hover:border-gray-300"
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
