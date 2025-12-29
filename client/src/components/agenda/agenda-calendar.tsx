@@ -228,7 +228,9 @@ export function AgendaCalendar({
                       return (
                         <Popover key={appointment.id || idx}>
                           <PopoverTrigger asChild>
-                            <AppointmentCard appointment={appointment} styles={styles} />
+                            <div>
+                              <AppointmentCard appointment={appointment} styles={styles} />
+                            </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-80">
                             <div className="grid gap-4">
