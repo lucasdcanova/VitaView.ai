@@ -1796,40 +1796,51 @@ export class DatabaseStorage implements IStorage {
 
     const examsByType = Object.entries(examTypeCount).map(([name, value]) => ({ name, value }));
 
-    // 2. Activity Trends (Exams & Patients over time)
-    // Group by month for longer ranges, or day for shorter? keeping simple: Group by Month/Day
+    // 2. Activity Trends (Exams, Patients & Revenue over time)
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const activityData: any[] = [];
 
-    // Mocking some trend data structure for now based on actual timestamps could be complex in SQL
-    // Let's do a simple JS aggregation for the last 6 months
+    // Simple aggregation for the last 6 months
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
       const monthName = months[d.getMonth()];
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
 
-      // Count exams in this month
+      // Count exams
       const examsInMonth = await db.select({ count: sql<number>`count(*)` })
         .from(exams)
         .where(and(
           eq(exams.userId, userId),
-          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${d.getMonth() + 1}`,
-          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${d.getFullYear()}`
+          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${month}`,
+          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${year}`
         ));
 
-      // Count patients (profiles) created in this month
+      // Count new patients
       const patientsInMonth = await db.select({ count: sql<number>`count(*)` })
         .from(profiles)
         .where(and(
           eq(profiles.userId, userId),
-          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${d.getMonth() + 1}`,
-          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${d.getFullYear()}`
+          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${month}`,
+          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${year}`
+        ));
+
+      // Calculate revenue
+      // appointments.date is text YYYY-MM-DD
+      const revenueInMonth = await db.select({ total: sql<number>`sum(${appointments.price})` })
+        .from(appointments)
+        .where(and(
+          eq(appointments.userId, userId),
+          sql`extract(month from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${month}`,
+          sql`extract(year from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${year}`
         ));
 
       activityData.push({
         name: monthName,
         exames: Number(examsInMonth[0].count),
-        pacientes: Number(patientsInMonth[0].count)
+        pacientes: Number(patientsInMonth[0].count),
+        faturamento: Number(revenueInMonth[0]?.total || 0) / 100 // Convert cents to real currency unit if needed, usually kept in cents for frontend formatting but here keeping consistent with request
       });
     }
 
@@ -1837,13 +1848,30 @@ export class DatabaseStorage implements IStorage {
     const totalPatients = (await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.userId, userId)))[0].count;
     const totalExams = (await db.select({ count: sql<number>`count(*)` }).from(exams).where(eq(exams.userId, userId)))[0].count;
 
+    // Financial Totals based on range
+    const financialTotals = await db.select({
+      revenue: sql<number>`sum(${appointments.price})`,
+      count: sql<number>`count(*)`
+    })
+      .from(appointments)
+      .where(and(
+        eq(appointments.userId, userId),
+        sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDate.toISOString().split('T')[0]}`
+      ));
+
+    const totalRevenue = Number(financialTotals[0]?.revenue || 0);
+    const payingAppointmentsCount = Number(financialTotals[0]?.count || 0);
+    const averageTicket = payingAppointmentsCount > 0 ? Math.round(totalRevenue / payingAppointmentsCount) : 0;
+
     return {
       examsByType,
       activityData,
       summary: {
         totalPatients: Number(totalPatients),
         totalExams: Number(totalExams),
-        mostFrequentExam: examsByType.sort((a, b) => b.value - a.value)[0]?.name || "N/A"
+        mostFrequentExam: examsByType.sort((a, b) => b.value - a.value)[0]?.name || "N/A",
+        totalRevenue,
+        averageTicket
       }
     };
   }

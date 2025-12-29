@@ -459,6 +459,7 @@ export const appointments = pgTable("appointments", {
   date: text("date").notNull(), // YYYY-MM-DD
   time: text("time").notNull(), // HH:mm
   type: text("type").notNull(), // consulta, retorno, exames, urgencia
+  price: integer("price"), // Price in cents
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -470,6 +471,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   date: true,
   time: true,
   type: true,
+  price: true,
   notes: true,
 });
 

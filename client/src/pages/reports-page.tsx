@@ -25,7 +25,7 @@ export default function ReportsPage() {
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar />
-            <div className="flex-1 flex flex-col md:pl-64 h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <MobileHeader />
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="max-w-7xl mx-auto space-y-8">
@@ -55,8 +55,7 @@ export default function ReportsPage() {
                             </div>
                         ) : (
                             <>
-                                {/* Summary Cards */}
-                                <div className="grid gap-4 md:grid-cols-3">
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Total de Pacientes</CardTitle>
@@ -79,6 +78,30 @@ export default function ReportsPage() {
                                     </Card>
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
+                                            <span className="text-sm font-bold text-green-600">R$</span>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">
+                                                {((analytics?.summary?.totalRevenue || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Estimado (Consultas)</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                                            <span className="text-sm font-bold text-blue-600">R$</span>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold">
+                                                {((analytics?.summary?.averageTicket || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Por consulta paga</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Exame Mais Comum</CardTitle>
                                             <Activity className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
@@ -97,10 +120,10 @@ export default function ReportsPage() {
                                         <CardHeader>
                                             <CardTitle className="flex items-center gap-2">
                                                 <TrendingUp className="h-5 w-5 text-primary" />
-                                                Atividade Mensal
+                                                Atividade e Faturamento
                                             </CardTitle>
                                             <CardDescription>
-                                                Volume de exames e novos pacientes nos últimos meses
+                                                Exames, pacientes e faturamento nos últimos meses
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="pl-2">
@@ -116,30 +139,54 @@ export default function ReportsPage() {
                                                             axisLine={false}
                                                         />
                                                         <YAxis
+                                                            yAxisId="left"
                                                             stroke="#888888"
                                                             fontSize={12}
                                                             tickLine={false}
                                                             axisLine={false}
                                                             tickFormatter={(value) => `${value}`}
                                                         />
+                                                        <YAxis
+                                                            yAxisId="right"
+                                                            orientation="right"
+                                                            stroke="#888888"
+                                                            fontSize={12}
+                                                            tickLine={false}
+                                                            axisLine={false}
+                                                            tickFormatter={(value) => `R$ ${value}`}
+                                                        />
                                                         <Tooltip
                                                             cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                                                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                            formatter={(value: any, name: any) => {
+                                                                if (name === "Faturamento") return [`R$ ${value.toFixed(2)}`, name];
+                                                                return [value, name];
+                                                            }}
                                                         />
                                                         <Legend />
                                                         <Bar
+                                                            yAxisId="left"
                                                             dataKey="exames"
                                                             name="Exames"
                                                             fill="#0ea5e9"
                                                             radius={[4, 4, 0, 0]}
-                                                            maxBarSize={50}
+                                                            maxBarSize={30}
                                                         />
                                                         <Bar
+                                                            yAxisId="left"
                                                             dataKey="pacientes"
                                                             name="Novos Pacientes"
                                                             fill="#10b981"
                                                             radius={[4, 4, 0, 0]}
-                                                            maxBarSize={50}
+                                                            maxBarSize={30}
+                                                        />
+                                                        <Bar
+                                                            yAxisId="right"
+                                                            dataKey="faturamento"
+                                                            name="Faturamento"
+                                                            fill="#8b5cf6"
+                                                            radius={[4, 4, 0, 0]}
+                                                            maxBarSize={30}
                                                         />
                                                     </BarChart>
                                                 </ResponsiveContainer>
