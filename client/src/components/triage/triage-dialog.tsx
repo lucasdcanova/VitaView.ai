@@ -347,26 +347,30 @@ export function TriageDialog({ open, onOpenChange, appointmentId, patientName, p
                     <TabsContent value="manchester" className="space-y-4 mt-4">
                         <div className="space-y-2">
                             <Label>Prioridade de Manchester *</Label>
-                            <div className="grid grid-cols-1 gap-2">
+                            <div className="grid grid-cols-1 gap-3">
                                 {MANCHESTER_PRIORITIES.map((priority) => (
                                     <button
                                         key={priority.value}
                                         type="button"
                                         onClick={() => setManchesterPriority(priority.value)}
-                                        className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${manchesterPriority === priority.value
-                                            ? "border-primary bg-primary/5"
-                                            : "border-gray-200 hover:border-gray-300"
+                                        className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${manchesterPriority === priority.value
+                                                ? `border-gray-800 ${priority.color} bg-opacity-20 shadow-lg scale-[1.02]`
+                                                : "border-gray-200 hover:border-gray-300 bg-white hover:shadow-md"
                                             }`}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-4 h-4 rounded-full ${priority.color}`} />
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-6 h-6 rounded-full ${priority.color} ${manchesterPriority === priority.value ? 'ring-4 ring-gray-800 ring-offset-2' : ''
+                                                }`} />
                                             <div className="text-left">
-                                                <div className="font-semibold">{priority.label}</div>
-                                                <div className="text-sm text-gray-500">Tempo: {priority.time}</div>
+                                                <div className={`font-semibold ${manchesterPriority === priority.value ? 'text-lg text-gray-900' : 'text-gray-700'
+                                                    }`}>
+                                                    {priority.label}
+                                                </div>
+                                                <div className="text-sm text-gray-600">Tempo: {priority.time}</div>
                                             </div>
                                         </div>
                                         {manchesterPriority === priority.value && (
-                                            <Activity className="h-5 w-5 text-primary" />
+                                            <Activity className="h-6 w-6 text-gray-900 animate-pulse" />
                                         )}
                                     </button>
                                 ))}
