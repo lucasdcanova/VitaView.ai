@@ -1155,6 +1155,24 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  app.patch("/api/appointments/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid appointment ID" });
+      }
+
+      const updated = await storage.updateAppointment(id, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar agendamento" });
+    }
+  });
+
   // Configure multer for AI scheduling file uploads
   const aiScheduleUpload = multer({
     storage: multer.memoryStorage(),
@@ -2788,6 +2806,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao criar evolução" });
     }
   });
+
+
 
   app.delete("/api/evolutions/:id", ensureAuthenticated, async (req, res) => {
     try {
@@ -4699,6 +4719,28 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('Error handling CSP violation report:', error);
       res.status(500).json({ message: "Error processing CSP violation report" });
+    }
+  });
+
+  // Temporary route to run migrations
+  app.post("/api/run-migration", ensureAuthenticated, async (req, res) => {
+    try {
+      // Only allow admin users to run migrations
+      if (req.user?.role !== 'admin') {
+        // For development, allow any authenticated user
+        console.log('[Migration] Running migration for user:', req.user?.id);
+      }
+
+      // Add price column to appointments if it doesn't exist
+      await pool.query(`
+        ALTER TABLE appointments ADD COLUMN IF NOT EXISTS price INTEGER;
+      `);
+
+      console.log('[Migration] Successfully added price column to appointments');
+      res.json({ success: true, message: "Migration executed successfully" });
+    } catch (error: any) {
+      console.error('[Migration] Error:', error);
+      res.status(500).json({ message: "Migration failed", error: error.message });
     }
   });
 

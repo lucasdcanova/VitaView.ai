@@ -25,6 +25,7 @@ import {
 export default function Agenda() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+    const [editingAppointment, setEditingAppointment] = useState<any>(null);
     const { toast } = useToast();
     const [aiCommand, setAiCommand] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -51,6 +52,31 @@ export default function Agenda() {
             toast({
                 title: "Erro",
                 description: "Não foi possível criar o agendamento.",
+                variant: "destructive",
+            });
+        }
+    });
+
+    // Update appointment mutation
+    const updateAppointmentMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const { id, ...rest } = data;
+            const res = await apiRequest("PATCH", `/api/appointments/${id}`, rest);
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            toast({
+                title: "Agendamento atualizado",
+                description: "Os dados do agendamento foram atualizados.",
+            });
+            setIsNewAppointmentOpen(false);
+            setEditingAppointment(null);
+        },
+        onError: () => {
+            toast({
+                title: "Erro",
+                description: "Não foi possível atualizar o agendamento.",
                 variant: "destructive",
             });
         }
@@ -123,16 +149,28 @@ export default function Agenda() {
     };
 
     const handleNewAppointment = () => {
+        setEditingAppointment(null);
+        setIsNewAppointmentOpen(true);
+    };
+
+    const handleEditAppointment = (appointment: any) => {
+        setEditingAppointment(appointment);
         setIsNewAppointmentOpen(true);
     };
 
     const handleAppointmentSuccess = (data: any) => {
-        console.log("Nova consulta agendada:", data);
-        toast({
-            title: "Consulta agendada",
-            description: `Agendamento confirmado para ${data.patientName} às ${data.time}.`,
-        });
-        // Aqui você adicionaria a lógica para atualizar a lista de consultas
+        if (editingAppointment) {
+            updateAppointmentMutation.mutate({ id: editingAppointment.id, ...data });
+        } else {
+            createAppointmentMutation.mutate(data);
+            setIsNewAppointmentOpen(false); // Only close here for create, update closes in mutation success to wait for finish? 
+            // Actually strictly speaking we can close immediately or wait. 
+            // The original createMutation didn't close modal in mutation, but onSuccess of Modal called this.
+            // But verify: Modal calls onOpenChange(false) immediately after Success callback?
+            // Yes, Modal: onSuccess(data); onOpenChange(false);
+            // So the modal closes itself.
+            // But we can keep consistent logic.
+        }
     };
 
     return (
@@ -219,7 +257,10 @@ export default function Agenda() {
                         </PatientHeader>
 
                         <div className="mt-6">
-                            <AgendaCalendar onNewAppointment={handleNewAppointment} />
+                            <AgendaCalendar
+                                onNewAppointment={handleNewAppointment}
+                                onEditAppointment={handleEditAppointment}
+                            />
                         </div>
                     </div>
                 </main>
@@ -227,8 +268,12 @@ export default function Agenda() {
 
             <NewAppointmentModal
                 open={isNewAppointmentOpen}
-                onOpenChange={setIsNewAppointmentOpen}
+                onOpenChange={(open) => {
+                    setIsNewAppointmentOpen(open);
+                    if (!open) setEditingAppointment(null);
+                }}
                 onSuccess={handleAppointmentSuccess}
+                initialData={editingAppointment}
             />
 
             {/* AI Proposal Dialog */}

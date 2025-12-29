@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -71,9 +71,10 @@ interface NewAppointmentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: (data: any) => void;
+    initialData?: any;
 }
 
-export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppointmentModalProps) {
+export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData }: NewAppointmentModalProps) {
     const [openCombobox, setOpenCombobox] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -83,6 +84,34 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppoin
             notes: "",
         },
     });
+
+    useEffect(() => {
+        if (open) {
+            if (initialData) {
+                // Format price from cents (123456) to string ("1.234,56")
+                let priceFormatted = "";
+                if (initialData.price) {
+                    priceFormatted = (initialData.price / 100).toFixed(2).replace('.', ',');
+                    priceFormatted = priceFormatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+
+                form.reset({
+                    profileId: initialData.userId ? initialData.userId.toString() : (initialData.profileId ? initialData.profileId.toString() : ""),
+                    type: initialData.type,
+                    date: new Date(initialData.date + 'T12:00:00'),
+                    time: initialData.time,
+                    notes: initialData.notes || "",
+                    price: priceFormatted
+                });
+            } else {
+                form.reset({
+                    time: "09:00",
+                    notes: "",
+                    price: ""
+                });
+            }
+        }
+    }, [open, initialData, form]);
 
     const { data: profiles = [] } = useQuery<any[]>({
         queryKey: ["/api/profiles"],
@@ -110,18 +139,23 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppoin
         if (onSuccess) {
             onSuccess(submissionData);
         }
+        if (onSuccess) {
+            onSuccess(submissionData);
+        }
         onOpenChange(false);
         form.reset();
         setOpenCombobox(false);
     }
 
+    const isEditing = !!initialData;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Nova Consulta</DialogTitle>
+                    <DialogTitle>{isEditing ? "Editar Consulta" : "Nova Consulta"}</DialogTitle>
                     <DialogDescription>
-                        Selecione um paciente e preencha os dados da consulta.
+                        {isEditing ? "Altere os dados da consulta." : "Selecione um paciente e preencha os dados da consulta."}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -322,7 +356,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess }: NewAppoin
                         />
 
                         <DialogFooter>
-                            <Button type="submit">Agendar</Button>
+                            <Button type="submit">{isEditing ? "Salvar Alterações" : "Agendar"}</Button>
                         </DialogFooter>
                     </form>
                 </Form>

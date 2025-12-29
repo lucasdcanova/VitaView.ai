@@ -459,7 +459,7 @@ export const appointments = pgTable("appointments", {
   date: text("date").notNull(), // YYYY-MM-DD
   time: text("time").notNull(), // HH:mm
   type: text("type").notNull(), // consulta, retorno, exames, urgencia
-  price: integer("price"), // Price in cents
+  price: integer("price"), // Price in cents (BRL)
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -33,12 +33,14 @@ interface AgendaCalendarProps {
   appointments?: Record<number, Appointment[]>;
   weekStart?: Date;
   onNewAppointment?: () => void;
+  onEditAppointment?: (appointment: Appointment) => void;
 }
 
 export function AgendaCalendar({
   appointments = {},
   weekStart = new Date(),
-  onNewAppointment
+  onNewAppointment,
+  onEditAppointment
 }: AgendaCalendarProps) {
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
@@ -249,6 +251,17 @@ export function AgendaCalendar({
                                     {appointment.notes}
                                   </div>
                                 )}
+                                {appointment.price && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <DollarSign className="w-4 h-4 text-gray-500" />
+                                    <span>
+                                      {(appointment.price / 100).toLocaleString('pt-BR', {
+                                        style: 'currency',
+                                        currency: 'BRL'
+                                      })}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex justify-end gap-2">
                                 <Button
@@ -263,7 +276,14 @@ export function AgendaCalendar({
                                   <Stethoscope className="w-4 h-4 mr-1" />
                                   Triagem
                                 </Button>
-                                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-100">Editar</Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-white hover:bg-gray-100"
+                                  onClick={() => onEditAppointment?.(appointment)}
+                                >
+                                  Editar
+                                </Button>
                                 <Button variant="destructive" size="sm">Cancelar</Button>
                               </div>
                             </div>
