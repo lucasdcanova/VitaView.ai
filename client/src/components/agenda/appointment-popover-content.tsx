@@ -19,7 +19,7 @@ export function AppointmentPopoverContent({
     onTriageClick
 }: AppointmentPopoverContentProps) {
     // Query triage data for this appointment
-    const { data: triageData } = useQuery({
+    const { data: triageData } = useQuery<any>({
         queryKey: [`/api/triage/appointment/${appointment.id}`],
         enabled: !!appointment.id,
     });
