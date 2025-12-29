@@ -40,6 +40,7 @@ import { CID10Selector } from "@/components/cid10-selector";
 import { apiRequest } from "@/lib/queryClient";
 import { CID10_DATABASE } from "@/data/cid10-database";
 import ProfileSwitcher from "@/components/profile-switcher";
+import { TriageBadge } from "@/components/triage/triage-badge";
 import {
   FileText,
   Calendar,
@@ -338,6 +339,15 @@ export default function HealthTrendsNew() {
   const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery({
     queryKey: ["/api/evolutions"],
   });
+
+  // Query para buscar histórico de triagens do paciente
+  const { data: triageHistory = [] } = useQuery<any[]>({
+    queryKey: [`/api/triage/history/${activeProfile?.id}`],
+    enabled: !!activeProfile?.id,
+  });
+
+  // Pegar a triagem mais recente (do dia atual se existir)
+  const todayTriage = triageHistory.length > 0 ? triageHistory[0] : null;
 
   // Mutation para adicionar diagnóstico
   const addDiagnosisMutation = useMutation({
@@ -1497,6 +1507,67 @@ export default function HealthTrendsNew() {
 
                 {/* Right Column (Sidebar) */}
                 <div className="space-y-6">
+                  {/* Triagem do Dia - Sidebar Card */}
+                  {todayTriage && (
+                    <Card className="border border-blue-200 bg-blue-50 shadow-sm">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            Triagem do Dia
+                          </CardTitle>
+                          <TriageBadge priority={todayTriage.manchesterPriority} showLabel={false} />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0 space-y-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Queixa Principal:</span>
+                          </div>
+                          <p className="text-sm font-medium text-gray-900">{todayTriage.chiefComplaint}</p>
+                        </div>
+
+                        {todayTriage.painScale && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Dor:</span>
+                            <span className="font-medium text-gray-900">{todayTriage.painScale}/10</span>
+                          </div>
+                        )}
+
+                        {(todayTriage.systolicBp || todayTriage.heartRate || todayTriage.temperature) && (
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200">
+                            {todayTriage.systolicBp && (
+                              <div className="text-xs">
+                                <div className="text-gray-600">PA</div>
+                                <div className="font-medium text-gray-900">
+                                  {todayTriage.systolicBp}/{todayTriage.diastolicBp}
+                                </div>
+                              </div>
+                            )}
+                            {todayTriage.heartRate && (
+                              <div className="text-xs">
+                                <div className="text-gray-600">FC</div>
+                                <div className="font-medium text-gray-900">{todayTriage.heartRate} bpm</div>
+                              </div>
+                            )}
+                            {todayTriage.temperature && (
+                              <div className="text-xs">
+                                <div className="text-gray-600">Temp</div>
+                                <div className="font-medium text-gray-900">{todayTriage.temperature}°C</div>
+                              </div>
+                            )}
+                            {todayTriage.oxygenSaturation && (
+                              <div className="text-xs">
+                                <div className="text-gray-600">SpO2</div>
+                                <div className="font-medium text-gray-900">{todayTriage.oxygenSaturation}%</div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Comorbidades - Sidebar Card */}
                   <Card className="border border-gray-200 bg-white shadow-sm">
                     <CardHeader className="pb-3">
