@@ -263,15 +263,16 @@ export function AgendaCalendar({
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="bg-white hover:bg-gray-100"
                                   onClick={() => {
                                     setSelectedAppointment(appointment);
                                     setTriageDialogOpen(true);
                                   }}
                                 >
                                   <Stethoscope className="w-4 h-4 mr-1" />
-                                  Realizar Triagem
+                                  Triagem
                                 </Button>
-                                <Button variant="outline" size="sm">Editar</Button>
+                                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-100">Editar</Button>
                                 <Button variant="destructive" size="sm">Cancelar</Button>
                               </div>
                             </div>
