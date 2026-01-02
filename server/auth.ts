@@ -60,39 +60,73 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`[AUTH] Login attempt for username: ${username}`);
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+
+        if (!user) {
+          console.log(`[AUTH] User not found: ${username}`);
           return done(null, false);
-        } else {
-          return done(null, user);
         }
+
+        console.log(`[AUTH] User found: ${username} (id: ${user.id})`);
+
+        const passwordMatch = await comparePasswords(password, user.password);
+        console.log(`[AUTH] Password match result: ${passwordMatch}`);
+
+        if (!passwordMatch) {
+          console.log(`[AUTH] Password mismatch for user: ${username}`);
+          return done(null, false);
+        }
+
+        console.log(`[AUTH] Login successful for user: ${username}`);
+        return done(null, user);
       } catch (error) {
+        console.error(`[AUTH] Error during login:`, error);
         return done(error);
       }
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log(`[AUTH] Serializing user session: ${user.id}`);
+    done(null, user.id);
+  });
+
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log(`[AUTH] Deserializing session for user id: ${id}`);
       const user = await storage.getUser(id);
+      if (user) {
+        console.log(`[AUTH] Session restored for user: ${user.username}`);
+      } else {
+        console.log(`[AUTH] User not found for session id: ${id}`);
+      }
       done(null, user);
     } catch (error) {
+      console.error(`[AUTH] Error deserializing session:`, error);
       done(error);
     }
   });
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log(`[AUTH] Registration attempt for username: ${req.body.username}`);
+
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
+        console.log(`[AUTH] Registration failed - username already exists: ${req.body.username}`);
         return res.status(400).json({ message: "Usuário já existe" });
       }
 
+      const hashedPassword = await hashPassword(req.body.password);
+      console.log(`[AUTH] Password hashed successfully for: ${req.body.username}`);
+
       const user = await storage.createUser({
         ...req.body,
-        password: await hashPassword(req.body.password),
+        password: hashedPassword,
       });
+
+      console.log(`[AUTH] User created in database - id: ${user.id}, username: ${user.username}`);
 
       // Create welcome notification
       await storage.createNotification({
@@ -103,16 +137,22 @@ export function setupAuth(app: Express) {
       });
 
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error(`[AUTH] Session creation failed for user ${user.id}:`, err);
+          return next(err);
+        }
+        console.log(`[AUTH] Session created successfully for user: ${user.id}`);
         const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
+      console.error(`[AUTH] Registration error:`, error);
       next(error);
     }
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    console.log(`[AUTH] Login route - user authenticated, setting cookies for user: ${req.user!.id}`);
     const { password, ...userWithoutPassword } = req.user as SelectUser;
 
     // Definir um cookie auxiliar simplificado para autenticação
