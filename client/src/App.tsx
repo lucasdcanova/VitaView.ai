@@ -18,7 +18,6 @@ import { ThemeProvider } from "@/hooks/use-theme";
 const NotFound = lazy(() => import("@/pages/not-found"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
-const Dashboard = lazy(() => import("@/pages/dashboard"));
 const UploadExams = lazy(() => import("@/pages/upload-exams"));
 const ExamHistory = lazy(() => import("@/pages/exam-history"));
 const ExamReport = lazy(() => import("@/pages/exam-report"));
@@ -57,7 +56,8 @@ function Router() {
         <Route path="/" component={Home} />
 
         {/* Área autenticada */}
-        <ProtectedRoute path="/dashboard" component={Dashboard} />
+        {/* Redirect /dashboard to /agenda for legacy URLs */}
+        <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
         <ProtectedRoute path="/agenda" component={Agenda} />
         <ProtectedRoute path="/upload" component={UploadExams} />
         <ProtectedRoute path="/upload-exams" component={UploadExams} />

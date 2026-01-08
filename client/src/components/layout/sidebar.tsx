@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useProfiles } from "@/hooks/use-profiles";
 import {
-  LayoutDashboard,
   Upload,
   LineChart,
   LogOut,
@@ -140,16 +139,6 @@ export default function Sidebar(props: SidebarProps) {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-340px)]">
-          <Link
-            href="/dashboard"
-            onClick={handleNavClick}
-            className={getNavItemClass('/dashboard')}
-            data-tour="nav-dashboard"
-          >
-            <LayoutDashboard className={getIconClass('/dashboard')} />
-            <span className="font-body">Dashboard</span>
-          </Link>
-
           <Link
             href="/agenda"
             onClick={handleNavClick}

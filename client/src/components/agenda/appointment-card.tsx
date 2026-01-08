@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { Play } from "lucide-react";
 
 interface AppointmentCardProps {
     appointment: any;
@@ -20,6 +21,21 @@ const PRIORITY_COLORS: Record<string, string> = {
     non_urgent: "bg-blue-500",
 };
 
+const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string; badgeBg: string }> = {
+    in_progress: {
+        bg: "bg-blue-50",
+        border: "border-blue-500",
+        badge: "text-blue-700",
+        badgeBg: "bg-blue-100"
+    },
+    completed: {
+        bg: "bg-gray-50",
+        border: "border-gray-300",
+        badge: "text-gray-500",
+        badgeBg: "bg-gray-100"
+    },
+};
+
 export function AppointmentCard({ appointment, styles }: AppointmentCardProps) {
     // Query triage data at component level (proper hook usage)
     const { data: triageData } = useQuery<any>({
@@ -27,19 +43,40 @@ export function AppointmentCard({ appointment, styles }: AppointmentCardProps) {
         enabled: !!appointment.id,
     });
 
+    const isInProgress = appointment.status === 'in_progress';
+    const isCompleted = appointment.status === 'completed';
+    const statusStyle = STATUS_STYLES[appointment.status] || null;
+
+    // Use status-specific styles for in_progress or completed, otherwise use type styles
+    const cardBg = statusStyle?.bg || styles.bg;
+    const cardBorder = statusStyle?.border || styles.border;
+
     return (
         <motion.div
-            className={`${styles.bg} border-l-4 ${styles.border} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative`}
+            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${isInProgress ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}`}
             whileHover={{ scale: 1.02 }}
         >
-            <div className={`text-xs font-semibold ${styles.text}`}>{appointment.time}</div>
-            <div className={`text-xs font-medium ${styles.subtext} mt-1 truncate`}>
+            {/* Status Badge */}
+            {isInProgress && (
+                <div className="absolute -top-1 -right-1 flex items-center gap-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold shadow-sm">
+                    <Play className="w-2.5 h-2.5 fill-current" />
+                    <span>Atendendo</span>
+                </div>
+            )}
+            {isCompleted && (
+                <div className="absolute -top-1 -right-1 bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                    Finalizado
+                </div>
+            )}
+
+            <div className={`text-xs font-semibold ${isInProgress ? 'text-blue-900' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.time}</div>
+            <div className={`text-xs font-medium mt-1 truncate ${isInProgress ? 'text-blue-800' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
                 {appointment.patientName}
             </div>
-            <div className={`text-xs ${styles.label} capitalize`}>{appointment.type}</div>
+            <div className={`text-xs capitalize ${isInProgress ? 'text-blue-600' : isCompleted ? 'text-gray-400' : styles.label}`}>{appointment.type}</div>
 
             {/* Manchester Priority Indicator */}
-            {triageData?.manchesterPriority && (
+            {triageData?.manchesterPriority && !isInProgress && (
                 <div
                     className={`absolute top-1 right-1 w-3 h-3 rounded-full ${PRIORITY_COLORS[triageData.manchesterPriority]
                         } ring-2 ring-white`}

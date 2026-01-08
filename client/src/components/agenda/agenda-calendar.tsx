@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
@@ -52,6 +52,28 @@ export function AgendaCalendar({
 
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
+  });
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/appointments/${id}`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Status atualizado",
+        description: "O status do agendamento foi atualizado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
   });
 
   const getAppointmentsForDay = (date: Date) => {
@@ -119,7 +141,7 @@ export function AgendaCalendar({
                     </h3>
                     <p className="text-sm text-gray-400">
                       {viewMode === 'week' ? (
-                        `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })}`
+                        `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })} `
                       ) : (
                         "Vista Mensal"
                       )}
@@ -263,28 +285,54 @@ export function AgendaCalendar({
                                   </div>
                                 )}
                               </div>
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="bg-white hover:bg-gray-100"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment);
-                                    setTriageDialogOpen(true);
-                                  }}
-                                >
-                                  <Stethoscope className="w-4 h-4 mr-1" />
-                                  Triagem
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="bg-white hover:bg-gray-100"
-                                  onClick={() => onEditAppointment?.(appointment)}
-                                >
-                                  Editar
-                                </Button>
-                                <Button variant="destructive" size="sm">Cancelar</Button>
+                              <div className="flex flex-col gap-2">
+                                {/* Status action buttons */}
+                                {appointment.status !== 'in_progress' && appointment.status !== 'completed' && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-blue-500 hover:bg-blue-600 text-white w-full"
+                                    onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'in_progress' })}
+                                    disabled={updateStatusMutation.isPending}
+                                  >
+                                    <Play className="w-4 h-4 mr-1" />
+                                    Iniciar Atendimento
+                                  </Button>
+                                )}
+                                {appointment.status === 'in_progress' && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-500 hover:bg-green-600 text-white w-full"
+                                    onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'completed' })}
+                                    disabled={updateStatusMutation.isPending}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Finalizar Atendimento
+                                  </Button>
+                                )}
+                                {/* Other action buttons */}
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white hover:bg-gray-100"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setTriageDialogOpen(true);
+                                    }}
+                                  >
+                                    <Stethoscope className="w-4 h-4 mr-1" />
+                                    Triagem
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white hover:bg-gray-100"
+                                    onClick={() => onEditAppointment?.(appointment)}
+                                  >
+                                    Editar
+                                  </Button>
+                                  <Button variant="destructive" size="sm">Cancelar</Button>
+                                </div>
                               </div>
                             </div>
                           </PopoverContent>
@@ -379,7 +427,7 @@ export function AgendaCalendar({
       {/* Calendar Footer */}
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          <span className="font-semibold">{Math.round(appointmentsList.length * 0.8)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType}` : 'agendadas este mês'}
+          <span className="font-semibold">{Math.round(appointmentsList.length * 0.8)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType} ` : 'agendadas este mês'}
         </div>
       </div>
 
