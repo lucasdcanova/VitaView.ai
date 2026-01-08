@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
 import { TriageDialog } from "@/components/triage/triage-dialog";
@@ -49,6 +50,7 @@ export function AgendaCalendar({
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const { toast } = useToast();
+  const { inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
 
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
@@ -253,7 +255,11 @@ export function AgendaCalendar({
                         <Popover key={appointment.id || idx}>
                           <PopoverTrigger asChild>
                             <div>
-                              <AppointmentCard appointment={appointment} styles={styles} />
+                              <AppointmentCard
+                                appointment={appointment}
+                                styles={styles}
+                                isInService={appointment.id === inServiceAppointmentId}
+                              />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-80">
@@ -286,30 +292,47 @@ export function AgendaCalendar({
                                 )}
                               </div>
                               <div className="flex flex-col gap-2">
-                                {/* Status action buttons */}
-                                {appointment.status !== 'in_progress' && appointment.status !== 'completed' && (
-                                  <Button
-                                    size="sm"
-                                    className="bg-blue-500 hover:bg-blue-600 text-white w-full"
-                                    onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'in_progress' })}
-                                    disabled={updateStatusMutation.isPending}
-                                  >
-                                    <Play className="w-4 h-4 mr-1" />
-                                    Iniciar Atendimento
-                                  </Button>
-                                )}
-                                {appointment.status === 'in_progress' && (
-                                  <Button
-                                    size="sm"
-                                    className="bg-green-500 hover:bg-green-600 text-white w-full"
-                                    onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'completed' })}
-                                    disabled={updateStatusMutation.isPending}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Finalizar Atendimento
-                                  </Button>
-                                )}
-                                {/* Other action buttons */}
+                                {/* Status action buttons - Iniciar Atendimento only for today */}
+                                {(() => {
+                                  const appointmentDate = new Date(appointment.date + 'T12:00:00');
+                                  const isToday = isSameDay(appointmentDate, new Date());
+                                  const canStartService = isToday && appointment.status !== 'in_progress' && appointment.status !== 'completed';
+
+                                  return (
+                                    <>
+                                      {canStartService && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-blue-500 hover:bg-blue-600 text-white w-full"
+                                          onClick={() => {
+                                            updateStatusMutation.mutate({ id: appointment.id, status: 'in_progress' });
+                                            if (appointment.profileId) {
+                                              setPatientInService(appointment.profileId, appointment.id);
+                                            }
+                                          }}
+                                          disabled={updateStatusMutation.isPending}
+                                        >
+                                          <Play className="w-4 h-4 mr-1" />
+                                          Iniciar Atendimento
+                                        </Button>
+                                      )}
+                                      {appointment.status === 'in_progress' && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-green-500 hover:bg-green-600 text-white w-full"
+                                          onClick={() => {
+                                            updateStatusMutation.mutate({ id: appointment.id, status: 'completed' });
+                                            clearPatientInService();
+                                          }}
+                                          disabled={updateStatusMutation.isPending}
+                                        >
+                                          <CheckCircle className="w-4 h-4 mr-1" />
+                                          Finalizar Atendimento
+                                        </Button>
+                                      )}
+                                    </>
+                                  );
+                                })()}\n                                {/* Other action buttons */}
                                 <div className="flex justify-end gap-2">
                                   <Button
                                     variant="outline"

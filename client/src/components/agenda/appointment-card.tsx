@@ -11,6 +11,7 @@ interface AppointmentCardProps {
         subtext: string;
         label: string;
     };
+    isInService?: boolean;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -36,7 +37,7 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string;
     },
 };
 
-export function AppointmentCard({ appointment, styles }: AppointmentCardProps) {
+export function AppointmentCard({ appointment, styles, isInService = false }: AppointmentCardProps) {
     // Query triage data at component level (proper hook usage)
     const { data: triageData } = useQuery<any>({
         queryKey: [`/api/triage/appointment/${appointment.id}`],
@@ -53,7 +54,7 @@ export function AppointmentCard({ appointment, styles }: AppointmentCardProps) {
 
     return (
         <motion.div
-            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${isInProgress ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}`}
+            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${isInProgress ? 'ring-2 ring-blue-400 ring-opacity-50' : ''} ${isInService ? 'animate-pulse ring-4 ring-blue-500' : ''}`}
             whileHover={{ scale: 1.02 }}
         >
             {/* Status Badge */}

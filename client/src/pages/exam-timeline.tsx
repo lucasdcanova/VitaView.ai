@@ -17,7 +17,7 @@ function formatDateToBR(dateString: string | Date): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
-    month: '2-digit', 
+    month: '2-digit',
     year: 'numeric'
   });
 }
@@ -25,10 +25,10 @@ function formatDateToBR(dateString: string | Date): string {
 // Função para formatar nomes de métricas
 function formatMetricDisplayName(name: string): string {
   const normalizedName = normalizeExamName(name);
-  
+
   const displayMap: Record<string, string> = {
     'eritrócitos': 'Eritrócitos',
-    'hemoglobina': 'Hemoglobina', 
+    'hemoglobina': 'Hemoglobina',
     'hematócrito': 'Hematócrito',
     'vcm': 'VCM',
     'hcm': 'HCM',
@@ -46,12 +46,12 @@ function formatMetricDisplayName(name: string): string {
     'vitamina d': 'Vitamina D',
     'albumina': 'Albumina'
   };
-  
+
   return displayMap[normalizedName] || name;
 }
 
 export default function ExamTimeline() {
-  const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const { activeProfile, isLoading: isLoadingProfiles, inServiceAppointmentId } = useProfiles();
 
   // Buscar exames
   const { data: exams = [], isLoading: isLoadingExams } = useQuery<Exam[]>({
@@ -121,12 +121,12 @@ export default function ExamTimeline() {
 
     // Agrupar métricas por data de exame
     const dataByDate = new Map();
-    
+
     exams.forEach(exam => {
       const examMetrics = healthMetrics.filter(m => m.examId === exam.id);
       const examDate = exam.examDate || exam.uploadDate;
       const formattedDate = formatDateToBR(examDate);
-      
+
       if (examMetrics.length > 0) {
         if (!dataByDate.has(formattedDate)) {
           dataByDate.set(formattedDate, {
@@ -165,17 +165,17 @@ export default function ExamTimeline() {
     const mainMetrics = ['hemoglobina', 'glicose', 'colesterol total', 'hematócrito', 'leucócitos', 'plaquetas', 'vitamina d', 'albumina'];
     const availableMainMetrics = mainMetrics.filter(m => metricsSet.has(m));
     const otherMetrics = Array.from(metricsSet).filter(m => !mainMetrics.includes(m)).slice(0, 8 - availableMainMetrics.length);
-    
-    return { 
-      chartData: sortedData, 
-      availableMetrics: [...availableMainMetrics, ...otherMetrics] 
+
+    return {
+      chartData: sortedData,
+      availableMetrics: [...availableMainMetrics, ...otherMetrics]
     };
   }, [exams, healthMetrics]);
 
   // Cores para as métricas
   const getMetricColor = (metric: string) => {
     const colors = [
-      '#1E3A5F', '#48C9B0', '#E74C3C', '#F39C12', '#9B59B6', 
+      '#1E3A5F', '#48C9B0', '#E74C3C', '#F39C12', '#9B59B6',
       '#2ECC71', '#3498DB', '#E67E22', '#1ABC9C', '#34495E'
     ];
     const index = availableMetrics.indexOf(metric) % colors.length;
@@ -194,6 +194,17 @@ export default function ExamTimeline() {
               description={`Acompanhe a evolução das métricas laboratoriais do paciente ${activeProfile.name}.`}
               patient={activeProfile}
             />
+
+            {/* In-Service Banner */}
+            {inServiceAppointmentId && (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-blue-900 font-semibold">Este paciente está em atendimento agora</p>
+                  <p className="text-blue-700 text-sm">Os dados do exame serão atualizados após finalizar a consulta</p>
+                </div>
+              </div>
+            )}
 
             <Card>
               <CardHeader>

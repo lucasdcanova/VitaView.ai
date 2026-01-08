@@ -14,6 +14,10 @@ interface ProfileContextType {
   createProfile: (data: Omit<Profile, "id" | "userId" | "createdAt">) => void;
   updateProfile: (id: number, data: Partial<Profile>) => void;
   deleteProfile: (id: number) => void;
+  // Patient in service state
+  inServiceAppointmentId: number | null;
+  setPatientInService: (profileId: number, appointmentId: number) => void;
+  clearPatientInService: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | null>(null);
@@ -22,6 +26,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
+  const [inServiceAppointmentId, setInServiceAppointmentId] = useState<number | null>(null);
 
   // Fetch user's profiles
   const {
@@ -32,7 +37,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/profiles"],
     queryFn: async () => {
       if (!user) return [];
-      
+
       try {
         const res = await apiRequest("GET", "/api/profiles");
         return await res.json();
@@ -77,9 +82,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         title: "Paciente atualizado",
         description: "Os dados do paciente foram atualizados",
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
-      
+
       // Update active profile if it was the one that was updated
       if (activeProfile && activeProfile.id === updatedProfile.id) {
         setActiveProfileState(updatedProfile);
@@ -105,9 +110,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         title: "Paciente removido",
         description: "O paciente foi removido do painel",
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
-      
+
       // If active profile was deleted, select a different one
       if (activeProfile && activeProfile.id === deletedId) {
         const remainingProfiles = profiles.filter((p: Profile) => p.id !== deletedId);
@@ -146,12 +151,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (profile) => {
       setActiveProfileState(profile);
-      
+
       toast({
         title: "Paciente selecionado",
         description: `Visualizando histórico de "${profile.name}"`,
       });
-      
+
       try {
         document.cookie = `active_profile_id=${profile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       } catch (err) {
@@ -183,7 +188,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const cookieProfileId = cookies['active_profile_id'] ? Number(cookies['active_profile_id']) : undefined;
 
       if (cookieProfileId) {
-        const storedProfile = profiles.find((p) => p.id === cookieProfileId);
+        const storedProfile = profiles.find((p: Profile) => p.id === cookieProfileId);
         if (storedProfile) {
           setActiveProfileState(storedProfile);
           return;
@@ -212,6 +217,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     deleteProfileMutation.mutate(id);
   };
 
+  // Set patient in service - automatically select the patient and track the appointment
+  const setPatientInService = (profileId: number, appointmentId: number) => {
+    const profile = profiles.find((p: Profile) => p.id === profileId);
+    if (profile) {
+      setActiveProfileState(profile);
+      setInServiceAppointmentId(appointmentId);
+      try {
+        document.cookie = `active_profile_id=${profile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      } catch (err) {
+        // Ignore cookie errors
+      }
+      // Refresh data for the new profile
+      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+    }
+  };
+
+  // Clear patient in service
+  const clearPatientInService = () => {
+    setInServiceAppointmentId(null);
+  };
+
   return (
     <ProfileContext.Provider
       value={{
@@ -222,6 +249,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         createProfile,
         updateProfile,
         deleteProfile,
+        inServiceAppointmentId,
+        setPatientInService,
+        clearPatientInService,
       }}
     >
       {children}
