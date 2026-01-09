@@ -28,7 +28,9 @@ import { ptBR } from "date-fns/locale";
 import { TriageCard } from "@/components/dashboard/triage-card";
 import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
 import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
+import { AnamnesisCard } from "@/components/dashboard/anamnesis-card";
 import HealthTrendsNew from "./health-trends-new";
+import VitaPrescriptions from "./vita-prescricoes";
 
 export default function PatientView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -127,6 +129,13 @@ export default function PatientView() {
                                     Dashboard
                                 </TabsTrigger>
                                 <TabsTrigger
+                                    value="prescricoes"
+                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                >
+                                    <Pill className="h-4 w-4 mr-2" />
+                                    Vita Prescrições
+                                </TabsTrigger>
+                                <TabsTrigger
                                     value="timeline"
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
@@ -138,7 +147,7 @@ export default function PatientView() {
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <LineChart className="h-4 w-4 mr-2" />
-                                    Laboratorial
+                                    Vita Exames
                                 </TabsTrigger>
                             </TabsList>
 
@@ -154,79 +163,53 @@ export default function PatientView() {
                                     </Card>
                                 ) : (
                                     <div className="space-y-6">
-                                        {/* Triage and Alerts Section */}
-                                        {(todayTriage || alertMetrics.length > 0) && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {todayTriage && <TriageCard triage={todayTriage} />}
+                                        {/* Main Dashboard Grid */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                            {/* Left Column: Anamnesis & Triage (2/3 width) */}
+                                            <div className="lg:col-span-2 space-y-6">
+                                                {/* Anamnesis Section */}
+                                                <AnamnesisCard />
 
-                                                {alertMetrics.length > 0 && (
-                                                    <Card className={`border-red-200 bg-red-50 ${!todayTriage ? 'md:col-span-2' : ''}`}>
-                                                        <CardHeader className="pb-3">
-                                                            <CardTitle className="text-red-700 flex items-center gap-2 text-base">
-                                                                <AlertTriangle className="h-5 w-5" />
-                                                                Métricas que Requerem Atenção
-                                                            </CardTitle>
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                {alertMetrics.slice(0, 4).map((metric: any) => (
-                                                                    <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
-                                                                        <div>
-                                                                            <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
-                                                                            <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            {getTrendIcon(metric.change)}
-                                                                            <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
-                                                                        </div>
+                                                {/* Triage and Alerts Section */}
+                                                {(todayTriage || alertMetrics.length > 0) && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        {todayTriage && <TriageCard triage={todayTriage} />}
+
+                                                        {alertMetrics.length > 0 && (
+                                                            <Card className={`border-red-200 bg-red-50 ${!todayTriage ? 'md:col-span-2' : ''}`}>
+                                                                <CardHeader className="pb-3">
+                                                                    <CardTitle className="text-red-700 flex items-center gap-2 text-base">
+                                                                        <AlertTriangle className="h-5 w-5" />
+                                                                        Métricas que Requerem Atenção
+                                                                    </CardTitle>
+                                                                </CardHeader>
+                                                                <CardContent>
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                        {alertMetrics.slice(0, 4).map((metric: any) => (
+                                                                            <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
+                                                                                <div>
+                                                                                    <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
+                                                                                    <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    {getTrendIcon(metric.change)}
+                                                                                    <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
-                                                                ))}
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
+                                                                </CardContent>
+                                                            </Card>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
-                                        )}
 
-                                        {/* Clinical Summary */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            <ComorbiditiesCard diagnoses={diagnoses} />
-
-                                            <SurgeriesCard surgeries={surgeries} />
-
-                                            {/* Active Medications */}
-                                            <Card className="border border-gray-200 bg-white shadow-sm">
-                                                <CardHeader className="pb-3">
-                                                    <CardTitle className="text-base text-gray-900 flex items-center gap-2">
-                                                        <Pill className="h-5 w-5" />
-                                                        Medicamentos Ativos
-                                                    </CardTitle>
-                                                </CardHeader>
-                                                <CardContent className="pt-0">
-                                                    {activeMedications.length === 0 ? (
-                                                        <div className="flex flex-col items-center justify-center h-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                                            <Pill className="h-5 w-5 mb-1 opacity-50" />
-                                                            <p className="text-xs">Nenhum ativo</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="grid gap-2">
-                                                            {activeMedications.slice(0, 5).map((med: any) => (
-                                                                <div key={med.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
-                                                                    <span className="font-medium text-gray-800 text-sm">{med.name}</span>
-                                                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{med.dosage} {med.dosageUnit}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        className="w-full mt-3 text-primary-600 hover:text-primary-700 hover:bg-primary-50 h-8 text-sm"
-                                                        onClick={() => setActiveTab("timeline")}
-                                                    >
-                                                        Ver todos
-                                                    </Button>
-                                                </CardContent>
-                                            </Card>
+                                            {/* Right Column: Clinical Summary (1/3 width) */}
+                                            <div className="space-y-6">
+                                                <ComorbiditiesCard diagnoses={diagnoses} />
+                                                <SurgeriesCard surgeries={surgeries} />
+                                            </div>
                                         </div>
 
                                         {/* Recent Exams */}
@@ -274,6 +257,21 @@ export default function PatientView() {
                                 )}
                             </TabsContent>
 
+                            {/* Vita Prescrições Tab */}
+                            <TabsContent value="prescricoes" className="mt-0">
+                                {activeProfile ? (
+                                    <VitaPrescriptions />
+                                ) : (
+                                    <Card className="text-center py-12">
+                                        <CardContent>
+                                            <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
+                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para gerenciar prescrições.</p>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </TabsContent>
+
                             {/* Timeline Tab - Redirect to actual page */}
                             <TabsContent value="timeline" className="mt-0">
                                 {activeProfile ? (
@@ -294,11 +292,11 @@ export default function PatientView() {
                                 <Card className="text-center py-12">
                                     <CardContent>
                                         <LineChart className="h-16 w-16 text-primary-600 mx-auto mb-4" />
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-2">View Laboratorial</h3>
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Vita Exames</h3>
                                         <p className="text-gray-600 mb-4">Visualize os exames laboratoriais e métricas de saúde do paciente.</p>
                                         <Button onClick={() => setLocation('/results')} className="gap-2">
                                             <LineChart className="h-4 w-4" />
-                                            Abrir View Laboratorial
+                                            Abrir Vita Exames
                                         </Button>
                                     </CardContent>
                                 </Card>

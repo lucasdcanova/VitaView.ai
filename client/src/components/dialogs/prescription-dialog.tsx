@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { generatePrescriptionPDF } from "@/lib/prescription-pdf";
 import {
     Dialog,
     DialogContent,
@@ -25,6 +26,7 @@ interface PrescriptionDialogProps {
     doctors: any[];
     medications: any[];
     onOpenDoctorForm: () => void;
+    patientName?: string;
 }
 
 export function PrescriptionDialog({
@@ -33,6 +35,7 @@ export function PrescriptionDialog({
     doctors,
     medications,
     onOpenDoctorForm,
+    patientName
 }: PrescriptionDialogProps) {
     const { toast } = useToast();
     const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
@@ -62,40 +65,37 @@ export function PrescriptionDialog({
 
         try {
             toast({
-                title: "Gerando receituário...",
-                description: "Aguarde enquanto geramos o documento.",
+                title: "Gerando PDF...",
+                description: "Aguarde enquanto preparamos o documento.",
             });
 
-            const response = await fetch("/api/prescriptions/generate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    medications: medications?.filter((m: any) => selectedMedicationIds.includes(m.id)),
-                    medicationIds: selectedMedicationIds,
-                    validityDays: prescriptionValidityDays,
-                    observations: prescriptionObservations,
-                    doctorName: doctorInfo.name,
-                    doctorCrm: doctorInfo.crm,
-                    doctorSpecialty: doctorInfo.specialty,
-                }),
+            // Find full medication objects
+            const selectedMeds = medications
+                .filter((m: any) => selectedMedicationIds.includes(m.id))
+                .map((m: any) => ({
+                    name: m.name,
+                    dosage: m.dosage,
+                    frequency: m.frequency,
+                    format: m.format,
+                    notes: m.notes,
+                    dosageUnit: m.dosageUnit
+                }));
+
+            // Generate PDF Client-side
+            generatePrescriptionPDF({
+                doctorName: doctorInfo.name,
+                doctorCrm: doctorInfo.crm,
+                doctorSpecialty: doctorInfo.specialty,
+                patientName: patientName || "Paciente (Visualização)",
+                issueDate: new Date(),
+                validUntil: new Date(Date.now() + prescriptionValidityDays * 24 * 60 * 60 * 1000),
+                medications: selectedMeds,
+                observations: prescriptionObservations
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Erro ao gerar prescrição");
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            window.open(url, '_blank');
 
             toast({
                 title: "Sucesso",
-                description: "Receituário gerado e aberto em nova aba!",
+                description: "Receituário gerado com sucesso!",
             });
 
             onOpenChange(false);
@@ -104,13 +104,11 @@ export function PrescriptionDialog({
             setDoctorInfo({ name: "", crm: "", specialty: "" });
             setSelectedDoctorId(null);
 
-            setTimeout(() => window.URL.revokeObjectURL(url), 5000);
-
         } catch (error: any) {
             console.error("Erro ao gerar receituário:", error);
             toast({
                 title: "Erro",
-                description: error.message || "Falha ao gerar receituário. Tente novamente.",
+                description: "Falha ao gerar PDF.",
                 variant: "destructive",
             });
         }
@@ -122,7 +120,7 @@ export function PrescriptionDialog({
                 <DialogHeader>
                     <DialogTitle>Renovar Prescrições</DialogTitle>
                     <DialogDescription>
-                        Selecione os medicamentos para renovação e configure o receituário
+                        Selecione os medicamentos para renovação e configure o receituário.
                     </DialogDescription>
                 </DialogHeader>
 
