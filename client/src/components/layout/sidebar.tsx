@@ -150,13 +150,13 @@ export default function Sidebar(props: SidebarProps) {
           </Link>
 
           <Link
-            href="/health-trends"
+            href="/atendimento"
             onClick={handleNavClick}
-            className={getNavItemClass('/health-trends')}
-            data-tour="nav-timeline"
+            className={getNavItemClass('/atendimento')}
+            data-tour="nav-atendimento"
           >
-            <Heart className={getIconClass('/health-trends')} />
-            <span className="font-heading font-bold">Vita Timeline</span>
+            <Heart className={getIconClass('/atendimento')} />
+            <span className="font-heading font-bold">Atendimento</span>
           </Link>
 
           <Link
@@ -167,15 +167,6 @@ export default function Sidebar(props: SidebarProps) {
           >
             <Upload className={getIconClass('/upload')} />
             <span className="font-body">Enviar Exames</span>
-          </Link>
-
-          <Link
-            href="/results"
-            onClick={handleNavClick}
-            className={getNavItemClass('/results')}
-          >
-            <LineChart className={getIconClass('/results')} />
-            <span className="font-body">View Laboratorial</span>
           </Link>
 
           <Link

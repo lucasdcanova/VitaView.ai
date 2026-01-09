@@ -26,6 +26,7 @@ const ExamResultSingle = lazy(() => import("@/pages/exam-result-single"));
 const Profile = lazy(() => import("@/pages/profile"));
 const DiagnosisPage = lazy(() => import("@/pages/diagnosis-page"));
 const HealthTrends = lazy(() => import("@/pages/health-trends-new"));
+const PatientView = lazy(() => import("@/pages/patient-view"));
 const ExamTimeline = lazy(() => import("@/pages/exam-timeline"));
 const ReportsPage = lazy(() => import("@/pages/reports-page"));
 const Home = lazy(() => import("@/pages/home"));
@@ -68,6 +69,7 @@ function Router() {
         <ProtectedRoute path="/results" component={ExamResults} />
         <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
         <ProtectedRoute path="/health-trends" component={HealthTrends} />
+        <ProtectedRoute path="/atendimento" component={PatientView} />
         <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
         <ProtectedRoute path="/profile" component={Profile} />
         <ProtectedRoute path="/bulk-import" component={BulkImport} />

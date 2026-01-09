@@ -54,44 +54,40 @@ import {
   Users,
   Save,
   AlertTriangle,
-  ShieldCheck
+  ShieldCheck,
+  Pill,
+  Scissors
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-const diagnosisSchema = z.object({
-  cidCode: z.string().min(1, "Código CID-10 é obrigatório"),
-  diagnosisDate: z.string().min(1, "Data é obrigatória"),
-  status: z.enum(["ativo", "em_tratamento", "resolvido", "cronico"]).optional(),
-  notes: z.string().optional(),
-});
-
-const medicationSchema = z.object({
-  name: z.string().min(1, "Nome do medicamento é obrigatório"),
-  format: z.string().default("comprimido"),
-  dosage: z.string().min(1, "Dosagem é obrigatória"),
-  dosageUnit: z.string().default("mg"),
-  frequency: z.string().min(1, "Frequência é obrigatória"),
-  startDate: z.string().min(1, "Data de início é obrigatória"),
-  notes: z.string().optional(),
-});
-
-const allergySchema = z.object({
-  allergen: z.string().min(1, "Nome do alérgeno é obrigatório"),
-  allergenType: z.string().default("medication"),
-  reaction: z.string().optional(),
-  severity: z.enum(["leve", "moderada", "grave"]).optional(),
-  notes: z.string().optional(),
-});
-
-const surgerySchema = z.object({
-  procedureName: z.string().min(1, "Nome do procedimento é obrigatório"),
-  hospitalName: z.string().optional(),
-  surgeonName: z.string().optional(),
-  surgeryDate: z.string().min(1, "Data da cirurgia é obrigatória"),
-  notes: z.string().optional(),
-});
+import {
+  DiagnosisDialog,
+  MedicationDialog,
+  AllergyDialog,
+  SurgeryDialog,
+  ManageAllergiesDialog,
+  DoctorDialog,
+  PrescriptionDialog,
+  diagnosisSchema,
+  medicationSchema,
+  allergySchema,
+  surgerySchema,
+  doctorSchema,
+  type DiagnosisFormData,
+  type MedicationFormData,
+  type AllergyFormData,
+  type SurgeryFormData,
+  type DoctorFormData
+} from "@/components/dialogs";
 
 const habitSchema = z.object({
   habitType: z.enum(["etilismo", "tabagismo", "drogas_ilicitas"]),
@@ -103,19 +99,12 @@ const habitSchema = z.object({
   notes: z.string().optional(),
 });
 
-const doctorSchema = z.object({
-  name: z.string().min(1, "Nome do médico é obrigatório"),
-  crm: z.string().min(1, "CRM é obrigatório"),
-  specialty: z.string().optional(),
-  isDefault: z.boolean().optional(),
-});
-
-type DiagnosisForm = z.infer<typeof diagnosisSchema>;
-type MedicationForm = z.infer<typeof medicationSchema>;
-type AllergyForm = z.infer<typeof allergySchema>;
-type SurgeryForm = z.infer<typeof surgerySchema>;
+type DiagnosisForm = DiagnosisFormData;
+type MedicationForm = MedicationFormData;
+type AllergyForm = AllergyFormData;
+type SurgeryForm = SurgeryFormData;
 type HabitForm = z.infer<typeof habitSchema>;
-type DoctorForm = z.infer<typeof doctorSchema>;
+type DoctorForm = DoctorFormData;
 
 // Função para buscar a descrição do código CID-10
 const getCIDDescription = (cidCode: string): string => {
@@ -137,7 +126,11 @@ interface TimelineItem {
   text?: string;
 }
 
-export default function HealthTrendsNew() {
+interface HealthTrendsNewProps {
+  embedded?: boolean;
+}
+
+export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewProps = {}) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -159,11 +152,7 @@ export default function HealthTrendsNew() {
   const [isEditHabitDialogOpen, setIsEditHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<any>(null);
   const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false);
-  const [selectedMedicationIds, setSelectedMedicationIds] = useState<number[]>([]);
-  const [prescriptionValidityDays, setPrescriptionValidityDays] = useState(30);
-  const [prescriptionObservations, setPrescriptionObservations] = useState("");
-  const [doctorInfo, setDoctorInfo] = useState({ name: "", crm: "", specialty: "" });
-  const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
+  // Removed state moved to PrescriptionDialog: selectedMedicationIds, prescriptionValidityDays, prescriptionObservations, doctorInfo, selectedDoctorId
   const [isDoctorManagementDialogOpen, setIsDoctorManagementDialogOpen] = useState(false);
   const [isDoctorFormDialogOpen, setIsDoctorFormDialogOpen] = useState(false);
   const [isEditDoctorDialogOpen, setIsEditDoctorDialogOpen] = useState(false);
@@ -312,11 +301,11 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/exams"],
   });
 
-  const { data: diagnoses = [], isLoading: diagnosesLoading } = useQuery({
+  const { data: diagnoses = [], isLoading: diagnosesLoading } = useQuery<any[]>({
     queryKey: ["/api/diagnoses"],
   });
 
-  const { data: medications = [], isLoading: medicationsLoading } = useQuery({
+  const { data: medications = [], isLoading: medicationsLoading } = useQuery<any[]>({
     queryKey: ["/api/medications"],
   });
 
@@ -324,7 +313,7 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/allergies"],
   });
 
-  const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery({
+  const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery<any[]>({
     queryKey: ["/api/surgeries"],
   });
 
@@ -336,7 +325,7 @@ export default function HealthTrendsNew() {
     queryKey: ["/api/doctors"],
   });
 
-  const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery({
+  const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery<any[]>({
     queryKey: ["/api/evolutions"],
   });
 
@@ -1162,6 +1151,13 @@ export default function HealthTrendsNew() {
   };
 
   if (examsLoading || diagnosesLoading || medicationsLoading) {
+    if (embedded) {
+      return (
+        <div className="flex items-center justify-center h-64 bg-gray-50">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex flex-col">
         <MobileHeader />
@@ -1179,61 +1175,107 @@ export default function HealthTrendsNew() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <MobileHeader />
 
-      <div className="flex flex-1 relative">
-        <Sidebar />
+  return (
+    <div className={`min-h-screen flex flex-col ${embedded ? 'bg-gray-50 !min-h-0' : ''}`}>
+      {!embedded && <MobileHeader />}
+
+      <div className={`flex flex-1 relative ${embedded ? 'block' : ''}`}>
+        {!embedded && <Sidebar />}
 
         <main className="flex-1 bg-gray-50">
-          <div className="p-4 md:p-6">
+          <div className={embedded ? "" : "p-4 md:p-6"}>
             <div className="max-w-6xl mx-auto space-y-8">
               {/* Header com Nome do Paciente */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
-                    Prontuário do Paciente
-                  </h1>
-                  <div className="flex items-center gap-4">
-                    <ProfileSwitcher />
-                    <div className="flex items-center gap-2">
-                      {allergies.length > 0 ? (
-                        <span className="text-red-600 font-medium">
-                          Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">
-                          Nega alergias
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                        onClick={() => setIsManageAllergiesDialogOpen(true)}
-                        title="Gerenciar alergias"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
+              {!embedded && (
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                      Prontuário do Paciente
+                    </h1>
+                    <div className="flex items-center gap-4">
+                      <ProfileSwitcher />
+                      <div className="flex items-center gap-2">
+                        {allergies.length > 0 ? (
+                          <span className="text-red-600 font-medium">
+                            Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">
+                            Nega alergias
+                          </span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                          onClick={() => setIsManageAllergiesDialogOpen(true)}
+                          title="Gerenciar alergias"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white"
+                      onClick={() => setLocation("/bulk-import")}
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Importar Pacientes
+                    </Button>
+                    <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
+                      {timelineItems.length} registros
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white"
-                    onClick={() => setLocation("/bulk-import")}
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Importar Pacientes
-                  </Button>
-                  <Badge variant="outline" className="px-3 py-1 text-sm bg-white">
-                    {timelineItems.length} registros
-                  </Badge>
+              )}
+              {embedded && (
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+                  <div className="flex items-center gap-4">
+                    {allergies.length > 0 ? (
+                      <span className="text-red-600 font-medium text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-full">
+                        Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 text-sm bg-gray-50 border border-gray-200 px-3 py-1 rounded-full">
+                        Nega alergias
+                      </span>
+                    )}
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-gray-600" onClick={() => setIsManageAllergiesDialogOpen(true)} title="Gerenciar alergias"><PlusCircle className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleExportToPDF}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" className="gap-2">
+                          <PlusCircle className="w-4 h-4" /> Novo Registro
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Adicionar Novo</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
+                          <ClipboardList className="w-4 h-4 mr-2" /> Diagnóstico
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setIsMedicationDialogOpen(true)}>
+                          <Pill className="w-4 h-4 mr-2" /> Medicamento
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setIsSurgeryDialogOpen(true)}>
+                          <Scissors className="w-4 h-4 mr-2" /> Cirurgia
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setIsAllergyDialogOpen(true)}>
+                          <AlertTriangle className="w-4 h-4 mr-2" /> Alergia
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              </div>
+              )}
 
 
 
@@ -1507,161 +1549,8 @@ export default function HealthTrendsNew() {
 
                 {/* Right Column (Sidebar) */}
                 <div className="space-y-6">
-                  {/* Triagem do Dia - Sidebar Card */}
-                  {todayTriage && (
-                    <Card className="border border-blue-200 bg-blue-50 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base text-gray-900 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                            Triagem do Dia
-                          </CardTitle>
-                          <TriageBadge priority={todayTriage.manchesterPriority} showLabel={false} />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0 space-y-3">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Queixa Principal:</span>
-                          </div>
-                          <p className="text-sm font-medium text-gray-900">{todayTriage.chiefComplaint}</p>
-                        </div>
 
-                        {todayTriage.painScale && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Dor:</span>
-                            <span className="font-medium text-gray-900">{todayTriage.painScale}/10</span>
-                          </div>
-                        )}
 
-                        {(todayTriage.systolicBp || todayTriage.heartRate || todayTriage.temperature) && (
-                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200">
-                            {todayTriage.systolicBp && (
-                              <div className="text-xs">
-                                <div className="text-gray-600">PA</div>
-                                <div className="font-medium text-gray-900">
-                                  {todayTriage.systolicBp}/{todayTriage.diastolicBp}
-                                </div>
-                              </div>
-                            )}
-                            {todayTriage.heartRate && (
-                              <div className="text-xs">
-                                <div className="text-gray-600">FC</div>
-                                <div className="font-medium text-gray-900">{todayTriage.heartRate} bpm</div>
-                              </div>
-                            )}
-                            {todayTriage.temperature && (
-                              <div className="text-xs">
-                                <div className="text-gray-600">Temp</div>
-                                <div className="font-medium text-gray-900">{todayTriage.temperature}°C</div>
-                              </div>
-                            )}
-                            {todayTriage.oxygenSaturation && (
-                              <div className="text-xs">
-                                <div className="text-gray-600">SpO2</div>
-                                <div className="font-medium text-gray-900">{todayTriage.oxygenSaturation}%</div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Comorbidades - Sidebar Card */}
-                  <Card className="border border-gray-200 bg-white shadow-sm">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                          Comorbidades
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{diagnoses.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600"
-                            onClick={() => setIsDialogOpen(true)}
-                            title="Adicionar comorbidade"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {Array.isArray(diagnoses) && diagnoses.length > 0 ? (
-                        <div className="grid gap-2">
-                          {diagnoses.slice(0, 5).map((diagnosis: any) => (
-                            <div key={diagnosis.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={getCIDDescription(diagnosis.cidCode)}>
-                                  {getCIDDescription(diagnosis.cidCode)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <FileText className="h-5 w-5 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhuma ativa</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Cirurgias Prévias - Sidebar Card */}
-                  <Card className="border border-gray-200 bg-white shadow-sm">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                          Cirurgias Prévias
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-gray-50">{surgeries.length}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600"
-                            onClick={() => setIsSurgeryDialogOpen(true)}
-                            title="Adicionar cirurgia"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {Array.isArray(surgeries) && surgeries.length > 0 ? (
-                        <div className="grid gap-2">
-                          {surgeries.slice(0, 5).map((surgery: any) => (
-                            <div key={surgery.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="bg-purple-50 p-1.5 rounded-md mt-0.5 flex-shrink-0">
-                                <Activity className="h-3 w-3 text-purple-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-800 line-clamp-1" title={surgery.procedureName}>
-                                  {surgery.procedureName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {format(parseISO(surgery.surgeryDate), "dd/MM/yy", { locale: ptBR })}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-20 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <Activity className="h-5 w-5 mb-1 opacity-50" />
-                          <p className="text-xs">Nenhuma registrada</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
 
                   {/* Medicamentos de Uso Contínuo - Always Visible */}
                   <Card className="border border-primary-100 bg-white shadow-md">
@@ -1746,1384 +1635,116 @@ export default function HealthTrendsNew() {
           </div >
         </main >
 
-        {/* Dialog para Novo Diagnóstico */}
-        < Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Registrar Novo Diagnóstico</DialogTitle>
-              <DialogDescription>
-                Adicione um diagnóstico médico à sua linha do tempo
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="cidCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Código CID-10 *</FormLabel>
-                        <FormControl>
-                          <CID10Selector
-                            value={field.value || ""}
-                            onValueChange={field.onChange}
-                            placeholder="Buscar código CID-10..."
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="diagnosisDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data do Diagnóstico</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ativo">Ativo</SelectItem>
-                              <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
-                              <SelectItem value="resolvido">Resolvido</SelectItem>
-                              <SelectItem value="cronico">Crônico</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Observações (opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Adicione observações sobre o diagnóstico..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={addDiagnosisMutation.isPending}>
-                    {addDiagnosisMutation.isPending ? "Registrando..." : "Registrar Diagnóstico"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
+        {/* Dialogs de Diagnóstico */}
+        <DiagnosisDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          form={form}
+          onSubmit={onSubmit}
+          isPending={addDiagnosisMutation.isPending}
+          mode="create"
+        />
 
-        {/* Dialog de Edição de Diagnóstico */}
-        < Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Editar Diagnóstico</DialogTitle>
-              <DialogDescription>
-                Modifique ou remova este diagnóstico da sua linha do tempo
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-                <div className="space-y-4">
-                  <FormField
-                    control={editForm.control}
-                    name="cidCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Código CID-10 *</FormLabel>
-                        <FormControl>
-                          <CID10Selector
-                            value={field.value || ""}
-                            onValueChange={field.onChange}
-                            placeholder="Buscar código CID-10..."
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={editForm.control}
-                      name="diagnosisDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data do Diagnóstico *</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={editForm.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="ativo">Ativo</SelectItem>
-                              <SelectItem value="em_tratamento">Em Tratamento</SelectItem>
-                              <SelectItem value="curado">Curado</SelectItem>
-                              <SelectItem value="cronico">Crônico</SelectItem>
-                              <SelectItem value="controlado">Controlado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={editForm.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Observações (opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Adicione observações sobre o diagnóstico..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex justify-between gap-3">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={handleRemoveDiagnosis}
-                    disabled={removeDiagnosisMutation.isPending}
-                  >
-                    {removeDiagnosisMutation.isPending ? "Removendo..." : "Remover Diagnóstico"}
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={editDiagnosisMutation.isPending}>
-                      {editDiagnosisMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
+        <DiagnosisDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          form={editForm}
+          onSubmit={onEditSubmit}
+          isPending={editDiagnosisMutation.isPending}
+          mode="edit"
+          onRemove={handleRemoveDiagnosis}
+          isRemovePending={removeDiagnosisMutation.isPending}
+        />
 
-        {/* Dialog para adicionar medicamento */}
-        < Dialog open={isMedicationDialogOpen} onOpenChange={setIsMedicationDialogOpen} >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Adicionar Medicamento de Uso Contínuo</DialogTitle>
-              <DialogDescription>
-                Registre um medicamento que você usa regularmente
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...medicationForm}>
-              <form onSubmit={medicationForm.handleSubmit(onMedicationSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={medicationForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Medicamento *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Losartana" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={medicationForm.control}
-                    name="format"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Formato *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o formato" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="comprimido">Comprimido</SelectItem>
-                              <SelectItem value="capsula">Cápsula</SelectItem>
-                              <SelectItem value="solucao">Solução</SelectItem>
-                              <SelectItem value="xarope">Xarope</SelectItem>
-                              <SelectItem value="gotas">Gotas</SelectItem>
-                              <SelectItem value="injecao">Injeção</SelectItem>
-                              <SelectItem value="creme">Creme</SelectItem>
-                              <SelectItem value="pomada">Pomada</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={medicationForm.control}
-                    name="dosage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dosagem *</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Ex: 50" min="0" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={medicationForm.control}
-                    name="dosageUnit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unidade *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a unidade" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="mg">mg (miligramas)</SelectItem>
-                              <SelectItem value="g">g (gramas)</SelectItem>
-                              <SelectItem value="mcg">mcg (microgramas)</SelectItem>
-                              <SelectItem value="ml">ml (mililitros)</SelectItem>
-                              <SelectItem value="UI">UI (unidades internacionais)</SelectItem>
-                              <SelectItem value="%">% (porcentagem)</SelectItem>
-                              <SelectItem value="gotas">gotas</SelectItem>
-                              <SelectItem value="comprimido(s)">comprimido(s)</SelectItem>
-                              <SelectItem value="cápsula(s)">cápsula(s)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={medicationForm.control}
-                    name="frequency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Frequência *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a frequência" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
-                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
-                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
-                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
-                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
-                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
-                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
-                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={medicationForm.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data de Início *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={medicationForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Adicione observações sobre o medicamento..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setIsMedicationDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={addMedicationMutation.isPending}>
-                    {addMedicationMutation.isPending ? "Adicionando..." : "Adicionar Medicamento"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
+        {/* Dialogs de Medicamento */}
+        <MedicationDialog
+          open={isMedicationDialogOpen}
+          onOpenChange={setIsMedicationDialogOpen}
+          form={medicationForm}
+          onSubmit={onMedicationSubmit}
+          isPending={addMedicationMutation.isPending}
+          mode="create"
+        />
 
-        {/* Dialog para editar medicamento */}
-        < Dialog open={isEditMedicationDialogOpen} onOpenChange={setIsEditMedicationDialogOpen} >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Editar Medicamento</DialogTitle>
-              <DialogDescription>
-                Atualize as informações do medicamento
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...editMedicationForm}>
-              <form onSubmit={editMedicationForm.handleSubmit(onEditMedicationSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Medicamento *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Losartana" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="format"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Formato *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o formato" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="comprimido">Comprimido</SelectItem>
-                              <SelectItem value="capsula">Cápsula</SelectItem>
-                              <SelectItem value="solucao">Solução</SelectItem>
-                              <SelectItem value="xarope">Xarope</SelectItem>
-                              <SelectItem value="gotas">Gotas</SelectItem>
-                              <SelectItem value="injecao">Injeção</SelectItem>
-                              <SelectItem value="creme">Creme</SelectItem>
-                              <SelectItem value="pomada">Pomada</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="dosage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dosagem *</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Ex: 50" min="0" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="dosageUnit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unidade *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a unidade" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="mg">mg (miligramas)</SelectItem>
-                              <SelectItem value="g">g (gramas)</SelectItem>
-                              <SelectItem value="mcg">mcg (microgramas)</SelectItem>
-                              <SelectItem value="ml">ml (mililitros)</SelectItem>
-                              <SelectItem value="UI">UI (unidades internacionais)</SelectItem>
-                              <SelectItem value="%">% (porcentagem)</SelectItem>
-                              <SelectItem value="gotas">gotas</SelectItem>
-                              <SelectItem value="comprimido(s)">comprimido(s)</SelectItem>
-                              <SelectItem value="cápsula(s)">cápsula(s)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="frequency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Frequência *</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a frequência" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1x-dia">1x ao dia</SelectItem>
-                              <SelectItem value="2x-dia">2x ao dia</SelectItem>
-                              <SelectItem value="3x-dia">3x ao dia</SelectItem>
-                              <SelectItem value="4x-dia">4x ao dia</SelectItem>
-                              <SelectItem value="12h-12h">12h em 12h</SelectItem>
-                              <SelectItem value="8h-8h">8h em 8h</SelectItem>
-                              <SelectItem value="6h-6h">6h em 6h</SelectItem>
-                              <SelectItem value="quando-necessario">Quando necessário</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editMedicationForm.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data de Início *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={editMedicationForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Adicione observações sobre o medicamento..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-between gap-3">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => editingMedication && handleRemoveMedication(editingMedication.id)}
-                    disabled={deleteMedicationMutation.isPending}
-                  >
-                    {deleteMedicationMutation.isPending ? "Removendo..." : "Remover Medicamento"}
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsEditMedicationDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={editMedicationMutation.isPending}>
-                      {editMedicationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
+        <MedicationDialog
+          open={isEditMedicationDialogOpen}
+          onOpenChange={setIsEditMedicationDialogOpen}
+          form={editMedicationForm}
+          onSubmit={onEditMedicationSubmit}
+          isPending={editMedicationMutation.isPending}
+          mode="edit"
+          onRemove={() => editingMedication && handleRemoveMedication(editingMedication.id)}
+          isRemovePending={deleteMedicationMutation.isPending}
+        />
 
-        {/* Dialog para adicionar nova alergia */}
-        < Dialog open={isAllergyDialogOpen} onOpenChange={setIsAllergyDialogOpen} >
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Adicionar Nova Alergia</DialogTitle>
-            </DialogHeader>
-            <Form {...allergyForm}>
-              <form onSubmit={allergyForm.handleSubmit(onAllergySubmit)} className="space-y-4">
-                <FormField
-                  control={allergyForm.control}
-                  name="allergen"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medicamento/Substância</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Dialogs de Alergia */}
+        <AllergyDialog
+          open={isAllergyDialogOpen}
+          onOpenChange={setIsAllergyDialogOpen}
+          form={allergyForm}
+          onSubmit={onAllergySubmit}
+          isPending={addAllergyMutation.isPending}
+          mode="create"
+        />
 
-                <FormField
-                  control={allergyForm.control}
-                  name="allergenType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="medication">Medicamento</SelectItem>
-                          <SelectItem value="food">Alimento</SelectItem>
-                          <SelectItem value="environment">Ambiental</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <AllergyDialog
+          open={isEditAllergyDialogOpen}
+          onOpenChange={setIsEditAllergyDialogOpen}
+          form={editAllergyForm}
+          onSubmit={onEditAllergySubmit}
+          isPending={editAllergyMutation.isPending}
+          mode="edit"
+          onRemove={() => editingAllergy && handleRemoveAllergy(editingAllergy.id)}
+          isRemovePending={deleteAllergyMutation.isPending}
+        />
 
-                <FormField
-                  control={allergyForm.control}
-                  name="reaction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reação</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <ManageAllergiesDialog
+          open={isManageAllergiesDialogOpen}
+          onOpenChange={setIsManageAllergiesDialogOpen}
+          allergies={allergies}
+          onEdit={(allergy) => openEditAllergyDialog(allergy)}
+          onRemove={handleRemoveAllergy}
+          onAdd={() => setIsAllergyDialogOpen(true)}
+        />
 
-                <FormField
-                  control={allergyForm.control}
-                  name="severity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gravidade</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a gravidade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="leve">Leve</SelectItem>
-                          <SelectItem value="moderada">Moderada</SelectItem>
-                          <SelectItem value="grave">Grave</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Dialogs de Cirurgia */}
+        <SurgeryDialog
+          open={isSurgeryDialogOpen}
+          onOpenChange={setIsSurgeryDialogOpen}
+          form={surgeryForm}
+          onSubmit={onSurgerySubmit}
+          isPending={addSurgeryMutation.isPending}
+          mode="create"
+        />
 
-                <FormField
-                  control={allergyForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Informações adicionais..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <SurgeryDialog
+          open={isEditSurgeryDialogOpen}
+          onOpenChange={setIsEditSurgeryDialogOpen}
+          form={editSurgeryForm}
+          onSubmit={onEditSurgerySubmit}
+          isPending={editSurgeryMutation.isPending}
+          mode="edit"
+          onRemove={() => editingSurgery && handleRemoveSurgery(editingSurgery.id)}
+          isRemovePending={deleteSurgeryMutation.isPending}
+        />
 
-                <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsAllergyDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={addAllergyMutation.isPending}>
-                    {addAllergyMutation.isPending ? "Salvando..." : "Salvar Alergia"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
+        {/* Dialog de Prescrição */}
+        <PrescriptionDialog
+          open={isPrescriptionDialogOpen}
+          onOpenChange={setIsPrescriptionDialogOpen}
+          doctors={doctors}
+          medications={medications}
+          onOpenDoctorForm={() => setIsDoctorFormDialogOpen(true)}
+        />
 
-        {/* Dialog para editar alergia existente */}
-        < Dialog open={isEditAllergyDialogOpen} onOpenChange={setIsEditAllergyDialogOpen} >
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Editar Alergia</DialogTitle>
-            </DialogHeader>
-            <Form {...editAllergyForm}>
-              <form onSubmit={editAllergyForm.handleSubmit(onEditAllergySubmit)} className="space-y-4">
-                <FormField
-                  control={editAllergyForm.control}
-                  name="allergen"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medicamento/Substância</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Penicilina, Dipirona..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editAllergyForm.control}
-                  name="allergenType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="medication">Medicamento</SelectItem>
-                          <SelectItem value="food">Alimento</SelectItem>
-                          <SelectItem value="environment">Ambiental</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editAllergyForm.control}
-                  name="reaction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reação</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Erupção cutânea, inchaço..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editAllergyForm.control}
-                  name="severity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gravidade</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a gravidade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="leve">Leve</SelectItem>
-                          <SelectItem value="moderada">Moderada</SelectItem>
-                          <SelectItem value="grave">Grave</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editAllergyForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Informações adicionais..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-between pt-4">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => editingAllergy && handleRemoveAllergy(editingAllergy.id)}
-                    disabled={deleteAllergyMutation.isPending}
-                  >
-                    {deleteAllergyMutation.isPending ? "Removendo..." : "Remover Alergia"}
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsEditAllergyDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={editAllergyMutation.isPending}>
-                      {editAllergyMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </div>
-                </div>
-
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog >
-        {/* Dialog para gerenciar alergias (listar, editar, excluir) */}
-        <Dialog open={isManageAllergiesDialogOpen} onOpenChange={setIsManageAllergiesDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Gerenciar Alergias</DialogTitle>
-              <DialogDescription>
-                Visualize, edite ou remova alergias registradas
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {Array.isArray(allergies) && allergies.length > 0 ? (
-                <div className="space-y-3">
-                  {allergies.map((allergy: any) => (
-                    <div
-                      key={allergy.id}
-                      className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertTriangle className="h-4 w-4 text-red-500" />
-                          <h4 className="font-semibold text-gray-900">{allergy.allergen}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {allergy.allergen_type === 'medication' ? 'Medicamento' :
-                              allergy.allergen_type === 'food' ? 'Alimento' : 'Ambiental'}
-                          </Badge>
-                        </div>
-                        {allergy.reaction && (
-                          <p className="text-sm text-gray-600 mb-1">
-                            <span className="font-medium">Reação:</span> {allergy.reaction}
-                          </p>
-                        )}
-                        {allergy.severity && (
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Gravidade:</span> {allergy.severity}
-                          </p>
-                        )}
-                        {allergy.notes && (
-                          <p className="text-sm text-gray-500 mt-1">{allergy.notes}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            openEditAllergyDialog(allergy);
-                            setIsManageAllergiesDialogOpen(false);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveAllergy(allergy.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>Nenhuma alergia registrada</p>
-                </div>
-              )}
-              <div className="pt-4 border-t">
-                <Button
-                  onClick={() => {
-                    setIsManageAllergiesDialogOpen(false);
-                    setIsAllergyDialogOpen(true);
-                  }}
-                  className="w-full"
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Adicionar Nova Alergia
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog para adicionar nova cirurgia */}
-        <Dialog open={isSurgeryDialogOpen} onOpenChange={setIsSurgeryDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Registrar Nova Cirurgia</DialogTitle>
-            </DialogHeader>
-            <Form {...surgeryForm}>
-              <form onSubmit={surgeryForm.handleSubmit(onSurgerySubmit)} className="space-y-4">
-                <FormField
-                  control={surgeryForm.control}
-                  name="procedureName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do Procedimento *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Apendicectomia..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={surgeryForm.control}
-                  name="hospitalName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hospital (opcional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Hospital Albert Einstein..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={surgeryForm.control}
-                  name="surgeonName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cirurgião (opcional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Dr. Silva..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={surgeryForm.control}
-                  name="surgeryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data da Cirurgia *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={surgeryForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Informações adicionais..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsSurgeryDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={addSurgeryMutation.isPending}>
-                    {addSurgeryMutation.isPending ? "Salvando..." : "Salvar Cirurgia"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog para editar cirurgia existente */}
-        <Dialog open={isEditSurgeryDialogOpen} onOpenChange={setIsEditSurgeryDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Editar Cirurgia</DialogTitle>
-            </DialogHeader>
-            <Form {...editSurgeryForm}>
-              <form onSubmit={editSurgeryForm.handleSubmit(onEditSurgerySubmit)} className="space-y-4">
-                <FormField
-                  control={editSurgeryForm.control}
-                  name="procedureName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do Procedimento *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Apendicectomia..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editSurgeryForm.control}
-                  name="hospitalName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hospital (opcional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Hospital Albert Einstein..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editSurgeryForm.control}
-                  name="surgeonName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cirurgião (opcional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Dr. Silva..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editSurgeryForm.control}
-                  name="surgeryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data da Cirurgia *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editSurgeryForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Informações adicionais..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-between pt-4">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => editingSurgery && handleRemoveSurgery(editingSurgery.id)}
-                    disabled={deleteSurgeryMutation.isPending}
-                  >
-                    {deleteSurgeryMutation.isPending ? "Removendo..." : "Remover Cirurgia"}
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsEditSurgeryDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={editSurgeryMutation.isPending}>
-                      {editSurgeryMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog para Renovar Prescrições */}
-        <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Renovar Prescrições</DialogTitle>
-              <DialogDescription>
-                Selecione os medicamentos para renovação e configure o receituário
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              {/* Seleção de Médico */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Médico Responsável</h3>
-                {doctors.length === 0 ? (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      ⚠️ Você ainda não cadastrou nenhum médico.{" "}
-                      <button
-                        type="button"
-                        onClick={() => setIsDoctorFormDialogOpen(true)}
-                        className="underline font-medium hover:text-yellow-900"
-                      >
-                        Cadastrar agora
-                      </button>
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="text-sm font-medium">Selecione o Médico *</label>
-                    <Select
-                      value={selectedDoctorId?.toString() || ""}
-                      onValueChange={(value) => {
-                        setSelectedDoctorId(parseInt(value));
-                        const doctor = doctors.find((d: any) => d.id === parseInt(value));
-                        if (doctor) {
-                          setDoctorInfo({
-                            name: doctor.name,
-                            crm: doctor.crm,
-                            specialty: doctor.specialty || "",
-                          });
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Selecione um médico" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {doctors.map((doctor: any) => (
-                          <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <span>{doctor.name}</span>
-                              <span className="text-xs text-gray-500">CRM: {doctor.crm}</span>
-                              {doctor.isDefault && (
-                                <Badge variant="outline" className="text-xs">Padrão</Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedDoctorId && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm">
-                        <p><strong>Nome:</strong> {doctorInfo.name}</p>
-                        <p><strong>CRM:</strong> {doctorInfo.crm}</p>
-                        {doctorInfo.specialty && <p><strong>Especialidade:</strong> {doctorInfo.specialty}</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Seleção de Medicamentos */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">Medicamentos para Renovação</h3>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const allIds = medications.map((m: any) => m.id);
-                      setSelectedMedicationIds(
-                        selectedMedicationIds.length === medications.length ? [] : allIds
-                      );
-                    }}
-                    className="text-xs"
-                  >
-                    {selectedMedicationIds.length === medications.length ? "Desmarcar Todos" : "Selecionar Todos"}
-                  </Button>
-                </div>
-                <div className="border rounded-lg p-3 space-y-2 max-h-60 overflow-y-auto">
-                  {medications.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      Nenhum medicamento ativo encontrado
-                    </p>
-                  ) : (
-                    medications.map((medication: any) => (
-                      <div
-                        key={medication.id}
-                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedMedicationIds.includes(medication.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedMedicationIds([...selectedMedicationIds, medication.id]);
-                            } else {
-                              setSelectedMedicationIds(
-                                selectedMedicationIds.filter((id) => id !== medication.id)
-                              );
-                            }
-                          }}
-                          className="mt-1 h-4 w-4 rounded border-gray-300"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-sm">{medication.name}</h4>
-                            <Badge variant="outline" className="text-[10px]">
-                              {medication.format}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {medication.dosage} • {medication.frequency}
-                          </p>
-                          {medication.notes && (
-                            <p className="text-xs text-gray-500 mt-1">{medication.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Configurações da Prescrição */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Configurações da Prescrição</h3>
-                <div>
-                  <label className="text-sm font-medium">Validade</label>
-                  <Select
-                    value={prescriptionValidityDays.toString()}
-                    onValueChange={(value) => setPrescriptionValidityDays(parseInt(value))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 dias</SelectItem>
-                      <SelectItem value="60">60 dias</SelectItem>
-                      <SelectItem value="90">90 dias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Observações (opcional)</label>
-                  <Textarea
-                    value={prescriptionObservations}
-                    onChange={(e) => setPrescriptionObservations(e.target.value)}
-                    placeholder="Informações adicionais para o paciente..."
-                    className="mt-1"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsPrescriptionDialogOpen(false);
-                  setSelectedMedicationIds([]);
-                  setPrescriptionObservations("");
-                  setDoctorInfo({ name: "", crm: "", specialty: "" });
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  if (selectedMedicationIds.length === 0) {
-                    toast({
-                      title: "Erro",
-                      description: "Selecione pelo menos um medicamento",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-
-                  if (!doctorInfo.name || !doctorInfo.crm) {
-                    toast({
-                      title: "Erro",
-                      description: "Preencha os dados do médico (nome e CRM)",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-
-                  try {
-                    toast({
-                      title: "Gerando receituário...",
-                      description: "Aguarde enquanto geramos o documento.",
-                    });
-
-                    const response = await fetch("/api/prescriptions/generate", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      credentials: "include",
-                      body: JSON.stringify({
-                        // Enviar objetos completos de medicamentos para evitar query no backend
-                        medications: medications?.filter((m: any) => selectedMedicationIds.includes(m.id)),
-                        medicationIds: selectedMedicationIds,
-                        validityDays: prescriptionValidityDays,
-                        observations: prescriptionObservations,
-                        doctorName: doctorInfo.name,
-                        doctorCrm: doctorInfo.crm,
-                        doctorSpecialty: doctorInfo.specialty,
-                      }),
-                    });
-
-                    if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.message || "Erro ao gerar prescrição");
-                    }
-
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-
-                    // Abrir em nova aba
-                    window.open(url, '_blank');
-
-                    toast({
-                      title: "Sucesso",
-                      description: "Receituário gerado e aberto em nova aba!",
-                    });
-
-                    setIsPrescriptionDialogOpen(false);
-                    setSelectedMedicationIds([]);
-                    setPrescriptionObservations("");
-                    setDoctorInfo({ name: "", crm: "", specialty: "" });
-
-                    // Limpar URL após um tempo para garantir que abriu
-                    setTimeout(() => window.URL.revokeObjectURL(url), 5000);
-
-                  } catch (error: any) {
-                    console.error("Erro ao gerar receituário:", error);
-                    toast({
-                      title: "Erro",
-                      description: error.message || "Falha ao gerar receituário. Tente novamente.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                type="button"
-                disabled={selectedMedicationIds.length === 0 || !doctorInfo.name || !doctorInfo.crm}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Gerar Receituário
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog para Cadastrar Médico */}
-        <Dialog open={isDoctorFormDialogOpen} onOpenChange={setIsDoctorFormDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Cadastrar Novo Médico</DialogTitle>
-              <DialogDescription>
-                Adicione um médico para usar nas prescrições
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...doctorForm}>
-              <form onSubmit={doctorForm.handleSubmit(onDoctorSubmit)} className="space-y-4">
-                <FormField
-                  control={doctorForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do Médico *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Dr. João Silva" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={doctorForm.control}
-                  name="crm"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CRM *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12345/SP" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={doctorForm.control}
-                  name="specialty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Especialidade (opcional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Cardiologia" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDoctorFormDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={createDoctorMutation.isPending}>
-                    {createDoctorMutation.isPending ? "Cadastrando..." : "Cadastrar Médico"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        {/* Dialog de Médico */}
+        <DoctorDialog
+          open={isDoctorFormDialogOpen}
+          onOpenChange={setIsDoctorFormDialogOpen}
+          form={doctorForm}
+          onSubmit={onDoctorSubmit}
+          isPending={createDoctorMutation.isPending}
+        />
 
       </div >
     </div >
