@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   gender: text("gender"),
   phoneNumber: text("phone_number"),
   address: text("address"),
+  crm: text("crm"), // CRM or professional registration number
+  specialty: text("specialty"), // Medical specialty
   activeProfileId: integer("active_profile_id"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),

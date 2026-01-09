@@ -92,8 +92,8 @@ const profileSchema = z.object({
   fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
   phoneNumber: z.string().optional(),
-  birthDate: z.string().optional(),
-  gender: z.string().optional(),
+  crm: z.string().optional(),
+  specialty: z.string().optional(),
   address: z.string().optional(),
 });
 
@@ -134,8 +134,8 @@ export default function Profile() {
       fullName: user?.fullName || "",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
-      birthDate: user?.birthDate || "",
-      gender: user?.gender || "",
+      crm: user?.crm || "",
+      specialty: user?.specialty || "",
       address: user?.address || "",
     },
   });
@@ -374,20 +374,20 @@ export default function Profile() {
                   <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
                     <TabsTrigger
                       value="personal"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
+                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800"
                     >
-                      Dados Pessoais
+                      Dados Profissionais
                     </TabsTrigger>
                     <TabsTrigger
                       value="doctors"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                     >
-                      Meus Profissionais
+                      Minha Equipe
                     </TabsTrigger>
 
                     <TabsTrigger
                       value="security"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                     >
                       Segurança
                     </TabsTrigger>
@@ -442,12 +442,12 @@ export default function Profile() {
 
                           <FormField
                             control={profileForm.control}
-                            name="birthDate"
+                            name="crm"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Data de Nascimento</FormLabel>
+                                <FormLabel>CRM / Registro Profissional</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} name={field.name} autoComplete="bday" />
+                                  <Input placeholder="123456/UF" {...field} name={field.name} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -456,10 +456,10 @@ export default function Profile() {
 
                           <FormField
                             control={profileForm.control}
-                            name="gender"
+                            name="specialty"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Gênero</FormLabel>
+                                <FormLabel>Especialidade</FormLabel>
                                 <Select
                                   value={field.value}
                                   onValueChange={field.onChange}
@@ -467,14 +467,16 @@ export default function Profile() {
                                 >
                                   <FormControl>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Selecione o gênero" />
+                                      <SelectValue placeholder="Selecione a especialidade" />
                                     </SelectTrigger>
                                   </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="female">Feminino</SelectItem>
-                                    <SelectItem value="male">Masculino</SelectItem>
-                                    <SelectItem value="other">Outro</SelectItem>
-                                    <SelectItem value="prefer_not_to_say">Prefiro não informar</SelectItem>
+                                  <SelectContent className="max-h-[200px]">
+                                    {MEDICAL_SPECIALTIES.map((specialty) => (
+                                      <SelectItem key={specialty} value={specialty}>
+                                        {specialty}
+                                      </SelectItem>
+                                    ))}
+                                    <SelectItem value="Outra">Outra</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -526,12 +528,12 @@ export default function Profile() {
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">Profissionais de Saúde</h3>
-                          <p className="text-sm text-gray-500">Gerencie os profissionais responsáveis pelos seus tratamentos</p>
+                          <h3 className="text-lg font-medium text-gray-900">Minha Equipe</h3>
+                          <p className="text-sm text-gray-500">Gerencie os profissionais da sua equipe de atendimento</p>
                         </div>
                         <Button onClick={handleAddDoctor} className="flex items-center gap-2">
                           <Plus className="h-4 w-4" />
-                          Adicionar Profissional
+                          Adicionar Membro
                         </Button>
                       </div>
 
@@ -542,10 +544,10 @@ export default function Profile() {
                       ) : doctors.length === 0 ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                           <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                          <h3 className="text-lg font-medium text-gray-900">Nenhum profissional cadastrado</h3>
-                          <p className="text-gray-500 mb-4">Adicione seus médicos, nutricionistas ou fisioterapeutas para facilitar o acompanhamento</p>
+                          <h3 className="text-lg font-medium text-gray-900">Nenhum membro na equipe</h3>
+                          <p className="text-gray-500 mb-4">Adicione secretárias, enfermeiros ou outros profissionais da sua equipe</p>
                           <Button variant="outline" onClick={handleAddDoctor}>
-                            Cadastrar primeiro profissional
+                            Cadastrar primeiro membro
                           </Button>
                         </div>
                       ) : (
@@ -922,8 +924,8 @@ export default function Profile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700">Lembretes de exames</h3>
-                      <p className="text-xs text-gray-500 mt-1">Lembretes para repetir seus exames</p>
+                      <h3 className="text-sm font-medium text-gray-700">Lembretes de consultas</h3>
+                      <p className="text-xs text-gray-500 mt-1">Lembretes sobre suas consultas agendadas</p>
                     </div>
                     <div className="flex items-center">
                       <Switch
@@ -939,43 +941,6 @@ export default function Profile() {
 
                 <hr className="my-6 border-gray-200" />
 
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Privacidade</h2>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700">Compartilhar dados com médicos</h3>
-                      <p className="text-xs text-gray-500 mt-1">Permite compartilhar suas análises com profissionais de saúde</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Switch
-                        id="share-doctors"
-                        checked={settings.shareDoctors}
-                        onCheckedChange={(checked) =>
-                          setSettings({ ...settings, shareDoctors: checked })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700">Dados anônimos para pesquisa</h3>
-                      <p className="text-xs text-gray-500 mt-1">Compartilha dados anônimos para melhorar o sistema</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Switch
-                        id="anonymous-data"
-                        checked={settings.anonymousData}
-                        onCheckedChange={(checked) =>
-                          setSettings({ ...settings, anonymousData: checked })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <hr className="my-6 border-gray-200" />
 
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Idioma e Região</h2>
 
