@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, Sparkles, Mic, PlusCircle, X, FileText } from "lucide-react";
+import { Loader2, Save, Sparkles, Mic, PlusCircle, X, FileText, Wand2 } from "lucide-react";
 import { ConsultationRecorder } from "@/components/consultation-recorder";
 
 type ExtractedDiagnosis = {
@@ -433,6 +433,39 @@ export function AnamnesisCard() {
         },
     });
 
+    const enhanceAnamnesisMutation = useMutation({
+        mutationFn: async ({ text }: { text: string }) => {
+            const res = await apiRequest("POST", "/api/patient-record/enhance", { text });
+            return await res.json();
+        },
+        onSuccess: (data) => {
+            setAnamnesisText(data.text);
+            toast({
+                title: "Anamnese melhorada",
+                description: "O texto foi reescrito e formatado pela IA.",
+            });
+        },
+        onError: (error: any) => {
+            toast({
+                title: "Erro ao melhorar texto",
+                description: error?.message || "Não foi possível melhorar o texto.",
+                variant: "destructive",
+            });
+        },
+    });
+
+    const handleEnhanceAnamnesis = () => {
+        if (!anamnesisText.trim()) {
+            toast({
+                title: "Texto vazio",
+                description: "Escreva algo para a IA melhorar.",
+                variant: "destructive",
+            });
+            return;
+        }
+        enhanceAnamnesisMutation.mutate({ text: anamnesisText });
+    };
+
     const handleAnalyzeAnamnesis = () => {
         if (!anamnesisText.trim()) {
             toast({
@@ -541,6 +574,20 @@ export function AnamnesisCard() {
                                 <Save className="h-4 w-4" />
                             )}
                             Salvar como Consulta
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleEnhanceAnamnesis}
+                            disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
+                            variant="secondary"
+                            className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                        >
+                            {enhanceAnamnesisMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Wand2 className="h-4 w-4" />
+                            )}
+                            Melhorar com IA
                         </Button>
                         <Button
                             type="button"

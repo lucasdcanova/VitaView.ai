@@ -15,7 +15,7 @@ import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
-import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis, parseAppointmentCommand, transcribeConsultationAudio, processTranscriptionToAnamnesis } from "./services/openai";
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis, parseAppointmentCommand, transcribeConsultationAudio, processTranscriptionToAnamnesis, enhanceAnamnesisText } from "./services/openai";
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
@@ -2706,6 +2706,25 @@ export async function registerRoutes(app: Express): Promise<void> {
         message: error instanceof Error ? error.message : String(error)
       });
       res.status(500).json({ message: "Erro ao interpretar anamnese" });
+    }
+  });
+
+  // Melhora o texto da anamnese com IA
+  app.post("/api/patient-record/enhance", ensureAuthenticated, async (req, res) => {
+    try {
+      const text = typeof req.body?.text === "string" ? req.body.text : "";
+      if (!text.trim()) {
+        return res.status(400).json({ message: "Texto da anamnese é obrigatório" });
+      }
+
+      const enhancedText = await enhanceAnamnesisText(text);
+      res.json({ text: enhancedText });
+    } catch (error) {
+      logger.error("[PatientRecord] Falha ao melhorar anamnese com IA", {
+        userId: req.user?.id,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ message: "Erro ao melhorar texto da anamnese" });
     }
   });
 
