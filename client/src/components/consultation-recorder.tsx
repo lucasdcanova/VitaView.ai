@@ -72,6 +72,28 @@ export function ConsultationRecorder({
       setRecordingTime(0);
       audioChunksRef.current = [];
 
+      // Verificar se a API de mídia está disponível
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        // Verificar se é um contexto inseguro (HTTP)
+        if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+          throw new Error("INSECURE_CONTEXT");
+        }
+        throw new Error("API_NOT_AVAILABLE");
+      }
+
+      // Verificar permissão prévia se a API estiver disponível
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          if (permissionStatus.state === 'denied') {
+            throw new Error("PERMISSION_DENIED");
+          }
+        } catch (permError) {
+          // Alguns navegadores não suportam query de microfone, continuar normalmente
+          console.log("Não foi possível verificar permissão prévia:", permError);
+        }
+      }
+
       // Solicitar permissão do microfone
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -122,11 +144,24 @@ export function ConsultationRecorder({
 
     } catch (error) {
       console.error("Erro ao iniciar gravação:", error);
-      setErrorMessage(
-        error instanceof Error && error.name === "NotAllowedError"
-          ? "Permissão de microfone negada. Habilite o acesso ao microfone nas configurações do navegador."
-          : "Erro ao acessar o microfone. Verifique se seu dispositivo tem um microfone disponível."
-      );
+
+      let message = "Erro ao acessar o microfone. Verifique se seu dispositivo tem um microfone disponível.";
+
+      if (error instanceof Error) {
+        if (error.message === "INSECURE_CONTEXT") {
+          message = "O acesso ao microfone requer conexão segura (HTTPS). Entre em contato com o suporte.";
+        } else if (error.message === "API_NOT_AVAILABLE") {
+          message = "Seu navegador não suporta gravação de áudio. Tente usar Chrome, Firefox ou Edge.";
+        } else if (error.message === "PERMISSION_DENIED" || error.name === "NotAllowedError") {
+          message = "Permissão de microfone negada. Clique no ícone de cadeado na barra de endereços e permita o acesso ao microfone.";
+        } else if (error.name === "NotFoundError") {
+          message = "Nenhum microfone encontrado. Conecte um microfone e tente novamente.";
+        } else if (error.name === "NotReadableError") {
+          message = "O microfone está sendo usado por outro aplicativo. Feche outros apps e tente novamente.";
+        }
+      }
+
+      setErrorMessage(message);
       setRecordingState("error");
     }
   };
