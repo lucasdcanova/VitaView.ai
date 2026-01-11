@@ -108,12 +108,12 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             generatePrescriptionPDF({
                 doctorName: savedData.doctorName,
                 doctorCrm: savedData.doctorCrm,
-                doctorSpecialty: savedData.doctorSpecialty,
-                patientName: savedData.patientName,
+                doctorSpecialty: savedData.doctorSpecialty || undefined,
+                patientName: patient.name,
                 issueDate: new Date(savedData.issueDate),
                 validUntil: new Date(savedData.validUntil),
                 medications: savedData.medications as any[], // stored as JSON
-                observations: savedData.observations
+                observations: savedData.observations || undefined
             });
 
             toast({ title: "Sucesso", description: "Receita salva e gerada!" });
@@ -218,7 +218,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             doctorName,
             doctorCrm,
             doctorSpecialty,
-            patientName: patient.name,
             medications: itemsToSave.map(item => ({
                 name: item.name,
                 dosage: item.dosage,
@@ -263,8 +262,8 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         generatePrescriptionPDF({
             doctorName: p.doctorName,
             doctorCrm: p.doctorCrm,
-            doctorSpecialty: p.doctorSpecialty,
-            patientName: p.patientName,
+            doctorSpecialty: p.doctorSpecialty || undefined,
+            patientName: patient.name,
             issueDate: new Date(p.issueDate),
             validUntil: new Date(p.validUntil),
             medications: p.medications as any[],

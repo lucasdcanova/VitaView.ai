@@ -534,7 +534,10 @@ export const prescriptions = pgTable("prescriptions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertPrescriptionSchema = createInsertSchema(prescriptions).pick({
+export const insertPrescriptionSchema = createInsertSchema(prescriptions, {
+  issueDate: z.coerce.date(),
+  validUntil: z.coerce.date(),
+}).pick({
   userId: true,
   profileId: true,
   doctorName: true,
@@ -572,7 +575,9 @@ export const certificates = pgTable("certificates", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCertificateSchema = createInsertSchema(certificates).pick({
+export const insertCertificateSchema = createInsertSchema(certificates, {
+  issueDate: z.coerce.date(),
+}).pick({
   userId: true,
   profileId: true,
   doctorName: true,
