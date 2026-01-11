@@ -3206,6 +3206,79 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // ============================================================================
+  // PROFILE PHOTO UPLOAD
+  // ============================================================================
+
+  // Configure multer for profile photo uploads
+  const profilePhotoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo de arquivo não suportado. Use JPEG, PNG, GIF ou WebP.'));
+      }
+    },
+  });
+
+  // Upload profile photo
+  app.post("/api/users/profile-photo", ensureAuthenticated, profilePhotoUpload.single('photo'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhuma imagem enviada" });
+      }
+
+      // Convert to base64 data URL for storage
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      // Update user's profile photo URL
+      await storage.updateUser(req.user!.id, { profilePhotoUrl: base64Image });
+
+      logger.info("[Profile Photo] Photo uploaded successfully", {
+        userId: req.user!.id,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype
+      });
+
+      res.json({
+        success: true,
+        profilePhotoUrl: base64Image,
+        message: "Foto de perfil atualizada com sucesso"
+      });
+    } catch (error) {
+      logger.error("[Profile Photo] Error uploading photo", {
+        userId: req.user?.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ message: "Erro ao fazer upload da foto de perfil" });
+    }
+  });
+
+  // Delete profile photo
+  app.delete("/api/users/profile-photo", ensureAuthenticated, async (req, res) => {
+    try {
+      await storage.updateUser(req.user!.id, { profilePhotoUrl: null });
+
+      logger.info("[Profile Photo] Photo deleted", { userId: req.user!.id });
+
+      res.json({
+        success: true,
+        message: "Foto de perfil removida com sucesso"
+      });
+    } catch (error) {
+      logger.error("[Profile Photo] Error deleting photo", {
+        userId: req.user?.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ message: "Erro ao remover foto de perfil" });
+    }
+  });
+
+  // ============================================================================
   // BULK PATIENT IMPORT ROUTES
   // ============================================================================
 

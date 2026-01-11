@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   address: text("address"),
   crm: text("crm"), // CRM or professional registration number
   specialty: text("specialty"), // Medical specialty
+  profilePhotoUrl: text("profile_photo_url"), // URL/path to user's profile photo
   activeProfileId: integer("active_profile_id"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),

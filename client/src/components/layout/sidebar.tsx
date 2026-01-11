@@ -163,9 +163,28 @@ export default function Sidebar(props: SidebarProps) {
         <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center flex-col gap-2" : "")}>
             <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
-              <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-white">
-                {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
-              </div>
+              {(() => {
+                // Check for profile photo in multiple locations
+                const photoUrl = user?.profilePhotoUrl ||
+                  (user?.preferences && typeof user.preferences === 'object'
+                    ? (user.preferences as any)?.professionalProfile?.professionalPhoto
+                    : null);
+
+                if (photoUrl) {
+                  return (
+                    <img
+                      src={photoUrl}
+                      alt={user?.fullName || user?.username || 'Perfil'}
+                      className="w-10 h-10 rounded-full object-cover shadow-sm border border-white"
+                    />
+                  );
+                }
+                return (
+                  <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-white">
+                    {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                );
+              })()}
               {!isCollapsed && (
                 <div className="ml-3 overflow-hidden">
                   <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayDoctor}>
