@@ -328,11 +328,11 @@ export class HTTPSConfigManager {
   private buildCSPHeader(): string {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://replit.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://replit.com https://www.googletagmanager.com https://www.google-analytics.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https://api.stripe.com https://replit.com wss://replit.com",
+      "connect-src 'self' https://api.stripe.com https://replit.com wss://replit.com https://fonts.googleapis.com https://fonts.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://api.openai.com https://generativelanguage.googleapis.com",
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://replit.com",
       "object-src 'none'",
       "base-uri 'self'",

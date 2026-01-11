@@ -3348,6 +3348,12 @@ export async function registerRoutes(app: Express): Promise<void> {
   // PROFILE PHOTO UPLOAD
   // ============================================================================
 
+  // Ensure profile-photos directory exists
+  const profilePhotosDir = path.join(process.cwd(), 'uploads', 'profile-photos');
+  if (!fs.existsSync(profilePhotosDir)) {
+    fs.mkdirSync(profilePhotosDir, { recursive: true });
+  }
+
   // Configure multer for profile photo uploads
   const profilePhotoUpload = multer({
     storage: multer.memoryStorage(),
@@ -3364,6 +3370,63 @@ export async function registerRoutes(app: Express): Promise<void> {
     },
   });
 
+  // Serve profile photos
+  app.get("/api/users/profile-photo/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.profilePhotoUrl) {
+        return res.status(404).json({ message: "Foto não encontrada" });
+      }
+
+      // Check if it's a file path (new format) or base64 (legacy)
+      if (user.profilePhotoUrl.startsWith('data:')) {
+        // Legacy base64 format - serve directly
+        const matches = user.profilePhotoUrl.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          const mimeType = matches[1];
+          const base64Data = matches[2];
+          const buffer = Buffer.from(base64Data, 'base64');
+          res.setHeader('Content-Type', mimeType);
+          res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
+          return res.send(buffer);
+        }
+        return res.status(400).json({ message: "Formato de imagem inválido" });
+      }
+
+      // New file-based format - serve from file
+      const filePath = path.join(profilePhotosDir, user.profilePhotoUrl);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "Arquivo de foto não encontrado" });
+      }
+
+      // Determine content type from extension
+      const ext = path.extname(user.profilePhotoUrl).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
+      res.sendFile(filePath);
+    } catch (error) {
+      logger.error("[Profile Photo] Error serving photo", {
+        userId: req.params.userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({ message: "Erro ao buscar foto de perfil" });
+    }
+  });
+
   // Upload profile photo
   app.post("/api/users/profile-photo", ensureAuthenticated, profilePhotoUpload.single('photo'), async (req, res) => {
     try {
@@ -3371,21 +3434,39 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Nenhuma imagem enviada" });
       }
 
-      // Convert to base64 data URL for storage
-      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      // Delete old photo if exists
+      const currentUser = await storage.getUser(req.user!.id);
+      if (currentUser?.profilePhotoUrl && !currentUser.profilePhotoUrl.startsWith('data:')) {
+        const oldFilePath = path.join(profilePhotosDir, currentUser.profilePhotoUrl);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
 
-      // Update user's profile photo URL
-      await storage.updateUser(req.user!.id, { profilePhotoUrl: base64Image });
+      // Generate unique filename
+      const ext = path.extname(req.file.originalname) || '.jpg';
+      const filename = `${req.user!.id}_${Date.now()}${ext}`;
+      const filePath = path.join(profilePhotosDir, filename);
+
+      // Save file to disk
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      // Update user's profile photo URL with just the filename
+      await storage.updateUser(req.user!.id, { profilePhotoUrl: filename });
+
+      // Generate the full URL for the response
+      const photoUrl = `/api/users/profile-photo/${req.user!.id}`;
 
       logger.info("[Profile Photo] Photo uploaded successfully", {
         userId: req.user!.id,
         fileSize: req.file.size,
-        mimeType: req.file.mimetype
+        mimeType: req.file.mimetype,
+        filename
       });
 
       res.json({
         success: true,
-        profilePhotoUrl: base64Image,
+        profilePhotoUrl: photoUrl,
         message: "Foto de perfil atualizada com sucesso"
       });
     } catch (error) {
@@ -3400,6 +3481,15 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Delete profile photo
   app.delete("/api/users/profile-photo", ensureAuthenticated, async (req, res) => {
     try {
+      // Get current photo path to delete the file
+      const currentUser = await storage.getUser(req.user!.id);
+      if (currentUser?.profilePhotoUrl && !currentUser.profilePhotoUrl.startsWith('data:')) {
+        const filePath = path.join(profilePhotosDir, currentUser.profilePhotoUrl);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
       await storage.updateUser(req.user!.id, { profilePhotoUrl: null });
 
       logger.info("[Profile Photo] Photo deleted", { userId: req.user!.id });

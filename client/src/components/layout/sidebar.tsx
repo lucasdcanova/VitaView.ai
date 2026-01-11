@@ -169,10 +169,25 @@ export default function Sidebar(props: SidebarProps) {
             <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
               {(() => {
                 // Check for profile photo in multiple locations
-                const photoUrl = user?.profilePhotoUrl ||
-                  (user?.preferences && typeof user.preferences === 'object'
-                    ? (user.preferences as any)?.professionalProfile?.professionalPhoto
-                    : null);
+                // First check profilePhotoUrl (can be filename or base64)
+                // Then check professionalProfile.professionalPhoto (always base64)
+                let photoUrl: string | null = null;
+
+                if (user?.profilePhotoUrl) {
+                  if (user.profilePhotoUrl.startsWith('data:') || user.profilePhotoUrl.startsWith('http')) {
+                    // Legacy base64 or external URL - use as is
+                    photoUrl = user.profilePhotoUrl;
+                  } else {
+                    // New file-based format - use API endpoint
+                    photoUrl = `/api/users/profile-photo/${user.id}`;
+                  }
+                } else if (user?.preferences && typeof user.preferences === 'object') {
+                  // Check professionalProfile photo (always base64)
+                  const profPhoto = (user.preferences as any)?.professionalProfile?.professionalPhoto;
+                  if (profPhoto) {
+                    photoUrl = profPhoto;
+                  }
+                }
 
                 if (photoUrl) {
                   return (

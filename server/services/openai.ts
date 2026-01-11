@@ -816,7 +816,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       throw new Error("Exame não encontrado ou acesso não autorizado");
     }
 
-    if (exam.status !== "ready_for_analysis" && exam.status !== "extracted") {
+    if (exam.status !== "ready_for_analysis" && exam.status !== "extracted" && exam.status !== "analyzing") {
       throw new Error(`Exame com status inválido para análise: ${exam.status}`);
     }
 

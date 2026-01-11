@@ -18,8 +18,16 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+
+  // Skip external resources - let the browser handle them directly
+  // This prevents CSP violations for cross-origin requests like fonts
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Network-first strategy for API calls
-  if (event.request.url.includes('/api/')) {
+  if (url.pathname.includes('/api/')) {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
@@ -32,7 +40,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for other requests
+  // Stale-while-revalidate for same-origin requests only
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
@@ -45,6 +53,9 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return networkResponse;
+        }).catch(() => {
+          // If fetch fails and we have a cached response, use it
+          return cachedResponse;
         });
         return cachedResponse || fetchPromise;
       })

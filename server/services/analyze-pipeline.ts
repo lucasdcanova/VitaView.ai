@@ -273,6 +273,12 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
       const patientData = await buildPatientRecordContext(exam.userId, profileContext);
 
       const analysisResult = await analyzeExtractedExam(exam.id, exam.userId, storage, patientData);
+
+      // Check if analysisResult indicates an error (function returns error object instead of throwing)
+      if (analysisResult && typeof analysisResult === 'object' && 'error' in analysisResult && analysisResult.error) {
+        throw new Error((analysisResult as any).message || 'Erro desconhecido na análise');
+      }
+
       // [Pipeline] Análise com OpenAI concluída com sucesso
 
       // Atualizar status para finalizado
