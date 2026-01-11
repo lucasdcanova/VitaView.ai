@@ -14,8 +14,10 @@ import {
     CalendarDays,
     History,
     Printer,
-    Ban
+    Ban,
+    FileText
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import type { Profile, Certificate } from "@shared/schema";
 
@@ -39,7 +41,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
     const queryClient = useQueryClient();
 
     // --- Certificate State ---
-    const [certType, setCertType] = useState<'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao'>("afastamento");
+    const [certType, setCertType] = useState<'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao' | 'laudo'>("afastamento");
     const [certDays, setCertDays] = useState("1");
     const [certStartTime, setCertStartTime] = useState("");
     const [certEndTime, setCertEndTime] = useState("");
@@ -195,6 +197,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                                 <SelectItem value="comparecimento">Comparecimento (Horas)</SelectItem>
                                                 <SelectItem value="acompanhamento">Acompanhamento de Paciente</SelectItem>
                                                 <SelectItem value="aptidao">Aptidão Física</SelectItem>
+                                                <SelectItem value="laudo">Laudo Médico</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -251,6 +254,19 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                             <Button variant="outline" size="sm" className="text-[10px] h-6 px-2" onClick={() => setCertCid("")}>Limpar</Button>
                                         </div>
                                     </div>
+
+                                    {/* Laudo Médico Text Area */}
+                                    {certType === 'laudo' && (
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-gray-700">Descrição do Caso / Laudo</label>
+                                            <Textarea
+                                                className="min-h-[200px] text-sm"
+                                                placeholder="Descreva o quadro clínico detalhado..."
+                                                value={customCertText}
+                                                onChange={e => setCustomCertText(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Right: Preview */}
