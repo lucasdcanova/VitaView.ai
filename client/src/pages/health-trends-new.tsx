@@ -112,6 +112,22 @@ const getCIDDescription = (cidCode: string): string => {
   return cidEntry ? `${cidCode} - ${cidEntry.description}` : cidCode;
 };
 
+// Helper para formatar texto com negrito (**texto**)
+const formatBoldText = (text: string | null | undefined) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={index} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      })}
+    </>
+  );
+};
+
 interface TimelineItem {
   id: number;
   type: "exam" | "diagnosis" | "surgery" | "evolution" | "triage";
@@ -1240,13 +1256,13 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                                     {item.type === 'triage' && item.details ? (
                                       <div className="text-sm mt-3 space-y-3">
                                         {item.description && (
-                                          <p className="text-gray-700 font-medium">{item.description}</p>
+                                          <div className="text-gray-700 font-medium">{formatBoldText(item.description)}</div>
                                         )}
 
                                         {item.details.history && (
                                           <div className="bg-blue-50/50 p-3 rounded-md border border-blue-100">
                                             <span className="font-semibold text-blue-800 block mb-1 text-xs uppercase tracking-wider">História da Doença Atual</span>
-                                            <p className="text-gray-700 whitespace-pre-line leading-relaxed">{item.details.history}</p>
+                                            <div className="text-gray-700 whitespace-pre-line leading-relaxed">{formatBoldText(item.details.history)}</div>
                                           </div>
                                         )}
 
@@ -1265,13 +1281,13 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                                         )}
 
                                         {item.details.notes && (
-                                          <p className="text-gray-600 text-xs italic border-t border-gray-100 pt-2 mt-2">
-                                            Obs: {item.details.notes}
-                                          </p>
+                                          <div className="text-gray-600 text-xs italic border-t border-gray-100 pt-2 mt-2">
+                                            Obs: {formatBoldText(item.details.notes)}
+                                          </div>
                                         )}
                                       </div>
                                     ) : (
-                                      <p className="text-gray-600 mt-1 whitespace-pre-line">{item.description}</p>
+                                      <div className="text-gray-600 mt-1 whitespace-pre-line">{formatBoldText(item.description)}</div>
                                     )}
                                   </div>
 

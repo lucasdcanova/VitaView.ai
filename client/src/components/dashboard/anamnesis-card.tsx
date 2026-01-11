@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, Sparkles, Mic, PlusCircle, X } from "lucide-react";
+import { Loader2, Save, Sparkles, Mic, PlusCircle, X, FileText } from "lucide-react";
 import { ConsultationRecorder } from "@/components/consultation-recorder";
 
 type ExtractedDiagnosis = {
@@ -490,6 +490,34 @@ export function AnamnesisCard() {
                         placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg, histórico familiar de diabetes, refere alergia a penicilina..."
                         className="min-h-[140px] resize-vertical"
                     />
+                    {anamnesisText && (
+                        <div className="p-3 bg-gray-50 rounded-md border border-gray-100 text-sm">
+                            <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                <FileText className="h-3.5 w-3.5" />
+                                Como será visualizado
+                            </div>
+                            <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                                {/* Helper para formatar texto com negrito (**texto**) */}
+                                {(() => {
+                                    const formatBoldText = (text: string | null | undefined) => {
+                                        if (!text) return null;
+                                        const parts = text.split(/(\*\*.*?\*\*)/g);
+                                        return (
+                                            <span>
+                                                {parts.map((part, index) => {
+                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return <strong key={index} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+                                                    }
+                                                    return part;
+                                                })}
+                                            </span>
+                                        );
+                                    };
+                                    return formatBoldText(anamnesisText);
+                                })()}
+                            </div>
+                        </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-3">
                         <Button
                             type="button"
