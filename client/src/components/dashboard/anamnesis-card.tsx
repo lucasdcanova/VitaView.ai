@@ -97,7 +97,7 @@ export function AnamnesisCard() {
     const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const { activeProfile } = useProfiles();
+    const { activeProfile, inServiceAppointmentId, clearPatientInService } = useProfiles();
     const previousProfileIdRef = useRef<number | null>(null);
 
     // Limpar estado quando o paciente mudar
@@ -406,13 +406,33 @@ export function AnamnesisCard() {
 
     const addEvolutionMutation = useMutation({
         mutationFn: (data: { text: string; date?: string; profileId: number }) => apiRequest("POST", "/api/evolutions", data),
-        onSuccess: () => {
+        onSuccess: async () => {
             // Invalidar queries de evoluções para o perfil ativo
             queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
-            toast({
-                title: "Consulta registrada",
-                description: "Histórico salvo com sucesso!",
-            });
+
+            // Se houver um agendamento em atendimento, marcar como concluído
+            if (inServiceAppointmentId) {
+                try {
+                    await apiRequest("PATCH", `/api/appointments/${inServiceAppointmentId}`, { status: 'completed' });
+                    queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+                    clearPatientInService();
+                    toast({
+                        title: "Consulta finalizada",
+                        description: "Atendimento concluído e registrado na agenda!",
+                    });
+                } catch (err) {
+                    console.error("Erro ao atualizar status do agendamento:", err);
+                    toast({
+                        title: "Consulta registrada",
+                        description: "Histórico salvo, mas houve erro ao atualizar a agenda.",
+                    });
+                }
+            } else {
+                toast({
+                    title: "Consulta registrada",
+                    description: "Histórico salvo com sucesso!",
+                });
+            }
             setAnamnesisText("");
         },
         onError: () => {
