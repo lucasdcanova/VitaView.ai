@@ -128,8 +128,12 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
             priceAmount = parseInt(cleanPrice);
         }
 
+        // Format date as YYYY-MM-DD string for the backend
+        const formattedDate = format(values.date, 'yyyy-MM-dd');
+
         const submissionData = {
             ...values,
+            date: formattedDate, // Override the Date object with formatted string
             profileId: parseInt(values.profileId),
             patientName: selectedProfile ? selectedProfile.name : "Paciente",
             price: priceAmount,

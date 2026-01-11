@@ -82,7 +82,19 @@ export function AgendaCalendar({
 
   const getAppointmentsForDay = (date: Date) => {
     return appointmentsList.filter(app => {
-      const appDate = new Date(app.date + 'T12:00:00');
+      // Handle both date string (YYYY-MM-DD) and full timestamp formats
+      let appDate: Date;
+      if (typeof app.date === 'string') {
+        // If it's a simple date string, add time component
+        if (app.date.length === 10) {
+          appDate = new Date(app.date + 'T12:00:00');
+        } else {
+          // It's already a full timestamp
+          appDate = new Date(app.date);
+        }
+      } else {
+        appDate = new Date(app.date);
+      }
       return isSameDay(appDate, date);
     });
   };
