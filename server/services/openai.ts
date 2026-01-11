@@ -1700,19 +1700,20 @@ ${transcription}
 4. Identifique diagnósticos (com CID-10 quando possível), medicamentos, alergias, comorbidades e cirurgias prévias mencionados
 5. Use terminologia médica apropriada
 6. Mantenha objetividade e clareza
+7. CRÍTICO: Sempre quando nao houver informacoes sobre um topico, OMITA esse topico completamente. Por exemplo, se o paciente nao falou sobre Historico Social, não coloque como "nao informado", apenas omita na evolucao medica. Faça isso com toda e qualquer informação.
 
 ### FORMATO DA ANAMNESE:
-A anamnese deve seguir a estrutura SOAP ou similar:
-- **Identificação**: Dados básicos do paciente (se mencionados)
+A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DADOS:
+- **Identificação**: Dados básicos do paciente (APENAS se mencionados)
 - **Queixa Principal (QP)**: Motivo da consulta em palavras do paciente
-- **História da Doença Atual (HDA)**: Evolução cronológica dos sintomas, características, fatores de melhora/piora
-- **Interrogatório Sintomatológico**: Revisão de sistemas quando aplicável
-- **História Patológica Pregressa (HPP)**: Doenças anteriores, cirurgias, internações
-- **História Familiar (HF)**: Antecedentes familiares relevantes
-- **História Social (HS)**: Hábitos de vida, ocupação, tabagismo, etilismo
-- **Medicamentos em Uso**: Lista de medicações atuais
-- **Alergias**: Alergias conhecidas
-- **Exame Físico**: Achados do exame quando mencionados
+- **História da Doença Atual (HDA)**: Evolução cronológica dos sintomas
+- **Interrogatório Sintomatológico**: APENAS sintomas positivos
+- **História Patológica Pregressa (HPP)**: APENAS se relatada
+- **História Familiar (HF)**: APENAS se relatada
+- **História Social (HS)**: OMITIR se não houver dados
+- **Medicamentos em Uso**: APENAS medicamentos citados
+- **Alergias**: APENAS se houver relato
+- **Exame Físico**: APENAS achados mencionados
 - **Impressão Diagnóstica**: Hipóteses diagnósticas
 - **Conduta**: Plano terapêutico e orientações
 
@@ -1743,16 +1744,13 @@ A anamnese deve seguir a estrutura SOAP ou similar:
       transcriptionLength: transcription.length
     });
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      input: [
-        {
-          role: "user",
-          content: [{ type: "input_text", text: prompt }]
-        }
+      messages: [
+        { role: "user", content: prompt }
       ],
       temperature: 0.3,
-      max_output_tokens: 4000
+      max_tokens: 4000
     });
 
     const content = extractResponseText(response);
