@@ -303,30 +303,6 @@ export default function AuthPage() {
 
                     <FormField
                       control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-heading font-bold text-[#212121]">Email</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="Digite seu email"
-                              value={field.value || ''}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              autoComplete="email"
-                              className="h-11"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-[#D32F2F]" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={registerForm.control}
                       name="password"
                       render={({ field }) => (
                         <FormItem>
