@@ -19,7 +19,9 @@ import {
     Ban,
     AlertTriangle,
     Pill,
-    Save
+    Save,
+    Check,
+    RefreshCw
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +49,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     // --- Continuous Medications State ---
     const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
     const [editingMedication, setEditingMedication] = useState<any>(null);
+    const [selectedMedications, setSelectedMedications] = useState<Set<number>>(new Set());
 
     const medicationForm = useForm<MedicationFormData>({
         resolver: zodResolver(medicationSchema),
@@ -275,6 +278,64 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         });
     };
 
+    // --- Renewal Prescription Handler ---
+    const handleRenewPrescription = async () => {
+        if (selectedMedications.size === 0) {
+            toast({ title: "Seleção vazia", description: "Selecione pelo menos um medicamento para renovar.", variant: "destructive" });
+            return;
+        }
+
+        if (!user) {
+            toast({ title: "Erro", description: "Usuário não identificado. Faça login novamente.", variant: "destructive" });
+            return;
+        }
+
+        const selectedMeds = medications.filter((med: any) => selectedMedications.has(med.id));
+        const doctorName = user.fullName || user.username || "Dr. VitaView";
+        const doctorCrm = user.crm || "CRM pendente";
+        const doctorSpecialty = user.specialty || "Clínica Médica";
+
+        createPrescriptionMutation.mutate({
+            profileId: patient.id,
+            userId: patient.userId,
+            doctorName,
+            doctorCrm,
+            doctorSpecialty,
+            medications: selectedMeds.map((med: any) => ({
+                name: med.name,
+                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit || ''}`,
+                frequency: med.frequency,
+                notes: med.notes
+            })),
+            issueDate: new Date().toISOString(),
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            observations: "Renovação de medicamentos de uso contínuo",
+            status: 'active'
+        });
+
+        setSelectedMedications(new Set());
+    };
+
+    const toggleMedicationSelection = (id: number) => {
+        setSelectedMedications(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedMedications.size === medications.length) {
+            setSelectedMedications(new Set());
+        } else {
+            setSelectedMedications(new Set(medications.map((m: any) => m.id)));
+        }
+    };
+
     return (
         <div className="space-y-6 pb-20">
             {/* Header */}
@@ -316,7 +377,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     <Pill className="h-4 w-4" /> Uso Contínuo
                 </TabsTrigger>
                 <TabsTrigger value="prescription" className="gap-2">
-                    <Stethoscope className="h-4 w-4" /> Nova Receita
+                    <Stethoscope className="h-4 w-4" /> Receita Aguda
                 </TabsTrigger>
                 <TabsTrigger value="history" className="gap-2">
                     <History className="h-4 w-4" /> Histórico
@@ -327,24 +388,68 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             <TabsContent value="continuous" className="mt-6">
                 <Card className="border-blue-100 shadow-md">
                     <CardHeader className="bg-blue-50/50 border-b border-blue-100 pb-4">
-                        <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
-                            <Pill className="h-5 w-5 text-blue-700" />
-                            Medicamentos de Uso Contínuo
-                        </CardTitle>
-                        <CardDescription>Gerencie os medicamentos que o paciente utiliza regularmente.</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                                    <Pill className="h-5 w-5 text-blue-700" />
+                                    Medicamentos de Uso Contínuo
+                                </CardTitle>
+                                <CardDescription>Gerencie os medicamentos que o paciente utiliza regularmente.</CardDescription>
+                            </div>
+                            {medications.length > 0 && (
+                                <Button
+                                    onClick={handleRenewPrescription}
+                                    disabled={selectedMedications.size === 0 || createPrescriptionMutation.isPending}
+                                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    {createPrescriptionMutation.isPending ? "Renovando..." : `Renovar Receita (${selectedMedications.size})`}
+                                </Button>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="pt-6">
                         {medications.length > 0 ? (
                             <div className="space-y-4">
+                                {/* Select All */}
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); toggleSelectAll(); }}
+                                        className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${selectedMedications.size === medications.length
+                                            ? 'bg-blue-600 border-blue-600 text-white'
+                                            : 'border-gray-300 hover:border-blue-400'
+                                            }`}
+                                    >
+                                        {selectedMedications.size === medications.length && <Check className="h-3 w-3" />}
+                                    </button>
+                                    <span className="text-sm text-gray-600">
+                                        {selectedMedications.size === medications.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                                    </span>
+                                </div>
+
                                 <div className="grid gap-3">
                                     {medications.map((medication: any) => (
                                         <div
                                             key={medication.id}
-                                            className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer group"
-                                            onClick={() => openEditMedicationDialog(medication)}
+                                            className={`p-4 bg-white rounded-lg border transition-all cursor-pointer group ${selectedMedications.has(medication.id)
+                                                ? 'border-blue-400 bg-blue-50/50 shadow-sm'
+                                                : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
+                                                    {/* Checkbox */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); toggleMedicationSelection(medication.id); }}
+                                                        className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${selectedMedications.has(medication.id)
+                                                            ? 'bg-blue-600 border-blue-600 text-white'
+                                                            : 'border-gray-300 hover:border-blue-400'
+                                                            }`}
+                                                    >
+                                                        {selectedMedications.has(medication.id) && <Check className="h-3 w-3" />}
+                                                    </button>
                                                     <div className="bg-blue-100 p-2 rounded-full">
                                                         <Pill className="h-4 w-4 text-blue-600" />
                                                     </div>
@@ -358,7 +463,12 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-blue-600">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-gray-400 hover:text-blue-600"
+                                                    onClick={(e) => { e.stopPropagation(); openEditMedicationDialog(medication); }}
+                                                >
                                                     <FileText className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -410,9 +520,9 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
                         <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
                             <Stethoscope className="h-5 w-5 text-green-700" />
-                            Nova Prescrição
+                            Receita Aguda
                         </CardTitle>
-                        <CardDescription>Adicione medicamentos à receita simples ou controlada.</CardDescription>
+                        <CardDescription>Prescreva medicamentos temporários para tratamentos específicos.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-6">
 

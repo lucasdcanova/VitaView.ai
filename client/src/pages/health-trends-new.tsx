@@ -1012,43 +1012,12 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                   </div>
                 </div>
               )}
-              {embedded && (
+              {embedded && allergies.length > 0 && (
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
                   <div className="flex items-center gap-4">
-                    {allergies.length > 0 ? (
-                      <span className="text-red-600 font-medium text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-full">
-                        Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
-                      </span>
-                    ) : (
-                      <span className="text-gray-500 text-sm bg-gray-50 border border-gray-200 px-3 py-1 rounded-full">
-                        Nega alergias
-                      </span>
-                    )}
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-gray-600" onClick={() => setIsManageAllergiesDialogOpen(true)} title="Gerenciar alergias"><PlusCircle className="h-4 w-4" /></Button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleExportToPDF}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" className="gap-2">
-                          <PlusCircle className="w-4 h-4" /> Novo Registro
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Adicionar Novo</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
-                          <ClipboardList className="w-4 h-4 mr-2" /> Diagnóstico
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsSurgeryDialogOpen(true)}>
-                          <Scissors className="w-4 h-4 mr-2" /> Cirurgia
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsAllergyDialogOpen(true)}>
-                          <AlertTriangle className="w-4 h-4 mr-2" /> Alergia
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <span className="text-red-600 font-medium text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-full">
+                      Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1073,9 +1042,16 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                           <p className="text-sm text-gray-500">Histórico cronológico de eventos</p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-gray-600 bg-white border-gray-200 px-3 py-1">
-                        {timelineItems.length} registros
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {embedded && (
+                          <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleExportToPDF}>
+                            <FileText className="w-4 h-4 mr-2" /> PDF
+                          </Button>
+                        )}
+                        <Badge variant="outline" className="text-gray-600 bg-white border-gray-200 px-3 py-1">
+                          {timelineItems.length} registros
+                        </Badge>
+                      </div>
                     </div>
 
                     <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4">
