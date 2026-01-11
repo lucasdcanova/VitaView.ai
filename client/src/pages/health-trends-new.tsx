@@ -1315,17 +1315,17 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                           </Card>
                         </div>
                       ))
-                    ) : (
-                      <div className="pl-8 py-8">
-                        <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                          <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                          <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
-                          <p className="text-gray-500 mt-1">
-                            Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                        : (
+                          <div className="pl-8 py-8">
+                            <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                              <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                              <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
+                              <p className="text-gray-500 mt-1">
+                                Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div > {/* End Left Column */}
