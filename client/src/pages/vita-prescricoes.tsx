@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { generatePrescriptionPDF, generateCertificatePDF } from "@/lib/prescription-pdf";
+import { useAuth } from "@/hooks/use-auth"; // Added
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,13 +26,6 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Profile, Prescription, Certificate } from "@shared/schema";
-import {
-    DoctorDialog,
-    doctorSchema,
-    type DoctorFormData
-} from "@/components/dialogs";
-
-type DoctorForm = DoctorFormData;
 
 interface AcutePrescriptionItem {
     id: string;
@@ -57,10 +51,8 @@ interface VitaPrescriptionsProps {
 
 export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const queryClient = useQueryClient();
-
-    const [isDoctorFormDialogOpen, setIsDoctorFormDialogOpen] = useState(false);
-    const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
 
     // --- Prescription State ---
     const [acuteItems, setAcuteItems] = useState<AcutePrescriptionItem[]>([]);
@@ -84,21 +76,9 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         }
     }, [patient]);
 
-    const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
-        queryKey: ["/api/doctors"],
-    });
-
     const isCurrentAcuteItemComplete = Boolean(
         currentAcuteItem.name && currentAcuteItem.dosage && currentAcuteItem.frequency
     );
-
-    useEffect(() => {
-        if (selectedDoctorId || doctorsLoading || doctors.length === 0) return;
-        const defaultDoctor = doctors.find((d) => d.isDefault) ?? doctors[0];
-        if (defaultDoctor?.id) {
-            setSelectedDoctorId(defaultDoctor.id.toString());
-        }
-    }, [doctors, doctorsLoading, selectedDoctorId]);
 
     // History Queries
     const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
@@ -111,22 +91,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         enabled: !!patient.id
     });
 
-    const doctorForm = useForm<DoctorForm>({
-        resolver: zodResolver(doctorSchema),
-        defaultValues: { name: "", crm: "", specialty: "", isDefault: false },
-    });
-
     // Mutations
-    const createDoctorMutation = useMutation({
-        mutationFn: (data: DoctorForm) => apiRequest("POST", "/api/doctors", data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-            doctorForm.reset();
-            setIsDoctorFormDialogOpen(false);
-            toast({ title: "Médico cadastrado", description: "Novo profissional adicionado." });
-        },
-        onError: () => toast({ title: "Erro", description: "Falha ao cadastrar médico.", variant: "destructive" }),
-    });
 
     const createPrescriptionMutation = useMutation({
         mutationFn: async (data: any) => {
@@ -229,13 +194,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             toast({ title: "Prescrição vazia", description: "Adicione pelo menos um medicamento.", variant: "destructive" });
             return;
         }
-        if (!selectedDoctorId) {
-            toast({ title: "Médico não selecionado", description: "Selecione um médico responsável.", variant: "destructive" });
+
+        if (!user) {
+            toast({ title: "Erro", description: "Usuário não identificado. Faça login novamente.", variant: "destructive" });
             return;
         }
-
-        const doctor = doctors.find(d => d.id.toString() === selectedDoctorId);
-        if (!doctor) return;
 
         const itemsToSave = acuteItems.length > 0 ? acuteItems : [{
             id: "single-item",
@@ -245,12 +208,16 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             notes: currentAcuteItem.notes
         }];
 
+        const doctorName = user.fullName || user.username || "Dr. VitaView";
+        const doctorCrm = user.crm || "CRM pendente";
+        const doctorSpecialty = user.specialty || "Clínica Médica";
+
         createPrescriptionMutation.mutate({
             profileId: patient.id,
             userId: patient.userId,
-            doctorName: doctor.name,
-            doctorCrm: doctor.crm,
-            doctorSpecialty: doctor.specialty,
+            doctorName,
+            doctorCrm,
+            doctorSpecialty,
             patientName: patient.name,
             medications: itemsToSave.map(item => ({
                 name: item.name,
@@ -266,19 +233,19 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     };
 
     const handleSaveAndPrintCertificate = async () => {
-        if (!selectedDoctorId) {
-            toast({ title: "Médico não selecionado", description: "Selecione um médico responsável.", variant: "destructive" });
+        if (!user) {
+            toast({ title: "Erro", description: "Usuário não identificado. Faça login novamente.", variant: "destructive" });
             return;
         }
 
-        const doctor = doctors.find(d => d.id.toString() === selectedDoctorId);
-        if (!doctor) return;
+        const doctorName = user.fullName || user.username || "Dr. VitaView";
+        const doctorCrm = user.crm || "CRM pendente";
 
         createCertificateMutation.mutate({
             profileId: patient.id,
             userId: patient.userId,
-            doctorName: doctor.name,
-            doctorCrm: doctor.crm,
+            doctorName,
+            doctorCrm,
             patientName: patient.name,
             patientDoc: patientDoc,
             type: certType,
@@ -330,19 +297,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     <p className="text-gray-500">Emissão de receitas médicas e atestados para <span className="font-semibold text-primary">{patient.name}</span>.</p>
                 </div>
 
-                {/* Global Doctor Selector */}
-                <div className="w-full md:w-auto min-w-[250px]">
-                    <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
-                        <SelectTrigger className="w-full bg-white">
-                            <SelectValue placeholder="Selecione o Médico Prescritor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {doctors.map((d) => (
-                                <SelectItem key={d.id} value={d.id.toString()}>{d.name} ({d.crm})</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {doctors.length === 0 && <p className="text-xs text-red-500 cursor-pointer hover:underline mt-1 text-right" onClick={() => setIsDoctorFormDialogOpen(true)}>+ Cadastrar Médico</p>}
+                {/* Professional Info */}
+                <div className="w-full md:w-auto min-w-[250px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex flex-col items-end">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
+                    <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
+                    {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
                 </div>
             </div>
 
@@ -466,7 +425,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 <Button
                                     className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
                                     onClick={handleSaveAndPrintPrescription}
-                                    disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !selectedDoctorId}
+                                    disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !user}
                                 >
                                     <Printer className="h-5 w-5 mr-2" />
                                     {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
@@ -572,7 +531,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 <Button
                                     className="h-12 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700 min-w-[250px]"
                                     onClick={handleSaveAndPrintCertificate}
-                                    disabled={createCertificateMutation.isPending || !selectedDoctorId}
+                                    disabled={createCertificateMutation.isPending || !user}
                                 >
                                     <Printer className="h-5 w-5 mr-2" />
                                     {createCertificateMutation.isPending ? "Salvando..." : "Salvar e Imprimir Atestado"}
@@ -694,7 +653,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 </TabsContent>
             </Tabs>
 
-            <DoctorDialog open={isDoctorFormDialogOpen} onOpenChange={setIsDoctorFormDialogOpen} form={doctorForm} onSubmit={(data) => createDoctorMutation.mutate(data)} isPending={createDoctorMutation.isPending} />
         </div>
     );
 }
