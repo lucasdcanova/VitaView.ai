@@ -139,14 +139,15 @@ export default function Sidebar(props: SidebarProps) {
         )}
       >
         {/* Toggle Button (Desktop Only) */}
-        <div className="absolute -right-3 top-20 hidden md:flex z-50">
+        <div className="absolute -right-4 top-20 hidden md:flex z-50">
           <Button
             variant="outline"
             size="icon"
-            className="h-6 w-6 rounded-full bg-white border-gray-200 shadow-md hover:bg-gray-50 text-gray-500 hover:text-charcoal"
+            className="h-8 w-8 rounded-full bg-white border-gray-200 shadow-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200"
             onClick={toggleCollapse}
+            title={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
           >
-            {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 
