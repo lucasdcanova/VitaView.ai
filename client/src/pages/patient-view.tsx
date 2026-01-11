@@ -56,6 +56,7 @@ import { useUploadManager } from "@/hooks/use-upload-manager";
 
 export default function PatientView() {
     const [activeTab, setActiveTab] = useState("dashboard");
+    const [showUpload, setShowUpload] = useState(false);
     const [, setLocation] = useLocation();
     const { activeProfile } = useProfiles();
     const { uploads } = useUploadManager();
@@ -284,19 +285,70 @@ export default function PatientView() {
                                                         <FileText className="h-5 w-5" />
                                                         Exames Recentes
                                                     </CardTitle>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 text-primary-600 hover:text-primary-700"
-                                                        onClick={() => setActiveTab("laboratorial")}
-                                                    >
-                                                        Ver todos
-                                                    </Button>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 gap-1"
+                                                            onClick={() => setShowUpload(!showUpload)}
+                                                        >
+                                                            <Upload className="h-4 w-4" />
+                                                            {showUpload ? "Ocultar" : "Enviar Exame"}
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 text-primary-600 hover:text-primary-700"
+                                                            onClick={() => setActiveTab("laboratorial")}
+                                                        >
+                                                            Ver todos
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="pt-0">
+                                                {/* Upload Section */}
+                                                {showUpload && (
+                                                    <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <FileUpIcon className="h-5 w-5 text-primary-600" />
+                                                            <span className="font-medium text-gray-800">Envio rápido de exame</span>
+                                                            {isProcessing && (
+                                                                <Badge variant="secondary" className="ml-2">
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    Processando...
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <FileUpload
+                                                            onUploadComplete={(result) => {
+                                                                handleUploadComplete(result);
+                                                                setShowUpload(false);
+                                                            }}
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-2 text-center">
+                                                            Nossa IA identificará automaticamente o paciente e vinculará ao prontuário.
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Exams List */}
                                                 {recentExams.length === 0 ? (
-                                                    <p className="text-gray-500 text-center py-8">Nenhum exame enviado ainda</p>
+                                                    <div className="text-center py-8">
+                                                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                                                        <p className="text-gray-500 mb-3">Nenhum exame enviado ainda</p>
+                                                        {!showUpload && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => setShowUpload(true)}
+                                                                className="gap-1"
+                                                            >
+                                                                <Upload className="h-4 w-4" />
+                                                                Enviar primeiro exame
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 ) : (
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         {recentExams.map((exam: any) => (
