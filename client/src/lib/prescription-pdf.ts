@@ -22,7 +22,7 @@ interface PrescriptionData {
 }
 
 interface CertificateData {
-    type: 'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao';
+    type: 'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao' | 'laudo';
     doctorName: string;
     doctorCrm: string;
     patientName: string;
@@ -205,7 +205,8 @@ export const generateCertificatePDF = (data: CertificateData) => {
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text("ATESTADO MÉDICO", 105, 22, { align: "center" });
+    const title = data.type === 'laudo' ? "LAUDO MÉDICO" : "ATESTADO MÉDICO";
+    doc.text(title, 105, 22, { align: "center" });
 
     doc.setFontSize(10);
     doc.setTextColor(80, 80, 80);
@@ -245,6 +246,10 @@ export const generateCertificatePDF = (data: CertificateData) => {
             case 'aptidao':
                 text = `Atesto para os devidos fins que o(a) Sr(a). ${data.patientName}, portador(a) do documento nº ${data.patientDoc || '________________'}, foi examinado(a) por mim nesta data e encontra-se APTO(A) para a prática de atividades físicas.`;
                 break;
+            case 'laudo':
+                // Laudo contents are typically custom text, fallback if empty
+                text = `LAUDO MÉDICO\n\nPaciente: ${data.patientName}\n\n[Descrição do quadro clínico não fornecida]`;
+                break;
         }
     }
 
@@ -276,5 +281,6 @@ export const generateCertificatePDF = (data: CertificateData) => {
     doc.text(`CRM: ${data.doctorCrm}`, 105, yPos + 10, { align: "center" });
     doc.text("Assinatura e Carimbo", 105, yPos + 15, { align: "center" });
 
-    doc.save(`Atestado_${data.type}_${data.patientName.replace(/\s+/g, '_')}.pdf`);
+    const prefix = data.type === 'laudo' ? "Laudo" : "Atestado";
+    doc.save(`${prefix}_${data.type}_${data.patientName.replace(/\s+/g, '_')}.pdf`);
 };

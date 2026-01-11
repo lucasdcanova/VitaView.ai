@@ -14,8 +14,10 @@ import {
     CalendarDays,
     History,
     Printer,
-    Ban
+    Ban,
+    FileText
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import type { Profile, Certificate } from "@shared/schema";
 
@@ -39,7 +41,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
     const queryClient = useQueryClient();
 
     // --- Certificate State ---
-    const [certType, setCertType] = useState<'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao'>("afastamento");
+    const [certType, setCertType] = useState<'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao' | 'laudo'>("afastamento");
     const [certDays, setCertDays] = useState("1");
     const [certStartTime, setCertStartTime] = useState("");
     const [certEndTime, setCertEndTime] = useState("");
@@ -231,7 +233,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                         </CardHeader>
                         <CardContent className="pt-6 space-y-6">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 {/* Left: Settings */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
@@ -245,6 +247,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                                 <SelectItem value="comparecimento">Comparecimento (Horas)</SelectItem>
                                                 <SelectItem value="acompanhamento">Acompanhamento de Paciente</SelectItem>
                                                 <SelectItem value="aptidao">Aptidão Física</SelectItem>
+                                                <SelectItem value="laudo">Laudo Médico</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -301,13 +304,19 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                             <Button variant="outline" size="sm" className="text-[10px] h-6 px-2" onClick={() => setCertCid("")}>Limpar</Button>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Right: Preview */}
-                                <div className="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 flex flex-col justify-center items-center text-center text-gray-500 gap-2">
-                                    <FileSignature className="h-10 w-10 opacity-20" />
-                                    <p className="text-sm max-w-[200px]">O atestado será gerado automaticamente com base nos dados informados ao lado.</p>
-                                    <p className="text-xs text-blue-600 mt-2">Modelo padrão VitaView AI</p>
+                                    {/* Laudo Médico Text Area */}
+                                    {certType === 'laudo' && (
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-gray-700">Descrição do Caso / Laudo</label>
+                                            <Textarea
+                                                className="min-h-[200px] text-sm"
+                                                placeholder="Descreva o quadro clínico detalhado..."
+                                                value={customCertText}
+                                                onChange={e => setCustomCertText(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
