@@ -158,7 +158,7 @@ export default function PatientView() {
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <Heart className="h-4 w-4 mr-2" />
-                                    Vita Timeline
+                                    Histórico do Paciente
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="laboratorial"
@@ -299,7 +299,7 @@ export default function PatientView() {
                                         <CardContent>
                                             <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                                             <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
-                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para visualizar a Timeline.</p>
+                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para visualizar o Histórico do Paciente.</p>
                                         </CardContent>
                                     </Card>
                                 )}
