@@ -34,6 +34,8 @@ import { TriageCard } from "@/components/dashboard/triage-card";
 import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
 import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
 import { AnamnesisCard } from "@/components/dashboard/anamnesis-card";
+import { AllergiesCard } from "@/components/dashboard/allergies-card";
+import { ActiveMedicationsCard } from "@/components/dashboard/active-medications-card";
 import HealthTrendsNew from "./health-trends-new";
 import VitaPrescriptions from "./vita-prescricoes";
 import FileUpload from "@/components/ui/file-upload";
@@ -218,9 +220,14 @@ export default function PatientView() {
                                                                     </div>
                                                                 </CardContent>
                                                             </Card>
-                                                        )}
                                                     </div>
                                                 )}
+
+                                                {/* Allergies and Medications Grid */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <AllergiesCard />
+                                                    <ActiveMedicationsCard />
+                                                </div>
                                             </div>
 
                                             {/* Right Column: Clinical Summary (1/3 width) */}
@@ -412,7 +419,7 @@ export default function PatientView() {
                         </Tabs>
                     </div>
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
