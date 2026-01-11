@@ -26,10 +26,23 @@ import {
     FileUpIcon,
     Loader2,
     ClipboardList,
-    ShieldCheck
+    ShieldCheck,
+    Building2,
+    CalendarDays,
+    User
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Função para calcular idade
+const calculateAge = (birthDate: string | null | undefined): number | null => {
+    if (!birthDate) return null;
+    try {
+        return differenceInYears(new Date(), new Date(birthDate));
+    } catch {
+        return null;
+    }
+};
 import { TriageCard } from "@/components/dashboard/triage-card";
 import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
 import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
@@ -124,13 +137,35 @@ export default function PatientView() {
                                         <Users className="h-6 w-6" />
                                         Atendimento
                                     </h1>
-                                    <p className="text-gray-600">
-                                        {activeProfile ? (
-                                            <>Paciente: <span className="font-semibold">{activeProfile.name}</span></>
-                                        ) : (
-                                            "Selecione um paciente para visualizar os dados"
-                                        )}
-                                    </p>
+                                    {activeProfile ? (
+                                        <div className="mt-2">
+                                            <p className="text-lg font-semibold text-gray-800">{activeProfile.name}</p>
+                                            <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-gray-600">
+                                                {calculateAge(activeProfile.birthDate) !== null && (
+                                                    <span className="flex items-center gap-1">
+                                                        <User className="h-4 w-4 text-gray-400" />
+                                                        {calculateAge(activeProfile.birthDate)} anos
+                                                    </span>
+                                                )}
+                                                {activeProfile.insuranceName && (
+                                                    <span className="flex items-center gap-1">
+                                                        <Building2 className="h-4 w-4 text-gray-400" />
+                                                        {activeProfile.insuranceName}
+                                                    </span>
+                                                )}
+                                                {activeProfile.createdAt && (
+                                                    <span className="flex items-center gap-1">
+                                                        <CalendarDays className="h-4 w-4 text-gray-400" />
+                                                        Paciente desde {format(new Date(activeProfile.createdAt), "MMM 'de' yyyy", { locale: ptBR })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-600 mt-1">
+                                            Selecione um paciente para visualizar os dados
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </header>
