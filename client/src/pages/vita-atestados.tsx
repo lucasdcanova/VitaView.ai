@@ -183,7 +183,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                         </CardHeader>
                         <CardContent className="pt-6 space-y-6">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 {/* Left: Settings */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
@@ -267,13 +267,6 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                             />
                                         </div>
                                     )}
-                                </div>
-
-                                {/* Right: Preview */}
-                                <div className="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 flex flex-col justify-center items-center text-center text-gray-500 gap-2">
-                                    <FileSignature className="h-10 w-10 opacity-20" />
-                                    <p className="text-sm max-w-[200px]">O atestado será gerado automaticamente com base nos dados informados ao lado.</p>
-                                    <p className="text-xs text-blue-600 mt-2">Modelo padrão VitaView AI</p>
                                 </div>
                             </div>
 
