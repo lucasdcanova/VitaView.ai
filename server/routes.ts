@@ -1191,22 +1191,25 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
       const appointments = await storage.getAppointmentsByUserId(req.user.id);
-      res.json(appointments);
+      res.json(appointments || []);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao buscar agendamentos" });
+      console.error("Erro ao buscar agendamentos:", error);
+      res.status(500).json({ message: "Erro ao buscar agendamentos", error: (error as Error).message });
     }
   });
 
   app.post("/api/appointments", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
+      console.log("Criando agendamento:", req.body);
       const appointment = await storage.createAppointment({
         ...req.body,
         userId: req.user.id
       });
       res.json(appointment);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao criar agendamento" });
+      console.error("Erro ao criar agendamento:", error);
+      res.status(500).json({ message: "Erro ao criar agendamento", error: (error as Error).message });
     }
   });
 
@@ -2288,12 +2291,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       if (!profileId) {
-        return res.status(400).json({ message: "Nenhum paciente selecionado." });
+        // Retornar array vazio se nenhum paciente selecionado (não é erro)
+        return res.json([]);
       }
 
       const profile = await storage.getProfile(profileId);
       if (!profile || profile.userId !== userId) {
-        return res.status(403).json({ message: "Paciente inválido para este profissional." });
+        // Retornar array vazio se paciente inválido
+        return res.json([]);
       }
 
       try {
@@ -2484,12 +2489,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       if (!profileId) {
-        return res.status(400).json({ message: "Nenhum paciente selecionado." });
+        // Retornar array vazio se nenhum paciente selecionado (não é erro)
+        return res.json([]);
       }
 
       const profile = await storage.getProfile(profileId);
       if (!profile || profile.userId !== userId) {
-        return res.status(403).json({ message: "Paciente inválido." });
+        // Retornar array vazio se paciente inválido
+        return res.json([]);
       }
 
       const metrics = await storage.getHealthMetricsByUserId(userId, profileId);

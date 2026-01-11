@@ -1830,3 +1830,50 @@ Esta anamnese foi gerada a partir de transcrição automática e requer revisão
     }
   };
 }
+
+/**
+ * Melhora e formata o texto da anamnese usando IA
+ * @param text Texto original da anamnese
+ * @returns Texto melhorado
+ */
+export async function enhanceAnamnesisText(text: string): Promise<string> {
+  if (!openai) {
+    throw new Error("OpenAI client not initialized");
+  }
+
+  const prompt = `
+    Você é um médico assistente experiente.
+    Melhore o seguinte texto de anamnese médica.
+    
+    DIRETRIZES:
+    1. Mantenha todas as informações clínicas factuais intactas.
+    2. Corrija erros de ortografia, gramática e pontuação.
+    3. Utilize terminologia médica técnica adequada (ex: trocar "dor de barriga" por "dor abdominal", se o contexto permitir).
+    4. Mantenha o tom profissional, objetivo e formal.
+    5. Melhore a estrutura e fluidez do texto.
+    6. Destaque em negrito (**texto**) os sintomas, diagnósticos, achados físicos importantes e medicamentos citados.
+    7. NÃO adicione informações que não estejam no texto original.
+    8. Retorne APENAS o texto melhorado, sem introduções ou observações.
+
+    TEXTO ORIGINAL:
+    "${text}"
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        { role: "system", content: "Você é um assistente médico especializado em documentação clínica." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 2000
+    });
+
+    const content = response.choices[0].message.content;
+    return content?.trim() || text;
+  } catch (error) {
+    logger.error("[OpenAI] Erro ao melhorar texto da anamnese", { error });
+    throw new Error("Falha ao melhorar o texto com IA");
+  }
+}
