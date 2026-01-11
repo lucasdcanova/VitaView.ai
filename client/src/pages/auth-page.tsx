@@ -110,7 +110,7 @@ export default function AuthPage() {
       {/* Botão para voltar para a landing page */}
       <Button
         variant="outline"
-        className="absolute top-4 left-4 z-10 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+        className="absolute top-4 left-4 z-50 rounded-full w-10 h-10 p-0 flex items-center justify-center"
         onClick={() => navigate("/")}
       >
         <ArrowLeft size={18} />
