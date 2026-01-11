@@ -183,57 +183,60 @@ export default function PatientView() {
                                     </Card>
                                 ) : (
                                     <div className="space-y-6">
-                                        {/* Main Dashboard Grid */}
-                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                            {/* Left Column: Anamnesis & Triage (2/3 width) */}
-                                            <div className="lg:col-span-2 space-y-6">
-                                                {/* Anamnesis Section */}
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                            {/* SECTION 1: MAIN HIGHLIGHT - ANAMNESIS */}
+                                            <div className="w-full">
                                                 <AnamnesisCard />
-
-                                                {/* Triage and Alerts Section */}
-                                                {(todayTriage || alertMetrics.length > 0) && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {todayTriage && <TriageCard triage={todayTriage} />}
-
-                                                        {alertMetrics.length > 0 && (
-                                                            <Card className={`border-red-200 bg-red-50 ${!todayTriage ? 'md:col-span-2' : ''}`}>
-                                                                <CardHeader className="pb-3">
-                                                                    <CardTitle className="text-red-700 flex items-center gap-2 text-base">
-                                                                        <AlertTriangle className="h-5 w-5" />
-                                                                        Métricas que Requerem Atenção
-                                                                    </CardTitle>
-                                                                </CardHeader>
-                                                                <CardContent>
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                        {alertMetrics.slice(0, 4).map((metric: any) => (
-                                                                            <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
-                                                                                <div>
-                                                                                    <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
-                                                                                    <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
-                                                                                </div>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    {getTrendIcon(metric.change)}
-                                                                                    <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </CardContent>
-                                                            </Card>
-                                                    </div>
-                                                )}
-
-                                                {/* Allergies and Medications Grid */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <AllergiesCard />
-                                                    <ActiveMedicationsCard />
-                                                </div>
                                             </div>
 
-                                            {/* Right Column: Clinical Summary (1/3 width) */}
-                                            <div className="space-y-6">
-                                                <ComorbiditiesCard diagnoses={diagnoses} />
-                                                <SurgeriesCard surgeries={surgeries} />
+                                            {/* SECTION 2: CLINICAL OVERVIEW GRID */}
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                                    <Activity className="h-5 w-5 text-primary-600" />
+                                                    Visão Geral Clínica
+                                                </h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+
+                                                    {/* Column 1: Immediate Attention (Triage & Alerts) */}
+                                                    {(todayTriage || alertMetrics.length > 0) ? (
+                                                        <div className="space-y-6">
+                                                            {todayTriage && <TriageCard triage={todayTriage} />}
+
+                                                            {alertMetrics.length > 0 && (
+                                                                <Card className="border-red-200 bg-red-50 shadow-sm h-full">
+                                                                    <CardHeader className="pb-3">
+                                                                        <CardTitle className="text-red-700 flex items-center gap-2 text-base">
+                                                                            <AlertTriangle className="h-5 w-5" />
+                                                                            Alertas Clínicos
+                                                                        </CardTitle>
+                                                                    </CardHeader>
+                                                                    <CardContent>
+                                                                        <div className="space-y-3">
+                                                                            {alertMetrics.slice(0, 4).map((metric: any) => (
+                                                                                <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
+                                                                                    <div>
+                                                                                        <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
+                                                                                        <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        {getTrendIcon(metric.change)}
+                                                                                        <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </CardContent>
+                                                                </Card>
+                                                            )}
+                                                        </div>
+                                                    ) : null}
+
+                                                    {/* Column 2 & 3 Items Distributed */}
+                                                    <AllergiesCard />
+                                                    <ActiveMedicationsCard />
+                                                    <ComorbiditiesCard diagnoses={diagnoses} />
+                                                    <SurgeriesCard surgeries={surgeries} />
+                                                </div>
                                             </div>
                                         </div>
 
