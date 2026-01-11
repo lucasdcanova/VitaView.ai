@@ -12,14 +12,13 @@ import { useProfiles } from "@/hooks/use-profiles";
 
 const profileSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    gender: z.string().min(1, "Gênero é obrigatório"),
-    birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
     phone: z.string().min(10, "Telefone é obrigatório"),
-    planType: z.string().optional(),
+    birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+    cpf: z.string().min(11, "CPF é obrigatório"),
+    planType: z.string().min(1, "Tipo de plano é obrigatório"),
     // All other fields optional
-    cpf: z.string().optional(),
+    gender: z.string().optional(),
     rg: z.string().optional(),
-    landline: z.string().optional(),
     email: z.string().email("Email inválido").optional().or(z.literal("")),
     cep: z.string().optional(),
     street: z.string().optional(),
@@ -54,13 +53,12 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
         resolver: zodResolver(profileSchema),
         defaultValues: {
             name: "",
-            gender: "",
-            birthDate: "",
             phone: "",
-            planType: "",
+            birthDate: "",
             cpf: "",
+            planType: "",
+            gender: "",
             rg: "",
-            landline: "",
             email: "",
             cep: "",
             street: "",
@@ -84,7 +82,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
     const onCreateSubmit = (data: ProfileFormData) => {
         createProfile({
             name: data.name,
-            gender: data.gender,
+            gender: data.gender || null,
             birthDate: data.birthDate,
             phone: data.phone,
             planType: data.planType || null,
@@ -94,7 +92,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
             // Identification
             cpf: data.cpf || null,
             rg: data.rg || null,
-            landline: data.landline || null,
+            landline: null,
             email: data.email || null,
             // Address
             cep: data.cep || null,
@@ -166,7 +164,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
                                     name="gender"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Gênero *</FormLabel>
+                                            <FormLabel>Gênero</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
@@ -208,7 +206,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
                                     name="cpf"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>CPF</FormLabel>
+                                            <FormLabel>CPF *</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="000.000.000-00" {...field} />
                                             </FormControl>
@@ -237,19 +235,6 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
                                             <FormLabel>Email</FormLabel>
                                             <FormControl>
                                                 <Input type="email" placeholder="email@exemplo.com" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={createForm.control}
-                                    name="landline"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Telefone fixo</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="(00) 0000-0000" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -435,7 +420,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
                                     name="planType"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Tipo de plano</FormLabel>
+                                            <FormLabel>Tipo de plano *</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="SUS, particular, convênio..." {...field} />
                                             </FormControl>
