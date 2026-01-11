@@ -1502,7 +1502,10 @@ export class DatabaseStorage implements IStorage {
     return r;
   }
   async getExamResultByExamId(examId: number): Promise<ExamResult | undefined> {
-    const [r] = await db.select().from(examResults).where(eq(examResults.examId, examId));
+    const [r] = await db.select()
+      .from(examResults)
+      .where(eq(examResults.examId, examId))
+      .orderBy(desc(examResults.id));
     return r;
   }
 
