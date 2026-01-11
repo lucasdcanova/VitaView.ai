@@ -242,17 +242,34 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    resolveDelegatedUser(req.user as SelectUser)
-      .then((resolvedUser) => {
-        const { password: _, ...resolvedWithoutPassword } = resolvedUser;
+
+    try {
+      const loggedInUser = req.user as SelectUser;
+      const preferences = parsePreferences(loggedInUser.preferences);
+      const isSecretary = preferences?.delegateType === "secretary" && preferences?.delegateForUserId;
+
+      const resolvedUser = await resolveDelegatedUser(loggedInUser);
+      const { password: _, ...resolvedWithoutPassword } = resolvedUser;
+
+      // If secretary is logged in, include their info
+      if (isSecretary && loggedInUser.id !== resolvedUser.id) {
+        res.json({
+          ...resolvedWithoutPassword,
+          loggedInAs: {
+            id: loggedInUser.id,
+            name: loggedInUser.fullName || loggedInUser.username,
+            role: "secretary"
+          }
+        });
+      } else {
         res.json(resolvedWithoutPassword);
-      })
-      .catch(() => {
-        const { password, ...userWithoutPassword } = req.user as SelectUser;
-        res.json(userWithoutPassword);
-      });
+      }
+    } catch (error) {
+      const { password, ...userWithoutPassword } = req.user as SelectUser;
+      res.json(userWithoutPassword);
+    }
   });
 
   // Endpoint para recuperação de senha

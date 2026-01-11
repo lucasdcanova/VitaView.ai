@@ -65,7 +65,11 @@ export default function Sidebar(props: SidebarProps) {
     setIsCollapsed(!isCollapsed);
   }
 
-  const displayDoctor = user?.fullName || user?.username || "Doutor";
+  // Check if secretary is logged in (loggedInAs field comes from API)
+  const loggedInAs = (user as any)?.loggedInAs;
+  const isSecretary = loggedInAs?.role === 'secretary';
+  const displayName = isSecretary ? loggedInAs.name : (user?.fullName || user?.username || "Doutor");
+  const displayRole = isSecretary ? 'Secretária' : 'Profissional de saúde';
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 768) {
@@ -187,11 +191,11 @@ export default function Sidebar(props: SidebarProps) {
               })()}
               {!isCollapsed && (
                 <div className="ml-3 overflow-hidden">
-                  <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayDoctor}>
-                    {displayDoctor}
+                  <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayName}>
+                    {displayName}
                   </h3>
                   <p className="text-xs text-mediumGray font-body truncate">
-                    {user?.role === 'secretary' ? 'Secretária' : 'Profissional de saúde'}
+                    {displayRole}
                   </p>
                 </div>
               )}
