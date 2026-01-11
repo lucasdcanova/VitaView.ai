@@ -186,7 +186,7 @@ export default function PatientView() {
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <Pill className="h-4 w-4 mr-2" />
-                                    Vita Prescrições
+                                    Prescrição
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="timeline"
@@ -200,7 +200,7 @@ export default function PatientView() {
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <LineChart className="h-4 w-4 mr-2" />
-                                    Vita Exames
+                                    Exames
                                 </TabsTrigger>
                             </TabsList>
 
