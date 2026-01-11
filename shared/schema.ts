@@ -317,6 +317,7 @@ export const evolutions = pgTable("evolutions", {
   userId: integer("user_id").notNull().references(() => users.id),
   profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   text: text("text").notNull(),
+  professionalName: text("professional_name"), // Name of the professional who created this evolution
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -325,6 +326,7 @@ export const insertEvolutionSchema = createInsertSchema(evolutions).pick({
   userId: true,
   profileId: true,
   text: true,
+  professionalName: true,
   date: true,
 });
 

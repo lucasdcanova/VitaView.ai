@@ -3071,10 +3071,22 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "profileId é obrigatório" });
       }
 
+      // Get professional name - check if secretary is logged in
+      const loggedInUser = req.user!;
+      const preferences = loggedInUser.preferences && typeof loggedInUser.preferences === 'object'
+        ? loggedInUser.preferences as Record<string, any>
+        : (typeof loggedInUser.preferences === 'string' ? JSON.parse(loggedInUser.preferences) : null);
+
+      const isSecretary = preferences?.delegateType === "secretary" && preferences?.delegateForUserId;
+      const professionalName = isSecretary
+        ? (loggedInUser.fullName || loggedInUser.username)
+        : (loggedInUser.fullName || loggedInUser.username || "Profissional");
+
       const evolutionData = {
         userId: req.user!.id,
         profileId: profileId,
         text: text,
+        professionalName: professionalName,
         date: date ? new Date(date) : new Date(),
       };
 

@@ -1271,7 +1271,15 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                                         )}
                                       </div>
                                     ) : (
-                                      <div className="text-gray-600 mt-1 whitespace-pre-line">{formatBoldText(item.description)}</div>
+                                      <div className="text-gray-600 mt-1 whitespace-pre-line">
+                                        {formatBoldText(item.description)}
+                                        {/* Show professional name for evolutions */}
+                                        {item.type === 'evolution' && item.originalData?.professionalName && (
+                                          <div className="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-400 italic text-right">
+                                            — {item.originalData.professionalName}
+                                          </div>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
 
