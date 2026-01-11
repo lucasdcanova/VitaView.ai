@@ -475,6 +475,11 @@ export default function ExamReport() {
                   onClick={async () => {
                     if (!data) return;
 
+                    const newTab = window.open('', '_blank');
+                    if (newTab) {
+                      newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Relatório...</div></body></html>');
+                    }
+
                     try {
                       const response = await fetch(`/api/export-exam-report/${examId}`, {
                         method: 'POST',
@@ -484,17 +489,14 @@ export default function ExamReport() {
                       if (response.ok) {
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `relatorio-exame-${data.exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
+                        if (newTab) newTab.location.href = url;
+                        else window.open(url, '_blank');
                       } else {
+                        newTab?.close();
                         alert('Erro ao gerar o PDF do relatório');
                       }
                     } catch (error) {
+                      newTab?.close();
                       console.error('Erro ao baixar PDF:', error);
                       alert('Erro ao gerar o PDF do relatório');
                     }
@@ -667,16 +669,16 @@ export default function ExamReport() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {healthMetrics.slice(0, 4).map((metric, index) => (
                             <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 border border-red-100' :
-                                metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
-                                  metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
+                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
+                                metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
                               }`}>
                               <div className="flex justify-between mb-1">
                                 <span className="text-sm font-medium text-gray-700 flex items-center">
                                   {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
                                   {metric.status !== 'normal' && (
                                     <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
-                                        metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                          'bg-amber-100 text-amber-800 border-amber-200'
+                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                        'bg-amber-100 text-amber-800 border-amber-200'
                                       }`}>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
@@ -686,8 +688,8 @@ export default function ExamReport() {
                                   <span className="text-sm text-gray-700 font-medium">{metric.value} {metric.unit}</span>
                                   {metric.change && (
                                     <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
-                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
-                                          'bg-gray-50 text-gray-700'
+                                      metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
+                                        'bg-gray-50 text-gray-700'
                                       }`}>
                                       {metric.change}
                                     </span>
@@ -758,8 +760,8 @@ export default function ExamReport() {
 
                                   {metric.change && (
                                     <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700' :
-                                        metric.change.startsWith('-') ? 'text-green-700' :
-                                          'text-gray-700'
+                                      metric.change.startsWith('-') ? 'text-green-700' :
+                                        'text-gray-700'
                                       }`}>
                                       {getChangeIcon(metric.change)}
                                       <span className="ml-0.5">{metric.change}</span>
@@ -811,8 +813,8 @@ export default function ExamReport() {
                                     <span className="font-medium">{metric.value}</span> {metric.unit}
                                     {metric.change && (
                                       <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
-                                          metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
-                                            'bg-gray-50 text-gray-700'
+                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
+                                          'bg-gray-50 text-gray-700'
                                         }`}>
                                         {getChangeIcon(metric.change)}
                                         <span className="ml-0.5">{metric.change}</span>
@@ -1110,8 +1112,8 @@ export default function ExamReport() {
                                 <div className="flex items-center">
                                   <div className="w-full bg-gray-200 rounded-full h-2.5 mr-4">
                                     <div className={`h-2.5 rounded-full ${insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
-                                        insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
-                                          'w-1/3 bg-red-500'
+                                      insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                        'w-1/3 bg-red-500'
                                       }`}></div>
                                   </div>
                                   <span className="text-sm font-medium text-gray-700 w-16">{

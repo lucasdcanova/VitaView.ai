@@ -1014,28 +1014,30 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
 
   // Função para exportar dados para PDF
   const handleExportToPDF = async () => {
+    const newTab = window.open('', '_blank');
+    if (newTab) {
+      newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Relatório de Saúde...</div></body></html>');
+    }
+
     try {
       const response = await apiRequest("POST", "/api/export-health-report", {});
 
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `relatorio-saude-${format(new Date(), "yyyy-MM-dd")}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        if (newTab) newTab.location.href = url;
+        else window.open(url, '_blank');
 
         toast({
-          title: "Relatório exportado",
-          description: "Seu relatório de saúde foi gerado e baixado com sucesso!",
+          title: "Relatório gerado",
+          description: "Seu relatório de saúde foi aberto em uma nova aba.",
         });
       } else {
+        newTab?.close();
         throw new Error("Erro ao gerar relatório");
       }
     } catch (error) {
+      newTab?.close();
       toast({
         title: "Erro na exportação",
         description: "Não foi possível gerar o relatório. Tente novamente.",

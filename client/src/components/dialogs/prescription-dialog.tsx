@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { generatePrescriptionPDF } from "@/lib/prescription-pdf";
+// import { generatePrescriptionPDF } from "@/lib/prescription-pdf";
 import {
     Dialog,
     DialogContent,
@@ -69,6 +69,12 @@ export function PrescriptionDialog({
                 description: "Aguarde enquanto preparamos o documento.",
             });
 
+            // Open tab immediately to avoid popup blockers
+            const newTab = window.open('', '_blank');
+            if (newTab) {
+                newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Receituário... Aguarde.</div></body></html>');
+            }
+
             // Find full medication objects
             const selectedMeds = medications
                 .filter((m: any) => selectedMedicationIds.includes(m.id))
@@ -81,17 +87,34 @@ export function PrescriptionDialog({
                     dosageUnit: m.dosageUnit
                 }));
 
-            // Generate PDF Client-side
-            generatePrescriptionPDF({
-                doctorName: doctorInfo.name,
-                doctorCrm: doctorInfo.crm,
-                doctorSpecialty: doctorInfo.specialty,
-                patientName: patientName || "Paciente (Visualização)",
-                issueDate: new Date(),
-                validUntil: new Date(Date.now() + prescriptionValidityDays * 24 * 60 * 60 * 1000),
-                medications: selectedMeds,
-                observations: prescriptionObservations
+            // Generate PDF Server-side
+            const response = await fetch('/api/documents/prescription/pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    doctorName: doctorInfo.name,
+                    doctorCrm: doctorInfo.crm,
+                    doctorSpecialty: doctorInfo.specialty,
+                    patientName: patientName || "Paciente (Visualização)",
+                    validityDays: prescriptionValidityDays,
+                    medications: selectedMeds,
+                    observations: prescriptionObservations
+                })
             });
+
+            if (!response.ok) {
+                newTab?.close();
+                throw new Error('Falha ao gerar PDF');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            if (newTab) {
+                newTab.location.href = url;
+            } else {
+                window.open(url, '_blank');
+            }
 
             toast({
                 title: "Sucesso",

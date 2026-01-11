@@ -89,6 +89,76 @@ function isControlledMedication(medicationName: string): boolean {
   return CONTROLLED_MEDICATIONS.some(controlled => nameLower.includes(controlled));
 }
 
+function generateCertificateHTML({ type, doctorName, doctorCrm, patientName, patientDoc, issueDate, daysOff, startTime, endTime, cid, customText }: any) {
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+  const dateStr = formatDate(issueDate || new Date());
+
+  let text = "";
+  if (customText) {
+    text = customText;
+  } else {
+    switch (type) {
+      case 'afastamento':
+        text = `Atesto para os devidos fins que o(a) Sr(a). ${patientName}, portador(a) do documento nº ${patientDoc || '________________'}, foi atendido(a) nesta data e necessita de ${daysOff || '0'} (${daysOff === '1' ? 'um' : ''}) dia(s) de afastamento de suas atividades laborais/escolares a partir desta data, por motivo de doença.`;
+        break;
+      case 'comparecimento':
+        text = `Atesto para os devidos fins que o(a) Sr(a). ${patientName}, portador(a) do documento nº ${patientDoc || '________________'}, compareceu a este serviço para atendimento médico/exames nesta data, no período das ${startTime || '____'} às ${endTime || '____'} horas.`;
+        break;
+      case 'acompanhamento':
+        text = `Atesto para os devidos fins que o(a) Sr(a). ${patientName}, portador(a) do documento nº ${patientDoc || '________________'}, compareceu a este serviço nesta data, como acompanhante de paciente sob meus cuidados.`;
+        break;
+      case 'aptidao':
+        text = `Atesto para os devidos fins que o(a) Sr(a). ${patientName}, portador(a) do documento nº ${patientDoc || '________________'}, foi examinado(a) por mim nesta data e encontra-se APTO(A) para a prática de atividades físicas.`;
+        break;
+    }
+  }
+
+  if (cid) {
+    text += `<br><br><strong>CID: ${cid}</strong>`;
+  }
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Atestado Médico</title>
+      <style>
+        @page { size: A4; margin: 0; }
+        body { font-family: 'Arial', sans-serif; color: #000; padding: 20mm; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 40px; background-color: #eff6ff; padding: 20px; border-bottom: 2px solid #2563eb; }
+        .title { font-size: 24px; font-weight: bold; color: #2563eb; margin: 0; }
+        .subtitle { font-size: 10px; color: #666; margin-top: 5px; }
+        .content { font-size: 14px; text-align: justify; margin: 40px 20px; min-height: 200px; }
+        .location-date { text-align: center; margin-top: 60px; margin-bottom: 60px; }
+        .signature { text-align: center; border-top: 1px solid #000; width: 60%; margin: 0 auto; padding-top: 10px; }
+        .doctor-name { font-weight: bold; font-size: 14px; }
+        .crm { font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1 class="title">ATESTADO MÉDICO</h1>
+        <p class="subtitle">VitaView AI Health Platform</p>
+      </div>
+      <div class="content">
+        ${text.replace(/\n/g, '<br>')}
+      </div>
+      <div class="location-date">
+        São Paulo, ${dateStr}.
+      </div>
+      <div class="signature">
+        <div class="doctor-name">${doctorName}</div>
+        <div class="crm">CRM: ${doctorCrm}</div>
+        <div style="font-size: 10px; margin-top: 5px;">Assinatura e Carimbo</div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 function generatePrescriptionHTML({ doctorName, doctorCrm, doctorSpecialty, patientName, medications, observations, issueDate, validUntil }: any) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('pt-BR', {
@@ -4589,7 +4659,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('PDF gerado, tamanho:', pdfBuffer.length);
 
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="relatorio-saude-${user.username}.pdf"`);
+      res.setHeader('Content-Disposition', `inline; filename="relatorio-saude-${user.username}.pdf"`);
       res.send(pdfBuffer);
 
     } catch (error) {
@@ -4652,12 +4722,103 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('PDF gerado, tamanho:', pdfBuffer.length);
 
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="relatorio-exame-${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+      res.setHeader('Content-Disposition', `inline; filename="relatorio-exame-${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
       res.send(pdfBuffer);
 
     } catch (error) {
       console.error('Erro detalhado na geração do PDF do exame:', error);
       res.status(500).json({ message: "Erro ao gerar relatório do exame", error: (error as Error).message });
+    }
+  });
+
+  // Rota para gerar PDF de Receituário
+  app.post("/api/documents/prescription/pdf", ensureAuthenticated, async (req, res) => {
+    try {
+      const { doctorName, doctorCrm, doctorSpecialty, patientName, medications, observations, validityDays } = req.body;
+
+      if (!doctorName || !doctorCrm || !patientName || !medications) {
+        return res.status(400).json({ message: "Dados incompletos para gerar receituário" });
+      }
+
+      console.log('Gerando PDF de receituário...');
+
+      const issueDate = new Date();
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + (validityDays || 30));
+
+      const htmlContent = generatePrescriptionHTML({
+        doctorName,
+        doctorCrm,
+        doctorSpecialty,
+        patientName,
+        medications,
+        observations,
+        issueDate,
+        validUntil
+      });
+
+      const options = {
+        format: 'A4',
+        margin: { top: '0', bottom: '0', left: '0', right: '0' },
+        printBackground: true
+      };
+
+      const { generatePdf } = await import('html-pdf-node');
+      const file = { content: htmlContent };
+      const pdfBuffer = await generatePdf(file, options);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="receita-${patientName.replace(/\s+/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Erro ao gerar receituário:', error);
+      res.status(500).json({ message: "Erro ao gerar receituário" });
+    }
+  });
+
+  // Rota para gerar PDF de Atestado
+  app.post("/api/documents/certificate/pdf", ensureAuthenticated, async (req, res) => {
+    try {
+      const { type, doctorName, doctorCrm, patientName, patientDoc, issueDate, daysOff, startTime, endTime, cid, customText } = req.body;
+
+      if (!doctorName || !doctorCrm || !patientName) {
+        return res.status(400).json({ message: "Dados incompletos para gerar atestado" });
+      }
+
+      console.log('Gerando PDF de atestado...');
+
+      const htmlContent = generateCertificateHTML({
+        type,
+        doctorName,
+        doctorCrm,
+        patientName,
+        patientDoc,
+        issueDate: issueDate ? new Date(issueDate) : new Date(),
+        daysOff,
+        startTime,
+        endTime,
+        cid,
+        customText
+      });
+
+      const options = {
+        format: 'A4',
+        margin: { top: '0', bottom: '0', left: '0', right: '0' },
+        printBackground: true
+      };
+
+      const { generatePdf } = await import('html-pdf-node');
+      const file = { content: htmlContent };
+      const pdfBuffer = await generatePdf(file, options);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="atestado-${patientName.replace(/\s+/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Erro ao gerar atestado:', error);
+      res.status(500).json({ message: "Erro ao gerar atestado" });
     }
   });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { generateCertificatePDF } from "@/lib/prescription-pdf";
+// import { generateCertificatePDF } from "@/lib/prescription-pdf";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -67,19 +67,8 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
         onSuccess: (savedData) => {
             queryClient.invalidateQueries({ queryKey: [`/api/certificates/patient/${patient.id}`] });
 
-            generateCertificatePDF({
-                type: savedData.type as any,
-                doctorName: savedData.doctorName,
-                doctorCrm: savedData.doctorCrm,
-                patientName: savedData.patientName,
-                patientDoc: savedData.patientDoc || undefined,
-                issueDate: new Date(savedData.issueDate),
-                daysOff: savedData.daysOff?.toString(),
-                startTime: savedData.startTime || undefined,
-                endTime: savedData.endTime || undefined,
-                cid: savedData.cid || undefined,
-                customText: savedData.customText || undefined
-            });
+
+            // Print logic moved to handleSaveAndPrintCertificate to manage popup blockers
 
             toast({ title: "Sucesso", description: "Atestado salvo e gerado!" });
         },
@@ -108,7 +97,13 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
         const doctorName = user.fullName || user.username || "Dr. VitaView";
         const doctorCrm = user.crm || "CRM pendente";
 
-        createCertificateMutation.mutate({
+        // Open tab immediately to avoid blocker
+        const newTab = window.open('', '_blank');
+        if (newTab) {
+            newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Salvando e Gerando Atestado...</div></body></html>');
+        }
+
+        createCertificateMutation.mutateAsync({
             profileId: patient.id,
             userId: patient.userId,
             doctorName,
@@ -123,23 +118,78 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
             cid: certCid || undefined,
             customText: customCertText || undefined,
             status: 'active'
+        }).then(async (savedData) => {
+            // Now generate PDF
+            try {
+                const response = await fetch('/api/documents/certificate/pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: savedData.type,
+                        doctorName: savedData.doctorName,
+                        doctorCrm: savedData.doctorCrm,
+                        patientName: savedData.patientName,
+                        patientDoc: savedData.patientDoc,
+                        issueDate: savedData.issueDate,
+                        daysOff: savedData.daysOff,
+                        startTime: savedData.startTime,
+                        endTime: savedData.endTime,
+                        cid: savedData.cid,
+                        customText: savedData.customText
+                    })
+                });
+
+                if (!response.ok) throw new Error('Falha');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                if (newTab) newTab.location.href = url;
+            } catch (e) {
+                console.error(e);
+                newTab?.close();
+                toast({ title: "Erro", description: "Atestado salvo, mas falha ao gerar PDF.", variant: "destructive" });
+            }
+        }).catch(() => {
+            newTab?.close();
         });
     };
 
-    const handleReprintCertificate = (c: Certificate) => {
-        generateCertificatePDF({
-            type: c.type as any,
-            doctorName: c.doctorName,
-            doctorCrm: c.doctorCrm,
-            patientName: c.patientName,
-            patientDoc: c.patientDoc || undefined,
-            issueDate: new Date(c.issueDate),
-            daysOff: c.daysOff?.toString(),
-            startTime: c.startTime || undefined,
-            endTime: c.endTime || undefined,
-            cid: c.cid || undefined,
-            customText: c.customText || undefined
-        });
+    const handleReprintCertificate = async (c: Certificate) => {
+        const newTab = window.open('', '_blank');
+        if (newTab) {
+            newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando PDF...</div></body></html>');
+        }
+
+        try {
+            const response = await fetch('/api/documents/certificate/pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: c.type,
+                    doctorName: c.doctorName,
+                    doctorCrm: c.doctorCrm,
+                    patientName: c.patientName,
+                    patientDoc: c.patientDoc,
+                    issueDate: c.issueDate,
+                    daysOff: c.daysOff,
+                    startTime: c.startTime,
+                    endTime: c.endTime,
+                    cid: c.cid,
+                    customText: c.customText
+                })
+            });
+
+            if (!response.ok) throw new Error('Falha');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            if (newTab) newTab.location.href = url;
+            else window.open(url, '_blank');
+
+        } catch (err) {
+            console.error("Erro PDF:", err);
+            newTab?.close();
+            toast({ title: "Erro", description: "Falha ao gerar PDF.", variant: "destructive" });
+        }
     };
 
     return (
