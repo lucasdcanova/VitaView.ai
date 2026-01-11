@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -12,11 +13,16 @@ import {
   Calendar,
   Settings,
   BarChart2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * VitaView AI Sidebar Component
@@ -36,6 +42,7 @@ interface SidebarProps {
 export default function Sidebar(props: SidebarProps) {
   const sidebarContext = useSidebar();
   const isSidebarOpen = props.isSidebarOpen ?? sidebarContext.isSidebarOpen;
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { activeProfile } = useProfiles();
@@ -55,6 +62,10 @@ export default function Sidebar(props: SidebarProps) {
     }
   };
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  }
+
   const displayDoctor = user?.fullName || user?.username || "Doutor";
 
   const closeSidebarOnMobile = () => {
@@ -70,17 +81,45 @@ export default function Sidebar(props: SidebarProps) {
   // Estilo dos itens de navegação
   const getNavItemClass = (path: string) => {
     const isActive = location === path;
-    return `w-full flex items-center p-3 rounded-lg transition-all duration-200 ${isActive
-      ? 'bg-charcoal text-pureWhite'
-      : 'text-charcoal hover:bg-lightGray'
-      }`;
+    return cn(
+      "w-full flex items-center p-3 rounded-lg transition-all duration-200 group relative",
+      isActive ? 'bg-charcoal text-pureWhite' : 'text-charcoal hover:bg-lightGray',
+      isCollapsed && "justify-center px-2"
+    );
   };
 
   // Estilo dos ícones
   const getIconClass = (path: string) => {
     const isActive = location === path;
-    return `mr-3 h-5 w-5 ${isActive ? 'text-pureWhite' : 'text-charcoal'}`;
+    return cn(
+      "h-6 w-6 flex-shrink-0 transition-all",
+      isActive ? 'text-pureWhite' : 'text-charcoal',
+      !isCollapsed && "mr-3"
+    );
   };
+
+  const NavItem = ({ href, icon: Icon, label, tourId }: { href: string, icon: any, label: string, tourId?: string }) => (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={href}
+            onClick={handleNavClick}
+            className={getNavItemClass(href)}
+            data-tour={tourId}
+          >
+            <Icon className={getIconClass(href)} />
+            {!isCollapsed && <span className="font-heading font-bold text-sm truncate opacity-100 transition-opacity duration-300">{label}</span>}
+          </Link>
+        </TooltipTrigger>
+        {isCollapsed && (
+          <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
+            {label}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   return (
     <>
@@ -93,125 +132,140 @@ export default function Sidebar(props: SidebarProps) {
       )}
 
       <aside
-        className={`bg-pureWhite border-r border-lightGray w-64 flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={cn(
+          "bg-pureWhite border-r border-lightGray flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-all duration-300 ease-in-out sidebar-shadow",
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          isCollapsed ? 'w-20' : 'w-80' // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
+        )}
       >
+        {/* Toggle Button (Desktop Only) */}
+        <div className="absolute -right-3 top-20 hidden md:flex z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-6 w-6 rounded-full bg-white border-gray-200 shadow-md hover:bg-gray-50 text-gray-500 hover:text-charcoal"
+            onClick={toggleCollapse}
+          >
+            {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+          </Button>
+        </div>
+
         {/* Logo Section */}
-        <div className="p-4 border-b border-lightGray" data-tour="sidebar-logo">
-          <Logo size="md" showText={true} textSize="md" variant="icon" />
+        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4 flex justify-center" : "p-4")} data-tour="sidebar-logo">
+          {isCollapsed ? (
+            <Logo size="sm" showText={false} variant="icon" />
+          ) : (
+            <Logo size="md" showText={true} textSize="md" variant="icon" />
+          )}
         </div>
 
         {/* User Profile Section */}
-        <div className="p-4 border-b border-lightGray">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center mr-3 font-heading font-bold">
+        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
+          <div className={cn("flex items-center mb-4", isCollapsed ? "justify-center flex-col gap-2" : "justify-between")}>
+            <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
+              <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-white">
                 {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
               </div>
-              <div>
-                <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[100px]" title={displayDoctor}>
-                  {displayDoctor}
-                </h3>
-                <p className="text-xs text-mediumGray font-body">Profissional de saúde</p>
+              {!isCollapsed && (
+                <div className="ml-3 overflow-hidden">
+                  <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[140px]" title={displayDoctor}>
+                    {displayDoctor}
+                  </h3>
+                  <p className="text-xs text-mediumGray font-body truncate">Profissional de saúde</p>
+                </div>
+              )}
+            </div>
+
+            {!isCollapsed && (
+              <div className="flex items-center gap-1">
+                <ThemeToggle />
+                <NotificationBell />
               </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <ThemeToggle />
-              <NotificationBell />
-            </div>
+            )}
           </div>
 
-          <Link href="/profile">
-            <button
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-charcoal bg-transparent text-charcoal rounded-lg transition-all duration-200 hover:bg-lightGray text-sm font-heading font-bold"
-              aria-label="Configurações do perfil"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Configurações</span>
-            </button>
-          </Link>
+          {!isCollapsed ? (
+            <Link href="/profile">
+              <button
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-charcoal bg-transparent text-charcoal rounded-lg transition-all duration-200 hover:bg-lightGray text-sm font-heading font-bold"
+                aria-label="Configurações do perfil"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Configurações</span>
+              </button>
+            </Link>
+          ) : (
+            <div className="flex flex-col gap-2 items-center">
+              <div className="h-px w-8 bg-gray-200 my-1"></div>
+              <Link href="/profile">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-charcoal"><Settings className="h-4 w-4" /></Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Patient Selector */}
-        <div className="p-3 border-b border-lightGray" data-tour="patient-selector">
-          <ActivePatientIndicator className="w-full" />
+        <div className={cn("border-b border-lightGray bg-gray-50/50", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
+          {isCollapsed ? (
+            <div className="flex justify-center" title={activeProfile?.name || "Nenhum paciente"}>
+              <ActivePatientIndicator className="w-full" collapsed={true} />
+            </div>
+          ) : (
+            <ActivePatientIndicator className="w-full" />
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-340px)]">
-          <Link
-            href="/agenda"
-            onClick={handleNavClick}
-            className={getNavItemClass('/agenda')}
-            data-tour="nav-agenda"
-          >
-            <Calendar className={getIconClass('/agenda')} />
-            <span className="font-body">Agenda</span>
-          </Link>
-
-          <Link
-            href="/atendimento"
-            onClick={handleNavClick}
-            className={getNavItemClass('/atendimento')}
-            data-tour="nav-atendimento"
-          >
-            <Heart className={getIconClass('/atendimento')} />
-            <span className="font-heading font-bold">Atendimento</span>
-          </Link>
-
-          <Link
-            href="/upload"
-            onClick={handleNavClick}
-            className={getNavItemClass('/upload')}
-            data-tour="nav-upload"
-          >
-            <Upload className={getIconClass('/upload')} />
-            <span className="font-body">Enviar Exames</span>
-          </Link>
-
-          <Link
-            href="/reports"
-            onClick={handleNavClick}
-            className={getNavItemClass('/reports')}
-          >
-            <BarChart2 className={getIconClass('/reports')} />
-            <span className="font-body">Relatórios</span>
-          </Link>
-
-          <Link
-            href="/subscription"
-            onClick={handleNavClick}
-            className={getNavItemClass('/subscription')}
-          >
-            <CreditCard className={getIconClass('/subscription')} />
-            <span className="font-body">Minha Assinatura</span>
-          </Link>
+        <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-340px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
+          <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
+          <NavItem href="/atendimento" icon={Heart} label="Atendimento" tourId="nav-atendimento" />
+          <NavItem href="/upload" icon={Upload} label="Enviar Exames" tourId="nav-upload" />
+          <NavItem href="/reports" icon={BarChart2} label="Relatórios" />
+          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" />
 
           {/* Link para o painel administrativo - visível apenas para administradores */}
           {user?.role === 'admin' && (
-            <Link
-              href="/admin-panel"
-              onClick={handleNavClick}
-              className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${location === '/admin-panel'
-                ? 'bg-red-600 text-white'
-                : 'text-red-600 hover:bg-red-50'
-                }`}
-            >
-              <ShieldCheck className={`mr-3 h-5 w-5 ${location === '/admin-panel' ? 'text-white' : 'text-red-600'}`} />
-              <span className="font-body font-bold">Painel Admin</span>
-            </Link>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/admin-panel"
+                    onClick={handleNavClick}
+                    className={cn(
+                      "w-full flex items-center p-3 rounded-lg transition-all duration-200 mt-6",
+                      location === '/admin-panel' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50',
+                      isCollapsed && "justify-center px-2"
+                    )}
+                  >
+                    <ShieldCheck className={cn("h-5 w-5", location === '/admin-panel' ? 'text-white' : 'text-red-600', !isCollapsed && "mr-3")} />
+                    {!isCollapsed && <span className="font-body font-bold text-sm">Painel Admin</span>}
+                  </Link>
+                </TooltipTrigger>
+                {isCollapsed && <TooltipContent side="right" className="ml-2 font-bold bg-red-600 text-white border-0">Painel Admin</TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           {/* Logout Button */}
-          <div className="pt-6">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-lightGray transition-all duration-200"
-              aria-label="Sair da conta"
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              <span className="font-body">Sair</span>
-            </button>
+          <div className="pt-6 mt-auto">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleLogout}
+                    className={cn(
+                      "w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-red-50 hover:text-red-600 transition-all duration-200",
+                      isCollapsed && "justify-center px-2"
+                    )}
+                    aria-label="Sair da conta"
+                  >
+                    <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                    {!isCollapsed && <span className="font-body text-sm font-medium">Sair</span>}
+                  </button>
+                </TooltipTrigger>
+                {isCollapsed && <TooltipContent side="right" className="ml-2 bg-red-600 text-white border-0">Sair</TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </nav>
       </aside>

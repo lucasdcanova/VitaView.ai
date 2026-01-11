@@ -22,11 +22,13 @@ import CreatePatientDialog from "@/components/create-patient-dialog";
 
 interface ActivePatientIndicatorProps {
     variant?: "compact" | "full";
+    collapsed?: boolean;
     className?: string;
 }
 
 export default function ActivePatientIndicator({
     variant = "full",
+    collapsed = false,
     className,
 }: ActivePatientIndicatorProps) {
     const { activeProfile, profiles, setActiveProfile } = useProfiles();
@@ -66,6 +68,56 @@ export default function ActivePatientIndicator({
             .join("")
             .toUpperCase();
 
+    // Dialog components wrapper to avoid repetition
+    const Dialogs = () => (
+        <>
+            <PatientSelectionDialog
+                isOpen={isDialogOpen}
+                onClose={() => setIsDialogOpen(false)}
+                profiles={filteredProfiles}
+                activeProfile={activeProfile}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSelect={handleSelect}
+                getAge={getAge}
+                getInitials={getInitials}
+                totalProfiles={profiles.length}
+                onCreatePatient={handleCreatePatient}
+            />
+
+            <CreatePatientDialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+            />
+        </>
+    );
+
+    // Collapsed State (Just Avatar)
+    if (collapsed) {
+        return (
+            <>
+                <div
+                    onClick={() => setIsDialogOpen(true)}
+                    className={cn(
+                        "group flex justify-center items-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200",
+                        activeProfile
+                            ? "bg-charcoal text-pureWhite hover:bg-[#424242]"
+                            : "bg-lightGray text-mediumGray hover:bg-charcoal hover:text-pureWhite",
+                        className
+                    )}
+                    title={activeProfile ? activeProfile.name : "Selecionar Paciente"}
+                >
+                    {activeProfile ? (
+                        <span className="text-xs font-heading font-bold">{getInitials(activeProfile.name)}</span>
+                    ) : (
+                        <User className="w-5 h-5" />
+                    )}
+                </div>
+                <Dialogs />
+            </>
+        );
+    }
+
     // Empty state - no patient selected
     if (!activeProfile) {
         return (
@@ -94,25 +146,7 @@ export default function ActivePatientIndicator({
                     </div>
                     <ChevronRight className="w-4 h-4 text-mediumGray group-hover:text-charcoal transition-colors" />
                 </div>
-
-                <PatientSelectionDialog
-                    isOpen={isDialogOpen}
-                    onClose={() => setIsDialogOpen(false)}
-                    profiles={filteredProfiles}
-                    activeProfile={activeProfile}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    onSelect={handleSelect}
-                    getAge={getAge}
-                    getInitials={getInitials}
-                    totalProfiles={profiles.length}
-                    onCreatePatient={handleCreatePatient}
-                />
-
-                <CreatePatientDialog
-                    open={isCreateDialogOpen}
-                    onOpenChange={setIsCreateDialogOpen}
-                />
+                <Dialogs />
             </>
         );
     }
@@ -144,25 +178,7 @@ export default function ActivePatientIndicator({
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-pureWhite/70" />
                 </div>
-
-                <PatientSelectionDialog
-                    isOpen={isDialogOpen}
-                    onClose={() => setIsDialogOpen(false)}
-                    profiles={filteredProfiles}
-                    activeProfile={activeProfile}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    onSelect={handleSelect}
-                    getAge={getAge}
-                    getInitials={getInitials}
-                    totalProfiles={profiles.length}
-                    onCreatePatient={handleCreatePatient}
-                />
-
-                <CreatePatientDialog
-                    open={isCreateDialogOpen}
-                    onOpenChange={setIsCreateDialogOpen}
-                />
+                <Dialogs />
             </>
         );
     }
