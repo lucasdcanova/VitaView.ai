@@ -17,8 +17,13 @@ import {
     Printer,
     History,
     Ban,
-    AlertTriangle
+    AlertTriangle,
+    Pill,
+    Save
 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { medicationSchema, MedicationDialog, type MedicationFormData } from "@/components/dialogs";
 import { format } from "date-fns";
 import type { Profile, Prescription } from "@shared/schema";
 
@@ -38,6 +43,36 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const { toast } = useToast();
     const { user } = useAuth();
     const queryClient = useQueryClient();
+
+    // --- Continuous Medications State ---
+    const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
+    const [editingMedication, setEditingMedication] = useState<any>(null);
+
+    const medicationForm = useForm<MedicationFormData>({
+        resolver: zodResolver(medicationSchema),
+        defaultValues: {
+            name: "",
+            format: "comprimido",
+            dosage: "",
+            dosageUnit: "mg",
+            frequency: "",
+            startDate: new Date().toISOString().split('T')[0],
+            notes: "",
+        },
+    });
+
+    const editMedicationForm = useForm<MedicationFormData>({
+        resolver: zodResolver(medicationSchema),
+        defaultValues: {
+            name: "",
+            format: "comprimido",
+            dosage: "",
+            dosageUnit: "mg",
+            frequency: "",
+            startDate: "",
+            notes: "",
+        },
+    });
 
     // --- Prescription State ---
     const [acuteItems, setAcuteItems] = useState<AcutePrescriptionItem[]>([]);
@@ -59,6 +94,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const { data: allergies = [] } = useQuery<any[]>({
         queryKey: [`/api/allergies/patient/${patient.id}`],
         enabled: !!patient.id
+    });
+
+    // Fetches continuous medications
+    const { data: medications = [] } = useQuery<any[]>({
+        queryKey: ["/api/medications"],
     });
 
     // Mutations
@@ -95,6 +135,69 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
         }
     });
+
+
+
+    // Continuous Medication Mutations
+    const addMedicationMutation = useMutation({
+        mutationFn: (data: MedicationFormData) => apiRequest("POST", "/api/medications", data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+            medicationForm.reset();
+            setIsMedicationDialogOpen(false);
+            toast({ title: "Sucesso", description: "Medicamento adicionado com sucesso!" });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao adicionar medicamento.", variant: "destructive" });
+        },
+    });
+
+    const editMedicationMutation = useMutation({
+        mutationFn: ({ id, data }: { id: number; data: MedicationFormData }) =>
+            apiRequest("PUT", `/api/medications/${id}`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+            editMedicationForm.reset();
+            setEditingMedication(null);
+            toast({ title: "Sucesso", description: "Medicamento atualizado com sucesso!" });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao atualizar medicamento.", variant: "destructive" });
+        },
+    });
+
+    const deleteMedicationMutation = useMutation({
+        mutationFn: (id: number) => apiRequest("DELETE", `/api/medications/${id}`, {}),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+            toast({ title: "Sucesso", description: "Medicamento excluído com sucesso!" });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao excluir medicamento.", variant: "destructive" });
+        },
+    });
+
+    const onMedicationSubmit = (data: MedicationFormData) => {
+        if (editingMedication) {
+            editMedicationMutation.mutate({ id: editingMedication.id, data });
+        } else {
+            addMedicationMutation.mutate(data);
+        }
+    };
+
+    const openEditMedicationDialog = (medication: any) => {
+        setEditingMedication(medication);
+        editMedicationForm.reset({
+            name: medication.name,
+            format: medication.format,
+            dosage: medication.dosage,
+            dosageUnit: medication.dosageUnit || medication.dosage_unit || "mg",
+            frequency: medication.frequency,
+            startDate: medication.startDate ? medication.startDate.split('T')[0] : "",
+            notes: medication.notes || "",
+        });
+        setIsMedicationDialogOpen(true);
+    };
 
     // Acute Prescription Handlers
     const addAcuteItem = () => {
@@ -208,188 +311,284 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 </div>
             )}
 
-            <Tabs defaultValue="prescription" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                    <TabsTrigger value="prescription" className="gap-2">
-                        <Stethoscope className="h-4 w-4" /> Nova Receita
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="gap-2">
-                        <History className="h-4 w-4" /> Histórico
-                    </TabsTrigger>
-                </TabsList>
+            <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+                <TabsTrigger value="continuous" className="gap-2">
+                    <Pill className="h-4 w-4" /> Uso Contínuo
+                </TabsTrigger>
+                <TabsTrigger value="prescription" className="gap-2">
+                    <Stethoscope className="h-4 w-4" /> Nova Receita
+                </TabsTrigger>
+                <TabsTrigger value="history" className="gap-2">
+                    <History className="h-4 w-4" /> Histórico
+                </TabsTrigger>
+            </TabsList>
 
-                {/* --- ABA RECEITA --- */}
-                <TabsContent value="prescription" className="mt-6">
-                    <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20">
-                        <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
-                            <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
-                                <Stethoscope className="h-5 w-5 text-green-700" />
-                                Nova Prescrição
-                            </CardTitle>
-                            <CardDescription>Adicione medicamentos à receita simples ou controlada.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-6 space-y-6">
-
-                            {/* Add Item Form */}
-                            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm space-y-4">
-                                <h3 className="font-medium text-gray-700 flex items-center gap-2">
-                                    <PlusCircle className="h-4 w-4" /> Adicionar Item
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                    <div className="space-y-1 md:col-span-1">
-                                        <label className="text-xs font-medium text-gray-500">Medicamento</label>
-                                        <Input
-                                            placeholder="Ex: Amoxicilina"
-                                            value={currentAcuteItem.name || ""}
-                                            onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1 md:col-span-1">
-                                        <label className="text-xs font-medium text-gray-500">Dose/Conc.</label>
-                                        <Input
-                                            placeholder="Ex: 875mg"
-                                            value={currentAcuteItem.dosage || ""}
-                                            onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, dosage: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1 md:col-span-1">
-                                        <label className="text-xs font-medium text-gray-500">Posologia</label>
-                                        <Input
-                                            placeholder="Ex: 12/12h por 7 dias"
-                                            value={currentAcuteItem.frequency || ""}
-                                            onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, frequency: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1 md:col-span-1">
-                                        <label className="text-xs font-medium text-gray-500">Obs.</label>
-                                        <Input
-                                            placeholder="Opcional"
-                                            value={currentAcuteItem.notes || ""}
-                                            onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, notes: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={addAcuteItem}>
-                                    Adicionar à Receita
-                                </Button>
-                            </div>
-
-                            {/* Prescription Items List */}
-                            <div className="bg-white rounded-xl border border-gray-200 min-h-[200px] flex flex-col">
-                                <div className="p-3 border-b bg-gray-50 flex justify-between items-center rounded-t-xl">
-                                    <span className="font-medium text-sm text-gray-700">Itens da Receita ({acuteItems.length})</span>
-                                    {acuteItems.length > 0 && <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6" onClick={() => setAcuteItems([])}>Limpar</Button>}
-                                </div>
-                                <div className="p-2 space-y-2 flex-1">
-                                    {acuteItems.length > 0 ? (
-                                        acuteItems.map((item, idx) => (
-                                            <div key={item.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 group">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="bg-green-100 text-green-700 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                                                        {idx + 1}
+            {/* --- ABA USO CONTÍNUO --- */}
+            <TabsContent value="continuous" className="mt-6">
+                <Card className="border-blue-100 shadow-md">
+                    <CardHeader className="bg-blue-50/50 border-b border-blue-100 pb-4">
+                        <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                            <Pill className="h-5 w-5 text-blue-700" />
+                            Medicamentos de Uso Contínuo
+                        </CardTitle>
+                        <CardDescription>Gerencie os medicamentos que o paciente utiliza regularmente.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        {medications.length > 0 ? (
+                            <div className="space-y-4">
+                                <div className="grid gap-3">
+                                    {medications.map((medication: any) => (
+                                        <div
+                                            key={medication.id}
+                                            className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer group"
+                                            onClick={() => openEditMedicationDialog(medication)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-blue-100 p-2 rounded-full">
+                                                        <Pill className="h-4 w-4 text-blue-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900">{item.name} <span className="font-normal text-gray-600 text-sm">({item.dosage})</span></p>
-                                                        <p className="text-sm text-gray-600">{item.frequency}</p>
-                                                        {item.notes && <p className="text-xs text-gray-500 mt-1">{item.notes}</p>}
+                                                        <h4 className="font-semibold text-gray-900">{medication.name}</h4>
+                                                        <div className="text-sm text-gray-600 flex items-center gap-2">
+                                                            <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
+                                                            <span>{medication.dosage}{medication.dosageUnit || medication.dosage_unit}</span>
+                                                            <span className="text-gray-300">•</span>
+                                                            <span>{medication.frequency}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeAcuteItem(item.id)}>
-                                                    <Trash2 className="h-3 w-3" />
+                                                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-blue-600">
+                                                    <FileText className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[150px]">
-                                            <FileText className="h-8 w-8 opacity-20" />
-                                            <p className="text-sm">Nenhum item adicionado</p>
+                                            {medication.notes && (
+                                                <div className="mt-3 pt-2 border-t border-gray-100 text-sm text-gray-500 italic">
+                                                    Obs: {medication.notes}
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        setEditingMedication(null);
+                                        medicationForm.reset();
+                                        setIsMedicationDialogOpen(true);
+                                    }}
+                                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                >
+                                    <PlusCircle className="h-4 w-4" />
+                                    Adicionar Medicamento
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                <Pill className="h-12 w-12 mb-3 opacity-20" />
+                                <h3 className="text-lg font-medium text-gray-900">Nenhum medicamento cadastrado</h3>
+                                <p className="text-gray-500 mb-6">Adicione os medicamentos de uso contínuo do paciente.</p>
+                                <Button
+                                    onClick={() => {
+                                        setEditingMedication(null);
+                                        medicationForm.reset();
+                                        setIsMedicationDialogOpen(true);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                >
+                                    <PlusCircle className="h-4 w-4" />
+                                    Adicionar Medicamento
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            {/* --- ABA RECEITA --- */}
+            <TabsContent value="prescription" className="mt-6">
+                <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20">
+                    <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
+                        <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                            <Stethoscope className="h-5 w-5 text-green-700" />
+                            Nova Prescrição
+                        </CardTitle>
+                        <CardDescription>Adicione medicamentos à receita simples ou controlada.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-6">
+
+                        {/* Add Item Form */}
+                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm space-y-4">
+                            <h3 className="font-medium text-gray-700 flex items-center gap-2">
+                                <PlusCircle className="h-4 w-4" /> Adicionar Item
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <div className="space-y-1 md:col-span-1">
+                                    <label className="text-xs font-medium text-gray-500">Medicamento</label>
+                                    <Input
+                                        placeholder="Ex: Amoxicilina"
+                                        value={currentAcuteItem.name || ""}
+                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1 md:col-span-1">
+                                    <label className="text-xs font-medium text-gray-500">Dose/Conc.</label>
+                                    <Input
+                                        placeholder="Ex: 875mg"
+                                        value={currentAcuteItem.dosage || ""}
+                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, dosage: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1 md:col-span-1">
+                                    <label className="text-xs font-medium text-gray-500">Posologia</label>
+                                    <Input
+                                        placeholder="Ex: 12/12h por 7 dias"
+                                        value={currentAcuteItem.frequency || ""}
+                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, frequency: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1 md:col-span-1">
+                                    <label className="text-xs font-medium text-gray-500">Obs.</label>
+                                    <Input
+                                        placeholder="Opcional"
+                                        value={currentAcuteItem.notes || ""}
+                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, notes: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={addAcuteItem}>
+                                Adicionar à Receita
+                            </Button>
+                        </div>
+
+                        {/* Prescription Items List */}
+                        <div className="bg-white rounded-xl border border-gray-200 min-h-[200px] flex flex-col">
+                            <div className="p-3 border-b bg-gray-50 flex justify-between items-center rounded-t-xl">
+                                <span className="font-medium text-sm text-gray-700">Itens da Receita ({acuteItems.length})</span>
+                                {acuteItems.length > 0 && <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6" onClick={() => setAcuteItems([])}>Limpar</Button>}
+                            </div>
+                            <div className="p-2 space-y-2 flex-1">
+                                {acuteItems.length > 0 ? (
+                                    acuteItems.map((item, idx) => (
+                                        <div key={item.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 group">
+                                            <div className="flex items-start gap-3">
+                                                <div className="bg-green-100 text-green-700 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                                                    {idx + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{item.name} <span className="font-normal text-gray-600 text-sm">({item.dosage})</span></p>
+                                                    <p className="text-sm text-gray-600">{item.frequency}</p>
+                                                    {item.notes && <p className="text-xs text-gray-500 mt-1">{item.notes}</p>}
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeAcuteItem(item.id)}>
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[150px]">
+                                        <FileText className="h-8 w-8 opacity-20" />
+                                        <p className="text-sm">Nenhum item adicionado</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-4 items-end">
+                            <div className="space-y-1 w-[200px]">
+                                <label className="text-xs font-medium text-gray-500">Validade da Receita</label>
+                                <Select value={prescriptionValidity} onValueChange={setPrescriptionValidity}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="30">30 dias</SelectItem>
+                                        <SelectItem value="60">60 dias</SelectItem>
+                                        <SelectItem value="90">90 dias</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button
+                                className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
+                                onClick={handleSaveAndPrintPrescription}
+                                disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !user}
+                            >
+                                <Printer className="h-5 w-5 mr-2" />
+                                {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            {/* --- ABA HISTÓRICO --- */}
+            <TabsContent value="history" className="mt-6">
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl flex items-center gap-2">
+                                <History className="h-5 w-5 text-gray-600" />
+                                Histórico de Prescrições
+                            </CardTitle>
+                            <CardDescription>Receitas emitidas para este paciente. Documentos são imutáveis após emissão.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-8">
+                                {/* Receitas Section */}
+                                <div>
+                                    {prescriptionHistory.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {prescriptionHistory.map(p => (
+                                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg border ${p.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
+                                                    <div className="flex gap-4 items-center">
+                                                        <div className="bg-green-100 p-2 rounded-full hidden sm:block">
+                                                            <FileText className="h-4 w-4 text-green-700" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-gray-900">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
+                                                            <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
+                                                            {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {p.status === 'active' && (
+                                                            <>
+                                                                <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintPrescription(p)}>
+                                                                    <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                        {p.status === 'cancelled' && (
+                                                            <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">Nenhuma receita encontrada.</p>
                                     )}
                                 </div>
                             </div>
-
-                            <div className="flex justify-end gap-4 items-end">
-                                <div className="space-y-1 w-[200px]">
-                                    <label className="text-xs font-medium text-gray-500">Validade da Receita</label>
-                                    <Select value={prescriptionValidity} onValueChange={setPrescriptionValidity}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="30">30 dias</SelectItem>
-                                            <SelectItem value="60">60 dias</SelectItem>
-                                            <SelectItem value="90">90 dias</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button
-                                    className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
-                                    onClick={handleSaveAndPrintPrescription}
-                                    disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !user}
-                                >
-                                    <Printer className="h-5 w-5 mr-2" />
-                                    {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
-                                </Button>
-                            </div>
                         </CardContent>
                     </Card>
-                </TabsContent>
+                </div>
+            </TabsContent>
 
-                {/* --- ABA HISTÓRICO --- */}
-                <TabsContent value="history" className="mt-6">
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-xl flex items-center gap-2">
-                                    <History className="h-5 w-5 text-gray-600" />
-                                    Histórico de Prescrições
-                                </CardTitle>
-                                <CardDescription>Receitas emitidas para este paciente. Documentos são imutáveis após emissão.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-8">
-                                    {/* Receitas Section */}
-                                    <div>
-                                        {prescriptionHistory.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {prescriptionHistory.map(p => (
-                                                    <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg border ${p.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
-                                                        <div className="flex gap-4 items-center">
-                                                            <div className="bg-green-100 p-2 rounded-full hidden sm:block">
-                                                                <FileText className="h-4 w-4 text-green-700" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-medium text-gray-900">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
-                                                                <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
-                                                                {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            {p.status === 'active' && (
-                                                                <>
-                                                                    <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintPrescription(p)}>
-                                                                        <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                                                    </Button>
-                                                                </>
-                                                            )}
-                                                            {p.status === 'cancelled' && (
-                                                                <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-gray-500 italic">Nenhuma receita encontrada.</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-            </Tabs>
+            <MedicationDialog
+                open={isMedicationDialogOpen}
+                onOpenChange={(open) => {
+                    setIsMedicationDialogOpen(open);
+                    if (!open) setEditingMedication(null);
+                }}
+                form={editingMedication ? editMedicationForm : medicationForm}
+                onSubmit={onMedicationSubmit}
+                isPending={editingMedication ? editMedicationMutation.isPending : addMedicationMutation.isPending}
+                mode={editingMedication ? "edit" : "create"}
+                onRemove={editingMedication ? () => deleteMedicationMutation.mutate(editingMedication.id) : undefined}
+                isRemovePending={deleteMedicationMutation.isPending}
+            />
 
-        </div>
+        </div >
     );
 }

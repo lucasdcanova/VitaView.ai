@@ -155,9 +155,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDiagnosis, setEditingDiagnosis] = useState<any>(null);
-  const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
-  const [isEditMedicationDialogOpen, setIsEditMedicationDialogOpen] = useState(false);
-  const [editingMedication, setEditingMedication] = useState<any>(null);
   const [isAllergyDialogOpen, setIsAllergyDialogOpen] = useState(false);
   const [isManageAllergiesDialogOpen, setIsManageAllergiesDialogOpen] = useState(false);
   const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
@@ -195,31 +192,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
     },
   });
 
-  const medicationForm = useForm<MedicationForm>({
-    resolver: zodResolver(medicationSchema),
-    defaultValues: {
-      name: "",
-      format: "comprimido",
-      dosage: "",
-      dosageUnit: "mg",
-      frequency: "",
-      startDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-      notes: "",
-    },
-  });
-
-  const editMedicationForm = useForm<MedicationForm>({
-    resolver: zodResolver(medicationSchema),
-    defaultValues: {
-      name: "",
-      format: "comprimido",
-      dosage: "",
-      dosageUnit: "mg",
-      frequency: "",
-      startDate: "",
-      notes: "",
-    },
-  });
 
   const allergyForm = useForm<AllergyForm>({
     resolver: zodResolver(allergySchema),
@@ -417,66 +389,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
     },
   });
 
-  // Mutations para medicamentos
-  const addMedicationMutation = useMutation({
-    mutationFn: (data: MedicationForm) => apiRequest("POST", "/api/medications", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
-      medicationForm.reset();
-      setIsMedicationDialogOpen(false);
-      toast({
-        title: "Sucesso",
-        description: "Medicamento adicionado com sucesso!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro",
-        description: "Erro ao adicionar medicamento. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const editMedicationMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: MedicationForm }) =>
-      apiRequest("PUT", `/api/medications/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
-      editMedicationForm.reset();
-      setIsEditMedicationDialogOpen(false);
-      setEditingMedication(null);
-      toast({
-        title: "Sucesso",
-        description: "Medicamento atualizado com sucesso!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar medicamento. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMedicationMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/medications/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
-      toast({
-        title: "Sucesso",
-        description: "Medicamento excluído com sucesso!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir medicamento. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Mutations para alergias
   const addAllergyMutation = useMutation({
@@ -855,36 +767,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
     }
   };
 
-  // Handlers para medicamentos
-  const onMedicationSubmit = (data: MedicationForm) => {
-    addMedicationMutation.mutate(data);
-  };
-
-  const onEditMedicationSubmit = (data: MedicationForm) => {
-    if (editingMedication) {
-      editMedicationMutation.mutate({ id: editingMedication.id, data });
-    }
-  };
-
-  const openEditMedicationDialog = (medication: any) => {
-    setEditingMedication(medication);
-    editMedicationForm.reset({
-      name: medication.name || "",
-      format: medication.format || "",
-      dosage: medication.dosage || "",
-      dosageUnit: medication.dosageUnit || medication.dosage_unit || "mg",
-      frequency: medication.frequency || "",
-      startDate: medication.start_date || medication.startDate || "",
-      notes: medication.notes || "",
-    });
-    setIsEditMedicationDialogOpen(true);
-  };
-
-  const handleRemoveMedication = (id: number) => {
-    if (confirm("Deseja remover este medicamento?")) {
-      deleteMedicationMutation.mutate(id);
-    }
-  };
 
   // Funções para alergias
   const onAllergySubmit = (data: AllergyForm) => {
@@ -1159,9 +1041,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                         <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
                           <ClipboardList className="w-4 h-4 mr-2" /> Diagnóstico
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsMedicationDialogOpen(true)}>
-                          <Pill className="w-4 h-4 mr-2" /> Medicamento
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setIsSurgeryDialogOpen(true)}>
                           <Scissors className="w-4 h-4 mr-2" /> Cirurgia
                         </DropdownMenuItem>
@@ -1329,82 +1208,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
 
 
 
-                  {/* Medicamentos de Uso Contínuo - Always Visible */}
-                  <Card className="border border-primary-100 bg-white shadow-md">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start gap-2 mb-1">
-                        <Activity className="h-5 w-5 text-gray-900 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base text-gray-900 leading-tight">
-                            Medicamentos de Uso Contínuo
-                          </CardTitle>
-                          <CardDescription className="text-xs mt-1">Gerenciar medicamentos e prescrições</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {medications.length > 0 ? (
-                        <>
-                          <div className="grid gap-2">
-                            {medications.map((medication: any) => (
-                              <div
-                                key={medication.id}
-                                className="p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer"
-                                onClick={() => openEditMedicationDialog(medication)}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h4 className="font-medium text-sm text-gray-900">{medication.name}</h4>
-                                  <Badge variant="outline" className="text-[10px]">
-                                    {medication.format}
-                                  </Badge>
-                                </div>
-                                <div className="text-xs text-gray-600 mt-1">
-                                  {medication.dosage}{medication.dosageUnit || medication.dosage_unit ? ` ${medication.dosageUnit || medication.dosage_unit}` : ''} • {medication.frequency}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-                            <Button
-                              onClick={() => setIsMedicationDialogOpen(true)}
-                              variant="outline"
-                              size="sm"
-                              className="gap-2 hover:bg-primary-50 hover:text-primary-700"
-                            >
-                              <PlusCircle className="h-4 w-4" />
-                              Adicionar
-                            </Button>
-                            <Button
-                              onClick={() => setIsPrescriptionDialogOpen(true)}
-                              variant="default"
-                              size="sm"
-                              className="gap-2 bg-gray-900 hover:bg-black text-white"
-                            >
-                              <FileText className="h-4 w-4" />
-                              Renovar Receita
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                            <Activity className="h-8 w-8 mb-2 opacity-50" />
-                            <p className="text-sm font-medium">Nenhum medicamento cadastrado</p>
-                            <p className="text-xs text-gray-500 mt-1">Adicione medicamentos de uso contínuo</p>
-                          </div>
-                          <Button
-                            onClick={() => setIsMedicationDialogOpen(true)}
-                            variant="default"
-                            className="w-full gap-2 bg-gray-900 hover:bg-black text-white"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                            Adicionar Medicamento
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
 
                 </div>
               </div >
@@ -1433,26 +1236,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
           isRemovePending={removeDiagnosisMutation.isPending}
         />
 
-        {/* Dialogs de Medicamento */}
-        <MedicationDialog
-          open={isMedicationDialogOpen}
-          onOpenChange={setIsMedicationDialogOpen}
-          form={medicationForm}
-          onSubmit={onMedicationSubmit}
-          isPending={addMedicationMutation.isPending}
-          mode="create"
-        />
-
-        <MedicationDialog
-          open={isEditMedicationDialogOpen}
-          onOpenChange={setIsEditMedicationDialogOpen}
-          form={editMedicationForm}
-          onSubmit={onEditMedicationSubmit}
-          isPending={editMedicationMutation.isPending}
-          mode="edit"
-          onRemove={() => editingMedication && handleRemoveMedication(editingMedication.id)}
-          isRemovePending={deleteMedicationMutation.isPending}
-        />
 
         {/* Dialogs de Alergia */}
         <AllergyDialog
