@@ -114,7 +114,7 @@ const getCIDDescription = (cidCode: string): string => {
 
 interface TimelineItem {
   id: number;
-  type: "exam" | "diagnosis" | "surgery" | "evolution";
+  type: "exam" | "diagnosis" | "surgery" | "evolution" | "triage";
   date: string;
   title: string;
   description?: string;
@@ -124,6 +124,7 @@ interface TimelineItem {
   resultSummary?: string;
   originalData?: any;
   text?: string;
+  details?: any;
 }
 
 interface HealthTrendsNewProps {
@@ -796,13 +797,36 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
       description: `${surgery.hospitalName ? `Hospital: ${surgery.hospitalName}` : ""} ${surgery.surgeonName ? `| Cirurgião: ${surgery.surgeonName}` : ""}`,
       originalData: surgery,
     })) : []),
+
     ...(Array.isArray(evolutions) ? evolutions.map((evolution: any) => ({
       id: evolution.id,
       type: "evolution" as const,
       date: evolution.date,
-      title: "Consulta/Anamnese",
+      title: "Evolução Médica",
       description: evolution.text,
       originalData: evolution,
+    })) : []),
+    ...(Array.isArray(triageHistory) ? triageHistory.map((triage: any) => ({
+      id: triage.id,
+      type: "triage" as const,
+      date: triage.createdAt,
+      title: "Anamnese / Triagem",
+      description: triage.chiefComplaint ? `Queixa: ${triage.chiefComplaint}` : "Registro de triagem",
+      originalData: triage,
+      details: {
+        chiefComplaint: triage.chiefComplaint,
+        history: triage.currentIllnessHistory,
+        vitals: {
+          bp: triage.systolicBp && triage.diastolicBp ? `${triage.systolicBp}/${triage.diastolicBp} mmHg` : null,
+          hr: triage.heartRate ? `${triage.heartRate} bpm` : null,
+          temp: triage.temperature ? `${triage.temperature}°C` : null,
+          spo2: triage.oxygenSaturation ? `${triage.oxygenSaturation}%` : null,
+          hgt: triage.bloodGlucose ? `${triage.bloodGlucose} mg/dL` : null,
+        },
+        painScale: triage.painScale,
+        manchester: triage.manchesterPriority,
+        notes: triage.notes
+      }
     })) : [])
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -1176,90 +1200,132 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                     </div>
 
                     <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4">
-                      {timelineItems.length > 0 ? (
-                        timelineItems.map((item, index) => (
-                          <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
-                            {/* Dot on the line */}
-                            <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-gray-500' :
-                              item.type === 'diagnosis' ? 'bg-red-500' :
-                                item.type === 'surgery' ? 'bg-purple-500' :
+                      {timelineItems.length > 0 ? timelineItems.map((item, index) => (
+                        <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
+                          {/* Dot on the line */}
+                          <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-gray-500' :
+                            item.type === 'diagnosis' ? 'bg-red-500' :
+                              item.type === 'surgery' ? 'bg-purple-500' :
+                                item.type === 'triage' ? 'bg-blue-500' :
                                   'bg-green-500'
-                              }`} />
+                            }`} />
 
-                            <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group-hover:border-indigo-100">
-                              <CardContent className="p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                                  <div className="space-y-2 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-gray-100 text-gray-700 border-gray-200' :
-                                        item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
-                                          item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                          <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group-hover:border-indigo-100">
+                            <CardContent className="p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge variant="secondary" className={`${item.type === 'exam' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                      item.type === 'diagnosis' ? 'bg-red-50 text-red-700 border-red-100' :
+                                        item.type === 'surgery' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                          item.type === 'triage' ? 'bg-blue-50 text-blue-700 border-blue-100' :
                                             'bg-green-50 text-green-700 border-green-100'
-                                        }`}>
-                                        {item.type === 'exam' ? 'Exame' : item.type === 'diagnosis' ? 'Diagnóstico' : item.type === 'surgery' ? 'Cirurgia' : 'Consulta'}
-                                      </Badge>
-                                      <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {format(parseISO(item.date), "dd 'de' MMMM, yyyy", { locale: ptBR })}
-                                      </span>
-                                    </div>
+                                      }`}>
+                                      {item.type === 'exam' ? 'Exame' :
+                                        item.type === 'diagnosis' ? 'Diagnóstico' :
+                                          item.type === 'surgery' ? 'Cirurgia' :
+                                            item.type === 'triage' ? 'Triagem/Anamnese' :
+                                              'Evolução'}
+                                    </Badge>
+                                    <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {format(parseISO(item.date), "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR })}
+                                    </span>
+                                  </div>
 
-                                    <div>
-                                      <h4 className="text-lg font-bold text-gray-900 leading-tight">{item.title}</h4>
-                                      <p className="text-gray-600 mt-1">{item.description}</p>
-                                    </div>
+                                  <div>
+                                    <h4 className="text-lg font-bold text-gray-900 leading-tight">{item.title}</h4>
 
-                                    {item.resultSummary && (
-                                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm border border-gray-100 flex items-start gap-2">
-                                        <Activity className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                          <span className="font-medium text-gray-700">Resumo: </span>
-                                          <span className="text-gray-600">{item.resultSummary}</span>
-                                        </div>
+                                    {/* Different content rendering based on type */}
+                                    {item.type === 'triage' && item.details ? (
+                                      <div className="text-sm mt-3 space-y-3">
+                                        {item.description && (
+                                          <p className="text-gray-700 font-medium">{item.description}</p>
+                                        )}
+
+                                        {item.details.history && (
+                                          <div className="bg-blue-50/50 p-3 rounded-md border border-blue-100">
+                                            <span className="font-semibold text-blue-800 block mb-1 text-xs uppercase tracking-wider">História da Doença Atual</span>
+                                            <p className="text-gray-700 whitespace-pre-line leading-relaxed">{item.details.history}</p>
+                                          </div>
+                                        )}
+
+                                        {item.details.vitals && Object.values(item.details.vitals).some(v => v) && (
+                                          <div>
+                                            <span className="font-semibold text-gray-500 block mb-1.5 text-xs uppercase tracking-wider">Sinais Vitais</span>
+                                            <div className="flex flex-wrap gap-2">
+                                              {item.details.vitals.bp && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">PA: {item.details.vitals.bp}</Badge>}
+                                              {item.details.vitals.hr && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">FC: {item.details.vitals.hr}</Badge>}
+                                              {item.details.vitals.temp && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">Temp: {item.details.vitals.temp}</Badge>}
+                                              {item.details.vitals.spo2 && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">SpO2: {item.details.vitals.spo2}</Badge>}
+                                              {item.details.vitals.hgt && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">Glicemia: {item.details.vitals.hgt}</Badge>}
+                                              {item.details.painScale !== null && <Badge variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">Dor: {item.details.painScale}/10</Badge>}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {item.details.notes && (
+                                          <p className="text-gray-600 text-xs italic border-t border-gray-100 pt-2 mt-2">
+                                            Obs: {item.details.notes}
+                                          </p>
+                                        )}
                                       </div>
+                                    ) : (
+                                      <p className="text-gray-600 mt-1 whitespace-pre-line">{item.description}</p>
                                     )}
                                   </div>
 
-                                  {item.type === 'diagnosis' && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => openEditDialog(item.originalData)}
-                                      className="self-start text-gray-400 hover:text-gray-900"
-                                    >
-                                      Editar
-                                    </Button>
-                                  )}
-                                  {item.type === 'evolution' && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        if (confirm("Deseja excluir esta evolução?")) {
-                                          deleteEvolutionMutation.mutate(item.id);
-                                        }
-                                      }}
-                                      className="self-start text-red-400 hover:text-red-900"
-                                    >
-                                      Excluir
-                                    </Button>
+                                  {item.resultSummary && (
+                                    <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm border border-gray-100 flex items-start gap-2">
+                                      <Activity className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <span className="font-medium text-gray-700">Resumo: </span>
+                                        <span className="text-gray-600">{item.resultSummary}</span>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="pl-8 py-8">
-                          <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                            <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
-                            <p className="text-gray-500 mt-1">
-                              Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
-                            </p>
-                          </div>
+
+                                {item.type === 'diagnosis' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditDialog(item.originalData)}
+                                    className="self-start text-gray-400 hover:text-gray-900"
+                                  >
+                                    Editar
+                                  </Button>
+                                )}
+                                {item.type === 'evolution' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm("Deseja excluir esta evolução?")) {
+                                        deleteEvolutionMutation.mutate(item.id);
+                                      }
+                                    }}
+                                    className="self-start text-red-400 hover:text-red-900"
+                                  >
+                                    Excluir
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
-                      )}
+                      ))
+                    ) : (
+                      <div className="pl-8 py-8">
+                        <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                          <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                          <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
+                          <p className="text-gray-500 mt-1">
+                            Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     </div>
                   </div>
                 </div > {/* End Left Column */}
