@@ -467,7 +467,7 @@ export const appointments = pgTable("appointments", {
   patientName: text("patient_name").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
   time: text("time").notNull(), // HH:mm
-  type: text("type").notNull(), // consulta, retorno, exames, urgencia
+  type: text("type").notNull(), // consulta, retorno, exames, urgencia, procedimento
   status: text("status").default("scheduled"), // scheduled, in_progress, completed, cancelled
   price: integer("price"), // Price in cents (BRL)
   duration: integer("duration").default(30), // Duration in minutes

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 interface Appointment {
     time: string;
     patient: string;
-    type: "consulta" | "retorno" | "exames" | "urgencia";
+    type: "consulta" | "retorno" | "exames" | "urgencia" | "procedimento";
     date?: string;
 }
 
@@ -33,6 +33,7 @@ export function AgendaWidget({ appointments, maxDisplay = 4 }: AgendaWidgetProps
             case "consulta": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-700" };
             case "retorno": return { bg: "bg-green-100", border: "border-green-500", text: "text-green-700" };
             case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-700" };
+            case "procedimento": return { bg: "bg-indigo-100", border: "border-indigo-500", text: "text-indigo-700" };
             case "urgencia": return { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-700" };
             default: return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-700" };
         }
@@ -43,6 +44,7 @@ export function AgendaWidget({ appointments, maxDisplay = 4 }: AgendaWidgetProps
             case "consulta": return "Consulta";
             case "retorno": return "Retorno";
             case "exames": return "Exames";
+            case "procedimento": return "Procedimento";
             case "urgencia": return "Urgência";
             default: return type;
         }

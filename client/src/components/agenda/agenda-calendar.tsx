@@ -110,6 +110,7 @@ export function AgendaCalendar({
       case "consulta": return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-900", subtext: "text-gray-800", label: "text-gray-600", dot: "bg-gray-500" };
       case "retorno": return { bg: "bg-green-100", border: "border-green-500", text: "text-green-900", subtext: "text-green-800", label: "text-green-600", dot: "bg-green-500" };
       case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
+      case "procedimento": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
       case "urgencia": return { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-900", subtext: "text-amber-800", label: "text-amber-600", dot: "bg-amber-500" };
       default: return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-900", subtext: "text-gray-800", label: "text-gray-600", dot: "bg-gray-500" };
     }
@@ -261,6 +262,7 @@ export function AgendaCalendar({
                   <SelectItem value="consulta">Consulta</SelectItem>
                   <SelectItem value="retorno">Retorno</SelectItem>
                   <SelectItem value="exames">Exames</SelectItem>
+                  <SelectItem value="procedimento">Procedimento</SelectItem>
                   <SelectItem value="urgencia">Urgência</SelectItem>
                 </SelectContent>
               </Select>
@@ -696,6 +698,10 @@ export function AgendaCalendar({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-amber-500 rounded"></div>
             <span className="text-xs text-gray-600">Urgência</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <span className="text-xs text-gray-600">Procedimento</span>
           </div>
         </div>
       </div>

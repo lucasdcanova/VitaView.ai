@@ -54,7 +54,7 @@ const formSchema = z.object({
         required_error: "Selecione um paciente.",
     }),
     patientName: z.string().optional(),
-    type: z.enum(["consulta", "retorno", "exames", "urgencia"], {
+    type: z.enum(["consulta", "retorno", "exames", "urgencia", "procedimento"], {
         required_error: "Selecione o tipo de consulta.",
     }),
     date: z.date({
@@ -242,6 +242,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                 <SelectItem value="consulta">Consulta</SelectItem>
                                                 <SelectItem value="retorno">Retorno</SelectItem>
                                                 <SelectItem value="exames">Exames</SelectItem>
+                                                <SelectItem value="procedimento">Procedimento</SelectItem>
                                                 <SelectItem value="urgencia">Urgência</SelectItem>
                                             </SelectContent>
                                         </Select>
