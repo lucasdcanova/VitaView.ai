@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { pool, db } from "./db";
 import { prescriptions, medications } from "@shared/schema";
-import { inArray, and, eq } from "drizzle-orm";
+import { inArray, and, eq, desc } from "drizzle-orm";
 import Stripe from "stripe";
 import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
@@ -4867,6 +4867,75 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('Migration error:', error);
       res.status(500).json({ message: "Migration failed", error: (error as Error).message });
+    }
+  });
+
+  // Get prescriptions for a patient
+  app.get("/api/prescriptions/patient/:profileId", ensureAuthenticated, async (req, res) => {
+    try {
+      const { profileId } = req.params;
+      const user = req.user as any;
+
+      const patientPrescriptions = await db.select()
+        .from(prescriptions)
+        .where(eq(prescriptions.profileId, parseInt(profileId)))
+        .orderBy(desc(prescriptions.createdAt));
+
+      res.json(patientPrescriptions);
+    } catch (error) {
+      console.error("Erro ao buscar receitas:", error);
+      res.status(500).json({ message: "Erro ao buscar receitas" });
+    }
+  });
+
+  // Create prescription route
+  app.post("/api/prescriptions", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { profileId, doctorName, doctorCrm, doctorSpecialty, patientName, medications, issueDate, validUntil, observations, status } = req.body;
+
+      console.log('📋 Salvando receita...');
+      console.log('User ID:', user.id);
+      console.log('Profile ID:', profileId);
+
+      // Validações
+      if (!profileId) {
+        return res.status(400).json({ message: "ID do paciente é obrigatório" });
+      }
+
+      if (!medications || medications.length === 0) {
+        return res.status(400).json({ message: "Adicione pelo menos um medicamento" });
+      }
+
+      if (!doctorName || !doctorCrm) {
+        return res.status(400).json({ message: "Dados do médico são obrigatórios" });
+      }
+
+      // Inserir prescrição no banco
+      const [insertedPrescription] = await db.insert(prescriptions).values({
+        userId: user.id,
+        profileId: profileId,
+        doctorName: doctorName,
+        doctorCrm: doctorCrm,
+        doctorSpecialty: doctorSpecialty || null,
+        medications: medications,
+        issueDate: issueDate ? new Date(issueDate) : new Date(),
+        validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        observations: observations || null,
+        status: status || 'active'
+      }).returning();
+
+      console.log('✅ Receita salva:', insertedPrescription.id);
+
+      // Retornar com patientName para o frontend gerar o PDF
+      res.json({
+        ...insertedPrescription,
+        patientName: patientName
+      });
+
+    } catch (error) {
+      console.error("Erro ao salvar receita:", error);
+      res.status(500).json({ message: "Erro ao salvar receita" });
     }
   });
 
