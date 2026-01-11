@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import {
@@ -37,8 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ExamResultSingle() {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,9 +82,7 @@ export default function ExamResultSingle() {
     },
   });
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+
 
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
@@ -125,10 +122,10 @@ export default function ExamResultSingle() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <MobileHeader toggleSidebar={toggleSidebar} />
+        <MobileHeader />
 
         <main className="flex-1 overflow-y-auto">
           <div className="container px-4 py-6 mx-auto max-w-7xl">
@@ -252,9 +249,9 @@ export default function ExamResultSingle() {
                 </Card>
 
                 <h2 className="text-xl font-bold mt-8 mb-4">Métricas de Saúde Encontradas</h2>
-                {examData.result.healthMetrics && examData.result.healthMetrics.length > 0 ? (
+                {examData.result.healthMetrics && (examData.result.healthMetrics as any[]).length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                    {examData.result.healthMetrics.map((metric: any, index: number) => (
+                    {(examData.result.healthMetrics as any[]).map((metric: any, index: number) => (
                       <Card key={index} className="overflow-hidden group hover:shadow-md transition-shadow duration-300">
                         <CardHeader className={cn("pb-3", metric.status && metric.status.toLowerCase() === 'normal' ? 'border-l-4 border-green-400' : metric.status && (metric.status.toLowerCase().includes('alt') || metric.status.toLowerCase().includes('high')) ? 'border-l-4 border-red-400' : metric.status && (metric.status.toLowerCase().includes('baix') || metric.status.toLowerCase().includes('low')) ? 'border-l-4 border-blue-400' : '')}>
                           <div className="flex justify-between items-start">

@@ -136,7 +136,6 @@ const secretarySchema = z.object({
 type SecretaryFormValues = z.infer<typeof secretarySchema>;
 
 export default function Profile() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -146,9 +145,7 @@ export default function Profile() {
       ? (user.preferences as Record<string, any>).professionalProfile
       : null;
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -479,10 +476,10 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MobileHeader toggleSidebar={toggleSidebar} />
+      <MobileHeader />
 
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+        <Sidebar />
 
         <main className="flex-1">
           <div className="p-4 md:p-6">

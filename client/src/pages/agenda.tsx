@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Agenda() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState<any>(null);
     const { toast } = useToast();
@@ -178,7 +177,7 @@ export default function Agenda() {
             <MobileHeader />
 
             <div className="flex flex-1 relative">
-                <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+                <Sidebar />
 
                 <main className="flex-1 bg-gray-50 px-6 py-8">
                     <div className="max-w-7xl mx-auto">

@@ -88,6 +88,18 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         queryKey: ["/api/doctors"],
     });
 
+    const isCurrentAcuteItemComplete = Boolean(
+        currentAcuteItem.name && currentAcuteItem.dosage && currentAcuteItem.frequency
+    );
+
+    useEffect(() => {
+        if (selectedDoctorId || doctorsLoading || doctors.length === 0) return;
+        const defaultDoctor = doctors.find((d) => d.isDefault) ?? doctors[0];
+        if (defaultDoctor?.id) {
+            setSelectedDoctorId(defaultDoctor.id.toString());
+        }
+    }, [doctors, doctorsLoading, selectedDoctorId]);
+
     // History Queries
     const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
         queryKey: [`/api/prescriptions/patient/${patient.id}`],
@@ -141,6 +153,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
             toast({ title: "Sucesso", description: "Receita salva e gerada!" });
             setAcuteItems([]);
+            setCurrentAcuteItem({});
         },
         onError: (err) => {
             console.error(err);
@@ -212,7 +225,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     };
 
     const handleSaveAndPrintPrescription = async () => {
-        if (acuteItems.length === 0) {
+        if (acuteItems.length === 0 && !isCurrentAcuteItemComplete) {
             toast({ title: "Prescrição vazia", description: "Adicione pelo menos um medicamento.", variant: "destructive" });
             return;
         }
@@ -224,6 +237,14 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         const doctor = doctors.find(d => d.id.toString() === selectedDoctorId);
         if (!doctor) return;
 
+        const itemsToSave = acuteItems.length > 0 ? acuteItems : [{
+            id: "single-item",
+            name: currentAcuteItem.name as string,
+            dosage: currentAcuteItem.dosage as string,
+            frequency: currentAcuteItem.frequency as string,
+            notes: currentAcuteItem.notes
+        }];
+
         createPrescriptionMutation.mutate({
             profileId: patient.id,
             userId: patient.userId,
@@ -231,7 +252,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             doctorCrm: doctor.crm,
             doctorSpecialty: doctor.specialty,
             patientName: patient.name,
-            medications: acuteItems.map(item => ({
+            medications: itemsToSave.map(item => ({
                 name: item.name,
                 dosage: item.dosage,
                 frequency: item.frequency,
@@ -445,7 +466,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 <Button
                                     className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
                                     onClick={handleSaveAndPrintPrescription}
-                                    disabled={createPrescriptionMutation.isPending || acuteItems.length === 0 || !selectedDoctorId}
+                                    disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !selectedDoctorId}
                                 >
                                     <Printer className="h-5 w-5 mr-2" />
                                     {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}

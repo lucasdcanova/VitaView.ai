@@ -24,24 +24,24 @@ import {
   Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardHeader,
   CardTitle,
   CardDescription,
   CardFooter
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -84,12 +84,11 @@ type HealthInsights = {
 };
 
 export default function DiagnosisPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("analysis");
   const [match, params] = useRoute<{ id: string }>("/diagnosis/:id");
   const examId = match && params ? parseInt(params.id) : 0;
   const { toast } = useToast();
-  
+
   // Dados do paciente para contextualização
   const [patientData, setPatientData] = useState<PatientData>({
     gender: "masculino",
@@ -98,23 +97,21 @@ export default function DiagnosisPage() {
     surgeries: [],
     allergies: []
   });
-  
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-  
+
+
+
   const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
     enabled: !!examId,
   });
-  
+
   const { data: insights, isLoading: isLoadingInsights } = useQuery<HealthInsights>({
     queryKey: [`/api/exams/${examId}/insights`],
     queryFn: () => getExamInsights(examId),
     enabled: !!examId && !!data?.result,
   });
-  
+
   // Mutação para analisar exame com OpenAI
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -137,12 +134,12 @@ export default function DiagnosisPage() {
       });
     }
   });
-  
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
-  
+
   // Obter cor baseada na probabilidade
   const getProbabilityColor = (probability: string) => {
     switch (probability.toLowerCase()) {
@@ -152,7 +149,7 @@ export default function DiagnosisPage() {
       default: return "text-gray-600";
     }
   };
-  
+
   // Gerar classes de badge baseadas na probabilidade
   const getProbabilityBadgeClass = (probability: string) => {
     switch (probability.toLowerCase()) {
@@ -165,11 +162,11 @@ export default function DiagnosisPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MobileHeader toggleSidebar={toggleSidebar} />
-      
+      <MobileHeader />
+
       <div className="flex flex-1 relative">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        
+        <Sidebar />
+
         <main className="flex-1 bg-gray-50">
           <div className="p-4 md:p-6">
             <div className="flex items-center mb-6">
@@ -181,7 +178,7 @@ export default function DiagnosisPage() {
                 <p className="text-gray-600">Avaliação especializada com diagnósticos sugeridos</p>
               </div>
             </div>
-            
+
             {isLoading ? (
               <div className="space-y-6">
                 <Skeleton className="h-32 w-full" />
@@ -214,8 +211,8 @@ export default function DiagnosisPage() {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                      
-                      <PatientContextForm 
+
+                      <PatientContextForm
                         initialData={patientData}
                         onSubmit={(data) => {
                           setPatientData(data);
@@ -223,7 +220,7 @@ export default function DiagnosisPage() {
                         }}
                         isLoading={analyzeMutation.isPending}
                       />
-                      
+
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -239,7 +236,7 @@ export default function DiagnosisPage() {
                     </div>
                   </CardHeader>
                 </Card>
-                
+
                 {/* Tabs principais */}
                 <Tabs defaultValue="analysis" value={activeTab} onValueChange={setActiveTab} className="mb-6">
                   <TabsList className="grid grid-cols-4 mb-6">
@@ -260,7 +257,7 @@ export default function DiagnosisPage() {
                       Evidências
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   {/* Tab de Análise Contextual */}
                   <TabsContent value="analysis">
                     {isLoadingInsights ? (
@@ -273,13 +270,13 @@ export default function DiagnosisPage() {
                         <div className="md:col-span-2">
                           {/* Componente de comparação entre extração e análise */}
                           {data?.result && (
-                            <AnalysisComparison 
+                            <AnalysisComparison
                               initialExtraction={data.result}
                               aiAnalysis={insights}
                               isAnalysisLoading={analyzeMutation.isPending}
                             />
                           )}
-                          
+
                           <Card>
                             <CardHeader>
                               <CardTitle className="flex items-center text-lg">
@@ -293,7 +290,7 @@ export default function DiagnosisPage() {
                               </p>
                             </CardContent>
                           </Card>
-                          
+
                           {/* Fatores de Risco */}
                           <Card className="mt-6">
                             <CardHeader>
@@ -314,7 +311,7 @@ export default function DiagnosisPage() {
                             </CardContent>
                           </Card>
                         </div>
-                        
+
                         {/* Pontuação de Saúde e Áreas */}
                         <div>
                           {insights?.healthParameters && (
@@ -326,22 +323,22 @@ export default function DiagnosisPage() {
                                 <div className="flex justify-center mb-4">
                                   <div className="relative w-32 h-32 flex items-center justify-center">
                                     <svg className="w-full h-full" viewBox="0 0 36 36">
-                                      <circle 
-                                        cx="18" cy="18" r="16" 
-                                        fill="none" 
-                                        stroke="#e5e7eb" 
-                                        strokeWidth="3" 
+                                      <circle
+                                        cx="18" cy="18" r="16"
+                                        fill="none"
+                                        stroke="#e5e7eb"
+                                        strokeWidth="3"
                                       />
-                                      <circle 
-                                        cx="18" cy="18" r="16" 
-                                        fill="none" 
+                                      <circle
+                                        cx="18" cy="18" r="16"
+                                        fill="none"
                                         stroke={
-                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" : 
-                                          insights.healthParameters.healthScore >= 60 ? "#f59e0b" : 
-                                          "#ef4444"
-                                        } 
-                                        strokeWidth="3" 
-                                        strokeDasharray="100" 
+                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" :
+                                            insights.healthParameters.healthScore >= 60 ? "#f59e0b" :
+                                              "#ef4444"
+                                        }
+                                        strokeWidth="3"
+                                        strokeDasharray="100"
                                         strokeDashoffset={100 - insights.healthParameters.healthScore}
                                         strokeLinecap="round"
                                         transform="rotate(-90, 18, 18)"
@@ -352,7 +349,7 @@ export default function DiagnosisPage() {
                                     </div>
                                   </div>
                                 </div>
-                                
+
                                 <div className="space-y-4">
                                   {insights.healthParameters.criticalAreas.length > 0 && (
                                     <div>
@@ -367,7 +364,7 @@ export default function DiagnosisPage() {
                                       </ul>
                                     </div>
                                   )}
-                                  
+
                                   {insights.healthParameters.stableAreas.length > 0 && (
                                     <div>
                                       <h4 className="text-sm font-medium text-green-600 mb-1">Áreas estáveis</h4>
@@ -381,7 +378,7 @@ export default function DiagnosisPage() {
                                       </ul>
                                     </div>
                                   )}
-                                  
+
                                   {insights.healthParameters.improvementTrends.length > 0 && (
                                     <div>
                                       <h4 className="text-sm font-medium text-blue-600 mb-1">Tendências de melhoria</h4>
@@ -395,7 +392,7 @@ export default function DiagnosisPage() {
                                       </ul>
                                     </div>
                                   )}
-                                  
+
                                   {insights.healthParameters.worseningTrends.length > 0 && (
                                     <div>
                                       <h4 className="text-sm font-medium text-orange-600 mb-1">Tendências de piora</h4>
@@ -417,7 +414,7 @@ export default function DiagnosisPage() {
                       </div>
                     )}
                   </TabsContent>
-                  
+
                   {/* Tab de Diagnósticos Possíveis */}
                   <TabsContent value="diagnoses">
                     {isLoadingInsights ? (
@@ -443,8 +440,8 @@ export default function DiagnosisPage() {
                               {insights?.possibleDiagnoses && insights.possibleDiagnoses.length > 0 ? (
                                 insights.possibleDiagnoses.map((diagnosis, index) => (
                                   <Card key={index} className="border-l-4" style={{
-                                    borderLeftColor: diagnosis.probability === 'alta' ? '#ef4444' : 
-                                                   diagnosis.probability === 'média' ? '#f59e0b' : '#3b82f6'
+                                    borderLeftColor: diagnosis.probability === 'alta' ? '#ef4444' :
+                                      diagnosis.probability === 'média' ? '#f59e0b' : '#3b82f6'
                                   }}>
                                     <CardHeader className="pb-2">
                                       <div className="flex justify-between items-center">
@@ -456,7 +453,7 @@ export default function DiagnosisPage() {
                                     </CardHeader>
                                     <CardContent>
                                       <p className="text-gray-700 mb-3">{diagnosis.description}</p>
-                                      
+
                                       <div className="mt-2">
                                         <h4 className="text-sm font-medium mb-1">Marcadores indicativos:</h4>
                                         <div className="flex flex-wrap gap-2">
@@ -492,7 +489,7 @@ export default function DiagnosisPage() {
                       </div>
                     )}
                   </TabsContent>
-                  
+
                   {/* Tab de Recomendações */}
                   <TabsContent value="recommendations">
                     {isLoadingInsights ? (
@@ -526,7 +523,7 @@ export default function DiagnosisPage() {
                             </CardContent>
                           </Card>
                         </div>
-                        
+
                         <div className="md:col-span-2">
                           <Card>
                             <CardHeader>
@@ -545,7 +542,7 @@ export default function DiagnosisPage() {
                               </ul>
                             </CardContent>
                           </Card>
-                          
+
                           {insights?.lifestyle && (
                             <Card className="mt-6">
                               <CardHeader>
@@ -584,7 +581,7 @@ export default function DiagnosisPage() {
                       </div>
                     )}
                   </TabsContent>
-                  
+
                   {/* Tab de Evidências Científicas */}
                   <TabsContent value="evidence">
                     {isLoadingInsights ? (
@@ -612,7 +609,7 @@ export default function DiagnosisPage() {
                               </ul>
                             </CardContent>
                           </Card>
-                          
+
                           <Card>
                             <CardHeader>
                               <CardTitle className="flex items-center text-lg">
@@ -633,7 +630,7 @@ export default function DiagnosisPage() {
                               </ul>
                             </CardContent>
                           </Card>
-                          
+
                           <Card>
                             <CardHeader>
                               <CardTitle className="text-lg">Nível de Confiança na Avaliação</CardTitle>
@@ -646,42 +643,41 @@ export default function DiagnosisPage() {
                                 <div className="w-full max-w-md">
                                   <div className="flex items-center mb-1">
                                     <div className="w-full bg-gray-200 rounded-full h-3">
-                                      <div className={`h-3 rounded-full ${
-                                        insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
-                                        insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
-                                        'w-1/3 bg-red-500'
-                                      }`}></div>
+                                      <div className={`h-3 rounded-full ${insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
+                                          insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                            'w-1/3 bg-red-500'
+                                        }`}></div>
                                     </div>
                                     <span className="ml-3 text-gray-700 font-medium min-w-16">
-                                      {insights?.evidenceBasedAssessment?.confidenceLevel?.charAt(0).toUpperCase() + 
-                                      insights?.evidenceBasedAssessment?.confidenceLevel?.slice(1)}
+                                      {insights?.evidenceBasedAssessment?.confidenceLevel?.charAt(0).toUpperCase() +
+                                        insights?.evidenceBasedAssessment?.confidenceLevel?.slice(1)}
                                     </span>
                                   </div>
-                                  
+
                                   <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>Baixa</span>
                                     <span>Média</span>
                                     <span>Alta</span>
                                   </div>
                                 </div>
-                                
+
                                 {insights?.evidenceBasedAssessment?.confidenceLevel === 'baixo' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
-                                    A confiança baixa indica que os dados disponíveis são limitados ou as evidências científicas 
+                                    A confiança baixa indica que os dados disponíveis são limitados ou as evidências científicas
                                     para estas conclusões são preliminares. Consulte um médico para avaliação completa.
                                   </p>
                                 )}
-                                
+
                                 {insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
-                                    A confiança média indica que há evidências científicas moderadas que suportam estas 
+                                    A confiança média indica que há evidências científicas moderadas que suportam estas
                                     conclusões, mas algumas áreas podem requerer mais dados ou confirmação clínica.
                                   </p>
                                 )}
-                                
+
                                 {insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' && (
                                   <p className="mt-4 text-center text-sm text-gray-600 max-w-md">
-                                    A confiança alta indica que as conclusões são baseadas em evidências científicas 
+                                    A confiança alta indica que as conclusões são baseadas em evidências científicas
                                     consistentes e dados robustos. Ainda assim, sempre consulte um médico.
                                   </p>
                                 )}

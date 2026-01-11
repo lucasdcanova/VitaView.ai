@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, HealthMetric } from "@shared/schema";
 import { Link, useRoute, useLocation } from "wouter";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,8 +50,7 @@ export default function ExamResults() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExamType, setSelectedExamType] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
@@ -105,9 +104,7 @@ export default function ExamResults() {
     }
   }, [match]);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+
 
   // Fetch exams from API
   const { data: apiExams, isLoading: apiLoading } = useQuery<Exam[]>({
@@ -155,9 +152,9 @@ export default function ExamResults() {
   if (!activeProfile) {
     return (
       <div className="flex h-screen bg-gray-50">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <MobileHeader toggleSidebar={toggleSidebar} />
+          <MobileHeader />
           <main className="flex-1 overflow-y-auto px-4 py-6">
             <div className="container mx-auto max-w-7xl">
               <PatientHeader
@@ -328,10 +325,10 @@ export default function ExamResults() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <MobileHeader toggleSidebar={toggleSidebar} />
+        <MobileHeader />
 
         <main className="flex-1 overflow-y-auto">
           <div className="container px-4 py-6 mx-auto max-w-7xl">

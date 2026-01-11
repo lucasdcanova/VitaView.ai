@@ -42,16 +42,13 @@ import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
 
 export default function PatientView() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard");
     const [, setLocation] = useLocation();
     const { activeProfile } = useProfiles();
     const { uploads } = useUploadManager();
     const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
 
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
+
 
     const handleUploadComplete = (result: any) => {
         // If we have a result with an exam ID, navigate to the report page
@@ -112,10 +109,10 @@ export default function PatientView() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <MobileHeader toggleSidebar={toggleSidebar} />
+            <MobileHeader />
 
             <div className="flex flex-1 relative">
-                <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+                <Sidebar />
 
                 <main className="flex-1">
                     <div className="p-4 md:p-6">
