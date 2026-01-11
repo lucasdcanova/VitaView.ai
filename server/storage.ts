@@ -1877,5 +1877,10 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Switch to DatabaseStorage when you have a working PostgreSQL connection
-export const storage = new DatabaseStorage();
+// Use DatabaseStorage for production and development with PostgreSQL
+// MemStorage is only for testing without a database connection
+// IMPORTANT: DatabaseStorage persists data and sessions to PostgreSQL
+export const storage: IStorage = process.env.DATABASE_URL
+  ? new DatabaseStorage()
+  : new MemStorage();
+
