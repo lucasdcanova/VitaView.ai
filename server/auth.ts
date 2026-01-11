@@ -58,33 +58,39 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        console.log(`[AUTH] Login attempt for username: ${username}`);
-        const user = await storage.getUserByUsername(username);
+    new LocalStrategy(
+      {
+        usernameField: 'email', // Change to use email field
+        passwordField: 'password'
+      },
+      async (email, password, done) => {
+        try {
+          console.log(`[AUTH] Login attempt for email: ${email}`);
+          const user = await storage.getUserByEmail(email);
 
-        if (!user) {
-          console.log(`[AUTH] User not found: ${username}`);
-          return done(null, false);
+          if (!user) {
+            console.log(`[AUTH] User not found with email: ${email}`);
+            return done(null, false, { message: 'Email ou senha incorretos' });
+          }
+
+          console.log(`[AUTH] User found: ${email} (id: ${user.id})`);
+
+          const passwordMatch = await comparePasswords(password, user.password);
+          console.log(`[AUTH] Password match result: ${passwordMatch}`);
+
+          if (!passwordMatch) {
+            console.log(`[AUTH] Password mismatch for user: ${email}`);
+            return done(null, false, { message: 'Email ou senha incorretos' });
+          }
+
+          console.log(`[AUTH] Login successful for user: ${email}`);
+          return done(null, user);
+        } catch (error) {
+          console.error(`[AUTH] Error during login:`, error);
+          return done(error);
         }
-
-        console.log(`[AUTH] User found: ${username} (id: ${user.id})`);
-
-        const passwordMatch = await comparePasswords(password, user.password);
-        console.log(`[AUTH] Password match result: ${passwordMatch}`);
-
-        if (!passwordMatch) {
-          console.log(`[AUTH] Password mismatch for user: ${username}`);
-          return done(null, false);
-        }
-
-        console.log(`[AUTH] Login successful for user: ${username}`);
-        return done(null, user);
-      } catch (error) {
-        console.error(`[AUTH] Error during login:`, error);
-        return done(error);
       }
-    }),
+    ),
   );
 
   passport.serializeUser((user, done) => {
@@ -97,7 +103,7 @@ export function setupAuth(app: Express) {
       console.log(`[AUTH] Deserializing session for user id: ${id}`);
       const user = await storage.getUser(id);
       if (user) {
-        console.log(`[AUTH] Session restored for user: ${user.username}`);
+        console.log(`[AUTH] Session restored for user: ${user.email || user.username}`);
       } else {
         console.log(`[AUTH] User not found for session id: ${id}`);
       }
@@ -110,23 +116,36 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      console.log(`[AUTH] Registration attempt for username: ${req.body.username}`);
+      const { fullName, email, password } = req.body;
 
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        console.log(`[AUTH] Registration failed - username already exists: ${req.body.username}`);
-        return res.status(400).json({ message: "Usuário já existe" });
+      // Validate required fields
+      if (!fullName || !email || !password) {
+        return res.status(400).json({ message: "Nome completo, email e senha são obrigatórios" });
       }
 
-      const hashedPassword = await hashPassword(req.body.password);
-      console.log(`[AUTH] Password hashed successfully for: ${req.body.username}`);
+      console.log(`[AUTH] Registration attempt for email: ${email}`);
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        console.log(`[AUTH] Registration failed - email already exists: ${email}`);
+        return res.status(400).json({ message: "Este email já está cadastrado" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      console.log(`[AUTH] Password hashed successfully for: ${email}`);
+
+      // Generate username from email (use part before @)
+      const username = email.split('@')[0] + '_' + Date.now().toString(36);
 
       const user = await storage.createUser({
-        ...req.body,
+        username,
+        fullName,
+        email,
         password: hashedPassword,
       });
 
-      console.log(`[AUTH] User created in database - id: ${user.id}, username: ${user.username}`);
+      console.log(`[AUTH] User created in database - id: ${user.id}, email: ${user.email}`);
 
       // Create welcome notification
       await storage.createNotification({
@@ -142,7 +161,7 @@ export function setupAuth(app: Express) {
           return next(err);
         }
         console.log(`[AUTH] Session created successfully for user: ${user.id}`);
-        const { password, ...userWithoutPassword } = user;
+        const { password: _, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {

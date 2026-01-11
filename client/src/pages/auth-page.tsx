@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import {
@@ -40,11 +39,13 @@ import { motion } from "framer-motion";
  */
 
 const loginSchema = z.object({
-  username: z.string().min(3, { message: "Usuário deve ter pelo menos 3 caracteres" }),
+  email: z.string().email({ message: "Digite um email válido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
 });
 
-const registerSchema = insertUserSchema.extend({
+const registerSchema = z.object({
+  fullName: z.string().min(3, { message: "Nome completo deve ter pelo menos 3 caracteres" }),
+  email: z.string().email({ message: "Digite um email válido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string(),
   acceptedTerms: z.boolean().refine(val => val === true, {
@@ -74,7 +75,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -82,7 +83,6 @@ export default function AuthPage() {
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
       fullName: "",
       email: "",
       password: "",
@@ -174,15 +174,16 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
                     <FormField
                       control={loginForm.control}
-                      name="username"
+                      name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-[#212121]">Usuário</FormLabel>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Email</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Digite seu usuário"
+                              type="email"
+                              placeholder="Digite seu email"
                               {...field}
-                              autoComplete="username"
+                              autoComplete="email"
                               className="h-11"
                             />
                           </FormControl>
@@ -255,25 +256,6 @@ export default function AuthPage() {
                   <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                     <FormField
                       control={registerForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-heading font-bold text-[#212121]">Usuário</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Escolha um nome de usuário"
-                              {...field}
-                              autoComplete="username"
-                              className="h-11"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-[#D32F2F]" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={registerForm.control}
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
@@ -287,6 +269,30 @@ export default function AuthPage() {
                               name={field.name}
                               ref={field.ref}
                               autoComplete="name"
+                              className="h-11"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#D32F2F]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-heading font-bold text-[#212121]">Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="Digite seu email"
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              autoComplete="email"
                               className="h-11"
                             />
                           </FormControl>

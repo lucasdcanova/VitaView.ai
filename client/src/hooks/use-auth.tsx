@@ -18,7 +18,7 @@ type AuthContextType = {
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+type LoginData = { email: string; password: string };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       toast({
         title: "Falha no login",
-        description: "Usuário ou senha incorretos.",
+        description: "Email ou senha incorretos.",
         variant: "destructive",
       });
     },
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       toast({
         title: "Falha no registro",
-        description: error.message || "Nome de usuário já existe.",
+        description: error.message || "Este email já está cadastrado.",
         variant: "destructive",
       });
     },
