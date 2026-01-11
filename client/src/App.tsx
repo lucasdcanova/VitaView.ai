@@ -49,6 +49,7 @@ const Agenda = lazy(() => import("@/pages/agenda"));
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const BulkImport = lazy(() => import("@/pages/bulk-import"));
+const Patients = lazy(() => import("@/pages/patients"));
 
 // ============================================
 // LOADING FALLBACKS
@@ -124,6 +125,7 @@ function AuthenticatedRoutes() {
                     {/* Redirect /dashboard to /agenda for legacy URLs */}
                     <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
                     <ProtectedRoute path="/agenda" component={Agenda} />
+                    <ProtectedRoute path="/pacientes" component={Patients} />
                     <ProtectedRoute path="/upload" component={UploadExams} />
                     <ProtectedRoute path="/upload-exams" component={UploadExams} />
                     <ProtectedRoute path="/history" component={ExamHistory} />

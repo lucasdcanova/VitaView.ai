@@ -13,7 +13,7 @@ import {
   BarChart2,
   ChevronLeft,
   ChevronRight,
-
+  Users,
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
@@ -211,6 +211,7 @@ export default function Sidebar(props: SidebarProps) {
         {/* Navigation */}
         <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
+          <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
           <NavItem href="/atendimento" icon={Heart} label="Atendimento" tourId="nav-atendimento" />
 
           {/* Separador */}
