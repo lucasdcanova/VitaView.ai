@@ -190,7 +190,9 @@ export default function Sidebar(props: SidebarProps) {
                   <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayDoctor}>
                     {displayDoctor}
                   </h3>
-                  <p className="text-xs text-mediumGray font-body truncate">Profissional de saúde</p>
+                  <p className="text-xs text-mediumGray font-body truncate">
+                    {user?.role === 'secretary' ? 'Secretária' : 'Profissional de saúde'}
+                  </p>
                 </div>
               )}
             </div>
