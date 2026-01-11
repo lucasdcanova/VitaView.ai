@@ -204,12 +204,7 @@ export function ConsultationRecorder({
     try {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
-      // Verificar tamanho mínimo (áudio muito curto provavelmente não tem conteúdo)
-      if (audioBlob.size < 10000) { // ~10KB mínimo
-        setErrorMessage("Gravação muito curta. Tente gravar por mais tempo.");
-        setRecordingState("error");
-        return;
-      }
+      // Não há limite de tamanho - transcreva qualquer gravação independente da duração
 
       // Preparar FormData
       const formData = new FormData();
