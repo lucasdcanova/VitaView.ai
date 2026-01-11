@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List } from "lucide-react";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -45,9 +46,10 @@ export function AgendaCalendar({
 }: AgendaCalendarProps) {
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [, setLocation] = useLocation();
 
   const { toast } = useToast();
   const { inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
@@ -112,7 +114,9 @@ export function AgendaCalendar({
   });
 
   const handleNext = () => {
-    if (viewMode === 'week') {
+    if (viewMode === 'day') {
+      setCurrentDate(prev => addDays(prev, 1));
+    } else if (viewMode === 'week') {
       setCurrentDate(prev => addDays(prev, 7));
     } else {
       setCurrentDate(prev => addMonths(prev, 1));
@@ -120,11 +124,58 @@ export function AgendaCalendar({
   };
 
   const handlePrev = () => {
-    if (viewMode === 'week') {
+    if (viewMode === 'day') {
+      setCurrentDate(prev => addDays(prev, -1));
+    } else if (viewMode === 'week') {
       setCurrentDate(prev => addDays(prev, -7));
     } else {
       setCurrentDate(prev => subMonths(prev, 1));
     }
+  };
+
+  const handleStartService = (appointment: Appointment) => {
+    updateStatusMutation.mutate(
+      { id: appointment.id, status: 'in_progress' },
+      {
+        onSuccess: () => {
+          if (appointment.profileId) {
+            setPatientInService(appointment.profileId, appointment.id);
+            setLocation('/atendimento');
+          } else {
+            toast({
+              title: "Paciente não identificado",
+              description: "Não é possível iniciar atendimento sem um perfil de paciente vinculado.",
+              variant: "destructive"
+            })
+          }
+        }
+      }
+    );
+  };
+
+  const getDailySlots = () => {
+    const slots: { hour: number; minute: number }[] = [];
+    for (let hour = 7; hour <= 19; hour++) {
+      slots.push({ hour, minute: 0 });
+      slots.push({ hour, minute: 30 });
+    }
+    return slots;
+  };
+
+  const formatSlotTime = (hour: number, minute: number) => {
+    const hourLabel = String(hour).padStart(2, "0");
+    const minuteLabel = String(minute).padStart(2, "0");
+    return `${hourLabel}:${minuteLabel}`;
+  };
+
+  const parseTime = (timeValue: string) => {
+    const [hourPart, minutePart] = timeValue.split(":");
+    const hour = Number.parseInt(hourPart, 10);
+    const minute = Number.parseInt(minutePart ?? "0", 10);
+    return {
+      hour: Number.isNaN(hour) ? 0 : hour,
+      minute: Number.isNaN(minute) ? 0 : minute,
+    };
   };
 
   return (
@@ -142,7 +193,9 @@ export function AgendaCalendar({
                       {format(currentDate, "MMMM yyyy", { locale: ptBR })}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {viewMode === 'week' ? (
+                      {viewMode === 'day' ? (
+                        format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                      ) : viewMode === 'week' ? (
                         `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })} `
                       ) : (
                         "Vista Mensal"
@@ -203,22 +256,161 @@ export function AgendaCalendar({
               </button>
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/20"
-              title={viewMode === 'week' ? "Ver Mês" : "Ver Semana"}
-              onClick={() => setViewMode(viewMode === 'week' ? 'month' : 'week')}
-            >
-              {viewMode === 'week' ? <CalendarDays className="w-5 h-5" /> : <CalendarWeek className="w-5 h-5" />}
-            </Button>
+            <div className="flex bg-white/10 rounded-lg p-1 gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'day' && "bg-white/20")}
+                title="Dia"
+                onClick={() => setViewMode('day')}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'week' && "bg-white/20")}
+                title="Semana"
+                onClick={() => setViewMode('week')}
+              >
+                <CalendarWeek className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'month' && "bg-white/20")}
+                title="Mês"
+                onClick={() => setViewMode('month')}
+              >
+                <CalendarDays className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
       <div className="p-6">
-        {viewMode === 'week' ? (
+        {viewMode === 'day' ? (
+          <div className="space-y-4">
+            {getDailySlots().map(({ hour, minute }) => {
+              const apps = getFilteredAppointmentsForDay(currentDate).filter(app => {
+                const { hour: appHour, minute: appMinute } = parseTime(app.time);
+                const slotMinute = appMinute < 30 ? 0 : 30;
+                return appHour === hour && slotMinute === minute;
+              });
+
+              return (
+                <div key={`${hour}-${minute}`} className="flex gap-4 min-h-[80px] group border-b border-gray-100 pb-4 last:border-0">
+                  {/* Time Column */}
+                  <div className="w-20 flex-shrink-0 text-right">
+                    <span className="text-lg font-bold text-gray-700 block -mt-1">{formatSlotTime(hour, minute)}</span>
+                    <span className="text-xs text-gray-400">
+                      {/* If we want to show anything else here */}
+                    </span>
+                  </div>
+
+                  {/* Content Column */}
+                  <div className="flex-1 space-y-3 relative">
+                    <div className="absolute top-2 left-0 w-full h-px bg-gray-100 group-hover:bg-gray-200 transition-colors -z-10"></div>
+
+                    {apps.length > 0 ? (
+                      apps.map(app => {
+                        const styles = getTypeStyles(app.type);
+                        const appointmentDate = new Date(app.date + 'T12:00:00');
+                        const isToday = isSameDay(appointmentDate, new Date());
+                        const canStartService = isToday && app.status !== 'in_progress' && app.status !== 'completed';
+
+                        return (
+                          <div key={app.id} className={cn(
+                            "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-white",
+                            styles.border
+                          )}>
+                            {/* Left Info */}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className={cn("px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider", styles.bg, styles.text)}>
+                                  {app.type}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {app.time}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-500">
+                                  {app.duration} min
+                                </span>
+                              </div>
+
+                              <h4 className="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
+                                {app.patientName}
+                                {app.profileId && (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-blue-600" title="Ver perfil">
+                                    <User className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </h4>
+
+                              {app.notes && (
+                                <p className="text-gray-600 text-sm mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
+                                  "{app.notes}"
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Right Actions */}
+                            <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
+                              {canStartService ? (
+                                <Button
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                  onClick={() => handleStartService(app)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  <Play className="w-4 h-4 mr-2" />
+                                  Iniciar Atendimento
+                                </Button>
+                              ) : app.status === 'in_progress' ? (
+                                <Button
+                                  className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                  onClick={() => {
+                                    updateStatusMutation.mutate({ id: app.id, status: 'completed' });
+                                    clearPatientInService();
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Finalizar Atendimento
+                                </Button>
+                              ) : (
+                                <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium w-full text-center">
+                                  {app.status === 'completed' ? 'Concluído' : 'Agendado'}
+                                </div>
+                              )}
+
+                              <div className="flex gap-2 w-full">
+                                <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
+                                  Editar
+                                </Button>
+                                <Button variant="outline" size="sm" className="flex-1" onClick={() => {
+                                  setSelectedAppointment(app);
+                                  setTriageDialogOpen(true);
+                                }}>
+                                  Triagem
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="h-full min-h-[60px] rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-300 text-sm hover:border-gray-300 hover:text-gray-400 transition-colors cursor-pointer" onClick={onNewAppointment}>
+                        <Plus className="w-4 h-4 mr-1" /> Disponível
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : viewMode === 'week' ? (
           <>
             {/* Week Days Header */}
             <div className="grid grid-cols-7 gap-2 mb-4">
@@ -304,12 +496,7 @@ export function AgendaCalendar({
                                         <Button
                                           size="sm"
                                           className="bg-blue-500 hover:bg-blue-600 text-white w-full"
-                                          onClick={() => {
-                                            updateStatusMutation.mutate({ id: appointment.id, status: 'in_progress' });
-                                            if (appointment.profileId) {
-                                              setPatientInService(appointment.profileId, appointment.id);
-                                            }
-                                          }}
+                                          onClick={() => handleStartService(appointment)}
                                           disabled={updateStatusMutation.isPending}
                                         >
                                           <Play className="w-4 h-4 mr-1" />
@@ -332,7 +519,8 @@ export function AgendaCalendar({
                                       )}
                                     </>
                                   );
-                                })()}\n                                {/* Other action buttons */}
+                                })()}
+                                {/* Other action buttons */}
                                 <div className="flex justify-end gap-2">
                                   <Button
                                     variant="outline"
@@ -389,7 +577,7 @@ export function AgendaCalendar({
                   )}
                   onClick={() => {
                     setCurrentDate(date);
-                    setViewMode('week');
+                    setViewMode('day');
                   }}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -450,7 +638,7 @@ export function AgendaCalendar({
       {/* Calendar Footer */}
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          <span className="font-semibold">{Math.round(appointmentsList.length * 0.8)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType} ` : 'agendadas este mês'}
+          <span className="font-semibold">{Math.round(appointmentsList.length)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType} ` : 'agendadas'} total
         </div>
       </div>
 
