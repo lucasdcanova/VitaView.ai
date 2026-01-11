@@ -31,7 +31,7 @@ export default function MobileHeader(props: MobileHeaderProps) {
 
       <Logo size="sm" showText={true} textSize="sm" variant="icon" />
 
-      <NotificationDropdown />
+      <div className="w-9" />
     </header>
   );
 }

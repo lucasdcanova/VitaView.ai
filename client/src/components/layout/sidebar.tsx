@@ -13,13 +13,11 @@ import {
   BarChart2,
   ChevronLeft,
   ChevronRight,
-  Bell,
-  Moon,
-  Sun
+
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
-import { useTheme } from "@/hooks/use-theme";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,7 +44,7 @@ export default function Sidebar(props: SidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { activeProfile } = useProfiles();
-  const { theme, setTheme } = useTheme();
+
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -127,28 +125,28 @@ export default function Sidebar(props: SidebarProps) {
       {/* Overlay/Backdrop - apenas no mobile quando sidebar está aberta */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={closeSidebarOnMobile}
         />
       )}
 
       <aside
         className={cn(
-          "bg-pureWhite border-r border-lightGray flex-shrink-0 fixed md:sticky top-0 h-full z-20 transition-all duration-300 ease-in-out sidebar-shadow",
+          "bg-pureWhite border-r border-lightGray flex-shrink-0 fixed md:sticky top-0 h-full z-50 transition-all duration-300 ease-in-out sidebar-shadow",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-20' : 'w-80' // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
         )}
       >
         {/* Toggle Button (Desktop Only) */}
-        <div className="absolute -right-4 top-20 hidden md:flex z-50">
+        <div className="absolute -right-5 top-14 hidden md:flex z-50">
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 rounded-full bg-white border-gray-200 shadow-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200"
+            className="h-10 w-10 rounded-full bg-white border-2 border-[#212121] shadow-xl text-[#212121] hover:bg-[#212121] hover:text-white transition-all duration-300 transform hover:scale-110"
             onClick={toggleCollapse}
             title={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCollapsed ? <ChevronRight className="h-6 w-6" /> : <ChevronLeft className="h-6 w-6" />}
           </Button>
         </div>
 
@@ -195,8 +193,6 @@ export default function Sidebar(props: SidebarProps) {
         <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/atendimento" icon={Heart} label="Atendimento" tourId="nav-atendimento" />
-          <NavItem href="/reports" icon={BarChart2} label="Relatórios" />
-          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" />
 
           {/* Separador */}
           <div className="py-2">
@@ -205,41 +201,12 @@ export default function Sidebar(props: SidebarProps) {
 
           {/* Configurações */}
           <NavItem href="/profile" icon={Settings} label="Configurações" />
+          <NavItem href="/reports" icon={BarChart2} label="Relatórios" />
+          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" />
 
-          {/* Notificações */}
-          <NavItem href="/notifications" icon={Bell} label="Notificações" />
 
-          {/* Toggle Modo Escuro */}
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className={cn(
-                    "w-full flex items-center p-3 rounded-lg transition-all duration-200 text-charcoal hover:bg-lightGray",
-                    isCollapsed && "justify-center px-2"
-                  )}
-                  aria-label="Alternar modo escuro"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className={cn("h-6 w-6 flex-shrink-0 text-charcoal", !isCollapsed && "mr-3")} />
-                  ) : (
-                    <Moon className={cn("h-6 w-6 flex-shrink-0 text-charcoal", !isCollapsed && "mr-3")} />
-                  )}
-                  {!isCollapsed && (
-                    <span className="font-heading font-bold text-sm">
-                      {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-                    </span>
-                  )}
-                </button>
-              </TooltipTrigger>
-              {isCollapsed && (
-                <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
-                  {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+
+
 
           {/* Link para o painel administrativo - visível apenas para administradores */}
           {user?.role === 'admin' && (

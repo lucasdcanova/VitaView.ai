@@ -28,6 +28,34 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+const parsePreferences = (preferences: unknown): Record<string, any> | null => {
+  if (!preferences) return null;
+  if (typeof preferences === "string") {
+    try {
+      const parsed = JSON.parse(preferences);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  if (typeof preferences === "object") return preferences as Record<string, any>;
+  return null;
+};
+
+async function resolveDelegatedUser(user: SelectUser): Promise<SelectUser> {
+  const preferences = parsePreferences(user.preferences);
+  const delegateForUserId = preferences?.delegateForUserId;
+  const delegateType = preferences?.delegateType;
+
+  if (!delegateForUserId || delegateType !== "secretary") return user;
+
+  const ownerId = Number(delegateForUserId);
+  if (!Number.isInteger(ownerId) || ownerId === user.id) return user;
+
+  const owner = await storage.getUser(ownerId);
+  return owner || user;
+}
+
 export function setupAuth(app: Express) {
   // Ensure SESSION_SECRET is set
   if (!process.env.SESSION_SECRET) {
@@ -216,8 +244,15 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
-    res.json(userWithoutPassword);
+    resolveDelegatedUser(req.user as SelectUser)
+      .then((resolvedUser) => {
+        const { password: _, ...resolvedWithoutPassword } = resolvedUser;
+        res.json(resolvedWithoutPassword);
+      })
+      .catch(() => {
+        const { password, ...userWithoutPassword } = req.user as SelectUser;
+        res.json(userWithoutPassword);
+      });
   });
 
   // Endpoint para recuperação de senha

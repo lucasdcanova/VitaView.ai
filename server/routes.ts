@@ -22,7 +22,8 @@ import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
 import { nanoid } from "nanoid";
-import { randomBytes } from "crypto";
+import { randomBytes, scrypt } from "crypto";
+import { promisify } from "util";
 import { sendClinicInvitationEmail } from "./services/email.service";
 import fs from "fs";
 import path from "path";
@@ -751,10 +752,58 @@ if (process.env.STRIPE_SECRET_KEY) {
   // Stripe secret key not found. Payment features will be disabled.
 }
 
+const scryptAsync = promisify(scrypt);
+
+const hashPassword = async (password: string) => {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+};
+
+const parsePreferences = (preferences: unknown): Record<string, any> | null => {
+  if (!preferences) return null;
+  if (typeof preferences === "string") {
+    try {
+      const parsed = JSON.parse(preferences);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  if (typeof preferences === "object") return preferences as Record<string, any>;
+  return null;
+};
+
+const applyDelegatedAccess = async (req: Request) => {
+  const user = req.user;
+  if (!user) return;
+
+  const preferences = parsePreferences(user.preferences);
+  const delegateForUserId = preferences?.delegateForUserId;
+  const delegateType = preferences?.delegateType;
+
+  if (!delegateForUserId || delegateType !== "secretary") return;
+
+  const delegateUserId = Number(delegateForUserId);
+  if (!Number.isInteger(delegateUserId) || delegateUserId === user.id) return;
+
+  const ownerUser = await storage.getUser(delegateUserId);
+  if (!ownerUser) return;
+
+  (ownerUser as any).delegatedBy = {
+    id: user.id,
+    fullName: user.fullName || user.username,
+    email: user.email,
+  };
+
+  req.user = ownerUser as any;
+};
+
 // Middleware para verificar autenticação
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
   // Verifica a autenticação padrão pelo Passport
   if (req.isAuthenticated()) {
+    await applyDelegatedAccess(req);
     return next();
   }
 
@@ -781,10 +830,11 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
 
           if (user) {
             // Define o usuário na sessão
-            return req.login(user, (err) => {
+            return req.login(user, async (err) => {
               if (err) {
                 return res.status(401).json({ message: "Erro de autenticação" });
               }
+              await applyDelegatedAccess(req);
               // Continua o fluxo
               return next();
             });
@@ -810,10 +860,11 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
 
           if (user) {
             // Define o usuário na sessão
-            return req.login(user, (err) => {
+            return req.login(user, async (err) => {
               if (err) {
                 return res.status(401).json({ message: "Erro de autenticação" });
               }
+              await applyDelegatedAccess(req);
               // Continua o fluxo
               return next();
             });
@@ -4606,6 +4657,113 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error("Erro ao definir médico padrão:", error);
       res.status(500).json({ message: "Erro ao definir médico padrão" });
+    }
+  });
+
+  // Secretary access routes
+  app.get("/api/team/secretaries", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const users = await storage.getAllUsers();
+      const secretaries = users
+        .map((member) => {
+          const prefs = parsePreferences(member.preferences);
+          if (prefs?.delegateForUserId !== user.id || prefs?.delegateType !== "secretary") {
+            return null;
+          }
+          return {
+            id: member.id,
+            fullName: member.fullName,
+            email: member.email,
+            createdAt: member.createdAt,
+          };
+        })
+        .filter(Boolean);
+
+      res.json(secretaries);
+    } catch (error) {
+      console.error("Erro ao buscar secretarias:", error);
+      res.status(500).json({ message: "Erro ao buscar secretarias" });
+    }
+  });
+
+  app.post("/api/team/secretaries", ensureAuthenticated, async (req, res) => {
+    try {
+      const owner = req.user as any;
+      const { fullName, email, password } = req.body;
+
+      if (!fullName || !email || !password) {
+        return res.status(400).json({ message: "Nome, email e senha são obrigatórios" });
+      }
+
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Este email já está cadastrado" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      const username = email.split("@")[0] + "_" + Date.now().toString(36);
+
+      const newUser = await storage.createUser({
+        username,
+        fullName,
+        email,
+        password: hashedPassword,
+      });
+
+      const basePreferences =
+        newUser.preferences && typeof newUser.preferences === "object"
+          ? (newUser.preferences as Record<string, any>)
+          : {};
+
+      const updatedUser = await storage.updateUser(newUser.id, {
+        preferences: {
+          ...basePreferences,
+          delegateForUserId: owner.id,
+          delegateType: "secretary",
+        },
+      });
+
+      res.status(201).json({
+        id: updatedUser?.id || newUser.id,
+        fullName: updatedUser?.fullName || newUser.fullName,
+        email: updatedUser?.email || newUser.email,
+        createdAt: updatedUser?.createdAt || newUser.createdAt,
+      });
+    } catch (error) {
+      console.error("Erro ao criar secretaria:", error);
+      res.status(500).json({ message: "Erro ao criar secretaria" });
+    }
+  });
+
+  app.delete("/api/team/secretaries/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const owner = req.user as any;
+      const secretaryId = parseInt(req.params.id);
+
+      if (isNaN(secretaryId)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const secretary = await storage.getUser(secretaryId);
+      if (!secretary) {
+        return res.status(404).json({ message: "Secretária não encontrada" });
+      }
+
+      const preferences = parsePreferences(secretary.preferences);
+      if (preferences?.delegateForUserId !== owner.id || preferences?.delegateType !== "secretary") {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const deleted = await storage.deleteUser(secretaryId);
+      if (!deleted) {
+        return res.status(500).json({ message: "Erro ao remover secretaria" });
+      }
+
+      res.json({ message: "Secretária removida com sucesso" });
+    } catch (error) {
+      console.error("Erro ao remover secretaria:", error);
+      res.status(500).json({ message: "Erro ao remover secretaria" });
     }
   });
 

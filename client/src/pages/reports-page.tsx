@@ -32,8 +32,8 @@ export default function ReportsPage() {
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Relatórios e Analytics</h1>
-                                <p className="text-gray-500 mt-1">Visualize tendências e métricas de saúde.</p>
+                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Relatórios Gerenciais</h1>
+                                <p className="text-gray-500 mt-1">Controle financeiro e fluxo de pacientes.</p>
                             </div>
 
                             <Select value={range} onValueChange={setRange}>
@@ -68,7 +68,7 @@ export default function ReportsPage() {
                                     </Card>
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Exames Realizados</CardTitle>
+                                            <CardTitle className="text-sm font-medium">Procedimentos Realizados</CardTitle>
                                             <FileText className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
@@ -102,7 +102,7 @@ export default function ReportsPage() {
                                     </Card>
                                     <Card>
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Exame Mais Comum</CardTitle>
+                                            <CardTitle className="text-sm font-medium">Procedimento Mais Frequente</CardTitle>
                                             <Activity className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
@@ -123,7 +123,7 @@ export default function ReportsPage() {
                                                 Atividade e Faturamento
                                             </CardTitle>
                                             <CardDescription>
-                                                Exames, pacientes e faturamento nos últimos meses
+                                                Procedimentos, pacientes e faturamento nos últimos meses
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="pl-2">
@@ -167,7 +167,7 @@ export default function ReportsPage() {
                                                         <Bar
                                                             yAxisId="left"
                                                             dataKey="exames"
-                                                            name="Exames"
+                                                            name="Procedimentos"
                                                             fill="#0ea5e9"
                                                             radius={[4, 4, 0, 0]}
                                                             maxBarSize={30}
@@ -199,7 +199,7 @@ export default function ReportsPage() {
                                         <CardHeader>
                                             <CardTitle className="flex items-center gap-2">
                                                 <PieChartIcon className="h-5 w-5 text-primary" />
-                                                Tipos de Exames
+                                                Procedimentos Realizados
                                             </CardTitle>
                                             <CardDescription>
                                                 Distribuição por categoria

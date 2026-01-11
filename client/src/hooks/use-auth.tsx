@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Configurar o cookie auxiliar para autenticação
       document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       // Popup de login bem-sucedido removido conforme solicitado
     },
     onError: (error: Error) => {

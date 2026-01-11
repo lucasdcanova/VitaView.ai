@@ -52,7 +52,7 @@ export function AgendaCalendar({
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
-  const { inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
+  const { profiles, setActiveProfile, inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
 
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
@@ -327,7 +327,21 @@ export function AgendaCalendar({
                             styles.border
                           )}>
                             {/* Left Info */}
-                            <div className="flex-1">
+                            <div
+                              className="flex-1 cursor-pointer"
+                              onClick={() => {
+                                if (app.profileId) {
+                                  const profile = profiles.find(p => p.id === app.profileId);
+                                  if (profile) setActiveProfile(profile);
+                                } else {
+                                  toast({
+                                    title: "Paciente não vinculado",
+                                    description: "Este agendamento não está vinculado a um perfil de paciente.",
+                                    variant: "destructive"
+                                  });
+                                }
+                              }}
+                            >
                               <div className="flex items-center gap-3 mb-2">
                                 <span className={cn("px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider", styles.bg, styles.text)}>
                                   {app.type}

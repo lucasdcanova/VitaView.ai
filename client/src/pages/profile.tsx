@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -19,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -30,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical } from "lucide-react";
+import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical, ImagePlus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -95,6 +97,14 @@ const profileSchema = z.object({
   crm: z.string().optional(),
   specialty: z.string().optional(),
   address: z.string().optional(),
+  professionalPhoto: z.string().optional(),
+  clinicName: z.string().optional(),
+  bio: z.string().optional(),
+  website: z.string().optional(),
+  linkedin: z.string().optional(),
+  instagram: z.string().optional(),
+  languages: z.string().optional(),
+  consultationMode: z.string().optional(),
 });
 
 const securitySchema = z.object({
@@ -117,12 +127,24 @@ const doctorSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type SecurityFormValues = z.infer<typeof securitySchema>;
 type DoctorFormValues = z.infer<typeof doctorSchema>;
+const secretarySchema = z.object({
+  fullName: z.string().min(3, "Nome da secretária é obrigatório"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+});
+
+type SecretaryFormValues = z.infer<typeof secretarySchema>;
 
 export default function Profile() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const professionalProfile =
+    user?.preferences && typeof user.preferences === "object"
+      ? (user.preferences as Record<string, any>).professionalProfile
+      : null;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -137,8 +159,19 @@ export default function Profile() {
       crm: user?.crm || "",
       specialty: user?.specialty || "",
       address: user?.address || "",
+      professionalPhoto: professionalProfile?.professionalPhoto || "",
+      clinicName: professionalProfile?.clinicName || "",
+      bio: professionalProfile?.bio || "",
+      website: professionalProfile?.website || "",
+      linkedin: professionalProfile?.linkedin || "",
+      instagram: professionalProfile?.instagram || "",
+      languages: professionalProfile?.languages || "",
+      consultationMode: professionalProfile?.consultationMode || "",
     },
   });
+
+  const professionalPhoto = profileForm.watch("professionalPhoto");
+  const clinicName = profileForm.watch("clinicName");
 
   const securityForm = useForm<SecurityFormValues>({
     resolver: zodResolver(securitySchema),
@@ -186,7 +219,52 @@ export default function Profile() {
   });
 
   const onProfileSubmit = (values: ProfileFormValues) => {
-    updateProfileMutation.mutate(values);
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      crm,
+      specialty,
+      address,
+      professionalPhoto,
+      clinicName,
+      bio,
+      website,
+      linkedin,
+      instagram,
+      languages,
+      consultationMode,
+    } = values;
+
+    const basePreferences =
+      user?.preferences && typeof user.preferences === "object"
+        ? (user.preferences as Record<string, any>)
+        : {};
+
+    const nextPreferences = {
+      ...basePreferences,
+      professionalProfile: {
+        ...(basePreferences as Record<string, any>).professionalProfile,
+        professionalPhoto,
+        clinicName,
+        bio,
+        website,
+        linkedin,
+        instagram,
+        languages,
+        consultationMode,
+      },
+    };
+
+    updateProfileMutation.mutate({
+      fullName,
+      email,
+      phoneNumber,
+      crm,
+      specialty,
+      address,
+      preferences: nextPreferences,
+    });
   };
 
   const onSecuritySubmit = (values: SecurityFormValues) => {
@@ -196,6 +274,7 @@ export default function Profile() {
   // Doctor management state and hooks
   const [isDoctorDialogOpen, setIsDoctorDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<any>(null);
+  const [isSecretaryDialogOpen, setIsSecretaryDialogOpen] = useState(false);
 
   const doctorForm = useForm<DoctorFormValues>({
     resolver: zodResolver(doctorSchema),
@@ -208,8 +287,21 @@ export default function Profile() {
     },
   });
 
+  const secretaryForm = useForm<SecretaryFormValues>({
+    resolver: zodResolver(secretarySchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+    },
+  });
+
   const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
     queryKey: ["/api/doctors"],
+  });
+
+  const { data: secretaries = [], isLoading: secretariesLoading } = useQuery<any[]>({
+    queryKey: ["/api/team/secretaries"],
   });
 
   const createDoctorMutation = useMutation({
@@ -227,6 +319,44 @@ export default function Profile() {
       toast({
         title: "Erro ao cadastrar médico",
         description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createSecretaryMutation = useMutation({
+    mutationFn: (data: SecretaryFormValues) => apiRequest("POST", "/api/team/secretaries", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/team/secretaries"] });
+      toast({
+        title: "Secretária criada",
+        description: "O acesso da secretária foi configurado com sucesso.",
+      });
+      secretaryForm.reset();
+      setIsSecretaryDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao criar secretária",
+        description: error.message || "Não foi possível criar o acesso.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSecretaryMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/team/secretaries/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/team/secretaries"] });
+      toast({
+        title: "Secretária removida",
+        description: "O acesso foi revogado com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao remover secretária",
+        description: error.message || "Não foi possível revogar o acesso.",
         variant: "destructive",
       });
     },
@@ -322,6 +452,19 @@ export default function Profile() {
     setIsDoctorDialogOpen(true);
   };
 
+  const onSecretarySubmit = (values: SecretaryFormValues) => {
+    createSecretaryMutation.mutate(values);
+  };
+
+  const handleAddSecretary = () => {
+    secretaryForm.reset({
+      fullName: "",
+      email: "",
+      password: "",
+    });
+    setIsSecretaryDialogOpen(true);
+  };
+
   // Medical conditions state
 
 
@@ -352,12 +495,23 @@ export default function Profile() {
               {/* User Information */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
-                  <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold mb-4 sm:mb-0 sm:mr-6">
-                    {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden mb-4 sm:mb-0 sm:mr-6">
+                    {professionalPhoto ? (
+                      <img
+                        src={professionalPhoto}
+                        alt={user?.fullName || "Foto do profissional"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || "U"
+                    )}
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-800">{user?.fullName || user?.username}</h2>
                     <p className="text-gray-500">{user?.email}</p>
+                    {clinicName && (
+                      <p className="text-sm text-gray-500">{clinicName}</p>
+                    )}
                     <div className="mt-2 flex items-center">
                       <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                         <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
@@ -499,6 +653,188 @@ export default function Profile() {
                               </FormItem>
                             )}
                           />
+                        </div>
+
+                        <div className="mt-8 border-t border-gray-200 pt-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Identidade profissional</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                              control={profileForm.control}
+                              name="professionalPhoto"
+                              render={({ field }) => (
+                                <FormItem className="md:col-span-2">
+                                  <FormLabel>Foto profissional</FormLabel>
+                                  <FormControl>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                      <div className="h-20 w-20 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                        {field.value ? (
+                                          <img
+                                            src={field.value}
+                                            alt="Foto profissional"
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <ImagePlus className="h-6 w-6 text-gray-400" />
+                                        )}
+                                      </div>
+                                      <div className="flex flex-1 flex-col gap-2">
+                                        <Input
+                                          type="file"
+                                          accept="image/*"
+                                          name={field.name}
+                                          ref={field.ref}
+                                          onChange={(event) => {
+                                            const file = event.target.files?.[0];
+                                            if (!file) return;
+                                            if (file.size > 2 * 1024 * 1024) {
+                                              toast({
+                                                title: "Arquivo muito grande",
+                                                description: "Envie uma imagem de até 2MB.",
+                                                variant: "destructive",
+                                              });
+                                              return;
+                                            }
+                                            const reader = new FileReader();
+                                            reader.onload = () => {
+                                              field.onChange(typeof reader.result === "string" ? reader.result : "");
+                                            };
+                                            reader.readAsDataURL(file);
+                                          }}
+                                        />
+                                        {field.value && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-fit"
+                                            onClick={() => field.onChange("")}
+                                          >
+                                            Remover foto
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="clinicName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Clínica / Consultório</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Nome da clínica" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="consultationMode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Atendimento</FormLabel>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    name={field.name}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a modalidade" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="presencial">Presencial</SelectItem>
+                                      <SelectItem value="online">Online</SelectItem>
+                                      <SelectItem value="hibrido">Híbrido</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="languages"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Idiomas</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Português, Inglês" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="website"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Site</FormLabel>
+                                  <FormControl>
+                                    <Input type="url" placeholder="https://seusite.com.br" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="linkedin"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>LinkedIn</FormLabel>
+                                  <FormControl>
+                                    <Input type="url" placeholder="https://linkedin.com/in/seunome" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="instagram"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Instagram</FormLabel>
+                                  <FormControl>
+                                    <Input type="url" placeholder="https://instagram.com/seuuser" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={profileForm.control}
+                              name="bio"
+                              render={({ field }) => (
+                                <FormItem className="md:col-span-2">
+                                  <FormLabel>Bio profissional</FormLabel>
+                                  <FormControl>
+                                    <Textarea
+                                      placeholder="Breve descrição da sua atuação, experiência ou áreas de interesse."
+                                      className="min-h-[120px]"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
 
                         <div className="mt-6 flex justify-end">
@@ -754,6 +1090,125 @@ export default function Profile() {
                           </Form>
                         </DialogContent>
                       </Dialog>
+
+                      <div className="border-t border-gray-200 pt-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900">Secretaria com acesso total</h3>
+                            <p className="text-sm text-gray-500">Crie um acesso para quem agenda consultas e administra o sistema.</p>
+                          </div>
+                          <Button variant="outline" onClick={handleAddSecretary} className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Adicionar Secretária
+                          </Button>
+                        </div>
+
+                        {secretariesLoading ? (
+                          <div className="flex justify-center py-6">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+                          </div>
+                        ) : secretaries.length === 0 ? (
+                          <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+                            <p className="text-sm text-gray-500">Nenhuma secretária com acesso total cadastrada.</p>
+                          </div>
+                        ) : (
+                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {secretaries.map((secretary) => (
+                              <div key={secretary.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex items-start gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-semibold">
+                                      {secretary.fullName?.[0]?.toUpperCase() || "S"}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium text-gray-900">{secretary.fullName}</h4>
+                                      <p className="text-sm text-gray-500">{secretary.email}</p>
+                                      <Badge variant="secondary" className="mt-2 bg-amber-50 text-amber-700">Acesso total</Badge>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      if (confirm("Deseja remover o acesso desta secretária?")) {
+                                        deleteSecretaryMutation.mutate(secretary.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <Dialog open={isSecretaryDialogOpen} onOpenChange={setIsSecretaryDialogOpen}>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Adicionar secretária</DialogTitle>
+                              <DialogDescription>
+                                Este acesso terá controle total do sistema, incluindo agenda e prontuário.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <Form {...secretaryForm}>
+                              <form onSubmit={secretaryForm.handleSubmit(onSecretarySubmit)} className="space-y-4">
+                                <FormField
+                                  control={secretaryForm.control}
+                                  name="fullName"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Nome completo</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Nome da secretária" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={secretaryForm.control}
+                                  name="email"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Email</FormLabel>
+                                      <FormControl>
+                                        <Input type="email" placeholder="email@clinica.com" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={secretaryForm.control}
+                                  name="password"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Senha</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" placeholder="Crie uma senha segura" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <DialogFooter>
+                                  <Button type="button" variant="outline" onClick={() => setIsSecretaryDialogOpen(false)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button type="submit" disabled={createSecretaryMutation.isPending}>
+                                    {createSecretaryMutation.isPending && (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    Criar acesso
+                                  </Button>
+                                </DialogFooter>
+                              </form>
+                            </Form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </TabsContent>
 
@@ -890,6 +1345,19 @@ export default function Profile() {
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Configurações</h2>
 
                 <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700">Modo Escuro</h3>
+                      <p className="text-xs text-gray-500 mt-1">Alternar entre tema claro e escuro</p>
+                    </div>
+                    <div className="flex items-center">
+                      <Switch
+                        id="dark-mode"
+                        checked={theme === 'dark'}
+                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                      />
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-700">Notificações por email</h3>

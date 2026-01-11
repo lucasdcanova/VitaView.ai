@@ -168,20 +168,20 @@ export default function LandingPage() {
         transition={{ duration: 0.5 }}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <Link href="/">
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <Logo
-                size="md"
-                showText={true}
-                textSize="lg"
-                variant="icon"
-                className="font-bold tracking-tight"
-              />
-            </motion.div>
-          </Link>
+          <motion.div
+            className="cursor-pointer"
+            whileHover={{ scale: 1.03 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <Logo
+              size="md"
+              showText={true}
+              textSize="lg"
+              variant="icon"
+              className="font-bold tracking-tight"
+            />
+          </motion.div>
 
           {/* Desktop navigation - design minimalista */}
           <div className="hidden md:flex space-x-8 text-[#212121]">
@@ -1290,7 +1290,7 @@ export default function LandingPage() {
                 {/* Monday - 2 appointments */}
                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">09:00</div>
@@ -1298,7 +1298,7 @@ export default function LandingPage() {
                     <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">14:30</div>
@@ -1310,7 +1310,7 @@ export default function LandingPage() {
                 {/* Tuesday - 1 appointment */}
                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">10:00</div>
@@ -1322,7 +1322,7 @@ export default function LandingPage() {
                 {/* Wednesday - 3 appointments */}
                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#9E9E9E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#FDECEC] border-l-4 border-[#EF4444] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">08:00</div>
@@ -1330,7 +1330,7 @@ export default function LandingPage() {
                     <div className="text-xs text-[#424242]">Urgência</div>
                   </motion.div>
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">11:00</div>
@@ -1338,7 +1338,7 @@ export default function LandingPage() {
                     <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">15:00</div>
@@ -1350,7 +1350,7 @@ export default function LandingPage() {
                 {/* Thursday - 2 appointments */}
                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">09:30</div>
@@ -1358,7 +1358,7 @@ export default function LandingPage() {
                     <div className="text-xs text-[#212121]">Consulta</div>
                   </motion.div>
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">13:00</div>
@@ -1370,7 +1370,7 @@ export default function LandingPage() {
                 {/* Friday - 1 appointment */}
                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                   <motion.div
-                    className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="text-xs font-semibold text-[#212121]">10:30</div>
@@ -1386,19 +1386,19 @@ export default function LandingPage() {
               {/* Legend */}
               <div className="mt-6 flex flex-wrap gap-4 justify-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <div className="w-3 h-3 bg-[#3B82F6] rounded"></div>
                   <span className="text-xs text-[#9E9E9E]">Consulta</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <div className="w-3 h-3 bg-[#22C55E] rounded"></div>
                   <span className="text-xs text-[#9E9E9E]">Retorno</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#212121] rounded"></div>
+                  <div className="w-3 h-3 bg-[#F59E0B] rounded"></div>
                   <span className="text-xs text-[#9E9E9E]">Exames</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#9E9E9E] rounded"></div>
+                  <div className="w-3 h-3 bg-[#EF4444] rounded"></div>
                   <span className="text-xs text-[#9E9E9E]">Urgência</span>
                 </div>
               </div>
