@@ -109,13 +109,11 @@ export default function AuthPage() {
     <div className="min-h-screen flex md:flex-row flex-col bg-[#F4F4F4] relative">
       {/* Botão para voltar para a landing page */}
       <Button
-        asChild
         variant="outline"
         className="absolute top-4 left-4 z-10 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+        onClick={() => navigate("/")}
       >
-        <Link href="/" className="rounded-full w-10 h-10 flex items-center justify-center">
-          <ArrowLeft size={18} />
-        </Link>
+        <ArrowLeft size={18} />
       </Button>
 
       {/* Main Content - Centered Form */}
