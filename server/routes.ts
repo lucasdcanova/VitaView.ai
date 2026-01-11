@@ -3101,8 +3101,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Acesso negado" });
       }
 
-      await storage.deleteEvolution(evolutionId);
-      res.json({ message: "Evolução excluída com sucesso" });
+      res.status(403).json({ message: "Evoluções não podem ser excluídas após serem salvas (LGPD)." });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir evolução" });
     }

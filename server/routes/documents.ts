@@ -29,13 +29,8 @@ export function registerDocumentRoutes(app: Express) {
         res.json(list);
     });
 
-    app.patch("/api/prescriptions/:id/status", ensureAuthenticated, async (req, res) => {
-        const id = parseInt(req.params.id);
-        const { status } = req.body;
-        if (!['active', 'cancelled'].includes(status)) return res.status(400).send("Invalid status");
-
-        const updated = await storage.updatePrescriptionStatus(id, status);
-        res.json(updated);
+    app.patch("/api/prescriptions/:id/status", ensureAuthenticated, async (_req, res) => {
+        res.status(403).json({ message: "Receitas não podem ser alteradas após serem salvas (LGPD)." });
     });
 
 
@@ -59,12 +54,7 @@ export function registerDocumentRoutes(app: Express) {
         res.json(list);
     });
 
-    app.patch("/api/certificates/:id/status", ensureAuthenticated, async (req, res) => {
-        const id = parseInt(req.params.id);
-        const { status } = req.body;
-        if (!['active', 'cancelled'].includes(status)) return res.status(400).send("Invalid status");
-
-        const updated = await storage.updateCertificateStatus(id, status);
-        res.json(updated);
+    app.patch("/api/certificates/:id/status", ensureAuthenticated, async (_req, res) => {
+        res.status(403).json({ message: "Atestados/laudos não podem ser alterados após serem salvos (LGPD)." });
     });
 }

@@ -741,25 +741,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
   });
 
 
-  const deleteEvolutionMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/evolutions/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
-      toast({
-        title: "Sucesso",
-        description: "Evolução excluída com sucesso!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir evolução. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-
   const timelineItems: TimelineItem[] = [
     ...(Array.isArray(exams) ? exams.map((exam: any) => {
       const originalContent = exam.originalContent ? JSON.parse(exam.originalContent) : null;
@@ -1313,20 +1294,6 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
                                     className="self-start text-gray-400 hover:text-gray-900"
                                   >
                                     Editar
-                                  </Button>
-                                )}
-                                {item.type === 'evolution' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      if (confirm("Deseja excluir esta evolução?")) {
-                                        deleteEvolutionMutation.mutate(item.id);
-                                      }
-                                    }}
-                                    className="self-start text-red-400 hover:text-red-900"
-                                  >
-                                    Excluir
                                   </Button>
                                 )}
                               </div>

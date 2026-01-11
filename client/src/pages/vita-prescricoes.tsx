@@ -15,8 +15,7 @@ import {
     Trash2,
     Stethoscope,
     Printer,
-    History,
-    Ban
+    History
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Profile, Prescription } from "@shared/schema";
@@ -88,17 +87,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
         }
     });
-
-    // Update status (Cancel)
-    const updateDocumentStatus = useMutation({
-        mutationFn: ({ id, status }: { id: number, status: string }) =>
-            apiRequest("PATCH", `/api/prescriptions/${id}/status`, { status }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [`/api/prescriptions/patient/${patient.id}`] });
-            toast({ title: "Atualizado", description: "Status do documento alterado." });
-        }
-    });
-
 
     // Acute Prescription Handlers
     const addAcuteItem = () => {
@@ -329,7 +317,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                     <History className="h-5 w-5 text-gray-600" />
                                     Histórico de Prescrições
                                 </CardTitle>
-                                <CardDescription>Receitas emitidas para este paciente.</CardDescription>
+                                <CardDescription>Receitas emitidas para este paciente. Documentos são imutáveis após emissão.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-8">
@@ -354,13 +342,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                 <>
                                                                     <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintPrescription(p)}>
                                                                         <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                                                    </Button>
-                                                                    <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
-                                                                        if (confirm("Deseja realmente cancelar/invalidar este documento? A ação será registrada.")) {
-                                                                            updateDocumentStatus.mutate({ id: p.id, status: 'cancelled' })
-                                                                        }
-                                                                    }}>
-                                                                        <Ban className="h-3 w-3 mr-1" /> Invalidar
                                                                     </Button>
                                                                 </>
                                                             )}

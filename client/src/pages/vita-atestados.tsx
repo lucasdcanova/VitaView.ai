@@ -13,9 +13,7 @@ import {
     FileSignature,
     CalendarDays,
     History,
-    Printer,
-    Ban,
-    FileText
+    Printer
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
@@ -77,16 +75,6 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
         onError: (err) => {
             console.error(err);
             toast({ title: "Erro", description: "Falha ao salvar atestado.", variant: "destructive" });
-        }
-    });
-
-    // Update status (Cancel)
-    const updateDocumentStatus = useMutation({
-        mutationFn: ({ id, status }: { id: number, status: string }) =>
-            apiRequest("PATCH", `/api/certificates/${id}/status`, { status }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [`/api/certificates/patient/${patient.id}`] });
-            toast({ title: "Atualizado", description: "Status do documento alterado." });
         }
     });
 
@@ -343,7 +331,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                 <History className="h-5 w-5 text-gray-600" />
                                 Histórico de Atestados
                             </CardTitle>
-                            <CardDescription>Atestados emitidos para este paciente.</CardDescription>
+                            <CardDescription>Atestados emitidos para este paciente. Documentos são imutáveis após emissão.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -366,13 +354,6 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                                         <>
                                                             <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintCertificate(c)}>
                                                                 <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                                            </Button>
-                                                            <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
-                                                                if (confirm("Deseja realmente cancelar/invalidar este documento? A ação será registrada.")) {
-                                                                    updateDocumentStatus.mutate({ id: c.id, status: 'cancelled' })
-                                                                }
-                                                            }}>
-                                                                <Ban className="h-3 w-3 mr-1" /> Invalidar
                                                             </Button>
                                                         </>
                                                     )}
