@@ -191,13 +191,6 @@ export default function PatientView() {
                                     Prescrição
                                 </TabsTrigger>
                                 <TabsTrigger
-                                    value="atestados"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
-                                >
-                                    <FileSignature className="h-4 w-4 mr-2" />
-                                    Atestados
-                                </TabsTrigger>
-                                <TabsTrigger
                                     value="timeline"
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
@@ -210,6 +203,13 @@ export default function PatientView() {
                                 >
                                     <LineChart className="h-4 w-4 mr-2" />
                                     Exames
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="atestados"
+                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                >
+                                    <FileSignature className="h-4 w-4 mr-2" />
+                                    Atestados
                                 </TabsTrigger>
                             </TabsList>
 
@@ -397,20 +397,6 @@ export default function PatientView() {
                                 )}
                             </TabsContent>
 
-                            {/* Vita Atestados Tab */}
-                            <TabsContent value="atestados" className="mt-0">
-                                {activeProfile ? (
-                                    <VitaCertificates patient={activeProfile} />
-                                ) : (
-                                    <Card className="text-center py-12">
-                                        <CardContent>
-                                            <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
-                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para gerenciar atestados.</p>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </TabsContent>
 
                             {/* Timeline Tab - Redirect to actual page */}
                             <TabsContent value="timeline" className="mt-0">
@@ -524,6 +510,21 @@ export default function PatientView() {
                                         </Card>
                                     </div>
                                 </div>
+                            </TabsContent>
+
+                            {/* Vita Atestados Tab */}
+                            <TabsContent value="atestados" className="mt-0">
+                                {activeProfile ? (
+                                    <VitaCertificates patient={activeProfile} />
+                                ) : (
+                                    <Card className="text-center py-12">
+                                        <CardContent>
+                                            <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
+                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para gerenciar atestados.</p>
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </TabsContent>
                         </Tabs>
                     </div>
