@@ -2962,24 +2962,56 @@ export async function registerRoutes(app: Express): Promise<void> {
   // API routes for evolutions (Consultas/Anamnese)
   app.get("/api/evolutions", ensureAuthenticated, async (req, res) => {
     try {
-      const evolutions = await storage.getEvolutionsByUserId(req.user!.id);
+      const userId = req.user!.id;
+      let profileId: number | undefined;
+
+      // Obter profileId da query ou do cookie
+      if (req.query.profileId) {
+        profileId = parseInt(req.query.profileId as string);
+      } else {
+        const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          acc[key] = value;
+          return acc;
+        }, {} as Record<string, string>) || {};
+
+        if (cookies['active_profile_id']) {
+          profileId = parseInt(cookies['active_profile_id']);
+        }
+      }
+
+      // Se não tem profileId, retorna array vazio
+      if (!profileId) {
+        return res.json([]);
+      }
+
+      const evolutions = await storage.getEvolutionsByProfileId(userId, profileId);
       res.json(evolutions || []);
     } catch (error) {
+      console.error("Erro ao buscar evoluções:", error);
       res.status(500).json({ message: "Erro ao buscar evoluções" });
     }
   });
 
   app.post("/api/evolutions", ensureAuthenticated, async (req, res) => {
     try {
+      const { text, date, profileId } = req.body;
+
+      if (!profileId) {
+        return res.status(400).json({ message: "profileId é obrigatório" });
+      }
+
       const evolutionData = {
         userId: req.user!.id,
-        text: req.body.text,
-        date: req.body.date ? new Date(req.body.date) : new Date(),
+        profileId: profileId,
+        text: text,
+        date: date ? new Date(date) : new Date(),
       };
 
       const newEvolution = await storage.createEvolution(evolutionData);
       res.status(201).json(newEvolution);
     } catch (error) {
+      console.error("Erro ao criar evolução:", error);
       res.status(500).json({ message: "Erro ao criar evolução" });
     }
   });

@@ -79,6 +79,7 @@ export interface IStorage {
   createEvolution(evolution: InsertEvolution): Promise<Evolution>;
   getEvolution(id: number): Promise<Evolution | undefined>;
   getEvolutionsByUserId(userId: number): Promise<Evolution[]>;
+  getEvolutionsByProfileId(userId: number, profileId: number): Promise<Evolution[]>;
   deleteEvolution(id: number): Promise<boolean>;
 
   // Habit operations
@@ -753,6 +754,10 @@ export class MemStorage implements IStorage {
 
   async getEvolutionsByUserId(userId: number): Promise<Evolution[]> {
     return Array.from(this.evolutionsMap.values()).filter(e => e.userId === userId);
+  }
+
+  async getEvolutionsByProfileId(userId: number, profileId: number): Promise<Evolution[]> {
+    return Array.from(this.evolutionsMap.values()).filter(e => e.userId === userId && e.profileId === profileId);
   }
 
   async deleteEvolution(id: number): Promise<boolean> {
@@ -1565,6 +1570,9 @@ export class DatabaseStorage implements IStorage {
   }
   async getEvolutionsByUserId(userId: number): Promise<Evolution[]> {
     return await db.select().from(evolutions).where(eq(evolutions.userId, userId)).orderBy(desc(evolutions.date));
+  }
+  async getEvolutionsByProfileId(userId: number, profileId: number): Promise<Evolution[]> {
+    return await db.select().from(evolutions).where(and(eq(evolutions.userId, userId), eq(evolutions.profileId, profileId))).orderBy(desc(evolutions.date));
   }
   async deleteEvolution(id: number): Promise<boolean> {
     await db.delete(evolutions).where(eq(evolutions.id, id));

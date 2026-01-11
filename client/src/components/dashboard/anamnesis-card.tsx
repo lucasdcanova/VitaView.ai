@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -98,6 +98,18 @@ export function AnamnesisCard() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const { activeProfile } = useProfiles();
+    const previousProfileIdRef = useRef<number | null>(null);
+
+    // Limpar estado quando o paciente mudar
+    useEffect(() => {
+        if (activeProfile?.id !== previousProfileIdRef.current) {
+            // Paciente mudou - limpar todo o estado da anamnese
+            setAnamnesisText("");
+            setExtractedRecord(null);
+            setIsApplyingExtraction(false);
+            previousProfileIdRef.current = activeProfile?.id ?? null;
+        }
+    }, [activeProfile?.id]);
 
     const updateDiagnosis = (index: number, updates: Partial<ExtractedDiagnosis>) => {
         setExtractedRecord((prev) => {
@@ -393,9 +405,10 @@ export function AnamnesisCard() {
     };
 
     const addEvolutionMutation = useMutation({
-        mutationFn: (data: { text: string; date?: string }) => apiRequest("POST", "/api/evolutions", data),
+        mutationFn: (data: { text: string; date?: string; profileId: number }) => apiRequest("POST", "/api/evolutions", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
+            // Invalidar queries de evoluções para o perfil ativo
+            queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
             toast({
                 title: "Consulta registrada",
                 description: "Histórico salvo com sucesso!",
@@ -422,7 +435,7 @@ export function AnamnesisCard() {
                 title: "Anamnese analisada",
                 description: "Identificamos dados clínicos. Revise antes de aplicar ao prontuário.",
             });
-            queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
+            queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
         },
         onError: (error: any) => {
             toast({
@@ -563,9 +576,17 @@ export function AnamnesisCard() {
                                     });
                                     return;
                                 }
-                                addEvolutionMutation.mutate({ text: anamnesisText });
+                                if (!activeProfile?.id) {
+                                    toast({
+                                        title: "Nenhum paciente selecionado",
+                                        description: "Selecione um paciente antes de salvar a evolução.",
+                                        variant: "destructive"
+                                    });
+                                    return;
+                                }
+                                addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
                             }}
-                            disabled={addEvolutionMutation.isPending || !anamnesisText.trim()}
+                            disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
                             className="gap-2 bg-green-600 hover:bg-green-700"
                         >
                             {addEvolutionMutation.isPending ? (

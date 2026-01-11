@@ -315,6 +315,7 @@ export const insertSurgerySchema = createInsertSchema(surgeries).pick({
 export const evolutions = pgTable("evolutions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   text: text("text").notNull(),
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -322,6 +323,7 @@ export const evolutions = pgTable("evolutions", {
 
 export const insertEvolutionSchema = createInsertSchema(evolutions).pick({
   userId: true,
+  profileId: true,
   text: true,
   date: true,
 });

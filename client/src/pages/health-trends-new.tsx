@@ -340,7 +340,8 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
   });
 
   const { data: evolutions = [], isLoading: evolutionsLoading } = useQuery<any[]>({
-    queryKey: ["/api/evolutions"],
+    queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`],
+    enabled: !!activeProfile?.id,
   });
 
   // Query para buscar histórico de triagens do paciente
@@ -743,7 +744,7 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
   const deleteEvolutionMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/evolutions/${id}`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
       toast({
         title: "Sucesso",
         description: "Evolução excluída com sucesso!",
