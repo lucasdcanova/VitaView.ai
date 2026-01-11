@@ -4,8 +4,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useProfiles } from "@/hooks/use-profiles";
 import {
-  Upload,
-  LineChart,
   LogOut,
   CreditCard,
   ShieldCheck,
@@ -14,12 +12,14 @@ import {
   Settings,
   BarChart2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  Moon,
+  Sun
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
-import { NotificationBell } from "@/components/notifications/notification-bell";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,6 +46,7 @@ export default function Sidebar(props: SidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { activeProfile } = useProfiles();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -162,47 +163,21 @@ export default function Sidebar(props: SidebarProps) {
 
         {/* User Profile Section */}
         <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
-          <div className={cn("flex items-center mb-4", isCollapsed ? "justify-center flex-col gap-2" : "justify-between")}>
+          <div className={cn("flex items-center", isCollapsed ? "justify-center flex-col gap-2" : "")}>
             <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
               <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-white">
                 {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
               </div>
               {!isCollapsed && (
                 <div className="ml-3 overflow-hidden">
-                  <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[140px]" title={displayDoctor}>
+                  <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayDoctor}>
                     {displayDoctor}
                   </h3>
                   <p className="text-xs text-mediumGray font-body truncate">Profissional de saúde</p>
                 </div>
               )}
             </div>
-
-            {!isCollapsed && (
-              <div className="flex items-center gap-1">
-                <ThemeToggle />
-                <NotificationBell />
-              </div>
-            )}
           </div>
-
-          {!isCollapsed ? (
-            <Link href="/profile">
-              <button
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-charcoal bg-transparent text-charcoal rounded-lg transition-all duration-200 hover:bg-lightGray text-sm font-heading font-bold"
-                aria-label="Configurações do perfil"
-              >
-                <Settings className="h-4 w-4" />
-                <span>Configurações</span>
-              </button>
-            </Link>
-          ) : (
-            <div className="flex flex-col gap-2 items-center">
-              <div className="h-px w-8 bg-gray-200 my-1"></div>
-              <Link href="/profile">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-charcoal"><Settings className="h-4 w-4" /></Button>
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* Patient Selector */}
@@ -217,12 +192,54 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-340px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
+        <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/atendimento" icon={Heart} label="Atendimento" tourId="nav-atendimento" />
-          <NavItem href="/upload" icon={Upload} label="Enviar Exames" tourId="nav-upload" />
           <NavItem href="/reports" icon={BarChart2} label="Relatórios" />
           <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" />
+
+          {/* Separador */}
+          <div className="py-2">
+            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
+          </div>
+
+          {/* Configurações */}
+          <NavItem href="/profile" icon={Settings} label="Configurações" />
+
+          {/* Notificações */}
+          <NavItem href="/notifications" icon={Bell} label="Notificações" />
+
+          {/* Toggle Modo Escuro */}
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className={cn(
+                    "w-full flex items-center p-3 rounded-lg transition-all duration-200 text-charcoal hover:bg-lightGray",
+                    isCollapsed && "justify-center px-2"
+                  )}
+                  aria-label="Alternar modo escuro"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className={cn("h-6 w-6 flex-shrink-0 text-charcoal", !isCollapsed && "mr-3")} />
+                  ) : (
+                    <Moon className={cn("h-6 w-6 flex-shrink-0 text-charcoal", !isCollapsed && "mr-3")} />
+                  )}
+                  {!isCollapsed && (
+                    <span className="font-heading font-bold text-sm">
+                      {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              {isCollapsed && (
+                <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
+                  {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Link para o painel administrativo - visível apenas para administradores */}
           {user?.role === 'admin' && (

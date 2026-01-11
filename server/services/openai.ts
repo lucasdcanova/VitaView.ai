@@ -249,6 +249,7 @@ const normalizeExtractedRecord = (payload: any) => {
     medications: Array.isArray(payload?.medications) ? payload.medications : [],
     allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
     comorbidities: Array.isArray(payload?.comorbidities) ? payload.comorbidities : [],
+    surgeries: Array.isArray(payload?.surgeries) ? payload.surgeries : [],
   };
 };
 
@@ -310,6 +311,7 @@ const fallbackAnamnesisExtraction = (text: string) => {
     medications,
     allergies,
     comorbidities: diagnoses.map((item) => item.cidCode),
+    surgeries: [],
   };
 };
 
@@ -1397,7 +1399,10 @@ Responda apenas em JSON no formato:
   "allergies": [
     {"allergen": "Penicilina", "allergenType": "medication", "reaction": "urticária", "severity": "grave", "notes": "Evitar beta-lactâmicos"}
   ],
-  "comorbidities": ["Hipertensão arterial", "Diabetes tipo 2"]
+  "comorbidities": ["Hipertensão arterial", "Diabetes tipo 2"],
+  "surgeries": [
+    {"procedureName": "Apendicectomia", "surgeryDate": "2018-05-01", "hospitalName": "Hospital X", "surgeonName": "Dr. Silva", "notes": "Sem complicações"}
+  ]
 }
 
 Anamnese:
@@ -1596,4 +1601,234 @@ async function extractAppointmentsFromImage(file: any): Promise<string> {
 async function extractAppointmentsFromPDF(file: any): Promise<string> {
   console.log("extractAppointmentsFromPDF stub called");
   return "";
+}
+
+/**
+ * Transcreve áudio de consulta médica usando OpenAI Whisper
+ * @param audioBuffer Buffer do arquivo de áudio
+ * @param mimeType Tipo MIME do áudio (audio/webm, audio/mp3, etc.)
+ * @returns Texto transcrito
+ */
+export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType: string): Promise<string> {
+  if (!openai) {
+    throw new Error("OpenAI client not initialized. API key may be missing.");
+  }
+
+  try {
+    // Determinar extensão do arquivo baseada no mime type
+    const extensionMap: Record<string, string> = {
+      'audio/webm': 'webm',
+      'audio/mp3': 'mp3',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav',
+      'audio/ogg': 'ogg',
+      'audio/m4a': 'm4a',
+      'audio/mp4': 'mp4',
+    };
+
+    const extension = extensionMap[mimeType] || 'webm';
+    const filename = `consultation-${Date.now()}.${extension}`;
+
+    // Criar File object para a API
+    const audioFile = new File([audioBuffer], filename, { type: mimeType });
+
+    logger.info("[OpenAI Whisper] Iniciando transcrição", {
+      filename,
+      mimeType,
+      bufferSize: audioBuffer.length
+    });
+
+    const transcription = await openai.audio.transcriptions.create({
+      file: audioFile,
+      model: "whisper-1",
+      language: "pt", // Português
+      response_format: "text",
+      prompt: "Transcrição de consulta médica em português brasileiro. Termos médicos, medicamentos, diagnósticos, sintomas."
+    });
+
+    logger.info("[OpenAI Whisper] Transcrição concluída", {
+      transcriptionLength: transcription.length
+    });
+
+    return transcription;
+  } catch (error) {
+    logger.error("[OpenAI Whisper] Erro na transcrição", {
+      message: error instanceof Error ? error.message : String(error)
+    });
+    throw new Error(`Falha na transcrição do áudio: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  }
+}
+
+/**
+ * Processa transcrição de consulta e gera anamnese profissional estruturada
+ * @param transcription Texto transcrito da consulta
+ * @param patientData Dados do paciente para contextualização
+ * @returns Anamnese formatada profissionalmente
+ */
+export async function processTranscriptionToAnamnesis(transcription: string, patientData?: any): Promise<{
+  anamnesis: string;
+  extractedData: {
+    summary: string;
+    diagnoses: any[];
+    medications: any[];
+    allergies: any[];
+    comorbidities: string[];
+    surgeries: any[];
+  };
+}> {
+  if (!openai) {
+    throw new Error("OpenAI client not initialized. API key may be missing.");
+  }
+
+  const patientContext = patientData ? formatPatientContext(patientData) : "";
+
+  const prompt = `
+Você é um médico especialista com vasta experiência em documentação clínica.
+Sua tarefa é transformar a transcrição de uma consulta médica em uma anamnese profissional completa.
+
+${patientContext ? `### CONTEXTO DO PACIENTE:\n${patientContext}\n` : ''}
+
+### TRANSCRIÇÃO DA CONSULTA:
+"""
+${transcription}
+"""
+
+### INSTRUÇÕES:
+1. Analise cuidadosamente toda a transcrição da consulta
+2. Extraia todas as informações clinicamente relevantes
+3. Organize as informações no formato de anamnese médica profissional
+4. Identifique diagnósticos (com CID-10 quando possível), medicamentos, alergias, comorbidades e cirurgias prévias mencionados
+5. Use terminologia médica apropriada
+6. Mantenha objetividade e clareza
+
+### FORMATO DA ANAMNESE:
+A anamnese deve seguir a estrutura SOAP ou similar:
+- **Identificação**: Dados básicos do paciente (se mencionados)
+- **Queixa Principal (QP)**: Motivo da consulta em palavras do paciente
+- **História da Doença Atual (HDA)**: Evolução cronológica dos sintomas, características, fatores de melhora/piora
+- **Interrogatório Sintomatológico**: Revisão de sistemas quando aplicável
+- **História Patológica Pregressa (HPP)**: Doenças anteriores, cirurgias, internações
+- **História Familiar (HF)**: Antecedentes familiares relevantes
+- **História Social (HS)**: Hábitos de vida, ocupação, tabagismo, etilismo
+- **Medicamentos em Uso**: Lista de medicações atuais
+- **Alergias**: Alergias conhecidas
+- **Exame Físico**: Achados do exame quando mencionados
+- **Impressão Diagnóstica**: Hipóteses diagnósticas
+- **Conduta**: Plano terapêutico e orientações
+
+### RESPOSTA (JSON):
+{
+  "anamnesis": "Texto completo da anamnese formatada profissionalmente com as seções acima",
+  "extractedData": {
+    "summary": "Resumo em 2-3 frases do caso clínico",
+    "diagnoses": [
+      {"cidCode": "Código CID-10", "status": "ativo|cronico|em_tratamento|resolvido", "diagnosisDate": "YYYY-MM-DD ou null", "notes": "Observações"}
+    ],
+    "medications": [
+      {"name": "Nome do medicamento", "dosage": "Dosagem", "frequency": "Frequência", "format": "Forma farmacêutica", "startDate": "YYYY-MM-DD ou null", "notes": "Observações", "isActive": true}
+    ],
+    "allergies": [
+      {"allergen": "Alérgeno", "allergenType": "medication|food|environmental|other", "reaction": "Tipo de reação", "severity": "leve|moderada|grave", "notes": "Observações"}
+    ],
+    "comorbidities": ["Lista de comorbidades identificadas"],
+    "surgeries": [
+      {"procedureName": "Nome da cirurgia", "surgeryDate": "YYYY-MM-DD ou null", "hospitalName": "Hospital (opcional)", "surgeonName": "Cirurgião (opcional)", "notes": "Observações"}
+    ]
+  }
+}
+`;
+
+  try {
+    logger.info("[OpenAI] Processando transcrição para anamnese", {
+      transcriptionLength: transcription.length
+    });
+
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [{ type: "input_text", text: prompt }]
+        }
+      ],
+      temperature: 0.3,
+      max_output_tokens: 4000
+    });
+
+    const content = extractResponseText(response);
+    const sanitized = stripMarkdownCodeFence(content);
+    const jsonPayload = sanitized ? extractJsonPayload(sanitized) : null;
+
+    if (!jsonPayload) {
+      logger.warn("[OpenAI] Resposta sem JSON válido, usando fallback");
+      return generateFallbackAnamnesis(transcription);
+    }
+
+    const parsed = JSON.parse(jsonPayload);
+
+    logger.info("[OpenAI] Anamnese gerada com sucesso", {
+      anamnesisLength: parsed.anamnesis?.length || 0,
+      diagnosesCount: parsed.extractedData?.diagnoses?.length || 0,
+      medicationsCount: parsed.extractedData?.medications?.length || 0,
+      surgeriesCount: parsed.extractedData?.surgeries?.length || 0
+    });
+
+    return {
+      anamnesis: parsed.anamnesis || "",
+      extractedData: {
+        summary: parsed.extractedData?.summary || "",
+        diagnoses: Array.isArray(parsed.extractedData?.diagnoses) ? parsed.extractedData.diagnoses : [],
+        medications: Array.isArray(parsed.extractedData?.medications) ? parsed.extractedData.medications : [],
+        allergies: Array.isArray(parsed.extractedData?.allergies) ? parsed.extractedData.allergies : [],
+        comorbidities: Array.isArray(parsed.extractedData?.comorbidities) ? parsed.extractedData.comorbidities : [],
+        surgeries: Array.isArray(parsed.extractedData?.surgeries) ? parsed.extractedData.surgeries : []
+      }
+    };
+  } catch (error) {
+    logger.error("[OpenAI] Erro ao processar transcrição para anamnese", {
+      message: error instanceof Error ? error.message : String(error)
+    });
+    return generateFallbackAnamnesis(transcription);
+  }
+}
+
+/**
+ * Gera uma anamnese básica quando a API falha
+ */
+function generateFallbackAnamnesis(transcription: string): {
+  anamnesis: string;
+  extractedData: {
+    summary: string;
+    diagnoses: any[];
+    medications: any[];
+    allergies: any[];
+    comorbidities: string[];
+    surgeries: any[];
+  };
+} {
+  const today = new Date().toLocaleDateString('pt-BR');
+
+  return {
+    anamnesis: `**ANAMNESE - ${today}**
+
+**Queixa Principal:**
+Consulta médica transcrita automaticamente.
+
+**História da Doença Atual:**
+${transcription}
+
+**Observação:**
+Esta anamnese foi gerada a partir de transcrição automática e requer revisão médica.
+
+---
+*Documento gerado automaticamente pelo VitaView AI*`,
+    extractedData: {
+      summary: "Anamnese gerada a partir de transcrição de consulta. Revisão manual recomendada.",
+      diagnoses: [],
+      medications: [],
+      allergies: [],
+      comorbidities: [],
+      surgeries: []
+    }
+  };
 }

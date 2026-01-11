@@ -2,44 +2,324 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Sparkles } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Save, Sparkles, Mic, PlusCircle, X } from "lucide-react";
+import { ConsultationRecorder } from "@/components/consultation-recorder";
+
+type ExtractedDiagnosis = {
+    cidCode?: string;
+    status?: string;
+    diagnosisDate?: string | null;
+    notes?: string | null;
+};
+
+type ExtractedMedication = {
+    name?: string;
+    dosage?: string;
+    frequency?: string;
+    format?: string;
+    startDate?: string | null;
+    notes?: string | null;
+    isActive?: boolean;
+};
+
+type ExtractedAllergy = {
+    allergen?: string;
+    allergenType?: string;
+    reaction?: string;
+    severity?: string;
+    notes?: string | null;
+};
+
+type ExtractedSurgery = {
+    procedureName?: string;
+    surgeryDate?: string | null;
+    hospitalName?: string;
+    surgeonName?: string;
+    notes?: string | null;
+};
+
+type ExtractedRecord = {
+    summary?: string;
+    diagnoses: ExtractedDiagnosis[];
+    medications: ExtractedMedication[];
+    allergies: ExtractedAllergy[];
+    comorbidities: string[];
+    surgeries: ExtractedSurgery[];
+};
+
+const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
+    summary: payload?.summary || "",
+    diagnoses: Array.isArray(payload?.diagnoses)
+        ? payload.diagnoses.map((diagnosis: ExtractedDiagnosis & { condition?: string; description?: string }) => {
+            const safeDiagnosis = (diagnosis && typeof diagnosis === "object" ? diagnosis : {}) as ExtractedDiagnosis & {
+                condition?: string;
+                description?: string;
+            };
+            return {
+                ...safeDiagnosis,
+                cidCode: safeDiagnosis.cidCode || safeDiagnosis.condition || "",
+                notes: safeDiagnosis.notes || safeDiagnosis.description || "",
+            };
+        })
+        : [],
+    medications: Array.isArray(payload?.medications)
+        ? payload.medications.map((medication: ExtractedMedication & { dose?: string }) => {
+            const safeMedication = (medication && typeof medication === "object" ? medication : {}) as ExtractedMedication & {
+                dose?: string;
+            };
+            return {
+                ...safeMedication,
+                dosage: safeMedication.dosage || safeMedication.dose || "",
+            };
+        })
+        : [],
+    allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
+    comorbidities: Array.isArray(payload?.comorbidities) ? payload.comorbidities : [],
+    surgeries: Array.isArray(payload?.surgeries) ? payload.surgeries : [],
+});
 
 export function AnamnesisCard() {
     const [anamnesisText, setAnamnesisText] = useState("");
-    const [extractedRecord, setExtractedRecord] = useState<any>(null);
+    const [extractedRecord, setExtractedRecord] = useState<ExtractedRecord | null>(null);
     const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const { activeProfile } = useProfiles();
 
-    const handleApplyExtraction = async (recordToApply?: any) => {
+    const updateDiagnosis = (index: number, updates: Partial<ExtractedDiagnosis>) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            const diagnoses = [...prev.diagnoses];
+            diagnoses[index] = { ...diagnoses[index], ...updates };
+            return { ...prev, diagnoses };
+        });
+    };
+
+    const removeDiagnosis = (index: number) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, diagnoses: prev.diagnoses.filter((_, i) => i !== index) };
+        });
+    };
+
+    const addDiagnosis = () => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                diagnoses: [
+                    ...prev.diagnoses,
+                    { cidCode: "", status: "ativo", diagnosisDate: "", notes: "" }
+                ],
+            };
+        });
+    };
+
+    const updateMedication = (index: number, updates: Partial<ExtractedMedication>) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            const medications = [...prev.medications];
+            medications[index] = { ...medications[index], ...updates };
+            return { ...prev, medications };
+        });
+    };
+
+    const removeMedication = (index: number) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, medications: prev.medications.filter((_, i) => i !== index) };
+        });
+    };
+
+    const addMedication = () => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                medications: [
+                    ...prev.medications,
+                    { name: "", dosage: "", frequency: "", format: "", startDate: "", notes: "", isActive: true }
+                ],
+            };
+        });
+    };
+
+    const updateAllergy = (index: number, updates: Partial<ExtractedAllergy>) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            const allergies = [...prev.allergies];
+            allergies[index] = { ...allergies[index], ...updates };
+            return { ...prev, allergies };
+        });
+    };
+
+    const removeAllergy = (index: number) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, allergies: prev.allergies.filter((_, i) => i !== index) };
+        });
+    };
+
+    const addAllergy = () => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                allergies: [
+                    ...prev.allergies,
+                    { allergen: "", allergenType: "medication", reaction: "", severity: "", notes: "" }
+                ],
+            };
+        });
+    };
+
+    const updateSurgery = (index: number, updates: Partial<ExtractedSurgery>) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            const surgeries = [...prev.surgeries];
+            surgeries[index] = { ...surgeries[index], ...updates };
+            return { ...prev, surgeries };
+        });
+    };
+
+    const removeSurgery = (index: number) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, surgeries: prev.surgeries.filter((_, i) => i !== index) };
+        });
+    };
+
+    const addSurgery = () => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                surgeries: [
+                    ...prev.surgeries,
+                    { procedureName: "", surgeryDate: "", hospitalName: "", surgeonName: "", notes: "" }
+                ],
+            };
+        });
+    };
+
+    const updateComorbidity = (index: number, value: string) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            const comorbidities = [...prev.comorbidities];
+            comorbidities[index] = value;
+            return { ...prev, comorbidities };
+        });
+    };
+
+    const removeComorbidity = (index: number) => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, comorbidities: prev.comorbidities.filter((_, i) => i !== index) };
+        });
+    };
+
+    const addComorbidity = () => {
+        setExtractedRecord((prev) => {
+            if (!prev) return prev;
+            return { ...prev, comorbidities: [...prev.comorbidities, ""] };
+        });
+    };
+
+    // Handler para quando a transcrição da consulta é concluída
+    const handleTranscriptionComplete = (result: {
+        transcription: string;
+        anamnesis: string;
+        extractedData: {
+            summary: string;
+            diagnoses: ExtractedDiagnosis[];
+            medications: ExtractedMedication[];
+            allergies: ExtractedAllergy[];
+            comorbidities: string[];
+            surgeries: ExtractedSurgery[];
+        };
+    }) => {
+        // Preencher o textarea com a anamnese formatada
+        setAnamnesisText(result.anamnesis);
+
+        // Definir os dados extraídos para exibição
+        setExtractedRecord(normalizeExtractedRecord(result.extractedData));
+
+        toast({
+            title: "Consulta transcrita com sucesso!",
+            description: "A anamnese e os dados clínicos foram preenchidos. Revise antes de salvar.",
+        });
+    };
+
+    const handleApplyExtraction = async (recordToApply?: ExtractedRecord) => {
         const record = recordToApply || extractedRecord;
         if (!record) return;
         setIsApplyingExtraction(true);
         const today = new Date().toISOString().split("T")[0];
-        const created = { diagnoses: 0, medications: 0, allergies: 0 };
+        const created = { diagnoses: 0, medications: 0, allergies: 0, surgeries: 0, comorbidities: 0 };
+        const skipped = { diagnoses: 0, medications: 0, allergies: 0, surgeries: 0, comorbidities: 0 };
+
+        const diagnosisCodes = new Set(
+            (record.diagnoses || [])
+                .map((diagnosis) => diagnosis?.cidCode?.trim())
+                .filter((code): code is string => Boolean(code))
+        );
 
         try {
             for (const diagnosis of record.diagnoses || []) {
-                if (!diagnosis?.cidCode) continue;
+                const cidCode = diagnosis?.cidCode?.trim();
+                if (!cidCode) {
+                    skipped.diagnoses += 1;
+                    continue;
+                }
                 await apiRequest("POST", "/api/diagnoses", {
-                    cidCode: diagnosis.cidCode,
+                    cidCode,
                     diagnosisDate: diagnosis.diagnosisDate || today,
                     status: diagnosis.status || "ativo",
-                    notes: diagnosis.notes || diagnosis.description || null,
+                    notes: diagnosis.notes || null,
                 });
                 created.diagnoses += 1;
             }
 
+            for (const comorbidity of record.comorbidities || []) {
+                const comorbidityValue = comorbidity?.trim();
+                if (!comorbidityValue) {
+                    skipped.comorbidities += 1;
+                    continue;
+                }
+                if (diagnosisCodes.has(comorbidityValue)) continue;
+                await apiRequest("POST", "/api/diagnoses", {
+                    cidCode: comorbidityValue,
+                    diagnosisDate: today,
+                    status: "cronico",
+                    notes: "Comorbidade identificada pela IA",
+                });
+                created.comorbidities += 1;
+                diagnosisCodes.add(comorbidityValue);
+            }
+
             for (const medication of record.medications || []) {
-                if (!medication?.name) continue;
+                const name = medication?.name?.trim();
+                if (!name) {
+                    skipped.medications += 1;
+                    continue;
+                }
                 await apiRequest("POST", "/api/medications", {
-                    name: medication.name,
+                    name,
                     format: medication.format || "comprimido",
-                    dosage: medication.dosage || medication.dose || "dose a confirmar",
+                    dosage: medication.dosage || "dose a confirmar",
                     frequency: medication.frequency || "1x ao dia",
                     notes: medication.notes || null,
                     startDate: medication.startDate || today,
@@ -49,9 +329,13 @@ export function AnamnesisCard() {
             }
 
             for (const allergy of record.allergies || []) {
-                if (!allergy?.allergen) continue;
+                const allergen = allergy?.allergen?.trim();
+                if (!allergen) {
+                    skipped.allergies += 1;
+                    continue;
+                }
                 await apiRequest("POST", "/api/allergies", {
-                    allergen: allergy.allergen,
+                    allergen,
                     allergenType: allergy.allergenType || "medication",
                     reaction: allergy.reaction || null,
                     severity: allergy.severity || null,
@@ -60,18 +344,43 @@ export function AnamnesisCard() {
                 created.allergies += 1;
             }
 
+            for (const surgery of record.surgeries || []) {
+                const procedureName = surgery?.procedureName?.trim();
+                const surgeryDate = surgery?.surgeryDate?.trim();
+                if (!procedureName || !surgeryDate) {
+                    skipped.surgeries += 1;
+                    continue;
+                }
+                await apiRequest("POST", "/api/surgeries", {
+                    procedureName,
+                    surgeryDate,
+                    hospitalName: surgery.hospitalName || null,
+                    surgeonName: surgery.surgeonName || null,
+                    notes: surgery.notes || null,
+                });
+                created.surgeries += 1;
+            }
+
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] }),
                 queryClient.invalidateQueries({ queryKey: ["/api/medications"] }),
                 queryClient.invalidateQueries({ queryKey: ["/api/allergies"] }),
+                queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] }),
             ]);
+
+            const skippedDetails = [
+                skipped.diagnoses ? `${skipped.diagnoses} diagnóstico(s)` : null,
+                skipped.comorbidities ? `${skipped.comorbidities} comorbidade(s)` : null,
+                skipped.medications ? `${skipped.medications} medicamento(s)` : null,
+                skipped.allergies ? `${skipped.allergies} alergia(s)` : null,
+                skipped.surgeries ? `${skipped.surgeries} cirurgia(s)` : null,
+            ].filter(Boolean);
 
             toast({
                 title: "Prontuário atualizado",
-                description: `Dados aplicados: ${created.diagnoses} diagnósticos, ${created.medications} medicamentos, ${created.allergies} alergias.`,
+                description: `Dados aplicados: ${created.diagnoses} diagnósticos, ${created.comorbidities} comorbidades, ${created.medications} medicamentos, ${created.allergies} alergias, ${created.surgeries} cirurgias.${skippedDetails.length ? ` Itens incompletos não aplicados: ${skippedDetails.join(", ")}.` : ""}`,
             });
             setExtractedRecord(null);
-            setAnamnesisText("");
         } catch (error: any) {
             toast({
                 title: "Falha ao salvar dados",
@@ -108,14 +417,11 @@ export function AnamnesisCard() {
             return await res.json();
         },
         onSuccess: (data) => {
-            setExtractedRecord(data);
+            setExtractedRecord(normalizeExtractedRecord(data));
             toast({
                 title: "Anamnese analisada",
-                description: "Identificamos diagnósticos, medicamentos e alergias a partir do texto.",
+                description: "Identificamos dados clínicos. Revise antes de aplicar ao prontuário.",
             });
-            // Automatically apply extraction
-            handleApplyExtraction(data);
-            // Refresh evolutions to show the new one
             queryClient.invalidateQueries({ queryKey: ["/api/evolutions"] });
         },
         onError: (error: any) => {
@@ -147,14 +453,35 @@ export function AnamnesisCard() {
     return (
         <div className="space-y-8">
             <Card className="border border-primary-100 shadow-md">
-                <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
-                        <CardDescription>
-                            Descreva o quadro clínico e deixe a IA identificar diagnósticos, comorbidades, medicamentos e alergias.
-                        </CardDescription>
+                <CardHeader className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
+                                <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
+                            </div>
+                            <CardDescription>
+                                Grave a consulta ou descreva o quadro clínico. A IA identifica diagnósticos, medicamentos e alergias.
+                            </CardDescription>
+                        </div>
                     </div>
-                    <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
+
+                    {/* Destaque para gravação de consulta */}
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-100">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-red-100 rounded-full">
+                                <Mic className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div>
+                                <p className="font-semibold text-gray-900">Transcrição automática</p>
+                                <p className="text-sm text-gray-600">Grave a consulta e a IA preenche a anamnese automaticamente</p>
+                            </div>
+                        </div>
+                        <ConsultationRecorder
+                            onTranscriptionComplete={handleTranscriptionComplete}
+                            profileId={activeProfile?.id}
+                        />
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Textarea
@@ -204,7 +531,7 @@ export function AnamnesisCard() {
                             Limpar texto
                         </Button>
                         <p className="text-sm text-gray-500">
-                            A IA sugere registros prontos que você pode aplicar ao prontuário em um clique.
+                            A IA sugere registros prontos para revisão antes de aplicar ao prontuário.
                         </p>
                     </div>
                 </CardContent>
@@ -213,29 +540,102 @@ export function AnamnesisCard() {
             {extractedRecord && (
                 <Card className="border-primary-200 bg-white shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-2xl text-gray-900">Insights identificados</CardTitle>
-                        <CardDescription>{extractedRecord.summary || "Revisão automática da anamnese"}</CardDescription>
+                        <CardTitle className="text-2xl text-gray-900">Revisão dos dados extraídos</CardTitle>
+                        <CardDescription>
+                            {extractedRecord.summary || "Revise, ajuste e aplique ao prontuário quando estiver pronto."}
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {Array.isArray(extractedRecord.comorbidities) && extractedRecord.comorbidities.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {extractedRecord.comorbidities.map((item: string, index: number) => (
-                                    <span key={`${item}-${index}`} className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                                        {item}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <div>
-                                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Diagnósticos sugeridos</p>
-                                {Array.isArray(extractedRecord.diagnoses) && extractedRecord.diagnoses.length > 0 ? (
+                    <CardContent className="space-y-6">
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">Comorbidades</p>
+                                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addComorbidity}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                                {extractedRecord.comorbidities.length > 0 ? (
                                     <div className="space-y-2">
-                                        {extractedRecord.diagnoses.map((diagnosis: any, index: number) => (
-                                            <div key={`diag-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                                <p className="font-semibold text-gray-900">{diagnosis.cidCode || diagnosis.condition || "Diagnóstico sugerido"}</p>
-                                                {diagnosis.notes && <p className="text-xs text-gray-600 mt-1">{diagnosis.notes}</p>}
-                                                <Badge className="mt-2 w-fit" variant="secondary">{diagnosis.status || "avaliar"}</Badge>
+                                        {extractedRecord.comorbidities.map((item, index) => (
+                                            <div key={`comorb-${index}`} className="flex items-center gap-2">
+                                                <Input
+                                                    value={item}
+                                                    onChange={(event) => updateComorbidity(index, event.target.value)}
+                                                    placeholder="Ex: Hipertensão arterial"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removeComorbidity(index)}
+                                                    className="text-gray-400 hover:text-red-600"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Nenhuma comorbidade identificada.</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">Diagnósticos sugeridos</p>
+                                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addDiagnosis}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                                {extractedRecord.diagnoses.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {extractedRecord.diagnoses.map((diagnosis, index) => (
+                                            <div key={`diag-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">Diagnóstico {index + 1}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeDiagnosis(index)}
+                                                        className="text-gray-400 hover:text-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    <Input
+                                                        value={diagnosis.cidCode ?? ""}
+                                                        onChange={(event) => updateDiagnosis(index, { cidCode: event.target.value })}
+                                                        placeholder="CID-10"
+                                                    />
+                                                    <Select
+                                                        value={diagnosis.status || ""}
+                                                        onValueChange={(value) => updateDiagnosis(index, { status: value })}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="ativo">Ativo</SelectItem>
+                                                            <SelectItem value="cronico">Crônico</SelectItem>
+                                                            <SelectItem value="em_tratamento">Em tratamento</SelectItem>
+                                                            <SelectItem value="resolvido">Resolvido</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Input
+                                                        type="date"
+                                                        value={diagnosis.diagnosisDate ?? ""}
+                                                        onChange={(event) => updateDiagnosis(index, { diagnosisDate: event.target.value })}
+                                                    />
+                                                    <Input
+                                                        value={diagnosis.notes ?? ""}
+                                                        onChange={(event) => updateDiagnosis(index, { notes: event.target.value })}
+                                                        placeholder="Observações"
+                                                    />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -243,16 +643,63 @@ export function AnamnesisCard() {
                                     <p className="text-sm text-gray-500">Nenhum diagnóstico identificado.</p>
                                 )}
                             </div>
-                            <div>
-                                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Medicamentos em uso</p>
-                                {Array.isArray(extractedRecord.medications) && extractedRecord.medications.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {extractedRecord.medications.map((medication: any, index: number) => (
-                                            <div key={`med-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                                <p className="font-semibold text-gray-900">{medication.name}</p>
-                                                <p className="text-xs text-gray-600 mt-1">
-                                                    {medication.dosage || medication.dose || "dosagem não informada"} · {medication.frequency || "frequência não informada"}
-                                                </p>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">Medicamentos em uso</p>
+                                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addMedication}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                                {extractedRecord.medications.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {extractedRecord.medications.map((medication, index) => (
+                                            <div key={`med-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">Medicamento {index + 1}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeMedication(index)}
+                                                        className="text-gray-400 hover:text-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    <Input
+                                                        value={medication.name ?? ""}
+                                                        onChange={(event) => updateMedication(index, { name: event.target.value })}
+                                                        placeholder="Medicamento"
+                                                    />
+                                                    <Input
+                                                        value={medication.dosage ?? ""}
+                                                        onChange={(event) => updateMedication(index, { dosage: event.target.value })}
+                                                        placeholder="Dosagem"
+                                                    />
+                                                    <Input
+                                                        value={medication.frequency ?? ""}
+                                                        onChange={(event) => updateMedication(index, { frequency: event.target.value })}
+                                                        placeholder="Frequência"
+                                                    />
+                                                    <Input
+                                                        value={medication.format ?? ""}
+                                                        onChange={(event) => updateMedication(index, { format: event.target.value })}
+                                                        placeholder="Forma farmacêutica"
+                                                    />
+                                                    <Input
+                                                        type="date"
+                                                        value={medication.startDate ?? ""}
+                                                        onChange={(event) => updateMedication(index, { startDate: event.target.value })}
+                                                    />
+                                                    <Input
+                                                        value={medication.notes ?? ""}
+                                                        onChange={(event) => updateMedication(index, { notes: event.target.value })}
+                                                        placeholder="Observações"
+                                                    />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -260,14 +707,76 @@ export function AnamnesisCard() {
                                     <p className="text-sm text-gray-500">Sem medicamentos detectados.</p>
                                 )}
                             </div>
-                            <div>
-                                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Alergias</p>
-                                {Array.isArray(extractedRecord.allergies) && extractedRecord.allergies.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {extractedRecord.allergies.map((allergy: any, index: number) => (
-                                            <div key={`alg-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                                                <p className="font-semibold text-red-700">{allergy.allergen}</p>
-                                                {allergy.reaction && <p className="text-xs text-gray-600 mt-1">Reação: {allergy.reaction}</p>}
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">Alergias</p>
+                                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addAllergy}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                                {extractedRecord.allergies.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {extractedRecord.allergies.map((allergy, index) => (
+                                            <div key={`alg-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">Alergia {index + 1}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeAllergy(index)}
+                                                        className="text-gray-400 hover:text-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    <Input
+                                                        value={allergy.allergen ?? ""}
+                                                        onChange={(event) => updateAllergy(index, { allergen: event.target.value })}
+                                                        placeholder="Alérgeno"
+                                                    />
+                                                    <Input
+                                                        value={allergy.reaction ?? ""}
+                                                        onChange={(event) => updateAllergy(index, { reaction: event.target.value })}
+                                                        placeholder="Reação"
+                                                    />
+                                                    <Select
+                                                        value={allergy.severity || ""}
+                                                        onValueChange={(value) => updateAllergy(index, { severity: value })}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Severidade" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="leve">Leve</SelectItem>
+                                                            <SelectItem value="moderada">Moderada</SelectItem>
+                                                            <SelectItem value="grave">Grave</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Select
+                                                        value={allergy.allergenType || ""}
+                                                        onValueChange={(value) => updateAllergy(index, { allergenType: value })}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Tipo de alérgeno" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="medication">Medicamento</SelectItem>
+                                                            <SelectItem value="food">Alimento</SelectItem>
+                                                            <SelectItem value="environmental">Ambiental</SelectItem>
+                                                            <SelectItem value="other">Outro</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Input
+                                                        value={allergy.notes ?? ""}
+                                                        onChange={(event) => updateAllergy(index, { notes: event.target.value })}
+                                                        placeholder="Observações"
+                                                        className="md:col-span-2"
+                                                    />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -275,6 +784,90 @@ export function AnamnesisCard() {
                                     <p className="text-sm text-gray-500">Nenhuma alergia encontrada.</p>
                                 )}
                             </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">Cirurgias prévias</p>
+                                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addSurgery}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                                {extractedRecord.surgeries.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {extractedRecord.surgeries.map((surgery, index) => (
+                                            <div key={`surgery-${index}`} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">Cirurgia {index + 1}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeSurgery(index)}
+                                                        className="text-gray-400 hover:text-red-600"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    <Input
+                                                        value={surgery.procedureName ?? ""}
+                                                        onChange={(event) => updateSurgery(index, { procedureName: event.target.value })}
+                                                        placeholder="Procedimento"
+                                                    />
+                                                    <Input
+                                                        type="date"
+                                                        value={surgery.surgeryDate ?? ""}
+                                                        onChange={(event) => updateSurgery(index, { surgeryDate: event.target.value })}
+                                                    />
+                                                    <Input
+                                                        value={surgery.hospitalName ?? ""}
+                                                        onChange={(event) => updateSurgery(index, { hospitalName: event.target.value })}
+                                                        placeholder="Hospital"
+                                                    />
+                                                    <Input
+                                                        value={surgery.surgeonName ?? ""}
+                                                        onChange={(event) => updateSurgery(index, { surgeonName: event.target.value })}
+                                                        placeholder="Cirurgião"
+                                                    />
+                                                    <Input
+                                                        value={surgery.notes ?? ""}
+                                                        onChange={(event) => updateSurgery(index, { notes: event.target.value })}
+                                                        placeholder="Observações"
+                                                        className="md:col-span-2"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Nenhuma cirurgia identificada.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Button
+                                type="button"
+                                onClick={() => handleApplyExtraction()}
+                                disabled={isApplyingExtraction}
+                                className="gap-2"
+                            >
+                                {isApplyingExtraction ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Save className="h-4 w-4" />
+                                )}
+                                Aplicar ao prontuário
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setExtractedRecord(null)}
+                                disabled={isApplyingExtraction}
+                            >
+                                Descartar sugestões
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>

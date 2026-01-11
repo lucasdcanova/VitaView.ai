@@ -298,7 +298,7 @@ export default function LandingPage() {
       </AnimatePresence>
 
       {/* Hero Section - design minimalista */}
-      <section className="pt-24 pb-8 md:pt-32 md:pb-16 px-4 sm:px-6 lg:px-8 relative bg-pureWhite min-h-screen flex flex-col justify-center">
+      <section className="pt-28 pb-12 md:pt-32 md:pb-16 px-5 sm:px-6 lg:px-8 relative bg-pureWhite min-h-screen flex flex-col justify-center">
         <motion.div
           className="flex flex-col md:flex-row items-center"
           initial="hidden"
@@ -308,16 +308,16 @@ export default function LandingPage() {
           <motion.div className="md:w-1/2 mb-10 md:mb-0 md:pr-8" variants={itemVariants}>
 
 
-            <h1 className="text-4xl sm:text-5xl font-heading font-bold text-[#212121] leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-tight mb-5 md:mb-6">
               <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: O Prontuário que pensa com você.
             </h1>
 
-            <p className="text-lg md:text-xl text-[#9E9E9E] font-body mb-8 max-w-lg">
+            <p className="text-base md:text-xl text-[#9E9E9E] font-body mb-6 md:mb-8 max-w-lg">
               Dados do paciente, histórico e tendências de saúde apresentados com clareza, permitindo que você foque no cuidado humano.
             </p>
 
             {/* Benefícios em lista */}
-            <div className="mb-8 space-y-3">
+            <div className="mb-6 md:mb-8 space-y-3 md:space-y-3 hidden md:block">
               {[
                 { icon: <ShieldCheck className="h-5 w-5 text-[#212121]" />, text: "Conformidade HIPAA e LGPD" },
                 { icon: <Brain className="h-5 w-5 text-[#212121]" />, text: "Organização Inteligente de Dados Clínicos" },
@@ -363,15 +363,15 @@ export default function LandingPage() {
               </motion.div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               <Link href="/auth">
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" className="bg-[#212121] hover:bg-[#424242] text-white px-8 py-6 rounded-lg w-full sm:w-auto font-heading font-bold">
+                  <Button size="lg" className="bg-[#212121] hover:bg-[#424242] text-white px-6 md:px-8 py-5 md:py-6 rounded-lg w-full sm:w-auto font-heading font-bold text-sm md:text-base">
                     Começar Teste Grátis
-                    <ChevronRight className="ml-2 h-5 w-5" />
+                    <ChevronRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                   </Button>
                 </motion.div>
               </Link>
@@ -380,8 +380,8 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button size="lg" variant="outline" className="border-2 border-[#212121] text-[#212121] hover:bg-[#E0E0E0] px-8 py-6 rounded-lg flex items-center font-heading font-bold">
-                    <Play className="mr-2 h-5 w-5" /> Ver Demonstração
+                  <Button size="lg" variant="outline" className="border-2 border-[#212121] text-[#212121] hover:bg-[#E0E0E0] px-6 md:px-8 py-5 md:py-6 rounded-lg flex items-center font-heading font-bold text-sm md:text-base">
+                    <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" /> Ver Demonstração
                   </Button>
                 </motion.div>
               </a>
@@ -534,23 +534,23 @@ export default function LandingPage() {
       </section>
 
       {/* Simulação de Relatórios Section - design minimalista */}
-      <section id="demonstracoes" className="py-16 mt-[0] bg-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+      <section id="demonstracoes" className="py-12 md:py-16 mt-[0] bg-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos minimalistas */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 right-10 w-56 h-56 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
           <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] rounded-full text-sm font-heading font-bold mb-6"
+              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] rounded-full text-sm font-heading font-bold mb-4 md:mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -559,15 +559,15 @@ export default function LandingPage() {
               Vita Timeline
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-6">
+            <h2 className="text-2xl md:text-4xl font-heading font-bold text-white mb-4 md:mb-6">
               Linha de <span className="text-[#9E9E9E]">Vida</span> do Paciente
             </h2>
-            <p className="text-lg text-[#E0E0E0] font-body max-w-3xl mx-auto">
+            <p className="text-base md:text-lg text-[#E0E0E0] font-body max-w-3xl mx-auto px-2">
               Tenha uma visão holística da jornada de saúde do seu paciente. Acesse exames, métricas vitais e histórico clínico em um dashboard centralizado e seguro.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-center">
             {/* Relatório de Exame Simulado */}
             <div className="relative w-full max-w-[600px]">
               {/* Dashboard mockup simulado - design mais próximo do real */}
@@ -799,7 +799,7 @@ export default function LandingPage() {
               </motion.div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6 mt-8 lg:mt-0">
               <motion.div
                 className="text-left"
                 initial={{ opacity: 0, x: 30 }}
@@ -807,12 +807,12 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-2xl font-bold text-white mb-3">Analise exames com eficiência e precisão</h3>
-                <p className="text-lg text-white text-opacity-90 mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Analise exames com eficiência e precisão</h3>
+                <p className="text-base md:text-lg text-white text-opacity-90 mb-4 md:mb-6">
                   Nossos relatórios transformam dados brutos em insights clínicos, ajudando você a monitorar:
                 </p>
 
-                <ul className="space-y-4">
+                <ul className="space-y-3 md:space-y-4 hidden md:block">
                   {[
                     {
                       icon: <GraduationCap className="h-5 w-5 text-[#212121]" />,
@@ -870,23 +870,23 @@ export default function LandingPage() {
       </section >
 
       {/* Appointment Scheduler Calendar */}
-      < section id="como-funciona" className="py-24 bg-gradient-to-b from-[#E0E0E0] to-[#F4F4F4] relative overflow-hidden" >
+      < section id="como-funciona" className="py-12 md:py-24 bg-gradient-to-b from-[#E0E0E0] to-[#F4F4F4] relative overflow-hidden" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
           <div className="absolute left-0 top-20 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
           <div className="absolute right-0 bottom-20 w-80 h-80 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
         </div >
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-16"
+            className="text-center mb-8 md:mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-[#F4F4F4] text-[#212121] rounded-full text-sm font-medium mb-6"
+              className="inline-block px-4 py-1.5 bg-[#F4F4F4] text-[#212121] rounded-full text-sm font-medium mb-4 md:mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -895,10 +895,10 @@ export default function LandingPage() {
               Análise Inteligente
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">
+            <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-4 md:mb-6">
               <span className="text-[#212121]">View Laboratorial</span>
             </h2>
-            <p className="text-lg text-[#9E9E9E] mb-8 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-[#9E9E9E] mb-6 md:mb-8 max-w-2xl mx-auto px-2">
               Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
             </p>
           </motion.div>
@@ -930,11 +930,11 @@ export default function LandingPage() {
             </div>
 
             {/* Lab Results Grid */}
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Hemoglobina Chart */}
                 <motion.div
-                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
+                  className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -945,7 +945,7 @@ export default function LandingPage() {
                       <h4 className="text-lg font-bold text-[#212121]">Hemoglobina</h4>
                       <p className="text-sm text-[#9E9E9E]">Referência: 12.0 - 16.0 g/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
                       Normal
                     </span>
                   </div>
@@ -954,9 +954,9 @@ export default function LandingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-red-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#F4F4F4]0 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-red-400 to-red-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "75%" }}
                           viewport={{ once: true }}
@@ -968,9 +968,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-red-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#F4F4F4]0 h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-red-400 to-red-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "80%" }}
                           viewport={{ once: true }}
@@ -983,7 +983,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-[#212121]">
+                    <div className="flex items-center gap-1 text-green-600">
                       <span className="text-lg">↗</span>
                       <span className="font-semibold">+7.6%</span>
                     </div>
@@ -993,7 +993,7 @@ export default function LandingPage() {
 
                 {/* Glicemia Chart */}
                 <motion.div
-                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
+                  className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1004,7 +1004,7 @@ export default function LandingPage() {
                       <h4 className="text-lg font-bold text-[#212121]">Glicemia em Jejum</h4>
                       <p className="text-sm text-[#9E9E9E]">Referência: 70 - 100 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
                       Atenção
                     </span>
                   </div>
@@ -1013,9 +1013,9 @@ export default function LandingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-amber-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#9E9E9E] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "85%" }}
                           viewport={{ once: true }}
@@ -1027,9 +1027,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-amber-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#9E9E9E] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "90%" }}
                           viewport={{ once: true }}
@@ -1042,7 +1042,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-[#424242]">
+                    <div className="flex items-center gap-1 text-amber-600">
                       <span className="text-lg">↗</span>
                       <span className="font-semibold">+5.9%</span>
                     </div>
@@ -1052,7 +1052,7 @@ export default function LandingPage() {
 
                 {/* Colesterol Total Chart */}
                 <motion.div
-                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
+                  className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0] hidden md:block"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1063,7 +1063,7 @@ export default function LandingPage() {
                       <h4 className="text-lg font-bold text-[#212121]">Colesterol Total</h4>
                       <p className="text-sm text-[#9E9E9E]">Referência: {'<'} 200 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
                       Normal
                     </span>
                   </div>
@@ -1072,9 +1072,9 @@ export default function LandingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-blue-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "78%" }}
                           viewport={{ once: true }}
@@ -1086,9 +1086,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-blue-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "72%" }}
                           viewport={{ once: true }}
@@ -1101,7 +1101,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-[#212121]">
+                    <div className="flex items-center gap-1 text-green-600">
                       <span className="text-lg">↘</span>
                       <span className="font-semibold">-7.7%</span>
                     </div>
@@ -1111,7 +1111,7 @@ export default function LandingPage() {
 
                 {/* Creatinina Chart */}
                 <motion.div
-                  className="bg-[#F4F4F4] rounded-xl p-6 border border-[#E0E0E0]"
+                  className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0] hidden md:block"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -1122,7 +1122,7 @@ export default function LandingPage() {
                       <h4 className="text-lg font-bold text-[#212121]">Creatinina</h4>
                       <p className="text-sm text-[#9E9E9E]">Referência: 0.6 - 1.2 mg/dL</p>
                     </div>
-                    <span className="px-3 py-1 bg-[#E0E0E0] text-[#212121] rounded-full text-xs font-semibold border border-[#E0E0E0]">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
                       Normal
                     </span>
                   </div>
@@ -1131,9 +1131,9 @@ export default function LandingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-emerald-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "65%" }}
                           viewport={{ once: true }}
@@ -1145,9 +1145,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                      <div className="flex-1 bg-[#E0E0E0] rounded-full h-6 relative overflow-hidden">
+                      <div className="flex-1 bg-emerald-100 rounded-full h-6 relative overflow-hidden">
                         <motion.div
-                          className="bg-gradient-to-r from-[#9E9E9E] to-[#212121] h-full rounded-full flex items-center justify-end pr-2"
+                          className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full rounded-full flex items-center justify-end pr-2"
                           initial={{ width: 0 }}
                           whileInView={{ width: "67%" }}
                           viewport={{ once: true }}
@@ -1160,7 +1160,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1 text-[#9E9E9E]">
+                    <div className="flex items-center gap-1 text-gray-500">
                       <span className="text-lg">→</span>
                       <span className="font-semibold">+2.2%</span>
                     </div>
@@ -1225,23 +1225,23 @@ export default function LandingPage() {
 
 
       {/* Appointment Scheduler Calendar */}
-      <section id="agenda" className="py-16 bg-[#212121] text-white relative overflow-hidden scroll-mt-16" >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="agenda" className="py-12 md:py-16 bg-[#212121] text-white relative overflow-hidden scroll-mt-16" >
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-8 md:mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Agenda Inteligente</h2>
-            <p className="text-xl text-white text-opacity-90 max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">Agenda Inteligente</h2>
+            <p className="text-base md:text-xl text-white text-opacity-90 max-w-3xl mx-auto px-2">
               Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica com a ajuda de um <span className="font-bold text-[#E0E0E0]">assistente de IA</span> que entende comandos de texto e fotos da sua agenda.
             </p>
           </motion.div>
 
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto hidden md:block"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -1269,9 +1269,9 @@ export default function LandingPage() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               {/* Week Days Header */}
-              <div className="grid grid-cols-7 gap-2 mb-4">
+              <div className="grid grid-cols-7 gap-1 md:gap-2 mb-4">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
                   <div key={i} className="text-center">
                     <div className="text-xs font-semibold text-[#9E9E9E] uppercase mb-2">{day}</div>
@@ -1283,12 +1283,12 @@ export default function LandingPage() {
               </div>
 
               {/* Time Slots Grid */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1 md:gap-2">
                 {/* Sunday - Empty */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]"></div>
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]"></div>
 
                 {/* Monday - 2 appointments */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
                     className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
@@ -1308,7 +1308,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Tuesday - 1 appointment */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]">
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                   <motion.div
                     className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
@@ -1320,7 +1320,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Wednesday - 3 appointments */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
                     className="bg-[#E0E0E0] border-l-4 border-[#9E9E9E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
@@ -1348,7 +1348,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Thursday - 2 appointments */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px] space-y-2">
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                   <motion.div
                     className="bg-[#E0E0E0] border-l-4 border-[#F4F4F4]0 rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
@@ -1368,7 +1368,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Friday - 1 appointment */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]">
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                   <motion.div
                     className="bg-[#E0E0E0] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                     whileHover={{ scale: 1.02 }}
@@ -1380,7 +1380,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Saturday - Empty */}
-                <div className="bg-[#F4F4F4] rounded-lg p-2 min-h-[200px]"></div>
+                <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]"></div>
               </div>
 
               {/* Legend */}
@@ -1418,7 +1418,7 @@ export default function LandingPage() {
 
           {/* AI Scheduling Features */}
           <motion.div
-            className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto"
+            className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -1512,7 +1512,7 @@ export default function LandingPage() {
       </section >
 
       {/* Benefits Section */}
-      <section id="beneficios" className="pt-12 pb-24 bg-gradient-to-b from-[#F4F4F4] to-[#E0E0E0] text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
+      <section id="beneficios" className="pt-10 md:pt-12 pb-16 md:pb-24 bg-gradient-to-b from-[#F4F4F4] to-[#E0E0E0] text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center" >
         {/* Elementos decorativos de fundo */}
         < div className="absolute inset-0 overflow-hidden pointer-events-none" >
           <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1521,16 +1521,16 @@ export default function LandingPage() {
 
         </div >
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
           >
             <motion.span
-              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] border border-[#9E9E9E] shadow-sm rounded-full text-sm font-medium mb-6"
+              className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] border border-[#9E9E9E] shadow-sm rounded-full text-sm font-medium mb-4 md:mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1539,15 +1539,15 @@ export default function LandingPage() {
               Visão Completa
             </motion.span>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">
+            <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-4 md:mb-6">
               Uma Nova <span className="text-[#424242]">Visão</span> para a Saúde
             </h2>
-            <p className="text-lg text-[#212121] text-opacity-90 mb-12 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-[#212121] text-opacity-90 mb-8 md:mb-12 max-w-2xl mx-auto px-2">
               O VitaView AI amplia sua capacidade de análise, transformando dados complexos em uma visão clara e acionável da vida do paciente.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 max-w-5xl mx-auto">
             {[
               {
                 icon: <Clock className="w-6 h-6 text-[#212121]" />,
@@ -1588,7 +1588,7 @@ export default function LandingPage() {
             ].map((benefit, index) => (
               <motion.div
                 key={index}
-                className="relative bg-white p-7 rounded-xl shadow-lg overflow-hidden border border-[#E0E0E0] hover:border-[#E0E0E0]300 group"
+                className={`relative bg-white p-5 md:p-7 rounded-xl shadow-lg overflow-hidden border border-[#E0E0E0] hover:border-[#E0E0E0]300 group ${index > 2 ? 'hidden md:block' : ''}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1645,7 +1645,7 @@ export default function LandingPage() {
 
       {/* For Whom Section */}
       {/* Seção: Para quem é o VitaView AI */}
-      <section id="para-quem" className="py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+      <section id="para-quem" className="py-12 md:py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos de fundo */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -left-20 bottom-0 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1657,29 +1657,29 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           {/* Título da seção */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
           >
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-[#E0E0E0] text-[#212121] mb-4">
               <Users className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Versatilidade Profissional</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">
               Soluções para cada <span className="text-white">Cenário</span>
             </h2>
-            <p className="text-lg text-white text-opacity-90 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-white text-opacity-90 max-w-2xl mx-auto px-2">
               Nossa plataforma se adapta a diferentes modelos de atuação clínica, potencializando resultados em cada contexto.
             </p>
           </motion.div>
 
           {/* Cards de público-alvo - Centralizados em 3 colunas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-10 md:mb-16 max-w-6xl mx-auto">
             {/* Card 1: Profissional Solo */}
             <motion.div
               className="bg-white rounded-xl shadow-lg overflow-hidden group border border-[#E0E0E0]"
@@ -1799,7 +1799,7 @@ export default function LandingPage() {
           </div>
 
           {/* Estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
             {/* Estatística 1 */}
             <motion.div
               className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
@@ -1852,7 +1852,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="depoimentos" className="py-20 bg-[#F4F4F4] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+      <section id="depoimentos" className="py-12 md:py-20 bg-[#F4F4F4] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -1865,22 +1865,22 @@ export default function LandingPage() {
           <div className="absolute bottom-40 left-[30%] w-4 h-4 bg-[#9E9E9E] rounded-full opacity-70"></div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-[#212121] mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-center text-[#212121] mb-3 md:mb-4">
               O Que Dizem Nossos <span className="text-[#212121]">Usuários</span>
             </h2>
-            <p className="text-center text-[#9E9E9E] mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-[#9E9E9E] mb-8 md:mb-12 max-w-2xl mx-auto text-sm md:text-base px-2">
               Centenas de pessoas já transformaram sua relação com a saúde através do VitaView AI.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-5xl mx-auto">
             {[
               {
                 quote: "O VitaView AI revolucionou a forma como acompanho meus pacientes crônicos. A linha do tempo visual me permite identificar padrões que passariam despercebidos em exames isolados.",
@@ -1928,7 +1928,7 @@ export default function LandingPage() {
                 {/* Barra gradiente superior */}
                 <div className={`h-3 w-full bg-gradient-to-r ${testimonial.gradient}`}></div>
 
-                <div className="p-8 relative z-10">
+                <div className="p-5 md:p-8 relative z-10">
                   {/* Aspas decorativas */}
                   <div className="flex justify-start mb-4 relative">
                     <motion.svg
@@ -2027,30 +2027,30 @@ export default function LandingPage() {
 
 
       {/* Seção FAQ Accordions */}
-      <section id="faq" className="py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
+      <section id="faq" className="py-12 md:py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
           <div className="absolute left-20 bottom-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">
               Perguntas <span className="text-[#9E9E9E]">Frequentes</span>
             </h2>
-            <p className="text-xl text-white text-opacity-90 max-w-2xl mx-auto">
+            <p className="text-base md:text-xl text-white text-opacity-90 max-w-2xl mx-auto px-2">
               Tire suas dúvidas sobre o VitaView AI e como nossa plataforma pode ajudar você a entender melhor sua saúde.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
             {/* Coluna Esquerda: FAQ Accordion */}
             <div className="lg:col-span-7 space-y-4">
               {[
@@ -2190,7 +2190,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#212121] text-[#9E9E9E] py-12 relative overflow-hidden">
+      <footer className="bg-[#212121] text-[#9E9E9E] py-10 md:py-12 relative overflow-hidden">
         {/* Elementos decorativos do footer */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
@@ -2221,7 +2221,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             className="flex flex-col md:flex-row justify-between"
             initial={{ opacity: 0, y: 20 }}
@@ -2230,7 +2230,7 @@ export default function LandingPage() {
             transition={{ duration: 0.7 }}
           >
             <motion.div
-              className="mb-8 md:mb-0"
+              className="mb-6 md:mb-0"
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -2262,7 +2262,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}

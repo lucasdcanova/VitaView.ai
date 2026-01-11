@@ -292,7 +292,7 @@ export default function PatientView() {
                             {/* Vita Prescrições Tab */}
                             <TabsContent value="prescricoes" className="mt-0">
                                 {activeProfile ? (
-                                    <VitaPrescriptions />
+                                    <VitaPrescriptions patient={activeProfile} />
                                 ) : (
                                     <Card className="text-center py-12">
                                         <CardContent>

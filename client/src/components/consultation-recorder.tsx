@@ -1,0 +1,380 @@
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface ConsultationRecorderProps {
+  onTranscriptionComplete: (result: {
+    transcription: string;
+    anamnesis: string;
+    extractedData: {
+      summary: string;
+      diagnoses: any[];
+      medications: any[];
+      allergies: any[];
+      comorbidities: string[];
+      surgeries: any[];
+    };
+  }) => void;
+  profileId?: number;
+  disabled?: boolean;
+  className?: string;
+}
+
+type RecordingState = "idle" | "recording" | "paused" | "processing" | "error" | "success";
+
+export function ConsultationRecorder({
+  onTranscriptionComplete,
+  profileId,
+  disabled = false,
+  className
+}: ConsultationRecorderProps) {
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Formatar tempo de gravação
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Limpar recursos
+  const cleanup = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+  }, []);
+
+  // Cleanup ao desmontar
+  useEffect(() => {
+    return () => cleanup();
+  }, [cleanup]);
+
+  // Iniciar gravação
+  const startRecording = async () => {
+    try {
+      setErrorMessage(null);
+      setRecordingTime(0);
+      audioChunksRef.current = [];
+
+      // Solicitar permissão do microfone
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        }
+      });
+
+      streamRef.current = stream;
+
+      // Criar MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : 'audio/webm'
+      });
+
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Parar o timer
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+
+        // Processar áudio
+        if (audioChunksRef.current.length > 0) {
+          await processAudio();
+        }
+      };
+
+      // Iniciar gravação
+      mediaRecorder.start(1000); // Capturar em chunks de 1 segundo
+      setRecordingState("recording");
+
+      // Iniciar timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (error) {
+      console.error("Erro ao iniciar gravação:", error);
+      setErrorMessage(
+        error instanceof Error && error.name === "NotAllowedError"
+          ? "Permissão de microfone negada. Habilite o acesso ao microfone nas configurações do navegador."
+          : "Erro ao acessar o microfone. Verifique se seu dispositivo tem um microfone disponível."
+      );
+      setRecordingState("error");
+    }
+  };
+
+  // Pausar/Retomar gravação
+  const togglePause = () => {
+    if (!mediaRecorderRef.current) return;
+
+    if (recordingState === "recording") {
+      mediaRecorderRef.current.pause();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setRecordingState("paused");
+    } else if (recordingState === "paused") {
+      mediaRecorderRef.current.resume();
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      setRecordingState("recording");
+    }
+  };
+
+  // Parar gravação
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      setRecordingState("processing");
+    }
+
+    // Parar o stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  // Processar e enviar áudio
+  const processAudio = async () => {
+    try {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+      // Verificar tamanho mínimo (áudio muito curto provavelmente não tem conteúdo)
+      if (audioBlob.size < 10000) { // ~10KB mínimo
+        setErrorMessage("Gravação muito curta. Tente gravar por mais tempo.");
+        setRecordingState("error");
+        return;
+      }
+
+      // Preparar FormData
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'consultation.webm');
+      if (profileId) {
+        formData.append('profileId', profileId.toString());
+      }
+
+      // Enviar para API
+      const response = await fetch('/api/consultation/transcribe', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setRecordingState("success");
+        onTranscriptionComplete({
+          transcription: result.transcription,
+          anamnesis: result.anamnesis,
+          extractedData: result.extractedData
+        });
+
+        // Reset após 2 segundos
+        setTimeout(() => {
+          setRecordingState("idle");
+          setRecordingTime(0);
+        }, 2000);
+      } else {
+        throw new Error(result.message || "Erro ao processar transcrição");
+      }
+
+    } catch (error) {
+      console.error("Erro ao processar áudio:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Erro ao processar a gravação. Tente novamente."
+      );
+      setRecordingState("error");
+    } finally {
+      cleanup();
+    }
+  };
+
+  // Cancelar gravação
+  const cancelRecording = () => {
+    cleanup();
+    setRecordingState("idle");
+    setRecordingTime(0);
+    setErrorMessage(null);
+  };
+
+  // Renderizar conteúdo baseado no estado
+  const renderContent = () => {
+    switch (recordingState) {
+      case "idle":
+        return (
+          <Button
+            variant="default"
+            size="default"
+            onClick={startRecording}
+            disabled={disabled}
+            className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-4 py-2"
+          >
+            <Mic className="h-4 w-4" />
+            Gravar Consulta
+          </Button>
+        );
+
+      case "recording":
+      case "paused":
+        return (
+          <Card className={cn(
+            "p-3 border-2",
+            recordingState === "recording" ? "border-red-400 bg-red-50" : "border-yellow-400 bg-yellow-50"
+          )}>
+            <div className="flex items-center gap-3">
+              {/* Indicador de gravação */}
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-3 h-3 rounded-full",
+                  recordingState === "recording" ? "bg-red-500 animate-pulse" : "bg-yellow-500"
+                )} />
+                <span className="font-mono text-lg font-semibold text-gray-700">
+                  {formatTime(recordingTime)}
+                </span>
+              </div>
+
+              {/* Controles */}
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={togglePause}
+                  className="h-8 w-8"
+                  title={recordingState === "recording" ? "Pausar" : "Retomar"}
+                >
+                  {recordingState === "recording" ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={stopRecording}
+                  className="gap-2 bg-red-600 hover:bg-red-700"
+                >
+                  <Square className="h-3 w-3" />
+                  Finalizar
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={cancelRecording}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              {recordingState === "recording"
+                ? "Gravando consulta... Fale normalmente com o paciente."
+                : "Gravação pausada. Clique em retomar para continuar."}
+            </p>
+          </Card>
+        );
+
+      case "processing":
+        return (
+          <Card className="p-3 border-2 border-blue-400 bg-blue-50">
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-700">Processando gravação...</p>
+                <p className="text-xs text-blue-600">
+                  Transcrevendo áudio e gerando anamnese inteligente
+                </p>
+              </div>
+            </div>
+          </Card>
+        );
+
+      case "success":
+        return (
+          <Card className="p-3 border-2 border-green-400 bg-green-50">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium text-green-700">Transcrição concluída!</p>
+                <p className="text-xs text-green-600">
+                  A anamnese e os dados clínicos foram preenchidos automaticamente
+                </p>
+              </div>
+            </div>
+          </Card>
+        );
+
+      case "error":
+        return (
+          <Card className="p-3 border-2 border-red-400 bg-red-50">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-red-700">Erro na gravação</p>
+                <p className="text-xs text-red-600">{errorMessage}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setRecordingState("idle");
+                  setErrorMessage(null);
+                }}
+                className="text-red-600 hover:text-red-700 hover:bg-red-100"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          </Card>
+        );
+    }
+  };
+
+  return (
+    <div className={cn("consultation-recorder", className)}>
+      {renderContent()}
+    </div>
+  );
+}

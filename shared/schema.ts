@@ -518,6 +518,7 @@ export type InsertHabit = z.infer<typeof insertHabitSchema>;
 export const prescriptions = pgTable("prescriptions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").notNull().references(() => profiles.id), // Link to patient profile
   doctorName: text("doctor_name").notNull(),
   doctorCrm: text("doctor_crm").notNull(),
   doctorSpecialty: text("doctor_specialty"),
@@ -526,11 +527,13 @@ export const prescriptions = pgTable("prescriptions", {
   validUntil: timestamp("valid_until").notNull(),
   observations: text("observations"),
   pdfPath: text("pdf_path"), // Caminho do PDF gerado
+  status: text("status").default("active").notNull(), // active, cancelled
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertPrescriptionSchema = createInsertSchema(prescriptions).pick({
   userId: true,
+  profileId: true,
   doctorName: true,
   doctorCrm: true,
   doctorSpecialty: true,
@@ -539,10 +542,53 @@ export const insertPrescriptionSchema = createInsertSchema(prescriptions).pick({
   validUntil: true,
   observations: true,
   pdfPath: true,
+  status: true,
 });
 
 export type Prescription = typeof prescriptions.$inferSelect;
 export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+
+// Certificates schema
+export const certificates = pgTable("certificates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").notNull().references(() => profiles.id),
+  doctorName: text("doctor_name").notNull(),
+  doctorCrm: text("doctor_crm").notNull(),
+  patientName: text("patient_name").notNull(),
+  patientDoc: text("patient_doc"),
+  type: text("type").notNull(), // afastamento, comparecimento, acompanhamento, aptidao
+  issueDate: timestamp("issue_date").defaultNow().notNull(),
+  daysOff: text("days_off"),
+  cid: text("cid"),
+  startTime: text("start_time"),
+  endTime: text("end_time"),
+  customText: text("custom_text"),
+  status: text("status").default("active").notNull(),
+  pdfPath: text("pdf_path"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCertificateSchema = createInsertSchema(certificates).pick({
+  userId: true,
+  profileId: true,
+  doctorName: true,
+  doctorCrm: true,
+  patientName: true,
+  patientDoc: true,
+  type: true,
+  issueDate: true,
+  daysOff: true,
+  cid: true,
+  startTime: true,
+  endTime: true,
+  customText: true,
+  status: true,
+  pdfPath: true,
+});
+
+export type Certificate = typeof certificates.$inferSelect;
+export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
 
 // Doctors schema
 export const doctors = pgTable("doctors", {
@@ -813,3 +859,109 @@ export const insertSecurityIncidentSchema = createInsertSchema(securityIncidents
 
 export type SecurityIncident = typeof securityIncidents.$inferSelect;
 export type InsertSecurityIncident = z.infer<typeof insertSecurityIncidentSchema>;
+
+// Team Members schema - Gerenciamento de equipe (secretários, médicos, contadores)
+export const teamMembers = pgTable("team_members", {
+  id: serial("id").primaryKey(),
+  ownerId: integer("owner_id").notNull().references(() => users.id), // Médico dono da conta
+  email: text("email").notNull(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull(), // 'secretary' | 'doctor' | 'accountant'
+  phone: text("phone"),
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Permissões específicas
+  canViewAgenda: boolean("can_view_agenda").default(true).notNull(),
+  canEditAgenda: boolean("can_edit_agenda").default(false).notNull(),
+  canViewPatients: boolean("can_view_patients").default(false).notNull(),
+  canEditPatients: boolean("can_edit_patients").default(false).notNull(),
+  canViewFinancials: boolean("can_view_financials").default(false).notNull(),
+  canViewReports: boolean("can_view_reports").default(false).notNull(),
+  canManageExams: boolean("can_manage_exams").default(false).notNull(),
+
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).pick({
+  ownerId: true,
+  email: true,
+  password: true,
+  name: true,
+  role: true,
+  phone: true,
+}).extend({
+  isActive: z.boolean().optional(),
+  canViewAgenda: z.boolean().optional(),
+  canEditAgenda: z.boolean().optional(),
+  canViewPatients: z.boolean().optional(),
+  canEditPatients: z.boolean().optional(),
+  canViewFinancials: z.boolean().optional(),
+  canViewReports: z.boolean().optional(),
+  canManageExams: z.boolean().optional(),
+});
+
+export const updateTeamMemberSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(6).optional(),
+  phone: z.string().optional().nullable(),
+  role: z.enum(['secretary', 'doctor', 'accountant']).optional(),
+  isActive: z.boolean().optional(),
+  canViewAgenda: z.boolean().optional(),
+  canEditAgenda: z.boolean().optional(),
+  canViewPatients: z.boolean().optional(),
+  canEditPatients: z.boolean().optional(),
+  canViewFinancials: z.boolean().optional(),
+  canViewReports: z.boolean().optional(),
+  canManageExams: z.boolean().optional(),
+});
+
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type UpdateTeamMember = z.infer<typeof updateTeamMemberSchema>;
+
+// Enum de roles para uso no frontend
+export const TEAM_ROLES = {
+  secretary: {
+    label: 'Secretário(a)',
+    description: 'Acesso ao agendamento e cadastro de pacientes',
+    defaultPermissions: {
+      canViewAgenda: true,
+      canEditAgenda: true,
+      canViewPatients: true,
+      canEditPatients: true,
+      canViewFinancials: false,
+      canViewReports: false,
+      canManageExams: false,
+    }
+  },
+  doctor: {
+    label: 'Médico(a)',
+    description: 'Acesso completo ao atendimento de pacientes',
+    defaultPermissions: {
+      canViewAgenda: true,
+      canEditAgenda: true,
+      canViewPatients: true,
+      canEditPatients: true,
+      canViewFinancials: false,
+      canViewReports: true,
+      canManageExams: true,
+    }
+  },
+  accountant: {
+    label: 'Contador(a)',
+    description: 'Acesso aos relatórios financeiros',
+    defaultPermissions: {
+      canViewAgenda: false,
+      canEditAgenda: false,
+      canViewPatients: false,
+      canEditPatients: false,
+      canViewFinancials: true,
+      canViewReports: true,
+      canManageExams: false,
+    }
+  }
+} as const;

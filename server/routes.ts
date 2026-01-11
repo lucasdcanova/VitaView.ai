@@ -15,7 +15,7 @@ import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
 import { webApplicationFirewall } from "./security/waf";
 import { uploadAnalysis } from "./middleware/upload.middleware";
-import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis, parseAppointmentCommand } from "./services/openai";
+import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights, generateChronologicalReport, extractRecordFromAnamnesis, parseAppointmentCommand, transcribeConsultationAudio, processTranscriptionToAnamnesis } from "./services/openai";
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
@@ -27,6 +27,7 @@ import { sendClinicInvitationEmail } from "./services/email.service";
 import fs from "fs";
 import path from "path";
 import { notificationScheduler } from "./services/notification-scheduler";
+import { registerDocumentRoutes } from "./routes/documents";
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -847,6 +848,9 @@ function logRequest(req: Request, res: Response, next: NextFunction) {
 export async function registerRoutes(app: Express): Promise<void> {
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
+
+  // Register document routes (Prescriptions & Certificates)
+  registerDocumentRoutes(app);
 
   // Set up biometric and 2FA authentication routes
   app.post("/api/auth/biometric/register", biometricTwoFactorAuth.registerBiometric.bind(biometricTwoFactorAuth));
@@ -2644,6 +2648,102 @@ export async function registerRoutes(app: Express): Promise<void> {
         message: error instanceof Error ? error.message : String(error)
       });
       res.status(500).json({ message: "Erro ao interpretar anamnese" });
+    }
+  });
+
+  // Configure multer for audio transcription uploads
+  const audioTranscriptionUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 25 * 1024 * 1024, // 25MB max (Whisper API limit)
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimes = [
+        'audio/webm',
+        'audio/mp3',
+        'audio/mpeg',
+        'audio/wav',
+        'audio/ogg',
+        'audio/m4a',
+        'audio/mp4',
+        'audio/x-m4a',
+      ];
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Formato de áudio não suportado: ${file.mimetype}`));
+      }
+    },
+  });
+
+  // Endpoint para transcrição de áudio de consulta
+  app.post("/api/consultation/transcribe", ensureAuthenticated, audioTranscriptionUpload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Arquivo de áudio é obrigatório" });
+      }
+
+      logger.info("[Transcription] Iniciando transcrição de consulta", {
+        userId: req.user?.id,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype
+      });
+
+      // Transcrever o áudio
+      const transcription = await transcribeConsultationAudio(
+        req.file.buffer,
+        req.file.mimetype
+      );
+
+      if (!transcription || !transcription.trim()) {
+        return res.status(400).json({ message: "Não foi possível transcrever o áudio. Verifique a qualidade da gravação." });
+      }
+
+      // Buscar dados do paciente ativo se houver profileId
+      let patientData = null;
+      const profileId = req.body.profileId ? parseInt(req.body.profileId) : null;
+
+      if (profileId) {
+        try {
+          const profile = await storage.getProfile(profileId);
+          if (profile && profile.userId === req.user!.id) {
+            patientData = {
+              name: profile.name,
+              gender: profile.gender,
+              birthDate: profile.birthDate,
+              // Adicionar mais dados do prontuário se disponíveis
+            };
+          }
+        } catch (err) {
+          logger.warn("[Transcription] Erro ao buscar perfil do paciente", { profileId, error: err });
+        }
+      }
+
+      // Processar transcrição e gerar anamnese profissional
+      const result = await processTranscriptionToAnamnesis(transcription, patientData);
+
+      logger.info("[Transcription] Transcrição e processamento concluídos", {
+        userId: req.user?.id,
+        transcriptionLength: transcription.length,
+        anamnesisLength: result.anamnesis.length,
+        diagnosesCount: result.extractedData.diagnoses.length
+      });
+
+      res.json({
+        success: true,
+        transcription,
+        anamnesis: result.anamnesis,
+        extractedData: result.extractedData
+      });
+
+    } catch (error) {
+      logger.error("[Transcription] Erro na transcrição de consulta", {
+        userId: req.user?.id,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "Erro ao transcrever áudio da consulta"
+      });
     }
   });
 
@@ -4603,25 +4703,29 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Try to save prescription record (optional, don't fail if it doesn't work)
       try {
-        const [insertedPrescription] = await db.insert(prescriptions).values({
-          userId: user.id,
-          doctorName,
-          doctorCrm,
-          doctorSpecialty: doctorSpecialty || null,
-          medications: medicationsList.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            format: m.format,
-            dosage: m.dosage,
-            dosageUnit: m.dosageUnit || m.dosage_unit,
-            frequency: m.frequency,
-            notes: m.notes
-          })),
-          issueDate: new Date(issueDate),
-          validUntil: new Date(validUntil),
-          observations: observations || null
-        }).returning();
-        console.log('✅ Prescrição salva no banco:', insertedPrescription.id);
+        if (activeProfileId) {
+          const [insertedPrescription] = await db.insert(prescriptions).values({
+            profileId: parseInt(activeProfileId),
+            status: 'active',
+            userId: user.id,
+            doctorName,
+            doctorCrm,
+            doctorSpecialty: doctorSpecialty || null,
+            medications: medicationsList.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              format: m.format,
+              dosage: m.dosage,
+              dosageUnit: m.dosageUnit || m.dosage_unit,
+              frequency: m.frequency,
+              notes: m.notes
+            })),
+            issueDate: new Date(issueDate),
+            validUntil: new Date(validUntil),
+            observations: observations || null
+          }).returning();
+          console.log('✅ Prescrição salva no banco:', insertedPrescription.id);
+        }
       } catch (dbError) {
         console.warn('⚠️ Erro ao salvar no banco (continuando com geração de PDF):', dbError);
       }

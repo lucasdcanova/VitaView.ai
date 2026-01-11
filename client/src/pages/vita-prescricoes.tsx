@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -18,9 +17,14 @@ import {
     Stethoscope,
     Printer,
     FileSignature,
-    Clock,
-    CalendarDays
+    CalendarDays,
+    History,
+    RefreshCw,
+    Ban
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { Profile, Prescription, Certificate } from "@shared/schema";
 import {
     DoctorDialog,
     doctorSchema,
@@ -47,7 +51,11 @@ const COMMON_CIDS = [
     { code: "Z76.3", description: "Pessoa em boa saúde acompanhando doente" },
 ];
 
-export default function VitaPrescriptions() {
+interface VitaPrescriptionsProps {
+    patient: Profile;
+}
+
+export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -69,8 +77,26 @@ export default function VitaPrescriptions() {
     const [patientDoc, setPatientDoc] = useState("");
     const [customCertText, setCustomCertText] = useState("");
 
+    // Initialize patient doc from profile
+    useEffect(() => {
+        if (patient?.cpf) {
+            setPatientDoc(patient.cpf);
+        }
+    }, [patient]);
+
     const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
         queryKey: ["/api/doctors"],
+    });
+
+    // History Queries
+    const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
+        queryKey: [`/api/prescriptions/patient/${patient.id}`],
+        enabled: !!patient.id
+    });
+
+    const { data: certificateHistory = [] } = useQuery<Certificate[]>({
+        queryKey: [`/api/certificates/patient/${patient.id}`],
+        enabled: !!patient.id
     });
 
     const doctorForm = useForm<DoctorForm>({
@@ -78,7 +104,7 @@ export default function VitaPrescriptions() {
         defaultValues: { name: "", crm: "", specialty: "", isDefault: false },
     });
 
-    // Doctor Mutation
+    // Mutations
     const createDoctorMutation = useMutation({
         mutationFn: (data: DoctorForm) => apiRequest("POST", "/api/doctors", data),
         onSuccess: () => {
@@ -89,6 +115,80 @@ export default function VitaPrescriptions() {
         },
         onError: () => toast({ title: "Erro", description: "Falha ao cadastrar médico.", variant: "destructive" }),
     });
+
+    const createPrescriptionMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const res = await apiRequest("POST", "/api/prescriptions", data);
+            return await res.json();
+        },
+        onSuccess: (savedData) => {
+            queryClient.invalidateQueries({ queryKey: [`/api/prescriptions/patient/${patient.id}`] });
+
+            // Log for debugging
+            console.log("Prescription saved:", savedData);
+
+            // Generate PDF with saved data
+            generatePrescriptionPDF({
+                doctorName: savedData.doctorName,
+                doctorCrm: savedData.doctorCrm,
+                doctorSpecialty: savedData.doctorSpecialty,
+                patientName: savedData.patientName,
+                issueDate: new Date(savedData.issueDate),
+                validUntil: new Date(savedData.validUntil),
+                medications: savedData.medications as any[], // stored as JSON
+                observations: savedData.observations
+            });
+
+            toast({ title: "Sucesso", description: "Receita salva e gerada!" });
+            setAcuteItems([]);
+        },
+        onError: (err) => {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
+        }
+    });
+
+    const createCertificateMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const res = await apiRequest("POST", "/api/certificates", data);
+            return await res.json();
+        },
+        onSuccess: (savedData) => {
+            queryClient.invalidateQueries({ queryKey: [`/api/certificates/patient/${patient.id}`] });
+
+            generateCertificatePDF({
+                type: savedData.type as any,
+                doctorName: savedData.doctorName,
+                doctorCrm: savedData.doctorCrm,
+                patientName: savedData.patientName,
+                patientDoc: savedData.patientDoc || undefined,
+                issueDate: new Date(savedData.issueDate),
+                daysOff: savedData.daysOff?.toString(),
+                startTime: savedData.startTime || undefined,
+                endTime: savedData.endTime || undefined,
+                cid: savedData.cid || undefined,
+                customText: savedData.customText || undefined
+            });
+
+            toast({ title: "Sucesso", description: "Atestado salvo e gerado!" });
+        },
+        onError: (err) => {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha ao salvar atestado.", variant: "destructive" });
+        }
+    });
+
+    // Update status (Cancel)
+    const updateDocumentStatus = useMutation({
+        mutationFn: ({ type, id, status }: { type: 'prescription' | 'certificate', id: number, status: string }) =>
+            apiRequest("PATCH", `/api/${type}s/${id}/status`, { status }),
+        onSuccess: (_, variables) => {
+            if (variables.type === 'prescription') queryClient.invalidateQueries({ queryKey: [`/api/prescriptions/patient/${patient.id}`] });
+            else queryClient.invalidateQueries({ queryKey: [`/api/certificates/patient/${patient.id}`] });
+            toast({ title: "Atualizado", description: "Status do documento alterado." });
+        }
+    });
+
 
     // Acute Prescription Handlers
     const addAcuteItem = () => {
@@ -111,7 +211,7 @@ export default function VitaPrescriptions() {
         setAcuteItems(acuteItems.filter(i => i.id !== id));
     };
 
-    const handleGeneratePrescription = async () => {
+    const handleSaveAndPrintPrescription = async () => {
         if (acuteItems.length === 0) {
             toast({ title: "Prescrição vazia", description: "Adicione pelo menos um medicamento.", variant: "destructive" });
             return;
@@ -124,34 +224,27 @@ export default function VitaPrescriptions() {
         const doctor = doctors.find(d => d.id.toString() === selectedDoctorId);
         if (!doctor) return;
 
-        try {
-            toast({ title: "Gerando Receita...", description: "Preparando documento..." });
-
-            generatePrescriptionPDF({
-                doctorName: doctor.name,
-                doctorCrm: doctor.crm,
-                doctorSpecialty: doctor.specialty,
-                patientName: "Paciente (Visualização)", // TODO: Connect to real patient context
-                issueDate: new Date(),
-                validUntil: new Date(Date.now() + parseInt(prescriptionValidity) * 24 * 60 * 60 * 1000),
-                medications: acuteItems.map(item => ({
-                    name: item.name,
-                    dosage: item.dosage,
-                    frequency: item.frequency,
-                    notes: item.notes
-                })),
-                observations: prescriptionObservations
-            });
-
-            toast({ title: "Sucesso", description: "Prescrição gerada!" });
-
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Erro", description: "Não foi possível gerar o PDF.", variant: "destructive" });
-        }
+        createPrescriptionMutation.mutate({
+            profileId: patient.id,
+            userId: patient.userId,
+            doctorName: doctor.name,
+            doctorCrm: doctor.crm,
+            doctorSpecialty: doctor.specialty,
+            patientName: patient.name,
+            medications: acuteItems.map(item => ({
+                name: item.name,
+                dosage: item.dosage,
+                frequency: item.frequency,
+                notes: item.notes
+            })),
+            issueDate: new Date().toISOString(),
+            validUntil: new Date(Date.now() + parseInt(prescriptionValidity) * 24 * 60 * 60 * 1000).toISOString(),
+            observations: prescriptionObservations || undefined,
+            status: 'active'
+        });
     };
 
-    const handleGenerateCertificate = async () => {
+    const handleSaveAndPrintCertificate = async () => {
         if (!selectedDoctorId) {
             toast({ title: "Médico não selecionado", description: "Selecione um médico responsável.", variant: "destructive" });
             return;
@@ -160,31 +253,52 @@ export default function VitaPrescriptions() {
         const doctor = doctors.find(d => d.id.toString() === selectedDoctorId);
         if (!doctor) return;
 
-        try {
-            toast({ title: "Gerando Atestado...", description: "Preparando documento..." });
-
-            generateCertificatePDF({
-                type: certType,
-                doctorName: doctor.name,
-                doctorCrm: doctor.crm,
-                patientName: "Paciente (Visualização)", // TODO: Connect to real patient context
-                patientDoc: patientDoc,
-                issueDate: new Date(),
-                daysOff: certDays,
-                startTime: certStartTime,
-                endTime: certEndTime,
-                cid: certCid,
-                customText: customCertText // If logic to preview/edit text
-            });
-
-            toast({ title: "Sucesso", description: "Atestado gerado!" });
-
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Erro", description: "Não foi possível gerar o PDF.", variant: "destructive" });
-        }
+        createCertificateMutation.mutate({
+            profileId: patient.id,
+            userId: patient.userId,
+            doctorName: doctor.name,
+            doctorCrm: doctor.crm,
+            patientName: patient.name,
+            patientDoc: patientDoc,
+            type: certType,
+            issueDate: new Date().toISOString(),
+            daysOff: certType === 'afastamento' ? parseInt(certDays) : undefined,
+            startTime: certType === 'comparecimento' ? certStartTime : undefined,
+            endTime: certType === 'comparecimento' ? certEndTime : undefined,
+            cid: certCid || undefined,
+            customText: customCertText || undefined,
+            status: 'active'
+        });
     };
 
+    const handleReprintPrescription = (p: Prescription) => {
+        generatePrescriptionPDF({
+            doctorName: p.doctorName,
+            doctorCrm: p.doctorCrm,
+            doctorSpecialty: p.doctorSpecialty,
+            patientName: p.patientName,
+            issueDate: new Date(p.issueDate),
+            validUntil: new Date(p.validUntil),
+            medications: p.medications as any[],
+            observations: p.observations || undefined
+        });
+    };
+
+    const handleReprintCertificate = (c: Certificate) => {
+        generateCertificatePDF({
+            type: c.type as any,
+            doctorName: c.doctorName,
+            doctorCrm: c.doctorCrm,
+            patientName: c.patientName,
+            patientDoc: c.patientDoc || undefined,
+            issueDate: new Date(c.issueDate),
+            daysOff: c.daysOff?.toString(),
+            startTime: c.startTime || undefined,
+            endTime: c.endTime || undefined,
+            cid: c.cid || undefined,
+            customText: c.customText || undefined
+        });
+    };
 
     return (
         <div className="space-y-6 pb-20">
@@ -192,7 +306,7 @@ export default function VitaPrescriptions() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">Vita Prescrições</h1>
-                    <p className="text-gray-500">Emissão de receitas médicas e atestados.</p>
+                    <p className="text-gray-500">Emissão de receitas médicas e atestados para <span className="font-semibold text-primary">{patient.name}</span>.</p>
                 </div>
 
                 {/* Global Doctor Selector */}
@@ -212,12 +326,15 @@ export default function VitaPrescriptions() {
             </div>
 
             <Tabs defaultValue="prescription" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+                <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
                     <TabsTrigger value="prescription" className="gap-2">
-                        <Stethoscope className="h-4 w-4" /> Receita
+                        <Stethoscope className="h-4 w-4" /> Nova Receita
                     </TabsTrigger>
                     <TabsTrigger value="certificate" className="gap-2">
-                        <FileSignature className="h-4 w-4" /> Atestado
+                        <FileSignature className="h-4 w-4" /> Novo Atestado
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="gap-2">
+                        <History className="h-4 w-4" /> Histórico
                     </TabsTrigger>
                 </TabsList>
 
@@ -327,11 +444,11 @@ export default function VitaPrescriptions() {
                                 </div>
                                 <Button
                                     className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
-                                    onClick={handleGeneratePrescription}
-                                    disabled={acuteItems.length === 0 || !selectedDoctorId}
+                                    onClick={handleSaveAndPrintPrescription}
+                                    disabled={createPrescriptionMutation.isPending || acuteItems.length === 0 || !selectedDoctorId}
                                 >
                                     <Printer className="h-5 w-5 mr-2" />
-                                    Imprimir Receita
+                                    {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
                                 </Button>
                             </div>
                         </CardContent>
@@ -422,7 +539,7 @@ export default function VitaPrescriptions() {
                                     </div>
                                 </div>
 
-                                {/* Right: Preview is handled by generation logic for simplicity, or we could add live preview text here later */}
+                                {/* Right: Preview */}
                                 <div className="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 flex flex-col justify-center items-center text-center text-gray-500 gap-2">
                                     <FileSignature className="h-10 w-10 opacity-20" />
                                     <p className="text-sm max-w-[200px]">O atestado será gerado automaticamente com base nos dados informados ao lado.</p>
@@ -433,16 +550,126 @@ export default function VitaPrescriptions() {
                             <div className="flex justify-end pt-4">
                                 <Button
                                     className="h-12 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700 min-w-[250px]"
-                                    onClick={handleGenerateCertificate}
-                                    disabled={!selectedDoctorId}
+                                    onClick={handleSaveAndPrintCertificate}
+                                    disabled={createCertificateMutation.isPending || !selectedDoctorId}
                                 >
                                     <Printer className="h-5 w-5 mr-2" />
-                                    Gerar e Imprimir Atestado
+                                    {createCertificateMutation.isPending ? "Salvando..." : "Salvar e Imprimir Atestado"}
                                 </Button>
                             </div>
 
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* --- ABA HISTÓRICO --- */}
+                <TabsContent value="history" className="mt-6">
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-xl flex items-center gap-2">
+                                    <History className="h-5 w-5 text-gray-600" />
+                                    Histórico de Documentos
+                                </CardTitle>
+                                <CardDescription>Receitas e atestados emitidos para este paciente. (Não-deletáveis para conformidade legal)</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-8">
+                                    {/* Receitas Section */}
+                                    <div>
+                                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                            <Stethoscope className="h-4 w-4 text-green-600" /> Receitas Médicas
+                                        </h3>
+                                        {prescriptionHistory.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {prescriptionHistory.map(p => (
+                                                    <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg border ${p.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
+                                                        <div className="flex gap-4 items-center">
+                                                            <div className="bg-green-100 p-2 rounded-full hidden sm:block">
+                                                                <FileText className="h-4 w-4 text-green-700" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-gray-900">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
+                                                                <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
+                                                                {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            {p.status === 'active' && (
+                                                                <>
+                                                                    <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintPrescription(p)}>
+                                                                        <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
+                                                                        if (confirm("Deseja realmente cancelar/invalidar este documento? A ação será registrada.")) {
+                                                                            updateDocumentStatus.mutate({ type: 'prescription', id: p.id, status: 'cancelled' })
+                                                                        }
+                                                                    }}>
+                                                                        <Ban className="h-3 w-3 mr-1" /> Invalidar
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                            {p.status === 'cancelled' && (
+                                                                <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 italic">Nenhuma receita encontrada.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Atestados Section */}
+                                    <div>
+                                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                            <FileSignature className="h-4 w-4 text-blue-600" /> Atestados
+                                        </h3>
+                                        {certificateHistory.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {certificateHistory.map(c => (
+                                                    <div key={c.id} className={`flex items-center justify-between p-3 rounded-lg border ${c.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
+                                                        <div className="flex gap-4 items-center">
+                                                            <div className="bg-blue-100 p-2 rounded-full hidden sm:block">
+                                                                <FileSignature className="h-4 w-4 text-blue-700" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-gray-900">Atestado ({c.type}) - {format(new Date(c.issueDate), "dd/MM/yyyy")}</p>
+                                                                <p className="text-xs text-gray-500">Dr(a). {c.doctorName} {c.cid ? `• CID: ${c.cid}` : ''}</p>
+                                                                {c.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADO</span>}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            {c.status === 'active' && (
+                                                                <>
+                                                                    <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintCertificate(c)}>
+                                                                        <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
+                                                                        if (confirm("Deseja realmente cancelar/invalidar este documento? A ação será registrada.")) {
+                                                                            updateDocumentStatus.mutate({ type: 'certificate', id: c.id, status: 'cancelled' })
+                                                                        }
+                                                                    }}>
+                                                                        <Ban className="h-3 w-3 mr-1" /> Invalidar
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                            {c.status === 'cancelled' && (
+                                                                <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 italic">Nenhum atestado encontrado.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
 

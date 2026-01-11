@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -164,6 +164,15 @@ export interface IStorage {
   updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined>;
   getTriageHistoryByProfileId(profileId: number): Promise<any[]>;
 
+  // Document operations
+  createPrescription(prescription: InsertPrescription): Promise<Prescription>;
+  getPrescriptionsByProfileId(profileId: number): Promise<Prescription[]>;
+  updatePrescriptionStatus(id: number, status: string): Promise<Prescription | undefined>;
+
+  createCertificate(certificate: InsertCertificate): Promise<Certificate>;
+  getCertificatesByProfileId(profileId: number): Promise<Certificate[]>;
+  updateCertificateStatus(id: number, status: string): Promise<Certificate | undefined>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -186,6 +195,8 @@ export class MemStorage implements IStorage {
   private clinicsMap: Map<number, Clinic>;
   private clinicInvitationsMap: Map<number, ClinicInvitation>;
   private triageRecordsMap: Map<number, any>;
+  private prescriptionsMap: Map<number, Prescription>;
+  private certificatesMap: Map<number, Certificate>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -205,6 +216,8 @@ export class MemStorage implements IStorage {
   private clinicIdCounter: number = 1;
   private clinicInvitationIdCounter: number = 1;
   private triageIdCounter: number = 1;
+  private prescriptionIdCounter: number = 1;
+  private certificateIdCounter: number = 1;
 
 
   constructor() {
@@ -225,7 +238,10 @@ export class MemStorage implements IStorage {
     this.doctorsMap = new Map();
     this.clinicsMap = new Map();
     this.clinicInvitationsMap = new Map();
+    this.clinicInvitationsMap = new Map();
     this.triageRecordsMap = new Map();
+    this.prescriptionsMap = new Map();
+    this.certificatesMap = new Map();
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -345,7 +361,10 @@ export class MemStorage implements IStorage {
       stripeSubscriptionId: null,
       role: (user as any).role || "user",
       clinicId: null,
-      clinicRole: null
+      clinicRole: null,
+      preferences: null,
+      crm: null,
+      specialty: null
     };
     this.users.set(id, newUser);
 
@@ -1159,6 +1178,69 @@ export class MemStorage implements IStorage {
       }
     };
   }
+
+
+  // Document operations - MemStorage
+  async createPrescription(p: InsertPrescription): Promise<Prescription> {
+    const id = this.prescriptionIdCounter++;
+    const newP: Prescription = {
+      ...p,
+      id,
+      createdAt: new Date(),
+      status: p.status || 'active',
+      issueDate: p.issueDate || new Date(),
+      doctorSpecialty: p.doctorSpecialty || null,
+      observations: p.observations || null,
+      pdfPath: p.pdfPath || null
+    };
+    this.prescriptionsMap.set(id, newP);
+    return newP;
+  }
+  async getPrescriptionsByProfileId(profileId: number): Promise<Prescription[]> {
+    return Array.from(this.prescriptionsMap.values())
+      .filter(p => p.profileId === profileId)
+      .sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
+  }
+  async updatePrescriptionStatus(id: number, status: string): Promise<Prescription | undefined> {
+    const p = this.prescriptionsMap.get(id);
+    if (!p) return undefined;
+    const updated = { ...p, status };
+    this.prescriptionsMap.set(id, updated);
+    return updated;
+  }
+
+  async createCertificate(c: InsertCertificate): Promise<Certificate> {
+    const id = this.certificateIdCounter++;
+    const newC: Certificate = {
+      ...c,
+      id,
+      createdAt: new Date(),
+      status: c.status || 'active',
+      issueDate: c.issueDate || new Date(),
+      patientDoc: c.patientDoc || null,
+      daysOff: c.daysOff || null,
+      cid: c.cid || null,
+      startTime: c.startTime || null,
+      endTime: c.endTime || null,
+      customText: c.customText || null,
+      pdfPath: c.pdfPath || null
+    };
+    this.certificatesMap.set(id, newC);
+    return newC;
+  }
+  async getCertificatesByProfileId(profileId: number): Promise<Certificate[]> {
+    return Array.from(this.certificatesMap.values())
+      .filter(c => c.profileId === profileId)
+      .sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
+  }
+  async updateCertificateStatus(id: number, status: string): Promise<Certificate | undefined> {
+    const c = this.certificatesMap.get(id);
+    if (!c) return undefined;
+    const updated = { ...c, status };
+    this.certificatesMap.set(id, updated);
+    return updated;
+  }
+
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1756,6 +1838,41 @@ export class DatabaseStorage implements IStorage {
       .from(triageRecords)
       .where(eq(triageRecords.profileId, profileId))
       .orderBy(desc(triageRecords.createdAt));
+  }
+
+  // Document operations - DatabaseStorage
+  async createPrescription(p: InsertPrescription): Promise<Prescription> {
+    const [newP] = await db.insert(prescriptions).values(p).returning();
+    return newP;
+  }
+  async getPrescriptionsByProfileId(profileId: number): Promise<Prescription[]> {
+    return await db.select().from(prescriptions)
+      .where(eq(prescriptions.profileId, profileId))
+      .orderBy(desc(prescriptions.issueDate));
+  }
+  async updatePrescriptionStatus(id: number, status: string): Promise<Prescription | undefined> {
+    const [updated] = await db.update(prescriptions)
+      .set({ status })
+      .where(eq(prescriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async createCertificate(c: InsertCertificate): Promise<Certificate> {
+    const [newC] = await db.insert(certificates).values(c).returning();
+    return newC;
+  }
+  async getCertificatesByProfileId(profileId: number): Promise<Certificate[]> {
+    return await db.select().from(certificates)
+      .where(eq(certificates.profileId, profileId))
+      .orderBy(desc(certificates.issueDate));
+  }
+  async updateCertificateStatus(id: number, status: string): Promise<Certificate | undefined> {
+    const [updated] = await db.update(certificates)
+      .set({ status })
+      .where(eq(certificates.id, id))
+      .returning();
+    return updated;
   }
 
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
