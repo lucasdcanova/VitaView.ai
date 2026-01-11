@@ -37,15 +37,15 @@ export function getTrustedDomains(service?: keyof typeof TRUSTED_DOMAINS): strin
   if (service) {
     return TRUSTED_DOMAINS[service] || [];
   }
-  
+
   // Return all domains if no specific service is requested
   return Object.values(TRUSTED_DOMAINS).flat();
 }
 
 // Create CSP directive with trusted domains
 export function createCSPDirective(
-  directive: string, 
-  baseSources: string[], 
+  directive: string,
+  baseSources: string[],
   services: (keyof typeof TRUSTED_DOMAINS)[] = []
 ): string[] {
   const trustedDomains = services.flatMap(service => getTrustedDomains(service));
@@ -58,59 +58,60 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   const isReplit = process.env.REPL_ID !== undefined;
   const userAgent = req.get('user-agent') || '';
   const referer = req.get('referer') || '';
-  
+
   // Detect which services are being used
-  const needsStripe = req.path.includes('payment') || 
-                     req.path.includes('subscription') || 
-                     req.path.includes('stripe') ||
-                     referer.includes('stripe') ||
-                     isDev; // Always include Stripe in development
-  
-  const needsReplit = isReplit || 
-                     req.hostname.includes('replit') || 
-                     referer.includes('replit') ||
-                     req.get('host')?.includes('replit') ||
-                     isDev; // Always include in development for safety
-  
+  const needsStripe = req.path.includes('payment') ||
+    req.path.includes('subscription') ||
+    req.path.includes('stripe') ||
+    referer.includes('stripe') ||
+    isDev; // Always include Stripe in development
+
+  const needsReplit = isReplit ||
+    req.hostname.includes('replit') ||
+    referer.includes('replit') ||
+    req.get('host')?.includes('replit') ||
+    isDev; // Always include in development for safety
+
   const needsAnalytics = !isDev; // Only in production
-  
+
   // Build CSP based on detected needs
   let scriptSrc = ["'self'", "'unsafe-inline'"];
   let styleSrc = ["'self'", "'unsafe-inline'"]; // CSS-in-JS needs unsafe-inline
   let connectSrc = ["'self'"];
   let imgSrc = ["'self'", "data:", "blob:"];
-  
+
   if (isDev) {
     scriptSrc.push("'unsafe-eval'");
     scriptSrc.push("http://localhost:*", "https://localhost:*");
     connectSrc.push("http://localhost:*", "https://localhost:*", "ws://localhost:*", "wss://localhost:*");
     imgSrc.push("https:");
   }
-  
+
   if (needsStripe) {
     scriptSrc.push(...getTrustedDomains('stripe'));
     styleSrc.push(...getTrustedDomains('stripe'));
     connectSrc.push(...getTrustedDomains('stripe'));
   }
-  
+
   if (needsReplit) {
     scriptSrc.push(...getTrustedDomains('replit'));
   }
-  
+
   if (needsAnalytics) {
     scriptSrc.push(...getTrustedDomains('analytics'));
     connectSrc.push(...getTrustedDomains('analytics'));
     imgSrc.push(...getTrustedDomains('analytics'));
   }
-  
+
   // Always allow fonts and APIs
   styleSrc.push(...getTrustedDomains('fonts'));
   connectSrc.push(...getTrustedDomains('apis'));
-  
+  connectSrc.push(...getTrustedDomains('fonts')); // Allow SW to fetch fonts
+
   // Store CSP directives in res.locals for use by other middleware
   const finalScriptSrc = [...new Set(scriptSrc)];
   const finalStyleSrc = [...new Set(styleSrc)];
-  
+
   res.locals.cspDirectives = {
     'default-src': ["'self'"],
     'script-src': finalScriptSrc,
@@ -130,7 +131,7 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
       'block-all-mixed-content': []
     })
   };
-  
+
   // Debug log in development
   if (isDev) {
     console.log('[CSP Debug] Generated directives for', req.path, {
@@ -140,7 +141,7 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
       needsStripe
     });
   }
-  
+
   next();
 }
 
@@ -163,23 +164,23 @@ export function formatCSPHeader(directives: Record<string, string[]>): string {
 export function applyCSPHeader(req: Request, res: Response, next: NextFunction) {
   const isDev = process.env.NODE_ENV === 'development';
   const directives = res.locals.cspDirectives;
-  
+
   if (!directives) {
     return next();
   }
-  
+
   const cspString = formatCSPHeader(directives);
-  
+
   if (isDev) {
     // Development: Report-only mode
-    res.setHeader('Content-Security-Policy-Report-Only', 
+    res.setHeader('Content-Security-Policy-Report-Only',
       `${cspString}; report-uri /api/csp-violation-report`);
   } else {
     // Production: Enforcing mode
     res.setHeader('Content-Security-Policy', cspString);
-    res.setHeader('Content-Security-Policy-Report-Only', 
+    res.setHeader('Content-Security-Policy-Report-Only',
       `${cspString}; report-uri /api/csp-violation-report`);
   }
-  
+
   next();
 }

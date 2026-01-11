@@ -130,8 +130,8 @@ export class HTTPSConfigManager {
         requestCert: false,
         rejectUnauthorized: true,
         // OCSP Stapling
-        ...(this.config.ocspStapling && { 
-          requestOCSP: true 
+        ...(this.config.ocspStapling && {
+          requestOCSP: true
         })
       };
 
@@ -211,7 +211,7 @@ export class HTTPSConfigManager {
   private setupHTTPRedirect() {
     const redirectApp = (req: any, res: any) => {
       const httpsUrl = `https://${req.headers.host}${req.url}`;
-      
+
       // Log de tentativa de acesso HTTP
       advancedSecurity.auditLog('HTTP_REDIRECT', null, req, {
         originalUrl: req.url,
@@ -310,11 +310,11 @@ export class HTTPSConfigManager {
     if (!this.config.hsts.enabled) return '';
 
     let hsts = `max-age=${this.config.hsts.maxAge}`;
-    
+
     if (this.config.hsts.includeSubdomains) {
       hsts += '; includeSubDomains';
     }
-    
+
     if (this.config.hsts.preload) {
       hsts += '; preload';
     }
@@ -355,7 +355,7 @@ export class HTTPSConfigManager {
       "geolocation 'none'",
       "gyroscope 'none'",
       "magnetometer 'none'",
-      "microphone 'none'",
+      "microphone 'self'",
       "payment 'self'",
       "usb 'none'"
     ];
@@ -373,7 +373,7 @@ export class HTTPSConfigManager {
       "geolocation=()",
       "gyroscope=()",
       "magnetometer=()",
-      "microphone=()",
+      "microphone=(self)",
       "payment=(self)",
       "usb=()"
     ];
@@ -450,7 +450,7 @@ export class HTTPSConfigManager {
 
       if (daysUntilExpiry <= 30) {
         console.warn(`[HTTPS] ATENÇÃO: Certificado expira em ${daysUntilExpiry} dias!`);
-        
+
         advancedSecurity.auditLog('CERTIFICATE_EXPIRING', null, null, {
           daysUntilExpiry,
           expirationDate: validTo,
