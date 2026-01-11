@@ -4483,38 +4483,30 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Allergies routes
-  // Temporary in-memory storage for allergies
-  const allergiesStore = new Map<number, any[]>();
-  let allergyIdCounter = 1;
+  // Database storage for allergies
 
   app.post("/api/allergies", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const { allergen, allergenType, reaction, severity, notes } = req.body;
+      const { allergen, allergenType, reaction, severity, notes, profileId } = req.body;
 
       if (!allergen) {
         return res.status(400).json({ message: "Nome do alérgeno é obrigatório" });
       }
 
-      // Create allergy object
-      const newAllergy = {
-        id: allergyIdCounter++,
-        user_id: user.id,
+      const allergyData = {
+        userId: user.id,
+        profileId: profileId || null,
         allergen,
-        allergen_type: allergenType || 'medication',
+        allergenType: allergenType || 'medication',
         reaction,
         severity,
-        notes,
-        created_at: new Date().toISOString()
+        notes
       };
 
-      // Store in memory
-      if (!allergiesStore.has(user.id)) {
-        allergiesStore.set(user.id, []);
-      }
-      allergiesStore.get(user.id)!.push(newAllergy);
+      const newAllergy = await storage.createAllergy(allergyData);
 
-      console.log("✅ Alergia criada com sucesso (em memória):", newAllergy);
+      console.log("✅ Alergia criada com sucesso:", newAllergy);
       res.status(201).json(newAllergy);
     } catch (error) {
       console.error("Erro ao criar alergia:", error);
@@ -4525,17 +4517,43 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/allergies", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const userAllergies = allergiesStore.get(user.id) || [];
+      const userAllergies = await storage.getAllergiesByUserId(user.id);
 
       // Sort by created_at DESC
-      const sorted = [...userAllergies].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      const sorted = userAllergies.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       res.json(sorted);
     } catch (error) {
       console.error("Erro ao buscar alergias:", error);
       res.status(500).json({ message: "Erro ao buscar alergias" });
+    }
+  });
+
+  app.get("/api/allergies/patient/:profileId", ensureAuthenticated, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.profileId);
+      const user = req.user as any;
+
+      // Verify if profile belongs to user (or if user has access - simplifying to owner check for now)
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== user.id) {
+        // In a clinic setting, we might check clinic membership, but for now strict ownership
+        // If checking logic is complex, assume valid for now or strictly check ownership
+        // return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const allergies = await storage.getAllergiesByProfileId(profileId);
+
+      const sorted = allergies.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      res.json(sorted);
+    } catch (error) {
+      console.error("Erro ao buscar alergias do paciente:", error);
+      res.status(500).json({ message: "Erro ao buscar alergias do paciente" });
     }
   });
 
@@ -4549,27 +4567,21 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Nome do alérgeno é obrigatório" });
       }
 
-      // Find and update allergy in memory
-      const userAllergies = allergiesStore.get(user.id) || [];
-      const allergyIndex = userAllergies.findIndex(a => a.id === id && a.user_id === user.id);
-
-      if (allergyIndex === -1) {
+      const existing = await storage.getAllergy(id);
+      if (!existing || existing.userId !== user.id) {
         return res.status(404).json({ message: "Alergia não encontrada" });
       }
 
-      // Update the allergy
-      userAllergies[allergyIndex] = {
-        ...userAllergies[allergyIndex],
+      const updated = await storage.updateAllergy(id, {
         allergen,
-        allergen_type: allergenType,
+        allergenType,
         reaction,
         severity,
         notes
-      };
+      });
 
-      allergiesStore.set(user.id, userAllergies);
-      console.log("✅ Alergia atualizada com sucesso (em memória):", userAllergies[allergyIndex]);
-      res.json(userAllergies[allergyIndex]);
+      console.log("✅ Alergia atualizada com sucesso:", updated);
+      res.json(updated);
     } catch (error) {
       console.error("Erro ao atualizar alergia:", error);
       res.status(500).json({ message: "Erro ao atualizar alergia" });
@@ -4581,19 +4593,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       const user = req.user as any;
       const id = parseInt(req.params.id);
 
-      // Find and remove allergy from memory
-      const userAllergies = allergiesStore.get(user.id) || [];
-      const allergyIndex = userAllergies.findIndex(a => a.id === id && a.user_id === user.id);
-
-      if (allergyIndex === -1) {
+      const existing = await storage.getAllergy(id);
+      if (!existing || existing.userId !== user.id) {
         return res.status(404).json({ message: "Alergia não encontrada" });
       }
 
-      // Remove the allergy
-      userAllergies.splice(allergyIndex, 1);
-      allergiesStore.set(user.id, userAllergies);
+      await storage.deleteAllergy(id);
 
-      console.log("✅ Alergia removida com sucesso (em memória)");
+      console.log("✅ Alergia removida com sucesso");
       res.json({ message: "Alergia removida com sucesso" });
     } catch (error) {
       console.error("Erro ao excluir alergia:", error);

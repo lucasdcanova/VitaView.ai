@@ -278,7 +278,7 @@ export default function PatientView() {
                                                     Histórico e Condições
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <AllergiesCard />
+                                                    <AllergiesCard profileId={activeProfile.id} />
                                                     <ActiveMedicationsCard />
                                                     <ComorbiditiesCard diagnoses={diagnoses} />
                                                     <SurgeriesCard surgeries={surgeries} />

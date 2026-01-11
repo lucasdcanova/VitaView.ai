@@ -16,7 +16,11 @@ import {
 
 type AllergyForm = AllergyFormData;
 
-export function AllergiesCard() {
+interface AllergiesCardProps {
+    profileId?: number;
+}
+
+export function AllergiesCard({ profileId }: AllergiesCardProps) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -24,8 +28,13 @@ export function AllergiesCard() {
     const [isEditAllergyDialogOpen, setIsEditAllergyDialogOpen] = useState(false);
     const [editingAllergy, setEditingAllergy] = useState<any>(null);
 
+    const queryKey = profileId
+        ? [`/api/allergies/patient/${profileId}`]
+        : ["/api/allergies"];
+
     const { data: allergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
-        queryKey: ["/api/allergies"],
+        queryKey,
+        enabled: profileId !== undefined // Optional: disable if profileId is explicitly passed but null (though ? handles undefined)
     });
 
     const allergyForm = useForm<AllergyForm>({
@@ -40,9 +49,9 @@ export function AllergiesCard() {
 
     // Mutations
     const addAllergyMutation = useMutation({
-        mutationFn: (data: AllergyForm) => apiRequest("POST", "/api/allergies", data),
+        mutationFn: (data: AllergyForm) => apiRequest("POST", "/api/allergies", { ...data, profileId }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+            queryClient.invalidateQueries({ queryKey });
             allergyForm.reset();
             setIsAllergyDialogOpen(false);
             toast({ title: "Sucesso", description: "Alergia registrada!" });
@@ -53,7 +62,7 @@ export function AllergiesCard() {
     const editAllergyMutation = useMutation({
         mutationFn: ({ id, data }: { id: number; data: AllergyForm }) => apiRequest("PUT", `/api/allergies/${id}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+            queryClient.invalidateQueries({ queryKey });
             setIsEditAllergyDialogOpen(false);
             setEditingAllergy(null);
             toast({ title: "Sucesso", description: "Alergia atualizada!" });
@@ -64,7 +73,7 @@ export function AllergiesCard() {
     const deleteAllergyMutation = useMutation({
         mutationFn: (id: number) => apiRequest("DELETE", `/api/allergies/${id}`, {}),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
+            queryClient.invalidateQueries({ queryKey });
             toast({ title: "Sucesso", description: "Alergia removida." });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao remover.", variant: "destructive" }),

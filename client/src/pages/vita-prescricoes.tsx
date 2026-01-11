@@ -15,7 +15,9 @@ import {
     Trash2,
     Stethoscope,
     Printer,
-    History
+    History,
+    Ban,
+    AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Profile, Prescription } from "@shared/schema";
@@ -50,6 +52,12 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     // History Queries
     const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
         queryKey: [`/api/prescriptions/patient/${patient.id}`],
+        enabled: !!patient.id
+    });
+
+    // Fetches patient allergies
+    const { data: allergies = [] } = useQuery<any[]>({
+        queryKey: [`/api/allergies/patient/${patient.id}`],
         enabled: !!patient.id
     });
 
@@ -180,6 +188,25 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
                 </div>
             </div>
+
+            {/* Warning de Alergias */}
+            {allergies.length > 0 && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                        <h3 className="text-red-800 font-semibold text-sm">Alergias Conhecidas do Paciente</h3>
+                        <ul className="mt-1 list-disc list-inside text-sm text-red-700">
+                            {allergies.map((allergy: any) => (
+                                <li key={allergy.id}>
+                                    <span className="font-medium">{allergy.allergen}</span>
+                                    {allergy.reaction && <span className="text-red-600"> - Reação: {allergy.reaction}</span>}
+                                    {allergy.severity && <span className="text-red-600"> ({allergy.severity})</span>}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
 
             <Tabs defaultValue="prescription" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">

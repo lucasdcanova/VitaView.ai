@@ -1,4 +1,4 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
 import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate } from "@shared/schema";
 import session from "express-session";
@@ -88,6 +88,14 @@ export interface IStorage {
   getHabitsByUserId(userId: number): Promise<any[]>;
   updateHabit(id: number, data: Partial<any>): Promise<any | undefined>;
   deleteHabit(id: number): Promise<boolean>;
+
+  // Allergies operations
+  createAllergy(allergy: any): Promise<any>;
+  getAllergy(id: number): Promise<any | undefined>;
+  getAllergiesByUserId(userId: number): Promise<any[]>;
+  getAllergiesByProfileId(profileId: number): Promise<any[]>;
+  updateAllergy(id: number, data: Partial<any>): Promise<any | undefined>;
+  deleteAllergy(id: number): Promise<boolean>;
 
   // Admin operations
   getAllUsers(): Promise<User[]>;
@@ -198,6 +206,7 @@ export class MemStorage implements IStorage {
   private triageRecordsMap: Map<number, any>;
   private prescriptionsMap: Map<number, Prescription>;
   private certificatesMap: Map<number, Certificate>;
+  private allergiesMap: Map<number, any>;
   sessionStore: SessionStore;
 
   private userIdCounter: number = 1;
@@ -219,6 +228,7 @@ export class MemStorage implements IStorage {
   private triageIdCounter: number = 1;
   private prescriptionIdCounter: number = 1;
   private certificateIdCounter: number = 1;
+  private allergyIdCounter: number = 1;
 
 
   constructor() {
@@ -243,6 +253,7 @@ export class MemStorage implements IStorage {
     this.triageRecordsMap = new Map();
     this.prescriptionsMap = new Map();
     this.certificatesMap = new Map();
+    this.allergiesMap = new Map();
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -790,6 +801,33 @@ export class MemStorage implements IStorage {
 
   async deleteHabit(id: number): Promise<boolean> {
     return this.habitsMap.delete(id);
+  }
+
+  // Allergies
+  async createAllergy(a: any): Promise<any> {
+    const id = this.allergyIdCounter++;
+    const newA = { ...a, id, createdAt: new Date() };
+    this.allergiesMap.set(id, newA);
+    return newA;
+  }
+  async getAllergy(id: number): Promise<any | undefined> {
+    return this.allergiesMap.get(id);
+  }
+  async getAllergiesByUserId(userId: number): Promise<any[]> {
+    return Array.from(this.allergiesMap.values()).filter(a => a.userId === userId);
+  }
+  async getAllergiesByProfileId(profileId: number): Promise<any[]> {
+    return Array.from(this.allergiesMap.values()).filter(a => a.profileId === profileId);
+  }
+  async updateAllergy(id: number, data: Partial<any>): Promise<any | undefined> {
+    const a = await this.getAllergy(id);
+    if (!a) return undefined;
+    const updated = { ...a, ...data };
+    this.allergiesMap.set(id, updated);
+    return updated;
+  }
+  async deleteAllergy(id: number): Promise<boolean> {
+    return this.allergiesMap.delete(id);
   }
 
   // Admin operations
@@ -1597,6 +1635,30 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteHabit(id: number): Promise<boolean> {
     await db.delete(habits).where(eq(habits.id, id));
+    return true;
+  }
+
+  // Allergies
+  async createAllergy(a: any): Promise<any> {
+    const [newA] = await db.insert(allergies).values(a).returning();
+    return newA;
+  }
+  async getAllergy(id: number): Promise<any | undefined> {
+    const [a] = await db.select().from(allergies).where(eq(allergies.id, id));
+    return a;
+  }
+  async getAllergiesByUserId(userId: number): Promise<any[]> {
+    return await db.select().from(allergies).where(eq(allergies.userId, userId));
+  }
+  async getAllergiesByProfileId(profileId: number): Promise<any[]> {
+    return await db.select().from(allergies).where(eq(allergies.profileId, profileId));
+  }
+  async updateAllergy(id: number, data: Partial<any>): Promise<any | undefined> {
+    const [updated] = await db.update(allergies).set(data).where(eq(allergies.id, id)).returning();
+    return updated;
+  }
+  async deleteAllergy(id: number): Promise<boolean> {
+    await db.delete(allergies).where(eq(allergies.id, id));
     return true;
   }
 

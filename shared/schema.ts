@@ -273,6 +273,7 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
 export const allergies = pgTable("allergies", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   allergen: text("allergen").notNull(), // Nome do medicamento ou substância
   allergenType: text("allergen_type").notNull().default("medication"), // medication, food, environment
   reaction: text("reaction"), // Tipo de reação alérgica
@@ -283,6 +284,7 @@ export const allergies = pgTable("allergies", {
 
 export const insertAllergySchema = createInsertSchema(allergies).pick({
   userId: true,
+  profileId: true,
   allergen: true,
   allergenType: true,
   reaction: true,
