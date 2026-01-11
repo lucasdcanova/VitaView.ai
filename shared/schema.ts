@@ -630,3 +630,186 @@ export const insertTriageRecordSchema = createInsertSchema(triageRecords).pick({
 
 export type TriageRecord = typeof triageRecords.$inferSelect;
 export type InsertTriageRecord = z.infer<typeof insertTriageRecordSchema>;
+
+// ========================================
+// HIPAA/LGPD COMPLIANCE TABLES
+// ========================================
+
+// User Consents - LGPD Art. 8
+export const userConsents = pgTable("user_consents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  consentType: text("consent_type").notNull(), // 'data_processing', 'health_data', 'marketing', 'third_party_sharing'
+  granted: boolean("granted").notNull(),
+  purpose: text("purpose").notNull(), // Specific purpose of consent
+  legalBasis: text("legal_basis").notNull(), // 'consent', 'legitimate_interest', 'legal_obligation', 'health_protection'
+  version: text("version").notNull(), // Version of the privacy policy
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+  expiresAt: timestamp("expires_at"), // Optional expiry for time-limited consents
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserConsentSchema = createInsertSchema(userConsents).pick({
+  userId: true,
+  consentType: true,
+  granted: true,
+  purpose: true,
+  legalBasis: true,
+  version: true,
+  ipAddress: true,
+  userAgent: true,
+  expiresAt: true,
+});
+
+export type UserConsent = typeof userConsents.$inferSelect;
+export type InsertUserConsent = z.infer<typeof insertUserConsentSchema>;
+
+// Audit Logs - HIPAA §164.312(b), LGPD Art. 37
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // null for anonymous/system actions
+  targetUserId: integer("target_user_id").references(() => users.id), // User whose data was accessed
+  action: text("action").notNull(), // 'CREATE', 'READ', 'UPDATE', 'DELETE', 'EXPORT', 'LOGIN', 'LOGOUT'
+  resourceType: text("resource_type").notNull(), // 'exam', 'profile', 'prescription', 'diagnosis', etc.
+  resourceId: integer("resource_id"), // ID of the affected resource
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  sessionId: text("session_id"),
+  requestMethod: text("request_method"), // 'GET', 'POST', 'PUT', 'DELETE'
+  requestPath: text("request_path"),
+  statusCode: integer("status_code"), // HTTP status code
+  oldValue: json("old_value"), // Previous state (for updates/deletes)
+  newValue: json("new_value"), // New state (for creates/updates) - REDACTED for sensitive fields
+  accessReason: text("access_reason"), // 'treatment', 'payment', 'operations', 'patient_request'
+  severity: text("severity").default("INFO"), // 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+  complianceFlags: json("compliance_flags"), // { hipaa: true, lgpd: true }
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).pick({
+  userId: true,
+  targetUserId: true,
+  action: true,
+  resourceType: true,
+  resourceId: true,
+  ipAddress: true,
+  userAgent: true,
+  sessionId: true,
+  requestMethod: true,
+  requestPath: true,
+  statusCode: true,
+  oldValue: true,
+  newValue: true,
+  accessReason: true,
+  severity: true,
+  complianceFlags: true,
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+
+// Data Deletion Requests - LGPD Art. 18
+export const dataDeletionRequests = pgTable("data_deletion_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  requestType: text("request_type").notNull(), // 'full_deletion', 'partial_deletion', 'anonymization'
+  reason: text("reason"), // Optional reason provided by user
+  dataCategories: json("data_categories"), // Array of categories to delete
+  status: text("status").default("pending").notNull(), // 'pending', 'in_progress', 'completed', 'rejected', 'cancelled'
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  completedAt: timestamp("completed_at"),
+  rejectionReason: text("rejection_reason"), // If legal retention required
+  legalRetentionUntil: timestamp("legal_retention_until"), // If data must be retained
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDataDeletionRequestSchema = createInsertSchema(dataDeletionRequests).pick({
+  userId: true,
+  requestType: true,
+  reason: true,
+  dataCategories: true,
+  ipAddress: true,
+  userAgent: true,
+});
+
+export type DataDeletionRequest = typeof dataDeletionRequests.$inferSelect;
+export type InsertDataDeletionRequest = z.infer<typeof insertDataDeletionRequestSchema>;
+
+// Data Processing Records - LGPD Art. 37
+export const dataProcessingRecords = pgTable("data_processing_records", {
+  id: serial("id").primaryKey(),
+  processingId: text("processing_id").notNull().unique(), // UUID for reference
+  dataCategory: text("data_category").notNull(), // 'health_data', 'personal_data', 'financial_data'
+  purpose: text("purpose").notNull(), // Purpose of processing
+  legalBasis: text("legal_basis").notNull(), // Legal basis for processing
+  dataController: text("data_controller").default("VitaView.ai").notNull(),
+  dataProcessor: text("data_processor"), // Third-party processor if applicable
+  retentionPeriod: text("retention_period").notNull(), // e.g., '7 years', '20 years'
+  securityMeasures: json("security_measures"), // Array of security measures
+  internationalTransfer: boolean("international_transfer").default(false),
+  transferSafeguards: text("transfer_safeguards"), // If international transfer
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDataProcessingRecordSchema = createInsertSchema(dataProcessingRecords).pick({
+  processingId: true,
+  dataCategory: true,
+  purpose: true,
+  legalBasis: true,
+  dataProcessor: true,
+  retentionPeriod: true,
+  securityMeasures: true,
+  internationalTransfer: true,
+  transferSafeguards: true,
+  isActive: true,
+});
+
+export type DataProcessingRecord = typeof dataProcessingRecords.$inferSelect;
+export type InsertDataProcessingRecord = z.infer<typeof insertDataProcessingRecordSchema>;
+
+// Security Incidents - LGPD Art. 48, HIPAA Breach Notification
+export const securityIncidents = pgTable("security_incidents", {
+  id: serial("id").primaryKey(),
+  incidentId: text("incident_id").notNull().unique(), // UUID for reference
+  incidentType: text("incident_type").notNull(), // 'data_breach', 'unauthorized_access', 'malware', 'phishing'
+  severity: text("severity").notNull(), // 'low', 'medium', 'high', 'critical'
+  affectedUsersCount: integer("affected_users_count"),
+  affectedDataTypes: json("affected_data_types"), // Array of affected data types
+  description: text("description").notNull(),
+  discoveredAt: timestamp("discovered_at").notNull(),
+  containedAt: timestamp("contained_at"),
+  resolvedAt: timestamp("resolved_at"),
+  reportedToAuthority: boolean("reported_to_authority").default(false),
+  reportedToAuthorityAt: timestamp("reported_to_authority_at"),
+  usersNotified: boolean("users_notified").default(false),
+  usersNotifiedAt: timestamp("users_notified_at"),
+  rootCause: text("root_cause"),
+  remediationSteps: json("remediation_steps"),
+  preventiveMeasures: json("preventive_measures"),
+  investigatedBy: integer("investigated_by").references(() => users.id),
+  status: text("status").default("investigating").notNull(), // 'investigating', 'contained', 'resolved', 'closed'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSecurityIncidentSchema = createInsertSchema(securityIncidents).pick({
+  incidentId: true,
+  incidentType: true,
+  severity: true,
+  affectedUsersCount: true,
+  affectedDataTypes: true,
+  description: true,
+  discoveredAt: true,
+});
+
+export type SecurityIncident = typeof securityIncidents.$inferSelect;
+export type InsertSecurityIncident = z.infer<typeof insertSecurityIncidentSchema>;
