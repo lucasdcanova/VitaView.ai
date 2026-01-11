@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface PrescriptionData {
     doctorName: string;
@@ -17,6 +19,20 @@ interface PrescriptionData {
         dosageUnit?: string;
     }[];
     observations?: string;
+}
+
+interface CertificateData {
+    type: 'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao';
+    doctorName: string;
+    doctorCrm: string;
+    patientName: string;
+    patientDoc?: string; // RG ou CPF opcional
+    issueDate: Date;
+    daysOff?: string; // Para afastamento
+    cid?: string;
+    startTime?: string; // Para comparecimento
+    endTime?: string; // Para comparecimento
+    customText?: string;
 }
 
 export const generatePrescriptionPDF = (data: PrescriptionData) => {
@@ -176,4 +192,89 @@ export const generatePrescriptionPDF = (data: PrescriptionData) => {
     }
 
     doc.save(`Receita_${data.patientName.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+};
+
+export const generateCertificatePDF = (data: CertificateData) => {
+    const doc = new jsPDF();
+    const primaryColor = [37, 99, 235]; // Blue
+
+    // Header
+    doc.setFillColor(240, 244, 255);
+    doc.rect(0, 0, 210, 40, "F");
+
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("ATESTADO MÉDICO", 105, 22, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text("VitaView AI Health Platform", 105, 32, { align: "center" });
+
+    let yPos = 70;
+
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    // doc.text("ATESTADO", 105, yPos, { align: "center" });
+    yPos += 20;
+
+    // Text Body
+    doc.setFontSize(12);
+    doc.setFont("times", "normal");
+    doc.setLineHeightFactor(1.5);
+
+    let text = "";
+
+    const dateStr = format(data.issueDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+
+    if (data.customText) {
+        text = data.customText;
+    } else {
+        switch (data.type) {
+            case 'afastamento':
+                text = `Atesto para os devidos fins que o(a) Sr(a). ${data.patientName}, portador(a) do documento nº ${data.patientDoc || '________________'}, foi atendido(a) nesta data e necessita de ${data.daysOff || '0'} (${data.daysOff === '1' ? 'um' : ''}) dia(s) de afastamento de suas atividades laborais/escolares a partir desta data, por motivo de doença.`;
+                break;
+            case 'comparecimento':
+                text = `Atesto para os devidos fins que o(a) Sr(a). ${data.patientName}, portador(a) do documento nº ${data.patientDoc || '________________'}, compareceu a este serviço para atendimento médico/exames nesta data, no período das ${data.startTime || '____'} às ${data.endTime || '____'} horas.`;
+                break;
+            case 'acompanhamento':
+                text = `Atesto para os devidos fins que o(a) Sr(a). ${data.patientName}, portador(a) do documento nº ${data.patientDoc || '________________'}, compareceu a este serviço nesta data, como acompanhante de paciente sob meus cuidados.`;
+                break;
+            case 'aptidao':
+                text = `Atesto para os devidos fins que o(a) Sr(a). ${data.patientName}, portador(a) do documento nº ${data.patientDoc || '________________'}, foi examinado(a) por mim nesta data e encontra-se APTO(A) para a prática de atividades físicas.`;
+                break;
+        }
+    }
+
+    if (data.cid) {
+        text += `\n\nCID: ${data.cid}`;
+    }
+
+    const splitText = doc.splitTextToSize(text, 160);
+    doc.text(splitText, 25, yPos, { align: "justify", maxWidth: 160 });
+
+    yPos += 80;
+
+    // Location and Date
+    doc.setFont("helvetica", "normal");
+    doc.text(`São Paulo, ${dateStr}.`, 105, yPos, { align: "center" });
+
+    yPos += 50;
+
+    // Signature
+    doc.setDrawColor(0, 0, 0);
+    doc.line(65, yPos, 145, yPos);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.doctorName, 105, yPos + 5, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CRM: ${data.doctorCrm}`, 105, yPos + 10, { align: "center" });
+    doc.text("Assinatura e Carimbo", 105, yPos + 15, { align: "center" });
+
+    doc.save(`Atestado_${data.type}_${data.patientName.replace(/\s+/g, '_')}.pdf`);
 };
