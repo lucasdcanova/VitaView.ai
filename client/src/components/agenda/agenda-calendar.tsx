@@ -190,6 +190,19 @@ export function AgendaCalendar({
     };
   };
 
+  // Helper to parse appointment date consistently
+  const parseAppointmentDate = (date: string | Date): Date => {
+    if (typeof date === 'string') {
+      // If it's a simple date string (YYYY-MM-DD), add time component
+      if (date.length === 10) {
+        return new Date(date + 'T12:00:00');
+      }
+      // It's already a full timestamp
+      return new Date(date);
+    }
+    return new Date(date);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
       {/* Calendar Header */}
@@ -329,7 +342,7 @@ export function AgendaCalendar({
                     {apps.length > 0 ? (
                       apps.map(app => {
                         const styles = getTypeStyles(app.type);
-                        const appointmentDate = new Date(app.date + 'T12:00:00');
+                        const appointmentDate = parseAppointmentDate(app.date);
                         const isToday = isSameDay(appointmentDate, new Date());
                         const canStartService = isToday && app.status !== 'in_progress' && app.status !== 'completed';
 
@@ -367,8 +380,22 @@ export function AgendaCalendar({
                                 </span>
                               </div>
 
-                              <h4 className="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-                                {app.patientName}
+                              <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
+                                {canStartService ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartService(app);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1 group"
+                                    title="Clique para iniciar atendimento"
+                                  >
+                                    <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {app.patientName}
+                                  </button>
+                                ) : (
+                                  <span className="text-gray-800">{app.patientName}</span>
+                                )}
                                 {app.profileId && (
                                   <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-blue-600" title="Ver perfil">
                                     <User className="h-4 w-4" />
@@ -482,7 +509,19 @@ export function AgendaCalendar({
                           </PopoverTrigger>
                           <PopoverContent className="w-80">
                             <div className="grid gap-4">
-                              <AppointmentPopoverHeader appointment={appointment} styles={styles} />
+                              {(() => {
+                                const appointmentDate = parseAppointmentDate(appointment.date);
+                                const isToday = isSameDay(appointmentDate, new Date());
+                                const canStart = isToday && appointment.status !== 'in_progress' && appointment.status !== 'completed';
+                                return (
+                                  <AppointmentPopoverHeader
+                                    appointment={appointment}
+                                    styles={styles}
+                                    canStartService={canStart}
+                                    onStartService={() => handleStartService(appointment)}
+                                  />
+                                );
+                              })()}
                               <div className="grid gap-2">
                                 <div className="flex items-center gap-2 text-sm">
                                   <Clock className="w-4 h-4 text-gray-500" />
@@ -512,7 +551,7 @@ export function AgendaCalendar({
                               <div className="flex flex-col gap-2">
                                 {/* Status action buttons - Iniciar Atendimento only for today */}
                                 {(() => {
-                                  const appointmentDate = new Date(appointment.date + 'T12:00:00');
+                                  const appointmentDate = parseAppointmentDate(appointment.date);
                                   const isToday = isSameDay(appointmentDate, new Date());
                                   const canStartService = isToday && appointment.status !== 'in_progress' && appointment.status !== 'completed';
 

@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { Play } from "lucide-react";
 
 interface AppointmentPopoverHeaderProps {
     appointment: any;
     styles: {
         dot: string;
     };
+    canStartService?: boolean;
+    onStartService?: () => void;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; label: string }> = {
@@ -15,7 +18,7 @@ const PRIORITY_CONFIG: Record<string, { color: string; label: string }> = {
     non_urgent: { color: "bg-blue-500", label: "Não Urgente" },
 };
 
-export function AppointmentPopoverHeader({ appointment, styles }: AppointmentPopoverHeaderProps) {
+export function AppointmentPopoverHeader({ appointment, styles, canStartService, onStartService }: AppointmentPopoverHeaderProps) {
     // Query triage data at component level (proper hook usage)
     const { data: triageData } = useQuery<any>({
         queryKey: [`/api/triage/appointment/${appointment.id}`],
@@ -29,7 +32,18 @@ export function AppointmentPopoverHeader({ appointment, styles }: AppointmentPop
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
-                <h4 className="font-medium leading-none">{appointment.patientName}</h4>
+                {canStartService && onStartService ? (
+                    <button
+                        onClick={onStartService}
+                        className="font-medium leading-none text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1 group"
+                        title="Clique para iniciar atendimento"
+                    >
+                        <Play className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {appointment.patientName}
+                    </button>
+                ) : (
+                    <h4 className="font-medium leading-none">{appointment.patientName}</h4>
+                )}
                 {/* Manchester Priority Badge */}
                 {config && (
                     <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100">
