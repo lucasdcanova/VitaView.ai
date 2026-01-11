@@ -12,6 +12,7 @@ import ErrorBoundary from "@/components/ui/error-boundary";
 import { Suspense, lazy } from "react";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 
 // ============================================
 // LAZY LOADED COMPONENTS - PUBLIC PAGES (sem auth)
@@ -117,6 +118,7 @@ function AuthenticatedRoutes() {
             <ThemeProvider>
               <TooltipProvider>
                 <Toaster />
+                <AuthenticatedScripts />
                 <Suspense fallback={<SystemLoadingFallback />}>
                   <Switch>
                     {/* Redirect /dashboard to /agenda for legacy URLs */}
