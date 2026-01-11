@@ -16,6 +16,7 @@ import {
     Pill,
     AlertTriangle,
     FileText,
+    FileSignature,
     Calendar,
     TrendingUp,
     TrendingDown,
@@ -51,6 +52,7 @@ import { AllergiesCard } from "@/components/dashboard/allergies-card";
 import { ActiveMedicationsCard } from "@/components/dashboard/active-medications-card";
 import HealthTrendsNew from "./health-trends-new";
 import VitaPrescriptions from "./vita-prescricoes";
+import VitaCertificates from "./vita-atestados";
 import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
 
@@ -187,6 +189,13 @@ export default function PatientView() {
                                 >
                                     <Pill className="h-4 w-4 mr-2" />
                                     Prescrição
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="atestados"
+                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                >
+                                    <FileSignature className="h-4 w-4 mr-2" />
+                                    Atestados
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="timeline"
@@ -383,6 +392,21 @@ export default function PatientView() {
                                             <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                                             <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
                                             <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para gerenciar prescrições.</p>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </TabsContent>
+
+                            {/* Vita Atestados Tab */}
+                            <TabsContent value="atestados" className="mt-0">
+                                {activeProfile ? (
+                                    <VitaCertificates patient={activeProfile} />
+                                ) : (
+                                    <Card className="text-center py-12">
+                                        <CardContent>
+                                            <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
+                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para gerenciar atestados.</p>
                                         </CardContent>
                                     </Card>
                                 )}
