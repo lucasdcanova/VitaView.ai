@@ -332,30 +332,26 @@ export default function PatientView() {
                                         </div>
                                     )}
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Left Column: Upload Area */}
-                                        <div className="lg:col-span-1 space-y-4">
-                                            <Card>
-                                                <CardHeader className="pb-3">
-                                                    <CardTitle className="text-base flex items-center gap-2">
-                                                        <Upload className="h-5 w-5" />
-                                                        Enviar Novos Exames
-                                                    </CardTitle>
-                                                    <CardDescription>
-                                                        Arraste arquivos ou clique para selecionar
-                                                    </CardDescription>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <FileUpload onUploadComplete={handleUploadComplete} />
-                                                    <p className="text-xs text-gray-500 text-center mt-3">
-                                                        PDF, JPG, PNG • Máx 10MB
-                                                    </p>
-                                                </CardContent>
-                                            </Card>
+                                        <Card className="h-fit">
+                                            <CardHeader className="pb-3">
+                                                <CardTitle className="text-base flex items-center gap-2">
+                                                    <Upload className="h-5 w-5 text-primary-600" />
+                                                    Enviar Novos Exames
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    Arraste arquivos ou clique para selecionar
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="space-y-4">
+                                                <FileUpload onUploadComplete={handleUploadComplete} />
+                                                <p className="text-xs text-gray-500 text-center">
+                                                    PDF, JPG, PNG • Máx 10MB
+                                                </p>
 
-                                            {/* Tips compacto */}
-                                            <Card className="bg-gradient-to-br from-primary-50 to-white">
-                                                <CardContent className="p-4 space-y-3">
+                                                {/* Tips integrado */}
+                                                <div className="bg-gradient-to-br from-primary-50 to-gray-50 rounded-lg p-4 space-y-3 border border-primary-100">
                                                     <div className="flex items-start gap-2">
                                                         <ShieldCheck className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
                                                         <p className="text-xs text-gray-600">Seus exames são tratados com segurança e confidencialidade.</p>
@@ -364,59 +360,57 @@ export default function PatientView() {
                                                         <ClipboardList className="text-yellow-500 flex-shrink-0 mt-0.5" size={16} />
                                                         <p className="text-xs text-gray-600">Envie imagens com boa resolução para melhor análise.</p>
                                                     </div>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
 
                                         {/* Right Column: Exams List */}
-                                        <div className="lg:col-span-2">
-                                            <Card>
-                                                <CardHeader className="pb-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <CardTitle className="text-base flex items-center gap-2">
-                                                            <FileText className="h-5 w-5" />
-                                                            Exames do Paciente
-                                                        </CardTitle>
-                                                        <Badge variant="outline">{exams.length} exames</Badge>
+                                        <Card className="h-fit">
+                                            <CardHeader className="pb-3">
+                                                <div className="flex items-center justify-between">
+                                                    <CardTitle className="text-base flex items-center gap-2">
+                                                        <FileText className="h-5 w-5 text-primary-600" />
+                                                        Exames do Paciente
+                                                    </CardTitle>
+                                                    <Badge variant="outline">{exams.length} exames</Badge>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {exams.length === 0 ? (
+                                                    <div className="text-center py-8">
+                                                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                                        <h3 className="text-base font-semibold text-gray-800 mb-1">Nenhum exame enviado</h3>
+                                                        <p className="text-sm text-gray-600">Envie o primeiro exame do paciente usando o painel ao lado.</p>
                                                     </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    {exams.length === 0 ? (
-                                                        <div className="text-center py-12">
-                                                            <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum exame enviado</h3>
-                                                            <p className="text-gray-600 mb-4">Envie o primeiro exame do paciente usando o painel ao lado.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                                                            {exams.map((exam: any) => (
-                                                                <div
-                                                                    key={exam.id}
-                                                                    className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-white transition-all cursor-pointer"
-                                                                    onClick={() => setLocation(`/report/${exam.id}`)}
-                                                                >
-                                                                    <div className="bg-primary-100 p-2 rounded-lg mr-4">
-                                                                        <FileText className="h-6 w-6 text-primary-600" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="font-medium text-gray-900 truncate">{exam.name || 'Exame sem título'}</p>
-                                                                        <p className="text-sm text-gray-500">
-                                                                            {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
-                                                                        </p>
-                                                                    </div>
-                                                                    <Badge
-                                                                        variant={exam.status === 'analyzed' ? 'default' : 'secondary'}
-                                                                        className="ml-4"
-                                                                    >
-                                                                        {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
-                                                                    </Badge>
+                                                ) : (
+                                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                                        {exams.map((exam: any) => (
+                                                            <div
+                                                                key={exam.id}
+                                                                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-white transition-all cursor-pointer"
+                                                                onClick={() => setLocation(`/report/${exam.id}`)}
+                                                            >
+                                                                <div className="bg-primary-100 p-2 rounded-lg mr-3">
+                                                                    <FileText className="h-5 w-5 text-primary-600" />
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
-                                        </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-medium text-gray-900 truncate text-sm">{exam.name || 'Exame sem título'}</p>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
+                                                                    </p>
+                                                                </div>
+                                                                <Badge
+                                                                    variant={exam.status === 'analyzed' ? 'default' : 'secondary'}
+                                                                    className="ml-3 text-xs"
+                                                                >
+                                                                    {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
+                                                                </Badge>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
                                     </div>
                                 </div>
                             </TabsContent>
