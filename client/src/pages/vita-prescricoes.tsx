@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     PlusCircle,
     FileText,
@@ -372,45 +371,24 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 </div>
             )}
 
-            <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
-                <TabsTrigger value="continuous" className="gap-2">
-                    <Pill className="h-4 w-4" /> Uso Contínuo
-                </TabsTrigger>
-                <TabsTrigger value="prescription" className="gap-2">
-                    <Stethoscope className="h-4 w-4" /> Receita Aguda
-                </TabsTrigger>
-                <TabsTrigger value="history" className="gap-2">
-                    <History className="h-4 w-4" /> Histórico
-                </TabsTrigger>
-            </TabsList>
-
-            {/* --- ABA USO CONTÍNUO --- */}
-            <TabsContent value="continuous" className="mt-6">
-                <Card className="border-blue-100 shadow-md">
+            {/* 2-Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* --- COLUNA ESQUERDA: USO CONTÍNUO --- */}
+                <Card className="border-blue-100 shadow-md h-fit">
                     <CardHeader className="bg-blue-50/50 border-b border-blue-100 pb-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                                <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
                                     <Pill className="h-5 w-5 text-blue-700" />
                                     Medicamentos de Uso Contínuo
                                 </CardTitle>
-                                <CardDescription>Gerencie os medicamentos que o paciente utiliza regularmente.</CardDescription>
+                                <CardDescription className="text-sm">Selecione para renovar receita.</CardDescription>
                             </div>
-                            {medications.length > 0 && (
-                                <Button
-                                    onClick={handleRenewPrescription}
-                                    disabled={selectedMedications.size === 0 || createPrescriptionMutation.isPending}
-                                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                                >
-                                    <RefreshCw className="h-4 w-4" />
-                                    {createPrescriptionMutation.isPending ? "Renovando..." : `Renovar Receita (${selectedMedications.size})`}
-                                </Button>
-                            )}
                         </div>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-4">
                         {medications.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {/* Select All */}
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                                     <button
@@ -428,11 +406,12 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                     </span>
                                 </div>
 
-                                <div className="grid gap-3">
+                                <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-1">
                                     {medications.map((medication: any) => (
                                         <div
                                             key={medication.id}
-                                            className={`p-4 bg-white rounded-lg border transition-all cursor-pointer group ${selectedMedications.has(medication.id)
+                                            onClick={() => toggleMedicationSelection(medication.id)}
+                                            className={`p-3 bg-white rounded-lg border transition-all cursor-pointer group ${selectedMedications.has(medication.id)
                                                 ? 'border-blue-400 bg-blue-50/50 shadow-sm'
                                                 : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
                                                 }`}
@@ -450,13 +429,10 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                     >
                                                         {selectedMedications.has(medication.id) && <Check className="h-3 w-3" />}
                                                     </button>
-                                                    <div className="bg-blue-100 p-2 rounded-full">
-                                                        <Pill className="h-4 w-4 text-blue-600" />
-                                                    </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-900">{medication.name}</h4>
-                                                        <div className="text-sm text-gray-600 flex items-center gap-2">
-                                                            <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
+                                                        <h4 className="font-semibold text-gray-900 text-sm">{medication.name}</h4>
+                                                        <div className="text-xs text-gray-600 flex items-center gap-1">
+                                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
                                                             <span>{medication.dosage}{medication.dosageUnit || medication.dosage_unit}</span>
                                                             <span className="text-gray-300">•</span>
                                                             <span>{medication.frequency}</span>
@@ -466,149 +442,162 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-gray-400 hover:text-blue-600"
+                                                    className="text-gray-400 hover:text-blue-600 h-7 w-7"
                                                     onClick={(e) => { e.stopPropagation(); openEditMedicationDialog(medication); }}
                                                 >
-                                                    <FileText className="h-4 w-4" />
+                                                    <FileText className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>
-                                            {medication.notes && (
-                                                <div className="mt-3 pt-2 border-t border-gray-100 text-sm text-gray-500 italic">
-                                                    Obs: {medication.notes}
-                                                </div>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
-                                <Button
-                                    onClick={() => {
-                                        setEditingMedication(null);
-                                        medicationForm.reset();
-                                        setIsMedicationDialogOpen(true);
-                                    }}
-                                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white gap-2"
-                                >
-                                    <PlusCircle className="h-4 w-4" />
-                                    Adicionar Medicamento
-                                </Button>
+
+                                <div className="flex gap-2 pt-2 border-t border-gray-100">
+                                    <Button
+                                        onClick={() => {
+                                            setEditingMedication(null);
+                                            medicationForm.reset();
+                                            setIsMedicationDialogOpen(true);
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1 text-xs"
+                                    >
+                                        <PlusCircle className="h-3.5 w-3.5" />
+                                        Adicionar
+                                    </Button>
+                                    <Button
+                                        onClick={handleRenewPrescription}
+                                        disabled={selectedMedications.size === 0 || createPrescriptionMutation.isPending}
+                                        size="sm"
+                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1 text-xs"
+                                    >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        {createPrescriptionMutation.isPending ? "Renovando..." : `Renovar Receita (${selectedMedications.size})`}
+                                    </Button>
+                                </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                <Pill className="h-12 w-12 mb-3 opacity-20" />
-                                <h3 className="text-lg font-medium text-gray-900">Nenhum medicamento cadastrado</h3>
-                                <p className="text-gray-500 mb-6">Adicione os medicamentos de uso contínuo do paciente.</p>
+                            <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                <Pill className="h-10 w-10 mb-2 opacity-20" />
+                                <h3 className="text-sm font-medium text-gray-900">Nenhum medicamento</h3>
+                                <p className="text-gray-500 text-xs mb-4">Adicione medicamentos de uso contínuo.</p>
                                 <Button
                                     onClick={() => {
                                         setEditingMedication(null);
                                         medicationForm.reset();
                                         setIsMedicationDialogOpen(true);
                                     }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white gap-1 text-xs"
                                 >
-                                    <PlusCircle className="h-4 w-4" />
+                                    <PlusCircle className="h-3.5 w-3.5" />
                                     Adicionar Medicamento
                                 </Button>
                             </div>
                         )}
                     </CardContent>
                 </Card>
-            </TabsContent>
 
-            {/* --- ABA RECEITA --- */}
-            <TabsContent value="prescription" className="mt-6">
-                <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20">
+                {/* --- COLUNA DIREITA: RECEITA AGUDA --- */}
+                <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20 h-fit">
                     <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
-                        <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                        <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
                             <Stethoscope className="h-5 w-5 text-green-700" />
-                            Receita Aguda
+                            Receita da Consulta
                         </CardTitle>
-                        <CardDescription>Prescreva medicamentos temporários para tratamentos específicos.</CardDescription>
+                        <CardDescription className="text-sm">Medicamentos para tratamento específico.</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6 space-y-6">
-
+                    <CardContent className="pt-4 space-y-4">
                         {/* Add Item Form */}
-                        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm space-y-4">
-                            <h3 className="font-medium text-gray-700 flex items-center gap-2">
-                                <PlusCircle className="h-4 w-4" /> Adicionar Item
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                <div className="space-y-1 md:col-span-1">
+                        <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-sm space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1 col-span-2">
                                     <label className="text-xs font-medium text-gray-500">Medicamento</label>
                                     <Input
-                                        placeholder="Ex: Amoxicilina"
+                                        placeholder="Ex: Amoxicilina 500mg"
                                         value={currentAcuteItem.name || ""}
                                         onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, name: e.target.value })}
+                                        className="h-9 text-sm"
                                     />
                                 </div>
-                                <div className="space-y-1 md:col-span-1">
-                                    <label className="text-xs font-medium text-gray-500">Dose/Conc.</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-500">Dose</label>
                                     <Input
-                                        placeholder="Ex: 875mg"
+                                        placeholder="Ex: 1 comp"
                                         value={currentAcuteItem.dosage || ""}
                                         onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, dosage: e.target.value })}
+                                        className="h-9 text-sm"
                                     />
                                 </div>
-                                <div className="space-y-1 md:col-span-1">
+                                <div className="space-y-1">
                                     <label className="text-xs font-medium text-gray-500">Posologia</label>
                                     <Input
-                                        placeholder="Ex: 12/12h por 7 dias"
+                                        placeholder="Ex: 8/8h por 7 dias"
                                         value={currentAcuteItem.frequency || ""}
                                         onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, frequency: e.target.value })}
+                                        className="h-9 text-sm"
                                     />
                                 </div>
-                                <div className="space-y-1 md:col-span-1">
-                                    <label className="text-xs font-medium text-gray-500">Obs.</label>
+                                <div className="space-y-1 col-span-2">
+                                    <label className="text-xs font-medium text-gray-500">Observação (opcional)</label>
                                     <Input
-                                        placeholder="Opcional"
+                                        placeholder="Instruções adicionais"
                                         value={currentAcuteItem.notes || ""}
                                         onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, notes: e.target.value })}
+                                        className="h-9 text-sm"
                                     />
                                 </div>
                             </div>
-                            <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={addAcuteItem}>
+                            <Button
+                                className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
+                                onClick={addAcuteItem}
+                                disabled={!isCurrentAcuteItemComplete}
+                            >
+                                <PlusCircle className="h-4 w-4 mr-1" />
                                 Adicionar à Receita
                             </Button>
                         </div>
 
                         {/* Prescription Items List */}
-                        <div className="bg-white rounded-xl border border-gray-200 min-h-[200px] flex flex-col">
-                            <div className="p-3 border-b bg-gray-50 flex justify-between items-center rounded-t-xl">
-                                <span className="font-medium text-sm text-gray-700">Itens da Receita ({acuteItems.length})</span>
-                                {acuteItems.length > 0 && <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6" onClick={() => setAcuteItems([])}>Limpar</Button>}
+                        <div className="bg-white rounded-lg border border-gray-200 min-h-[150px] flex flex-col">
+                            <div className="p-2 border-b bg-gray-50 flex justify-between items-center rounded-t-lg">
+                                <span className="font-medium text-xs text-gray-700">Itens da Receita ({acuteItems.length})</span>
+                                {acuteItems.length > 0 && <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6 px-2" onClick={() => setAcuteItems([])}>Limpar</Button>}
                             </div>
-                            <div className="p-2 space-y-2 flex-1">
+                            <div className="p-2 space-y-2 flex-1 max-h-[200px] overflow-y-auto">
                                 {acuteItems.length > 0 ? (
                                     acuteItems.map((item, idx) => (
-                                        <div key={item.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 group">
-                                            <div className="flex items-start gap-3">
-                                                <div className="bg-green-100 text-green-700 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                                        <div key={item.id} className="flex items-start justify-between p-2 bg-gray-50 rounded-lg border border-gray-100 group">
+                                            <div className="flex items-start gap-2">
+                                                <div className="bg-green-100 text-green-700 h-5 w-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                                                     {idx + 1}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900">{item.name} <span className="font-normal text-gray-600 text-sm">({item.dosage})</span></p>
-                                                    <p className="text-sm text-gray-600">{item.frequency}</p>
-                                                    {item.notes && <p className="text-xs text-gray-500 mt-1">{item.notes}</p>}
+                                                    <p className="font-semibold text-gray-900 text-sm">{item.name} <span className="font-normal text-gray-600 text-xs">({item.dosage})</span></p>
+                                                    <p className="text-xs text-gray-600">{item.frequency}</p>
+                                                    {item.notes && <p className="text-xs text-gray-500 mt-0.5 italic">{item.notes}</p>}
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeAcuteItem(item.id)}>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeAcuteItem(item.id)}>
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[150px]">
-                                        <FileText className="h-8 w-8 opacity-20" />
-                                        <p className="text-sm">Nenhum item adicionado</p>
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-1 min-h-[100px]">
+                                        <FileText className="h-6 w-6 opacity-20" />
+                                        <p className="text-xs">Nenhum item adicionado</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-4 items-end">
-                            <div className="space-y-1 w-[200px]">
-                                <label className="text-xs font-medium text-gray-500">Validade da Receita</label>
+                        <div className="flex gap-2 items-end">
+                            <div className="space-y-1 w-[120px]">
+                                <label className="text-xs font-medium text-gray-500">Validade</label>
                                 <Select value={prescriptionValidity} onValueChange={setPrescriptionValidity}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-9 text-sm">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -619,71 +608,60 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 </Select>
                             </div>
                             <Button
-                                className="h-10 text-base shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700 min-w-[200px]"
+                                className="flex-1 h-9 text-sm shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700"
                                 onClick={handleSaveAndPrintPrescription}
                                 disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !user}
                             >
-                                <Printer className="h-5 w-5 mr-2" />
+                                <Printer className="h-4 w-4 mr-1" />
                                 {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
-            </TabsContent>
+            </div>
 
-            {/* --- ABA HISTÓRICO --- */}
-            <TabsContent value="history" className="mt-6">
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <History className="h-5 w-5 text-gray-600" />
-                                Histórico de Prescrições
-                            </CardTitle>
-                            <CardDescription>Receitas emitidas para este paciente. Documentos são imutáveis após emissão.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-8">
-                                {/* Receitas Section */}
-                                <div>
-                                    {prescriptionHistory.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {prescriptionHistory.map(p => (
-                                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg border ${p.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
-                                                    <div className="flex gap-4 items-center">
-                                                        <div className="bg-green-100 p-2 rounded-full hidden sm:block">
-                                                            <FileText className="h-4 w-4 text-green-700" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-gray-900">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
-                                                            <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
-                                                            {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {p.status === 'active' && (
-                                                            <>
-                                                                <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintPrescription(p)}>
-                                                                    <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                        {p.status === 'cancelled' && (
-                                                            <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
+            {/* --- HISTÓRICO --- */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <History className="h-5 w-5 text-gray-600" />
+                        Histórico de Prescrições
+                    </CardTitle>
+                    <CardDescription className="text-sm">Receitas emitidas para este paciente.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {prescriptionHistory.length > 0 ? (
+                        <div className="space-y-2">
+                            {prescriptionHistory.map(p => (
+                                <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg border ${p.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
+                                    <div className="flex gap-3 items-center">
+                                        <div className="bg-green-100 p-2 rounded-full hidden sm:block">
+                                            <FileText className="h-4 w-4 text-green-700" />
                                         </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500 italic">Nenhuma receita encontrada.</p>
-                                    )}
+                                        <div>
+                                            <p className="font-medium text-gray-900 text-sm">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
+                                            <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
+                                            {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {p.status === 'active' && (
+                                            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleReprintPrescription(p)}>
+                                                <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
+                                            </Button>
+                                        )}
+                                        {p.status === 'cancelled' && (
+                                            <Button disabled variant="outline" size="sm" className="h-8 opacity-50 text-xs">Cancelado</Button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </TabsContent>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-500 italic">Nenhuma receita encontrada.</p>
+                    )}
+                </CardContent>
+            </Card>
 
             <MedicationDialog
                 open={isMedicationDialogOpen}
@@ -698,7 +676,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 onRemove={editingMedication ? () => deleteMedicationMutation.mutate(editingMedication.id) : undefined}
                 isRemovePending={deleteMedicationMutation.isPending}
             />
-
-        </div >
+        </div>
     );
 }

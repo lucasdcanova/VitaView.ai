@@ -1751,7 +1751,7 @@ export const CID10_DATABASE = [
   },
   {
     "code": "E11",
-    "description": "Diabetes mellitus nao-insulino-dependemte",
+    "description": "Diabetes mellitus nao-insulino-dependente",
     "category": "Endócrinas e Metabólicas"
   },
   {
