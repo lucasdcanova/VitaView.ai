@@ -251,6 +251,8 @@ export const medications = pgTable("medications", {
   dosage: text("dosage").notNull(), // ex: 500, 10, etc. (valor numérico)
   dosageUnit: text("dosage_unit").default("mg"), // mg, g, ml, mcg, UI, etc.
   frequency: text("frequency").notNull(), // ex: 1x ao dia, 2x ao dia, etc.
+  quantity: text("quantity"), // ex: 60 comprimidos
+  administrationRoute: text("administration_route").default("oral"), // oral, sublingual, injetavel, topico, etc.
   notes: text("notes"),
   startDate: text("start_date").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
@@ -264,6 +266,8 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   dosage: true,
   dosageUnit: true,
   frequency: true,
+  quantity: true,
+  administrationRoute: true,
   notes: true,
   startDate: true,
   isActive: true,
