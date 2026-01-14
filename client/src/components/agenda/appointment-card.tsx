@@ -30,10 +30,10 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string;
         badgeBg: "bg-blue-100"
     },
     completed: {
-        bg: "bg-gray-50",
-        border: "border-gray-300",
-        badge: "text-gray-500",
-        badgeBg: "bg-gray-100"
+        bg: "bg-gray-200",
+        border: "border-gray-800",
+        badge: "text-gray-100",
+        badgeBg: "bg-gray-800"
     },
 };
 

@@ -1291,12 +1291,29 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Invalid appointment ID" });
       }
 
+      // If setting status to in_progress, first clear any other in_progress appointments for this user
+      if (req.body.status === 'in_progress') {
+        console.log(`[APPOINTMENT] Starting service for appointment ${id}, clearing other in_progress appointments...`);
+        const userAppointments = await storage.getAppointmentsByUserId(req.user.id);
+        console.log(`[APPOINTMENT] Found ${userAppointments.length} appointments for user ${req.user.id}`);
+
+        for (const apt of userAppointments) {
+          if (apt.id !== id && apt.status === 'in_progress') {
+            console.log(`[APPOINTMENT] Resetting appointment ${apt.id} (${apt.patientName}) from in_progress to scheduled`);
+            await storage.updateAppointment(apt.id, { status: 'scheduled' });
+          }
+        }
+        console.log(`[APPOINTMENT] Done clearing other in_progress appointments`);
+      }
+
       const updated = await storage.updateAppointment(id, req.body);
       if (!updated) {
         return res.status(404).json({ message: "Appointment not found" });
       }
+      console.log(`[APPOINTMENT] Updated appointment ${id} to status: ${updated.status}`);
       res.json(updated);
     } catch (error) {
+      console.error('[APPOINTMENT] Error updating appointment:', error);
       res.status(500).json({ message: "Erro ao atualizar agendamento" });
     }
   });

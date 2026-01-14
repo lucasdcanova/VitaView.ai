@@ -107,12 +107,12 @@ export function AgendaCalendar({
 
   const getTypeStyles = (type: string) => {
     switch (type) {
-      case "consulta": return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-900", subtext: "text-gray-800", label: "text-gray-600", dot: "bg-gray-500" };
+      case "consulta": return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
       case "retorno": return { bg: "bg-green-100", border: "border-green-500", text: "text-green-900", subtext: "text-green-800", label: "text-green-600", dot: "bg-green-500" };
       case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
       case "procedimento": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
-      case "urgencia": return { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-900", subtext: "text-amber-800", label: "text-amber-600", dot: "bg-amber-500" };
-      default: return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-900", subtext: "text-gray-800", label: "text-gray-600", dot: "bg-gray-500" };
+      case "urgencia": return { bg: "bg-red-100", border: "border-red-500", text: "text-red-900", subtext: "text-red-800", label: "text-red-600", dot: "bg-red-500" };
+      default: return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
     }
   };
 
@@ -423,20 +423,9 @@ export function AgendaCalendar({
                                   <Play className="w-4 h-4 mr-2" />
                                   Iniciar Atendimento
                                 </Button>
-                              ) : app.status === 'in_progress' ? (
-                                <Button
-                                  className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm"
-                                  onClick={() => {
-                                    updateStatusMutation.mutate({ id: app.id, status: 'completed' });
-                                    clearPatientInService();
-                                  }}
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Finalizar Atendimento
-                                </Button>
                               ) : (
                                 <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium w-full text-center">
-                                  {app.status === 'completed' ? 'Concluído' : 'Agendado'}
+                                  {app.status === 'completed' ? 'Concluído' : app.status === 'in_progress' ? 'Em Atendimento' : 'Agendado'}
                                 </div>
                               )}
 
@@ -570,20 +559,7 @@ export function AgendaCalendar({
                                           Iniciar Atendimento
                                         </Button>
                                       )}
-                                      {appointment.status === 'in_progress' && (
-                                        <Button
-                                          size="sm"
-                                          className="bg-green-500 hover:bg-green-600 text-white w-full"
-                                          onClick={() => {
-                                            updateStatusMutation.mutate({ id: appointment.id, status: 'completed' });
-                                            clearPatientInService();
-                                          }}
-                                          disabled={updateStatusMutation.isPending}
-                                        >
-                                          <CheckCircle className="w-4 h-4 mr-1" />
-                                          Finalizar Atendimento
-                                        </Button>
-                                      )}
+
                                     </>
                                   );
                                 })()}
@@ -684,7 +660,7 @@ export function AgendaCalendar({
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-gray-500 rounded"></div>
+            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
             <span className="text-xs text-gray-600">Consulta</span>
           </div>
           <div className="flex items-center gap-2">
@@ -692,16 +668,20 @@ export function AgendaCalendar({
             <span className="text-xs text-gray-600">Retorno</span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <span className="text-xs text-gray-600">Procedimento</span>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-purple-500 rounded"></div>
             <span className="text-xs text-gray-600">Exames</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-amber-500 rounded"></div>
+            <div className="w-3 h-3 bg-red-500 rounded"></div>
             <span className="text-xs text-gray-600">Urgência</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-xs text-gray-600">Procedimento</span>
+            <div className="w-3 h-3 bg-gray-800 rounded"></div>
+            <span className="text-xs text-gray-600">Finalizado</span>
           </div>
         </div>
       </div>
@@ -714,15 +694,17 @@ export function AgendaCalendar({
       </div>
 
       {/* Triage Dialog */}
-      {selectedAppointment && (
-        <TriageDialog
-          open={triageDialogOpen}
-          onOpenChange={setTriageDialogOpen}
-          appointmentId={selectedAppointment.id}
-          patientName={selectedAppointment.patientName}
-          profileId={selectedAppointment.profileId || undefined}
-        />
-      )}
+      {
+        selectedAppointment && (
+          <TriageDialog
+            open={triageDialogOpen}
+            onOpenChange={setTriageDialogOpen}
+            appointmentId={selectedAppointment.id}
+            patientName={selectedAppointment.patientName}
+            profileId={selectedAppointment.profileId || undefined}
+          />
+        )
+      }
     </div>
   );
 }
