@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, FileText } from "lucide-react";
+import { PlusCircle, FileText, Trash2 } from "lucide-react";
 import { CID10_DATABASE } from "@/data/cid10-database";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Diagnosis {
     id: number;
@@ -15,6 +18,20 @@ interface ComorbiditiesCardProps {
 }
 
 export function ComorbiditiesCard({ diagnoses, onAdd }: ComorbiditiesCardProps) {
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => apiRequest("DELETE", `/api/diagnoses/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
+            toast({ title: "Sucesso", description: "Comorbidade removida." });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao remover comorbidade.", variant: "destructive" });
+        }
+    });
+
     const getCIDDescription = (code: string) => {
         const entry = CID10_DATABASE.find((c) => c.code === code);
         return entry ? `${code} - ${entry.description}` : code;
@@ -55,6 +72,18 @@ export function ComorbiditiesCard({ diagnoses, onAdd }: ComorbiditiesCardProps) 
                                         {getCIDDescription(diagnosis.cidCode)}
                                     </p>
                                 </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600 hover:bg-red-50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteMutation.mutate(diagnosis.id);
+                                    }}
+                                    title="Remover"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
                             </div>
                         ))}
                     </div>

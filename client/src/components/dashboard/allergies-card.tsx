@@ -100,7 +100,7 @@ export function AllergiesCard({ profileId }: AllergiesCardProps) {
                             <AlertTriangle className="h-5 w-5 text-red-600" />
                             Alergias e Reações
                         </CardTitle>
-                        <CardDescription>Histórico de sensibilidades</CardDescription>
+
                     </div>
                     <Button size="sm" variant="outline" onClick={() => setIsAllergyDialogOpen(true)} className="gap-1 text-red-600 border-red-200 hover:bg-red-50">
                         <PlusCircle className="h-4 w-4" /> Registrar
@@ -110,15 +110,13 @@ export function AllergiesCard({ profileId }: AllergiesCardProps) {
                     {allergiesLoading ? (
                         <div className="text-center py-4 text-gray-400">Carregando...</div>
                     ) : allergies.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {allergies.map((alg) => (
                                 <div key={alg.id} className="flex items-start justify-between p-3 bg-red-50/50 rounded-lg border border-red-100">
-                                    <div>
+                                    <div className="flex-1 flex flex-wrap items-center gap-2">
                                         <h4 className="font-semibold text-gray-900">{alg.allergen}</h4>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant="outline" className="bg-white border-red-200 text-red-700 text-[10px]">{alg.severity || "Não especificado"}</Badge>
-                                            <span className="text-xs text-gray-600">{alg.reaction}</span>
-                                        </div>
+                                        <span className="text-sm text-gray-500">({alg.severity || "Não especificado"})</span>
+                                        <span className="text-sm text-gray-700">{alg.reaction}</span>
                                     </div>
                                     <div className="flex gap-1">
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-700" onClick={() => handleEditAllergy(alg)}>

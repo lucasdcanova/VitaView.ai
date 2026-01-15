@@ -49,7 +49,7 @@ import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
 import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
 import { AnamnesisCard } from "@/components/dashboard/anamnesis-card";
 import { AllergiesCard } from "@/components/dashboard/allergies-card";
-import { ActiveMedicationsCard } from "@/components/dashboard/active-medications-card";
+
 import HealthTrendsNew from "./health-trends-new";
 import VitaPrescriptions from "./vita-prescricoes";
 import VitaReceituariosEspeciais from "./vita-receituarios-especiais";
@@ -110,7 +110,7 @@ export default function PatientView() {
 
     // Get recent items
     const recentExams = exams.slice(0, 3);
-    const activeMedications = medications.filter((m: any) => m.isActive);
+
     const activeDiagnoses = diagnoses.filter((d: any) => d.status === 'ativo' || d.status === 'em_tratamento');
 
     // Get metrics with alerts
@@ -286,8 +286,9 @@ export default function PatientView() {
                                                     Histórico e Condições
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <AllergiesCard profileId={activeProfile.id} />
-                                                    <ActiveMedicationsCard />
+                                                    <div className="md:col-span-2">
+                                                        <AllergiesCard profileId={activeProfile.id} />
+                                                    </div>
                                                     <ComorbiditiesCard diagnoses={diagnoses} />
                                                     <SurgeriesCard surgeries={surgeries} />
                                                 </div>

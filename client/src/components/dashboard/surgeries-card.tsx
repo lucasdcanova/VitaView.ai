@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Activity } from "lucide-react";
+import { PlusCircle, Activity, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Surgery {
     id: number;
@@ -17,6 +20,19 @@ interface SurgeriesCardProps {
 }
 
 export function SurgeriesCard({ surgeries, onAdd }: SurgeriesCardProps) {
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => apiRequest("DELETE", `/api/surgeries/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+            toast({ title: "Sucesso", description: "Cirurgia removida." });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao remover cirurgia.", variant: "destructive" });
+        }
+    });
     return (
         <Card className="border border-gray-200 bg-white shadow-sm">
             <CardHeader className="pb-3">
@@ -45,7 +61,7 @@ export function SurgeriesCard({ surgeries, onAdd }: SurgeriesCardProps) {
                 {Array.isArray(surgeries) && surgeries.length > 0 ? (
                     <div className="grid gap-2">
                         {surgeries.slice(0, 5).map((surgery) => (
-                            <div key={surgery.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div key={surgery.id} className="group flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                                 <div className="bg-purple-50 p-1.5 rounded-md mt-0.5 flex-shrink-0">
                                     <Activity className="h-3 w-3 text-purple-600" />
                                 </div>
@@ -57,6 +73,18 @@ export function SurgeriesCard({ surgeries, onAdd }: SurgeriesCardProps) {
                                         {format(parseISO(surgery.surgeryDate), "dd/MM/yy", { locale: ptBR })}
                                     </p>
                                 </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-purple-600 hover:bg-purple-50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteMutation.mutate(surgery.id);
+                                    }}
+                                    title="Remover"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
                             </div>
                         ))}
                     </div>

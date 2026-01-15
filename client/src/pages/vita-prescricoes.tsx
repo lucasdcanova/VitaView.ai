@@ -343,39 +343,35 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Vita Prescrições</h1>
-                    <p className="text-gray-500">Emissão de receitas médicas para <span className="font-semibold text-primary">{patient.name}</span>.</p>
+            {/* Header & Allergies - Integrated Row */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                {/* Allergies Warning (Left side if present, otherwise empty space keeps alignment) */}
+                <div className="flex-1 w-full">
+                    {allergies.length > 0 && (
+                        <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-md flex items-start h-full">
+                            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                            <div>
+                                <h3 className="text-red-800 font-semibold text-sm">Alergias Conhecidas</h3>
+                                <ul className="mt-1 list-disc list-inside text-sm text-red-700">
+                                    {allergies.map((allergy: any) => (
+                                        <li key={allergy.id}>
+                                            <span className="font-medium">{allergy.allergen}</span>
+                                            {allergy.reaction && <span className="text-red-600"> - {allergy.reaction}</span>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Professional Info */}
-                <div className="w-full md:w-auto min-w-[250px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex flex-col items-end">
+                {/* Professional Info (Right side) */}
+                <div className="w-full md:w-auto min-w-[250px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex flex-col items-end flex-shrink-0">
                     <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
                     <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
                     {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
                 </div>
             </div>
-
-            {/* Warning de Alergias */}
-            {allergies.length > 0 && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start">
-                    <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <div>
-                        <h3 className="text-red-800 font-semibold text-sm">Alergias Conhecidas do Paciente</h3>
-                        <ul className="mt-1 list-disc list-inside text-sm text-red-700">
-                            {allergies.map((allergy: any) => (
-                                <li key={allergy.id}>
-                                    <span className="font-medium">{allergy.allergen}</span>
-                                    {allergy.reaction && <span className="text-red-600"> - Reação: {allergy.reaction}</span>}
-                                    {allergy.severity && <span className="text-red-600"> ({allergy.severity})</span>}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            )}
 
             {/* 2-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
