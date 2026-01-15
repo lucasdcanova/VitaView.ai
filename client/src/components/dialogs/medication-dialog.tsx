@@ -82,6 +82,7 @@ interface MedicationInfo {
     category: string;
     route: string;
     isControlled?: boolean;
+    prescriptionType?: 'common' | 'A' | 'B1' | 'B2' | 'C'; // Tipo de receituário
     commonFrequencies?: string[];
     notes?: string;
 }
@@ -200,6 +201,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20-40mg 1x/dia", indication: "Depressão, TOC" },
             { dosage: "40", unit: "mg", format: "cápsula", commonDose: "40-60mg 1x/dia" },
@@ -212,6 +214,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1x/dia", indication: "Dose inicial" },
             { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia" },
@@ -224,6 +227,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 1x/dia" },
             { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15-20mg 1x/dia" },
@@ -236,6 +240,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo Tricíclico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-75mg 1x/dia", indication: "Depressão, dor crônica" },
             { dosage: "75", unit: "mg", format: "comprimido", commonDose: "75-150mg 1x/dia" },
@@ -248,6 +253,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "30", unit: "mg", format: "cápsula", commonDose: "30-60mg 1x/dia", indication: "Depressão, fibromialgia" },
             { dosage: "60", unit: "mg", format: "cápsula", commonDose: "60mg 1x/dia" },
@@ -260,6 +266,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Ansiolítico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "0.25", unit: "mg", format: "comprimido", commonDose: "0.25-0.5mg 2-3x/dia" },
             { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-1mg 2-3x/dia" },
@@ -286,6 +293,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Ansiolítico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "0.25", unit: "mg", format: "comprimido", commonDose: "0.25-0.5mg 2-3x/dia" },
             { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-1mg 2-3x/dia" },
@@ -300,6 +308,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Hipnótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg à noite", indication: "Idosos" },
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg à noite" },
@@ -737,6 +746,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20mg 1x/dia", indication: "Dose habitual" },
             { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-40mg 1x/dia" },
@@ -750,6 +760,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "37.5", unit: "mg", format: "cápsula", commonDose: "37.5-75mg 1x/dia", indication: "Dose inicial" },
             { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75-150mg 1x/dia" },
@@ -762,6 +773,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo Tricíclico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "10", unit: "mg", format: "cápsula", commonDose: "10-25mg 1-3x/dia", indication: "Dose inicial" },
             { dosage: "25", unit: "mg", format: "cápsula", commonDose: "25-75mg 1x/dia" },
@@ -776,6 +788,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo Tricíclico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-25mg 1x/dia", indication: "Dose inicial" },
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-150mg 1x/dia" },
@@ -789,6 +802,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "150", unit: "mg", format: "comprimido", commonDose: "150mg 1-2x/dia" },
             { dosage: "300", unit: "mg", format: "comprimido", commonDose: "300mg 1x/dia", indication: "Liberação prolongada" },
@@ -801,6 +815,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia", indication: "Insônia/dose inicial" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-300mg 1x/dia" },
@@ -814,6 +829,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antidepressivo",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15-30mg 1x/dia", indication: "Dose inicial" },
             { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-45mg 1x/dia" },
@@ -828,6 +844,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Ansiolítico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 2-3x/dia" },
@@ -840,6 +857,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Ansiolítico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 2-3x/dia" },
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2mg 2-3x/dia" },
@@ -852,6 +870,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Ansiolítico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "3", unit: "mg", format: "comprimido", commonDose: "1.5-3mg 2-3x/dia" },
             { dosage: "6", unit: "mg", format: "comprimido", commonDose: "6mg 2-3x/dia" },
@@ -865,6 +884,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antipsicótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1x/dia", indication: "Insônia/dose baixa" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-300mg 1x/dia" },
@@ -879,6 +899,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antipsicótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 1-2x/dia" },
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1-2x/dia" },
@@ -891,6 +912,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antipsicótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "2.5", unit: "mg", format: "comprimido", commonDose: "2.5-5mg 1x/dia", indication: "Dose inicial" },
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 1x/dia" },
@@ -903,6 +925,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antipsicótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-15mg 1x/dia" },
             { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15-30mg 1x/dia" },
@@ -916,6 +939,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antipsicótico",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-5mg 2-3x/dia" },
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
@@ -929,6 +953,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2-3x/dia" },
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 2-3x/dia" },
@@ -940,6 +965,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250-500mg 2-3x/dia" },
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 2x/dia" },
@@ -951,6 +977,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 2-3x/dia" },
         ],
@@ -961,6 +988,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25mg 1x/dia", indication: "Dose inicial - titular lentamente" },
             { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1-2x/dia" },
@@ -974,6 +1002,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 2x/dia", indication: "Dose inicial" },
             { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 2x/dia" },
@@ -986,6 +1015,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300mg 3x/dia", indication: "Dose inicial" },
             { dosage: "400", unit: "mg", format: "cápsula", commonDose: "400mg 3x/dia" },
@@ -998,6 +1028,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'B1',
         presentations: [
             { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75mg 2x/dia", indication: "Dose inicial" },
             { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150mg 2x/dia" },
@@ -1110,6 +1141,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Opioide",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'A',
         presentations: [
             { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50-100mg 4-6x/dia" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia", indication: "Liberação prolongada" },
@@ -1123,6 +1155,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Opioide",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'A',
         presentations: [
             { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4-6x/dia" },
             { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60mg 4-6x/dia" },
@@ -1135,6 +1168,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Opioide",
         route: "oral",
         isControlled: true,
+        prescriptionType: 'A',
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-30mg 4h/4h" },
             { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4h/4h" },
