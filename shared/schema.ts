@@ -252,6 +252,7 @@ export const medications = pgTable("medications", {
   dosageUnit: text("dosage_unit").default("mg"), // mg, g, ml, mcg, UI, etc.
   frequency: text("frequency").notNull(), // ex: 1x ao dia, 2x ao dia, etc.
   doseAmount: integer("dose_amount").default(1), // Quantidade por dose (ex: 2 comprimidos)
+  prescriptionType: text("prescription_type").default("padrao"), // padrao, especial, A, B1, B2, C
   quantity: text("quantity"), // ex: 60 comprimidos
   administrationRoute: text("administration_route").default("oral"), // oral, sublingual, injetavel, topico, etc.
   notes: text("notes"),

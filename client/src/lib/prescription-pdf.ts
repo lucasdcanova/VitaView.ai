@@ -28,6 +28,7 @@ interface PrescriptionData {
         format?: string;
         notes?: string;
         quantity?: string;
+        prescriptionType?: string; // padrao, especial, A, B1, B2, C
     }[];
     observations?: string;
 }
@@ -541,53 +542,407 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData) => {
 };
 
 // ==========================================
+// RECEITA TIPO A (Amarela - Opioides)
+// ==========================================
+const generateTypeAPrescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    // Header com fundo amarelo claro
+    doc.setFillColor(255, 248, 220);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(180, 120, 0);
+    doc.text("NOTIFICAÇÃO DE RECEITA \"A\"", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 80, 0);
+    doc.text("Entorpecentes e Psicotrópicos - Lista A1/A2 (Opioides)", 105, yPos + 5, { align: "center" });
+    doc.text("1ª Via - Retenção da Farmácia", 105, yPos + 9, { align: "center" });
+
+    yPos = 38;
+    doc.setTextColor(0, 0, 0);
+
+    // Reutilizar estrutura do controlado
+    generateControlledPrescription(doc, data);
+};
+
+// ==========================================
+// RECEITA TIPO B1 (Azul - Psicotrópicos)
+// ==========================================
+const generateTypeB1Prescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    // Header com fundo azul claro
+    doc.setFillColor(220, 235, 255);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 80, 150);
+    doc.text("NOTIFICAÇÃO DE RECEITA \"B\"", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(50, 80, 120);
+    doc.text("Psicotrópicos - Lista B1 (Ansiolíticos, Hipnóticos, Anticonvulsivantes)", 105, yPos + 5, { align: "center" });
+    doc.text("1ª Via - Retenção da Farmácia", 105, yPos + 9, { align: "center" });
+
+    yPos = 38;
+    doc.setTextColor(0, 0, 0);
+
+    // Usar estrutura controlada
+    generateControlledContent(doc, data, yPos);
+};
+
+// ==========================================
+// RECEITA TIPO B2 (Azul - Anorexígenos)
+// ==========================================
+const generateTypeB2Prescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    // Header com fundo azul mais intenso
+    doc.setFillColor(200, 220, 255);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 60, 130);
+    doc.text("NOTIFICAÇÃO DE RECEITA \"B2\"", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(50, 70, 110);
+    doc.text("Psicotrópicos Anorexígenos - Lista B2", 105, yPos + 5, { align: "center" });
+    doc.text("1ª Via - Retenção da Farmácia", 105, yPos + 9, { align: "center" });
+
+    yPos = 38;
+    doc.setTextColor(0, 0, 0);
+
+    generateControlledContent(doc, data, yPos);
+};
+
+// ==========================================
+// RECEITA TIPO C (Branca 2 vias - Retinoides)
+// ==========================================
+const generateTypeCPrescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("RECEITA DE CONTROLE ESPECIAL", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Retinoides, Imunossupressores - Lista C (2 vias)", 105, yPos + 5, { align: "center" });
+    doc.text("1ª Via - Retenção da Farmácia  |  2ª Via - Paciente", 105, yPos + 9, { align: "center" });
+
+    yPos = 38;
+    doc.setTextColor(0, 0, 0);
+
+    generateControlledContent(doc, data, yPos);
+};
+
+// ==========================================
+// RECEITA ESPECIAL (Antibióticos, etc)
+// ==========================================
+const generateSpecialPrescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    // Header com fundo amarelo suave
+    doc.setFillColor(255, 250, 230);
+    doc.rect(0, 0, pageWidth, 25, 'F');
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(150, 100, 0);
+    doc.text("RECEITA ESPECIAL", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 80, 0);
+    doc.text("Antimicrobianos - 2 vias (Retenção Farmácia)", 105, yPos + 5, { align: "center" });
+
+    yPos = 32;
+    doc.setTextColor(0, 0, 0);
+
+    // Linha divisória
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+
+    yPos = 40;
+
+    // Continuar com estrutura básica
+    generateBasicContent(doc, data, yPos);
+};
+
+// Helper: Conteúdo da receita controlada (sem header)
+const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: number) => {
+    const pageWidth = 210;
+    let yPos = startY;
+
+    // Linha divisória
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos - 5, pageWidth - 15, yPos - 5);
+
+    // Dados do médico
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Dr(a). ${data.doctorName}`, 15, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CRM: ${data.doctorCrm}`, 80, yPos);
+    if (data.doctorSpecialty) {
+        doc.setFontSize(8);
+        doc.text(data.doctorSpecialty, 15, yPos + 4);
+    }
+
+    yPos += 12;
+
+    // Dados do paciente
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Paciente:", 15, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.patientName, 35, yPos);
+
+    const dateStr = format(data.issueDate, "dd/MM/yyyy", { locale: ptBR });
+    doc.text(`Data: ${dateStr}`, 150, yPos);
+
+    yPos += 10;
+
+    // Linha divisória
+    doc.setLineWidth(0.3);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+
+    yPos += 8;
+
+    // Medicamentos
+    const rightMargin = pageWidth - 15;
+    doc.setFontSize(10);
+
+    data.medications.forEach((med, index) => {
+        doc.setFont("helvetica", "bold");
+        let medicationLine = med.name.toUpperCase();
+        if (med.dosage) medicationLine += ` ${med.dosage}`;
+
+        doc.text(`${index + 1}.`, 15, yPos);
+        doc.text(medicationLine, 22, yPos);
+
+        if (med.quantity) {
+            doc.setFont("helvetica", "normal");
+            doc.text(med.quantity, rightMargin, yPos, { align: "right" });
+        }
+
+        yPos += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        if (med.frequency) {
+            doc.text(med.frequency, 22, yPos);
+        }
+
+        yPos += 10;
+        doc.setFontSize(10);
+    });
+
+    // Assinatura e caixas
+    const pageHeight = 297;
+    const signatureY = pageHeight - 80;
+    const boxesY = pageHeight - 55;
+
+    doc.setLineWidth(0.3);
+    doc.line(65, signatureY, 145, signatureY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.doctorName, 105, signatureY + 5, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CRM: ${data.doctorCrm}`, 105, signatureY + 10, { align: "center" });
+
+    // Caixas de identificação
+    doc.rect(15, boxesY, 85, 35, "S");
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.text("IDENTIFICAÇÃO DO COMPRADOR", 18, boxesY + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120, 120, 120);
+    doc.text("Nome: _________________________________", 18, boxesY + 12);
+    doc.text("RG: _________________ Órgão: ___________", 18, boxesY + 18);
+    doc.text("Endereço: ______________________________", 18, boxesY + 24);
+
+    doc.setTextColor(0, 0, 0);
+    doc.rect(110, boxesY, 85, 35, "S");
+    doc.setFont("helvetica", "bold");
+    doc.text("IDENTIFICAÇÃO DO FORNECEDOR", 113, boxesY + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120, 120, 120);
+    doc.text("Data: ___/___/______", 113, boxesY + 12);
+    doc.text("Assinatura: ____________________________", 113, boxesY + 18);
+};
+
+// Helper: Conteúdo básico (sem header)
+const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number) => {
+    const pageWidth = 210;
+    let yPos = startY;
+
+    // Dados do médico
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Dr(a). ${data.doctorName}`, 15, yPos);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CRM: ${data.doctorCrm}`, 15, yPos + 5);
+
+    yPos += 15;
+
+    // Paciente
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("PACIENTE:", 15, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.patientName, 40, yPos);
+
+    const dateStr = format(data.issueDate, "dd/MM/yyyy", { locale: ptBR });
+    doc.text(`DATA: ${dateStr}`, 150, yPos);
+
+    yPos += 10;
+    doc.setLineWidth(0.3);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+
+    yPos += 10;
+
+    // Medicamentos
+    const rightMargin = pageWidth - 15;
+    doc.setFontSize(10);
+
+    data.medications.forEach((med, index) => {
+        doc.setFont("helvetica", "bold");
+        let medicationLine = med.name.toUpperCase();
+        if (med.dosage) medicationLine += ` ${med.dosage}`;
+
+        doc.text(`${index + 1}.`, 15, yPos);
+        doc.text(medicationLine, 22, yPos);
+
+        if (med.quantity) {
+            doc.setFont("helvetica", "normal");
+            doc.text(med.quantity, rightMargin, yPos, { align: "right" });
+        }
+
+        yPos += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        if (med.frequency) {
+            doc.text(med.frequency, 22, yPos);
+        }
+
+        yPos += 10;
+        doc.setFontSize(10);
+    });
+
+    // Assinatura
+    const signatureY = 220;
+    doc.setLineWidth(0.3);
+    doc.line(65, signatureY, 145, signatureY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.doctorName, 105, signatureY + 5, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CRM: ${data.doctorCrm}`, 105, signatureY + 10, { align: "center" });
+};
+
+// ==========================================
 // FUNÇÃO PRINCIPAL DE GERAÇÃO DE RECEITA
 // ==========================================
 export const generatePrescriptionPDF = (data: PrescriptionData) => {
-    // Verificar se há medicamentos controlados
-    const hasControlled = data.medications.some(med => isControlledMedication(med.name));
+    // Agrupar medicamentos por tipo de receituário
+    const groups: { [key: string]: typeof data.medications } = {
+        padrao: [],
+        especial: [],
+        A: [],
+        B1: [],
+        B2: [],
+        C: []
+    };
 
-    if (hasControlled) {
-        // Separar medicamentos controlados e não controlados
-        const controlledMeds = data.medications.filter(med => isControlledMedication(med.name));
-        const regularMeds = data.medications.filter(med => !isControlledMedication(med.name));
-
-        // Se tem ambos os tipos, gerar um único PDF com 2 páginas
-        if (controlledMeds.length > 0 && regularMeds.length > 0) {
-            const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
-
-            // Página 1: Receita de Controle Especial
-            generateControlledPrescription(doc, { ...data, medications: controlledMeds });
-
-            // Adicionar nova página para receita básica
-            doc.addPage();
-
-            // Página 2: Receituário Básico
-            generateBasicPrescription(doc, { ...data, medications: regularMeds });
-
-            // Abrir em nova aba
-            const pdfBlob = doc.output('blob');
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            window.open(pdfUrl, '_blank');
+    data.medications.forEach(med => {
+        const type = med.prescriptionType || 'padrao';
+        if (groups[type]) {
+            groups[type].push(med);
+        } else {
+            // Fallback: detectar controlados pelo nome se não tiver tipo definido
+            if (isControlledMedication(med.name)) {
+                groups['B1'].push(med); // Padrão para controlados sem tipo
+            } else {
+                groups['padrao'].push(med);
+            }
         }
-        // Se só tem controlados
-        else if (controlledMeds.length > 0) {
-            const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
-            generateControlledPrescription(doc, { ...data, medications: controlledMeds });
+    });
 
-            const pdfBlob = doc.output('blob');
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            window.open(pdfUrl, '_blank');
-        }
-    } else {
-        // Apenas receita básica
-        const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
-        generateBasicPrescription(doc, data);
+    // Ordem de geração das páginas
+    const typeOrder: Array<keyof typeof groups> = ['padrao', 'especial', 'A', 'B1', 'B2', 'C'];
+    const typesWithMeds = typeOrder.filter(type => groups[type].length > 0);
 
-        const pdfBlob = doc.output('blob');
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        window.open(pdfUrl, '_blank');
+    if (typesWithMeds.length === 0) {
+        console.warn("Nenhum medicamento para gerar receita");
+        return;
     }
+
+    const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
+    let isFirstPage = true;
+
+    typesWithMeds.forEach(type => {
+        if (!isFirstPage) {
+            doc.addPage();
+        }
+        isFirstPage = false;
+
+        const groupData = { ...data, medications: groups[type] };
+
+        switch (type) {
+            case 'padrao':
+                generateBasicPrescription(doc, groupData);
+                break;
+            case 'especial':
+                generateSpecialPrescription(doc, groupData);
+                break;
+            case 'A':
+                generateTypeAPrescription(doc, groupData);
+                break;
+            case 'B1':
+                generateTypeB1Prescription(doc, groupData);
+                break;
+            case 'B2':
+                generateTypeB2Prescription(doc, groupData);
+                break;
+            case 'C':
+                generateTypeCPrescription(doc, groupData);
+                break;
+        }
+    });
+
+    // Abrir PDF em nova aba
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
 };
 
 // ==========================================

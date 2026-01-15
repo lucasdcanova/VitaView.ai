@@ -42,6 +42,7 @@ export const medicationSchema = z.object({
     dosageUnit: z.string().default("mg"),
     frequency: z.string().min(1, "Frequência é obrigatória"),
     doseAmount: z.coerce.number().min(1).default(1),
+    prescriptionType: z.string().default("padrao"), // padrao, especial, A, B1, B2, C
     quantity: z.string().optional(),
     administrationRoute: z.string().default("oral"),
     startDate: z.string().min(1, "Data de início é obrigatória"),
@@ -1967,6 +1968,31 @@ export function MedicationDialog({
                                                             {route.label}
                                                         </SelectItem>
                                                     ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="prescriptionType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tipo de Receituário</FormLabel>
+                                        <FormControl>
+                                            <Select onValueChange={field.onChange} value={field.value || "padrao"}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione o tipo" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="padrao">🟢 Padrão</SelectItem>
+                                                    <SelectItem value="especial">🟡 Especial (2 vias)</SelectItem>
+                                                    <SelectItem value="A">🟠 A - Opioides (Amarela)</SelectItem>
+                                                    <SelectItem value="B1">🔵 B1 - Psicotrópicos (Azul)</SelectItem>
+                                                    <SelectItem value="B2">🔵 B2 - Anorexígenos (Azul)</SelectItem>
+                                                    <SelectItem value="C">⚪ C - Retinoides</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </FormControl>
