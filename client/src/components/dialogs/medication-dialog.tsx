@@ -1,6 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -67,6 +67,13 @@ interface MedicationPresentation {
     format: string;
     commonDose?: string;
     indication?: string;
+    // Campos para cálculo de dose por peso (uso pediátrico)
+    isPediatric?: boolean;
+    dosePerKg?: number; // Dose em mg/kg
+    dosePerKgMax?: number; // Dose máxima em mg/kg (para faixa)
+    concentration?: number; // Concentração em mg/ml
+    maxDailyDose?: number; // Dose máxima diária em mg
+    frequency?: number; // Número de doses por dia
 }
 
 interface MedicationInfo {
@@ -258,9 +265,21 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-1mg 2-3x/dia" },
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "1-2mg 2-3x/dia" },
             { dosage: "2.5", unit: "mg/ml", format: "gotas", commonDose: "5-10 gotas 2-3x/dia" },
+            // Apresentação pediátrica (convulsões)
+            {
+                dosage: "2.5", unit: "mg/ml", format: "gotas",
+                commonDose: "0.01-0.05mg/kg/dia dividido 2-3x/dia",
+                indication: "Crianças (convulsões) - 1 gota = 0.1mg",
+                isPediatric: true,
+                dosePerKg: 0.01,
+                dosePerKgMax: 0.05,
+                concentration: 2.5, // 2.5mg/ml (1 gota ≈ 0.1mg)
+                maxDailyDose: 6,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia", "Quando necessário"],
-        notes: "Receita B1 (azul) - Controle especial",
+        notes: "Receita B1 (azul). 1 gota = 0.1mg",
     },
     {
         name: "Alprazolam",
@@ -320,9 +339,21 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 4-6x/dia" },
             { dosage: "750", unit: "mg", format: "comprimido", commonDose: "750mg 4-6x/dia" },
             { dosage: "200", unit: "mg/ml", format: "gotas", commonDose: "35-55 gotas 4-6x/dia" },
+            // Apresentação pediátrica
+            {
+                dosage: "200", unit: "mg/ml", format: "gotas",
+                commonDose: "10-15mg/kg/dose 4-6x/dia",
+                indication: "Uso pediátrico (1 gota = 10mg)",
+                isPediatric: true,
+                dosePerKg: 10,
+                dosePerKgMax: 15,
+                concentration: 200, // 200mg/ml
+                maxDailyDose: 4000,
+                frequency: 4
+            },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h", "Quando necessário"],
-        notes: "Dose máxima: 4g/dia",
+        notes: "Dose máxima: 4g/dia. 1 gota = 10mg",
     },
     {
         name: "Dipirona",
@@ -332,8 +363,21 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 4x/dia" },
             { dosage: "1000", unit: "mg", format: "comprimido", commonDose: "1000mg 4x/dia" },
             { dosage: "500", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4x/dia" },
+            // Apresentação pediátrica
+            {
+                dosage: "500", unit: "mg/ml", format: "gotas",
+                commonDose: "12.5-25mg/kg/dose 4x/dia",
+                indication: "Uso pediátrico (1 gota = 25mg)",
+                isPediatric: true,
+                dosePerKg: 12.5,
+                dosePerKgMax: 25,
+                concentration: 500, // 500mg/ml
+                maxDailyDose: 4000,
+                frequency: 4
+            },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "1 gota = 25mg",
     },
     {
         name: "Ibuprofeno",
@@ -343,6 +387,29 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 3-4x/dia" },
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 3-4x/dia" },
             { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600mg 3x/dia" },
+            // Apresentações pediátricas
+            {
+                dosage: "50", unit: "mg/ml", format: "suspensão",
+                commonDose: "5-10mg/kg/dose 3-4x/dia",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 5,
+                dosePerKgMax: 10,
+                concentration: 50, // 50mg/ml
+                maxDailyDose: 1200,
+                frequency: 3
+            },
+            {
+                dosage: "100", unit: "mg/5ml", format: "suspensão",
+                commonDose: "5-10mg/kg/dose 3-4x/dia",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 5,
+                dosePerKgMax: 10,
+                concentration: 20, // 100mg/5ml = 20mg/ml
+                maxDailyDose: 1200,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["8h em 8h", "6h em 6h"],
         notes: "Tomar após as refeições",
@@ -355,7 +422,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia" },
         ],
         commonFrequencies: ["12h em 12h"],
-        notes: "Uso máximo: 15 dias",
+        notes: "⚠️ CONTRAINDICADO em menores de 12 anos. Uso máximo: 15 dias",
     },
     {
         name: "Prednisona",
@@ -376,6 +443,29 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "500", unit: "mg", format: "cápsula", commonDose: "500mg 8/8h por 7 dias" },
             { dosage: "875", unit: "mg", format: "comprimido", commonDose: "875mg 12/12h por 7 dias" },
+            // Apresentações líquidas pediátricas
+            {
+                dosage: "250", unit: "mg/5ml", format: "suspensão",
+                commonDose: "25-50mg/kg/dia dividido 8/8h",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 25,
+                dosePerKgMax: 50,
+                concentration: 50, // 250mg/5ml = 50mg/ml
+                maxDailyDose: 3000,
+                frequency: 3
+            },
+            {
+                dosage: "500", unit: "mg/5ml", format: "suspensão",
+                commonDose: "25-50mg/kg/dia dividido 8/8h",
+                indication: "Uso pediátrico - concentração alta",
+                isPediatric: true,
+                dosePerKg: 25,
+                dosePerKgMax: 50,
+                concentration: 100, // 500mg/5ml = 100mg/ml
+                maxDailyDose: 3000,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["8h em 8h", "12h em 12h"],
     },
@@ -385,6 +475,18 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 1x/dia por 3-5 dias" },
+            // Apresentação pediátrica
+            {
+                dosage: "200", unit: "mg/5ml", format: "suspensão",
+                commonDose: "10mg/kg/dia 1x/dia por 3-5 dias",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 10,
+                dosePerKgMax: 10,
+                concentration: 40, // 200mg/5ml = 40mg/ml
+                maxDailyDose: 500,
+                frequency: 1
+            },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -397,6 +499,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-750mg 12/12h" },
         ],
         commonFrequencies: ["12h em 12h"],
+        notes: "⚠️ Evitar em <18 anos (risco de lesão osteoarticular), exceto infecções graves sem alternativas",
     },
     // TIREOIDE
     {
@@ -423,6 +526,18 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia" },
+            // Apresentação pediátrica
+            {
+                dosage: "1", unit: "mg/ml", format: "xarope",
+                commonDose: "2-12a: 5mg (5ml); >30kg: 10mg (10ml) 1x/dia",
+                indication: "Uso pediátrico (>2 anos)",
+                isPediatric: true,
+                dosePerKg: 0.2,
+                dosePerKgMax: 0.3,
+                concentration: 1, // 1mg/ml
+                maxDailyDose: 10,
+                frequency: 1
+            },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -436,33 +551,1019 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         ],
         commonFrequencies: ["1x ao dia"],
     },
+    // ANTI-HIPERTENSIVOS ADICIONAIS
+    {
+        name: "Captopril",
+        category: "Anti-hipertensivo",
+        route: "oral",
+        presentations: [
+            { dosage: "12.5", unit: "mg", format: "comprimido", commonDose: "12.5-25mg 2-3x/dia", indication: "Dose inicial" },
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 2-3x/dia" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Atenolol",
+        category: "Beta-bloqueador",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Metoprolol",
+        category: "Beta-bloqueador",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 2x/dia" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 2x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia"],
+    },
+    {
+        name: "Nifedipino",
+        category: "Bloqueador de Canal de Cálcio",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 3x/dia" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20mg 2-3x/dia" },
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 1x/dia", indication: "Liberação prolongada" },
+            { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60mg 1x/dia", indication: "Liberação prolongada" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Valsartana",
+        category: "Anti-hipertensivo",
+        route: "oral",
+        presentations: [
+            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-80mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "80", unit: "mg", format: "comprimido", commonDose: "80-160mg 1x/dia" },
+            { dosage: "160", unit: "mg", format: "comprimido", commonDose: "160-320mg 1x/dia" },
+            { dosage: "320", unit: "mg", format: "comprimido", commonDose: "320mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Furosemida",
+        category: "Diurético",
+        route: "oral",
+        presentations: [
+            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-80mg 1-2x/dia" },
+            { dosage: "80", unit: "mg", format: "comprimido", commonDose: "80mg 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    {
+        name: "Espironolactona",
+        category: "Diurético",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1x/dia" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    // ANTIDIABÉTICOS ADICIONAIS
+    {
+        name: "Glibenclamida",
+        category: "Antidiabético",
+        route: "oral",
+        presentations: [
+            { dosage: "2.5", unit: "mg", format: "comprimido", commonDose: "2.5-5mg 1-2x/dia", indication: "Dose inicial" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar antes das refeições",
+    },
+    {
+        name: "Glimepirida",
+        category: "Antidiabético",
+        route: "oral",
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1x/dia" },
+            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar no café da manhã",
+    },
+    {
+        name: "Glicazida",
+        category: "Antidiabético",
+        route: "oral",
+        presentations: [
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 1x/dia", indication: "Liberação modificada" },
+            { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60-120mg 1x/dia" },
+            { dosage: "80", unit: "mg", format: "comprimido", commonDose: "80-160mg 2x/dia", indication: "Liberação imediata" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+    },
+    {
+        name: "Insulina NPH",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "injecao", commonDose: "10-40 UI 1-2x/dia", indication: "Dose conforme glicemia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Ajustar dose conforme glicemia",
+    },
+    {
+        name: "Insulina Regular",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "injecao", commonDose: "Conforme glicemia", indication: "Ação rápida" },
+        ],
+        commonFrequencies: ["Antes das refeições"],
+        notes: "Aplicar 30min antes das refeições",
+    },
+    {
+        name: "Dapagliflozina",
+        category: "Antidiabético",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Pode ser tomado com ou sem alimentos",
+    },
+    // HIPOLIPEMIANTES ADICIONAIS
+    {
+        name: "Pravastatina",
+        category: "Hipolipemiante",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
+            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar à noite",
+    },
+    {
+        name: "Fenofibrato",
+        category: "Hipolipemiante",
+        route: "oral",
+        presentations: [
+            { dosage: "160", unit: "mg", format: "comprimido", commonDose: "160mg 1x/dia" },
+            { dosage: "200", unit: "mg", format: "cápsula", commonDose: "200mg 1x/dia" },
+            { dosage: "250", unit: "mg", format: "cápsula", commonDose: "250mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar com as refeições",
+    },
+    {
+        name: "Ezetimiba",
+        category: "Hipolipemiante",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    // ANTIDEPRESSIVOS ADICIONAIS
+    {
+        name: "Paroxetina",
+        category: "Antidepressivo",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20mg 1x/dia", indication: "Dose habitual" },
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-40mg 1x/dia" },
+            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    {
+        name: "Venlafaxina",
+        category: "Antidepressivo",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "37.5", unit: "mg", format: "cápsula", commonDose: "37.5-75mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75-150mg 1x/dia" },
+            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150-225mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Nortriptilina",
+        category: "Antidepressivo Tricíclico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "10", unit: "mg", format: "cápsula", commonDose: "10-25mg 1-3x/dia", indication: "Dose inicial" },
+            { dosage: "25", unit: "mg", format: "cápsula", commonDose: "25-75mg 1x/dia" },
+            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50-150mg 1x/dia" },
+            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75-150mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar à noite",
+    },
+    {
+        name: "Clomipramina",
+        category: "Antidepressivo Tricíclico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-25mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-150mg 1x/dia" },
+            { dosage: "75", unit: "mg", format: "comprimido", commonDose: "75-250mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar à noite (causa sonolência)",
+    },
+    {
+        name: "Bupropiona",
+        category: "Antidepressivo",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "150", unit: "mg", format: "comprimido", commonDose: "150mg 1-2x/dia" },
+            { dosage: "300", unit: "mg", format: "comprimido", commonDose: "300mg 1x/dia", indication: "Liberação prolongada" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Não tomar à noite (pode causar insônia)",
+    },
+    {
+        name: "Trazodona",
+        category: "Antidepressivo",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia", indication: "Insônia/dose inicial" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-300mg 1x/dia" },
+            { dosage: "150", unit: "mg", format: "comprimido", commonDose: "150-400mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar à noite (causa sonolência)",
+    },
+    {
+        name: "Mirtazapina",
+        category: "Antidepressivo",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15-30mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-45mg 1x/dia" },
+            { dosage: "45", unit: "mg", format: "comprimido", commonDose: "45mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar à noite (causa sonolência)",
+    },
+    // ANSIOLÍTICOS ADICIONAIS
+    {
+        name: "Diazepam",
+        category: "Ansiolítico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul) - Controle especial",
+    },
+    {
+        name: "Lorazepam",
+        category: "Ansiolítico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 2-3x/dia" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul) - Controle especial",
+    },
+    {
+        name: "Bromazepam",
+        category: "Ansiolítico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "3", unit: "mg", format: "comprimido", commonDose: "1.5-3mg 2-3x/dia" },
+            { dosage: "6", unit: "mg", format: "comprimido", commonDose: "6mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul) - Controle especial",
+    },
+    // ANTIPSICÓTICOS
+    {
+        name: "Quetiapina",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1x/dia", indication: "Insônia/dose baixa" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-300mg 1x/dia" },
+            { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 1x/dia" },
+            { dosage: "300", unit: "mg", format: "comprimido", commonDose: "300-600mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar à noite",
+    },
+    {
+        name: "Risperidona",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 1-2x/dia" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1-2x/dia" },
+            { dosage: "3", unit: "mg", format: "comprimido", commonDose: "3-6mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+    },
+    {
+        name: "Olanzapina",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "2.5", unit: "mg", format: "comprimido", commonDose: "2.5-5mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 1x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Aripiprazol",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-15mg 1x/dia" },
+            { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15-30mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-30mg 1x/dia" },
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Haloperidol",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-5mg 2-3x/dia" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
+            { dosage: "2", unit: "mg/ml", format: "gotas", commonDose: "5-15 gotas 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    // ANTICONVULSIVANTES
+    {
+        name: "Carbamazepina",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2-3x/dia" },
+            { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Valproato de Sódio",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250-500mg 2-3x/dia" },
+            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 2x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Fenitoína",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Lamotrigina",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25mg 1x/dia", indication: "Dose inicial - titular lentamente" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1-2x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Titular lentamente para evitar rash",
+    },
+    {
+        name: "Topiramato",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 2x/dia", indication: "Dose inicial" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 2x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 2x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia"],
+    },
+    {
+        name: "Gabapentina",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300mg 3x/dia", indication: "Dose inicial" },
+            { dosage: "400", unit: "mg", format: "cápsula", commonDose: "400mg 3x/dia" },
+            { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600mg 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+    },
+    {
+        name: "Pregabalina",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75mg 2x/dia", indication: "Dose inicial" },
+            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150mg 2x/dia" },
+            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300mg 2x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia"],
+    },
+    // ANTI-INFLAMATÓRIOS ADICIONAIS
+    {
+        name: "Diclofenaco",
+        category: "Anti-inflamatório",
+        route: "oral",
+        presentations: [
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50mg 2-3x/dia" },
+            { dosage: "75", unit: "mg", format: "comprimido", commonDose: "75mg 2x/dia", indication: "Liberação prolongada" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 1x/dia", indication: "Liberação prolongada" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Tomar após as refeições",
+    },
+    {
+        name: "Cetoprofeno",
+        category: "Anti-inflamatório",
+        route: "oral",
+        presentations: [
+            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50mg 3x/dia" },
+            { dosage: "100", unit: "mg", format: "cápsula", commonDose: "100mg 2x/dia" },
+            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150mg 1x/dia", indication: "Liberação prolongada" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Meloxicam",
+        category: "Anti-inflamatório",
+        route: "oral",
+        presentations: [
+            { dosage: "7.5", unit: "mg", format: "comprimido", commonDose: "7.5-15mg 1x/dia" },
+            { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Piroxicam",
+        category: "Anti-inflamatório",
+        route: "oral",
+        presentations: [
+            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Prednisolona",
+        category: "Corticoide",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-60mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
+            // Apresentação pediátrica
+            {
+                dosage: "3", unit: "mg/ml", format: "solução",
+                commonDose: "1-2mg/kg/dia 1x/dia",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 1,
+                dosePerKgMax: 2,
+                concentration: 3, // 3mg/ml
+                maxDailyDose: 60,
+                frequency: 1
+            },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    {
+        name: "Dexametasona",
+        category: "Corticoide",
+        route: "oral",
+        presentations: [
+            { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-4mg 1x/dia" },
+            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 1x/dia" },
+            // Apresentação pediátrica
+            {
+                dosage: "0.1", unit: "mg/ml", format: "elixir",
+                commonDose: "0.1-0.3mg/kg/dia",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 0.1,
+                dosePerKgMax: 0.3,
+                concentration: 0.1, // 0.1mg/ml
+                maxDailyDose: 16,
+                frequency: 1
+            },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    {
+        name: "Betametasona",
+        category: "Corticoide",
+        route: "oral",
+        presentations: [
+            { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-2mg 1x/dia" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    // OPIOIDES
+    {
+        name: "Tramadol",
+        category: "Opioide",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50-100mg 4-6x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia", indication: "Liberação prolongada" },
+            { dosage: "100", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 4-6x/dia" },
+        ],
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "Receita A (amarela) - Controle especial",
+    },
+    {
+        name: "Codeína",
+        category: "Opioide",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4-6x/dia" },
+            { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60mg 4-6x/dia" },
+        ],
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "Receita A (amarela) - Controle especial",
+    },
+    {
+        name: "Morfina",
+        category: "Opioide",
+        route: "oral",
+        isControlled: true,
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-30mg 4h/4h" },
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4h/4h" },
+            { dosage: "10", unit: "mg/ml", format: "solucao", commonDose: "10-20mg 4h/4h" },
+        ],
+        commonFrequencies: ["4h em 4h", "6h em 6h"],
+        notes: "Receita A (amarela) - Controle especial",
+    },
+    // ANTIBIÓTICOS ADICIONAIS
+    {
+        name: "Amoxicilina + Clavulanato",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "500+125", unit: "mg", format: "comprimido", commonDose: "500+125mg 8/8h por 7-10 dias" },
+            { dosage: "875+125", unit: "mg", format: "comprimido", commonDose: "875+125mg 12/12h por 7-10 dias" },
+            // Apresentações pediátricas
+            {
+                dosage: "250+62.5", unit: "mg/5ml", format: "suspensão",
+                commonDose: "25-45mg/kg/dia (Amox) dividido 12/12h",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 25,
+                dosePerKgMax: 45,
+                concentration: 50, // 250mg/5ml = 50mg/ml (Amoxicilina)
+                maxDailyDose: 1750,
+                frequency: 2
+            },
+            {
+                dosage: "400+57", unit: "mg/5ml", format: "suspensão",
+                commonDose: "25-45mg/kg/dia (Amox) dividido 12/12h",
+                indication: "Uso pediátrico - alta concentração",
+                isPediatric: true,
+                dosePerKg: 25,
+                dosePerKgMax: 45,
+                concentration: 80, // 400mg/5ml = 80mg/ml (Amoxicilina)
+                maxDailyDose: 1750,
+                frequency: 2
+            },
+        ],
+        commonFrequencies: ["8h em 8h", "12h em 12h"],
+    },
+    {
+        name: "Levofloxacino",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 1x/dia por 7-14 dias" },
+            { dosage: "750", unit: "mg", format: "comprimido", commonDose: "750mg 1x/dia por 5-7 dias" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Cefalexina",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "500", unit: "mg", format: "cápsula", commonDose: "500mg 6/6h por 7-10 dias" },
+            { dosage: "1000", unit: "mg", format: "comprimido", commonDose: "1g 12/12h por 7-10 dias" },
+            // Apresentação pediátrica
+            {
+                dosage: "250", unit: "mg/5ml", format: "suspensão",
+                commonDose: "25-50mg/kg/dia dividido 6/6h",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 25,
+                dosePerKgMax: 50,
+                concentration: 50, // 250mg/5ml = 50mg/ml
+                maxDailyDose: 4000,
+                frequency: 4
+            },
+        ],
+        commonFrequencies: ["6h em 6h", "12h em 12h"],
+    },
+    {
+        name: "Ceftriaxona",
+        category: "Antibiótico",
+        route: "injetavel",
+        presentations: [
+            { dosage: "500", unit: "mg", format: "injecao", commonDose: "500mg-1g 1x/dia IM/IV" },
+            { dosage: "1000", unit: "mg", format: "injecao", commonDose: "1-2g 1x/dia IM/IV" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Sulfametoxazol + Trimetoprima",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "400+80", unit: "mg", format: "comprimido", commonDose: "800+160mg 12/12h por 7-14 dias" },
+            { dosage: "800+160", unit: "mg", format: "comprimido", commonDose: "800+160mg 12/12h" },
+            // Apresentação pediátrica
+            {
+                dosage: "200+40", unit: "mg/5ml", format: "suspensão",
+                commonDose: "40-50mg/kg/dia (SMZ) dividido 12/12h",
+                indication: "Uso pediátrico (>2 meses)",
+                isPediatric: true,
+                dosePerKg: 40,
+                dosePerKgMax: 50,
+                concentration: 40, // 200mg SMZ/5ml = 40mg/ml
+                maxDailyDose: 1600,
+                frequency: 2
+            },
+        ],
+        commonFrequencies: ["12h em 12h"],
+        notes: "Contraindicado em menores de 2 meses",
+    },
+    {
+        name: "Metronidazol",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250-500mg 8/8h" },
+            { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 8/8h" },
+            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 8/8h por 7-10 dias" },
+            // Apresentação pediátrica
+            {
+                dosage: "40", unit: "mg/ml", format: "suspensão",
+                commonDose: "30-40mg/kg/dia dividido 8/8h",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 30,
+                dosePerKgMax: 40,
+                concentration: 40, // 40mg/ml
+                maxDailyDose: 2000,
+                frequency: 3
+            },
+        ],
+        commonFrequencies: ["8h em 8h"],
+        notes: "Evitar álcool durante o tratamento",
+    },
+    {
+        name: "Clindamicina",
+        category: "Antibiótico",
+        route: "oral",
+        presentations: [
+            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150-300mg 6/6h" },
+            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300-600mg 6/6h" },
+        ],
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+    },
+    // GASTROPROTETORES ADICIONAIS
+    {
+        name: "Esomeprazol",
+        category: "Inibidor de Bomba de Prótons",
+        route: "oral",
+        presentations: [
+            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20mg 1x/dia" },
+            { dosage: "40", unit: "mg", format: "cápsula", commonDose: "40mg 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar em jejum",
+    },
+    {
+        name: "Lansoprazol",
+        category: "Inibidor de Bomba de Prótons",
+        route: "oral",
+        presentations: [
+            { dosage: "15", unit: "mg", format: "cápsula", commonDose: "15mg 1x/dia" },
+            { dosage: "30", unit: "mg", format: "cápsula", commonDose: "30mg 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar em jejum",
+    },
+    {
+        name: "Ranitidina",
+        category: "Antagonista H2",
+        route: "oral",
+        presentations: [
+            { dosage: "150", unit: "mg", format: "comprimido", commonDose: "150mg 2x/dia" },
+            { dosage: "300", unit: "mg", format: "comprimido", commonDose: "300mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+    },
+    {
+        name: "Domperidona",
+        category: "Procinético",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Tomar 15-30min antes das refeições",
+    },
+    {
+        name: "Metoclopramida",
+        category: "Procinético",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
+            { dosage: "4", unit: "mg/ml", format: "gotas", commonDose: "10-15 gotas 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Tomar 30min antes das refeições",
+    },
+    // TIREOIDE ADICIONAL
+    {
+        name: "Propiltiouracil",
+        category: "Antitireoidiano",
+        route: "oral",
+        presentations: [
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-150mg 3x/dia", indication: "Hipertireoidismo" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+    },
+    {
+        name: "Metimazol",
+        category: "Antitireoidiano",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-20mg 1x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-30mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    // ANTIALÉRGICOS ADICIONAIS
+    {
+        name: "Desloratadina",
+        category: "Anti-histamínico",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Cetirizina",
+        category: "Anti-histamínico",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Fexofenadina",
+        category: "Anti-histamínico",
+        route: "oral",
+        presentations: [
+            { dosage: "120", unit: "mg", format: "comprimido", commonDose: "120mg 1x/dia" },
+            { dosage: "180", unit: "mg", format: "comprimido", commonDose: "180mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Hidroxizina",
+        category: "Anti-histamínico",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 2-3x/dia" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Pode causar sonolência",
+    },
+    {
+        name: "Prometazina",
+        category: "Anti-histamínico",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25mg 1-3x/dia" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "3x ao dia"],
+        notes: "Causa sonolência",
+    },
+    // ANTICOAGULANTES/ANTIAGREGANTES
+    {
+        name: "Clopidogrel",
+        category: "Antiagregante",
+        route: "oral",
+        presentations: [
+            { dosage: "75", unit: "mg", format: "comprimido", commonDose: "75mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Varfarina",
+        category: "Anticoagulante",
+        route: "oral",
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "Conforme INR" },
+            { dosage: "2.5", unit: "mg", format: "comprimido", commonDose: "Conforme INR" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "2.5-10mg 1x/dia conforme INR" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Monitorar INR regularmente",
+    },
+    {
+        name: "Rivaroxabana",
+        category: "Anticoagulante",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia", indication: "Profilaxia TVP" },
+            { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15mg 2x/dia", indication: "TEV fase aguda" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20mg 1x/dia", indication: "FA, TEV manutenção" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar com alimentos",
+    },
+    {
+        name: "Apixabana",
+        category: "Anticoagulante",
+        route: "oral",
+        presentations: [
+            { dosage: "2.5", unit: "mg", format: "comprimido", commonDose: "2.5mg 2x/dia", indication: "Dose reduzida" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 2x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia"],
+    },
+    // UROLOGIA
+    {
+        name: "Sildenafila",
+        category: "Disfunção Erétil",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg quando necessário", indication: "Dose inicial" },
+            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50mg quando necessário" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg quando necessário" },
+        ],
+        commonFrequencies: ["Quando necessário"],
+        notes: "Tomar 30-60min antes da atividade sexual",
+    },
+    {
+        name: "Tadalafila",
+        category: "Disfunção Erétil",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia", indication: "Uso diário" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg quando necessário" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20mg quando necessário" },
+        ],
+        commonFrequencies: ["1x ao dia", "Quando necessário"],
+    },
+    {
+        name: "Finasterida",
+        category: "Urologia",
+        route: "oral",
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1mg 1x/dia", indication: "Calvície" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia", indication: "HPB" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Tamsulosina",
+        category: "Urologia",
+        route: "oral",
+        presentations: [
+            { dosage: "0.4", unit: "mg", format: "cápsula", commonDose: "0.4mg 1x/dia", indication: "HPB" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar após o café da manhã",
+    },
+    {
+        name: "Doxazosina",
+        category: "Urologia/Anti-hipertensivo",
+        route: "oral",
+        presentations: [
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1x/dia" },
+            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar ao deitar (pode causar hipotensão postural)",
+    },
+    // SUPLEMENTOS
+    {
+        name: "Carbonato de Cálcio",
+        category: "Suplemento",
+        route: "oral",
+        presentations: [
+            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 1-2x/dia" },
+            { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600mg 1-2x/dia" },
+            { dosage: "1250", unit: "mg", format: "comprimido", commonDose: "1250mg 1x/dia", indication: "= 500mg Ca elemento" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar com as refeições",
+    },
+    {
+        name: "Vitamina D",
+        category: "Suplemento",
+        route: "oral",
+        presentations: [
+            { dosage: "1000", unit: "UI", format: "comprimido", commonDose: "1000-2000 UI 1x/dia" },
+            { dosage: "2000", unit: "UI", format: "cápsula", commonDose: "2000 UI 1x/dia" },
+            { dosage: "5000", unit: "UI", format: "cápsula", commonDose: "5000 UI 1x/dia", indication: "Deficiência moderada" },
+            { dosage: "7000", unit: "UI", format: "cápsula", commonDose: "7000 UI 1x/semana" },
+            { dosage: "50000", unit: "UI", format: "cápsula", commonDose: "50000 UI 1x/semana", indication: "Deficiência grave" },
+        ],
+        commonFrequencies: ["1x ao dia", "1x por semana"],
+    },
+    {
+        name: "Vitamina B12",
+        category: "Suplemento",
+        route: "oral",
+        presentations: [
+            { dosage: "1000", unit: "mcg", format: "comprimido", commonDose: "1000mcg 1x/dia" },
+            { dosage: "2500", unit: "mcg", format: "comprimido", commonDose: "2500mcg 1x/dia" },
+            { dosage: "5000", unit: "mcg", format: "comprimido", commonDose: "5000mcg 1x/dia", indication: "Deficiência" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Ácido Fólico",
+        category: "Suplemento",
+        route: "oral",
+        presentations: [
+            { dosage: "0.4", unit: "mg", format: "comprimido", commonDose: "0.4mg 1x/dia", indication: "Gestação" },
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1mg 1x/dia" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia", indication: "Deficiência" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Sulfato Ferroso",
+        category: "Suplemento",
+        route: "oral",
+        presentations: [
+            { dosage: "40", unit: "mg Fe", format: "comprimido", commonDose: "40-80mg Fe 1-2x/dia" },
+            { dosage: "60", unit: "mg Fe", format: "comprimido", commonDose: "60mg Fe 1-2x/dia" },
+            { dosage: "25", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Tomar em jejum com vitamina C para melhor absorção",
+    },
 ];
 
 // Lista simples de nomes de medicamentos para autocomplete
-const COMMON_MEDICATIONS = MEDICATION_DATABASE.map(m => m.name).sort();
-
-// Medicamentos adicionais
-const ADDITIONAL_MEDICATIONS = [
-    "Captopril", "Atenolol", "Metoprolol", "Nifedipino", "Valsartana", "Furosemida", "Espironolactona",
-    "Glibenclamida", "Glimepirida", "Glicazida", "Insulina NPH", "Insulina Regular", "Dapagliflozina",
-    "Pravastatina", "Fenofibrato", "Ezetimiba",
-    "Paroxetina", "Venlafaxina", "Nortriptilina", "Clomipramina", "Bupropiona", "Trazodona", "Mirtazapina",
-    "Diazepam", "Lorazepam", "Bromazepam",
-    "Quetiapina", "Risperidona", "Olanzapina", "Aripiprazol", "Haloperidol",
-    "Carbamazepina", "Valproato de Sódio", "Fenitoína", "Lamotrigina", "Topiramato", "Gabapentina", "Pregabalina",
-    "Diclofenaco", "Cetoprofeno", "Meloxicam", "Piroxicam", "Prednisolona", "Dexametasona", "Betametasona",
-    "Tramadol", "Codeína", "Morfina",
-    "Amoxicilina + Clavulanato", "Levofloxacino", "Cefalexina", "Ceftriaxona",
-    "Sulfametoxazol + Trimetoprima", "Metronidazol", "Clindamicina",
-    "Esomeprazol", "Lansoprazol", "Ranitidina", "Domperidona", "Metoclopramida",
-    "Propiltiouracil", "Metimazol",
-    "Desloratadina", "Cetirizina", "Fexofenadina", "Hidroxizina", "Prometazina",
-    "Clopidogrel", "Varfarina", "Rivaroxabana", "Apixabana",
-    "Sildenafila", "Tadalafila", "Finasterida", "Tamsulosina", "Doxazosina",
-    "Carbonato de Cálcio", "Vitamina D", "Vitamina B12", "Ácido Fólico", "Sulfato Ferroso",
-].sort();
-
-const ALL_MEDICATIONS = [...new Set([...COMMON_MEDICATIONS, ...ADDITIONAL_MEDICATIONS])].sort();
+const ALL_MEDICATIONS = MEDICATION_DATABASE.map(m => m.name).sort();
 
 const MEDICATION_FORMATS = [
     { value: "comprimido", label: "Comprimido" },
@@ -531,6 +1632,42 @@ export function MedicationDialog({
     const [searchValue, setSearchValue] = useState("");
     const [dosagePopoverOpen, setDosagePopoverOpen] = useState(false);
     const [selectedMedInfo, setSelectedMedInfo] = useState<MedicationInfo | null>(null);
+    const [patientWeight, setPatientWeight] = useState<string>("");
+
+    // Ref para controlar quando ignorar o próximo evento de foco (após seleção)
+    const skipNextFocusRef = useRef(false);
+
+    // Função para calcular dose pediátrica baseada no peso
+    const calculatePediatricDose = useCallback((pres: MedicationPresentation, weight: number) => {
+        if (!pres.isPediatric || !pres.dosePerKg || !pres.concentration || !pres.frequency) {
+            return null;
+        }
+
+        // Calcula dose diária total em mg
+        const dailyDoseLow = pres.dosePerKg * weight;
+        const dailyDoseHigh = (pres.dosePerKgMax || pres.dosePerKg) * weight;
+
+        // Limita pela dose máxima diária
+        const maxDaily = pres.maxDailyDose || Infinity;
+        const effectiveDailyLow = Math.min(dailyDoseLow, maxDaily);
+        const effectiveDailyHigh = Math.min(dailyDoseHigh, maxDaily);
+
+        // Dose por administração em mg
+        const dosePerAdminLow = effectiveDailyLow / pres.frequency;
+        const dosePerAdminHigh = effectiveDailyHigh / pres.frequency;
+
+        // Converte para ml
+        const mlPerAdminLow = dosePerAdminLow / pres.concentration;
+        const mlPerAdminHigh = dosePerAdminHigh / pres.concentration;
+
+        return {
+            dosePerAdminMgLow: Math.round(dosePerAdminLow * 10) / 10,
+            dosePerAdminMgHigh: Math.round(dosePerAdminHigh * 10) / 10,
+            mlPerAdminLow: Math.round(mlPerAdminLow * 10) / 10,
+            mlPerAdminHigh: Math.round(mlPerAdminHigh * 10) / 10,
+            frequency: pres.frequency,
+        };
+    }, []);
 
     // Watch para o nome do medicamento selecionado
     const selectedMedName = form.watch("name");
@@ -561,12 +1698,20 @@ export function MedicationDialog({
     }, [searchValue]);
 
     // Função para aplicar sugestão de dosagem
-    const applyDosageSuggestion = (presentation: MedicationPresentation) => {
+    const applyDosageSuggestion = useCallback((presentation: MedicationPresentation) => {
+        // Marcar para ignorar o próximo foco
+        skipNextFocusRef.current = true;
+
         form.setValue("dosage", presentation.dosage);
         form.setValue("dosageUnit", presentation.unit);
         form.setValue("format", presentation.format);
         setDosagePopoverOpen(false);
-    };
+
+        // Resetar o flag após um curto delay
+        setTimeout(() => {
+            skipNextFocusRef.current = false;
+        }, 200);
+    }, [form]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -744,7 +1889,8 @@ export function MedicationDialog({
                                                         placeholder="Ex: 50"
                                                         {...field}
                                                         onFocus={() => {
-                                                            if (selectedMedInfo) {
+                                                            // Só abre o popup se não acabou de fechar por uma seleção
+                                                            if (selectedMedInfo && !skipNextFocusRef.current) {
                                                                 setDosagePopoverOpen(true);
                                                             }
                                                         }}
@@ -752,31 +1898,101 @@ export function MedicationDialog({
                                                 </FormControl>
                                             </PopoverTrigger>
                                             {selectedMedInfo && (
-                                                <PopoverContent className="w-[350px] p-0" align="start" side="bottom">
-                                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b">
+                                                <PopoverContent className="w-[400px] p-0" align="start" side="bottom">
+                                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 border-b">
                                                         <div className="flex items-center gap-2 text-blue-700">
                                                             <Sparkles className="h-4 w-4" />
                                                             <span className="font-medium text-sm">Sugestão IA</span>
                                                             <Badge variant="outline" className="text-xs ml-auto">{selectedMedInfo.category}</Badge>
                                                         </div>
-                                                        <p className="text-xs text-blue-600 mt-1">Apresentações disponíveis para {selectedMedInfo.name}:</p>
                                                     </div>
-                                                    <div className="p-2 max-h-[200px] overflow-y-auto">
-                                                        {selectedMedInfo.presentations.map((pres, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
-                                                                onClick={() => applyDosageSuggestion(pres)}
-                                                            >
-                                                                <div>
-                                                                    <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
-                                                                    <span className="text-gray-500 ml-2 text-sm">({pres.format})</span>
+
+                                                    <div className="p-2 max-h-[280px] overflow-y-auto">
+                                                        {/* Apresentações para adultos */}
+                                                        {selectedMedInfo.presentations.filter(p => !p.isPediatric).length > 0 && (
+                                                            <>
+                                                                {selectedMedInfo.presentations.filter(p => !p.isPediatric).map((pres, idx) => (
+                                                                    <div
+                                                                        key={`adult-${idx}`}
+                                                                        className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            applyDosageSuggestion(pres);
+                                                                        }}
+                                                                    >
+                                                                        <div>
+                                                                            <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
+                                                                            <span className="text-gray-500 ml-2 text-sm">({pres.format})</span>
+                                                                        </div>
+                                                                        {pres.commonDose && (
+                                                                            <span className="text-xs text-gray-500">{pres.commonDose}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </>
+                                                        )}
+
+                                                        {/* Seção pediátrica com campo de peso integrado */}
+                                                        {selectedMedInfo.presentations.filter(p => p.isPediatric).length > 0 && (
+                                                            <div className="mt-2 pt-2 border-t">
+                                                                <div className="flex items-center justify-between px-2 py-1">
+                                                                    <span className="text-xs text-purple-600 font-medium">👶 Pediátrico</span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Input
+                                                                            type="number"
+                                                                            placeholder="Peso"
+                                                                            value={patientWeight}
+                                                                            onChange={(e) => setPatientWeight(e.target.value)}
+                                                                            className="h-6 w-16 text-xs px-2"
+                                                                            min="0"
+                                                                            step="0.1"
+                                                                        />
+                                                                        <span className="text-xs text-gray-500">kg</span>
+                                                                    </div>
                                                                 </div>
-                                                                {pres.commonDose && (
-                                                                    <span className="text-xs text-gray-500">{pres.commonDose}</span>
-                                                                )}
+                                                                {selectedMedInfo.presentations.filter(p => p.isPediatric).map((pres, idx) => {
+                                                                    const weight = parseFloat(patientWeight);
+                                                                    const calculation = weight > 0 ? calculatePediatricDose(pres, weight) : null;
+
+                                                                    return (
+                                                                        <div
+                                                                            key={`ped-${idx}`}
+                                                                            className="p-2 rounded-md cursor-pointer hover:bg-purple-50 transition-colors border-l-2 border-purple-200 ml-2 mt-1"
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                if (calculation) {
+                                                                                    form.setValue("dosage", `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`);
+                                                                                    form.setValue("dosageUnit", "ml");
+                                                                                    form.setValue("format", pres.format);
+                                                                                    skipNextFocusRef.current = true;
+                                                                                    setDosagePopoverOpen(false);
+                                                                                    setTimeout(() => { skipNextFocusRef.current = false; }, 200);
+                                                                                } else {
+                                                                                    applyDosageSuggestion(pres);
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="font-semibold text-gray-900 text-sm">{pres.dosage}</span>
+                                                                                {calculation ? (
+                                                                                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                                                                                        {calculation.mlPerAdminLow === calculation.mlPerAdminHigh
+                                                                                            ? `${calculation.mlPerAdminLow}ml`
+                                                                                            : `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}ml`
+                                                                                        } / dose
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="text-xs text-purple-400 italic">informe peso</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-xs text-gray-500">{pres.commonDose}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
-                                                        ))}
+                                                        )}
                                                     </div>
                                                     {selectedMedInfo.notes && (
                                                         <div className="bg-amber-50 p-2 border-t flex items-start gap-2">
@@ -784,11 +2000,13 @@ export function MedicationDialog({
                                                             <span className="text-xs text-amber-700">{selectedMedInfo.notes}</span>
                                                         </div>
                                                     )}
-                                                    {selectedMedInfo.isControlled && (
-                                                        <div className="bg-red-50 p-2 border-t">
-                                                            <span className="text-xs text-red-700">⚠️ Medicamento controlado - Requer receita especial</span>
-                                                        </div>
-                                                    )}
+
+                                                    {/* Disclaimer */}
+                                                    <div className="bg-gray-50 p-2 border-t">
+                                                        <p className="text-[10px] text-gray-400 text-center leading-tight">
+                                                            ⚕️ Sugestões baseadas em referências gerais. Confirme a posologia conforme protocolo institucional e avaliação clínica.
+                                                        </p>
+                                                    </div>
                                                 </PopoverContent>
                                             )}
                                         </Popover>

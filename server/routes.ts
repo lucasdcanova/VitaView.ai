@@ -4461,45 +4461,58 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Medications routes
-  // Temporary in-memory storage for medications
-  const medicationsStore = new Map<number, any[]>();
-  let medicationIdCounter = 1;
+  // Medications routes - Using PostgreSQL database
 
   app.post("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const { name, format, dosage, dosageUnit, frequency, notes, startDate, isActive } = req.body;
+      const { name, format, dosage, dosageUnit, frequency, quantity, administrationRoute, notes, startDate, isActive } = req.body;
 
       if (!name) {
         return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
       }
 
-      // Create medication object
-      const newMedication = {
-        id: medicationIdCounter++,
-        user_id: user.id,
-        name,
-        format,
-        dosage,
-        dosage_unit: dosageUnit || 'mg',
-        dosageUnit: dosageUnit || 'mg', // Add camelCase version for frontend
-        frequency,
-        notes,
-        start_date: startDate,
-        startDate, // Add camelCase version for frontend
-        is_active: isActive !== false,
-        created_at: new Date().toISOString()
+      // Insert into database
+      const result = await pool.query(
+        `INSERT INTO medications (user_id, name, format, dosage, dosage_unit, frequency, quantity, administration_route, notes, start_date, is_active, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+         RETURNING *`,
+        [
+          user.id,
+          name,
+          format || 'comprimido',
+          dosage,
+          dosageUnit || 'mg',
+          frequency,
+          quantity || null,
+          administrationRoute || 'oral',
+          notes || null,
+          startDate,
+          isActive !== false
+        ]
+      );
+
+      const newMedication = result.rows[0];
+
+      // Convert to camelCase for frontend
+      const responseData = {
+        id: newMedication.id,
+        userId: newMedication.user_id,
+        name: newMedication.name,
+        format: newMedication.format,
+        dosage: newMedication.dosage,
+        dosageUnit: newMedication.dosage_unit,
+        frequency: newMedication.frequency,
+        quantity: newMedication.quantity,
+        administrationRoute: newMedication.administration_route,
+        notes: newMedication.notes,
+        startDate: newMedication.start_date,
+        isActive: newMedication.is_active,
+        createdAt: newMedication.created_at
       };
 
-      // Store in memory
-      if (!medicationsStore.has(user.id)) {
-        medicationsStore.set(user.id, []);
-      }
-      medicationsStore.get(user.id)!.push(newMedication);
-
-      console.log("✅ Medicamento criado com sucesso (em memória):", newMedication);
-      res.status(201).json(newMedication);
+      console.log("✅ Medicamento criado com sucesso (PostgreSQL):", responseData);
+      res.status(201).json(responseData);
     } catch (error) {
       console.error("Erro ao criar medicamento:", error);
       res.status(500).json({ message: "Erro ao criar medicamento" });
@@ -4509,14 +4522,32 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const userMedications = medicationsStore.get(user.id) || [];
 
-      // Filter active medications and sort by created_at DESC
-      const activeMedications = userMedications
-        .filter(m => m.is_active !== false)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const result = await pool.query(
+        `SELECT * FROM medications 
+         WHERE user_id = $1 AND is_active = true
+         ORDER BY created_at DESC`,
+        [user.id]
+      );
 
-      res.json(activeMedications);
+      // Convert to camelCase for frontend
+      const medications = result.rows.map(m => ({
+        id: m.id,
+        userId: m.user_id,
+        name: m.name,
+        format: m.format,
+        dosage: m.dosage,
+        dosageUnit: m.dosage_unit,
+        frequency: m.frequency,
+        quantity: m.quantity,
+        administrationRoute: m.administration_route,
+        notes: m.notes,
+        startDate: m.start_date,
+        isActive: m.is_active,
+        createdAt: m.created_at
+      }));
+
+      res.json(medications);
     } catch (error) {
       console.error("Erro ao buscar medicamentos:", error);
       res.status(500).json({ message: "Erro ao buscar medicamentos" });
@@ -4527,37 +4558,59 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
-      const { name, format, dosage, dosageUnit, frequency, notes, startDate } = req.body;
+      const { name, format, dosage, dosageUnit, frequency, quantity, administrationRoute, notes, startDate } = req.body;
 
       if (!name) {
         return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
       }
 
-      // Find and update medication in memory
-      const userMedications = medicationsStore.get(user.id) || [];
-      const medicationIndex = userMedications.findIndex(m => m.id === id && m.user_id === user.id);
+      // Update in database
+      const result = await pool.query(
+        `UPDATE medications 
+         SET name = $1, format = $2, dosage = $3, dosage_unit = $4, frequency = $5, 
+             quantity = $6, administration_route = $7, notes = $8, start_date = $9
+         WHERE id = $10 AND user_id = $11
+         RETURNING *`,
+        [
+          name,
+          format || 'comprimido',
+          dosage,
+          dosageUnit || 'mg',
+          frequency,
+          quantity || null,
+          administrationRoute || 'oral',
+          notes || null,
+          startDate,
+          id,
+          user.id
+        ]
+      );
 
-      if (medicationIndex === -1) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ message: "Medicamento não encontrado" });
       }
 
-      // Update the medication
-      userMedications[medicationIndex] = {
-        ...userMedications[medicationIndex],
-        name,
-        format,
-        dosage,
-        dosage_unit: dosageUnit || 'mg',
-        dosageUnit: dosageUnit || 'mg',
-        frequency,
-        notes,
-        start_date: startDate,
-        startDate
+      const updatedMedication = result.rows[0];
+
+      // Convert to camelCase for frontend
+      const responseData = {
+        id: updatedMedication.id,
+        userId: updatedMedication.user_id,
+        name: updatedMedication.name,
+        format: updatedMedication.format,
+        dosage: updatedMedication.dosage,
+        dosageUnit: updatedMedication.dosage_unit,
+        frequency: updatedMedication.frequency,
+        quantity: updatedMedication.quantity,
+        administrationRoute: updatedMedication.administration_route,
+        notes: updatedMedication.notes,
+        startDate: updatedMedication.start_date,
+        isActive: updatedMedication.is_active,
+        createdAt: updatedMedication.created_at
       };
 
-      medicationsStore.set(user.id, userMedications);
-      console.log("✅ Medicamento atualizado com sucesso (em memória):", userMedications[medicationIndex]);
-      res.json(userMedications[medicationIndex]);
+      console.log("✅ Medicamento atualizado com sucesso (PostgreSQL):", responseData);
+      res.json(responseData);
     } catch (error) {
       console.error("Erro ao atualizar medicamento:", error);
       res.status(500).json({ message: "Erro ao atualizar medicamento" });
@@ -4569,19 +4622,20 @@ export async function registerRoutes(app: Express): Promise<void> {
       const user = req.user as any;
       const id = parseInt(req.params.id);
 
-      // Find and mark medication as inactive in memory
-      const userMedications = medicationsStore.get(user.id) || [];
-      const medicationIndex = userMedications.findIndex(m => m.id === id && m.user_id === user.id);
+      // Soft delete - mark as inactive
+      const result = await pool.query(
+        `UPDATE medications 
+         SET is_active = false
+         WHERE id = $1 AND user_id = $2
+         RETURNING *`,
+        [id, user.id]
+      );
 
-      if (medicationIndex === -1) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ message: "Medicamento não encontrado" });
       }
 
-      // Mark as inactive instead of removing
-      userMedications[medicationIndex].is_active = false;
-      medicationsStore.set(user.id, userMedications);
-
-      console.log("✅ Medicamento marcado como inativo (em memória)");
+      console.log("✅ Medicamento marcado como inativo (PostgreSQL)");
       res.json({ message: "Medicamento excluído com sucesso" });
     } catch (error) {
       console.error("Erro ao excluir medicamento:", error);
