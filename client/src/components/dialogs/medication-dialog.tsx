@@ -32,8 +32,42 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, ChevronsUpDown, Sparkles, Lightbulb, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Helper function to render prescription type badge with appropriate colors
+const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' | 'C' }) => {
+    if (!type || type === 'common') return null;
+
+    const badgeConfig: Record<string, { label: string; className: string }> = {
+        'A': {
+            label: 'A',
+            className: 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-100'
+        },
+        'B1': {
+            label: 'B1',
+            className: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-100'
+        },
+        'B2': {
+            label: 'B2',
+            className: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-100'
+        },
+        'C': {
+            label: 'C',
+            className: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-100'
+        },
+    };
+
+    const config = badgeConfig[type];
+    if (!config) return null;
+
+    return (
+        <Badge variant="outline" className={cn("text-xs font-semibold", config.className)}>
+            {config.label}
+        </Badge>
+    );
+};
 
 export const medicationSchema = z.object({
     name: z.string().min(1, "Nome do medicamento é obrigatório"),
@@ -1598,8 +1632,76 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
     },
 ];
 
-// Lista simples de nomes de medicamentos para autocomplete
-const ALL_MEDICATIONS = MEDICATION_DATABASE.map(m => m.name).sort();
+// Interface para item de medicamento com apresentação
+interface MedicationListItem {
+    displayName: string;  // Nome exibido: "Dipirona (comprimido)"
+    baseName: string;     // Nome base: "Dipirona"
+    format: string;       // Formato: "comprimido"
+    dosage?: string;      // Dosagem: "500"
+    unit?: string;        // Unidade: "mg"
+    prescriptionType?: 'common' | 'A' | 'B1' | 'B2' | 'C';
+}
+
+// Mapear formatos para categorias amigáveis
+const formatCategory = (format: string): string => {
+    const lower = format.toLowerCase();
+    if (lower.includes('comprimido') || lower.includes('capsula') || lower.includes('cápsula')) {
+        return 'comprimido/cápsula';
+    }
+    if (lower.includes('gotas') || lower.includes('solucao') || lower.includes('solução') || lower.includes('xarope') || lower.includes('suspensao') || lower.includes('suspensão')) {
+        return 'gotas/solução';
+    }
+    if (lower.includes('injecao') || lower.includes('injeção') || lower.includes('injetável') || lower.includes('injetavel')) {
+        return 'injetável';
+    }
+    if (lower.includes('creme') || lower.includes('pomada') || lower.includes('gel')) {
+        return 'tópico';
+    }
+    if (lower.includes('colirio') || lower.includes('colírio')) {
+        return 'colírio';
+    }
+    if (lower.includes('spray') || lower.includes('inalatorio') || lower.includes('inalatório')) {
+        return 'inalatório';
+    }
+    return format;
+};
+
+// Gerar lista de medicamentos com apresentações únicas
+const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
+    const items: MedicationListItem[] = [];
+    const seen = new Set<string>();
+
+    MEDICATION_DATABASE.forEach(med => {
+        // Agrupar apresentações por categoria
+        const categoriesAdded = new Set<string>();
+
+        med.presentations.forEach(pres => {
+            const category = formatCategory(pres.format);
+
+            // Evitar duplicatas da mesma categoria para o mesmo medicamento
+            const key = `${med.name}-${category}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                categoriesAdded.add(category);
+
+                items.push({
+                    displayName: `${med.name} (${category})`,
+                    baseName: med.name,
+                    format: pres.format,
+                    dosage: pres.dosage,
+                    unit: pres.unit,
+                    prescriptionType: med.prescriptionType
+                });
+            }
+        });
+    });
+
+    // Ordenar alfabeticamente
+    return items.sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt-BR'));
+})();
+
+// Lista simples de nomes base para busca (mantido para compatibilidade)
+const ALL_MEDICATIONS = MEDICATION_DATABASE.map(m => m.name).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 const MEDICATION_FORMATS = [
     { value: "comprimido", label: "Comprimido" },
@@ -1752,10 +1854,10 @@ export function MedicationDialog({
 
     // Filtrar medicamentos baseado na busca
     const filteredMedications = useMemo(() => {
-        if (!searchValue) return ALL_MEDICATIONS.slice(0, 20);
+        if (!searchValue) return ALL_MEDICATIONS;
         return ALL_MEDICATIONS.filter(med =>
             med.toLowerCase().includes(searchValue.toLowerCase())
-        ).slice(0, 20);
+        );
     }, [searchValue]);
 
     // Watch para cálculo automático de quantidade
@@ -1837,7 +1939,7 @@ export function MedicationDialog({
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                     <FormLabel>Nome do Medicamento *</FormLabel>
-                                    <Popover open={medicationOpen} onOpenChange={setMedicationOpen}>
+                                    <Popover open={medicationOpen} onOpenChange={setMedicationOpen} modal={false}>
                                         <PopoverTrigger asChild>
                                             <FormControl>
                                                 <Button
@@ -1851,15 +1953,19 @@ export function MedicationDialog({
                                                 >
                                                     <span className="flex items-center gap-2">
                                                         {field.value || "Selecione o medicamento"}
-                                                        {selectedMedInfo?.isControlled && (
-                                                            <Badge variant="secondary" className="text-xs">Controlado</Badge>
+                                                        {selectedMedInfo?.prescriptionType && selectedMedInfo.prescriptionType !== 'common' && (
+                                                            <PrescriptionTypeBadge type={selectedMedInfo.prescriptionType} />
                                                         )}
                                                     </span>
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[400px] p-0" align="start">
+                                        <PopoverContent
+                                            className="w-[400px] p-0"
+                                            align="start"
+                                            onOpenAutoFocus={(e) => e.preventDefault()}
+                                        >
                                             <div className="flex items-center border-b px-3">
                                                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                                                 <input
@@ -1869,55 +1975,64 @@ export function MedicationDialog({
                                                     onChange={(e) => setSearchValue(e.target.value)}
                                                 />
                                             </div>
-                                            <div className="max-h-[300px] overflow-y-auto p-1">
-                                                {filteredMedications.length === 0 ? (
-                                                    <div className="py-6 text-center text-sm">
-                                                        <p>Nenhum medicamento encontrado.</p>
-                                                        {searchValue && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="mt-2"
-                                                                onClick={() => {
-                                                                    field.onChange(searchValue);
-                                                                    setMedicationOpen(false);
-                                                                    setSearchValue("");
-                                                                }}
-                                                            >
-                                                                Usar "{searchValue}"
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    filteredMedications.map((medication) => {
-                                                        const medInfo = MEDICATION_DATABASE.find(m => m.name === medication);
-                                                        return (
-                                                            <div
-                                                                key={medication}
-                                                                className={cn(
-                                                                    "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
-                                                                    field.value === medication && "bg-accent"
-                                                                )}
-                                                                onClick={() => {
-                                                                    field.onChange(medication);
-                                                                    setMedicationOpen(false);
-                                                                    setSearchValue("");
-                                                                }}
-                                                            >
-                                                                <Check
+                                            <div
+                                                className="max-h-[300px] overflow-y-auto p-1"
+                                                onWheel={(e) => {
+                                                    e.stopPropagation();
+                                                    const target = e.currentTarget;
+                                                    target.scrollTop += e.deltaY;
+                                                }}
+                                            >
+                                                <div className="pr-2">
+                                                    {filteredMedications.length === 0 ? (
+                                                        <div className="py-6 text-center text-sm">
+                                                            <p>Nenhum medicamento encontrado.</p>
+                                                            {searchValue && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="mt-2"
+                                                                    onClick={() => {
+                                                                        field.onChange(searchValue);
+                                                                        setMedicationOpen(false);
+                                                                        setSearchValue("");
+                                                                    }}
+                                                                >
+                                                                    Usar "{searchValue}"
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        filteredMedications.map((medication) => {
+                                                            const medInfo = MEDICATION_DATABASE.find(m => m.name === medication);
+                                                            return (
+                                                                <div
+                                                                    key={medication}
                                                                     className={cn(
-                                                                        "h-4 w-4",
-                                                                        field.value === medication ? "opacity-100" : "opacity-0"
+                                                                        "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                                                                        field.value === medication && "bg-accent"
                                                                     )}
-                                                                />
-                                                                <span className="flex-1">{medication}</span>
-                                                                {medInfo?.isControlled && (
-                                                                    <Badge variant="secondary" className="text-xs">Controlado</Badge>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })
-                                                )}
+                                                                    onClick={() => {
+                                                                        field.onChange(medication);
+                                                                        setMedicationOpen(false);
+                                                                        setSearchValue("");
+                                                                    }}
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "h-4 w-4",
+                                                                            field.value === medication ? "opacity-100" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    <span className="flex-1">{medication}</span>
+                                                                    {medInfo?.prescriptionType && medInfo.prescriptionType !== 'common' && (
+                                                                        <PrescriptionTypeBadge type={medInfo.prescriptionType} />
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
                                             </div>
                                         </PopoverContent>
                                     </Popover>
