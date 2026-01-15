@@ -41,6 +41,7 @@ export const medicationSchema = z.object({
     dosage: z.string().min(1, "Dosagem é obrigatória"),
     dosageUnit: z.string().default("mg"),
     frequency: z.string().min(1, "Frequência é obrigatória"),
+    doseAmount: z.coerce.number().min(1).default(1),
     quantity: z.string().optional(),
     administrationRoute: z.string().default("oral"),
     startDate: z.string().min(1, "Data de início é obrigatória"),
@@ -203,8 +204,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20-40mg 1x/dia", indication: "Depressão, TOC" },
-            { dosage: "40", unit: "mg", format: "cápsula", commonDose: "40-60mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "capsula", commonDose: "20-40mg 1x/dia", indication: "Depressão, TOC" },
+            { dosage: "40", unit: "mg", format: "capsula", commonDose: "40-60mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar pela manhã",
@@ -255,8 +256,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "30", unit: "mg", format: "cápsula", commonDose: "30-60mg 1x/dia", indication: "Depressão, fibromialgia" },
-            { dosage: "60", unit: "mg", format: "cápsula", commonDose: "60mg 1x/dia" },
+            { dosage: "30", unit: "mg", format: "capsula", commonDose: "30-60mg 1x/dia", indication: "Depressão, fibromialgia" },
+            { dosage: "60", unit: "mg", format: "capsula", commonDose: "60mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -322,8 +323,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Inibidor de Bomba de Prótons",
         route: "oral",
         presentations: [
-            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20mg 1x/dia", indication: "Proteção gástrica" },
-            { dosage: "40", unit: "mg", format: "cápsula", commonDose: "40mg 1x/dia", indication: "DRGE, úlcera" },
+            { dosage: "20", unit: "mg", format: "capsula", commonDose: "20mg 1x/dia", indication: "Proteção gástrica" },
+            { dosage: "40", unit: "mg", format: "capsula", commonDose: "40mg 1x/dia", indication: "DRGE, úlcera" },
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Tomar em jejum, 30min antes da refeição",
@@ -398,7 +399,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600mg 3x/dia" },
             // Apresentações pediátricas
             {
-                dosage: "50", unit: "mg/ml", format: "suspensão",
+                dosage: "50", unit: "mg/ml", format: "suspensao",
                 commonDose: "5-10mg/kg/dose 3-4x/dia",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -409,7 +410,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 frequency: 3
             },
             {
-                dosage: "100", unit: "mg/5ml", format: "suspensão",
+                dosage: "100", unit: "mg/5ml", format: "suspensao",
                 commonDose: "5-10mg/kg/dose 3-4x/dia",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -450,11 +451,11 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antibiótico",
         route: "oral",
         presentations: [
-            { dosage: "500", unit: "mg", format: "cápsula", commonDose: "500mg 8/8h por 7 dias" },
+            { dosage: "500", unit: "mg", format: "capsula", commonDose: "500mg 8/8h por 7 dias" },
             { dosage: "875", unit: "mg", format: "comprimido", commonDose: "875mg 12/12h por 7 dias" },
             // Apresentações líquidas pediátricas
             {
-                dosage: "250", unit: "mg/5ml", format: "suspensão",
+                dosage: "250", unit: "mg/5ml", format: "suspensao",
                 commonDose: "25-50mg/kg/dia dividido 8/8h",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -465,7 +466,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 frequency: 3
             },
             {
-                dosage: "500", unit: "mg/5ml", format: "suspensão",
+                dosage: "500", unit: "mg/5ml", format: "suspensao",
                 commonDose: "25-50mg/kg/dia dividido 8/8h",
                 indication: "Uso pediátrico - concentração alta",
                 isPediatric: true,
@@ -486,7 +487,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 1x/dia por 3-5 dias" },
             // Apresentação pediátrica
             {
-                dosage: "200", unit: "mg/5ml", format: "suspensão",
+                dosage: "200", unit: "mg/5ml", format: "suspensao",
                 commonDose: "10mg/kg/dia 1x/dia por 3-5 dias",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -725,8 +726,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "160", unit: "mg", format: "comprimido", commonDose: "160mg 1x/dia" },
-            { dosage: "200", unit: "mg", format: "cápsula", commonDose: "200mg 1x/dia" },
-            { dosage: "250", unit: "mg", format: "cápsula", commonDose: "250mg 1x/dia" },
+            { dosage: "200", unit: "mg", format: "capsula", commonDose: "200mg 1x/dia" },
+            { dosage: "250", unit: "mg", format: "capsula", commonDose: "250mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar com as refeições",
@@ -762,9 +763,9 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "37.5", unit: "mg", format: "cápsula", commonDose: "37.5-75mg 1x/dia", indication: "Dose inicial" },
-            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75-150mg 1x/dia" },
-            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150-225mg 1x/dia" },
+            { dosage: "37.5", unit: "mg", format: "capsula", commonDose: "37.5-75mg 1x/dia", indication: "Dose inicial" },
+            { dosage: "75", unit: "mg", format: "capsula", commonDose: "75-150mg 1x/dia" },
+            { dosage: "150", unit: "mg", format: "capsula", commonDose: "150-225mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -775,10 +776,10 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "10", unit: "mg", format: "cápsula", commonDose: "10-25mg 1-3x/dia", indication: "Dose inicial" },
-            { dosage: "25", unit: "mg", format: "cápsula", commonDose: "25-75mg 1x/dia" },
-            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50-150mg 1x/dia" },
-            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75-150mg 1x/dia" },
+            { dosage: "10", unit: "mg", format: "capsula", commonDose: "10-25mg 1-3x/dia", indication: "Dose inicial" },
+            { dosage: "25", unit: "mg", format: "capsula", commonDose: "25-75mg 1x/dia" },
+            { dosage: "50", unit: "mg", format: "capsula", commonDose: "50-150mg 1x/dia" },
+            { dosage: "75", unit: "mg", format: "capsula", commonDose: "75-150mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar à noite",
@@ -1017,8 +1018,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300mg 3x/dia", indication: "Dose inicial" },
-            { dosage: "400", unit: "mg", format: "cápsula", commonDose: "400mg 3x/dia" },
+            { dosage: "300", unit: "mg", format: "capsula", commonDose: "300mg 3x/dia", indication: "Dose inicial" },
+            { dosage: "400", unit: "mg", format: "capsula", commonDose: "400mg 3x/dia" },
             { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600mg 3x/dia" },
         ],
         commonFrequencies: ["3x ao dia"],
@@ -1030,9 +1031,9 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'B1',
         presentations: [
-            { dosage: "75", unit: "mg", format: "cápsula", commonDose: "75mg 2x/dia", indication: "Dose inicial" },
-            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150mg 2x/dia" },
-            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300mg 2x/dia" },
+            { dosage: "75", unit: "mg", format: "capsula", commonDose: "75mg 2x/dia", indication: "Dose inicial" },
+            { dosage: "150", unit: "mg", format: "capsula", commonDose: "150mg 2x/dia" },
+            { dosage: "300", unit: "mg", format: "capsula", commonDose: "300mg 2x/dia" },
         ],
         commonFrequencies: ["2x ao dia"],
     },
@@ -1054,9 +1055,9 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anti-inflamatório",
         route: "oral",
         presentations: [
-            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50mg 3x/dia" },
-            { dosage: "100", unit: "mg", format: "cápsula", commonDose: "100mg 2x/dia" },
-            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150mg 1x/dia", indication: "Liberação prolongada" },
+            { dosage: "50", unit: "mg", format: "capsula", commonDose: "50mg 3x/dia" },
+            { dosage: "100", unit: "mg", format: "capsula", commonDose: "100mg 2x/dia" },
+            { dosage: "150", unit: "mg", format: "capsula", commonDose: "150mg 1x/dia", indication: "Liberação prolongada" },
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia"],
     },
@@ -1075,7 +1076,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anti-inflamatório",
         route: "oral",
         presentations: [
-            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "capsula", commonDose: "20mg 1x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -1088,7 +1089,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
             // Apresentação pediátrica
             {
-                dosage: "3", unit: "mg/ml", format: "solução",
+                dosage: "3", unit: "mg/ml", format: "solucao",
                 commonDose: "1-2mg/kg/dia 1x/dia",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -1143,7 +1144,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         isControlled: true,
         prescriptionType: 'A',
         presentations: [
-            { dosage: "50", unit: "mg", format: "cápsula", commonDose: "50-100mg 4-6x/dia" },
+            { dosage: "50", unit: "mg", format: "capsula", commonDose: "50-100mg 4-6x/dia" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia", indication: "Liberação prolongada" },
             { dosage: "100", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 4-6x/dia" },
         ],
@@ -1187,7 +1188,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "875+125", unit: "mg", format: "comprimido", commonDose: "875+125mg 12/12h por 7-10 dias" },
             // Apresentações pediátricas
             {
-                dosage: "250+62.5", unit: "mg/5ml", format: "suspensão",
+                dosage: "250+62.5", unit: "mg/5ml", format: "suspensao",
                 commonDose: "25-45mg/kg/dia (Amox) dividido 12/12h",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -1198,7 +1199,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 frequency: 2
             },
             {
-                dosage: "400+57", unit: "mg/5ml", format: "suspensão",
+                dosage: "400+57", unit: "mg/5ml", format: "suspensao",
                 commonDose: "25-45mg/kg/dia (Amox) dividido 12/12h",
                 indication: "Uso pediátrico - alta concentração",
                 isPediatric: true,
@@ -1226,11 +1227,11 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antibiótico",
         route: "oral",
         presentations: [
-            { dosage: "500", unit: "mg", format: "cápsula", commonDose: "500mg 6/6h por 7-10 dias" },
+            { dosage: "500", unit: "mg", format: "capsula", commonDose: "500mg 6/6h por 7-10 dias" },
             { dosage: "1000", unit: "mg", format: "comprimido", commonDose: "1g 12/12h por 7-10 dias" },
             // Apresentação pediátrica
             {
-                dosage: "250", unit: "mg/5ml", format: "suspensão",
+                dosage: "250", unit: "mg/5ml", format: "suspensao",
                 commonDose: "25-50mg/kg/dia dividido 6/6h",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -1262,7 +1263,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "800+160", unit: "mg", format: "comprimido", commonDose: "800+160mg 12/12h" },
             // Apresentação pediátrica
             {
-                dosage: "200+40", unit: "mg/5ml", format: "suspensão",
+                dosage: "200+40", unit: "mg/5ml", format: "suspensao",
                 commonDose: "40-50mg/kg/dia (SMZ) dividido 12/12h",
                 indication: "Uso pediátrico (>2 meses)",
                 isPediatric: true,
@@ -1286,7 +1287,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 8/8h por 7-10 dias" },
             // Apresentação pediátrica
             {
-                dosage: "40", unit: "mg/ml", format: "suspensão",
+                dosage: "40", unit: "mg/ml", format: "suspensao",
                 commonDose: "30-40mg/kg/dia dividido 8/8h",
                 indication: "Uso pediátrico",
                 isPediatric: true,
@@ -1305,8 +1306,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antibiótico",
         route: "oral",
         presentations: [
-            { dosage: "150", unit: "mg", format: "cápsula", commonDose: "150-300mg 6/6h" },
-            { dosage: "300", unit: "mg", format: "cápsula", commonDose: "300-600mg 6/6h" },
+            { dosage: "150", unit: "mg", format: "capsula", commonDose: "150-300mg 6/6h" },
+            { dosage: "300", unit: "mg", format: "capsula", commonDose: "300-600mg 6/6h" },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h"],
     },
@@ -1316,8 +1317,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Inibidor de Bomba de Prótons",
         route: "oral",
         presentations: [
-            { dosage: "20", unit: "mg", format: "cápsula", commonDose: "20mg 1x/dia" },
-            { dosage: "40", unit: "mg", format: "cápsula", commonDose: "40mg 1-2x/dia" },
+            { dosage: "20", unit: "mg", format: "capsula", commonDose: "20mg 1x/dia" },
+            { dosage: "40", unit: "mg", format: "capsula", commonDose: "40mg 1-2x/dia" },
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Tomar em jejum",
@@ -1327,8 +1328,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Inibidor de Bomba de Prótons",
         route: "oral",
         presentations: [
-            { dosage: "15", unit: "mg", format: "cápsula", commonDose: "15mg 1x/dia" },
-            { dosage: "30", unit: "mg", format: "cápsula", commonDose: "30mg 1-2x/dia" },
+            { dosage: "15", unit: "mg", format: "capsula", commonDose: "15mg 1x/dia" },
+            { dosage: "30", unit: "mg", format: "capsula", commonDose: "30mg 1-2x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar em jejum",
@@ -1518,7 +1519,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Urologia",
         route: "oral",
         presentations: [
-            { dosage: "0.4", unit: "mg", format: "cápsula", commonDose: "0.4mg 1x/dia", indication: "HPB" },
+            { dosage: "0.4", unit: "mg", format: "capsula", commonDose: "0.4mg 1x/dia", indication: "HPB" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar após o café da manhã",
@@ -1553,10 +1554,10 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "1000", unit: "UI", format: "comprimido", commonDose: "1000-2000 UI 1x/dia" },
-            { dosage: "2000", unit: "UI", format: "cápsula", commonDose: "2000 UI 1x/dia" },
-            { dosage: "5000", unit: "UI", format: "cápsula", commonDose: "5000 UI 1x/dia", indication: "Deficiência moderada" },
-            { dosage: "7000", unit: "UI", format: "cápsula", commonDose: "7000 UI 1x/semana" },
-            { dosage: "50000", unit: "UI", format: "cápsula", commonDose: "50000 UI 1x/semana", indication: "Deficiência grave" },
+            { dosage: "2000", unit: "UI", format: "capsula", commonDose: "2000 UI 1x/dia" },
+            { dosage: "5000", unit: "UI", format: "capsula", commonDose: "5000 UI 1x/dia", indication: "Deficiência moderada" },
+            { dosage: "7000", unit: "UI", format: "capsula", commonDose: "7000 UI 1x/semana" },
+            { dosage: "50000", unit: "UI", format: "capsula", commonDose: "50000 UI 1x/semana", indication: "Deficiência grave" },
         ],
         commonFrequencies: ["1x ao dia", "1x por semana"],
     },
@@ -1624,6 +1625,7 @@ const DOSAGE_UNITS = [
     { value: "%", label: "%" },
     { value: "gotas", label: "gotas" },
     { value: "mg/ml", label: "mg/ml" },
+    { value: "mg/5ml", label: "mg/5ml" },
 ];
 
 const FREQUENCIES = [
@@ -1650,6 +1652,30 @@ const ADMINISTRATION_ROUTES = [
     { value: "nasal", label: "Nasal" },
     { value: "transdermico", label: "Transdérmico" },
 ];
+
+const normalizeFormat = (format: string) => {
+    if (!format) return "comprimido";
+    const lower = format.toLowerCase().trim();
+
+    // Manual overrides for known issues
+    const overrides: Record<string, string> = {
+        "suspensão": "suspensao",
+        "solução": "solucao",
+        "cápsula": "capsula",
+        "inalatório": "inalatorio",
+        "tópico": "topico",
+        "supositório": "supositorio",
+        "injeção": "injecao",
+        "colírio": "colirio"
+    };
+
+    if (overrides[lower]) return overrides[lower];
+
+    return lower
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ç/g, "c");
+};
 
 export function MedicationDialog({
     open,
@@ -1731,6 +1757,46 @@ export function MedicationDialog({
         ).slice(0, 20);
     }, [searchValue]);
 
+    // Watch para cálculo automático de quantidade
+    const watchedFrequency = form.watch("frequency");
+    const watchedFormat = form.watch("format");
+    const watchedDoseAmount = form.watch("doseAmount");
+
+    // Calcular quantidade automaticamente baseada na frequência (para 30 dias)
+    useEffect(() => {
+        if (!watchedFrequency) return;
+
+        // Apenas calcular para formas sólidas comuns
+        const formatLower = (watchedFormat || "").toLowerCase();
+        const isSolid = formatLower.includes("comprimido") || formatLower.includes("capsula") || formatLower.includes("cápsula");
+
+        if (!isSolid) return;
+
+        let frequencyMultiplier = 0;
+        switch (watchedFrequency) {
+            case "1x ao dia": frequencyMultiplier = 30; break;
+            case "2x ao dia": frequencyMultiplier = 60; break;
+            case "3x ao dia": frequencyMultiplier = 90; break;
+            case "4x ao dia": frequencyMultiplier = 120; break;
+            case "12h em 12h": frequencyMultiplier = 60; break;
+            case "8h em 8h": frequencyMultiplier = 90; break;
+            case "6h em 6h": frequencyMultiplier = 120; break;
+            case "1x por semana": frequencyMultiplier = 4; break;
+            case "1x por mês": frequencyMultiplier = 1; break;
+            default: return; // Não calcular para "Quando necessário" ou outros
+        }
+
+        const dose = watchedDoseAmount || 1;
+        const totalQuantity = dose * frequencyMultiplier;
+
+        let suffix = "comprimidos";
+        if (formatLower.includes("capsula") || formatLower.includes("cápsula")) {
+            suffix = "cápsulas";
+        }
+
+        form.setValue("quantity", `${totalQuantity} ${suffix}`);
+    }, [watchedFrequency, watchedFormat, watchedDoseAmount, form]);
+
     // Função para aplicar sugestão de dosagem
     const applyDosageSuggestion = useCallback((presentation: MedicationPresentation) => {
         // Marcar para ignorar o próximo foco
@@ -1738,7 +1804,8 @@ export function MedicationDialog({
 
         form.setValue("dosage", presentation.dosage);
         form.setValue("dosageUnit", presentation.unit);
-        form.setValue("format", presentation.format);
+        form.setValue("format", normalizeFormat(presentation.format));
+        form.setValue("doseAmount", 1);
         setDosagePopoverOpen(false);
 
         // Resetar o flag após um curto delay
@@ -1957,7 +2024,9 @@ export function MedicationDialog({
                                                                     >
                                                                         <div>
                                                                             <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
-                                                                            <span className="text-gray-500 ml-2 text-sm">({pres.format})</span>
+                                                                            <span className="text-gray-500 ml-2 text-sm">
+                                                                                ({MEDICATION_FORMATS.find(f => f.value === pres.format)?.label || pres.format})
+                                                                            </span>
                                                                         </div>
                                                                         {pres.commonDose && (
                                                                             <span className="text-xs text-gray-500">{pres.commonDose}</span>
@@ -1999,7 +2068,7 @@ export function MedicationDialog({
                                                                                 if (calculation) {
                                                                                     form.setValue("dosage", `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`);
                                                                                     form.setValue("dosageUnit", "ml");
-                                                                                    form.setValue("format", pres.format);
+                                                                                    form.setValue("format", normalizeFormat(pres.format));
                                                                                     skipNextFocusRef.current = true;
                                                                                     setDosagePopoverOpen(false);
                                                                                     setTimeout(() => { skipNextFocusRef.current = false; }, 200);
@@ -2009,7 +2078,14 @@ export function MedicationDialog({
                                                                             }}
                                                                         >
                                                                             <div className="flex items-center justify-between">
-                                                                                <span className="font-semibold text-gray-900 text-sm">{pres.dosage}</span>
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <span className="font-semibold text-gray-900 text-sm">{pres.dosage}</span>
+                                                                                    {pres.format && (
+                                                                                        <span className="text-gray-500 font-normal text-xs">
+                                                                                            ({MEDICATION_FORMATS.find(f => f.value === pres.format)?.label || pres.format})
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
                                                                                 {calculation ? (
                                                                                     <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
                                                                                         {calculation.mlPerAdminLow === calculation.mlPerAdminHigh
@@ -2097,19 +2173,40 @@ export function MedicationDialog({
                                     </FormItem>
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name="quantity"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Quantidade</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Ex: 60 comprimidos" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="doseAmount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Quantidade</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="quantity"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Total</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Ex: 60 comprimidos" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <FormField
                                 control={form.control}
                                 name="startDate"

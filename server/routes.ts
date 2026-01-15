@@ -4466,7 +4466,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/medications", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user as any;
-      const { name, format, dosage, dosageUnit, frequency, quantity, administrationRoute, notes, startDate, isActive } = req.body;
+      const { name, format, dosage, dosageUnit, frequency, doseAmount, quantity, administrationRoute, notes, startDate, isActive } = req.body;
 
       if (!name) {
         return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
@@ -4474,9 +4474,11 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Insert into database
       const result = await pool.query(
-        `INSERT INTO medications (user_id, name, format, dosage, dosage_unit, frequency, quantity, administration_route, notes, start_date, is_active, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
-         RETURNING *`,
+        `INSERT INTO medications (
+          user_id, name, format, dosage, dosage_unit, frequency, dose_amount, 
+          quantity, administration_route, notes, start_date, is_active, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+        RETURNING *`,
         [
           user.id,
           name,
@@ -4484,6 +4486,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           dosage,
           dosageUnit || 'mg',
           frequency,
+          doseAmount || 1,
           quantity || null,
           administrationRoute || 'oral',
           notes || null,
@@ -4503,6 +4506,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         dosage: newMedication.dosage,
         dosageUnit: newMedication.dosage_unit,
         frequency: newMedication.frequency,
+        doseAmount: newMedication.dose_amount,
         quantity: newMedication.quantity,
         administrationRoute: newMedication.administration_route,
         notes: newMedication.notes,
@@ -4539,6 +4543,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         dosage: m.dosage,
         dosageUnit: m.dosage_unit,
         frequency: m.frequency,
+        doseAmount: m.dose_amount,
         quantity: m.quantity,
         administrationRoute: m.administration_route,
         notes: m.notes,
@@ -4558,7 +4563,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
-      const { name, format, dosage, dosageUnit, frequency, quantity, administrationRoute, notes, startDate } = req.body;
+      const { name, format, dosage, dosageUnit, frequency, doseAmount, quantity, administrationRoute, notes, startDate } = req.body;
 
       if (!name) {
         return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
@@ -4568,8 +4573,9 @@ export async function registerRoutes(app: Express): Promise<void> {
       const result = await pool.query(
         `UPDATE medications 
          SET name = $1, format = $2, dosage = $3, dosage_unit = $4, frequency = $5, 
-             quantity = $6, administration_route = $7, notes = $8, start_date = $9
-         WHERE id = $10 AND user_id = $11
+             quantity = $6, administration_route = $7, notes = $8, start_date = $9,
+             dose_amount = $10
+         WHERE id = $11 AND user_id = $12
          RETURNING *`,
         [
           name,
@@ -4581,6 +4587,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           administrationRoute || 'oral',
           notes || null,
           startDate,
+          doseAmount || 1,
           id,
           user.id
         ]
@@ -4601,6 +4608,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         dosage: updatedMedication.dosage,
         dosageUnit: updatedMedication.dosage_unit,
         frequency: updatedMedication.frequency,
+        doseAmount: updatedMedication.dose_amount,
         quantity: updatedMedication.quantity,
         administrationRoute: updatedMedication.administration_route,
         notes: updatedMedication.notes,

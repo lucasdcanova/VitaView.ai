@@ -58,6 +58,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             dosage: "",
             dosageUnit: "mg",
             frequency: "",
+            doseAmount: 1,
             quantity: "",
             administrationRoute: "oral",
             startDate: new Date().toISOString().split('T')[0],
@@ -73,6 +74,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             dosage: "",
             dosageUnit: "mg",
             frequency: "",
+            doseAmount: 1,
             quantity: "",
             administrationRoute: "oral",
             startDate: "",
@@ -199,6 +201,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             dosage: medication.dosage,
             dosageUnit: medication.dosageUnit || medication.dosage_unit || "mg",
             frequency: medication.frequency,
+            doseAmount: medication.doseAmount || medication.dose_amount || 1,
             quantity: medication.quantity || "",
             administrationRoute: medication.administrationRoute || medication.administration_route || "oral",
             startDate: medication.startDate ? medication.startDate.split('T')[0] : "",
@@ -308,7 +311,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             doctorSpecialty,
             medications: selectedMeds.map((med: any) => ({
                 name: med.name,
-                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit || ''}`,
+                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit || ''}${(med.doseAmount > 1 || med.dose_amount > 1) ? ` (${med.doseAmount || med.dose_amount} ${med.format}s)` : ''}`,
                 frequency: med.frequency,
                 notes: med.notes
             })),
@@ -436,6 +439,12 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                         <div className="text-xs text-gray-600 flex items-center gap-1">
                                                             <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
                                                             <span>{medication.dosage}{medication.dosageUnit || medication.dosage_unit}</span>
+                                                            {(medication.doseAmount > 1 || medication.dose_amount > 1) && (
+                                                                <>
+                                                                    <span className="text-gray-300">•</span>
+                                                                    <span>{medication.doseAmount || medication.dose_amount} {medication.format}s</span>
+                                                                </>
+                                                            )}
                                                             <span className="text-gray-300">•</span>
                                                             <span>{medication.frequency}</span>
                                                         </div>

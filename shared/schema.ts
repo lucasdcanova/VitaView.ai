@@ -251,6 +251,7 @@ export const medications = pgTable("medications", {
   dosage: text("dosage").notNull(), // ex: 500, 10, etc. (valor numérico)
   dosageUnit: text("dosage_unit").default("mg"), // mg, g, ml, mcg, UI, etc.
   frequency: text("frequency").notNull(), // ex: 1x ao dia, 2x ao dia, etc.
+  doseAmount: integer("dose_amount").default(1), // Quantidade por dose (ex: 2 comprimidos)
   quantity: text("quantity"), // ex: 60 comprimidos
   administrationRoute: text("administration_route").default("oral"), // oral, sublingual, injetavel, topico, etc.
   notes: text("notes"),
@@ -531,7 +532,7 @@ export type InsertHabit = z.infer<typeof insertHabitSchema>;
 export const prescriptions = pgTable("prescriptions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  profileId: integer("profile_id").notNull().references(() => profiles.id), // Link to patient profile
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   doctorName: text("doctor_name").notNull(),
   doctorCrm: text("doctor_crm").notNull(),
   doctorSpecialty: text("doctor_specialty"),
