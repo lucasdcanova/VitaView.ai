@@ -315,7 +315,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             doctorSpecialty,
             medications: selectedMeds.map((med: any) => ({
                 name: med.name,
-                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit || ''}${(med.doseAmount > 1 || med.dose_amount > 1) ? ` (${med.doseAmount || med.dose_amount} ${med.format}s)` : ''}`,
+                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit ? ' ' + (med.dosageUnit || med.dosage_unit) : ''}${(med.doseAmount > 1 || med.dose_amount > 1) ? ` (${med.doseAmount || med.dose_amount} ${med.format}s)` : ''}`.trim(),
                 frequency: med.frequency,
                 format: med.format,
                 quantity: med.quantity,

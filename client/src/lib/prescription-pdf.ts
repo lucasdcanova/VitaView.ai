@@ -201,11 +201,8 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData) => {
     data.medications.forEach((med, index) => {
         doc.setFont("helvetica", "bold");
 
-        // Linha 1: Nome + Dosagem (esquerda) | Quantidade (direita)
+        // Linha 1: Nome (esquerda) | Quantidade (direita)
         let medicationLine = cleanTextForPDF(med.name).toUpperCase();
-        if (med.dosage) {
-            medicationLine += ` ${med.dosage}`;
-        }
 
         doc.text(`${index + 1}.`, 15, yPos);
         doc.text(medicationLine, 22, yPos);
@@ -216,11 +213,18 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData) => {
             doc.text(med.quantity, rightMargin, yPos, { align: "right" });
         }
 
-        // Linha 2: Posologia (esquerda) | Via de administração (direita)
+        yPos += 5;
+
+        // Linha 2: Dosagem (se houver)
+        if (med.dosage) {
+            doc.setFont("helvetica", "normal");
+            doc.text(med.dosage, 22, yPos);
+            yPos += 5;
+        }
+
+        // Linha 3: Posologia (esquerda) | Via de administração (direita)
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-
-        yPos += 5;
 
         if (med.frequency) {
             let posologia = med.frequency;
@@ -576,8 +580,8 @@ const generateTypeAPrescription = (doc: jsPDF, data: PrescriptionData) => {
     yPos = 38;
     doc.setTextColor(0, 0, 0);
 
-    // Reutilizar estrutura do controlado
-    generateControlledPrescription(doc, data);
+    // Usar apenas o conteúdo controlado (sem header duplicado)
+    generateControlledContent(doc, data, yPos);
 };
 
 // ==========================================
@@ -668,6 +672,32 @@ const generateTypeCPrescription = (doc: jsPDF, data: PrescriptionData) => {
 };
 
 // ==========================================
+// RECEITA TIPO C1 (Especial - Antidepressivos, Antipsicóticos)
+// ==========================================
+const generateTypeC1Prescription = (doc: jsPDF, data: PrescriptionData) => {
+    const pageWidth = 210;
+    let yPos = 15;
+
+    drawLogo(doc, pageWidth - 30, 10);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("RECEITA DE CONTROLE ESPECIAL", 105, yPos, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Antidepressivos, Antipsicóticos - Lista C1 (2 vias)", 105, yPos + 5, { align: "center" });
+    doc.text("1ª Via - Retenção da Farmácia", 105, yPos + 9, { align: "center" });
+
+    yPos = 38;
+    doc.setTextColor(0, 0, 0);
+
+    generateControlledContent(doc, data, yPos);
+};
+
+// ==========================================
 // RECEITA ESPECIAL (Antibióticos, etc)
 // ==========================================
 const generateSpecialPrescription = (doc: jsPDF, data: PrescriptionData) => {
@@ -750,7 +780,6 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
     data.medications.forEach((med, index) => {
         doc.setFont("helvetica", "bold");
         let medicationLine = cleanTextForPDF(med.name).toUpperCase();
-        if (med.dosage) medicationLine += ` ${med.dosage}`;
 
         doc.text(`${index + 1}.`, 15, yPos);
         doc.text(medicationLine, 22, yPos);
@@ -761,6 +790,14 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
         }
 
         yPos += 5;
+
+        // Linha 2: Dosagem (se houver)
+        if (med.dosage) {
+            doc.setFont("helvetica", "normal");
+            doc.text(med.dosage, 22, yPos);
+            yPos += 5;
+        }
+
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
         if (med.frequency) {
@@ -844,7 +881,6 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
     data.medications.forEach((med, index) => {
         doc.setFont("helvetica", "bold");
         let medicationLine = cleanTextForPDF(med.name).toUpperCase();
-        if (med.dosage) medicationLine += ` ${med.dosage}`;
 
         doc.text(`${index + 1}.`, 15, yPos);
         doc.text(medicationLine, 22, yPos);
@@ -855,6 +891,13 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
         }
 
         yPos += 5;
+
+        if (med.dosage) {
+            doc.setFont("helvetica", "normal");
+            doc.text(med.dosage, 22, yPos);
+            yPos += 5;
+        }
+
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
         if (med.frequency) {
@@ -888,7 +931,8 @@ export const generatePrescriptionPDF = (data: PrescriptionData) => {
         A: [],
         B1: [],
         B2: [],
-        C: []
+        C: [],
+        C1: []  // Antidepressivos e Antipsicóticos (Receita Especial branca 2 vias)
     };
 
     data.medications.forEach(med => {
@@ -906,7 +950,7 @@ export const generatePrescriptionPDF = (data: PrescriptionData) => {
     });
 
     // Ordem de geração das páginas
-    const typeOrder: Array<keyof typeof groups> = ['padrao', 'especial', 'A', 'B1', 'B2', 'C'];
+    const typeOrder: Array<keyof typeof groups> = ['padrao', 'especial', 'A', 'B1', 'B2', 'C', 'C1'];
     const typesWithMeds = typeOrder.filter(type => groups[type].length > 0);
 
     if (typesWithMeds.length === 0) {
@@ -943,6 +987,9 @@ export const generatePrescriptionPDF = (data: PrescriptionData) => {
                 break;
             case 'C':
                 generateTypeCPrescription(doc, groupData);
+                break;
+            case 'C1':
+                generateTypeC1Prescription(doc, groupData);
                 break;
         }
     });
