@@ -1630,6 +1630,256 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Tomar em jejum com vitamina C para melhor absorção",
     },
+    // BENZODIAZEPÍNICOS ADICIONAIS
+    {
+        name: "Midazolam",
+        category: "Ansiolítico/Sedativo",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "7.5", unit: "mg", format: "comprimido", commonDose: "7.5-15mg à noite" },
+            { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15mg à noite" },
+            { dosage: "2", unit: "mg/ml", format: "gotas", commonDose: "15-30 gotas à noite" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Receita B1 (azul). Usar antes de procedimentos ou para insônia",
+    },
+    {
+        name: "Diazepam",
+        category: "Ansiolítico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia", "Quando necessário"],
+        notes: "Receita B1 (azul)",
+    },
+    {
+        name: "Lorazepam",
+        category: "Ansiolítico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 2-3x/dia" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul)",
+    },
+    // ANTIPSICÓTICOS
+    {
+        name: "Clorpromazina",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-100mg 2-3x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 2-3x/dia" },
+            { dosage: "40", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul). Causa fotossensibilidade",
+    },
+    {
+        name: "Haloperidol",
+        category: "Antipsicótico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-5mg 2-3x/dia" },
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
+            { dosage: "2", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1 (azul)",
+    },
+    {
+        name: "Risperidona",
+        category: "Antipsicótico Atípico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 1-2x/dia" },
+            { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1-2x/dia" },
+            { dosage: "3", unit: "mg", format: "comprimido", commonDose: "3-6mg 1x/dia" },
+            { dosage: "1", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Receita B1 (azul)",
+    },
+    {
+        name: "Quetiapina",
+        category: "Antipsicótico Atípico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1-2x/dia", indication: "Insônia, ansiedade" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-300mg 2x/dia" },
+            { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Receita B1 (azul)",
+    },
+    {
+        name: "Olanzapina",
+        category: "Antipsicótico Atípico",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 1x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Receita B1 (azul). Pode causar ganho de peso",
+    },
+    // ANTICONVULSIVANTES
+    {
+        name: "Carbamazepina",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2-3x/dia" },
+            { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 2-3x/dia" },
+            { dosage: "20", unit: "mg/ml", format: "suspensao", commonDose: "10-20ml 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1. Monitorar hemograma e função hepática",
+    },
+    {
+        name: "Fenitoína",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 3x/dia" },
+            { dosage: "100", unit: "mg", format: "capsula", commonDose: "100mg 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Receita B1. Monitorar níveis séricos",
+    },
+    {
+        name: "Ácido Valproico",
+        category: "Anticonvulsivante",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'B1',
+        presentations: [
+            { dosage: "250", unit: "mg", format: "capsula", commonDose: "250-500mg 2-3x/dia" },
+            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Receita B1. Evitar na gestação",
+    },
+    // ANTIEMÉTICOS E OUTROS
+    {
+        name: "Prometazina",
+        category: "Anti-histamínico/Antiemético",
+        route: "oral",
+        presentations: [
+            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-50mg 1-3x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "3x ao dia", "Quando necessário"],
+        notes: "Causa sonolência",
+    },
+    {
+        name: "Metoclopramida",
+        category: "Antiemético",
+        route: "oral",
+        presentations: [
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
+            { dosage: "4", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Tomar 30min antes das refeições",
+    },
+    {
+        name: "Ondansetrona",
+        category: "Antiemético",
+        route: "oral",
+        presentations: [
+            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 2-3x/dia" },
+            { dosage: "8", unit: "mg", format: "comprimido", commonDose: "8mg 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    // CORTICOIDES
+    {
+        name: "Dexametasona",
+        category: "Corticoide",
+        route: "oral",
+        presentations: [
+            { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-4mg 1x/dia" },
+            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 1x/dia" },
+            { dosage: "0.1", unit: "mg/ml", format: "gotas", commonDose: "10-40 gotas 1x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    {
+        name: "Prednisolona",
+        category: "Corticoide",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-60mg 1x/dia" },
+            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
+            { dosage: "3", unit: "mg/ml", format: "suspensao", commonDose: "1-2mg/kg/dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Tomar pela manhã",
+    },
+    // RELAXANTES MUSCULARES
+    {
+        name: "Ciclobenzaprina",
+        category: "Relaxante Muscular",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 3x/dia" },
+            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Pode causar sonolência",
+    },
+    // OPIOIDES (Receita A)
+    {
+        name: "Tramadol",
+        category: "Analgésico Opioide",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'A',
+        presentations: [
+            { dosage: "50", unit: "mg", format: "capsula", commonDose: "50-100mg 4-6x/dia" },
+            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2-3x/dia", indication: "Liberação prolongada" },
+            { dosage: "100", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4-6x/dia" },
+        ],
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "Receita A (amarela). Dose máxima 400mg/dia",
+    },
+    {
+        name: "Codeína",
+        category: "Analgésico Opioide",
+        route: "oral",
+        isControlled: true,
+        prescriptionType: 'A',
+        presentations: [
+            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4-6x/dia" },
+            { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60mg 4-6x/dia" },
+        ],
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "Receita A (amarela)",
+    },
 ];
 
 // Interface para item de medicamento com apresentação
@@ -1666,26 +1916,51 @@ const formatCategory = (format: string): string => {
     return format;
 };
 
-// Gerar lista de medicamentos com apresentações únicas
+// Gerar lista de medicamentos com apresentações únicas - usa emoji para indicar tipo
 const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
     const items: MedicationListItem[] = [];
     const seen = new Set<string>();
 
+    // Função para obter emoji baseado no formato
+    const getFormatEmoji = (format: string): string => {
+        const formatLower = format.toLowerCase();
+
+        // Comprimidos e cápsulas
+        if (formatLower.includes('comprimido') || formatLower.includes('capsula') || formatLower.includes('cápsula')) {
+            return '💊';
+        }
+
+        // Líquidos (gotas, suspensão, solução, xarope)
+        if (formatLower.includes('gotas') || formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
+            formatLower.includes('solucao') || formatLower.includes('solução') || formatLower.includes('xarope')) {
+            return '💧';
+        }
+
+        // Injetáveis
+        if (formatLower.includes('injecao') || formatLower.includes('injeção') || formatLower.includes('ampola')) {
+            return '💉';
+        }
+
+        // Outros (cremes, pomadas, colírios, sprays) - usar emoji genérico
+        return '💊';
+    };
+
     MEDICATION_DATABASE.forEach(med => {
-        // Agrupar apresentações por categoria
-        const categoriesAdded = new Set<string>();
-
         med.presentations.forEach(pres => {
-            const category = formatCategory(pres.format);
+            // Criar uma chave única para cada apresentação específica
+            const key = `${med.name}-${pres.format}-${pres.dosage}-${pres.unit}`;
 
-            // Evitar duplicatas da mesma categoria para o mesmo medicamento
-            const key = `${med.name}-${category}`;
             if (!seen.has(key)) {
                 seen.add(key);
-                categoriesAdded.add(category);
+
+                // Obter emoji do formato
+                const formatEmoji = getFormatEmoji(pres.format);
+
+                // Criar displayName simplificado: "💊 Medicamento 100 mg"
+                const displayName = `${formatEmoji} ${med.name} ${pres.dosage} ${pres.unit}`;
 
                 items.push({
-                    displayName: `${med.name} (${category})`,
+                    displayName: displayName,
                     baseName: med.name,
                     format: pres.format,
                     dosage: pres.dosage,
@@ -1696,8 +1971,8 @@ const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
         });
     });
 
-    // Ordenar alfabeticamente
-    return items.sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt-BR'));
+    // Ordenar alfabeticamente (ignorando o emoji no início)
+    return items.sort((a, b) => a.baseName.localeCompare(b.baseName, 'pt-BR') || a.displayName.localeCompare(b.displayName, 'pt-BR'));
 })();
 
 // Lista simples de nomes base para busca (mantido para compatibilidade)
@@ -1720,13 +1995,16 @@ const MEDICATION_FORMATS = [
 ];
 
 const DOSAGE_UNITS = [
+    { value: "comprimido", label: "comprimido" },
+    { value: "cápsula", label: "cápsula" },
+    { value: "gotas", label: "gotas" },
+    { value: "ml", label: "ml" },
+    { value: "ampola", label: "ampola" },
     { value: "mg", label: "mg" },
     { value: "g", label: "g" },
     { value: "mcg", label: "mcg" },
-    { value: "ml", label: "ml" },
     { value: "UI", label: "UI" },
     { value: "%", label: "%" },
-    { value: "gotas", label: "gotas" },
     { value: "mg/ml", label: "mg/ml" },
     { value: "mg/5ml", label: "mg/5ml" },
 ];
@@ -1838,42 +2116,51 @@ export function MedicationDialog({
     // Atualizar informações do medicamento quando selecionado
     useEffect(() => {
         if (selectedMedName) {
-            const medInfo = MEDICATION_DATABASE.find(
-                m => m.name.toLowerCase() === selectedMedName.toLowerCase()
+            // Encontrar o item selecionado na lista de apresentações
+            const selectedItem = ALL_MEDICATIONS_WITH_PRESENTATIONS.find(
+                item => item.displayName === selectedMedName
             );
-            setSelectedMedInfo(medInfo || null);
 
-            // Auto-preencher via de administração se disponível
-            if (medInfo && medInfo.route) {
-                form.setValue("administrationRoute", medInfo.route);
+            // Se encontrar, buscar info do medicamento pelo baseName
+            if (selectedItem) {
+                const medInfo = MEDICATION_DATABASE.find(
+                    m => m.name === selectedItem.baseName
+                );
+                setSelectedMedInfo(medInfo || null);
+            } else {
+                // Fallback: tentar buscar diretamente pelo nome (para medicamentos digitados manualmente)
+                const medInfo = MEDICATION_DATABASE.find(
+                    m => selectedMedName.toLowerCase().includes(m.name.toLowerCase())
+                );
+                setSelectedMedInfo(medInfo || null);
             }
         } else {
             setSelectedMedInfo(null);
         }
-    }, [selectedMedName, form]);
+    }, [selectedMedName]);
 
-    // Filtrar medicamentos baseado na busca
+    // Filtrar medicamentos baseado na busca - agora usa lista com apresentações
     const filteredMedications = useMemo(() => {
-        if (!searchValue) return ALL_MEDICATIONS;
-        return ALL_MEDICATIONS.filter(med =>
-            med.toLowerCase().includes(searchValue.toLowerCase())
+        if (!searchValue) return ALL_MEDICATIONS_WITH_PRESENTATIONS;
+        return ALL_MEDICATIONS_WITH_PRESENTATIONS.filter(med =>
+            med.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
+            med.baseName.toLowerCase().includes(searchValue.toLowerCase())
         );
     }, [searchValue]);
 
     // Watch para cálculo automático de quantidade
     const watchedFrequency = form.watch("frequency");
     const watchedFormat = form.watch("format");
-    const watchedDoseAmount = form.watch("doseAmount");
+    const watchedDosage = form.watch("dosage");
 
     // Calcular quantidade automaticamente baseada na frequência (para 30 dias)
     useEffect(() => {
-        if (!watchedFrequency) return;
+        if (!watchedFrequency || !watchedFormat) return;
 
-        // Apenas calcular para formas sólidas comuns
         const formatLower = (watchedFormat || "").toLowerCase();
         const isSolid = formatLower.includes("comprimido") || formatLower.includes("capsula") || formatLower.includes("cápsula");
-
-        if (!isSolid) return;
+        const isLiquid = formatLower.includes("gotas") || formatLower.includes("suspensao") || formatLower.includes("suspensão") ||
+            formatLower.includes("solucao") || formatLower.includes("solução") || formatLower.includes("xarope");
 
         let frequencyMultiplier = 0;
         switch (watchedFrequency) {
@@ -1886,19 +2173,39 @@ export function MedicationDialog({
             case "6h em 6h": frequencyMultiplier = 120; break;
             case "1x por semana": frequencyMultiplier = 4; break;
             case "1x por mês": frequencyMultiplier = 1; break;
-            default: return; // Não calcular para "Quando necessário" ou outros
+            default:
+                form.setValue("quantity", "");
+                return; // Não calcular para "Quando necessário" ou outros
         }
 
-        const dose = watchedDoseAmount || 1;
-        const totalQuantity = dose * frequencyMultiplier;
+        if (isSolid) {
+            // Para sólidos: calcular total de comprimidos/cápsulas
+            const dosePerTake = parseInt(watchedDosage) || 1;
+            const totalQuantity = dosePerTake * frequencyMultiplier;
+            const suffix = formatLower.includes("capsula") || formatLower.includes("cápsula") ? "cápsulas" : "comprimidos";
+            form.setValue("quantity", `${totalQuantity} ${suffix}`);
+        } else if (isLiquid) {
+            // Para líquidos: calcular em frascos
+            const dosePerTake = parseInt(watchedDosage) || 5;
+            const isGotas = formatLower.includes("gotas");
 
-        let suffix = "comprimidos";
-        if (formatLower.includes("capsula") || formatLower.includes("cápsula")) {
-            suffix = "cápsulas";
+            if (isGotas) {
+                // Gotas: frasco geralmente tem 20ml, ~20 gotas/ml = ~400 gotas/frasco
+                const totalGotas = dosePerTake * frequencyMultiplier;
+                const gotasPorFrasco = 400; // frasco padrão de 20ml, 20 gotas/ml
+                const frascos = Math.ceil(totalGotas / gotasPorFrasco);
+                form.setValue("quantity", `${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
+            } else {
+                // Suspensão/Solução: frasco geralmente tem 100ml
+                const totalMl = dosePerTake * frequencyMultiplier;
+                const frascos = Math.ceil(totalMl / 100); // Assumindo frasco de 100ml
+                form.setValue("quantity", `${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
+            }
+        } else {
+            // Outros formatos
+            form.setValue("quantity", "Verificar com farmácia");
         }
-
-        form.setValue("quantity", `${totalQuantity} ${suffix}`);
-    }, [watchedFrequency, watchedFormat, watchedDoseAmount, form]);
+    }, [watchedFrequency, watchedFormat, watchedDosage, form]);
 
     // Função para aplicar sugestão de dosagem
     const applyDosageSuggestion = useCallback((presentation: MedicationPresentation) => {
@@ -1908,7 +2215,6 @@ export function MedicationDialog({
         form.setValue("dosage", presentation.dosage);
         form.setValue("dosageUnit", presentation.unit);
         form.setValue("format", normalizeFormat(presentation.format));
-        form.setValue("doseAmount", 1);
         setDosagePopoverOpen(false);
 
         // Resetar o flag após um curto delay
@@ -2003,37 +2309,95 @@ export function MedicationDialog({
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        filteredMedications.map((medication) => {
-                                                            const medInfo = MEDICATION_DATABASE.find(m => m.name === medication);
-                                                            return (
+                                                        <>
+                                                            {/* Opção de digitar manualmente */}
+                                                            {searchValue && (
                                                                 <div
-                                                                    key={medication}
-                                                                    className={cn(
-                                                                        "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
-                                                                        field.value === medication && "bg-accent"
-                                                                    )}
+                                                                    className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b mb-1 bg-gradient-to-r from-blue-50 to-transparent"
                                                                     onClick={() => {
-                                                                        field.onChange(medication);
+                                                                        field.onChange(searchValue);
+                                                                        // Limpar campos para preenchimento manual
+                                                                        form.setValue("dosage", "");
+                                                                        form.setValue("frequency", "");
+                                                                        form.setValue("quantity", "");
+                                                                        form.setValue("format", "");
+                                                                        form.setValue("dosageUnit", "mg");
                                                                         setMedicationOpen(false);
                                                                         setSearchValue("");
                                                                     }}
                                                                 >
-                                                                    <Check
-                                                                        className={cn(
-                                                                            "h-4 w-4",
-                                                                            field.value === medication ? "opacity-100" : "opacity-0"
-                                                                        )}
-                                                                    />
-                                                                    <span className="flex-1">{medication}</span>
-                                                                    {medInfo?.prescriptionType && medInfo.prescriptionType !== 'common' && (
-                                                                        <PrescriptionTypeBadge type={medInfo.prescriptionType} />
-                                                                    )}
+                                                                    <span className="text-blue-600">✏️</span>
+                                                                    <span className="flex-1 text-blue-700 font-medium">
+                                                                        Digitar manualmente: "{searchValue}"
+                                                                    </span>
                                                                 </div>
+                                                            )}
+                                                            return (
+                                                            <div
+                                                                key={medItem.displayName}
+                                                                className={cn(
+                                                                    "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                                                                    field.value === medItem.displayName && "bg-accent"
+                                                                )}
+                                                                onClick={() => {
+                                                                    // Definir o nome completo com concentração
+                                                                    field.onChange(medItem.displayName);
+
+                                                                    // Limpar campos ao trocar de medicamento
+                                                                    form.setValue("dosage", "");
+                                                                    form.setValue("frequency", "");
+                                                                    form.setValue("quantity", "");
+
+                                                                    // Auto-preencher formato
+                                                                    if (medItem.format) {
+                                                                        form.setValue("format", medItem.format);
+
+                                                                        // Auto-preencher unidade baseada no formato
+                                                                        const formatLower = medItem.format.toLowerCase();
+                                                                        if (formatLower.includes('comprimido')) {
+                                                                            form.setValue("dosageUnit", "comprimido");
+                                                                        } else if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
+                                                                            form.setValue("dosageUnit", "cápsula");
+                                                                        } else if (formatLower.includes('gotas')) {
+                                                                            form.setValue("dosageUnit", "gotas");
+                                                                        } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
+                                                                            formatLower.includes('solucao') || formatLower.includes('solução') ||
+                                                                            formatLower.includes('xarope')) {
+                                                                            form.setValue("dosageUnit", "ml");
+                                                                        } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
+                                                                            formatLower.includes('ampola')) {
+                                                                            form.setValue("dosageUnit", "ampola");
+                                                                        }
+                                                                    }
+                                                                    // Auto-preencher tipo de receituário
+                                                                    if (medItem.prescriptionType) {
+                                                                        form.setValue("prescriptionType", medItem.prescriptionType);
+                                                                    }
+                                                                    // Buscar info completa para via de administração
+                                                                    const medInfo = MEDICATION_DATABASE.find(m => m.name === medItem.baseName);
+                                                                    if (medInfo?.route) {
+                                                                        form.setValue("administrationRoute", medInfo.route);
+                                                                    }
+                                                                    setMedicationOpen(false);
+                                                                    setSearchValue("");
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "h-4 w-4",
+                                                                        field.value === medItem.displayName ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <span className="flex-1">{medItem.displayName}</span>
+                                                                {medItem.prescriptionType && medItem.prescriptionType !== 'common' && (
+                                                                    <PrescriptionTypeBadge type={medItem.prescriptionType} />
+                                                                )}
+                                                            </div>
                                                             );
                                                         })
                                                     )}
+                                                        </div>
                                                 </div>
-                                            </div>
                                         </PopoverContent>
                                     </Popover>
                                     <FormMessage />
@@ -2090,31 +2454,6 @@ export function MedicationDialog({
                                     </FormItem>
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name="prescriptionType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo de Receituário</FormLabel>
-                                        <FormControl>
-                                            <Select onValueChange={field.onChange} value={field.value || "padrao"}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione o tipo" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="padrao">🟢 Padrão</SelectItem>
-                                                    <SelectItem value="especial">🟡 Especial (2 vias)</SelectItem>
-                                                    <SelectItem value="A">🟠 A - Opioides (Amarela)</SelectItem>
-                                                    <SelectItem value="B1">🔵 B1 - Psicotrópicos (Azul)</SelectItem>
-                                                    <SelectItem value="B2">🔵 B2 - Anorexígenos (Azul)</SelectItem>
-                                                    <SelectItem value="C">⚪ C - Retinoides</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
 
                             {/* Dosagem com Popup de Sugestões */}
                             <FormField
@@ -2122,13 +2461,13 @@ export function MedicationDialog({
                                 name="dosage"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Dosagem *</FormLabel>
+                                        <FormLabel>Dose por vez *</FormLabel>
                                         <Popover open={dosagePopoverOpen} onOpenChange={setDosagePopoverOpen}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Input
                                                         type="text"
-                                                        placeholder="Ex: 50"
+                                                        placeholder="Ex: 6, 10, 1"
                                                         {...field}
                                                         onFocus={() => {
                                                             // Só abre o popup se não acabou de fechar por uma seleção
@@ -2315,39 +2654,22 @@ export function MedicationDialog({
                                 )}
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="doseAmount"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Quantidade</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="quantity"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Total</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Ex: 60 comprimidos" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="quantity"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Quantidade (para 30 dias)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Ex: 60 comprimidos"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="startDate"
