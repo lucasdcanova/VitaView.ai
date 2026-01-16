@@ -460,28 +460,41 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                 );
                                                             })()}
                                                         </div>
-                                                        <div className="text-xs text-gray-600 flex items-center gap-1">
+                                                        <div className="text-xs text-gray-600 flex items-center gap-1 flex-wrap">
                                                             <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
-                                                            <span>{medication.dosage}{medication.dosageUnit || medication.dosage_unit}</span>
-                                                            {(medication.doseAmount > 1 || medication.dose_amount > 1) && (
-                                                                <>
-                                                                    <span className="text-gray-300">•</span>
-                                                                    <span>{medication.doseAmount || medication.dose_amount} {medication.format}s</span>
-                                                                </>
-                                                            )}
+                                                            <span className="text-gray-300">•</span>
+                                                            <span className="font-medium text-blue-700">{medication.dosage} {medication.dosageUnit || medication.dosage_unit}/vez</span>
                                                             <span className="text-gray-300">•</span>
                                                             <span>{medication.frequency}</span>
                                                         </div>
+                                                        {medication.quantity && (
+                                                            <div className="text-xs text-gray-500 mt-0.5">
+                                                                📦 Qtd: <span className="font-medium">{medication.quantity}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-gray-400 hover:text-blue-600 h-7 w-7"
-                                                    onClick={(e) => { e.stopPropagation(); openEditMedicationDialog(medication); }}
-                                                >
-                                                    <FileText className="h-3.5 w-3.5" />
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-gray-400 hover:text-blue-600 h-7 w-7"
+                                                        onClick={(e) => { e.stopPropagation(); openEditMedicationDialog(medication); }}
+                                                    >
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-gray-400 hover:text-red-600 h-7 w-7"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteMedicationMutation.mutate(medication.id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
