@@ -67,6 +67,14 @@ const isControlledMedication = (medName: string): boolean => {
     return CONTROLLED_MEDICATIONS.some(c => medName.toLowerCase().includes(c));
 };
 
+// Remove emojis e caracteres Unicode especiais do texto (jsPDF/Helvetica não suporta)
+const cleanTextForPDF = (text: string): string => {
+    if (!text) return '';
+    // Remove emojis comuns (💊💧💉 e outros símbolos) usando ranges conhecidos
+    // eslint-disable-next-line no-control-regex
+    return text.replace(/[\uD800-\uDFFF].|[\u2600-\u27BF]/g, '').trim();
+};
+
 // Desenha o logo VitaView de forma minimalista (texto)
 const drawLogo = (doc: jsPDF, x: number, y: number) => {
     doc.setFontSize(8);
@@ -194,7 +202,7 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData) => {
         doc.setFont("helvetica", "bold");
 
         // Linha 1: Nome + Dosagem (esquerda) | Quantidade (direita)
-        let medicationLine = med.name.toUpperCase();
+        let medicationLine = cleanTextForPDF(med.name).toUpperCase();
         if (med.dosage) {
             medicationLine += ` ${med.dosage}`;
         }
@@ -433,7 +441,7 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData) => {
         doc.setFont("helvetica", "bold");
 
         // Linha 1: Nome + Dosagem (esquerda) | Quantidade (direita)
-        let medicationLine = med.name.toUpperCase();
+        let medicationLine = cleanTextForPDF(med.name).toUpperCase();
         if (med.dosage) {
             medicationLine += ` ${med.dosage}`;
         }
@@ -741,7 +749,7 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
 
     data.medications.forEach((med, index) => {
         doc.setFont("helvetica", "bold");
-        let medicationLine = med.name.toUpperCase();
+        let medicationLine = cleanTextForPDF(med.name).toUpperCase();
         if (med.dosage) medicationLine += ` ${med.dosage}`;
 
         doc.text(`${index + 1}.`, 15, yPos);
@@ -835,7 +843,7 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
 
     data.medications.forEach((med, index) => {
         doc.setFont("helvetica", "bold");
-        let medicationLine = med.name.toUpperCase();
+        let medicationLine = cleanTextForPDF(med.name).toUpperCase();
         if (med.dosage) medicationLine += ` ${med.dosage}`;
 
         doc.text(`${index + 1}.`, 15, yPos);
