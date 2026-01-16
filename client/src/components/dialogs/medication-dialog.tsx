@@ -71,6 +71,31 @@ const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' |
             {config.label}
         </Badge>
     );
+
+};
+
+// Helper function to get medication icon based on format
+const getMedicationIcon = (format: string) => {
+    const formatLower = (format || "").toLowerCase();
+
+    if (formatLower.includes("injecao") || formatLower.includes("injeção") || formatLower.includes("ampola") || formatLower.includes("refil") || formatLower.includes("caneta")) {
+        return "💉";
+    }
+    if (formatLower.includes("gotas") || formatLower.includes("xarope") || formatLower.includes("po") || formatLower.includes("pó") || formatLower.includes("solucao") || formatLower.includes("solução") || formatLower.includes("suspensao") || formatLower.includes("suspensão")) {
+        return "💧";
+    }
+    if (formatLower.includes("spray") || formatLower.includes("aerosol") || formatLower.includes("inalatoria")) {
+        return "💨";
+    }
+    if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel") || formatLower.includes("locao") || formatLower.includes("loção")) {
+        return "🧴";
+    }
+    if (formatLower.includes("capsula") || formatLower.includes("cápsula")) {
+        return "💊";
+    }
+
+    // Default to pill for tablets and others
+    return "💊";
 };
 
 export const medicationSchema = z.object({
@@ -408,10 +433,13 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         name: "Dipirona",
         category: "Analgésico",
         route: "oral",
+        commonFrequencies: ["6h em 6h", "8h em 8h"],
+        notes: "1 gota = 25mg",
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 4x/dia" },
             { dosage: "1000", unit: "mg", format: "comprimido", commonDose: "1000mg 4x/dia" },
             { dosage: "500", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4x/dia" },
+            { dosage: "1000", unit: "mg/2ml", format: "ampola", commonDose: "1 ampola IM/IV 6/6h" },
             // Apresentação pediátrica
             {
                 dosage: "500", unit: "mg/ml", format: "gotas",
@@ -425,8 +453,6 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 frequency: 4
             },
         ],
-        commonFrequencies: ["6h em 6h", "8h em 8h"],
-        notes: "1 gota = 25mg",
     },
     {
         name: "Ibuprofeno",
@@ -734,9 +760,62 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "injetavel",
         presentations: [
             { dosage: "100", unit: "UI/ml", format: "injecao", commonDose: "Conforme glicemia", indication: "Ação rápida" },
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "Conforme glicemia", indication: "Caneta" },
         ],
         commonFrequencies: ["Antes das refeições"],
         notes: "Aplicar 30min antes das refeições",
+    },
+    {
+        name: "Insulina Glargina",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "10-20 UI 1x/dia", indication: "Lantus/Basaglar (Caneta)" },
+            { dosage: "300", unit: "UI/ml", format: "refil", commonDose: "10-20 UI 1x/dia", indication: "Toujeo (Caneta)" },
+            { dosage: "100", unit: "UI/ml", format: "injecao", commonDose: "10-20 UI 1x/dia", indication: "Frasco" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Insulina basal de longa duração. Horário fixo.",
+    },
+    {
+        name: "Insulina Detemir",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "0.1-0.2 UI/kg 1-2x/dia", indication: "Levemir (Caneta)" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Insulina basal.",
+    },
+    {
+        name: "Insulina Degludeca",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "10 UI 1x/dia", indication: "Tresiba (Caneta)" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Insulina basal ultra-longa. Tresiba.",
+    },
+    {
+        name: "Insulina Asparte",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "Conforme contagem carboidratos", indication: "NovoRapid (Caneta)" },
+        ],
+        commonFrequencies: ["Antes das refeições"],
+        notes: "Ação ultrarrápida.",
+    },
+    {
+        name: "Insulina Lispro",
+        category: "Insulina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "100", unit: "UI/ml", format: "refil", commonDose: "Conforme refeição", indication: "Humalog (Caneta)" },
+        ],
+        commonFrequencies: ["Antes das refeições"],
+        notes: "Ação ultrarrápida.",
     },
     {
         name: "Dapagliflozina",
@@ -1178,48 +1257,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         ],
         commonFrequencies: ["1x ao dia"],
     },
-    // OPIOIDES
-    {
-        name: "Tramadol",
-        category: "Opioide",
-        route: "oral",
-        isControlled: true,
-        prescriptionType: 'A',
-        presentations: [
-            { dosage: "50", unit: "mg", format: "capsula", commonDose: "50-100mg 4-6x/dia" },
-            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2x/dia", indication: "Liberação prolongada" },
-            { dosage: "100", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 4-6x/dia" },
-        ],
-        commonFrequencies: ["6h em 6h", "8h em 8h"],
-        notes: "Receita A (amarela) - Controle especial",
-    },
-    {
-        name: "Codeína",
-        category: "Opioide",
-        route: "oral",
-        isControlled: true,
-        prescriptionType: 'A',
-        presentations: [
-            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4-6x/dia" },
-            { dosage: "60", unit: "mg", format: "comprimido", commonDose: "60mg 4-6x/dia" },
-        ],
-        commonFrequencies: ["6h em 6h", "8h em 8h"],
-        notes: "Receita A (amarela) - Controle especial",
-    },
-    {
-        name: "Morfina",
-        category: "Opioide",
-        route: "oral",
-        isControlled: true,
-        prescriptionType: 'A',
-        presentations: [
-            { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-30mg 4h/4h" },
-            { dosage: "30", unit: "mg", format: "comprimido", commonDose: "30-60mg 4h/4h" },
-            { dosage: "10", unit: "mg/ml", format: "solucao", commonDose: "10-20mg 4h/4h" },
-        ],
-        commonFrequencies: ["4h em 4h", "6h em 6h"],
-        notes: "Receita A (amarela) - Controle especial",
-    },
+
     // ANTIBIÓTICOS ADICIONAIS
     {
         name: "Amoxicilina + Clavulanato",
@@ -1865,14 +1903,14 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Analgésico Opioide",
         route: "oral",
         isControlled: true,
-        prescriptionType: 'A',
+        prescriptionType: 'C1',
         presentations: [
             { dosage: "50", unit: "mg", format: "capsula", commonDose: "50-100mg 4-6x/dia" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 2-3x/dia", indication: "Liberação prolongada" },
             { dosage: "100", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4-6x/dia" },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h"],
-        notes: "Receita A (amarela). Dose máxima 400mg/dia",
+        notes: "Receita de Controle Especial (Branca 2 vias). Dose máxima 400mg/dia",
     },
     {
         name: "Codeína",
@@ -2290,28 +2328,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia"],
         notes: "Fibrilação atrial. Monitorar função tireoidiana",
     },
-    {
-        name: "Amoxicilina + Clavulanato",
-        category: "Antibiótico",
-        route: "oral",
-        presentations: [
-            { dosage: "500/125", unit: "mg", format: "comprimido", commonDose: "1cp 8/8h por 7 dias" },
-            { dosage: "875/125", unit: "mg", format: "comprimido", commonDose: "1cp 12/12h por 7 dias" },
-            { dosage: "50/12.5", unit: "mg/ml", format: "suspensao", commonDose: "25-45mg/kg/dia", indication: "Pediátrico" },
-        ],
-        commonFrequencies: ["8h em 8h", "12h em 12h"],
-    },
-    {
-        name: "Azitromicina",
-        category: "Antibiótico",
-        route: "oral",
-        presentations: [
-            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 1x/dia por 3 dias" },
-            { dosage: "40", unit: "mg/ml", format: "suspensao", commonDose: "10mg/kg 1x/dia por 3 dias", indication: "Pediátrico" },
-        ],
-        commonFrequencies: ["1x ao dia"],
-        notes: "Tomar longe das refeições",
-    },
+
+
     {
         name: "Biperideno",
         category: "Antiparkinsoniano",
@@ -3014,9 +3032,65 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Cortef. Insuficiência adrenal",
     },
+    // CORTICOIDES E ANTIBIÓTICOS TÓPICOS
+    {
+        name: "Dexametasona",
+        category: "Corticoide Tópico",
+        route: "tópica",
+        presentations: [
+            { dosage: "0.1%", unit: "", format: "creme", commonDose: "Aplicar 2-3x/dia" },
+            { dosage: "0.1%", unit: "", format: "elixir", commonDose: "0.5-2mg/dia", indication: "Uso Oral" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Inflamação, coceira.",
+    },
+    {
+        name: "Betametasona",
+        category: "Corticoide Tópico",
+        route: "tópica",
+        presentations: [
+            { dosage: "0.1%", unit: "", format: "creme", commonDose: "Aplicar 1-2x/dia" },
+            { dosage: "0.1%", unit: "", format: "pomada", commonDose: "Aplicar 1-2x/dia" },
+            { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-2mg 1x/dia", indication: "Uso Oral" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+    },
+    {
+        name: "Hidrocortisona",
+        category: "Corticoide Tópico",
+        route: "tópica",
+        presentations: [
+            { dosage: "1%", unit: "", format: "creme", commonDose: "Aplicar 2-3x/dia" },
+            { dosage: "1%", unit: "", format: "pomada", commonDose: "Aplicar 2-3x/dia" },
+        ],
+        commonFrequencies: ["2x ao dia", "3x ao dia"],
+        notes: "Dermatite leve.",
+    },
+    {
+        name: "Mupirocina",
+        category: "Antibiótico Tópico",
+        route: "tópica",
+        presentations: [
+            { dosage: "2%", unit: "", format: "pomada", commonDose: "Aplicar 3x/dia por 7 dias" },
+        ],
+        commonFrequencies: ["3x ao dia"],
+        notes: "Impetigo, infecções de pele.",
+    },
+    {
+        name: "Cetoconazol",
+        category: "Antifúngico Tópico",
+        route: "tópica",
+        presentations: [
+            { dosage: "2%", unit: "", format: "creme", commonDose: "Aplicar 1-2x/dia" },
+            { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200mg 1x/dia", indication: "Uso Oral" },
+            { dosage: "2%", unit: "", format: "shampoo", commonDose: "Aplicar 2-3x/semana" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Micoses de pele e couro cabeludo.",
+    },
     {
         name: "Morfina",
-        category: "Analgésico Opioide",
+        category: "Opioide",
         route: "oral",
         isControlled: true,
         prescriptionType: 'A',
@@ -3188,6 +3262,10 @@ const MEDICATION_FORMATS = [
     { value: "supositorio", label: "Supositório" },
     { value: "colirio", label: "Colírio" },
     { value: "suspensao", label: "Suspensão" },
+    { value: "bisnaga", label: "Bisnaga" },
+    { value: "ampola", label: "Ampola" },
+    { value: "refil", label: "Refil" },
+    { value: "caneta", label: "Caneta" },
 ];
 
 const DOSAGE_UNITS = [
@@ -3413,6 +3491,19 @@ export function MedicationDialog({
                 const frascos = Math.ceil(totalMl / 100); // Assumindo frasco de 100ml
                 form.setValue("quantity", `${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
             }
+        } else if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel")) {
+            // Tópicos (Tubos/Bisnagas)
+            form.setValue("quantity", "1 bisnaga");
+        } else if (formatLower.includes("spray") || formatLower.includes("aerosol")) {
+            // Sprays
+            form.setValue("quantity", "1 frasco");
+        } else if (formatLower.includes("refil") || formatLower.includes("caneta")) {
+            // Insulinas
+            const dose = parseInt(watchedDosage) || 10;
+            // Caneta tem 3ml = 300UI. Se dose diária for X...
+            const totalUI = dose * frequencyMultiplier; // Total UI no mês
+            const canetas = Math.ceil(totalUI / 300);
+            form.setValue("quantity", `${canetas} ${canetas === 1 ? 'caneta/refil' : 'canetas/refis'}`);
         } else {
             // Outros formatos
             form.setValue("quantity", "Verificar com farmácia");
@@ -3632,12 +3723,9 @@ export function MedicationDialog({
                                                                         setSearchValue("");
                                                                     }}
                                                                 >
-                                                                    <Check
-                                                                        className={cn(
-                                                                            "h-4 w-4",
-                                                                            field.value === medItem.displayName ? "opacity-100" : "opacity-0"
-                                                                        )}
-                                                                    />
+                                                                    <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-50 text-base">
+                                                                        {getMedicationIcon(medItem.format || 'comprimido')}
+                                                                    </div>
                                                                     <span className="flex-1">{medItem.displayName}</span>
                                                                     {medItem.prescriptionType && medItem.prescriptionType !== 'common' && (
                                                                         <PrescriptionTypeBadge type={medItem.prescriptionType} />
