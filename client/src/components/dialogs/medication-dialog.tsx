@@ -58,8 +58,8 @@ const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' |
             className: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-100'
         },
         'C1': {
-            label: 'ESP',
-            className: 'bg-green-100 text-green-700 border-green-300 hover:bg-green-100'
+            label: 'C1',
+            className: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-100'
         },
     };
 
