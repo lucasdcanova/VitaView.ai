@@ -81,14 +81,14 @@ const getMedicationIcon = (format: string) => {
     if (formatLower.includes("injecao") || formatLower.includes("injeção") || formatLower.includes("ampola") || formatLower.includes("refil") || formatLower.includes("caneta")) {
         return "💉";
     }
-    if (formatLower.includes("gotas") || formatLower.includes("xarope") || formatLower.includes("po") || formatLower.includes("pó") || formatLower.includes("solucao") || formatLower.includes("solução") || formatLower.includes("suspensao") || formatLower.includes("suspensão")) {
+    if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel") || formatLower.includes("locao") || formatLower.includes("loção")) {
+        return "🧴";
+    }
+    if (formatLower.includes("gotas") || formatLower.includes("xarope") || formatLower.includes("elixir") || formatLower.includes(" po ") || formatLower.includes("pó") || formatLower.includes("solucao") || formatLower.includes("solução") || formatLower.includes("suspensao") || formatLower.includes("suspensão") || formatLower.includes("colirio") || formatLower.includes("colírio")) {
         return "💧";
     }
     if (formatLower.includes("spray") || formatLower.includes("aerosol") || formatLower.includes("inalatoria")) {
         return "💨";
-    }
-    if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel") || formatLower.includes("locao") || formatLower.includes("loção")) {
-        return "🧴";
     }
     if (formatLower.includes("capsula") || formatLower.includes("cápsula")) {
         return "💊";
@@ -222,6 +222,18 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia", "3x ao dia"],
         notes: "Tomar junto às refeições",
+    },
+    {
+        name: "Metformina XR",
+        category: "Antidiabético",
+        route: "oral",
+        presentations: [
+            { dosage: "500", unit: "mg", format: "comprimido lib. prol.", commonDose: "500-1000mg 1x/dia", indication: "Glifage XR 500" },
+            { dosage: "750", unit: "mg", format: "comprimido lib. prol.", commonDose: "750-1500mg 1x/dia", indication: "Glifage XR 750" },
+            { dosage: "1000", unit: "mg", format: "comprimido lib. prol.", commonDose: "1000-2000mg 1x/dia", indication: "Glifage XR 1000" },
+        ],
+        commonFrequencies: ["1x ao dia (noturno)"],
+        notes: "Tomar no jantar. Não partir/mastigar",
     },
     // HIPOLIPEMIANTES
     {
@@ -425,6 +437,28 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 maxDailyDose: 4000,
                 frequency: 4
             },
+            {
+                dosage: "100", unit: "mg/ml", format: "suspensao",
+                commonDose: "10-15mg/kg/dose 4-6x/dia",
+                indication: "Uso pediátrico (Bebê - Seringa)",
+                isPediatric: true,
+                dosePerKg: 10,
+                dosePerKgMax: 15,
+                concentration: 100, // 100mg/ml
+                maxDailyDose: 4000,
+                frequency: 4
+            },
+            {
+                dosage: "32", unit: "mg/ml", format: "suspensao",
+                commonDose: "10-15mg/kg/dose 4-6x/dia",
+                indication: "Uso pediátrico (Criança)",
+                isPediatric: true,
+                dosePerKg: 10,
+                dosePerKgMax: 15,
+                concentration: 32, // 32mg/ml
+                maxDailyDose: 3000,
+                frequency: 4
+            },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h", "Quando necessário"],
         notes: "Dose máxima: 4g/dia. 1 gota = 10mg",
@@ -475,13 +509,24 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 frequency: 3
             },
             {
-                dosage: "100", unit: "mg/5ml", format: "suspensao",
+                dosage: "100", unit: "mg/ml", format: "suspensao", // Alivium 100mg/ml
                 commonDose: "5-10mg/kg/dose 3-4x/dia",
                 indication: "Uso pediátrico",
                 isPediatric: true,
                 dosePerKg: 5,
                 dosePerKgMax: 10,
-                concentration: 20, // 100mg/5ml = 20mg/ml
+                concentration: 100, // 100mg/ml
+                maxDailyDose: 1200,
+                frequency: 3
+            },
+            {
+                dosage: "30", unit: "mg/ml", format: "suspensao", // Alivium 30mg/ml
+                commonDose: "5-10mg/kg/dose 3-4x/dia",
+                indication: "Uso pediátrico (Criança)",
+                isPediatric: true,
+                dosePerKg: 5,
+                dosePerKgMax: 10,
+                concentration: 30, // 30mg/ml
                 maxDailyDose: 1200,
                 frequency: 3
             },
@@ -694,6 +739,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-80mg 1-2x/dia" },
             { dosage: "80", unit: "mg", format: "comprimido", commonDose: "80mg 1-2x/dia" },
+            { dosage: "20", unit: "mg/2ml", format: "ampola", commonDose: "20-40mg EV/IM" },
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Tomar pela manhã",
@@ -1105,20 +1151,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia"],
     },
-    {
-        name: "Lamotrigina",
-        category: "Anticonvulsivante",
-        route: "oral",
-        isControlled: true,
-        prescriptionType: 'B1',
-        presentations: [
-            { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25mg 1x/dia", indication: "Dose inicial - titular lentamente" },
-            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1-2x/dia" },
-            { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 1-2x/dia" },
-        ],
-        commonFrequencies: ["1x ao dia", "2x ao dia"],
-        notes: "Titular lentamente para evitar rash",
-    },
+
     {
         name: "Topiramato",
         category: "Anticonvulsivante",
@@ -1231,7 +1264,6 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-4mg 1x/dia" },
             { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 1x/dia" },
-            // Apresentação pediátrica
             {
                 dosage: "0.1", unit: "mg/ml", format: "elixir",
                 commonDose: "0.1-0.3mg/kg/dia",
@@ -1243,6 +1275,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 maxDailyDose: 16,
                 frequency: 1
             },
+            { dosage: "0.1%", unit: "", format: "creme", commonDose: "Aplicar 2-3x/dia" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Tomar pela manhã",
@@ -1595,7 +1628,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia"],
     },
     {
-        name: "Tamsulosina",
+        name: "Tansulosina",
         category: "Urologia",
         route: "oral",
         presentations: [
@@ -1685,7 +1718,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "7.5", unit: "mg", format: "comprimido", commonDose: "7.5-15mg à noite" },
             { dosage: "15", unit: "mg", format: "comprimido", commonDose: "15mg à noite" },
-            { dosage: "2", unit: "mg/ml", format: "gotas", commonDose: "15-30 gotas à noite" },
+            { dosage: "5", unit: "mg/ml", format: "ampola", commonDose: "Sedação/Indução (Hospitalar)" },
+            { dosage: "1", unit: "mg/ml", format: "ampola", commonDose: "Sedação leve" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Receita B1 (azul). Usar antes de procedimentos ou para insônia",
@@ -1861,18 +1895,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["2x ao dia", "3x ao dia"],
     },
     // CORTICOIDES
-    {
-        name: "Dexametasona",
-        category: "Corticoide",
-        route: "oral",
-        presentations: [
-            { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-4mg 1x/dia" },
-            { dosage: "4", unit: "mg", format: "comprimido", commonDose: "4-8mg 1x/dia" },
-            { dosage: "0.1", unit: "mg/ml", format: "gotas", commonDose: "10-40 gotas 1x/dia" },
-        ],
-        commonFrequencies: ["1x ao dia"],
-        notes: "Tomar pela manhã",
-    },
+
     {
         name: "Prednisolona",
         category: "Corticoide",
@@ -2202,16 +2225,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia"],
         notes: "Plavix. Prevenção eventos CV",
     },
-    {
-        name: "Furosemida",
-        category: "Diurético",
-        route: "oral",
-        presentations: [
-            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-80mg 1-2x/dia" },
-        ],
-        commonFrequencies: ["1x ao dia", "2x ao dia"],
-        notes: "Lasix. Tomar pela manhã",
-    },
+
     {
         name: "Espironolactona",
         category: "Diurético",
@@ -2395,16 +2409,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Tomar com alimentos. Osteoporose",
     },
-    {
-        name: "Cefalexina",
-        category: "Antibiótico",
-        route: "oral",
-        presentations: [
-            { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 6/6h por 7 dias" },
-            { dosage: "50", unit: "mg/ml", format: "suspensao", commonDose: "25-50mg/kg/dia 6/6h", indication: "Pediátrico" },
-        ],
-        commonFrequencies: ["6h em 6h"],
-    },
+
     {
         name: "Ciclobenzaprina",
         category: "Relaxante Muscular",
@@ -2704,18 +2709,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["3x ao dia", "4x ao dia"],
         notes: "Luftal. Gases intestinais",
     },
-    {
-        name: "Sulfametoxazol + Trimetoprima",
-        category: "Antibiótico",
-        route: "oral",
-        presentations: [
-            { dosage: "400/80", unit: "mg", format: "comprimido", commonDose: "1-2cp 12/12h por 7-10 dias" },
-            { dosage: "800/160", unit: "mg", format: "comprimido", commonDose: "1cp 12/12h por 7-10 dias" },
-            { dosage: "40/8", unit: "mg/ml", format: "suspensao", commonDose: "1ml/kg/dia", indication: "Bactrim Pediátrico" },
-        ],
-        commonFrequencies: ["12h em 12h"],
-        notes: "Bactrim. ITU, infecções respiratórias",
-    },
+
     {
         name: "Sulfato Ferroso",
         category: "Suplemento",
@@ -2865,6 +2859,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10/250", unit: "mg", format: "comprimido", commonDose: "1cp 3-4x/dia", indication: "Buscopan Composto" },
+            { dosage: "20/2500", unit: "mg/5ml", format: "ampola", commonDose: "1 ampola EV lenta", indication: "Buscopan Composto Inj" },
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia", "Quando necessário"],
         notes: "Cólicas com dor",
@@ -3033,17 +3028,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         notes: "Cortef. Insuficiência adrenal",
     },
     // CORTICOIDES E ANTIBIÓTICOS TÓPICOS
-    {
-        name: "Dexametasona",
-        category: "Corticoide Tópico",
-        route: "tópica",
-        presentations: [
-            { dosage: "0.1%", unit: "", format: "creme", commonDose: "Aplicar 2-3x/dia" },
-            { dosage: "0.1%", unit: "", format: "elixir", commonDose: "0.5-2mg/dia", indication: "Uso Oral" },
-        ],
-        commonFrequencies: ["2x ao dia", "3x ao dia"],
-        notes: "Inflamação, coceira.",
-    },
+
     {
         name: "Betametasona",
         category: "Corticoide Tópico",
@@ -3144,16 +3129,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["A cada 2-4 semanas"],
         notes: "Receita Especial (branca 2 vias). Anatensol Depot. Manutenção esquizofrenia",
     },
-    {
-        name: "Losartana 50mg",
-        category: "Anti-hipertensivo",
-        route: "oral",
-        presentations: [
-            { dosage: "50", unit: "mg", format: "comprimido", commonDose: "50-100mg 1x/dia" },
-        ],
-        commonFrequencies: ["1x ao dia"],
-        notes: "HAS, proteção renal em DM",
-    },
+
 ];
 
 // Interface para item de medicamento com apresentação
@@ -3221,9 +3197,8 @@ const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
 
     MEDICATION_DATABASE.forEach(med => {
         med.presentations.forEach(pres => {
-            // Criar displayName simplificado: "💊 Medicamento 100 mg"
-            const formatEmoji = getFormatEmoji(pres.format);
-            const displayName = `${formatEmoji} ${med.name} ${pres.dosage} ${pres.unit}`;
+            // Criar displayName simplificado: "Medicamento 100 mg" (emoji removido pois já existe ícone na UI)
+            const displayName = `${med.name} ${pres.dosage} ${pres.unit}`;
 
             // Usar displayName como chave única para evitar duplicatas
             if (!seen.has(displayName)) {
@@ -3241,8 +3216,37 @@ const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
         });
     });
 
-    // Ordenar alfabeticamente (ignorando o emoji no início)
-    return items.sort((a, b) => a.baseName.localeCompare(b.baseName, 'pt-BR') || a.displayName.localeCompare(b.displayName, 'pt-BR'));
+    // Ordenar alfabeticamente e por formato/dosagem
+    return items.sort((a, b) => {
+        // Comparar nomes base
+        const nameCompare = a.baseName.localeCompare(b.baseName, 'pt-BR');
+        if (nameCompare !== 0) return nameCompare;
+
+        // Se for o mesmo medicamento, ordenar por formato
+        const getFormatPriority = (format: string) => {
+            const f = format.toLowerCase();
+            if (f.includes('comprimido') || f.includes('capsula') || f.includes('cápsula')) return 1;
+            if (f.includes('oral') || f.includes('solucao') || f.includes('xarope') || f.includes('gotas')) return 2;
+            if (f.includes('topico') || f.includes('creme') || f.includes('pomada')) return 3;
+            if (f.includes('oftalmico') || f.includes('colirio')) return 4;
+            if (f.includes('nasal') || f.includes('spray')) return 5;
+            if (f.includes('injetavel') || f.includes('ampola')) return 6;
+            return 9;
+        };
+
+        const priorityA = getFormatPriority(a.format);
+        const priorityB = getFormatPriority(b.format);
+
+        if (priorityA !== priorityB) return priorityA - priorityB;
+
+        // Se mesmo formato, ordenar por dosagem (numérico se possível)
+        const parseDosage = (d: string) => {
+            const num = parseFloat(d.replace(',', '.'));
+            return isNaN(num) ? 0 : num;
+        };
+
+        return parseDosage(a.dosage || "0") - parseDosage(b.dosage || "0");
+    });
 })();
 
 // Lista simples de nomes base para busca (mantido para compatibilidade)
@@ -3432,9 +3436,34 @@ export function MedicationDialog({
             if (aStartsWith && !bStartsWith) return -1;
             if (!aStartsWith && bStartsWith) return 1;
 
-            // Se ambos começam ou não começam, ordenar alfabeticamente
-            return a.baseName.localeCompare(b.baseName, 'pt-BR') ||
-                a.displayName.localeCompare(b.displayName, 'pt-BR');
+            // Comparar nomes base
+            const nameCompare = a.baseName.localeCompare(b.baseName, 'pt-BR');
+            if (nameCompare !== 0) return nameCompare;
+
+            // Se for o mesmo medicamento, ordenar por formato
+            const getFormatPriority = (format: string) => {
+                const f = format.toLowerCase();
+                if (f.includes('comprimido') || f.includes('capsula') || f.includes('cápsula')) return 1;
+                if (f.includes('oral') || f.includes('solucao') || f.includes('xarope') || f.includes('gotas')) return 2;
+                if (f.includes('topico') || f.includes('creme') || f.includes('pomada')) return 3;
+                if (f.includes('oftalmico') || f.includes('colirio')) return 4;
+                if (f.includes('nasal') || f.includes('spray')) return 5;
+                if (f.includes('injetavel') || f.includes('ampola')) return 6;
+                return 9;
+            };
+
+            const priorityA = getFormatPriority(a.format);
+            const priorityB = getFormatPriority(b.format);
+
+            if (priorityA !== priorityB) return priorityA - priorityB;
+
+            // Se mesmo formato, ordenar por dosagem (numérico se possível)
+            const parseDosage = (d: string) => {
+                const num = parseFloat(d.replace(',', '.'));
+                return isNaN(num) ? 0 : num;
+            };
+
+            return parseDosage(a.dosage || "0") - parseDosage(b.dosage || "0");
         });
     }, [searchValue]);
 

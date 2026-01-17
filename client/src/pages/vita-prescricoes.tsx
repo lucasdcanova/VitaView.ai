@@ -129,9 +129,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 doctorName: savedData.doctorName,
                 doctorCrm: savedData.doctorCrm,
                 doctorSpecialty: savedData.doctorSpecialty || undefined,
+                doctorRqe: (user as any)?.rqe || undefined,
                 patientName: patient.name,
                 patientCpf: patient.cpf || undefined,
                 patientRg: patient.rg || undefined,
+                patientBirthDate: patient.birthDate || undefined,
                 patientAge: patient.birthDate ? `${new Date().getFullYear() - new Date(patient.birthDate.split("/").reverse().join("-")).getFullYear()} anos` : undefined,
                 patientGender: patient.gender || undefined,
                 patientPhone: patient.phone || undefined,
@@ -166,8 +168,24 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             setIsMedicationDialogOpen(false);
             toast({ title: "Sucesso", description: "Medicamento adicionado com sucesso!" });
         },
-        onError: () => {
-            toast({ title: "Erro", description: "Erro ao adicionar medicamento.", variant: "destructive" });
+        onError: (error: Error) => {
+            let errorMsg = "Erro ao adicionar medicamento.";
+            try {
+                // Tenta extrair a mensagem de erro detalhada da resposta do servidor
+                // O formato do erro é "STATUS: CORPO_DA_RESPOSTA"
+                const parts = error.message.split(': ');
+                if (parts.length > 1) {
+                    const errorBody = JSON.parse(parts.slice(1).join(': '));
+                    if (errorBody.error) {
+                        errorMsg = `Erro: ${errorBody.error}`;
+                    } else if (errorBody.message) {
+                        errorMsg = errorBody.message;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao parsear resposta de erro:", e);
+            }
+            toast({ title: "Erro", description: errorMsg, variant: "destructive" });
         },
     });
 
@@ -181,8 +199,22 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             setIsMedicationDialogOpen(false);
             toast({ title: "Sucesso", description: "Medicamento atualizado com sucesso!" });
         },
-        onError: () => {
-            toast({ title: "Erro", description: "Erro ao atualizar medicamento.", variant: "destructive" });
+        onError: (error: Error) => {
+            let errorMsg = "Erro ao atualizar medicamento.";
+            try {
+                const parts = error.message.split(': ');
+                if (parts.length > 1) {
+                    const errorBody = JSON.parse(parts.slice(1).join(': '));
+                    if (errorBody.error) {
+                        errorMsg = `Erro: ${errorBody.error}`;
+                    } else if (errorBody.message) {
+                        errorMsg = errorBody.message;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao parsear resposta de erro:", e);
+            }
+            toast({ title: "Erro", description: errorMsg, variant: "destructive" });
         },
     });
 
@@ -291,9 +323,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             doctorName: p.doctorName,
             doctorCrm: p.doctorCrm,
             doctorSpecialty: p.doctorSpecialty || undefined,
+            doctorRqe: (user as any)?.rqe || undefined,
             patientName: patient.name,
             patientCpf: patient.cpf || undefined,
             patientRg: patient.rg || undefined,
+            patientBirthDate: patient.birthDate || undefined,
             patientAge: patient.birthDate ? `${new Date().getFullYear() - new Date(patient.birthDate.split("/").reverse().join("-")).getFullYear()} anos` : undefined,
             patientGender: patient.gender || undefined,
             patientPhone: patient.phone || undefined,

@@ -4521,7 +4521,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(201).json(responseData);
     } catch (error) {
       console.error("Erro ao criar medicamento:", error);
-      res.status(500).json({ message: "Erro ao criar medicamento" });
+      res.status(500).json({ message: "Erro ao criar medicamento", error: String(error) });
     }
   });
 
@@ -5375,9 +5375,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Get active patient profile for patient name
       let patientName = user.fullName || user.username || "Paciente";
+      let activeProfileId = req.body.activeProfileId;
       try {
         // Try to get active profile from the profiles system
-        const activeProfileId = req.body.activeProfileId;
         if (activeProfileId) {
           const profile = await storage.getProfile(activeProfileId);
           if (profile && profile.userId === user.id) {
@@ -5393,13 +5393,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       let medicationsList = medicationsFromBody;
 
       if (!medicationsList || medicationsList.length === 0) {
-        console.log('📦 Buscando medicamentos do armazenamento em memória...');
-        // Try to get from in-memory storage first
-        const userMedications = medicationsStore.get(user.id) || [];
-        medicationsList = userMedications.filter((m: any) =>
-          medicationIds.includes(m.id) && m.is_active !== false
+        console.log('📦 Buscando medicamentos do banco de dados...');
+        // Fallback: buscar do banco de dados se não enviado no corpo
+        const result = await pool.query(
+          `SELECT * FROM medications 
+             WHERE user_id = $1 AND id = ANY($2) AND is_active = true`,
+          [user.id, medicationIds]
         );
-        console.log(`✅ Encontrados ${medicationsList.length} medicamentos na memória`);
+        medicationsList = result.rows.map(m => ({
+          id: m.id,
+          name: m.name,
+          dosage: m.dosage + ' ' + (m.dosage_unit || ''), // Combining for PDF
+          frequency: m.frequency,
+          format: m.format
+        }));
+        console.log(`✅ Encontrados ${medicationsList.length} medicamentos no banco`);
       }
 
       if (!medicationsList || medicationsList.length === 0) {

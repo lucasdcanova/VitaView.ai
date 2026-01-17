@@ -10,11 +10,13 @@ interface PrescriptionData {
     doctorName: string;
     doctorCrm: string;
     doctorSpecialty?: string;
+    doctorRqe?: string;
     // Dados do Paciente
     patientName: string;
     patientCpf?: string;
     patientRg?: string;
     patientAge?: string;
+    patientBirthDate?: string;
     patientAddress?: string;
     patientMotherName?: string;
     patientGender?: string;
@@ -43,6 +45,7 @@ interface CertificateData {
     doctorName: string;
     doctorCrm: string;
     doctorSpecialty?: string;
+    doctorRqe?: string;
     clinicName?: string;
     clinicAddress?: string;
     clinicPhone?: string;
@@ -117,105 +120,69 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: 
     doc.setLineWidth(0.5);
     doc.line(leftX, yPos, rightX, yPos);
 
-    yPos = 32;
+    yPos = 30;
 
     // ===== DADOS DO MÉDICO =====
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text(`Dr(a). ${data.doctorName}`, leftX, yPos);
 
-    doc.setFontSize(9);
+    // CRM no final da linha (alinhado à direita)
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`CRM: ${data.doctorCrm}`, leftX, yPos + 5);
+    doc.text(`CRM: ${data.doctorCrm}`, rightX, yPos, { align: "right" });
+
+    yPos += 5;
+    // Especialidade + RQE no final da linha (alinhado à direita)
     if (data.doctorSpecialty) {
-        doc.text(`${data.doctorSpecialty}`, leftX, yPos + 10);
+        const specialtyText = data.doctorRqe
+            ? `${data.doctorSpecialty} - RQE ${data.doctorRqe}`
+            : data.doctorSpecialty;
+        doc.text(specialtyText, rightX, yPos, { align: "right" });
     }
 
-    // Dados da clínica no lado direito
-    if (data.clinicName) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(data.clinicName, rightX, yPos, { align: "right" });
-        if (data.clinicAddress) {
-            doc.text(data.clinicAddress, rightX, yPos + 4, { align: "right" });
-        }
-        if (data.clinicPhone) {
-            doc.text(`Tel: ${data.clinicPhone}`, rightX, yPos + 8, { align: "right" });
-        }
-    }
-
-    yPos = 50;
-
-    // Linha divisória
-    doc.setLineWidth(0.3);
-    doc.line(leftX, yPos, rightX, yPos);
-
-    yPos = 58;
+    yPos += 8;
 
     // ===== DADOS DO PACIENTE =====
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text("PACIENTE:", leftX, yPos);
+    doc.text("Paciente:", leftX, yPos);
     doc.setFont("helvetica", "normal");
-    doc.text(data.patientName, leftX + 25, yPos);
+    doc.text(data.patientName, leftX + 20, yPos);
 
     // Data no lado direito
     const dateStr = format(data.issueDate, "dd/MM/yyyy", { locale: ptBR });
     doc.setFont("helvetica", "bold");
-    doc.text("DATA:", rightX - 35, yPos);
+    doc.text("Data:", rightX - 35, yPos);
     doc.setFont("helvetica", "normal");
     doc.text(dateStr, rightX, yPos, { align: "right" });
 
-    yPos = 66;
-
-    // Informações adicionais do paciente
-    // Informações adicionais do paciente (Layout denso)
-    const patientDetails: string[] = [];
-
-    // Linha 1: Idade | Sexo
-    let line1 = "";
-    if (data.patientAge) line1 += `Idade: ${data.patientAge}`;
-    if (data.patientGender) line1 += `${line1 ? "  |  " : ""}Sexo: ${data.patientGender}`;
-    if (line1) patientDetails.push(line1);
-
-    // Linha 2: CPF | RG
-    let line2 = "";
-    if (data.patientCpf) line2 += `CPF: ${data.patientCpf}`;
-    if (data.patientRg) line2 += `${line2 ? "  |  " : ""}RG: ${data.patientRg}`;
-    if (line2) patientDetails.push(line2);
-
-    // Linha 3: Contatos
-    let line3 = "";
-    if (data.patientPhone) line3 += `Tel: ${data.patientPhone}`;
-    if (data.patientEmail) line3 += `${line3 ? "  |  " : ""}Email: ${data.patientEmail}`;
-    if (line3) patientDetails.push(line3);
-
-    // Responsável
-    if (data.patientGuardianName) {
-        patientDetails.push(`Responsável: ${data.patientGuardianName}`);
-    }
-
-    // Convênio
-    if (data.patientInsurance) {
-        patientDetails.push(`Convênio: ${data.patientInsurance}`);
-    }
-
-    doc.setFontSize(8);
-    patientDetails.forEach(detail => {
-        doc.text(detail, leftX, yPos);
-        yPos += 4;
-    });
-
-    if (patientDetails.length > 0) yPos += 2;
-
-    if (data.patientAddress) {
-        doc.setFontSize(8);
-        const addr = data.patientAddress.length > 70 ? data.patientAddress.substring(0, 67) + "..." : data.patientAddress;
-        doc.text(`Endereço: ${addr}`, leftX, yPos);
-        yPos += 5;
-    }
-
     yPos += 5;
+
+    // DN + CPF na mesma linha
+    doc.setFontSize(8);
+    let patientInfoLine = "";
+
+    if (data.patientBirthDate) {
+        // Formatar data de nascimento se estiver em formato ISO
+        let formattedBirthDate = data.patientBirthDate;
+        if (data.patientBirthDate.includes("-")) {
+            const [year, month, day] = data.patientBirthDate.split("-");
+            formattedBirthDate = `${day}/${month}/${year}`;
+        }
+        patientInfoLine += `DN: ${formattedBirthDate}`;
+    }
+
+    if (data.patientCpf) {
+        if (patientInfoLine) patientInfoLine += "    ";
+        patientInfoLine += `CPF: ${data.patientCpf}`;
+    }
+
+    if (patientInfoLine) {
+        doc.text(patientInfoLine, leftX, yPos);
+    }
+
+    yPos += 6;
 
     // Linha divisória
     doc.setLineWidth(0.3);
@@ -254,26 +221,29 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: 
 
         yPos += 5;
 
-        // Linha 2: Dosagem (se houver)
-        if (med.dosage) {
-            doc.setFont("helvetica", "normal");
-            doc.text(med.dosage, leftX + 7, yPos);
-            yPos += 5;
-        }
-
-        // Linha 3: Posologia (esquerda) | Via de administração (direita)
+        // Linha 2: Dosagem + Posologia na mesma linha
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
 
+        let dosagePosologia = "";
+        if (med.dosage) {
+            dosagePosologia += med.dosage;
+        }
         if (med.frequency) {
-            let posologia = med.frequency;
-            // Adicionar "Uso contínuo" se for receita de uso contínuo
-            if (data.isContinuousUse) {
-                posologia += ". Uso contínuo.";
+            if (dosagePosologia) {
+                dosagePosologia += "  -  " + med.frequency;
+            } else {
+                dosagePosologia = med.frequency;
             }
-            // Quebrar texto se for muito longo
+        }
+        // Adicionar "Uso contínuo" se for receita de uso contínuo
+        if (data.isContinuousUse && dosagePosologia) {
+            dosagePosologia += ". Uso contínuo.";
+        }
+
+        if (dosagePosologia) {
             const maxPosologiaWidth = pageWidth - margin * 2 - 30;
-            const posologiaLines = doc.splitTextToSize(posologia, maxPosologiaWidth);
+            const posologiaLines = doc.splitTextToSize(dosagePosologia, maxPosologiaWidth);
             doc.text(posologiaLines, leftX + 7, yPos);
         }
 
@@ -309,8 +279,8 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: 
         doc.setFontSize(10);
     });
 
-    // Observações gerais
-    if (data.observations) {
+    // Observações gerais (exceto mensagem padrão de renovação)
+    if (data.observations && !data.observations.toLowerCase().includes("renovação de medicamentos")) {
         yPos += 5;
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
@@ -343,7 +313,8 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: 
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
     doc.text("Válido por 180 dias a partir da data de emissão.", leftX, footerY);
-    doc.text("1ª Via", rightX, footerY, { align: "right" });
+    const viaText = xOffset > 0 ? "2ª Via" : "1ª Via";
+    doc.text(viaText, rightX, footerY, { align: "right" });
 };
 
 // ==========================================
@@ -394,13 +365,18 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData, xOff
     doc.setFont("helvetica", "bold");
     doc.text(`Dr(a). ${data.doctorName}`, leftX, yPos);
 
+    // CRM no final da linha (alinhado à direita)
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`CRM: ${data.doctorCrm}`, leftX + 65, yPos);
+    doc.text(`CRM: ${data.doctorCrm}`, rightX, yPos, { align: "right" });
 
     yPos += 5;
+    // Especialidade + RQE no final da linha (alinhado à direita)
     if (data.doctorSpecialty) {
-        doc.text(data.doctorSpecialty, leftX, yPos);
+        const specialtyText = data.doctorRqe
+            ? `${data.doctorSpecialty} - RQE ${data.doctorRqe}`
+            : data.doctorSpecialty;
+        doc.text(specialtyText, rightX, yPos, { align: "right" });
     }
 
     if (data.clinicAddress) {
@@ -440,13 +416,23 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData, xOff
 
     yPos += 5;
 
-    // CPF e Endereço
-    // Linha 1: CPF | RG | Idade | Sexo
+    // DN + CPF na mesma linha (com formatação dd/mm/yyyy)
+    doc.setFontSize(8);
     let infoLine = "";
-    if (data.patientCpf) infoLine += `CPF: ${data.patientCpf}`;
-    if (data.patientRg) infoLine += `${infoLine ? "  |  " : ""}RG: ${data.patientRg}`;
-    if (data.patientAge) infoLine += `${infoLine ? "  |  " : ""}Idade: ${data.patientAge}`;
-    if (data.patientGender) infoLine += `${infoLine ? "  |  " : ""}Sexo: ${data.patientGender}`;
+
+    if (data.patientBirthDate) {
+        let formattedBirthDate = data.patientBirthDate;
+        if (data.patientBirthDate.includes("-")) {
+            const [year, month, day] = data.patientBirthDate.split("-");
+            formattedBirthDate = `${day}/${month}/${year}`;
+        }
+        infoLine += `DN: ${formattedBirthDate}`;
+    }
+
+    if (data.patientCpf) {
+        if (infoLine) infoLine += "    ";
+        infoLine += `CPF: ${data.patientCpf}`;
+    }
 
     if (infoLine) {
         doc.setFont("helvetica", "normal");
@@ -465,10 +451,9 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData, xOff
         yPos += 5;
     }
 
-    // Contatos e Convenio
+    // Convenio (telefone removido)
     let extraLine = "";
-    if (data.patientPhone) extraLine += `Tel: ${data.patientPhone}`;
-    if (data.patientInsurance) extraLine += `${extraLine ? "  |  " : ""}Convênio: ${data.patientInsurance}`;
+    if (data.patientInsurance) extraLine += `Convênio: ${data.patientInsurance}`;
 
     if (extraLine) {
         doc.text(extraLine, leftX, yPos);
@@ -510,22 +495,28 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData, xOff
 
         yPos += 5;
 
-        // Linha 2
-        if (med.dosage) {
-            doc.setFont("helvetica", "normal");
-            doc.text(med.dosage, leftX + 7, yPos);
-            yPos += 5;
-        }
-
+        // Linha 2: Dosagem + Posologia na mesma linha
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
 
+        let dosagePosologia = "";
+        if (med.dosage) {
+            dosagePosologia += med.dosage;
+        }
         if (med.frequency) {
-            let posologia = med.frequency;
-            if (data.isContinuousUse) posologia += ". Uso contínuo.";
-            // Quebrar texto se for muito longo
+            if (dosagePosologia) {
+                dosagePosologia += "  -  " + med.frequency;
+            } else {
+                dosagePosologia = med.frequency;
+            }
+        }
+        if (data.isContinuousUse && dosagePosologia) {
+            dosagePosologia += ". Uso contínuo.";
+        }
+
+        if (dosagePosologia) {
             const maxPosologiaWidth = pageWidth - margin * 2 - 30;
-            const posologiaLines = doc.splitTextToSize(posologia, maxPosologiaWidth);
+            const posologiaLines = doc.splitTextToSize(dosagePosologia, maxPosologiaWidth);
             doc.text(posologiaLines, leftX + 7, yPos);
         }
 
@@ -844,11 +835,18 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text(`Dr(a). ${data.doctorName}`, leftX, yPos);
+
+    // CRM no final da linha (alinhado à direita)
     doc.setFont("helvetica", "normal");
-    doc.text(`CRM: ${data.doctorCrm}`, leftX + 65, yPos);
+    doc.text(`CRM: ${data.doctorCrm}`, rightX, yPos, { align: "right" });
+
+    // Especialidade + RQE no final da linha (alinhado à direita)
     if (data.doctorSpecialty) {
         doc.setFontSize(8);
-        doc.text(data.doctorSpecialty, leftX, yPos + 4);
+        const specialtyText = data.doctorRqe
+            ? `${data.doctorSpecialty} - RQE ${data.doctorRqe}`
+            : data.doctorSpecialty;
+        doc.text(specialtyText, rightX, yPos + 4, { align: "right" });
     }
 
     yPos += 12;
@@ -865,15 +863,23 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
 
     yPos += 5;
 
-    // Dados extras do paciente - compactados
+    // DN + CPF na mesma linha (com formatação dd/mm/yyyy)
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
 
     let line1 = "";
-    if (data.patientCpf) line1 += `CPF: ${data.patientCpf}`;
-    if (data.patientRg) line1 += `${line1 ? " | " : ""}RG: ${data.patientRg}`;
-    if (data.patientPhone) line1 += `${line1 ? " | " : ""}Tel: ${data.patientPhone}`;
-    if (data.patientGuardianName) line1 += `${line1 ? " | " : ""}Resp: ${data.patientGuardianName}`;
+    if (data.patientBirthDate) {
+        let formattedBirthDate = data.patientBirthDate;
+        if (data.patientBirthDate.includes("-")) {
+            const [year, month, day] = data.patientBirthDate.split("-");
+            formattedBirthDate = `${day}/${month}/${year}`;
+        }
+        line1 += `DN: ${formattedBirthDate}`;
+    }
+    if (data.patientCpf) {
+        if (line1) line1 += "    ";
+        line1 += `CPF: ${data.patientCpf}`;
+    }
 
     if (line1) {
         doc.text(line1, leftX, yPos);
@@ -910,19 +916,25 @@ const generateControlledContent = (doc: jsPDF, data: PrescriptionData, startY: n
 
         yPos += 5;
 
-        // Linha 2: Dosagem (se houver)
-        if (med.dosage) {
-            doc.setFont("helvetica", "normal");
-            doc.text(med.dosage, leftX + 7, yPos);
-            yPos += 5;
-        }
-
+        // Linha 2: Dosagem + Posologia na mesma linha
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
+
+        let dosagePosologia = "";
+        if (med.dosage) {
+            dosagePosologia += med.dosage;
+        }
         if (med.frequency) {
-            // Quebrar texto se for muito longo
+            if (dosagePosologia) {
+                dosagePosologia += "  -  " + med.frequency;
+            } else {
+                dosagePosologia = med.frequency;
+            }
+        }
+
+        if (dosagePosologia) {
             const maxPosologiaWidth = pageWidth - margin * 2 - 30;
-            const posologiaLines = doc.splitTextToSize(med.frequency, maxPosologiaWidth);
+            const posologiaLines = doc.splitTextToSize(dosagePosologia, maxPosologiaWidth);
             doc.text(posologiaLines, leftX + 7, yPos);
         }
 
@@ -1014,9 +1026,7 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
     // Detalhes extras do paciente
     doc.setFontSize(8);
     let details = "";
-    if (data.patientCpf) details += `CPF: ${data.patientCpf}`;
-    if (data.patientPhone) details += `${details ? " | " : ""}Tel: ${data.patientPhone}`;
-    if (data.patientGender) details += `${details ? " | " : ""}Sexo: ${data.patientGender}`;
+    if (data.patientGender) details += `Sexo: ${data.patientGender}`;
     if (data.patientInsurance) details += `${details ? " | " : ""}Convênio: ${data.patientInsurance}`;
 
     if (details) {
@@ -1054,18 +1064,25 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
 
         yPos += 5;
 
-        if (med.dosage) {
-            doc.setFont("helvetica", "normal");
-            doc.text(med.dosage, leftX + 7, yPos);
-            yPos += 5;
-        }
-
+        // Linha 2: Dosagem + Posologia na mesma linha
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
+
+        let dosagePosologia = "";
+        if (med.dosage) {
+            dosagePosologia += med.dosage;
+        }
         if (med.frequency) {
-            // Quebrar texto se for muito longo
+            if (dosagePosologia) {
+                dosagePosologia += "  -  " + med.frequency;
+            } else {
+                dosagePosologia = med.frequency;
+            }
+        }
+
+        if (dosagePosologia) {
             const maxPosologiaWidth = pageWidth - margin * 2 - 30;
-            const posologiaLines = doc.splitTextToSize(med.frequency, maxPosologiaWidth);
+            const posologiaLines = doc.splitTextToSize(dosagePosologia, maxPosologiaWidth);
             doc.text(posologiaLines, leftX + 7, yPos);
         }
 

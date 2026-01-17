@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -96,6 +96,7 @@ const profileSchema = z.object({
   phoneNumber: z.string().optional(),
   crm: z.string().optional(),
   specialty: z.string().optional(),
+  rqe: z.string().optional(),
   address: z.string().optional(),
   professionalPhoto: z.string().optional(),
   clinicName: z.string().optional(),
@@ -155,6 +156,7 @@ export default function Profile() {
       phoneNumber: user?.phoneNumber || "",
       crm: user?.crm || "",
       specialty: user?.specialty || "",
+      rqe: (user as any)?.rqe || "",
       address: user?.address || "",
       professionalPhoto: professionalProfile?.professionalPhoto || "",
       clinicName: professionalProfile?.clinicName || "",
@@ -166,6 +168,32 @@ export default function Profile() {
       consultationMode: professionalProfile?.consultationMode || "",
     },
   });
+
+  // Reset form when user data changes (e.g., after loading from API)
+  useEffect(() => {
+    if (user) {
+      const prefs = user.preferences && typeof user.preferences === "object"
+        ? (user.preferences as Record<string, any>).professionalProfile
+        : null;
+      profileForm.reset({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        crm: user.crm || "",
+        specialty: user.specialty || "",
+        rqe: (user as any).rqe || "",
+        address: user.address || "",
+        professionalPhoto: prefs?.professionalPhoto || "",
+        clinicName: prefs?.clinicName || "",
+        bio: prefs?.bio || "",
+        website: prefs?.website || "",
+        linkedin: prefs?.linkedin || "",
+        instagram: prefs?.instagram || "",
+        languages: prefs?.languages || "",
+        consultationMode: prefs?.consultationMode || "",
+      });
+    }
+  }, [user, profileForm]);
 
   const professionalPhoto = profileForm.watch("professionalPhoto");
   const clinicName = profileForm.watch("clinicName");
@@ -222,6 +250,7 @@ export default function Profile() {
       phoneNumber,
       crm,
       specialty,
+      rqe,
       address,
       professionalPhoto,
       clinicName,
@@ -259,6 +288,7 @@ export default function Profile() {
       phoneNumber,
       crm,
       specialty,
+      rqe,
       address,
       preferences: nextPreferences,
     });
@@ -630,6 +660,20 @@ export default function Profile() {
                                     <SelectItem value="Outra">Outra</SelectItem>
                                   </SelectContent>
                                 </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={profileForm.control}
+                            name="rqe"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>RQE (Reg. Qualif. Especialista)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="12345" {...field} name={field.name} />
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
