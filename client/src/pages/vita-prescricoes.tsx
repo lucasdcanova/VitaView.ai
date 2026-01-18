@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { generatePrescriptionPDF } from "@/lib/prescription-pdf";
@@ -24,15 +24,32 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { medicationSchema, MedicationDialog, type MedicationFormData } from "@/components/dialogs";
+import {
+    medicationSchema,
+    MedicationDialog,
+    type MedicationFormData,
+    ALL_MEDICATIONS_WITH_PRESENTATIONS,
+    FREQUENCIES,
+    getMedicationIcon,
+    PrescriptionTypeBadge,
+    MEDICATION_DATABASE,
+    MEDICATION_FORMATS,
+    DOSAGE_UNITS
+} from "@/components/dialogs";
 import { format } from "date-fns";
 import type { Profile, Prescription } from "@shared/schema";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Search, ChevronsUpDown, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AcutePrescriptionItem {
     id: string;
     name: string;
     dosage: string;
     frequency: string;
+    quantity?: string;
+    daysOfUse?: number;
     notes?: string;
 }
 
@@ -49,6 +66,38 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
     const [editingMedication, setEditingMedication] = useState<any>(null);
     const [selectedMedications, setSelectedMedications] = useState<Set<number>>(new Set());
+
+    // --- Receituário State ---
+    const [receituarioMedOpen, setReceituarioMedOpen] = useState(false);
+    const [receituarioSearchValue, setReceituarioSearchValue] = useState("");
+    const [receituarioDaysOfUse, setReceituarioDaysOfUse] = useState("7");
+    const [receituarioNotes, setReceituarioNotes] = useState("");
+    const [receituarioDose, setReceituarioDose] = useState("");
+    const [receituarioDoseUnit, setReceituarioDoseUnit] = useState("comprimido");
+    const [receituarioDosePopoverOpen, setReceituarioDosePopoverOpen] = useState(false);
+    const [receituarioPatientWeight, setReceituarioPatientWeight] = useState("");
+    const [receituarioQuantity, setReceituarioQuantity] = useState("");
+
+    // Função para calcular dose pediátrica baseada no peso
+    const calculatePediatricDose = (pres: any, weight: number) => {
+        if (!pres.isPediatric || !pres.dosePerKg || !pres.concentration || !pres.frequency) {
+            return null;
+        }
+        const dailyDoseLow = pres.dosePerKg * weight;
+        const dailyDoseHigh = (pres.dosePerKgMax || pres.dosePerKg) * weight;
+        const maxDaily = pres.maxDailyDose || Infinity;
+        const effectiveDailyLow = Math.min(dailyDoseLow, maxDaily);
+        const effectiveDailyHigh = Math.min(dailyDoseHigh, maxDaily);
+        const dosePerAdminLow = effectiveDailyLow / pres.frequency;
+        const dosePerAdminHigh = effectiveDailyHigh / pres.frequency;
+        const mlPerAdminLow = dosePerAdminLow / pres.concentration;
+        const mlPerAdminHigh = dosePerAdminHigh / pres.concentration;
+        return {
+            mlPerAdminLow: Math.round(mlPerAdminLow * 10) / 10,
+            mlPerAdminHigh: Math.round(mlPerAdminHigh * 10) / 10,
+        };
+    };
+
 
     const medicationForm = useForm<MedicationFormData>({
         resolver: zodResolver(medicationSchema),
@@ -84,15 +133,84 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         },
     });
 
+    // Form for receituario
+    const receituarioForm = useForm<MedicationFormData>({
+        resolver: zodResolver(medicationSchema),
+        defaultValues: {
+            name: "",
+            format: "comprimido",
+            dosage: "",
+            dosageUnit: "mg",
+            frequency: "",
+            doseAmount: 1,
+            prescriptionType: "padrao",
+            quantity: "",
+            administrationRoute: "oral",
+            startDate: new Date().toISOString().split('T')[0],
+            notes: "",
+        },
+    });
+
+    // Calculate quantity automatically
+    useEffect(() => {
+        const frequency = receituarioForm.getValues("frequency");
+        if (!frequency || !receituarioDose || !receituarioDaysOfUse) return;
+
+        const days = parseInt(receituarioDaysOfUse) || 0;
+        let dailyFreq = 0;
+
+        switch (frequency) {
+            case "1x ao dia": dailyFreq = 1; break;
+            case "2x ao dia": dailyFreq = 2; break;
+            case "3x ao dia": dailyFreq = 3; break;
+            case "4x ao dia": dailyFreq = 4; break;
+            case "12h em 12h": dailyFreq = 2; break;
+            case "8h em 8h": dailyFreq = 3; break;
+            case "6h em 6h": dailyFreq = 4; break;
+            case "4h em 4h": dailyFreq = 6; break;
+            case "Quando necessário": dailyFreq = 1; break;
+            default: dailyFreq = 0;
+        }
+
+        if (days === 0 || dailyFreq === 0) return;
+
+        // Handle ranges usage
+        const doseParts = receituarioDose.split('-');
+        const doseVal = parseFloat(doseParts.length > 1 ? doseParts[1] : doseParts[0].replace(',', '.')) || 0;
+
+        const formatLower = receituarioDoseUnit.toLowerCase();
+
+        const isSolid = formatLower.includes("comprimido") || formatLower.includes("capsula") || formatLower.includes("cápsula");
+        const isLiquid = formatLower.includes("gotas") || formatLower.includes("ml") || formatLower.includes("xarope") || formatLower.includes("suspensao");
+
+        const totalDoses = dailyFreq * days;
+
+        if (isSolid) {
+            const qty = Math.ceil(doseVal * totalDoses);
+            const suffix = formatLower.includes("capsula") || formatLower.includes("cápsula") ? "cápsulas" : "comprimidos";
+            setReceituarioQuantity(`${qty} ${suffix}`);
+        } else if (isLiquid) {
+            if (formatLower.includes("gotas")) {
+                const totalDrops = doseVal * totalDoses;
+                const frascos = Math.ceil(totalDrops / 400); // 400 gotas per frasco
+                setReceituarioQuantity(`${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
+            } else {
+                const totalMl = doseVal * totalDoses;
+                const frascos = Math.ceil(totalMl / 100); // 100ml per frasco
+                setReceituarioQuantity(`${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
+            }
+        } else if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel")) {
+            setReceituarioQuantity("1 bisnaga");
+        } else if (formatLower.includes("spray")) {
+            setReceituarioQuantity("1 frasco");
+        }
+
+    }, [receituarioDose, receituarioDoseUnit, receituarioDaysOfUse, receituarioForm.watch("frequency")]);
+
     // --- Prescription State ---
     const [acuteItems, setAcuteItems] = useState<AcutePrescriptionItem[]>([]);
-    const [currentAcuteItem, setCurrentAcuteItem] = useState<Partial<AcutePrescriptionItem>>({});
     const [prescriptionValidity, setPrescriptionValidity] = useState("30");
     const [prescriptionObservations, setPrescriptionObservations] = useState("");
-
-    const isCurrentAcuteItemComplete = Boolean(
-        currentAcuteItem.name && currentAcuteItem.dosage && currentAcuteItem.frequency
-    );
 
     // History Queries
     const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
@@ -149,7 +267,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
             toast({ title: "Sucesso", description: "Receita salva e gerada!" });
             setAcuteItems([]);
-            setCurrentAcuteItem({});
         },
         onError: (err) => {
             console.error(err);
@@ -255,21 +372,31 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         setIsMedicationDialogOpen(true);
     };
 
-    // Acute Prescription Handlers
-    const addAcuteItem = () => {
-        if (!currentAcuteItem.name || !currentAcuteItem.dosage || !currentAcuteItem.frequency) {
-            toast({ title: "Campos incompletos", description: "Preencha nome, dose e frequência.", variant: "destructive" });
+    // Receituário Inline Handler
+    const addMedicationToReceituario = (medicationName: string, frequency: string, doseValue: string, doseUnit: string, quantity: string) => {
+        if (!medicationName || !frequency || !doseValue) {
+            toast({ title: "Erro", description: "Preencha o medicamento, dose e frequência.", variant: "destructive" });
             return;
         }
+        const dosageStr = `${doseValue} ${doseUnit}`;
         const newItem: AcutePrescriptionItem = {
             id: Math.random().toString(36).substr(2, 9),
-            name: currentAcuteItem.name,
-            dosage: currentAcuteItem.dosage,
-            frequency: currentAcuteItem.frequency,
-            notes: currentAcuteItem.notes
+            name: medicationName,
+            dosage: dosageStr,
+            frequency: frequency,
+            daysOfUse: parseInt(receituarioDaysOfUse) || 7,
+            quantity: quantity || undefined,
+            notes: receituarioNotes || undefined
         };
         setAcuteItems([...acuteItems, newItem]);
-        setCurrentAcuteItem({});
+        setReceituarioSearchValue("");
+        receituarioForm.reset();
+        setReceituarioDaysOfUse("7");
+        setReceituarioNotes("");
+        setReceituarioDose("");
+        setReceituarioDoseUnit("comprimido");
+        setReceituarioQuantity("");
+        toast({ title: "Medicamento adicionado", description: `${medicationName} foi adicionado à receita.` });
     };
 
     const removeAcuteItem = (id: string) => {
@@ -277,7 +404,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     };
 
     const handleSaveAndPrintPrescription = async () => {
-        if (acuteItems.length === 0 && !isCurrentAcuteItemComplete) {
+        if (acuteItems.length === 0) {
             toast({ title: "Prescrição vazia", description: "Adicione pelo menos um medicamento.", variant: "destructive" });
             return;
         }
@@ -287,13 +414,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             return;
         }
 
-        const itemsToSave = acuteItems.length > 0 ? acuteItems : [{
-            id: "single-item",
-            name: currentAcuteItem.name as string,
-            dosage: currentAcuteItem.dosage as string,
-            frequency: currentAcuteItem.frequency as string,
-            notes: currentAcuteItem.notes
-        }];
+        const itemsToSave = acuteItems;
 
         const doctorName = user.fullName || user.username || "Dr. VitaView";
         const doctorCrm = user.crm || "CRM pendente";
@@ -600,73 +721,417 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     </CardContent>
                 </Card>
 
-                {/* --- COLUNA DIREITA: RECEITA AGUDA --- */}
+                {/* --- COLUNA DIREITA: RECEITUÁRIO --- */}
                 <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20 h-fit">
                     <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
                         <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
                             <Stethoscope className="h-5 w-5 text-green-700" />
-                            Receita da Consulta
+                            Receituário
                         </CardTitle>
-                        <CardDescription className="text-sm">Medicamentos para tratamento específico.</CardDescription>
+                        <CardDescription className="text-sm">Medicamentos para tratamento específico desta consulta.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4 space-y-4">
-                        {/* Add Item Form */}
-                        <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-sm space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1 col-span-2">
-                                    <label className="text-xs font-medium text-gray-500">Medicamento</label>
-                                    <Input
-                                        placeholder="Ex: Amoxicilina 500mg"
-                                        value={currentAcuteItem.name || ""}
-                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, name: e.target.value })}
-                                        className="h-9 text-sm"
-                                    />
+                        {/* Inline Medication Form */}
+                        <div className="bg-green-50/50 rounded-lg border border-green-100 p-3 space-y-3">
+                            {/* Medication Search */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-700">Medicamento</label>
+                                <Popover open={receituarioMedOpen} onOpenChange={setReceituarioMedOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={receituarioMedOpen}
+                                            className={cn(
+                                                "w-full justify-between font-normal h-9 text-sm bg-white",
+                                                !receituarioForm.watch("name") && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <span className="flex items-center gap-2 truncate">
+                                                {receituarioForm.watch("name") || "Buscar medicamento..."}
+                                            </span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[350px] p-0" align="start">
+                                        <div className="flex items-center border-b px-3">
+                                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                            <input
+                                                className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                                                placeholder="Buscar medicamento..."
+                                                value={receituarioSearchValue}
+                                                onChange={(e) => setReceituarioSearchValue(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="max-h-[250px] overflow-y-auto p-1">
+                                            {(() => {
+                                                const filtered = receituarioSearchValue
+                                                    ? ALL_MEDICATIONS_WITH_PRESENTATIONS.filter(med =>
+                                                        med.displayName.toLowerCase().includes(receituarioSearchValue.toLowerCase()) ||
+                                                        med.baseName.toLowerCase().includes(receituarioSearchValue.toLowerCase())
+                                                    )
+                                                    : ALL_MEDICATIONS_WITH_PRESENTATIONS;
+
+                                                if (filtered.length === 0) {
+                                                    return (
+                                                        <div className="py-4 text-center">
+                                                            <p className="text-sm text-gray-500">Nenhum medicamento encontrado.</p>
+                                                            {receituarioSearchValue && (
+                                                                <div
+                                                                    className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b mt-2 bg-gradient-to-r from-blue-50 to-transparent mx-2"
+                                                                    onClick={() => {
+                                                                        // Clear previous fields
+                                                                        receituarioForm.reset();
+                                                                        setReceituarioDose("");
+                                                                        setReceituarioDoseUnit("comprimido");
+                                                                        setReceituarioQuantity("");
+                                                                        setReceituarioNotes("");
+                                                                        setReceituarioDaysOfUse("7");
+
+                                                                        receituarioForm.setValue("name", receituarioSearchValue);
+                                                                        setReceituarioMedOpen(false);
+                                                                        setReceituarioSearchValue("");
+                                                                    }}
+                                                                >
+                                                                    <span className="text-blue-600">✏️</span>
+                                                                    <span className="flex-1 text-blue-700 font-medium">
+                                                                        Digitar manualmente: "{receituarioSearchValue}"
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <>
+                                                        {/* Opção de digitar manualmente sempre visível quando há busca */}
+                                                        {receituarioSearchValue && (
+                                                            <div
+                                                                className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b mb-1 bg-gradient-to-r from-blue-50 to-transparent"
+                                                                onClick={() => {
+                                                                    // Clear previous fields
+                                                                    receituarioForm.reset();
+                                                                    setReceituarioDose("");
+                                                                    setReceituarioDoseUnit("comprimido");
+                                                                    setReceituarioQuantity("");
+                                                                    setReceituarioNotes("");
+                                                                    setReceituarioDaysOfUse("7");
+
+                                                                    receituarioForm.setValue("name", receituarioSearchValue);
+                                                                    setReceituarioMedOpen(false);
+                                                                    setReceituarioSearchValue("");
+                                                                }}
+                                                            >
+                                                                <span className="text-blue-600">✏️</span>
+                                                                <span className="flex-1 text-blue-700 font-medium">
+                                                                    Digitar manualmente: "{receituarioSearchValue}"
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {filtered.map((med) => (
+                                                            <div
+                                                                key={med.displayName}
+                                                                className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-green-50"
+                                                                onClick={() => {
+                                                                    // Clear previous fields
+                                                                    receituarioForm.reset();
+                                                                    setReceituarioDose("");
+                                                                    setReceituarioDoseUnit("comprimido");
+                                                                    setReceituarioQuantity("");
+                                                                    setReceituarioNotes("");
+                                                                    setReceituarioDaysOfUse("7");
+
+                                                                    receituarioForm.setValue("name", med.displayName);
+                                                                    setReceituarioMedOpen(false);
+                                                                    setReceituarioSearchValue("");
+                                                                }}
+                                                            >
+                                                                <span className="text-base">{getMedicationIcon(med.format)}</span>
+                                                                <span className="flex-1">{med.displayName}</span>
+                                                                {med.prescriptionType && med.prescriptionType !== 'common' && (
+                                                                    <PrescriptionTypeBadge type={med.prescriptionType} />
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            {/* Dose per use with AI suggestions - split into value and unit */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="col-span-2 space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Dose por vez *</label>
+                                    <Popover open={receituarioDosePopoverOpen} onOpenChange={setReceituarioDosePopoverOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Input
+                                                className="h-9 text-sm bg-white"
+                                                placeholder="Ex: 1, 10, 5"
+                                                value={receituarioDose}
+                                                onChange={(e) => setReceituarioDose(e.target.value)}
+                                                onFocus={() => {
+                                                    const medName = receituarioForm.watch("name");
+                                                    if (medName) setReceituarioDosePopoverOpen(true);
+                                                }}
+                                            />
+                                        </PopoverTrigger>
+                                        {(() => {
+                                            const medName = receituarioForm.watch("name");
+                                            if (!medName) return null;
+
+                                            // Find the base medication name (remove dosage info)
+                                            const baseName = medName.split(" ")[0];
+                                            const medInfo = MEDICATION_DATABASE.find(m =>
+                                                m.name.toLowerCase() === baseName.toLowerCase()
+                                            );
+
+                                            if (!medInfo) return null;
+
+                                            return (
+                                                <PopoverContent className="w-[340px] p-0" align="start" side="bottom">
+                                                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-2 border-b">
+                                                        <div className="flex items-center gap-2 text-green-700">
+                                                            <Sparkles className="h-4 w-4" />
+                                                            <span className="font-medium text-sm">Sugestão IA</span>
+                                                            <Badge variant="outline" className="text-xs ml-auto">{medInfo.category}</Badge>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-2 max-h-[280px] overflow-y-auto">
+                                                        {/* Apresentações para adultos */}
+                                                        {medInfo.presentations.filter(p => !p.isPediatric).length > 0 && (
+                                                            <>
+                                                                {medInfo.presentations.filter(p => !p.isPediatric).map((pres, idx) => (
+                                                                    <div
+                                                                        key={`adult-${idx}`}
+                                                                        className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-green-50 transition-colors"
+                                                                        onClick={() => {
+                                                                            if (pres.suggestedDose && pres.suggestedUnit) {
+                                                                                setReceituarioDose(pres.suggestedDose);
+                                                                                setReceituarioDoseUnit(pres.suggestedUnit);
+                                                                            } else {
+                                                                                setReceituarioDose(`${pres.dosage}`);
+                                                                                setReceituarioDoseUnit(pres.unit || "comprimido");
+                                                                            }
+                                                                            setReceituarioDosePopoverOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <div>
+                                                                            <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
+                                                                            <span className="text-gray-500 ml-2 text-sm">
+                                                                                ({MEDICATION_FORMATS.find(f => f.value === pres.format)?.label || pres.format})
+                                                                            </span>
+                                                                        </div>
+                                                                        {pres.commonDose && (
+                                                                            <span className="text-xs text-gray-500">{pres.commonDose}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </>
+                                                        )}
+
+                                                        {/* Seção pediátrica com campo de peso integrado */}
+                                                        {medInfo.presentations.filter(p => p.isPediatric).length > 0 && (
+                                                            <div className="mt-2 pt-2 border-t">
+                                                                <div className="flex items-center justify-between px-2 py-1">
+                                                                    <span className="text-xs text-purple-600 font-medium">👶 Pediátrico</span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Input
+                                                                            type="number"
+                                                                            placeholder="Peso"
+                                                                            value={receituarioPatientWeight}
+                                                                            onChange={(e) => setReceituarioPatientWeight(e.target.value)}
+                                                                            className="h-6 w-16 text-xs px-2"
+                                                                            min="0"
+                                                                            step="0.1"
+                                                                        />
+                                                                        <span className="text-xs text-gray-500">kg</span>
+                                                                    </div>
+                                                                </div>
+                                                                {medInfo.presentations.filter(p => p.isPediatric).map((pres, idx) => {
+                                                                    const weight = parseFloat(receituarioPatientWeight);
+                                                                    const calculation = weight > 0 ? calculatePediatricDose(pres, weight) : null;
+
+                                                                    return (
+                                                                        <div
+                                                                            key={`ped-${idx}`}
+                                                                            className="p-2 rounded-md cursor-pointer hover:bg-purple-50 transition-colors border-l-2 border-purple-200 ml-2 mt-1"
+                                                                            onClick={() => {
+                                                                                if (calculation) {
+                                                                                    const doseValue = calculation.mlPerAdminLow === calculation.mlPerAdminHigh
+                                                                                        ? `${calculation.mlPerAdminLow}`
+                                                                                        : `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`;
+                                                                                    setReceituarioDose(doseValue);
+                                                                                    setReceituarioDoseUnit("ml");
+                                                                                    setReceituarioDosePopoverOpen(false);
+                                                                                } else {
+                                                                                    if (pres.suggestedDose && pres.suggestedUnit) {
+                                                                                        setReceituarioDose(pres.suggestedDose);
+                                                                                        setReceituarioDoseUnit(pres.suggestedUnit);
+                                                                                    } else {
+                                                                                        setReceituarioDose(`${pres.dosage}`);
+                                                                                        setReceituarioDoseUnit("ml");
+                                                                                    }
+                                                                                    setReceituarioDosePopoverOpen(false);
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex items-center justify-between">
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <span className="font-semibold text-gray-900 text-sm">{pres.dosage}</span>
+                                                                                    {pres.format && (
+                                                                                        <span className="text-gray-500 font-normal text-xs">
+                                                                                            ({MEDICATION_FORMATS.find(f => f.value === pres.format)?.label || pres.format})
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                {calculation ? (
+                                                                                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                                                                                        {calculation.mlPerAdminLow === calculation.mlPerAdminHigh
+                                                                                            ? `${calculation.mlPerAdminLow}ml`
+                                                                                            : `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}ml`
+                                                                                        } / dose
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    // Fallback logic if no calculation possible (or no weight)
+                                                                                    pres.dosePerKg ? (
+                                                                                        // Has calc params, waiting for weight
+                                                                                        <span className="text-xs text-purple-400 italic">informe peso</span>
+                                                                                    ) : (
+                                                                                        // No calc params (Fixed dose or Manual), show suggestion if exists
+                                                                                        pres.suggestedDose ? (
+                                                                                            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                                                                {pres.suggestedDose}{pres.suggestedUnit || "ml"} (Fixo)
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <span className="text-xs text-gray-400 italic">Ver bula</span>
+                                                                                        )
+                                                                                    )
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-xs text-gray-500">{pres.commonDose}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="bg-gray-50 p-2 border-t">
+                                                        <p className="text-[10px] text-gray-400 text-center">
+                                                            ⚕️ Sugestões baseadas em referências gerais.
+                                                        </p>
+                                                    </div>
+                                                </PopoverContent>
+                                            );
+                                        })()}
+                                    </Popover>
+                                </div>
+                                {/* Unit selector */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Unidade</label>
+                                    <Select value={receituarioDoseUnit} onValueChange={setReceituarioDoseUnit}>
+                                        <SelectTrigger className="h-9 text-sm bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {DOSAGE_UNITS.map((unit) => (
+                                                <SelectItem key={unit.value} value={unit.value}>
+                                                    {unit.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Frequency, Days and Quantity Row */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Frequência</label>
+                                    <Select
+                                        value={receituarioForm.watch("frequency")}
+                                        onValueChange={(val) => receituarioForm.setValue("frequency", val)}
+                                    >
+                                        <SelectTrigger className="h-9 text-sm bg-white">
+                                            <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {FREQUENCIES.map((freq) => (
+                                                <SelectItem key={freq.value} value={freq.value}>
+                                                    {freq.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-gray-500">Dose</label>
-                                    <Input
-                                        placeholder="Ex: 1 comp"
-                                        value={currentAcuteItem.dosage || ""}
-                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, dosage: e.target.value })}
-                                        className="h-9 text-sm"
-                                    />
+                                    <label className="text-xs font-medium text-gray-700">Dias de uso</label>
+                                    <Select value={receituarioDaysOfUse} onValueChange={setReceituarioDaysOfUse}>
+                                        <SelectTrigger className="h-9 text-sm bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="3">3 dias</SelectItem>
+                                            <SelectItem value="5">5 dias</SelectItem>
+                                            <SelectItem value="7">7 dias</SelectItem>
+                                            <SelectItem value="10">10 dias</SelectItem>
+                                            <SelectItem value="14">14 dias</SelectItem>
+                                            <SelectItem value="21">21 dias</SelectItem>
+                                            <SelectItem value="30">30 dias</SelectItem>
+                                            <SelectItem value="60">60 dias</SelectItem>
+                                            <SelectItem value="90">90 dias</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-gray-500">Posologia</label>
+                                    <label className="text-xs font-medium text-gray-700">Quantidade</label>
                                     <Input
-                                        placeholder="Ex: 8/8h por 7 dias"
-                                        value={currentAcuteItem.frequency || ""}
-                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, frequency: e.target.value })}
-                                        className="h-9 text-sm"
-                                    />
-                                </div>
-                                <div className="space-y-1 col-span-2">
-                                    <label className="text-xs font-medium text-gray-500">Observação (opcional)</label>
-                                    <Input
-                                        placeholder="Instruções adicionais"
-                                        value={currentAcuteItem.notes || ""}
-                                        onChange={e => setCurrentAcuteItem({ ...currentAcuteItem, notes: e.target.value })}
-                                        className="h-9 text-sm"
+                                        className="h-9 text-sm bg-white"
+                                        value={receituarioQuantity}
+                                        onChange={(e) => setReceituarioQuantity(e.target.value)}
+                                        placeholder="Calc. Auto"
                                     />
                                 </div>
                             </div>
+
+                            {/* Notes */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-700">Observações (opcional)</label>
+                                <Input
+                                    className="h-9 text-sm bg-white"
+                                    placeholder="Ex: Tomar com alimento"
+                                    value={receituarioNotes}
+                                    onChange={(e) => setReceituarioNotes(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Add Button */}
                             <Button
-                                className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
-                                onClick={addAcuteItem}
-                                disabled={!isCurrentAcuteItemComplete}
+                                className="w-full h-9 bg-green-600 hover:bg-green-700 text-white text-sm gap-2"
+                                onClick={() => addMedicationToReceituario(
+                                    receituarioForm.watch("name"),
+                                    receituarioForm.watch("frequency"),
+                                    receituarioDose,
+                                    receituarioDoseUnit,
+                                    receituarioQuantity
+                                )}
+                                disabled={!receituarioForm.watch("name") || !receituarioForm.watch("frequency") || !receituarioDose}
                             >
-                                <PlusCircle className="h-4 w-4 mr-1" />
+                                <PlusCircle className="h-4 w-4" />
                                 Adicionar à Receita
                             </Button>
                         </div>
 
                         {/* Prescription Items List */}
-                        <div className="bg-white rounded-lg border border-gray-200 min-h-[150px] flex flex-col">
+                        <div className="bg-white rounded-lg border border-gray-200 min-h-[120px] flex flex-col">
                             <div className="p-2 border-b bg-gray-50 flex justify-between items-center rounded-t-lg">
                                 <span className="font-medium text-xs text-gray-700">Itens da Receita ({acuteItems.length})</span>
                                 {acuteItems.length > 0 && <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6 px-2" onClick={() => setAcuteItems([])}>Limpar</Button>}
                             </div>
-                            <div className="p-2 space-y-2 flex-1 max-h-[200px] overflow-y-auto">
+                            <div className="p-2 space-y-2 flex-1 max-h-[180px] overflow-y-auto">
                                 {acuteItems.length > 0 ? (
                                     acuteItems.map((item, idx) => (
                                         <div key={item.id} className="flex items-start justify-between p-2 bg-gray-50 rounded-lg border border-gray-100 group">
@@ -675,8 +1140,8 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                     {idx + 1}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 text-sm">{item.name} <span className="font-normal text-gray-600 text-xs">({item.dosage})</span></p>
-                                                    <p className="text-xs text-gray-600">{item.frequency}</p>
+                                                    <p className="font-semibold text-gray-900 text-sm">{item.name} <span className="font-normal text-gray-600">({item.dosage})</span></p>
+                                                    <p className="text-xs text-gray-600">{item.frequency} • <span className="text-green-600 font-medium">{item.daysOfUse} dias</span> {item.quantity && <span>• {item.quantity}</span>}</p>
                                                     {item.notes && <p className="text-xs text-gray-500 mt-0.5 italic">{item.notes}</p>}
                                                 </div>
                                             </div>
@@ -686,7 +1151,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-1 min-h-[100px]">
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-1 min-h-[80px]">
                                         <FileText className="h-6 w-6 opacity-20" />
                                         <p className="text-xs">Nenhum item adicionado</p>
                                     </div>
@@ -711,7 +1176,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                             <Button
                                 className="flex-1 h-9 text-sm shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700"
                                 onClick={handleSaveAndPrintPrescription}
-                                disabled={createPrescriptionMutation.isPending || (!isCurrentAcuteItemComplete && acuteItems.length === 0) || !user}
+                                disabled={createPrescriptionMutation.isPending || acuteItems.length === 0 || !user}
                             >
                                 <Printer className="h-4 w-4 mr-1" />
                                 {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
@@ -764,6 +1229,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 </CardContent>
             </Card>
 
+            {/* Dialog para Medicamentos de Uso Contínuo */}
             <MedicationDialog
                 open={isMedicationDialogOpen}
                 onOpenChange={(open) => {
@@ -777,6 +1243,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 onRemove={editingMedication ? () => deleteMedicationMutation.mutate(editingMedication.id) : undefined}
                 isRemovePending={deleteMedicationMutation.isPending}
             />
-        </div>
+        </div >
     );
 }

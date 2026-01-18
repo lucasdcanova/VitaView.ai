@@ -37,7 +37,7 @@ import { Check, ChevronsUpDown, Sparkles, Lightbulb, Search } from "lucide-react
 import { cn } from "@/lib/utils";
 
 // Helper function to render prescription type badge with appropriate colors
-const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' | 'C' | 'C1' }) => {
+export const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' | 'C' | 'C1' }) => {
     if (!type || type === 'common') return null;
 
     const badgeConfig: Record<string, { label: string; className: string }> = {
@@ -75,7 +75,7 @@ const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' |
 };
 
 // Helper function to get medication icon based on format
-const getMedicationIcon = (format: string) => {
+export const getMedicationIcon = (format: string) => {
     const formatLower = (format || "").toLowerCase();
 
     if (formatLower.includes("injecao") || formatLower.includes("injeção") || formatLower.includes("ampola") || formatLower.includes("refil") || formatLower.includes("caneta")) {
@@ -139,6 +139,8 @@ interface MedicationPresentation {
     concentration?: number; // Concentração em mg/ml
     maxDailyDose?: number; // Dose máxima diária em mg
     frequency?: number; // Número de doses por dia
+    suggestedDose?: string; // Dose sugerida para preencher o campo (ex: "5", "30")
+    suggestedUnit?: string; // Unidade sugerida (ex: "ml", "gotas")
 }
 
 interface MedicationInfo {
@@ -153,7 +155,7 @@ interface MedicationInfo {
 }
 
 // Banco de dados de medicamentos com apresentações
-const MEDICATION_DATABASE: MedicationInfo[] = [
+export const MEDICATION_DATABASE: MedicationInfo[] = [
     // ANTI-HIPERTENSIVOS
     {
         name: "Losartana",
@@ -348,7 +350,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "0.25", unit: "mg", format: "comprimido", commonDose: "0.25-0.5mg 2-3x/dia" },
             { dosage: "0.5", unit: "mg", format: "comprimido", commonDose: "0.5-1mg 2-3x/dia" },
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "1-2mg 2-3x/dia" },
-            { dosage: "2.5", unit: "mg/ml", format: "gotas", commonDose: "5-10 gotas 2-3x/dia" },
+            { dosage: "2.5", unit: "mg/ml", format: "gotas", commonDose: "5-10 gotas 2-3x/dia", suggestedDose: "5", suggestedUnit: "gotas" },
             // Apresentação pediátrica (convulsões)
             {
                 dosage: "2.5", unit: "mg/ml", format: "gotas",
@@ -424,7 +426,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 4-6x/dia" },
             { dosage: "750", unit: "mg", format: "comprimido", commonDose: "750mg 4-6x/dia" },
-            { dosage: "200", unit: "mg/ml", format: "gotas", commonDose: "35-55 gotas 4-6x/dia" },
+            { dosage: "200", unit: "mg/ml", format: "gotas", commonDose: "35-55 gotas 4-6x/dia", suggestedDose: "35", suggestedUnit: "gotas" },
             // Apresentação pediátrica
             {
                 dosage: "200", unit: "mg/ml", format: "gotas",
@@ -472,7 +474,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500-1000mg 4x/dia" },
             { dosage: "1000", unit: "mg", format: "comprimido", commonDose: "1000mg 4x/dia" },
-            { dosage: "500", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4x/dia" },
+            { dosage: "500", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 4x/dia", suggestedDose: "30", suggestedUnit: "gotas" },
             { dosage: "1000", unit: "mg/2ml", format: "ampola", commonDose: "1 ampola IM/IV 6/6h" },
             // Apresentação pediátrica
             {
@@ -502,6 +504,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 commonDose: "5-10mg/kg/dose 3-4x/dia",
                 indication: "Uso pediátrico",
                 isPediatric: true,
+                suggestedDose: "5",
+                suggestedUnit: "ml",
                 dosePerKg: 5,
                 dosePerKgMax: 10,
                 concentration: 50, // 50mg/ml
@@ -569,6 +573,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 commonDose: "25-50mg/kg/dia dividido 8/8h",
                 indication: "Uso pediátrico",
                 isPediatric: true,
+                suggestedDose: "5",
+                suggestedUnit: "ml",
                 dosePerKg: 25,
                 dosePerKgMax: 50,
                 concentration: 50, // 250mg/5ml = 50mg/ml
@@ -580,6 +586,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 commonDose: "25-50mg/kg/dia dividido 8/8h",
                 indication: "Uso pediátrico - concentração alta",
                 isPediatric: true,
+                suggestedDose: "5",
+                suggestedUnit: "ml",
                 dosePerKg: 25,
                 dosePerKgMax: 50,
                 concentration: 100, // 500mg/5ml = 100mg/ml
@@ -601,6 +609,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 commonDose: "10mg/kg/dia 1x/dia por 3-5 dias",
                 indication: "Uso pediátrico",
                 isPediatric: true,
+                suggestedDose: "5",
+                suggestedUnit: "ml",
                 dosePerKg: 10,
                 dosePerKgMax: 10,
                 concentration: 40, // 200mg/5ml = 40mg/ml
@@ -652,6 +662,8 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
                 commonDose: "2-12a: 5mg (5ml); >30kg: 10mg (10ml) 1x/dia",
                 indication: "Uso pediátrico (>2 anos)",
                 isPediatric: true,
+                suggestedDose: "5",
+                suggestedUnit: "ml",
                 dosePerKg: 0.2,
                 dosePerKgMax: 0.3,
                 concentration: 1, // 1mg/ml
@@ -1121,7 +1133,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
-        prescriptionType: 'B1',
+        prescriptionType: 'C1',
         presentations: [
             { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2-3x/dia" },
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 2-3x/dia" },
@@ -1473,7 +1485,14 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
-            { dosage: "4", unit: "mg/ml", format: "gotas", commonDose: "10-15 gotas 3x/dia" },
+            {
+                dosage: "4", unit: "mg/ml", format: "gotas",
+                commonDose: "10-15 gotas 3x/dia",
+                isPediatric: true,
+                dosePerKg: 0.5,
+                concentration: 4,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["3x ao dia"],
         notes: "Tomar 30min antes das refeições",
@@ -1505,6 +1524,12 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5mg 1x/dia" },
+            {
+                dosage: "0.5", unit: "mg/ml", format: "xarope",
+                commonDose: "2.5-5ml 1x/dia",
+                suggestedDose: "2.5", suggestedUnit: "ml",
+                isPediatric: true
+            },
         ],
         commonFrequencies: ["1x ao dia"],
     },
@@ -1774,7 +1799,15 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-5mg 2-3x/dia" },
             { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg 2-3x/dia" },
-            { dosage: "2", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 2-3x/dia" },
+            {
+                dosage: "2", unit: "mg/ml", format: "gotas",
+                commonDose: "10-20 gotas 2-3x/dia",
+                isPediatric: true,
+                dosePerKg: 0.05,
+                dosePerKgMax: 0.15,
+                concentration: 2,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia"],
         notes: "Receita Especial (branca 2 vias)",
@@ -1789,7 +1822,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "1", unit: "mg", format: "comprimido", commonDose: "1-2mg 1-2x/dia" },
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2-4mg 1-2x/dia" },
             { dosage: "3", unit: "mg", format: "comprimido", commonDose: "3-6mg 1x/dia" },
-            { dosage: "1", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 1-2x/dia" },
+            { dosage: "1", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas 1-2x/dia", isPediatric: true },
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia"],
         notes: "Receita B1 (azul)",
@@ -1827,11 +1860,19 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Anticonvulsivante",
         route: "oral",
         isControlled: true,
-        prescriptionType: 'B1',
+        prescriptionType: 'C1',
         presentations: [
             { dosage: "200", unit: "mg", format: "comprimido", commonDose: "200-400mg 2-3x/dia" },
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 2-3x/dia" },
-            { dosage: "20", unit: "mg/ml", format: "suspensao", commonDose: "10-20ml 2-3x/dia" },
+            {
+                dosage: "20", unit: "mg/ml", format: "suspensao",
+                commonDose: "10-20ml 2-3x/dia",
+                isPediatric: true,
+                dosePerKg: 15,
+                dosePerKgMax: 20,
+                concentration: 20,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia"],
         notes: "Receita B1. Monitorar hemograma e função hepática",
@@ -1879,7 +1920,14 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 3x/dia" },
-            { dosage: "4", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 3x/dia" },
+            {
+                dosage: "4", unit: "mg/ml", format: "gotas",
+                commonDose: "20-40 gotas 3x/dia",
+                isPediatric: true,
+                dosePerKg: 0.5,
+                concentration: 4,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["3x ao dia"],
         notes: "Tomar 30min antes das refeições",
@@ -1896,18 +1944,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
     },
     // CORTICOIDES
 
-    {
-        name: "Prednisolona",
-        category: "Corticoide",
-        route: "oral",
-        presentations: [
-            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-60mg 1x/dia" },
-            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
-            { dosage: "3", unit: "mg/ml", format: "suspensao", commonDose: "1-2mg/kg/dia" },
-        ],
-        commonFrequencies: ["1x ao dia"],
-        notes: "Tomar pela manhã",
-    },
+
     // RELAXANTES MUSCULARES
     {
         name: "Ciclobenzaprina",
@@ -2090,7 +2127,16 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "300", unit: "mg", format: "comprimido", commonDose: "300-600mg 2x/dia" },
             { dosage: "600", unit: "mg", format: "comprimido", commonDose: "600-1200mg 2x/dia" },
-            { dosage: "60", unit: "mg/ml", format: "suspensao", commonDose: "8-10mg/kg/dia", indication: "Uso pediátrico" },
+            {
+                dosage: "60", unit: "mg/ml", format: "suspensao",
+                commonDose: "8-10mg/kg/dia",
+                indication: "Uso pediátrico",
+                isPediatric: true,
+                dosePerKg: 10,
+                dosePerKgMax: 10,
+                concentration: 60,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["2x ao dia"],
         notes: "Alternativa à carbamazepina",
@@ -2294,10 +2340,41 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Mucolítico",
         route: "oral",
         presentations: [
-            { dosage: "5", unit: "mg/ml", format: "xarope", commonDose: "5ml 2-3x/dia", indication: "Infantil" },
+            {
+                dosage: "5", unit: "mg/ml", format: "xarope",
+                commonDose: "5ml 2-3x/dia",
+                indication: "Infantil",
+                suggestedDose: "5",
+                suggestedUnit: "ml",
+                isPediatric: true,
+                dosePerKg: 1.25,
+                dosePerKgMax: 1.25,
+                concentration: 5,
+                frequency: 2
+            },
             { dosage: "50", unit: "mg", format: "capsula", commonDose: "50mg 2x/dia" },
         ],
         commonFrequencies: ["2x ao dia", "3x ao dia"],
+    },
+    {
+        name: "Ambroxol",
+        category: "Mucolítico",
+        route: "oral",
+        presentations: [
+            {
+                dosage: "3", unit: "mg/ml", format: "xarope",
+                commonDose: "2.5-5ml 3x/dia",
+                indication: "Infantil",
+                suggestedDose: "5", suggestedUnit: "ml",
+                isPediatric: true,
+                dosePerKg: 0.75, // Approx for 2.5ml/10kg
+                dosePerKgMax: 0.75,
+                concentration: 3,
+                frequency: 3
+            },
+            { dosage: "6", unit: "mg/ml", format: "xarope", commonDose: "5-10ml 3x/dia", suggestedDose: "5", suggestedUnit: "ml" },
+        ],
+        commonFrequencies: ["3x ao dia"],
     },
     {
         name: "Aciclovir",
@@ -2316,7 +2393,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg dose única" },
-            { dosage: "40", unit: "mg/ml", format: "suspensao", commonDose: "10ml dose única" },
+            { dosage: "40", unit: "mg/ml", format: "suspensao", commonDose: "10ml dose única", suggestedDose: "10", suggestedUnit: "ml", isPediatric: true },
         ],
         commonFrequencies: ["Dose única"],
         notes: "Vermífugo. Tomar com alimentos",
@@ -2360,7 +2437,15 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10-20mg 3-4x/dia", indication: "Buscopan" },
-            { dosage: "10", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas 3-4x/dia" },
+            {
+                dosage: "10", unit: "mg/ml", format: "gotas",
+                commonDose: "20-40 gotas 3-4x/dia",
+                isPediatric: true,
+                dosePerKg: 1.5, // 0.5mg/kg/dose * 3 ?? Approx. 1 drop/kg/dose = 0.5mg/kg/dose. Daily = 1.5
+                dosePerKgMax: 2,
+                concentration: 10,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia", "Quando necessário"],
         notes: "Cólicas abdominais",
@@ -2448,7 +2533,16 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2mg 3-4x/dia" },
-            { dosage: "0.4", unit: "mg/ml", format: "xarope", commonDose: "5ml 3x/dia" },
+            {
+                dosage: "0.4", unit: "mg/ml", format: "xarope",
+                commonDose: "5ml 3x/dia",
+                suggestedDose: "5", suggestedUnit: "ml",
+                isPediatric: true,
+                dosePerKg: 0.15,
+                dosePerKgMax: 0.15,
+                concentration: 0.4,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia"],
         notes: "Polaramine. Pode causar sonolência",
@@ -2493,7 +2587,16 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         prescriptionType: 'B1',
         presentations: [
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100-200mg 1x/dia" },
-            { dosage: "40", unit: "mg/ml", format: "gotas", commonDose: "3-5mg/kg/dia", indication: "Pediátrico" },
+            {
+                dosage: "40", unit: "mg/ml", format: "gotas",
+                commonDose: "3-5mg/kg/dia",
+                indication: "Pediátrico",
+                isPediatric: true,
+                dosePerKg: 4,
+                dosePerKgMax: 5,
+                concentration: 40,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Receita B1 (azul). Gardenal. Tomar à noite",
@@ -2533,7 +2636,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antiácido",
         route: "oral",
         presentations: [
-            { dosage: "61.5", unit: "mg/ml", format: "suspensao", commonDose: "10-20ml 3-4x/dia" },
+            { dosage: "61.5", unit: "mg/ml", format: "suspensao", commonDose: "10-20ml 3-4x/dia", suggestedDose: "5", suggestedUnit: "ml", isPediatric: true },
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia"],
         notes: "Tomar 1h após refeições",
@@ -2579,7 +2682,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "10", unit: "mg", format: "comprimido", commonDose: "10mg 1x/dia" },
-            { dosage: "1", unit: "mg/ml", format: "xarope", commonDose: "10ml 1x/dia" },
+            { dosage: "1", unit: "mg/ml", format: "xarope", commonDose: "10ml 1x/dia", suggestedDose: "10", suggestedUnit: "ml" },
         ],
         commonFrequencies: ["1x ao dia"],
         notes: "Não sedativo. Claritin",
@@ -2625,7 +2728,15 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250-500mg 3x/dia" },
             { dosage: "400", unit: "mg", format: "comprimido", commonDose: "400mg 3x/dia" },
-            { dosage: "40", unit: "mg/ml", format: "suspensao", commonDose: "15-30mg/kg/dia", indication: "Pediátrico" },
+            {
+                dosage: "40", unit: "mg/ml", format: "suspensao",
+                commonDose: "15-30mg/kg/dia",
+                indication: "Pediátrico",
+                isPediatric: true,
+                dosePerKg: 30,
+                concentration: 40,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["3x ao dia"],
         notes: "Flagyl. Não ingerir álcool",
@@ -2670,30 +2781,19 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Antifúngico",
         route: "oral",
         presentations: [
-            { dosage: "100.000", unit: "UI/ml", format: "suspensao", commonDose: "4-6ml 4x/dia" },
+            { dosage: "100.000", unit: "UI/ml", format: "suspensao", commonDose: "4-6ml 4x/dia", suggestedDose: "4", suggestedUnit: "ml", isPediatric: true },
         ],
         commonFrequencies: ["4x ao dia"],
         notes: "Candidíase oral. Bochechar e engolir",
     },
-    {
-        name: "Prednisolona",
-        category: "Corticoide",
-        route: "oral",
-        presentations: [
-            { dosage: "3", unit: "mg/ml", format: "solucao", commonDose: "1-2mg/kg/dia", indication: "Prelone" },
-            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-60mg 1x/dia" },
-            { dosage: "20", unit: "mg", format: "comprimido", commonDose: "20-40mg 1x/dia" },
-        ],
-        commonFrequencies: ["1x ao dia"],
-        notes: "Tomar pela manhã, após café",
-    },
+
     {
         name: "Salbutamol",
         category: "Broncodilatador",
         route: "inalatória",
         presentations: [
             { dosage: "100", unit: "mcg/dose", format: "aerosol", commonDose: "1-2 jatos 4-6x/dia" },
-            { dosage: "0.4", unit: "mg/ml", format: "xarope", commonDose: "5ml 3-4x/dia" },
+            { dosage: "0.4", unit: "mg/ml", format: "xarope", commonDose: "5ml 3-4x/dia", suggestedDose: "5", suggestedUnit: "ml" },
         ],
         commonFrequencies: ["Quando necessário", "4x ao dia"],
         notes: "Aerolin. Broncoespasmo agudo",
@@ -2704,7 +2804,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-80mg 3-4x/dia" },
-            { dosage: "75", unit: "mg/ml", format: "gotas", commonDose: "8-12 gotas 3x/dia" },
+            { dosage: "75", unit: "mg/ml", format: "gotas", commonDose: "8-12 gotas 3x/dia", isPediatric: true },
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia"],
         notes: "Luftal. Gases intestinais",
@@ -2758,7 +2858,15 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         route: "oral",
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 12/12h por 3 dias" },
-            { dosage: "20", unit: "mg/ml", format: "suspensao", commonDose: "7.5ml 12/12h por 3 dias", indication: "Annita Pediátrico" },
+            {
+                dosage: "20", unit: "mg/ml", format: "suspensao",
+                commonDose: "7.5ml 12/12h por 3 dias",
+                indication: "Annita Pediátrico",
+                isPediatric: true,
+                dosePerKg: 15,
+                concentration: 20,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["12h em 12h"],
         notes: "Annita. Diarreias infecciosas",
@@ -2848,7 +2956,16 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 12/12h por 7-14 dias" },
             { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250mg 12/12h" },
-            { dosage: "25", unit: "mg/ml", format: "suspensao", commonDose: "7.5mg/kg 12/12h", indication: "Pediátrico" },
+            {
+                dosage: "25", unit: "mg/ml", format: "suspensao",
+                commonDose: "7.5mg/kg 12/12h",
+                indication: "Pediátrico",
+                isPediatric: true,
+                dosePerKg: 15, // 7.5 * 2
+                dosePerKgMax: 15,
+                concentration: 25,
+                frequency: 2
+            },
         ],
         commonFrequencies: ["12h em 12h"],
         notes: "Infecções respiratórias, H. pylori",
@@ -2906,7 +3023,15 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         presentations: [
             { dosage: "25", unit: "mg", format: "comprimido", commonDose: "25-100mg 1-3x/dia" },
             { dosage: "100", unit: "mg", format: "comprimido", commonDose: "100mg 1-2x/dia" },
-            { dosage: "40", unit: "mg/ml", format: "gotas", commonDose: "15-30 gotas 1-3x/dia" },
+            {
+                dosage: "40", unit: "mg/ml", format: "gotas",
+                commonDose: "15-30 gotas 1-3x/dia",
+                isPediatric: true,
+                dosePerKg: 1, // 1mg/kg/dia ? 1 gota = 1mg. 20kg -> 20mg -> 20 gotas. Correct.
+                dosePerKgMax: 3,
+                concentration: 40,
+                frequency: 3
+            },
         ],
         commonFrequencies: ["1x ao dia", "2x ao dia", "3x ao dia"],
         notes: "Receita B1 (azul). Neozine. Sedativo potente",
@@ -3102,7 +3227,7 @@ const MEDICATION_DATABASE: MedicationInfo[] = [
         category: "Fitoterápico",
         route: "oral",
         presentations: [
-            { dosage: "7", unit: "mg/ml", format: "xarope", commonDose: "5-10ml 3x/dia" },
+            { dosage: "7", unit: "mg/ml", format: "xarope", commonDose: "5-10ml 3x/dia", suggestedDose: "5", suggestedUnit: "ml", isPediatric: true },
         ],
         commonFrequencies: ["3x ao dia"],
         notes: "Tosse, bronquite",
@@ -3167,7 +3292,7 @@ const formatCategory = (format: string): string => {
 };
 
 // Gerar lista de medicamentos com apresentações únicas - usa emoji para indicar tipo
-const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
+export const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
     const items: MedicationListItem[] = [];
     const seen = new Set<string>();
 
@@ -3252,7 +3377,7 @@ const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
 // Lista simples de nomes base para busca (mantido para compatibilidade)
 const ALL_MEDICATIONS = MEDICATION_DATABASE.map(m => m.name).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-const MEDICATION_FORMATS = [
+export const MEDICATION_FORMATS = [
     { value: "comprimido", label: "Comprimido" },
     { value: "capsula", label: "Cápsula" },
     { value: "solucao", label: "Solução" },
@@ -3272,7 +3397,7 @@ const MEDICATION_FORMATS = [
     { value: "caneta", label: "Caneta" },
 ];
 
-const DOSAGE_UNITS = [
+export const DOSAGE_UNITS = [
     { value: "comprimido", label: "comprimido" },
     { value: "cápsula", label: "cápsula" },
     { value: "gotas", label: "gotas" },
@@ -3286,8 +3411,7 @@ const DOSAGE_UNITS = [
     { value: "mg/ml", label: "mg/ml" },
     { value: "mg/5ml", label: "mg/5ml" },
 ];
-
-const FREQUENCIES = [
+export const FREQUENCIES = [
     { value: "1x ao dia", label: "1x ao dia" },
     { value: "2x ao dia", label: "2x ao dia" },
     { value: "3x ao dia", label: "3x ao dia" },
@@ -3295,6 +3419,7 @@ const FREQUENCIES = [
     { value: "12h em 12h", label: "12h em 12h" },
     { value: "8h em 8h", label: "8h em 8h" },
     { value: "6h em 6h", label: "6h em 6h" },
+    { value: "4h em 4h", label: "4h em 4h" },
     { value: "Quando necessário", label: "Quando necessário" },
     { value: "1x por semana", label: "1x por semana" },
     { value: "1x por mês", label: "1x por mês" },
