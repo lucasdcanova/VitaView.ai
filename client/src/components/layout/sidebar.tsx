@@ -101,28 +101,46 @@ export default function Sidebar(props: SidebarProps) {
     );
   };
 
-  const NavItem = ({ href, icon: Icon, label, tourId }: { href: string, icon: any, label: string, tourId?: string }) => (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={href}
-            onClick={handleNavClick}
-            className={getNavItemClass(href)}
-            data-tour={tourId}
-          >
-            <Icon className={getIconClass(href)} />
-            {!isCollapsed && <span className="font-heading font-bold text-sm truncate opacity-100 transition-opacity duration-300">{label}</span>}
-          </Link>
-        </TooltipTrigger>
-        {isCollapsed && (
-          <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
-            {label}
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
-  );
+  const NavItem = ({ href, icon: Icon, label, tourId, highlight }: { href: string, icon: any, label: string, tourId?: string, highlight?: boolean }) => {
+    const isActive = location === href;
+
+    // Custom styles for highlighted item (Atendimento)
+    // When active: Standard active style (dark bg, white text)
+    // When inactive but highlighted: Primary light bg, primary text, bold
+    const highlightClasses = highlight && !isActive
+      ? "bg-[#212121] text-white hover:bg-[#424242] shadow-md border border-transparent"
+      : "";
+
+    const highlightIconClasses = highlight && !isActive
+      ? "text-white"
+      : "";
+
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={href}
+              onClick={handleNavClick}
+              className={cn(
+                getNavItemClass(href),
+                highlightClasses
+              )}
+              data-tour={tourId}
+            >
+              <Icon className={cn(getIconClass(href), highlightIconClasses)} />
+              {!isCollapsed && <span className={cn("font-heading text-sm truncate opacity-100 transition-opacity duration-300", highlight ? "font-bold" : "font-bold")}>{label}</span>}
+            </Link>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
+              {label}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+    )
+  };
 
   return (
     <>
@@ -233,7 +251,6 @@ export default function Sidebar(props: SidebarProps) {
         <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
-          <NavItem href="/atendimento" icon={Heart} label="Atendimento" tourId="nav-atendimento" />
 
           {/* Separador */}
           <div className="py-2">

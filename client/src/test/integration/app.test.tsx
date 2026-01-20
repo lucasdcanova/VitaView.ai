@@ -119,7 +119,7 @@ describe("App integration", () => {
     );
 
     queryClient.setQueryData(["/api/user"], testUser);
-    window.history.replaceState(null, "", "/dashboard");
+    window.history.replaceState(null, "", "/agenda");
     render(<App />);
 
     await waitFor(() => {
@@ -128,7 +128,7 @@ describe("App integration", () => {
     });
 
     await waitFor(() => {
-      const dashboardLinks = screen.getAllByText(/Dashboard/i);
+      const dashboardLinks = screen.getAllByText(/Agenda/i);
       expect(dashboardLinks.length).toBeGreaterThan(0);
     });
   });

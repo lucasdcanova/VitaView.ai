@@ -34,6 +34,27 @@ import {
 } from "lucide-react";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+import { TriageCard } from "@/components/dashboard/triage-card";
+import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
+import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
+import { AnamnesisCard } from "@/components/dashboard/anamnesis-card";
+import { AllergiesCard } from "@/components/dashboard/allergies-card";
+
+import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/components/dialogs/diagnosis-dialog";
+import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
+
+import HealthTrendsNew from "./health-trends-new";
+import VitaPrescriptions from "./vita-prescricoes";
+import VitaReceituariosEspeciais from "./vita-receituarios-especiais";
+import VitaCertificates from "./vita-atestados";
+import FileUpload from "@/components/ui/file-upload";
+import { useUploadManager } from "@/hooks/use-upload-manager";
 
 // Função para calcular idade
 const calculateAge = (birthDate: string | null | undefined): number | null => {
@@ -44,18 +65,7 @@ const calculateAge = (birthDate: string | null | undefined): number | null => {
         return null;
     }
 };
-import { TriageCard } from "@/components/dashboard/triage-card";
-import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
-import { SurgeriesCard } from "@/components/dashboard/surgeries-card";
-import { AnamnesisCard } from "@/components/dashboard/anamnesis-card";
-import { AllergiesCard } from "@/components/dashboard/allergies-card";
 
-import HealthTrendsNew from "./health-trends-new";
-import VitaPrescriptions from "./vita-prescricoes";
-import VitaReceituariosEspeciais from "./vita-receituarios-especiais";
-import VitaCertificates from "./vita-atestados";
-import FileUpload from "@/components/ui/file-upload";
-import { useUploadManager } from "@/hooks/use-upload-manager";
 
 export default function PatientView() {
     const [activeTab, setActiveTab] = useState("dashboard");
@@ -64,8 +74,69 @@ export default function PatientView() {
     const { activeProfile } = useProfiles();
     const { uploads } = useUploadManager();
     const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
 
+    // Dialog States
+    const [isDiagnosisDialogOpen, setIsDiagnosisDialogOpen] = useState(false);
+    const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
 
+    // Diagnosis Form & Mutation
+    const diagnosisForm = useForm<DiagnosisFormData>({
+        resolver: zodResolver(diagnosisSchema),
+        defaultValues: {
+            cidCode: "",
+            diagnosisDate: new Date().toISOString().split('T')[0],
+            status: "ativo",
+            notes: "",
+        },
+    });
+
+    const createDiagnosisMutation = useMutation({
+        mutationFn: (data: DiagnosisFormData) => apiRequest("POST", "/api/diagnoses", data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
+            toast({ title: "Sucesso", description: "Diagnóstico registrado com sucesso." });
+            setIsDiagnosisDialogOpen(false);
+            diagnosisForm.reset();
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao registrar diagnóstico.", variant: "destructive" });
+        },
+    });
+
+    const onAddDiagnosis = (data: DiagnosisFormData) => {
+        createDiagnosisMutation.mutate(data);
+    };
+
+    // Surgery Form & Mutation
+    const surgeryForm = useForm<SurgeryFormData>({
+        resolver: zodResolver(surgerySchema),
+        defaultValues: {
+            procedureName: "",
+            hospitalName: "",
+            surgeonName: "",
+            surgeryDate: new Date().toISOString().split('T')[0],
+            notes: "",
+        },
+    });
+
+    const createSurgeryMutation = useMutation({
+        mutationFn: (data: SurgeryFormData) => apiRequest("POST", "/api/surgeries", data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+            toast({ title: "Sucesso", description: "Cirurgia registrada com sucesso." });
+            setIsSurgeryDialogOpen(false);
+            surgeryForm.reset();
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao registrar cirurgia.", variant: "destructive" });
+        },
+    });
+
+    const onAddSurgery = (data: SurgeryFormData) => {
+        createSurgeryMutation.mutate(data);
+    };
 
     const handleUploadComplete = (result: any) => {
         // If we have a result with an exam ID, navigate to the report page
@@ -289,10 +360,35 @@ export default function PatientView() {
                                                     <div className="md:col-span-2">
                                                         <AllergiesCard profileId={activeProfile.id} />
                                                     </div>
-                                                    <ComorbiditiesCard diagnoses={diagnoses} />
-                                                    <SurgeriesCard surgeries={surgeries} />
+                                                    <ComorbiditiesCard
+                                                        diagnoses={diagnoses}
+                                                        onAdd={() => setIsDiagnosisDialogOpen(true)}
+                                                    />
+                                                    <SurgeriesCard
+                                                        surgeries={surgeries}
+                                                        onAdd={() => setIsSurgeryDialogOpen(true)}
+                                                    />
                                                 </div>
                                             </div>
+
+                                            {/* Dialogs */}
+                                            <DiagnosisDialog
+                                                open={isDiagnosisDialogOpen}
+                                                onOpenChange={setIsDiagnosisDialogOpen}
+                                                form={diagnosisForm}
+                                                onSubmit={onAddDiagnosis}
+                                                isPending={createDiagnosisMutation.isPending}
+                                                mode="create"
+                                            />
+
+                                            <SurgeryDialog
+                                                open={isSurgeryDialogOpen}
+                                                onOpenChange={setIsSurgeryDialogOpen}
+                                                form={surgeryForm}
+                                                onSubmit={onAddSurgery}
+                                                isPending={createSurgeryMutation.isPending}
+                                                mode="create"
+                                            />
                                         </div>
 
                                         {/* Recent Exams */}

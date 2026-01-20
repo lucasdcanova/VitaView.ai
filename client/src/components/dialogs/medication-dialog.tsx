@@ -87,11 +87,14 @@ export const getMedicationIcon = (format: string) => {
     if (formatLower.includes("gotas") || formatLower.includes("xarope") || formatLower.includes("elixir") || formatLower.includes(" po ") || formatLower.includes("pó") || formatLower.includes("solucao") || formatLower.includes("solução") || formatLower.includes("suspensao") || formatLower.includes("suspensão") || formatLower.includes("colirio") || formatLower.includes("colírio")) {
         return "💧";
     }
-    if (formatLower.includes("spray") || formatLower.includes("aerosol") || formatLower.includes("inalatoria")) {
+    if (formatLower.includes("spray") || formatLower.includes("aerosol") || formatLower.includes("inalatoria") || formatLower.includes("jato")) {
         return "💨";
     }
-    if (formatLower.includes("capsula") || formatLower.includes("cápsula")) {
+    if (formatLower.includes("capsula") || formatLower.includes("cápsula") || formatLower.includes("sache") || formatLower.includes("sachê") || formatLower.includes("supositorio") || formatLower.includes("supositório")) {
         return "💊";
+    }
+    if (formatLower.includes("enema") || formatLower.includes("clister")) {
+        return "🧴";
     }
 
     // Default to pill for tablets and others
@@ -2814,6 +2817,72 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
         commonFrequencies: ["Quando necessário", "4x ao dia"],
         notes: "Aerolin. Broncoespasmo agudo",
     },
+    // CORTICOIDES INALATÓRIOS / BRONCODILATADORES
+    {
+        name: "Budesonida",
+        category: "Corticoide Inalatório",
+        route: "inalatória",
+        presentations: [
+            { dosage: "32", unit: "mcg", format: "aerosol", commonDose: "1-2 jatos 1-2x/dia (Nasal)", indication: "Rinite" },
+            { dosage: "50", unit: "mcg", format: "aerosol", commonDose: "1-2 jatos 1-2x/dia (Nasal)", indication: "Rinite" },
+            { dosage: "200", unit: "mcg", format: "capsula inalatoria", commonDose: "1 cápsula 12/12h (Oral)", indication: "Asma/DPOC" },
+            { dosage: "400", unit: "mcg", format: "capsula inalatoria", commonDose: "1 cápsula 12/12h (Oral)", indication: "Asma/DPOC" },
+            { dosage: "0.25", unit: "mg/ml", format: "suspensao", commonDose: "Nebulização: 1-2ml 12/12h", indication: "Nebulização" },
+        ],
+        commonFrequencies: ["12h em 12h", "1x ao dia"],
+    },
+    {
+        name: "Beclometasona",
+        category: "Corticoide Inalatório",
+        route: "inalatória",
+        presentations: [
+            { dosage: "50", unit: "mcg", format: "jatos", commonDose: "1-2 jatos 12/12h (Oral)", indication: "Asma" },
+            { dosage: "250", unit: "mcg", format: "jatos", commonDose: "1-2 jatos 12/12h (Oral)", indication: "Asma" },
+            { dosage: "50", unit: "mcg", format: "jatos", commonDose: "1-2 jatos em cada narina 12/12h (Nasal)", indication: "Rinite" },
+        ],
+        commonFrequencies: ["12h em 12h"],
+    },
+    {
+        name: "Brometo de Ipratrópio",
+        category: "Anticolinérgico",
+        route: "inalatória",
+        presentations: [
+            { dosage: "0.25", unit: "mg/ml", format: "gotas", commonDose: "20-40 gotas por nebulização 3-4x/dia", indication: "Atrovent Gotas" },
+            { dosage: "20", unit: "mcg", format: "jatos", commonDose: "2 jatos 4x/dia", indication: "Atrovent Spray" },
+        ],
+        commonFrequencies: ["4x ao dia", "6h em 6h"],
+    },
+    {
+        name: "Fenoterol",
+        category: "Broncodilatador",
+        route: "inalatória",
+        presentations: [
+            { dosage: "5", unit: "mg/ml", format: "gotas", commonDose: "5-10 gotas por nebulização", indication: "Berotec" },
+            { dosage: "100", unit: "mcg", format: "jatos", commonDose: "1-2 jatos se crise", indication: "Berotec Spray" },
+        ],
+        commonFrequencies: ["Quando necessário", "4x ao dia"],
+        notes: "CUIDADO: risco de taquicardia. Monitorar frequência cardíaca.",
+    },
+    {
+        name: "Formoterol + Budesonida",
+        category: "Associação Inalatória",
+        route: "inalatória",
+        presentations: [
+            { dosage: "6/200", unit: "mcg", format: "capsula inalatoria", commonDose: "1 cápsula 12/12h", indication: "Alenia 6/200" },
+            { dosage: "12/400", unit: "mcg", format: "capsula inalatoria", commonDose: "1 cápsula 12/12h", indication: "Alenia 12/400" },
+        ],
+        commonFrequencies: ["12h em 12h"],
+    },
+    {
+        name: "Salmeterol + Fluticasona",
+        category: "Associação Inalatória",
+        route: "inalatória",
+        presentations: [
+            { dosage: "25/125", unit: "mcg", format: "jatos", commonDose: "2 jatos 12/12h", indication: "Seretide Spray" },
+            { dosage: "50/250", unit: "mcg", format: "po inalatorio", commonDose: "1 inalação 12/12h", indication: "Seretide Diskus" },
+        ],
+        commonFrequencies: ["12h em 12h"],
+    },
     {
         name: "Simeticona",
         category: "Antiflatulento",
@@ -3271,6 +3340,99 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
         notes: "Receita Especial (branca 2 vias). Anatensol Depot. Manutenção esquizofrenia",
     },
 
+    // LAXANTES
+    {
+        name: "Bisacodil",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "comprimido", commonDose: "5-10mg à noite" },
+            { dosage: "10", unit: "mg", format: "supositorio", commonDose: "1 supositório por dia" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Efeito em 6-12h (oral) ou 15-60min (retal)",
+    },
+    {
+        name: "Lactulose",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "667", unit: "mg/ml", format: "xarope", commonDose: "15-30ml 1-2x/dia" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Ajustar dose conforme resposta",
+    },
+    {
+        name: "Picossulfato de Sódio",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "5", unit: "mg", format: "capsula", commonDose: "5-10mg à noite", indication: "Pérolas" },
+            { dosage: "7.5", unit: "mg/ml", format: "gotas", commonDose: "10-20 gotas à noite", suggestedDose: "10", suggestedUnit: "gotas" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Sene",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "46", unit: "mg/ml", format: "solucao", commonDose: "5-10ml à noite" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+    },
+    {
+        name: "Macrogol",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "4", unit: "g", format: "sache", commonDose: "1-2 sachês/dia", indication: "Pediátrico" },
+            { dosage: "10", unit: "g", format: "sache", commonDose: "1-2 sachês/dia", indication: "Adulto" },
+            { dosage: "14", unit: "g", format: "sache", commonDose: "1 sachê/dia", indication: "Muvinlax" },
+        ],
+        commonFrequencies: ["1x ao dia", "2x ao dia"],
+        notes: "Dissolver em água",
+    },
+    {
+        name: "Glicerina",
+        category: "Laxante",
+        route: "retal",
+        presentations: [
+            { dosage: "1", unit: "unidade", format: "supositorio", commonDose: "1 supositório se necessário" },
+            { dosage: "12", unit: "%", format: "enema", commonDose: "1 enema se necessário", indication: "Clister" },
+        ],
+        commonFrequencies: ["Quando necessário"],
+    },
+    {
+        name: "Fosfato de Sódio",
+        category: "Laxante",
+        route: "retal",
+        presentations: [
+            { dosage: "133", unit: "ml", format: "enema", commonDose: "1 frasco dose única", indication: "Fleet Enema" },
+        ],
+        commonFrequencies: ["Dose única"],
+    },
+    {
+        name: "Óleo Mineral",
+        category: "Laxante",
+        route: "oral",
+        presentations: [
+            { dosage: "100", unit: "%", format: "solucao", commonDose: "15-30ml à noite" },
+        ],
+        commonFrequencies: ["1x ao dia"],
+        notes: "Risco de aspiração",
+    },
+    {
+        name: "Simeticona",
+        category: "Antigases",
+        route: "oral",
+        presentations: [
+            { dosage: "40", unit: "mg", format: "comprimido", commonDose: "40-120mg 3-4x/dia" },
+            { dosage: "125", unit: "mg", format: "capsula", commonDose: "125mg 3-4x/dia" },
+            { dosage: "75", unit: "mg/ml", format: "gotas", commonDose: "15-30 gotas 3-4x/dia", suggestedDose: "15", suggestedUnit: "gotas" },
+        ],
+        commonFrequencies: ["3x ao dia", "4x ao dia", "Quando necessário"],
+    },
 ];
 
 // Interface para item de medicamento com apresentação
@@ -3332,7 +3494,12 @@ export const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
             return '💉';
         }
 
-        // Outros (cremes, pomadas, colírios, sprays) - usar emoji genérico
+        // Inalatórios
+        if (formatLower.includes('spray') || formatLower.includes('aerosol') || formatLower.includes('inalatorio') || formatLower.includes('inalatório')) {
+            return '💨';
+        }
+
+        // Outros (cremes, pomadas, colírios) - usar emoji genérico
         return '💊';
     };
 
@@ -3370,7 +3537,7 @@ export const ALL_MEDICATIONS_WITH_PRESENTATIONS: MedicationListItem[] = (() => {
             if (f.includes('oral') || f.includes('solucao') || f.includes('xarope') || f.includes('gotas')) return 2;
             if (f.includes('topico') || f.includes('creme') || f.includes('pomada')) return 3;
             if (f.includes('oftalmico') || f.includes('colirio')) return 4;
-            if (f.includes('nasal') || f.includes('spray')) return 5;
+            if (f.includes('nasal') || f.includes('spray') || f.includes('aerosol')) return 5;
             if (f.includes('injetavel') || f.includes('ampola')) return 6;
             return 9;
         };
@@ -3411,6 +3578,10 @@ export const MEDICATION_FORMATS = [
     { value: "ampola", label: "Ampola" },
     { value: "refil", label: "Refil" },
     { value: "caneta", label: "Caneta" },
+    { value: "aerosol", label: "Aerossol" },
+    { value: "capsula inalatoria", label: "Cápsula Inalatória" },
+    { value: "sache", label: "Sachê" },
+    { value: "enema", label: "Enema" },
 ];
 
 export const DOSAGE_UNITS = [
@@ -3426,6 +3597,12 @@ export const DOSAGE_UNITS = [
     { value: "%", label: "%" },
     { value: "mg/ml", label: "mg/ml" },
     { value: "mg/5ml", label: "mg/5ml" },
+    { value: "jatos", label: "jatos" },
+    { value: "inalacao", label: "inalação" },
+    { value: "sache", label: "sachê" },
+    { value: "enema", label: "enema" },
+    { value: "frasco", label: "frasco" },
+    { value: "unidade", label: "unidade" },
 ];
 export const FREQUENCIES = [
     { value: "1x ao dia", label: "1x ao dia" },
@@ -3466,7 +3643,10 @@ const normalizeFormat = (format: string) => {
         "tópico": "topico",
         "supositório": "supositorio",
         "injeção": "injecao",
-        "colírio": "colirio"
+        "colírio": "colirio",
+        "cápsula inalatória": "capsula inalatoria",
+        "sachê": "sache",
+
     };
 
     if (overrides[lower]) return overrides[lower];
@@ -3588,7 +3768,7 @@ export function MedicationDialog({
                 if (f.includes('oral') || f.includes('solucao') || f.includes('xarope') || f.includes('gotas')) return 2;
                 if (f.includes('topico') || f.includes('creme') || f.includes('pomada')) return 3;
                 if (f.includes('oftalmico') || f.includes('colirio')) return 4;
-                if (f.includes('nasal') || f.includes('spray')) return 5;
+                if (f.includes('nasal') || f.includes('spray') || f.includes('aerosol')) return 5;
                 if (f.includes('injetavel') || f.includes('ampola')) return 6;
                 return 9;
             };
@@ -3667,6 +3847,11 @@ export function MedicationDialog({
         } else if (formatLower.includes("spray") || formatLower.includes("aerosol")) {
             // Sprays
             form.setValue("quantity", "1 frasco");
+        } else if (formatLower.includes("capsula inalatoria")) {
+            // Cápsulas inalatórias
+            const dosePerTake = parseInt(watchedDosage) || 1;
+            const totalQuantity = dosePerTake * frequencyMultiplier;
+            form.setValue("quantity", `${totalQuantity} cápsulas`);
         } else if (formatLower.includes("refil") || formatLower.includes("caneta")) {
             // Insulinas
             const dose = parseInt(watchedDosage) || 10;
@@ -3720,6 +3905,24 @@ export function MedicationDialog({
         } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
             formatLower.includes('ampola')) {
             unit = "ampola";
+        } else if (formatLower.includes('spray') || formatLower.includes('aerosol')) {
+            unit = "jatos";
+            let dosage = "1";
+
+            // Tentar extrair dose comum (ex: "1-2 jatos")
+            if (presentation.commonDose) {
+                const match = presentation.commonDose.match(/(\d+([-–]\d+)?)/);
+                if (match) {
+                    dosage = match[1];
+                }
+            }
+
+            form.setValue("dosage", dosage);
+            form.setValue("dosageUnit", unit);
+            form.setValue("format", normalizeFormat(presentation.format));
+            setDosagePopoverOpen(false);
+            setTimeout(() => { skipNextFocusRef.current = false; }, 200);
+            return;
         }
 
         // Para formas sólidas (comprimido, cápsula) e injetáveis, usar "1" como dose padrão

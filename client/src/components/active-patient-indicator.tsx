@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import { useProfiles } from "@/hooks/use-profiles";
-import { User, ChevronRight, Calendar, Activity, Users, Search, X, UserPlus } from "lucide-react";
+import { User, ChevronRight, Calendar, Activity, Users, Search, X, UserPlus, Heart } from "lucide-react";
 import { differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,6 +36,7 @@ export default function ActivePatientIndicator({
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [location, setLocation] = useLocation();
 
     const handleCreatePatient = () => {
         setIsDialogOpen(false);
@@ -187,9 +189,8 @@ export default function ActivePatientIndicator({
     return (
         <>
             <div
-                onClick={() => setIsDialogOpen(true)}
                 className={cn(
-                    "group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-200",
+                    "group relative overflow-hidden rounded-lg transition-all duration-200",
                     "bg-pureWhite border border-lightGray",
                     "hover:border-charcoal hover:shadow-sm",
                     className
@@ -198,7 +199,11 @@ export default function ActivePatientIndicator({
                 {/* Decorative line at top */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-charcoal" />
 
-                <div className="p-4 pt-5">
+                {/* Top Section: Patient Selection */}
+                <div
+                    onClick={() => setIsDialogOpen(true)}
+                    className="p-4 pt-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                >
                     {/* Header */}
                     <div className="flex items-center gap-2 mb-3">
                         <Activity className="w-3.5 h-3.5 text-charcoal" />
@@ -241,13 +246,50 @@ export default function ActivePatientIndicator({
                             </div>
                         </div>
 
-                        {/* Action */}
+                        {/* Action: Switch Patient */}
                         <div className="flex-shrink-0">
                             <div className="w-7 h-7 rounded-full bg-lightGray flex items-center justify-center group-hover:bg-charcoal transition-colors">
                                 <ChevronRight className="w-3.5 h-3.5 text-mediumGray group-hover:text-pureWhite" />
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-lightGray w-full" />
+
+                {/* Bottom Section: Atendimento Action */}
+                <div
+                    onClick={() => setLocation("/atendimento")}
+                    className={cn(
+                        "flex items-center justify-between p-3 cursor-pointer transition-colors group/atendimento",
+                        location === "/atendimento"
+                            ? "bg-[#212121]"
+                            : "bg-gray-50 hover:bg-[#212121]"
+                    )}
+                >
+                    <div className="flex items-center gap-2">
+                        <Heart className={cn(
+                            "w-4 h-4 transition-colors",
+                            location === "/atendimento"
+                                ? "text-white"
+                                : "text-charcoal group-hover/atendimento:text-white"
+                        )} />
+                        <span className={cn(
+                            "text-xs font-heading font-bold transition-colors",
+                            location === "/atendimento"
+                                ? "text-white"
+                                : "text-charcoal group-hover/atendimento:text-white"
+                        )}>
+                            Ir para Atendimento
+                        </span>
+                    </div>
+                    <ChevronRight className={cn(
+                        "w-3.5 h-3.5 transition-colors",
+                        location === "/atendimento"
+                            ? "text-white"
+                            : "text-mediumGray group-hover/atendimento:text-white"
+                    )} />
                 </div>
             </div>
 
