@@ -207,10 +207,27 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
     }, [receituarioDose, receituarioDoseUnit, receituarioDaysOfUse, receituarioForm.watch("frequency")]);
 
-    // --- Prescription State ---
-    const [acuteItems, setAcuteItems] = useState<AcutePrescriptionItem[]>([]);
+    // --- Prescription State --- 
+    // Persist draft prescription items in localStorage per patient
+    const [acuteItems, setAcuteItems] = useState<AcutePrescriptionItem[]>(() => {
+        try {
+            const saved = localStorage.getItem(`prescricao-rascunho-${patient.id}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
     const [prescriptionValidity, setPrescriptionValidity] = useState("30");
     const [prescriptionObservations, setPrescriptionObservations] = useState("");
+
+    // Auto-save acute items to localStorage
+    useEffect(() => {
+        if (acuteItems.length > 0) {
+            localStorage.setItem(`prescricao-rascunho-${patient.id}`, JSON.stringify(acuteItems));
+        } else {
+            localStorage.removeItem(`prescricao-rascunho-${patient.id}`);
+        }
+    }, [acuteItems, patient.id]);
 
     // History Queries
     const { data: prescriptionHistory = [] } = useQuery<Prescription[]>({
@@ -834,10 +851,36 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                 key={med.displayName}
                                                                 className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-green-50"
                                                                 onClick={() => {
+                                                                    // Determinar a unidade baseada no formato do medicamento
+                                                                    const formatLower = (med.format || "").toLowerCase();
+                                                                    let autoUnit = "comprimido";
+
+                                                                    if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
+                                                                        autoUnit = "cápsula";
+                                                                    } else if (formatLower.includes('gotas')) {
+                                                                        autoUnit = "gotas";
+                                                                    } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
+                                                                        formatLower.includes('solucao') || formatLower.includes('solução') ||
+                                                                        formatLower.includes('xarope') || formatLower.includes('elixir')) {
+                                                                        autoUnit = "ml";
+                                                                    } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
+                                                                        formatLower.includes('ampola')) {
+                                                                        autoUnit = "ampola";
+                                                                    } else if (formatLower.includes('spray') || formatLower.includes('aerosol') ||
+                                                                        formatLower.includes('inalador')) {
+                                                                        autoUnit = "jatos";
+                                                                    } else if (formatLower.includes('creme') || formatLower.includes('pomada') ||
+                                                                        formatLower.includes('gel') || formatLower.includes('loção') ||
+                                                                        formatLower.includes('locao')) {
+                                                                        autoUnit = "aplicação";
+                                                                    } else if (formatLower.includes('comprimido')) {
+                                                                        autoUnit = "comprimido";
+                                                                    }
+
                                                                     // Clear previous fields
                                                                     receituarioForm.reset();
                                                                     setReceituarioDose("");
-                                                                    setReceituarioDoseUnit("comprimido");
+                                                                    setReceituarioDoseUnit(autoUnit);
                                                                     setReceituarioQuantity("");
                                                                     setReceituarioNotes("");
                                                                     setReceituarioDaysOfUse("7");
@@ -867,18 +910,27 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 <div className="col-span-2 space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Dose por vez *</label>
                                     <Popover open={receituarioDosePopoverOpen} onOpenChange={setReceituarioDosePopoverOpen}>
-                                        <PopoverTrigger asChild>
+                                        <div className="relative">
                                             <Input
-                                                className="h-9 text-sm bg-white"
+                                                className="h-9 text-sm bg-white pr-8"
                                                 placeholder="Ex: 1, 10, 5"
                                                 value={receituarioDose}
                                                 onChange={(e) => setReceituarioDose(e.target.value)}
-                                                onFocus={() => {
-                                                    const medName = receituarioForm.watch("name");
-                                                    if (medName) setReceituarioDosePopoverOpen(true);
-                                                }}
                                             />
-                                        </PopoverTrigger>
+                                            <PopoverTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 transition-colors"
+                                                    onClick={() => {
+                                                        const medName = receituarioForm.watch("name");
+                                                        if (medName) setReceituarioDosePopoverOpen(true);
+                                                    }}
+                                                    title="Ver sugestões de dose"
+                                                >
+                                                    <Sparkles className="h-4 w-4" />
+                                                </button>
+                                            </PopoverTrigger>
+                                        </div>
                                         {(() => {
                                             const medName = receituarioForm.watch("name");
                                             if (!medName) return null;
@@ -909,12 +961,47 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                         key={`adult-${idx}`}
                                                                         className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-green-50 transition-colors"
                                                                         onClick={() => {
-                                                                            if (pres.suggestedDose && pres.suggestedUnit) {
+                                                                            const formatLower = pres.format.toLowerCase();
+
+                                                                            // Para formas sólidas (comprimido, cápsula), usar "1" + formato
+                                                                            if (formatLower.includes('comprimido') || formatLower.includes('capsula') || formatLower.includes('cápsula')) {
+                                                                                setReceituarioDose("1");
+                                                                                const unit = formatLower.includes('capsula') || formatLower.includes('cápsula')
+                                                                                    ? "cápsula"
+                                                                                    : "comprimido";
+                                                                                setReceituarioDoseUnit(unit);
+                                                                            } else if (formatLower.includes('gotas')) {
+                                                                                // Para gotas, extrair número da commonDose ou usar 20 como padrão
+                                                                                if (pres.commonDose) {
+                                                                                    const match = pres.commonDose.match(/(\d+)[-–]?(\d+)?/);
+                                                                                    if (match) {
+                                                                                        setReceituarioDose(match[1]);
+                                                                                    } else {
+                                                                                        setReceituarioDose("20");
+                                                                                    }
+                                                                                } else {
+                                                                                    setReceituarioDose("20");
+                                                                                }
+                                                                                setReceituarioDoseUnit("gotas");
+                                                                            } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
+                                                                                formatLower.includes('solucao') || formatLower.includes('solução') ||
+                                                                                formatLower.includes('xarope')) {
+                                                                                // Para líquidos, usar suggestedDose ou 5ml padrão
+                                                                                setReceituarioDose(pres.suggestedDose || "5");
+                                                                                setReceituarioDoseUnit(pres.suggestedUnit || "ml");
+                                                                            } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
+                                                                                formatLower.includes('ampola')) {
+                                                                                // Para injetáveis, usar "1" + ampola
+                                                                                setReceituarioDose("1");
+                                                                                setReceituarioDoseUnit("ampola");
+                                                                            } else if (pres.suggestedDose && pres.suggestedUnit) {
+                                                                                // Fallback para suggestedDose/Unit se existir
                                                                                 setReceituarioDose(pres.suggestedDose);
                                                                                 setReceituarioDoseUnit(pres.suggestedUnit);
                                                                             } else {
-                                                                                setReceituarioDose(`${pres.dosage}`);
-                                                                                setReceituarioDoseUnit(pres.unit || "comprimido");
+                                                                                // Último fallback: 1 + formato
+                                                                                setReceituarioDose("1");
+                                                                                setReceituarioDoseUnit(pres.format || "comprimido");
                                                                             }
                                                                             setReceituarioDosePopoverOpen(false);
                                                                         }}

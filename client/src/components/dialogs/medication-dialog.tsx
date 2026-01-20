@@ -126,6 +126,15 @@ interface MedicationDialogProps {
 }
 
 // Tipos para o banco de medicamentos
+interface AgeRange {
+    minAge: number; // Idade mínima em anos
+    maxAge: number; // Idade máxima em anos
+    dose: number; // Dose para essa faixa etária
+    unit: string; // Unidade (ex: "ml", "gotas")
+    frequency: string; // Frequência (ex: "8/8h", "6-8h")
+    indication?: string; // Descrição da faixa (ex: "2-5 anos")
+}
+
 interface MedicationPresentation {
     dosage: string;
     unit: string;
@@ -141,6 +150,9 @@ interface MedicationPresentation {
     frequency?: number; // Número de doses por dia
     suggestedDose?: string; // Dose sugerida para preencher o campo (ex: "5", "30")
     suggestedUnit?: string; // Unidade sugerida (ex: "ml", "gotas")
+    // Campos para dosagem baseada em idade (não peso)
+    isAgeBased?: boolean; // Se true, usa faixas etárias em vez de peso
+    ageRanges?: AgeRange[]; // Faixas etárias com doses específicas
 }
 
 interface MedicationInfo {
@@ -2535,17 +2547,21 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
             { dosage: "2", unit: "mg", format: "comprimido", commonDose: "2mg 3-4x/dia" },
             {
                 dosage: "0.4", unit: "mg/ml", format: "xarope",
-                commonDose: "5ml 3x/dia",
-                suggestedDose: "5", suggestedUnit: "ml",
+                commonDose: "2-5 anos: 2,5ml 8/8h | 6-11 anos: 5ml 6-8h",
+                suggestedDose: "2.5", suggestedUnit: "ml",
                 isPediatric: true,
-                dosePerKg: 0.15,
-                dosePerKgMax: 0.15,
+                isAgeBased: true,
+                ageRanges: [
+                    { minAge: 2, maxAge: 5, dose: 2.5, unit: "ml", frequency: "8/8h", indication: "2-5 anos" },
+                    { minAge: 6, maxAge: 11, dose: 5, unit: "ml", frequency: "6-8h", indication: "6-11 anos" },
+                    { minAge: 12, maxAge: 17, dose: 5, unit: "ml", frequency: "6-8h", indication: "≥12 anos (pode usar até 10ml)" }
+                ],
                 concentration: 0.4,
                 frequency: 3
             },
         ],
-        commonFrequencies: ["3x ao dia", "4x ao dia"],
-        notes: "Polaramine. Pode causar sonolência",
+        commonFrequencies: ["8h em 8h", "6h em 6h"],
+        notes: "Polaramine. Dose pediátrica conforme idade. Pode causar sonolência",
     },
     {
         name: "Diclofenaco",
@@ -3955,21 +3971,28 @@ export function MedicationDialog({
                                     <FormItem>
                                         <FormLabel>Dose por vez *</FormLabel>
                                         <Popover open={dosagePopoverOpen} onOpenChange={setDosagePopoverOpen}>
-                                            <PopoverTrigger asChild>
+                                            <div className="relative">
                                                 <FormControl>
                                                     <Input
                                                         type="text"
                                                         placeholder="Ex: 6, 10, 1"
+                                                        className="pr-8"
                                                         {...field}
-                                                        onFocus={() => {
-                                                            // Só abre o popup se não acabou de fechar por uma seleção
-                                                            if (selectedMedInfo && !skipNextFocusRef.current) {
-                                                                setDosagePopoverOpen(true);
-                                                            }
-                                                        }}
                                                     />
                                                 </FormControl>
-                                            </PopoverTrigger>
+                                                <PopoverTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 transition-colors"
+                                                        onClick={() => {
+                                                            if (selectedMedInfo) setDosagePopoverOpen(true);
+                                                        }}
+                                                        title="Ver sugestões de dose"
+                                                    >
+                                                        <Sparkles className="h-4 w-4" />
+                                                    </button>
+                                                </PopoverTrigger>
+                                            </div>
                                             {selectedMedInfo && (
                                                 <PopoverContent className="w-[400px] p-0" align="start" side="bottom">
                                                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 border-b">
