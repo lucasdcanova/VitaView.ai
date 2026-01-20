@@ -7,10 +7,14 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Helper function to delay execution
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  maxRetries: number = 2,
 ): Promise<Response> {
 
   const requestOptions: RequestInit = {
@@ -20,15 +24,36 @@ export async function apiRequest(
     credentials: "include" as RequestCredentials,
   };
 
+  let lastError: Error | null = null;
 
-  try {
-    const res = await fetch(url, requestOptions);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, requestOptions);
 
-    await throwIfResNotOk(res);
-    return res;
-  } catch (error) {
-    throw error;
+      // If it's a 5xx error and we have retries left, retry
+      if (res.status >= 500 && attempt < maxRetries) {
+        console.log(`[API] Server error ${res.status}, retrying (${attempt + 1}/${maxRetries})...`);
+        await delay(500 * (attempt + 1)); // Exponential backoff: 500ms, 1000ms, etc.
+        continue;
+      }
+
+      await throwIfResNotOk(res);
+      return res;
+    } catch (error) {
+      lastError = error as Error;
+
+      // If it's a network error and we have retries left, retry
+      if (attempt < maxRetries) {
+        console.log(`[API] Request failed, retrying (${attempt + 1}/${maxRetries})...`);
+        await delay(500 * (attempt + 1));
+        continue;
+      }
+
+      throw error;
+    }
   }
+
+  throw lastError;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

@@ -143,9 +143,6 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         if (onSuccess) {
             onSuccess(submissionData);
         }
-        if (onSuccess) {
-            onSuccess(submissionData);
-        }
         onOpenChange(false);
         form.reset();
         setOpenCombobox(false);

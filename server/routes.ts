@@ -1318,6 +1318,26 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  app.delete("/api/appointments/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid appointment ID" });
+      }
+
+      const deleted = await storage.deleteAppointment(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      console.log(`[APPOINTMENT] Deleted appointment ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[APPOINTMENT] Error deleting appointment:', error);
+      res.status(500).json({ message: "Erro ao apagar agendamento" });
+    }
+  });
+
   // Configure multer for AI scheduling file uploads
   const aiScheduleUpload = multer({
     storage: multer.memoryStorage(),

@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Profile } from "@shared/schema";
+import CreatePatientDialog from "@/components/create-patient-dialog";
 
 function calculateAge(birthDate: string | Date | null | undefined): number | null {
   if (!birthDate) return null;
@@ -35,6 +36,7 @@ export default function Patients() {
   const [, setLocation] = useLocation();
   const { profiles, isLoading, activeProfile, setActiveProfile } = useProfiles();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Filter profiles based on search term
   const filteredProfiles = useMemo(() => {
@@ -45,7 +47,7 @@ export default function Patients() {
       const name = profile.name?.toLowerCase() || "";
       const email = profile.email?.toLowerCase() || "";
       const phone = profile.phone?.toLowerCase() || "";
-      const insurance = profile.insuranceType?.toLowerCase() || "";
+      const insurance = profile.planType?.toLowerCase() || "";
 
       return (
         name.includes(term) ||
@@ -86,7 +88,7 @@ export default function Patients() {
               </div>
 
               <Button
-                onClick={() => {/* TODO: Open new patient modal */}}
+                onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-charcoal hover:bg-charcoal/90 text-white"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -143,7 +145,10 @@ export default function Patients() {
                   : "Cadastre seu primeiro paciente para começar"}
               </p>
               {!searchTerm && (
-                <Button className="bg-charcoal hover:bg-charcoal/90 text-white">
+                <Button
+                  className="bg-charcoal hover:bg-charcoal/90 text-white"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Cadastrar Paciente
                 </Button>
@@ -152,7 +157,7 @@ export default function Patients() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredProfiles.map((profile: Profile) => {
-                const age = calculateAge(profile.dateOfBirth);
+                const age = calculateAge(profile.birthDate);
                 const isActive = activeProfile?.id === profile.id;
                 const registrationDate = profile.createdAt
                   ? format(new Date(profile.createdAt), "dd/MM/yyyy", { locale: ptBR })
@@ -201,10 +206,10 @@ export default function Patients() {
 
                       {/* Info */}
                       <div className="space-y-2 text-sm text-gray-600 mb-4">
-                        {profile.insuranceType && (
+                        {profile.planType && (
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-gray-400" />
-                            <span>{profile.insuranceType}</span>
+                            <span>{profile.planType}</span>
                           </div>
                         )}
                         {profile.phone && (
@@ -262,6 +267,11 @@ export default function Patients() {
           )}
         </main>
       </div>
+
+      <CreatePatientDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </div>
   );
 }

@@ -80,6 +80,28 @@ export function AgendaCalendar({
     }
   });
 
+  // Delete appointment mutation
+  const deleteAppointmentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/appointments/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Agendamento apagado",
+        description: "O agendamento foi removido com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível apagar o agendamento.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const getAppointmentsForDay = (date: Date) => {
     return appointmentsList.filter(app => {
       // Handle both date string (YYYY-MM-DD) and full timestamp formats
@@ -585,7 +607,14 @@ export function AgendaCalendar({
                                   >
                                     Editar
                                   </Button>
-                                  <Button variant="destructive" size="sm">Cancelar</Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                                    disabled={deleteAppointmentMutation.isPending}
+                                  >
+                                    Apagar
+                                  </Button>
                                 </div>
                               </div>
                             </div>
