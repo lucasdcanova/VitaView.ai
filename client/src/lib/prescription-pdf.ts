@@ -776,48 +776,33 @@ const generateTypeC1Prescription = (doc: jsPDF, data: PrescriptionData, xOffset:
 };
 
 // ==========================================
-// RECEITA ESPECIAL (Antibióticos, etc)
-// ==========================================
-// ==========================================
-// RECEITA ESPECIAL (Antibióticos, etc)
+// RECEITA ESPECIAL (Antibióticos/Antimicrobianos)
 // ==========================================
 const generateSpecialPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: number = 0) => {
     const pageWidth = 148.5;
     const centerX = xOffset + (pageWidth / 2);
     const rightX = xOffset + pageWidth - 10;
-    const leftX = xOffset + 10;
     let yPos = 15;
-
-    // Header com fundo amarelo suave
-    doc.setFillColor(255, 250, 230);
-    doc.rect(xOffset, 0, pageWidth, 25, 'F');
 
     drawLogo(doc, rightX - 15, 10);
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(150, 100, 0);
-    doc.text("RECEITA ESPECIAL", centerX, yPos, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+    doc.text("RECEITA DE CONTROLE ESPECIAL", centerX, yPos, { align: "center" });
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 80, 0);
+    doc.setTextColor(80, 80, 80);
     doc.text("Antimicrobianos - 2 vias (Retenção Farmácia)", centerX, yPos + 5, { align: "center" });
 
     const viaText = xOffset > 0 ? "2ª Via - Paciente" : "1ª Via - Retenção da Farmácia";
     doc.text(viaText, centerX, yPos + 9, { align: "center" });
 
-    yPos = 32;
+    yPos = 38;
     doc.setTextColor(0, 0, 0);
 
-    // Linha divisória
-    doc.setLineWidth(0.5);
-    doc.line(leftX, yPos, rightX, yPos);
-
-    yPos = 40;
-
-    // Continuar com estrutura básica
-    generateBasicContent(doc, data, yPos, xOffset);
+    generateControlledContent(doc, data, yPos, xOffset);
 };
 
 // Helper: Conteúdo da receita controlada (sem header)
@@ -1150,6 +1135,9 @@ export const generatePrescriptionPDF = (data: PrescriptionData, targetWindow: Wi
     // Ordem de geração das páginas
     const typeOrder: Array<keyof typeof groups> = ['padrao', 'especial', 'A', 'B1', 'B2', 'C', 'C1'];
     const typesWithMeds = typeOrder.filter(type => groups[type].length > 0);
+
+    console.log('[PDF DEBUG] Incoming medications:', data.medications.map(m => ({ name: m.name, type: m.prescriptionType })));
+    console.log('[PDF DEBUG] Grouped:', typesWithMeds.map(t => ({ type: t, count: groups[t].length })));
 
     if (typesWithMeds.length === 0) {
         console.warn("Nenhum medicamento para gerar receita");

@@ -52,7 +52,7 @@ interface AcutePrescriptionItem {
     daysOfUse?: number;
     quantity?: string;
     notes?: string;
-    prescriptionType: 'padrao' | 'c1' | 'a1' | 'a2' | 'a3' | 'b1' | 'b2' | 'especial'; // Added field
+    prescriptionType: 'padrao' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1'; // Matches PDF generator keys
 }
 
 interface VitaPrescriptionsProps {
@@ -382,7 +382,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         const baseName = medicationName.split(" ")[0];
         const medInfo = MEDICATION_DATABASE.find(m => m.name.toLowerCase() === baseName.toLowerCase());
         // Antibiotics are "especial", CONTROLLED_MEDICATIONS covers others, default to 'padrao'
-        let pType: 'padrao' | 'c1' | 'a1' | 'a2' | 'a3' | 'b1' | 'b2' | 'especial' = 'padrao';
+        let pType: 'padrao' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1' = 'padrao';
 
         if (medInfo) {
             if (medInfo.category) {
@@ -418,6 +418,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             notes: receituarioNotes || undefined,
             prescriptionType: pType
         };
+        console.log('[DEBUG] Adding med:', medicationName, 'prescriptionType:', pType);
         setAcuteItems([...acuteItems, newItem]);
         setReceituarioSearchValue("");
         receituarioForm.reset();
@@ -1319,7 +1320,10 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                     {idx + 1}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 text-sm">{item.name} <span className="font-normal text-gray-600">({item.dosage})</span></p>
+                                                    <div className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                                                        {item.name} <span className="font-normal text-gray-600">({item.dosage})</span>
+                                                        <PrescriptionTypeBadge type={item.prescriptionType === 'padrao' ? undefined : item.prescriptionType} />
+                                                    </div>
                                                     <p className="text-xs text-gray-600">{item.frequency} • <span className="text-green-600 font-medium">{item.daysOfUse} dias</span> {item.quantity && <span>• {item.quantity}</span>}</p>
                                                     {item.notes && <p className="text-xs text-gray-500 mt-0.5 italic">{item.notes}</p>}
                                                 </div>
