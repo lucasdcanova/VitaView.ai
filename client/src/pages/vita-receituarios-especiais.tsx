@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { Profile } from "@shared/schema";
 import jsPDF from "jspdf";
+import { CONTROLLED_MEDICATIONS } from "@/components/dialogs";
 
 // Tipos de receituário especial no Brasil
 const PRESCRIPTION_TYPES = {
@@ -65,49 +66,7 @@ const PRESCRIPTION_TYPES = {
     },
 };
 
-// Base de medicamentos controlados (importado do medication-dialog.tsx)
-const CONTROLLED_MEDICATIONS = [
-    // Receita A (Amarela) - Opioides
-    { name: "Tramadol", category: "Opioide", prescriptionType: "A" as const },
-    { name: "Codeína", category: "Opioide", prescriptionType: "A" as const },
-    { name: "Morfina", category: "Opioide", prescriptionType: "A" as const },
 
-    // Receita B1 (Azul) - Psicotrópicos
-    { name: "Fluoxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Sertralina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Escitalopram", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Amitriptilina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
-    { name: "Duloxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Clonazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
-    { name: "Alprazolam", category: "Ansiolítico", prescriptionType: "B1" as const },
-    { name: "Zolpidem", category: "Hipnótico", prescriptionType: "B1" as const },
-    { name: "Diazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
-    { name: "Lorazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
-    { name: "Bromazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
-    { name: "Paroxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Venlafaxina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Nortriptilina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
-    { name: "Clomipramina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
-    { name: "Bupropiona", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Trazodona", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Mirtazapina", category: "Antidepressivo", prescriptionType: "B1" as const },
-    { name: "Quetiapina", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Risperidona", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Olanzapina", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Aripiprazol", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Haloperidol", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Carbamazepina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Valproato de Sódio", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Fenitoína", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Lamotrigina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Topiramato", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Gabapentina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-    { name: "Pregabalina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
-
-    // Receita C - Retinoides
-    { name: "Isotretinoína", category: "Retinoide", prescriptionType: "C" as const },
-    { name: "Acitretina", category: "Retinoide", prescriptionType: "C" as const },
-];
 
 interface VitaReceituariosEspeciaisProps {
     patient: Profile;
@@ -362,8 +321,8 @@ export default function VitaReceituariosEspeciais({ patient }: VitaReceituariosE
                                                         key={med.name}
                                                         onClick={() => handleSelectMedication(med.name)}
                                                         className={`p-3 text-left rounded-lg border transition-all ${prescriptionItem.name === med.name
-                                                                ? `${info.bgColor} ${info.borderColor} border-2`
-                                                                : 'bg-white border-gray-200 hover:border-gray-300'
+                                                            ? `${info.bgColor} ${info.borderColor} border-2`
+                                                            : 'bg-white border-gray-200 hover:border-gray-300'
                                                             }`}
                                                     >
                                                         <div className="flex items-center justify-between">

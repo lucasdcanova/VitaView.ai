@@ -312,7 +312,9 @@ const generateBasicPrescription = (doc: jsPDF, data: PrescriptionData, xOffset: 
     // Validade
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
-    doc.text("Válido por 180 dias a partir da data de emissão.", leftX, footerY);
+    // Usar texto de validade dinâmico se fornecido, senão padrão 30 dias (ou 180 se contínuo no objeto antigo)
+    const validityText = (data as any).validityText || (data.isContinuousUse ? "Válido por 180 dias a partir da data de emissão." : "Válido por 30 dias a partir da data de emissão.");
+    doc.text(validityText, leftX, footerY);
     const viaText = xOffset > 0 ? "2ª Via" : "1ª Via";
     doc.text(viaText, rightX, footerY, { align: "right" });
 };
@@ -594,7 +596,8 @@ const generateControlledPrescription = (doc: jsPDF, data: PrescriptionData, xOff
     // Validade no rodapé
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
-    doc.text("Válido por 30 dias a partir da data de emissão.", leftX, validityY);
+    const validityText = (data as any).validityText || "Válido por 30 dias a partir da data de emissão.";
+    doc.text(validityText, leftX, validityY);
 };
 
 // ==========================================
@@ -1118,7 +1121,7 @@ const generateBasicContent = (doc: jsPDF, data: PrescriptionData, startY: number
 // ==========================================
 // FUNÇÃO PRINCIPAL DE GERAÇÃO DE RECEITA
 // ==========================================
-export const generatePrescriptionPDF = (data: PrescriptionData) => {
+export const generatePrescriptionPDF = (data: PrescriptionData, targetWindow: Window | null = null) => {
     // Agrupar medicamentos por tipo de receituário
     const groups: { [key: string]: typeof data.medications } = {
         padrao: [],
@@ -1179,34 +1182,41 @@ export const generatePrescriptionPDF = (data: PrescriptionData) => {
         offsets.forEach(xOffset => {
             switch (type) {
                 case 'padrao':
-                    generateBasicPrescription(doc, groupData, xOffset);
+                    // Padrão: 30 dias, ou 180 se for uso contínuo
+                    const validityPadrao = groupData.isContinuousUse ? "Válido por 180 dias a partir da data de emissão." : "Válido por 30 dias a partir da data de emissão.";
+                    generateBasicPrescription(doc, { ...groupData, validityText: validityPadrao } as any, xOffset);
                     break;
                 case 'especial':
-                    generateSpecialPrescription(doc, groupData, xOffset);
+                    // Antibióticos: 10 dias
+                    generateSpecialPrescription(doc, { ...groupData, validityText: "Válido por 10 dias a partir da data de emissão." } as any, xOffset);
                     break;
                 case 'A':
-                    generateTypeAPrescription(doc, groupData, xOffset);
-                    break;
                 case 'B1':
-                    generateTypeB1Prescription(doc, groupData, xOffset);
-                    break;
                 case 'B2':
-                    generateTypeB2Prescription(doc, groupData, xOffset);
-                    break;
                 case 'C':
-                    generateTypeCPrescription(doc, groupData, xOffset);
-                    break;
                 case 'C1':
-                    generateTypeC1Prescription(doc, groupData, xOffset);
+                    // Controlados: 30 dias
+                    const validityControlled = "Válido por 30 dias a partir da data de emissão.";
+                    if (type === 'A') generateTypeAPrescription(doc, { ...groupData, validityText: validityControlled } as any, xOffset);
+                    else if (type === 'B1') generateTypeB1Prescription(doc, { ...groupData, validityText: validityControlled } as any, xOffset);
+                    else if (type === 'B2') generateTypeB2Prescription(doc, { ...groupData, validityText: validityControlled } as any, xOffset);
+                    else if (type === 'C') generateTypeCPrescription(doc, { ...groupData, validityText: validityControlled } as any, xOffset);
+                    else if (type === 'C1') generateTypeC1Prescription(doc, { ...groupData, validityText: validityControlled } as any, xOffset);
                     break;
             }
         });
     });
 
-    // Abrir PDF em nova aba
+    // Abrir PDF em nova aba (usando janela pré-aberta se fornecida)
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, '_blank');
+
+    if (targetWindow) {
+        targetWindow.location.href = pdfUrl;
+    } else {
+        // Fallback para abrir nova janela (pode ser bloqueado)
+        window.open(pdfUrl, '_blank');
+    }
 };
 
 // ==========================================

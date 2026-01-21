@@ -10,7 +10,8 @@ export {
     PrescriptionTypeBadge,
     MEDICATION_DATABASE,
     MEDICATION_FORMATS,
-    DOSAGE_UNITS
+    DOSAGE_UNITS,
+    CONTROLLED_MEDICATIONS
 } from "./medication-dialog";
 export { AllergyDialog, allergySchema, type AllergyFormData } from "./allergy-dialog";
 export { SurgeryDialog, surgerySchema, type SurgeryFormData } from "./surgery-dialog";

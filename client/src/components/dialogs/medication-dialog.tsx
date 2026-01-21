@@ -37,7 +37,7 @@ import { Check, ChevronsUpDown, Sparkles, Lightbulb, Search } from "lucide-react
 import { cn } from "@/lib/utils";
 
 // Helper function to render prescription type badge with appropriate colors
-export const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' | 'B2' | 'C' | 'C1' }) => {
+export const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1' }) => {
     if (!type || type === 'common') return null;
 
     const badgeConfig: Record<string, { label: string; className: string }> = {
@@ -60,6 +60,10 @@ export const PrescriptionTypeBadge = ({ type }: { type?: 'common' | 'A' | 'B1' |
         'C1': {
             label: 'C1',
             className: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-100'
+        },
+        'especial': {
+            label: 'Controle Especial',
+            className: 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-100'
         },
     };
 
@@ -93,6 +97,7 @@ export const getMedicationIcon = (format: string) => {
     if (formatLower.includes("capsula") || formatLower.includes("cápsula") || formatLower.includes("sache") || formatLower.includes("sachê") || formatLower.includes("supositorio") || formatLower.includes("supositório")) {
         return "💊";
     }
+
     if (formatLower.includes("enema") || formatLower.includes("clister")) {
         return "🧴";
     }
@@ -164,7 +169,7 @@ interface MedicationInfo {
     category: string;
     route: string;
     isControlled?: boolean;
-    prescriptionType?: 'common' | 'A' | 'B1' | 'B2' | 'C' | 'C1'; // Tipo de receituário (C1 = Especial)
+    prescriptionType?: 'common' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1'; // Tipo de receituário (C1 = Especial)
     commonFrequencies?: string[];
     notes?: string;
 }
@@ -578,6 +583,7 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
     {
         name: "Amoxicilina",
         category: "Antibiótico",
+        prescriptionType: 'especial',
         route: "oral",
         presentations: [
             { dosage: "500", unit: "mg", format: "capsula", commonDose: "500mg 8/8h por 7 dias" },
@@ -615,6 +621,7 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
     {
         name: "Azitromicina",
         category: "Antibiótico",
+        prescriptionType: 'especial',
         route: "oral",
         presentations: [
             { dosage: "500", unit: "mg", format: "comprimido", commonDose: "500mg 1x/dia por 3-5 dias" },
@@ -638,6 +645,7 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
     {
         name: "Ciprofloxacino",
         category: "Antibiótico",
+        prescriptionType: 'especial',
         route: "oral",
         presentations: [
             { dosage: "250", unit: "mg", format: "comprimido", commonDose: "250-500mg 12/12h" },
@@ -3442,7 +3450,7 @@ interface MedicationListItem {
     format: string;       // Formato: "comprimido"
     dosage?: string;      // Dosagem: "500"
     unit?: string;        // Unidade: "mg"
-    prescriptionType?: 'common' | 'A' | 'B1' | 'B2' | 'C' | 'C1';
+    prescriptionType?: 'common' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1';
 }
 
 // Mapear formatos para categorias amigáveis
@@ -4450,3 +4458,45 @@ export function MedicationDialog({
         </Dialog>
     );
 }
+export const CONTROLLED_MEDICATIONS = [
+    // Receita A (Amarela) - Opioides
+    { name: "Tramadol", category: "Opioide", prescriptionType: "A" as const },
+    { name: "Codeína", category: "Opioide", prescriptionType: "A" as const },
+    { name: "Morfina", category: "Opioide", prescriptionType: "A" as const },
+
+    // Receita B1 (Azul) - Psicotrópicos
+    { name: "Fluoxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Sertralina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Escitalopram", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Amitriptilina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
+    { name: "Duloxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Clonazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
+    { name: "Alprazolam", category: "Ansiolítico", prescriptionType: "B1" as const },
+    { name: "Zolpidem", category: "Hipnótico", prescriptionType: "B1" as const },
+    { name: "Diazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
+    { name: "Lorazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
+    { name: "Bromazepam", category: "Ansiolítico", prescriptionType: "B1" as const },
+    { name: "Paroxetina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Venlafaxina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Nortriptilina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
+    { name: "Clomipramina", category: "Antidepressivo Tricíclico", prescriptionType: "B1" as const },
+    { name: "Bupropiona", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Trazodona", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Mirtazapina", category: "Antidepressivo", prescriptionType: "B1" as const },
+    { name: "Quetiapina", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Risperidona", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Olanzapina", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Aripiprazol", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Haloperidol", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Carbamazepina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Valproato de Sódio", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Fenitoína", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Lamotrigina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Topiramato", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Gabapentina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+    { name: "Pregabalina", category: "Anticonvulsivante", prescriptionType: "B1" as const },
+
+    // Receita C - Retinoides
+    { name: "Isotretinoína", category: "Retinoide", prescriptionType: "C" as const },
+    { name: "Acitretina", category: "Retinoide", prescriptionType: "C" as const },
+];

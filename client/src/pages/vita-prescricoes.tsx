@@ -34,7 +34,8 @@ import {
     PrescriptionTypeBadge,
     MEDICATION_DATABASE,
     MEDICATION_FORMATS,
-    DOSAGE_UNITS
+    DOSAGE_UNITS,
+    CONTROLLED_MEDICATIONS
 } from "@/components/dialogs";
 import { format } from "date-fns";
 import type { Profile, Prescription } from "@shared/schema";
@@ -48,9 +49,10 @@ interface AcutePrescriptionItem {
     name: string;
     dosage: string;
     frequency: string;
-    quantity?: string;
     daysOfUse?: number;
+    quantity?: string;
     notes?: string;
+    prescriptionType: 'padrao' | 'c1' | 'a1' | 'a2' | 'a3' | 'b1' | 'b2' | 'especial'; // Added field
 }
 
 interface VitaPrescriptionsProps {
@@ -217,7 +219,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             return [];
         }
     });
-    const [prescriptionValidity, setPrescriptionValidity] = useState("30");
+
     const [prescriptionObservations, setPrescriptionObservations] = useState("");
 
     // Auto-save acute items to localStorage
@@ -259,28 +261,8 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             // Log for debugging
             console.log("Prescription saved:", savedData);
 
-            // Generate PDF with saved data
-            generatePrescriptionPDF({
-                doctorName: savedData.doctorName,
-                doctorCrm: savedData.doctorCrm,
-                doctorSpecialty: savedData.doctorSpecialty || undefined,
-                doctorRqe: (user as any)?.rqe || undefined,
-                patientName: patient.name,
-                patientCpf: patient.cpf || undefined,
-                patientRg: patient.rg || undefined,
-                patientBirthDate: patient.birthDate || undefined,
-                patientAge: patient.birthDate ? `${new Date().getFullYear() - new Date(patient.birthDate.split("/").reverse().join("-")).getFullYear()} anos` : undefined,
-                patientGender: patient.gender || undefined,
-                patientPhone: patient.phone || undefined,
-                patientEmail: patient.email || undefined,
-                patientAddress: patient.street ? `${patient.street}${patient.number ? `, ${patient.number}` : ""}${patient.complement ? ` - ${patient.complement}` : ""}${patient.neighborhood ? ` - ${patient.neighborhood}` : ""}${patient.city ? `, ${patient.city}` : ""}${patient.state ? ` - ${patient.state}` : ""}${patient.cep ? ` (${patient.cep})` : ""}` : undefined,
-                patientGuardianName: patient.guardianName || undefined,
-                patientInsurance: patient.planType ? `${patient.planType}${patient.insuranceCardNumber ? ` - Comb: ${patient.insuranceCardNumber}` : ""}` : undefined,
-                issueDate: new Date(savedData.issueDate),
-                validUntil: new Date(savedData.validUntil),
-                medications: savedData.medications as any[], // stored as JSON
-                observations: savedData.observations || undefined
-            });
+            // PDF generation is now handled manually in the calling function
+            // to support opening in a new tab without popup blocking.
 
             toast({ title: "Sucesso", description: "Receita salva e gerada!" });
             setAcuteItems([]);
@@ -395,6 +377,36 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             toast({ title: "Erro", description: "Preencha o medicamento, dose e frequência.", variant: "destructive" });
             return;
         }
+
+        // Determine prescription type from DB
+        const baseName = medicationName.split(" ")[0];
+        const medInfo = MEDICATION_DATABASE.find(m => m.name.toLowerCase() === baseName.toLowerCase());
+        // Antibiotics are "especial", CONTROLLED_MEDICATIONS covers others, default to 'padrao'
+        let pType: 'padrao' | 'c1' | 'a1' | 'a2' | 'a3' | 'b1' | 'b2' | 'especial' = 'padrao';
+
+        if (medInfo) {
+            if (medInfo.category) {
+                // Map category to prescriptionType if possible or use a lookup
+                // Simple heuristic: if it's in the controlled list, use that type
+                const controlled = CONTROLLED_MEDICATIONS.find(c => c.name.toLowerCase() === baseName.toLowerCase());
+                if (controlled) {
+                    pType = controlled.prescriptionType as any;
+                } else if (medInfo.prescriptionType) {
+                    pType = medInfo.prescriptionType as any;
+                }
+            }
+            // Explicit check for known antibiotics if not yet caught
+            if (['Amoxicilina', 'Azitromicina', 'Ciprofloxacino', 'Claritromicina'].includes(medInfo.name)) {
+                pType = 'especial';
+            }
+        } else {
+            // Fallback check against controlled list directly
+            const controlled = CONTROLLED_MEDICATIONS.find(c => c.name.toLowerCase() === baseName.toLowerCase());
+            if (controlled) {
+                pType = controlled.prescriptionType as any;
+            }
+        }
+
         const dosageStr = `${doseValue} ${doseUnit}`;
         const newItem: AcutePrescriptionItem = {
             id: Math.random().toString(36).substr(2, 9),
@@ -403,7 +415,8 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             frequency: frequency,
             daysOfUse: parseInt(receituarioDaysOfUse) || 7,
             quantity: quantity || undefined,
-            notes: receituarioNotes || undefined
+            notes: receituarioNotes || undefined,
+            prescriptionType: pType
         };
         setAcuteItems([...acuteItems, newItem]);
         setReceituarioSearchValue("");
@@ -416,9 +429,11 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         toast({ title: "Medicamento adicionado", description: `${medicationName} foi adicionado à receita.` });
     };
 
+
     const removeAcuteItem = (id: string) => {
         setAcuteItems(acuteItems.filter(i => i.id !== id));
     };
+
 
     const handleSaveAndPrintPrescription = async () => {
         if (acuteItems.length === 0) {
@@ -431,29 +446,74 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             return;
         }
 
+        // 1. Abrir nova aba IMEDIATAMENTE (síncrono) para evitar bloqueio de popup
+        const pdfWindow = window.open('', '_blank');
+        if (pdfWindow) {
+            pdfWindow.document.write('<html><head><title>Gerando Receita...</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div><h2>Gerando Receita...</h2><p>Por favor, aguarde.</p></div></body></html>');
+        } else {
+            toast({ title: "Aviso", description: "O bloqueador de popups pode ter impedido a abertura da receita. Verifique as permissões do navegador.", variant: "destructive" });
+        }
+
         const itemsToSave = acuteItems;
 
         const doctorName = user.fullName || user.username || "Dr. VitaView";
         const doctorCrm = user.crm || "CRM pendente";
         const doctorSpecialty = user.specialty || "Clínica Médica";
 
-        createPrescriptionMutation.mutate({
-            profileId: patient.id,
-            userId: patient.userId,
-            doctorName,
-            doctorCrm,
-            doctorSpecialty,
-            medications: itemsToSave.map(item => ({
-                name: item.name,
-                dosage: item.dosage,
-                frequency: item.frequency,
-                notes: item.notes
-            })),
-            issueDate: new Date().toISOString(),
-            validUntil: new Date(Date.now() + parseInt(prescriptionValidity) * 24 * 60 * 60 * 1000).toISOString(),
-            observations: prescriptionObservations || undefined,
-            status: 'active'
-        });
+        try {
+            // 2. Salvar receita (Assíncrono)
+            const savedData = await createPrescriptionMutation.mutateAsync({
+                profileId: patient.id,
+                userId: patient.userId,
+                doctorName,
+                doctorCrm,
+                doctorSpecialty,
+                medications: itemsToSave.map(item => ({
+                    name: item.name,
+                    dosage: item.dosage,
+                    frequency: `${item.frequency}${item.daysOfUse ? ` por ${item.daysOfUse} dias` : ''}`,
+                    notes: item.notes,
+                    prescriptionType: item.prescriptionType
+                })),
+                issueDate: new Date().toISOString(),
+                validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default 30 days for DB record
+                observations: prescriptionObservations || undefined,
+                status: 'active'
+            });
+
+            // 3. Gerar PDF na janela aberta
+            if (pdfWindow) {
+                generatePrescriptionPDF({
+                    doctorName: savedData.doctorName,
+                    doctorCrm: savedData.doctorCrm,
+                    doctorSpecialty: savedData.doctorSpecialty || undefined,
+                    doctorRqe: (user as any)?.rqe || undefined,
+                    patientName: patient.name,
+                    patientCpf: patient.cpf || undefined,
+                    patientRg: patient.rg || undefined,
+                    patientBirthDate: patient.birthDate || undefined,
+                    patientAge: patient.birthDate ? `${new Date().getFullYear() - new Date(patient.birthDate.split("/").reverse().join("-")).getFullYear()} anos` : undefined,
+                    patientGender: patient.gender || undefined,
+                    patientPhone: patient.phone || undefined,
+                    patientEmail: patient.email || undefined,
+                    patientAddress: patient.street ? `${patient.street}${patient.number ? `, ${patient.number}` : ""}${patient.complement ? ` - ${patient.complement}` : ""}${patient.neighborhood ? ` - ${patient.neighborhood}` : ""}${patient.city ? `, ${patient.city}` : ""}${patient.state ? ` - ${patient.state}` : ""}${patient.cep ? ` (${patient.cep})` : ""}` : undefined,
+                    patientGuardianName: patient.guardianName || undefined,
+                    patientInsurance: patient.planType ? `${patient.planType}${patient.insuranceCardNumber ? ` - Comb: ${patient.insuranceCardNumber}` : ""}` : undefined,
+                    issueDate: new Date(savedData.issueDate),
+                    validUntil: new Date(savedData.validUntil),
+                    medications: savedData.medications as any[], // stored as JSON
+                    observations: savedData.observations || undefined
+                }, pdfWindow);
+            }
+
+            toast({ title: "Sucesso", description: "Receita salva e gerada!" });
+            setAcuteItems([]);
+
+        } catch (error) {
+            console.error(error);
+            if (pdfWindow) pdfWindow.close(); // Fechar janela em caso de erro
+            toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
+        }
     };
 
     const handleReprintPrescription = (p: Prescription) => {
@@ -493,33 +553,73 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             return;
         }
 
+        // 1. Abrir nova aba IMEDIATAMENTE (síncrono)
+        const pdfWindow = window.open('', '_blank');
+        if (pdfWindow) {
+            pdfWindow.document.write('<html><head><title>Gerando Receita...</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div><h2>Gerando Receita...</h2><p>Por favor, aguarde.</p></div></body></html>');
+        } else {
+            toast({ title: "Aviso", description: "O bloqueador de popups pode ter impedido a abertura da receita. Verifique as permissões do navegador.", variant: "destructive" });
+        }
+
         const selectedMeds = medications.filter((med: any) => selectedMedications.has(med.id));
         const doctorName = user.fullName || user.username || "Dr. VitaView";
         const doctorCrm = user.crm || "CRM pendente";
         const doctorSpecialty = user.specialty || "Clínica Médica";
 
-        createPrescriptionMutation.mutate({
-            profileId: patient.id,
-            userId: patient.userId,
-            doctorName,
-            doctorCrm,
-            doctorSpecialty,
-            medications: selectedMeds.map((med: any) => ({
-                name: med.name,
-                dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit ? ' ' + (med.dosageUnit || med.dosage_unit) : ''}${(med.doseAmount > 1 || med.dose_amount > 1) ? ` (${med.doseAmount || med.dose_amount} ${med.format}s)` : ''}`.trim(),
-                frequency: med.frequency,
-                format: med.format,
-                quantity: med.quantity,
-                prescriptionType: med.prescriptionType || med.prescription_type || 'padrao',
-                notes: med.notes
-            })),
-            issueDate: new Date().toISOString(),
-            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            observations: "Renovação de medicamentos de uso contínuo",
-            status: 'active'
-        });
+        try {
+            const savedData = await createPrescriptionMutation.mutateAsync({
+                profileId: patient.id,
+                userId: patient.userId,
+                doctorName,
+                doctorCrm,
+                doctorSpecialty,
+                medications: selectedMeds.map((med: any) => ({
+                    name: med.name,
+                    dosage: `${med.dosage}${med.dosageUnit || med.dosage_unit ? ' ' + (med.dosageUnit || med.dosage_unit) : ''}${(med.doseAmount > 1 || med.dose_amount > 1) ? ` (${med.doseAmount || med.dose_amount} ${med.format}s)` : ''}`.trim(),
+                    frequency: med.frequency,
+                    format: med.format,
+                    quantity: med.quantity,
+                    prescriptionType: med.prescriptionType || med.prescription_type || 'padrao',
+                    notes: med.notes
+                })),
+                issueDate: new Date().toISOString(),
+                validUntil: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), // 180 dias para uso contínuo
+                observations: "Uso contínuo. Renovação de medicamentos.",
+                status: 'active'
+            });
 
-        setSelectedMedications(new Set());
+            if (pdfWindow) {
+                generatePrescriptionPDF({
+                    doctorName: savedData.doctorName,
+                    doctorCrm: savedData.doctorCrm,
+                    doctorSpecialty: savedData.doctorSpecialty || undefined,
+                    doctorRqe: (user as any)?.rqe || undefined,
+                    patientName: patient.name,
+                    patientCpf: patient.cpf || undefined,
+                    patientRg: patient.rg || undefined,
+                    patientBirthDate: patient.birthDate || undefined,
+                    patientAge: patient.birthDate ? `${new Date().getFullYear() - new Date(patient.birthDate.split("/").reverse().join("-")).getFullYear()} anos` : undefined,
+                    patientGender: patient.gender || undefined,
+                    patientPhone: patient.phone || undefined,
+                    patientEmail: patient.email || undefined,
+                    patientAddress: patient.street ? `${patient.street}${patient.number ? `, ${patient.number}` : ""}${patient.complement ? ` - ${patient.complement}` : ""}${patient.neighborhood ? ` - ${patient.neighborhood}` : ""}${patient.city ? `, ${patient.city}` : ""}${patient.state ? ` - ${patient.state}` : ""}${patient.cep ? ` (${patient.cep})` : ""}` : undefined,
+                    patientGuardianName: patient.guardianName || undefined,
+                    patientInsurance: patient.planType ? `${patient.planType}${patient.insuranceCardNumber ? ` - Comb: ${patient.insuranceCardNumber}` : ""}` : undefined,
+                    issueDate: new Date(savedData.issueDate),
+                    validUntil: new Date(savedData.validUntil),
+                    medications: savedData.medications as any[],
+                    observations: savedData.observations || undefined
+                }, pdfWindow);
+            }
+
+            toast({ title: "Sucesso", description: "Receita renovada e gerada!" });
+            setSelectedMedications(new Set());
+
+        } catch (error) {
+            console.error(error);
+            if (pdfWindow) pdfWindow.close();
+            toast({ title: "Erro", description: "Falha ao renovar receita.", variant: "destructive" });
+        }
     };
 
     const toggleMedicationSelection = (id: number) => {
@@ -1156,22 +1256,14 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Dias de uso</label>
-                                    <Select value={receituarioDaysOfUse} onValueChange={setReceituarioDaysOfUse}>
-                                        <SelectTrigger className="h-9 text-sm bg-white">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="3">3 dias</SelectItem>
-                                            <SelectItem value="5">5 dias</SelectItem>
-                                            <SelectItem value="7">7 dias</SelectItem>
-                                            <SelectItem value="10">10 dias</SelectItem>
-                                            <SelectItem value="14">14 dias</SelectItem>
-                                            <SelectItem value="21">21 dias</SelectItem>
-                                            <SelectItem value="30">30 dias</SelectItem>
-                                            <SelectItem value="60">60 dias</SelectItem>
-                                            <SelectItem value="90">90 dias</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <Input
+                                        type="number"
+                                        className="h-9 text-sm bg-white"
+                                        value={receituarioDaysOfUse}
+                                        onChange={(e) => setReceituarioDaysOfUse(e.target.value)}
+                                        min="1"
+                                        placeholder="7"
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Quantidade</label>
@@ -1247,19 +1339,6 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                         </div>
 
                         <div className="flex gap-2 items-end">
-                            <div className="space-y-1 w-[120px]">
-                                <label className="text-xs font-medium text-gray-500">Validade</label>
-                                <Select value={prescriptionValidity} onValueChange={setPrescriptionValidity}>
-                                    <SelectTrigger className="h-9 text-sm">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="30">30 dias</SelectItem>
-                                        <SelectItem value="60">60 dias</SelectItem>
-                                        <SelectItem value="90">90 dias</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
                             <Button
                                 className="flex-1 h-9 text-sm shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700"
                                 onClick={handleSaveAndPrintPrescription}
