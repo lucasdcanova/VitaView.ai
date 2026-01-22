@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-// import { generateCertificatePDF } from "@/lib/prescription-pdf";
+import { generateCertificatePDF } from "@/lib/certificate-pdf";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
     FileSignature,
     CalendarDays,
@@ -102,37 +102,30 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
             patientDoc: patientDoc,
             type: certType,
             issueDate: new Date().toISOString(),
-            daysOff: certType === 'afastamento' ? parseInt(certDays) : undefined,
+            daysOff: certType === 'afastamento' ? certDays : undefined,
             startTime: certType === 'comparecimento' ? certStartTime : undefined,
             endTime: certType === 'comparecimento' ? certEndTime : undefined,
             cid: certCid || undefined,
             customText: customCertText || undefined,
             status: 'active'
         }).then(async (savedData) => {
-            // Now generate PDF
+            // Generate PDF Client-side
             try {
-                const response = await fetch('/api/documents/certificate/pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: savedData.type,
-                        doctorName: savedData.doctorName,
-                        doctorCrm: savedData.doctorCrm,
-                        patientName: savedData.patientName,
-                        patientDoc: savedData.patientDoc,
-                        issueDate: savedData.issueDate,
-                        daysOff: savedData.daysOff,
-                        startTime: savedData.startTime,
-                        endTime: savedData.endTime,
-                        cid: savedData.cid,
-                        customText: savedData.customText
-                    })
+                const blob = generateCertificatePDF({
+                    type: savedData.type as any,
+                    doctorName: savedData.doctorName,
+                    doctorCrm: savedData.doctorCrm,
+                    patientName: savedData.patientName,
+                    patientDoc: savedData.patientDoc,
+                    issueDate: savedData.issueDate,
+                    daysOff: savedData.daysOff,
+                    startTime: savedData.startTime,
+                    endTime: savedData.endTime,
+                    cid: savedData.cid,
+                    customText: savedData.customText
                 });
 
-                if (!response.ok) throw new Error('Falha');
-                const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
-
                 if (newTab) newTab.location.href = url;
             } catch (e) {
                 console.error(e);
@@ -151,26 +144,20 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
         }
 
         try {
-            const response = await fetch('/api/documents/certificate/pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: c.type,
-                    doctorName: c.doctorName,
-                    doctorCrm: c.doctorCrm,
-                    patientName: c.patientName,
-                    patientDoc: c.patientDoc,
-                    issueDate: c.issueDate,
-                    daysOff: c.daysOff,
-                    startTime: c.startTime,
-                    endTime: c.endTime,
-                    cid: c.cid,
-                    customText: c.customText
-                })
+            const blob = generateCertificatePDF({
+                type: c.type as any,
+                doctorName: c.doctorName,
+                doctorCrm: c.doctorCrm,
+                patientName: c.patientName,
+                patientDoc: c.patientDoc || undefined,
+                issueDate: c.issueDate,
+                daysOff: c.daysOff || undefined,
+                startTime: c.startTime || undefined,
+                endTime: c.endTime || undefined,
+                cid: c.cid || undefined,
+                customText: c.customText || undefined
             });
 
-            if (!response.ok) throw new Error('Falha');
-            const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             if (newTab) newTab.location.href = url;
             else window.open(url, '_blank');
@@ -199,19 +186,10 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                 </div>
             </div>
 
-            <Tabs defaultValue="new-certificate" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                    <TabsTrigger value="new-certificate" className="gap-2">
-                        <FileSignature className="h-4 w-4" /> Novo Atestado
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="gap-2">
-                        <History className="h-4 w-4" /> Histórico
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* --- ABA NOVO ATESTADO --- */}
-                <TabsContent value="new-certificate" className="mt-6">
-                    <Card className="border-blue-100 shadow-md bg-gradient-to-b from-white to-blue-50/20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                {/* --- COLUNA ESQUERDA: NOVO ATESTADO --- */}
+                <div className="space-y-6">
+                    <Card className="border-blue-100 shadow-md bg-gradient-to-b from-white to-blue-50/20 h-full">
                         <CardHeader className="bg-blue-50/50 border-b border-blue-100 pb-4">
                             <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
                                 <FileSignature className="h-5 w-5 text-blue-700" />
@@ -222,7 +200,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                         <CardContent className="pt-6 space-y-6">
 
                             <div className="grid grid-cols-1 gap-6">
-                                {/* Left: Settings */}
+                                {/* Settings */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-gray-700">Tipo de Atestado</label>
@@ -310,7 +288,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
 
                             <div className="flex justify-end pt-4">
                                 <Button
-                                    className="h-12 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700 min-w-[250px]"
+                                    className="w-full h-12 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700"
                                     onClick={handleSaveAndPrintCertificate}
                                     disabled={createCertificateMutation.isPending || !user}
                                 >
@@ -321,57 +299,69 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
 
                         </CardContent>
                     </Card>
-                </TabsContent>
+                </div>
 
-                {/* --- ABA HISTÓRICO --- */}
-                <TabsContent value="history" className="mt-6">
-                    <Card>
-                        <CardHeader>
+                {/* --- COLUNA DIREITA: HISTÓRICO --- */}
+                <div className="space-y-6">
+                    <Card className="h-full">
+                        <CardHeader className="pb-4">
                             <CardTitle className="text-xl flex items-center gap-2">
                                 <History className="h-5 w-5 text-gray-600" />
                                 Histórico de Atestados
                             </CardTitle>
-                            <CardDescription>Atestados emitidos para este paciente. Documentos são imutáveis após emissão.</CardDescription>
+                            <CardDescription>Atestados emitidos para este paciente.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                                 {certificateHistory.length > 0 ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {certificateHistory.map(c => (
-                                            <div key={c.id} className={`flex items-center justify-between p-3 rounded-lg border ${c.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-white border-gray-100 shadow-sm'}`}>
-                                                <div className="flex gap-4 items-center">
-                                                    <div className="bg-blue-100 p-2 rounded-full hidden sm:block">
+                                            <div key={c.id} className={`flex flex-col gap-3 p-4 rounded-lg border ${c.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-gray-50 border-gray-100 hover:bg-white hover:shadow-sm transition-all'}`}>
+                                                <div className="flex gap-3 items-start">
+                                                    <div className="bg-blue-100 p-2 rounded-lg mt-0.5">
                                                         <FileSignature className="h-4 w-4 text-blue-700" />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900">Atestado ({c.type}) - {format(new Date(c.issueDate), "dd/MM/yyyy")}</p>
-                                                        <p className="text-xs text-gray-500">Dr(a). {c.doctorName} {c.cid ? `• CID: ${c.cid}` : ''}</p>
-                                                        {c.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADO</span>}
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <p className="font-semibold text-gray-900 text-sm">Atestado de {c.type.charAt(0).toUpperCase() + c.type.slice(1)}</p>
+                                                            <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">
+                                                                {format(new Date(c.issueDate), "dd/MM/yyyy")}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                                            Dr(a). {c.doctorName}
+                                                        </p>
+                                                        {c.cid && (
+                                                            <div className="flex mt-2">
+                                                                <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">CID: {c.cid}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    {c.status === 'active' && (
-                                                        <>
-                                                            <Button variant="outline" size="sm" className="h-8" onClick={() => handleReprintCertificate(c)}>
-                                                                <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                    {c.status === 'cancelled' && (
-                                                        <Button disabled variant="outline" size="sm" className="h-8 opacity-50">Cancelado</Button>
+
+                                                <div className="flex justify-end border-t border-gray-100 pt-3 mt-1">
+                                                    {c.status === 'active' ? (
+                                                        <Button variant="outline" size="sm" className="h-7 text-xs w-full sm:w-auto" onClick={() => handleReprintCertificate(c)}>
+                                                            <Printer className="h-3 w-3 mr-1.5" /> Re-Imprimir PDF
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-xs text-red-600 font-bold px-2 py-1">CANCELADO</span>
                                                     )}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500 italic">Nenhum atestado encontrado.</p>
+                                    <div className="text-center py-12">
+                                        <History className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-sm text-gray-500 italic">Nenhum atestado emitido ainda.</p>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>
                     </Card>
-                </TabsContent>
-            </Tabs>
+                </div>
+            </div>
         </div>
     );
 }
