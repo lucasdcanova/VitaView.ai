@@ -986,3 +986,66 @@ export const TEAM_ROLES = {
     }
   }
 } as const;
+
+// Exam Requests schema - Solicitação de exames laboratoriais e de imagem
+export const examRequests = pgTable("exam_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
+  doctorName: text("doctor_name").notNull(),
+  doctorCrm: text("doctor_crm").notNull(),
+  doctorSpecialty: text("doctor_specialty"),
+  exams: json("exams").notNull(), // Array de exames solicitados [{name, type, notes}]
+  clinicalIndication: text("clinical_indication"), // Indicação clínica
+  issueDate: timestamp("issue_date").defaultNow().notNull(),
+  observations: text("observations"),
+  pdfPath: text("pdf_path"),
+  status: text("status").default("pending").notNull(), // pending, completed, cancelled
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertExamRequestSchema = createInsertSchema(examRequests, {
+  issueDate: z.coerce.date(),
+}).pick({
+  userId: true,
+  profileId: true,
+  doctorName: true,
+  doctorCrm: true,
+  doctorSpecialty: true,
+  exams: true,
+  clinicalIndication: true,
+  issueDate: true,
+  observations: true,
+  pdfPath: true,
+  status: true,
+});
+
+export type ExamRequest = typeof examRequests.$inferSelect;
+export type InsertExamRequest = z.infer<typeof insertExamRequestSchema>;
+
+// Custom Exam Protocols schema - Protocolos de exames personalizados por médico
+export const examProtocols = pgTable("exam_protocols", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon").default("FlaskConical"), // Lucide icon name
+  color: text("color").default("blue"), // Tailwind color name
+  exams: json("exams").notNull(), // Array de exames [{name, type}]
+  isDefault: boolean("is_default").default(false), // Se é protocolo padrão do sistema
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertExamProtocolSchema = createInsertSchema(examProtocols).pick({
+  userId: true,
+  name: true,
+  description: true,
+  icon: true,
+  color: true,
+  exams: true,
+  isDefault: true,
+});
+
+export type ExamProtocol = typeof examProtocols.$inferSelect;
+export type InsertExamProtocol = z.infer<typeof insertExamProtocolSchema>;

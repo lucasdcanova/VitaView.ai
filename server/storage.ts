@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -181,6 +181,21 @@ export interface IStorage {
   createCertificate(certificate: InsertCertificate): Promise<Certificate>;
   getCertificatesByProfileId(profileId: number): Promise<Certificate[]>;
   updateCertificateStatus(id: number, status: string): Promise<Certificate | undefined>;
+
+  // Exam Request operations
+  createExamRequest(examRequest: InsertExamRequest): Promise<ExamRequest>;
+  getExamRequestsByProfileId(profileId: number): Promise<ExamRequest[]>;
+  updateExamRequest(id: number, data: Partial<InsertExamRequest>): Promise<ExamRequest | undefined>;
+  updateExamRequestStatus(id: number, status: string): Promise<ExamRequest | undefined>;
+
+  // Exam Protocol operations
+  createExamProtocol(protocol: InsertExamProtocol): Promise<ExamProtocol>;
+  getExamProtocolsByUserId(userId: number): Promise<ExamProtocol[]>;
+  updateExamProtocol(id: number, data: Partial<InsertExamProtocol>): Promise<ExamProtocol | undefined>;
+  deleteExamProtocol(id: number): Promise<boolean>;
+
+  // Prescription update
+  updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined>;
 
   // Session store
   sessionStore: SessionStore;
@@ -1284,6 +1299,95 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  // Prescription update - MemStorage
+  async updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined> {
+    const p = this.prescriptionsMap.get(id);
+    if (!p) return undefined;
+    const updated = { ...p, ...data, issueDate: data.issueDate || p.issueDate } as Prescription;
+    this.prescriptionsMap.set(id, updated);
+    return updated;
+  }
+
+  // Exam Request operations - MemStorage
+  private examRequestsMap: Map<number, ExamRequest> = new Map();
+  private examRequestIdCounter: number = 1;
+
+  async createExamRequest(er: InsertExamRequest): Promise<ExamRequest> {
+    const id = this.examRequestIdCounter++;
+    const newER: ExamRequest = {
+      ...er,
+      id,
+      createdAt: new Date(),
+      status: er.status || 'pending',
+      issueDate: er.issueDate || new Date(),
+      doctorSpecialty: er.doctorSpecialty || null,
+      clinicalIndication: er.clinicalIndication || null,
+      observations: er.observations || null,
+      pdfPath: er.pdfPath || null
+    };
+    this.examRequestsMap.set(id, newER);
+    return newER;
+  }
+
+  async getExamRequestsByProfileId(profileId: number): Promise<ExamRequest[]> {
+    return Array.from(this.examRequestsMap.values())
+      .filter(er => er.profileId === profileId)
+      .sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
+  }
+
+  async updateExamRequest(id: number, data: Partial<InsertExamRequest>): Promise<ExamRequest | undefined> {
+    const er = this.examRequestsMap.get(id);
+    if (!er) return undefined;
+    const updated = { ...er, ...data, issueDate: data.issueDate || er.issueDate } as ExamRequest;
+    this.examRequestsMap.set(id, updated);
+    return updated;
+  }
+
+  async updateExamRequestStatus(id: number, status: string): Promise<ExamRequest | undefined> {
+    const er = this.examRequestsMap.get(id);
+    if (!er) return undefined;
+    const updated = { ...er, status };
+    this.examRequestsMap.set(id, updated);
+    return updated;
+  }
+
+  // ExamProtocol methods for MemStorage
+  private examProtocolsMap = new Map<number, ExamProtocol>();
+  private examProtocolIdCounter = 1;
+
+  async createExamProtocol(protocol: InsertExamProtocol): Promise<ExamProtocol> {
+    const id = this.examProtocolIdCounter++;
+    const newProtocol: ExamProtocol = {
+      ...protocol,
+      id,
+      description: protocol.description || null,
+      icon: protocol.icon || "FlaskConical",
+      color: protocol.color || "blue",
+      isDefault: protocol.isDefault || false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.examProtocolsMap.set(id, newProtocol);
+    return newProtocol;
+  }
+
+  async getExamProtocolsByUserId(userId: number): Promise<ExamProtocol[]> {
+    return Array.from(this.examProtocolsMap.values())
+      .filter(p => p.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateExamProtocol(id: number, data: Partial<InsertExamProtocol>): Promise<ExamProtocol | undefined> {
+    const protocol = this.examProtocolsMap.get(id);
+    if (!protocol) return undefined;
+    const updated = { ...protocol, ...data, updatedAt: new Date() } as ExamProtocol;
+    this.examProtocolsMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteExamProtocol(id: number): Promise<boolean> {
+    return this.examProtocolsMap.delete(id);
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1946,6 +2050,68 @@ export class DatabaseStorage implements IStorage {
       .where(eq(certificates.id, id))
       .returning();
     return updated;
+  }
+
+  // Prescription update - DatabaseStorage
+  async updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined> {
+    const [updated] = await db.update(prescriptions)
+      .set(data)
+      .where(eq(prescriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Exam Request operations - DatabaseStorage
+  async createExamRequest(er: InsertExamRequest): Promise<ExamRequest> {
+    const [newER] = await db.insert(examRequests).values(er).returning();
+    return newER;
+  }
+
+  async getExamRequestsByProfileId(profileId: number): Promise<ExamRequest[]> {
+    return await db.select().from(examRequests)
+      .where(eq(examRequests.profileId, profileId))
+      .orderBy(desc(examRequests.issueDate));
+  }
+
+  async updateExamRequest(id: number, data: Partial<InsertExamRequest>): Promise<ExamRequest | undefined> {
+    const [updated] = await db.update(examRequests)
+      .set(data)
+      .where(eq(examRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateExamRequestStatus(id: number, status: string): Promise<ExamRequest | undefined> {
+    const [updated] = await db.update(examRequests)
+      .set({ status })
+      .where(eq(examRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Exam Protocol operations - DatabaseStorage
+  async createExamProtocol(protocol: InsertExamProtocol): Promise<ExamProtocol> {
+    const [newProtocol] = await db.insert(examProtocols).values(protocol).returning();
+    return newProtocol;
+  }
+
+  async getExamProtocolsByUserId(userId: number): Promise<ExamProtocol[]> {
+    return await db.select().from(examProtocols)
+      .where(eq(examProtocols.userId, userId))
+      .orderBy(desc(examProtocols.createdAt));
+  }
+
+  async updateExamProtocol(id: number, data: Partial<InsertExamProtocol>): Promise<ExamProtocol | undefined> {
+    const [updated] = await db.update(examProtocols)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(examProtocols.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteExamProtocol(id: number): Promise<boolean> {
+    const result = await db.delete(examProtocols).where(eq(examProtocols.id, id));
+    return true;
   }
 
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {

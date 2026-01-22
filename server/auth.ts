@@ -312,7 +312,11 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Preferences object is required" });
       }
 
-      const updatedUser = await storage.updateUser(userId, { preferences });
+      const user = await storage.getUser(userId);
+      const currentPreferences = (user?.preferences as any) || {};
+      const updatedPreferences = { ...currentPreferences, ...preferences };
+
+      const updatedUser = await storage.updateUser(userId, { preferences: updatedPreferences });
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });

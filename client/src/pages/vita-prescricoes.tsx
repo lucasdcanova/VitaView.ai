@@ -20,7 +20,8 @@ import {
     Pill,
     Save,
     Check,
-    RefreshCw
+    RefreshCw,
+    Pencil
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,6 +69,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
     const [editingMedication, setEditingMedication] = useState<any>(null);
     const [selectedMedications, setSelectedMedications] = useState<Set<number>>(new Set());
+    const [editingPrescriptionId, setEditingPrescriptionId] = useState<number | null>(null);
 
     // --- Receituário State ---
     const [receituarioMedOpen, setReceituarioMedOpen] = useState(false);
@@ -266,10 +268,29 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
             toast({ title: "Sucesso", description: "Receita salva e gerada!" });
             setAcuteItems([]);
+            setEditingPrescriptionId(null);
         },
         onError: (err) => {
             console.error(err);
             toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
+        }
+    });
+
+    const updatePrescriptionMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number; data: any }) => {
+            const res = await apiRequest("PUT", `/api/prescriptions/${id}`, data);
+            return await res.json();
+        },
+        onSuccess: (savedData) => {
+            queryClient.invalidateQueries({ queryKey: [`/api/prescriptions/patient/${patient.id}`] });
+            console.log("Prescription updated:", savedData);
+            toast({ title: "Sucesso", description: "Receita atualizada!" });
+            setAcuteItems([]);
+            setEditingPrescriptionId(null);
+        },
+        onError: (err) => {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha ao atualizar receita.", variant: "destructive" });
         }
     });
 
@@ -461,26 +482,38 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         const doctorCrm = user.crm || "CRM pendente";
         const doctorSpecialty = user.specialty || "Clínica Médica";
 
+        const prescriptionData = {
+            profileId: patient.id,
+            userId: patient.userId,
+            doctorName,
+            doctorCrm,
+            doctorSpecialty,
+            medications: itemsToSave.map(item => ({
+                name: item.name,
+                dosage: item.dosage,
+                frequency: `${item.frequency}${item.daysOfUse ? ` por ${item.daysOfUse} dias` : ''}`,
+                notes: item.notes,
+                prescriptionType: item.prescriptionType
+            })),
+            issueDate: new Date().toISOString(),
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            observations: prescriptionObservations || undefined,
+            status: 'active'
+        };
+
         try {
-            // 2. Salvar receita (Assíncrono)
-            const savedData = await createPrescriptionMutation.mutateAsync({
-                profileId: patient.id,
-                userId: patient.userId,
-                doctorName,
-                doctorCrm,
-                doctorSpecialty,
-                medications: itemsToSave.map(item => ({
-                    name: item.name,
-                    dosage: item.dosage,
-                    frequency: `${item.frequency}${item.daysOfUse ? ` por ${item.daysOfUse} dias` : ''}`,
-                    notes: item.notes,
-                    prescriptionType: item.prescriptionType
-                })),
-                issueDate: new Date().toISOString(),
-                validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default 30 days for DB record
-                observations: prescriptionObservations || undefined,
-                status: 'active'
-            });
+            let savedData;
+
+            if (editingPrescriptionId) {
+                // Atualizar receita existente
+                savedData = await updatePrescriptionMutation.mutateAsync({
+                    id: editingPrescriptionId,
+                    data: prescriptionData
+                });
+            } else {
+                // Criar nova receita
+                savedData = await createPrescriptionMutation.mutateAsync(prescriptionData);
+            }
 
             // 3. Gerar PDF na janela aberta
             if (pdfWindow) {
@@ -502,19 +535,32 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                     patientInsurance: patient.planType ? `${patient.planType}${patient.insuranceCardNumber ? ` - Comb: ${patient.insuranceCardNumber}` : ""}` : undefined,
                     issueDate: new Date(savedData.issueDate),
                     validUntil: new Date(savedData.validUntil),
-                    medications: savedData.medications as any[], // stored as JSON
+                    medications: savedData.medications as any[],
                     observations: savedData.observations || undefined
                 }, pdfWindow);
             }
 
-            toast({ title: "Sucesso", description: "Receita salva e gerada!" });
+            const successMsg = editingPrescriptionId ? "Receita atualizada e gerada!" : "Receita salva e gerada!";
+            toast({ title: "Sucesso", description: successMsg });
             setAcuteItems([]);
+            setEditingPrescriptionId(null);
+            setPrescriptionObservations("");
 
         } catch (error) {
             console.error(error);
-            if (pdfWindow) pdfWindow.close(); // Fechar janela em caso de erro
+            if (pdfWindow) pdfWindow.close();
             toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
         }
+    };
+
+    // Helper para formatar nomes dos medicamentos para exibição no histórico
+    const formatMedicationNames = (medications: any[]): string => {
+        if (!medications || medications.length === 0) return "Receita vazia";
+        const names = medications.map(m => m.name.split(" ")[0]); // Pega só o primeiro nome/princípio ativo
+        if (names.length <= 3) {
+            return names.join(", ");
+        }
+        return `${names.slice(0, 3).join(", ")} +${names.length - 3}`;
     };
 
     const handleReprintPrescription = (p: Prescription) => {
@@ -540,6 +586,25 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
             medications: p.medications as any[],
             observations: p.observations || undefined
         });
+    };
+
+    // Carregar receita para edição
+    const handleEditPrescription = (p: Prescription) => {
+        const meds = p.medications as any[];
+        const items: AcutePrescriptionItem[] = meds.map((med, idx) => ({
+            id: `edit-${p.id}-${idx}`,
+            name: med.name,
+            dosage: med.dosage || "",
+            frequency: med.frequency?.split(" por ")[0] || med.frequency || "",
+            daysOfUse: parseInt(med.frequency?.match(/por (\d+) dias/)?.[1] || "7"),
+            quantity: med.quantity,
+            notes: med.notes,
+            prescriptionType: med.prescriptionType || 'padrao'
+        }));
+        setAcuteItems(items);
+        setEditingPrescriptionId(p.id);
+        setPrescriptionObservations(p.observations || "");
+        toast({ title: "Receita carregada", description: "Edite os medicamentos e clique em Salvar." });
     };
 
     // --- Renewal Prescription Handler ---
@@ -840,13 +905,45 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 </Card>
 
                 {/* --- COLUNA DIREITA: RECEITUÁRIO --- */}
-                <Card className="border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20 h-fit">
-                    <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
-                        <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
-                            <Stethoscope className="h-5 w-5 text-green-700" />
-                            Receituário
-                        </CardTitle>
-                        <CardDescription className="text-sm">Medicamentos para tratamento específico desta consulta.</CardDescription>
+                <Card className={`border-green-100 shadow-md bg-gradient-to-b from-white to-green-50/20 h-fit ${editingPrescriptionId ? 'ring-2 ring-blue-400' : ''}`}>
+                    <CardHeader className={`border-b pb-4 ${editingPrescriptionId ? 'bg-blue-50/50 border-blue-100' : 'bg-green-50/50 border-green-100'}`}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
+                                    {editingPrescriptionId ? (
+                                        <>
+                                            <Pencil className="h-5 w-5 text-blue-700" />
+                                            Editando Receita
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Stethoscope className="h-5 w-5 text-green-700" />
+                                            Receituário
+                                        </>
+                                    )}
+                                </CardTitle>
+                                <CardDescription className="text-sm">
+                                    {editingPrescriptionId
+                                        ? "Modifique os medicamentos e clique em Salvar para atualizar."
+                                        : "Medicamentos para tratamento específico desta consulta."}
+                                </CardDescription>
+                            </div>
+                            {editingPrescriptionId && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs text-gray-600 hover:text-red-600"
+                                    onClick={() => {
+                                        setAcuteItems([]);
+                                        setEditingPrescriptionId(null);
+                                        setPrescriptionObservations("");
+                                        toast({ title: "Edição cancelada", description: "A receita não foi alterada." });
+                                    }}
+                                >
+                                    <Ban className="h-3 w-3 mr-1" /> Cancelar
+                                </Button>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="pt-4 space-y-4">
                         {/* Inline Medication Form */}
@@ -1344,12 +1441,16 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
                         <div className="flex gap-2 items-end">
                             <Button
-                                className="flex-1 h-9 text-sm shadow-lg shadow-green-200 bg-green-600 hover:bg-green-700"
+                                className={`flex-1 h-9 text-sm shadow-lg ${editingPrescriptionId ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}
                                 onClick={handleSaveAndPrintPrescription}
-                                disabled={createPrescriptionMutation.isPending || acuteItems.length === 0 || !user}
+                                disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending || acuteItems.length === 0 || !user}
                             >
                                 <Printer className="h-4 w-4 mr-1" />
-                                {createPrescriptionMutation.isPending ? "Salvando..." : "Salvar e Imprimir"}
+                                {(createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending)
+                                    ? "Salvando..."
+                                    : editingPrescriptionId
+                                        ? "Atualizar e Imprimir"
+                                        : "Salvar e Imprimir"}
                             </Button>
                         </div>
                     </CardContent>
@@ -1375,16 +1476,21 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                             <FileText className="h-4 w-4 text-green-700" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-900 text-sm">Receita Médica - {format(new Date(p.issueDate), "dd/MM/yyyy")}</p>
-                                            <p className="text-xs text-gray-500">Dr(a). {p.doctorName} • {(p.medications as any[]).length} med(s)</p>
+                                            <p className="font-medium text-gray-900 text-sm">{formatMedicationNames(p.medications as any[])}</p>
+                                            <p className="text-xs text-gray-500">{format(new Date(p.issueDate), "dd/MM/yyyy")} • Dr(a). {p.doctorName}</p>
                                             {p.status === 'cancelled' && <span className="text-xs text-red-600 font-bold">CANCELADA</span>}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1">
                                         {p.status === 'active' && (
-                                            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleReprintPrescription(p)}>
-                                                <Printer className="h-3 w-3 mr-1" /> Re-Imprimir
-                                            </Button>
+                                            <>
+                                                <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleEditPrescription(p)}>
+                                                    <Pencil className="h-3 w-3 mr-1" /> Editar
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleReprintPrescription(p)}>
+                                                    <Printer className="h-3 w-3 mr-1" /> Reimprimir
+                                                </Button>
+                                            </>
                                         )}
                                         {p.status === 'cancelled' && (
                                             <Button disabled variant="outline" size="sm" className="h-8 opacity-50 text-xs">Cancelado</Button>
