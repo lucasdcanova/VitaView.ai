@@ -81,7 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Remover o cookie auxiliar
       document.cookie = "auth_user_id=; max-age=0; path=/; SameSite=Lax";
+
+      // Remover cookie de perfil ativo para evitar vazamento de dados entre sessões
+      document.cookie = "active_profile_id=; max-age=0; path=/; SameSite=Lax";
+
+      // Limpar todo o cache do React Query para garantir que novos usuários não vejam dados antigos
+      queryClient.clear();
+
+      // Explicitamente definir user como null
       queryClient.setQueryData(["/api/user"], null);
+
       // Redirecionar para a página de login após logout
       navigate("/auth");
       // Popup de logout removido conforme solicitado

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,6 +52,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const MEDICAL_SPECIALTIES = [
   "Alergia e Imunologia",
@@ -139,6 +151,7 @@ type SecretaryFormValues = z.infer<typeof secretarySchema>;
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const professionalProfile =
@@ -447,6 +460,31 @@ export default function Profile() {
     },
   });
 
+  // Delete Account Mutation
+  const [showSecondConfirmation, setShowSecondConfirmation] = useState(false);
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/user");
+    },
+    onSuccess: () => {
+      // Clear all local storage and cookies handled by use-auth but extra check here
+      queryClient.clear();
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta foi excluída com sucesso. Sentiremos sua falta.",
+      });
+      // Redirect to login/home
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir conta",
+        description: error.message || "Não foi possível excluir sua conta. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onDoctorSubmit = (values: DoctorFormValues) => {
     if (editingDoctor) {
       updateDoctorMutation.mutate({ id: editingDoctor.id, data: values });
@@ -641,25 +679,21 @@ export default function Profile() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Especialidade</FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                  name={field.name}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione a especialidade" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent className="max-h-[200px]">
-                                    {MEDICAL_SPECIALTIES.map((specialty) => (
-                                      <SelectItem key={specialty} value={specialty}>
-                                        {specialty}
-                                      </SelectItem>
-                                    ))}
-                                    <SelectItem value="Outra">Outra</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Input
+                                      {...field}
+                                      list="specialties-list"
+                                      placeholder="Selecione ou digite sua especialidade"
+                                      autoComplete="off"
+                                    />
+                                    <datalist id="specialties-list">
+                                      {MEDICAL_SPECIALTIES.map((s) => (
+                                        <option key={s} value={s} />
+                                      ))}
+                                    </datalist>
+                                  </div>
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -1135,7 +1169,7 @@ export default function Profile() {
                       <div className="border-t border-gray-200 pt-6">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900">Secretaria com acesso total</h3>
+                            <h3 className="text-lg font-medium text-gray-900">Secretária com acesso total</h3>
                             <p className="text-sm text-gray-500">Crie um acesso para quem agenda consultas e administra o sistema.</p>
                           </div>
                           <Button variant="outline" onClick={handleAddSecretary} className="flex items-center gap-2">
@@ -1371,10 +1405,66 @@ export default function Profile() {
 
                       <div className="pt-4 border-t border-gray-200">
                         <h3 className="text-lg font-medium text-red-600 mb-3">Zona de perigo</h3>
-                        <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos.</p>
-                        <Button variant="destructive">
-                          Excluir minha conta
-                        </Button>
+                        <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</p>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                              Excluir minha conta
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá todos os seus dados de nossos servidores.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                onClick={(e) => {
+                                  e.preventDefault(); // Impede o fechamento imediato
+                                  // Abre o segundo diálogo de confirmação
+                                  setShowSecondConfirmation(true);
+                                }}
+                              >
+                                Continuar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        {/* Segundo diálogo de confirmação */}
+                        <AlertDialog open={showSecondConfirmation} onOpenChange={setShowSecondConfirmation}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-red-600">Confirmação Final</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Por favor, confirme novamente. Você perderá acesso a:
+                                <ul className="list-disc list-inside mt-2 mb-2">
+                                  <li>Todos os prontuários de pacientes</li>
+                                  <li>Histórico de exames e receitas</li>
+                                  <li>Configurações personalizadas</li>
+                                </ul>
+                                <strong>Todos os dados serão apagados permanentemente agora.</strong>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setShowSecondConfirmation(false)}>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                onClick={() => {
+                                  deleteAccountMutation.mutate();
+                                  setShowSecondConfirmation(false);
+                                }}
+                              >
+                                Sim, excluir tudo permanentemente
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </TabsContent>
@@ -1451,36 +1541,7 @@ export default function Profile() {
                 <hr className="my-6 border-gray-200" />
 
 
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Idioma e Região</h2>
 
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
-                    <Select defaultValue="pt-BR">
-                      <SelectTrigger id="language-select">
-                        <SelectValue placeholder="Selecione o idioma" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                        <SelectItem value="en-US">English (US)</SelectItem>
-                        <SelectItem value="es-ES">Español</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="units-select" className="block text-sm font-medium text-gray-700 mb-1">Unidades de medida</label>
-                    <Select defaultValue="metric">
-                      <SelectTrigger id="units-select">
-                        <SelectValue placeholder="Selecione o sistema de unidades" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="metric">Sistema métrico</SelectItem>
-                        <SelectItem value="imperial">Sistema imperial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
                 <div className="mt-6 flex justify-end">
                   <Button type="button">

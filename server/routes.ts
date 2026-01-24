@@ -2771,6 +2771,29 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // API routes for user profile
+  // Delete user account
+  app.delete("/api/user", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+
+      // Additional safety check: ensure userId is valid
+      if (!userId) {
+        return res.status(400).json({ message: "Usuário não identificado" });
+      }
+
+      await storage.deleteUser(userId);
+
+      req.logout((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Erro ao realizar logout durante exclusão" });
+        }
+        res.status(200).json({ message: "Conta excluída com sucesso" });
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir conta" });
+    }
+  });
+
   app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {
       const updatedUser = await storage.updateUser(req.user!.id, req.body);

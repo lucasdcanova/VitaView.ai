@@ -258,9 +258,9 @@ export default function Sidebar(props: SidebarProps) {
           </div>
 
           {/* Configurações */}
-          <NavItem href="/profile" icon={Settings} label="Configurações" />
-          <NavItem href="/reports" icon={BarChart2} label="Relatórios" />
-          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" />
+          <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
+          <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
+          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
 
 
 
