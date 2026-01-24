@@ -11,7 +11,8 @@ export {
     MEDICATION_DATABASE,
     MEDICATION_FORMATS,
     DOSAGE_UNITS,
-    CONTROLLED_MEDICATIONS
+    PRESCRIPTION_TYPES,
+    CONTROLLED_MEDICATIONS,
 } from "./medication-dialog";
 export { AllergyDialog, allergySchema, type AllergyFormData } from "./allergy-dialog";
 export { SurgeryDialog, surgerySchema, type SurgeryFormData } from "./surgery-dialog";

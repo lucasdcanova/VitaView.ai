@@ -36,10 +36,11 @@ import {
     MEDICATION_DATABASE,
     MEDICATION_FORMATS,
     DOSAGE_UNITS,
+    PRESCRIPTION_TYPES,
     CONTROLLED_MEDICATIONS
 } from "@/components/dialogs";
 import { format } from "date-fns";
-import type { Profile, Prescription } from "@shared/schema";
+import type { Profile, Prescription, CustomMedication } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Search, ChevronsUpDown, Sparkles } from "lucide-react";
@@ -64,6 +65,31 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     const { toast } = useToast();
     const { user } = useAuth();
     const queryClient = useQueryClient();
+
+    // Fetch custom medications
+    const { data: customMedications = [] } = useQuery<CustomMedication[]>({
+        queryKey: ["/api/custom-medications"],
+    });
+
+    const createCustomMedicationMutation = useMutation({
+        mutationFn: async (newMedication: { name: string }) => {
+            const res = await apiRequest("POST", "/api/custom-medications", newMedication);
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/custom-medications"] });
+        },
+    });
+
+    const deleteCustomMedicationMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await apiRequest("DELETE", `/api/custom-medications/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/custom-medications"] });
+            toast({ title: "Medicamento removido", description: "O medicamento personalizado foi excluído." });
+        },
+    });
 
     // --- Continuous Medications State ---
     const [isMedicationDialogOpen, setIsMedicationDialogOpen] = useState(false);
@@ -818,7 +844,9 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                             })()}
                                                         </div>
                                                         <div className="text-xs text-gray-600 flex items-center gap-1 flex-wrap">
-                                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-medium text-gray-700">{medication.format}</span>
+                                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-medium text-gray-700">
+                                                                {MEDICATION_FORMATS.find(f => f.value === medication.format)?.label || medication.format}
+                                                            </span>
                                                             <span className="text-gray-300">•</span>
                                                             <span className="font-medium text-blue-700">{medication.dosage} {medication.dosageUnit || medication.dosage_unit}/vez</span>
                                                             <span className="text-gray-300">•</span>
@@ -964,6 +992,24 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                         >
                                             <span className="flex items-center gap-2 truncate">
                                                 {receituarioForm.watch("name") || "Buscar medicamento..."}
+                                                {(() => {
+                                                    const val = (receituarioForm.watch("name") || "").toLowerCase().trim();
+                                                    if (!val) return null;
+
+                                                    const isStandard = ALL_MEDICATIONS_WITH_PRESENTATIONS.some(
+                                                        m => m.displayName.toLowerCase() === val || m.baseName.toLowerCase() === val
+                                                    );
+                                                    const isCustom = customMedications.some(m => m.name.toLowerCase() === val) || !isStandard;
+
+                                                    if (isCustom) {
+                                                        return (
+                                                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-200 text-blue-600 bg-blue-50">
+                                                                Personalizado
+                                                            </Badge>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </span>
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
@@ -980,12 +1026,23 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                         </div>
                                         <div className="max-h-[250px] overflow-y-auto p-1">
                                             {(() => {
+                                                // Prepare Custom Medications for display
+                                                const customItems = customMedications.map(med => ({
+                                                    ...med,
+                                                    displayName: med.name,
+                                                    baseName: med.name,
+                                                    prescriptionType: med.prescriptionType || 'padrao',
+                                                    isCustom: true
+                                                }));
+
+                                                const allMedications = [...customItems, ...ALL_MEDICATIONS_WITH_PRESENTATIONS];
+
                                                 const filtered = receituarioSearchValue
-                                                    ? ALL_MEDICATIONS_WITH_PRESENTATIONS.filter(med =>
+                                                    ? allMedications.filter(med =>
                                                         med.displayName.toLowerCase().includes(receituarioSearchValue.toLowerCase()) ||
-                                                        med.baseName.toLowerCase().includes(receituarioSearchValue.toLowerCase())
+                                                        (med.baseName && med.baseName.toLowerCase().includes(receituarioSearchValue.toLowerCase()))
                                                     )
-                                                    : ALL_MEDICATIONS_WITH_PRESENTATIONS;
+                                                    : allMedications.slice(0, 50); // Limit to 50 if no search logic
 
                                                 if (filtered.length === 0) {
                                                     return (
@@ -1020,30 +1077,41 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
                                                 return (
                                                     <>
-                                                        {/* Opção de digitar manualmente sempre visível quando há busca */}
-                                                        {receituarioSearchValue && (
-                                                            <div
-                                                                className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b mb-1 bg-gradient-to-r from-blue-50 to-transparent"
-                                                                onClick={() => {
-                                                                    // Clear previous fields
-                                                                    receituarioForm.reset();
-                                                                    setReceituarioDose("");
-                                                                    setReceituarioDoseUnit("comprimido");
-                                                                    setReceituarioQuantity("");
-                                                                    setReceituarioNotes("");
-                                                                    setReceituarioDaysOfUse("7");
+                                                        {/* Opção de digitar manualmente - sempre visível */}
+                                                        <div
+                                                            className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-blue-50 border-b mb-1 bg-gradient-to-r from-blue-50 to-transparent"
+                                                            onClick={() => {
+                                                                // Clear previous fields
+                                                                receituarioForm.reset();
+                                                                setReceituarioDose("");
+                                                                setReceituarioDoseUnit("comprimido");
+                                                                setReceituarioQuantity("");
+                                                                setReceituarioNotes("");
+                                                                setReceituarioDaysOfUse("7");
 
+                                                                if (receituarioSearchValue) {
                                                                     receituarioForm.setValue("name", receituarioSearchValue);
-                                                                    setReceituarioMedOpen(false);
-                                                                    setReceituarioSearchValue("");
-                                                                }}
-                                                            >
-                                                                <span className="text-blue-600">✏️</span>
-                                                                <span className="flex-1 text-blue-700 font-medium">
-                                                                    Digitar manualmente: "{receituarioSearchValue}"
-                                                                </span>
-                                                            </div>
-                                                        )}
+
+                                                                    // Auto-save as custom medication if not exists
+                                                                    const exists = customMedications.some(m => m.name.toLowerCase() === receituarioSearchValue.toLowerCase()) ||
+                                                                        ALL_MEDICATIONS_WITH_PRESENTATIONS.some(m => (m as any).name.toLowerCase() === receituarioSearchValue.toLowerCase());
+
+                                                                    if (!exists) {
+                                                                        createCustomMedicationMutation.mutate({ name: receituarioSearchValue });
+                                                                    }
+                                                                }
+                                                                setReceituarioMedOpen(false);
+                                                                setReceituarioSearchValue("");
+                                                            }}
+                                                        >
+                                                            <span className="text-blue-600">✏️</span>
+                                                            <span className="flex-1 text-blue-700 font-medium">
+                                                                {receituarioSearchValue ? `Digitar manualmente: "${receituarioSearchValue}"` : "Digitar manualmente"}
+                                                            </span>
+                                                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-200 text-blue-600 bg-blue-50">
+                                                                Personalizado
+                                                            </Badge>
+                                                        </div>
                                                         {filtered.map((med) => (
                                                             <div
                                                                 key={med.displayName}
@@ -1088,10 +1156,27 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                     setReceituarioSearchValue("");
                                                                 }}
                                                             >
-                                                                <span className="text-base">{getMedicationIcon(med.format)}</span>
-                                                                <span className="flex-1">{med.displayName}</span>
-                                                                {med.prescriptionType && med.prescriptionType !== 'common' && (
-                                                                    <PrescriptionTypeBadge type={med.prescriptionType} />
+                                                                <span className="text-base">{getMedicationIcon(med.format || "")}</span>
+                                                                <span className="flex-1">{(med as any).displayName}</span>
+                                                                {(med as any).isCustom && (
+                                                                    <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-200 text-blue-600 bg-blue-50">
+                                                                        Personalizado
+                                                                    </Badge>
+                                                                )}
+                                                                {(med as any).prescriptionType && (med as any).prescriptionType !== 'common' && (med as any).prescriptionType !== 'padrao' && (
+                                                                    <PrescriptionTypeBadge type={(med as any).prescriptionType} />
+                                                                )}
+                                                                {(med as any).isCustom && (
+                                                                    <div
+                                                                        role="button"
+                                                                        className="ml-auto p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            deleteCustomMedicationMutation.mutate((med as any).id);
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         ))}
@@ -1104,7 +1189,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                             </div>
 
                             {/* Dose per use with AI suggestions - split into value and unit */}
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-4 gap-2">
                                 <div className="col-span-2 space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Dose por vez *</label>
                                     <Popover open={receituarioDosePopoverOpen} onOpenChange={setReceituarioDosePopoverOpen}>
@@ -1325,6 +1410,25 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                             {DOSAGE_UNITS.map((unit) => (
                                                 <SelectItem key={unit.value} value={unit.value}>
                                                     {unit.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {/* Type selector */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Tipo</label>
+                                    <Select
+                                        value={receituarioForm.watch("prescriptionType")}
+                                        onValueChange={(val) => receituarioForm.setValue("prescriptionType", val as any)}
+                                    >
+                                        <SelectTrigger className="h-9 text-sm bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PRESCRIPTION_TYPES.map((type) => (
+                                                <SelectItem key={type.value} value={type.value}>
+                                                    {type.label}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { pool, db } from "./db";
-import { prescriptions, medications } from "@shared/schema";
+import { prescriptions, medications, insertCustomMedicationSchema } from "@shared/schema";
 import { inArray, and, eq, desc } from "drizzle-orm";
 import Stripe from "stripe";
 import multer from "multer";
@@ -5586,6 +5586,40 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.error('[Migration] Error:', error);
       res.status(500).json({ message: "Migration failed", error: error.message });
     }
+  });
+
+  // Custom Medications Routes
+  app.get("/api/custom-medications", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = req.user!.id;
+    const medications = await storage.getCustomMedicationsByUserId(userId);
+    res.json(medications);
+  });
+
+  app.post("/api/custom-medications", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const parseResult = insertCustomMedicationSchema.safeParse({
+      ...req.body,
+      userId: req.user!.id
+    });
+
+    if (!parseResult.success) {
+      return res.status(400).json(parseResult.error);
+    }
+
+    const medication = await storage.createCustomMedication(parseResult.data);
+    res.status(201).json(medication);
+  });
+
+  app.delete("/api/custom-medications/:id", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).send("Invalid ID");
+
+    await storage.deleteCustomMedication(id);
+    res.sendStatus(204);
   });
 
   // Server creation is now handled by httpsConfig in index.ts

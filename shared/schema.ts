@@ -276,6 +276,31 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   isActive: true,
 });
 
+// Custom Medications schema (user-defined medications for quick access)
+export const customMedications = pgTable("custom_medications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  format: text("format"), // comprimido, xarope, cápsula, etc.
+  dosage: text("dosage"), // ex: 500mg
+  category: text("category"), // categoria do medicamento
+  prescriptionType: text("prescription_type").default("padrao"), // padrao, C1, B1, etc.
+  route: text("route").default("oral"), // via de administração
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCustomMedicationSchema = createInsertSchema(customMedications).pick({
+  userId: true,
+  name: true,
+  format: true,
+  dosage: true,
+  category: true,
+  prescriptionType: true,
+  route: true,
+  isActive: true,
+});
+
 // Allergies schema
 export const allergies = pgTable("allergies", {
   id: serial("id").primaryKey(),
@@ -1049,3 +1074,6 @@ export const insertExamProtocolSchema = createInsertSchema(examProtocols).pick({
 
 export type ExamProtocol = typeof examProtocols.$inferSelect;
 export type InsertExamProtocol = z.infer<typeof insertExamProtocolSchema>;
+
+export type CustomMedication = typeof customMedications.$inferSelect;
+export type InsertCustomMedication = z.infer<typeof insertCustomMedicationSchema>;

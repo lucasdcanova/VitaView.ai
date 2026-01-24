@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -196,6 +196,11 @@ export interface IStorage {
 
   // Prescription update
   updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined>;
+
+  // Custom Medications operations
+  createCustomMedication(medication: InsertCustomMedication): Promise<CustomMedication>;
+  getCustomMedicationsByUserId(userId: number): Promise<CustomMedication[]>;
+  deleteCustomMedication(id: number): Promise<boolean>;
 
   // Session store
   sessionStore: SessionStore;
@@ -1388,7 +1393,44 @@ export class MemStorage implements IStorage {
   async deleteExamProtocol(id: number): Promise<boolean> {
     return this.examProtocolsMap.delete(id);
   }
+
+  // Custom Medications operations - MemStorage
+  private customMedicationsMap = new Map<number, CustomMedication>();
+  private customMedicationIdCounter = 1;
+
+  async createCustomMedication(medication: InsertCustomMedication): Promise<CustomMedication> {
+    const id = this.customMedicationIdCounter++;
+    const newMedication: CustomMedication = {
+      id,
+      userId: medication.userId,
+      name: medication.name,
+      format: medication.format || null,
+      dosage: medication.dosage || null,
+      category: medication.category || null,
+      prescriptionType: medication.prescriptionType || 'padrao',
+      route: medication.route || 'oral',
+      isActive: medication.isActive ?? true,
+      createdAt: new Date(),
+    };
+    this.customMedicationsMap.set(id, newMedication);
+    return newMedication;
+  }
+
+  async getCustomMedicationsByUserId(userId: number): Promise<CustomMedication[]> {
+    return Array.from(this.customMedicationsMap.values())
+      .filter(m => m.userId === userId && m.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async deleteCustomMedication(id: number): Promise<boolean> {
+    const medication = this.customMedicationsMap.get(id);
+    if (!medication) return false;
+    medication.isActive = false;
+    this.customMedicationsMap.set(id, medication);
+    return true;
+  }
 }
+
 
 export class DatabaseStorage implements IStorage {
 
@@ -2111,6 +2153,28 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExamProtocol(id: number): Promise<boolean> {
     const result = await db.delete(examProtocols).where(eq(examProtocols.id, id));
+    return true;
+  }
+
+  // Custom Medications operations - DatabaseStorage
+  async createCustomMedication(medication: InsertCustomMedication): Promise<CustomMedication> {
+    const [newMedication] = await db.insert(customMedications).values(medication).returning();
+    return newMedication;
+  }
+
+  async getCustomMedicationsByUserId(userId: number): Promise<CustomMedication[]> {
+    return await db.select().from(customMedications)
+      .where(and(
+        eq(customMedications.userId, userId),
+        eq(customMedications.isActive, true)
+      ))
+      .orderBy(asc(customMedications.name));
+  }
+
+  async deleteCustomMedication(id: number): Promise<boolean> {
+    await db.update(customMedications)
+      .set({ isActive: false })
+      .where(eq(customMedications.id, id));
     return true;
   }
 
