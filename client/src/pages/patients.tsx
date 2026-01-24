@@ -180,7 +180,7 @@ export default function Patients() {
                         <div className="flex items-center gap-3">
                           <div
                             className={cn(
-                              "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold",
+                              "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0",
                               isActive
                                 ? "bg-charcoal text-white"
                                 : "bg-gray-100 text-gray-600"

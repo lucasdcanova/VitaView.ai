@@ -11,6 +11,7 @@ export interface CertificateData {
     issueDate: string | Date; // Allow string from JSON
     daysOff?: number | string;
     cid?: string;
+    city?: string;
     startTime?: string;
     endTime?: string;
     customText?: string;
@@ -26,7 +27,7 @@ const cleanTextForPDF = (text: string): string => {
 const drawLogo = (doc: jsPDF, x: number, y: number) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(37, 99, 235); // Blue-600
+    doc.setTextColor(0, 0, 0); // Black
     doc.text("VitaView", x, y);
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(8);
@@ -50,11 +51,11 @@ export const generateCertificatePDF = (data: CertificateData): Blob => {
 
     // ===== HEADER =====
     // Background header bar
-    doc.setFillColor(239, 246, 255); // blue-50
+    doc.setFillColor(245, 245, 245); // Gray-100/Light Gray
     doc.rect(0, 0, pageWidth, 40, 'F');
 
     // Bottom border of header
-    doc.setDrawColor(37, 99, 235); // blue-600
+    doc.setDrawColor(0, 0, 0); // Black
     doc.setLineWidth(1);
     doc.line(0, 40, pageWidth, 40);
 
@@ -63,7 +64,7 @@ export const generateCertificatePDF = (data: CertificateData): Blob => {
     // Title
     doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(37, 99, 235); // blue-600
+    doc.setTextColor(0, 0, 0); // Black
     doc.text("ATESTADO MÉDICO", centerX, yPos, { align: "center" });
 
     // Subtitle
@@ -131,7 +132,8 @@ export const generateCertificatePDF = (data: CertificateData): Blob => {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
-    doc.text(`São Paulo, ${dateStr}.`, centerX, yPos, { align: "center" });
+    const city = data.city || "São Paulo";
+    doc.text(`${city}, ${dateStr}.`, centerX, yPos, { align: "center" });
 
     // ===== SIGNATURE =====
     const signatureY = 250;

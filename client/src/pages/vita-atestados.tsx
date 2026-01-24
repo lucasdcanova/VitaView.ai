@@ -45,6 +45,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
     const [certEndTime, setCertEndTime] = useState("");
     const [certCid, setCertCid] = useState("");
     const [patientDoc, setPatientDoc] = useState("");
+    const [certCity, setCertCity] = useState("São Paulo");
     const [customCertText, setCustomCertText] = useState("");
 
     // Initialize patient doc from profile
@@ -106,6 +107,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
             startTime: certType === 'comparecimento' ? certStartTime : undefined,
             endTime: certType === 'comparecimento' ? certEndTime : undefined,
             cid: certCid || undefined,
+            city: certCity,
             customText: customCertText || undefined,
             status: 'active'
         }).then(async (savedData) => {
@@ -122,6 +124,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                     startTime: savedData.startTime,
                     endTime: savedData.endTime,
                     cid: savedData.cid,
+                    city: savedData.city,
                     customText: savedData.customText
                 });
 
@@ -155,6 +158,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                 startTime: c.startTime || undefined,
                 endTime: c.endTime || undefined,
                 cid: c.cid || undefined,
+                city: c.city || undefined,
                 customText: c.customText || undefined
             });
 
@@ -245,6 +249,11 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-gray-700">RG/CPF do Paciente (Opcional)</label>
                                         <Input placeholder="Para identificação no documento" value={patientDoc} onChange={e => setPatientDoc(e.target.value)} />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-gray-700">Cidade (Data)</label>
+                                        <Input placeholder="Ex: São Paulo" value={certCity} onChange={e => setCertCity(e.target.value)} />
                                     </div>
 
                                     <div className="space-y-1">

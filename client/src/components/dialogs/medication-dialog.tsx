@@ -3678,6 +3678,9 @@ export const DOSAGE_UNITS = [
     { value: "mcg", label: "mcg" },
     { value: "puff", label: "jatos/puffs" },
     { value: "aplicacao", label: "aplicação" },
+    { value: "sache", label: "sachê" },
+    { value: "adesivo", label: "adesivo" },
+    { value: "supositorio", label: "supositório" },
 ];
 
 export const PRESCRIPTION_TYPES = [
@@ -4228,18 +4231,18 @@ export function MedicationDialog({
                                                                             // Auto-preencher unidade baseada no formato
                                                                             const formatLower = medItem.format.toLowerCase();
                                                                             if (formatLower.includes('comprimido')) {
-                                                                                form.setValue("dosageUnit", "comprimido");
+                                                                                form.setValue("dosageUnit", "cp");
                                                                             } else if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
-                                                                                form.setValue("dosageUnit", "cápsula");
+                                                                                form.setValue("dosageUnit", "cps");
                                                                             } else if (formatLower.includes('gotas')) {
-                                                                                form.setValue("dosageUnit", "gotas");
+                                                                                form.setValue("dosageUnit", "gt");
                                                                             } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
                                                                                 formatLower.includes('solucao') || formatLower.includes('solução') ||
                                                                                 formatLower.includes('xarope')) {
                                                                                 form.setValue("dosageUnit", "ml");
                                                                             } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
                                                                                 formatLower.includes('ampola')) {
-                                                                                form.setValue("dosageUnit", "ampola");
+                                                                                form.setValue("dosageUnit", "amp");
                                                                             }
                                                                         }
                                                                         // Auto-preencher tipo de receituário
@@ -4680,7 +4683,7 @@ export const CONTROLLED_MEDICATIONS = [
     { name: "Quetiapina", category: "Antipsicótico", prescriptionType: "B1" as const },
     { name: "Risperidona", category: "Antipsicótico", prescriptionType: "B1" as const },
     { name: "Olanzapina", category: "Antipsicótico", prescriptionType: "B1" as const },
-    { name: "Aripiprazol", category: "Antipsicótico", prescriptionType: "B1" as const },
+    { name: "Aripiprazol", category: "Antipsicótico", prescriptionType: "C1" as const },
     { name: "Brexpiprazol", category: "Antipsicótico", prescriptionType: "B1" as const },
     { name: "Clozapina", category: "Antipsicótico", prescriptionType: "B1" as const },
     { name: "Paliperidona", category: "Antipsicótico", prescriptionType: "B1" as const },

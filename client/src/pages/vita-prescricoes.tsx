@@ -182,14 +182,16 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
     });
 
     // Calculate quantity automatically
+    const watchedFrequency = receituarioForm.watch("frequency");
+
+    // Calculate quantity automatically
     useEffect(() => {
-        const frequency = receituarioForm.getValues("frequency");
-        if (!frequency || !receituarioDose || !receituarioDaysOfUse) return;
+        if (!watchedFrequency || !receituarioDose || !receituarioDaysOfUse) return;
 
         const days = parseInt(receituarioDaysOfUse) || 0;
         let dailyFreq = 0;
 
-        switch (frequency) {
+        switch (watchedFrequency) {
             case "1x ao dia": dailyFreq = 1; break;
             case "2x ao dia": dailyFreq = 2; break;
             case "3x ao dia": dailyFreq = 3; break;
@@ -210,17 +212,17 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
         const formatLower = receituarioDoseUnit.toLowerCase();
 
-        const isSolid = formatLower.includes("comprimido") || formatLower.includes("capsula") || formatLower.includes("cápsula");
-        const isLiquid = formatLower.includes("gotas") || formatLower.includes("ml") || formatLower.includes("xarope") || formatLower.includes("suspensao");
+        const isSolid = formatLower === 'cp' || formatLower === 'cps' || formatLower.includes("comprimido") || formatLower.includes("capsula");
+        const isLiquid = formatLower === 'gt' || formatLower === 'ml' || formatLower.includes("gotas") || formatLower.includes("xarope") || formatLower.includes("suspensao");
 
         const totalDoses = dailyFreq * days;
 
         if (isSolid) {
             const qty = Math.ceil(doseVal * totalDoses);
-            const suffix = formatLower.includes("capsula") || formatLower.includes("cápsula") ? "cápsulas" : "comprimidos";
+            const suffix = (formatLower === 'cps' || formatLower.includes("capsula")) ? "cápsulas" : "comprimidos";
             setReceituarioQuantity(`${qty} ${suffix}`);
         } else if (isLiquid) {
-            if (formatLower.includes("gotas")) {
+            if (formatLower === 'gt' || formatLower.includes("gotas")) {
                 const totalDrops = doseVal * totalDoses;
                 const frascos = Math.ceil(totalDrops / 400); // 400 gotas per frasco
                 setReceituarioQuantity(`${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
@@ -229,13 +231,25 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                 const frascos = Math.ceil(totalMl / 100); // 100ml per frasco
                 setReceituarioQuantity(`${frascos} ${frascos === 1 ? 'frasco' : 'frascos'}`);
             }
-        } else if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel")) {
+        } else if (formatLower.includes("pomada") || formatLower.includes("creme") || formatLower.includes("gel") || formatLower === 'aplicacao') {
             setReceituarioQuantity("1 bisnaga");
-        } else if (formatLower.includes("spray")) {
+        } else if (formatLower.includes("spray") || formatLower.includes("aerosol") || formatLower === 'puff') {
             setReceituarioQuantity("1 frasco");
+        } else if (formatLower === 'amp' || formatLower.includes("injecao") || formatLower.includes("ampola")) {
+            const qty = Math.ceil(doseVal * totalDoses);
+            setReceituarioQuantity(`${qty} ampolas`);
+        } else if (formatLower === 'sache' || formatLower.includes("sache") || formatLower.includes("sachê")) {
+            const qty = Math.ceil(doseVal * totalDoses);
+            setReceituarioQuantity(`${qty} sachês`);
+        } else if (formatLower === 'adesivo' || formatLower.includes("adesivo")) {
+            const qty = Math.ceil(doseVal * totalDoses);
+            setReceituarioQuantity(`${qty} adesivos`);
+        } else if (formatLower === 'supositorio' || formatLower.includes("supositorio") || formatLower.includes("supositório")) {
+            const qty = Math.ceil(doseVal * totalDoses);
+            setReceituarioQuantity(`${qty} supositórios`);
         }
 
-    }, [receituarioDose, receituarioDoseUnit, receituarioDaysOfUse, receituarioForm.watch("frequency")]);
+    }, [receituarioDose, receituarioDoseUnit, receituarioDaysOfUse, watchedFrequency]);
 
     // --- Prescription State --- 
     // Persist draft prescription items in localStorage per patient
@@ -1042,7 +1056,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                         med.displayName.toLowerCase().includes(receituarioSearchValue.toLowerCase()) ||
                                                         (med.baseName && med.baseName.toLowerCase().includes(receituarioSearchValue.toLowerCase()))
                                                     )
-                                                    : allMedications.slice(0, 50); // Limit to 50 if no search logic
+                                                    : allMedications;
 
                                                 if (filtered.length === 0) {
                                                     return (
@@ -1119,28 +1133,34 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                 onClick={() => {
                                                                     // Determinar a unidade baseada no formato do medicamento
                                                                     const formatLower = (med.format || "").toLowerCase();
-                                                                    let autoUnit = "comprimido";
+                                                                    let autoUnit = "cp"; // Default to comprimido code
 
                                                                     if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
-                                                                        autoUnit = "cápsula";
+                                                                        autoUnit = "cps";
                                                                     } else if (formatLower.includes('gotas')) {
-                                                                        autoUnit = "gotas";
+                                                                        autoUnit = "gt";
                                                                     } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
                                                                         formatLower.includes('solucao') || formatLower.includes('solução') ||
                                                                         formatLower.includes('xarope') || formatLower.includes('elixir')) {
                                                                         autoUnit = "ml";
                                                                     } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
                                                                         formatLower.includes('ampola')) {
-                                                                        autoUnit = "ampola";
+                                                                        autoUnit = "amp";
+                                                                    } else if (formatLower.includes('sache') || formatLower.includes('sachê')) {
+                                                                        autoUnit = "sache";
+                                                                    } else if (formatLower.includes('adesivo')) {
+                                                                        autoUnit = "adesivo";
+                                                                    } else if (formatLower.includes('supositorio') || formatLower.includes('supositório')) {
+                                                                        autoUnit = "supositorio";
                                                                     } else if (formatLower.includes('spray') || formatLower.includes('aerosol') ||
                                                                         formatLower.includes('inalador')) {
-                                                                        autoUnit = "jatos";
+                                                                        autoUnit = "puff";
                                                                     } else if (formatLower.includes('creme') || formatLower.includes('pomada') ||
                                                                         formatLower.includes('gel') || formatLower.includes('loção') ||
                                                                         formatLower.includes('locao')) {
-                                                                        autoUnit = "aplicação";
+                                                                        autoUnit = "aplicacao";
                                                                     } else if (formatLower.includes('comprimido')) {
-                                                                        autoUnit = "comprimido";
+                                                                        autoUnit = "cp";
                                                                     }
 
                                                                     // Clear previous fields
@@ -1152,6 +1172,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                     setReceituarioDaysOfUse("7");
 
                                                                     receituarioForm.setValue("name", med.displayName);
+                                                                    receituarioForm.setValue("prescriptionType", (med as any).prescriptionType || "padrao");
                                                                     setReceituarioMedOpen(false);
                                                                     setReceituarioSearchValue("");
                                                                 }}
@@ -1250,8 +1271,8 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                             if (formatLower.includes('comprimido') || formatLower.includes('capsula') || formatLower.includes('cápsula')) {
                                                                                 setReceituarioDose("1");
                                                                                 const unit = formatLower.includes('capsula') || formatLower.includes('cápsula')
-                                                                                    ? "cápsula"
-                                                                                    : "comprimido";
+                                                                                    ? "cps"
+                                                                                    : "cp";
                                                                                 setReceituarioDoseUnit(unit);
                                                                             } else if (formatLower.includes('gotas')) {
                                                                                 // Para gotas, extrair número da commonDose ou usar 20 como padrão
@@ -1265,7 +1286,7 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                                 } else {
                                                                                     setReceituarioDose("20");
                                                                                 }
-                                                                                setReceituarioDoseUnit("gotas");
+                                                                                setReceituarioDoseUnit("gt");
                                                                             } else if (formatLower.includes('suspensao') || formatLower.includes('suspensão') ||
                                                                                 formatLower.includes('solucao') || formatLower.includes('solução') ||
                                                                                 formatLower.includes('xarope')) {
@@ -1276,15 +1297,26 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
                                                                                 formatLower.includes('ampola')) {
                                                                                 // Para injetáveis, usar "1" + ampola
                                                                                 setReceituarioDose("1");
-                                                                                setReceituarioDoseUnit("ampola");
+                                                                                setReceituarioDoseUnit("amp");
                                                                             } else if (pres.suggestedDose && pres.suggestedUnit) {
                                                                                 // Fallback para suggestedDose/Unit se existir
                                                                                 setReceituarioDose(pres.suggestedDose);
-                                                                                setReceituarioDoseUnit(pres.suggestedUnit);
+                                                                                // Map common full names to codes if necessary
+                                                                                let u = pres.suggestedUnit.toLowerCase();
+                                                                                if (u === 'ampola') u = 'amp';
+                                                                                if (u === 'comprimido') u = 'cp';
+                                                                                if (u === 'cápsula' || u === 'capsula') u = 'cps';
+                                                                                if (u === 'gotas') u = 'gt';
+                                                                                setReceituarioDoseUnit(u);
                                                                             } else {
                                                                                 // Último fallback: 1 + formato
                                                                                 setReceituarioDose("1");
-                                                                                setReceituarioDoseUnit(pres.format || "comprimido");
+                                                                                let u = pres.format.toLowerCase() || "cp";
+                                                                                if (u === 'ampola') u = 'amp';
+                                                                                if (u === 'comprimido') u = 'cp';
+                                                                                if (u === 'cápsula' || u === 'capsula') u = 'cps';
+                                                                                if (u === 'gotas') u = 'gt';
+                                                                                setReceituarioDoseUnit(u);
                                                                             }
                                                                             setReceituarioDosePopoverOpen(false);
                                                                         }}
