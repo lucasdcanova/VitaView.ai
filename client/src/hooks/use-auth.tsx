@@ -39,8 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
-      // Configurar o cookie auxiliar para autenticação
-      document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
+      // Configurar o cookie auxiliar para autenticação - REMOVED
+      // document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       // Popup de login bem-sucedido removido conforme solicitado
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       toast({
         title: "Falha no login",
-        description: "Email ou senha incorretos.",
+        description: error.message || "Email ou senha incorretos.",
         variant: "destructive",
       });
     },
@@ -60,8 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
-      // Configurar o cookie auxiliar para autenticação
-      document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
+      // Configurar o cookie auxiliar para autenticação - REMOVED
+      // document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
       // Popup de registro bem-sucedido removido conforme solicitado
     },

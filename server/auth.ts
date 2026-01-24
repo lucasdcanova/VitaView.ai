@@ -98,7 +98,7 @@ export function setupAuth(app: Express) {
 
           if (!user) {
             console.log(`[AUTH] User not found with email: ${email}`);
-            return done(null, false, { message: 'Email ou senha incorretos' });
+            return done(null, false, { message: 'Esta conta não existe.' });
           }
 
           console.log(`[AUTH] User found: ${email} (id: ${user.id})`);

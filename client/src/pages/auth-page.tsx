@@ -65,12 +65,12 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Redirect if user is already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/agenda");
-    }
-  }, [user, navigate]);
+  // Redirect logic removed to enforce manual login as requested
+  // useEffect(() => {
+  //   if (user) {
+  //     navigate("/agenda");
+  //   }
+  // }, [user, navigate]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
