@@ -1,4 +1,4 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
 import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication } from "@shared/schema";
 import session from "express-session";
@@ -1813,7 +1813,82 @@ export class DatabaseStorage implements IStorage {
 
   // Admin
   async getAllUsers(): Promise<User[]> { return await db.select().from(users); }
-  async deleteUser(id: number): Promise<boolean> { await db.delete(users).where(eq(users.id, id)); return true; }
+  async deleteUser(id: number): Promise<boolean> {
+    console.log(`[STORAGE] Attempting to delete user ${id}`);
+
+    // Pre-check
+    const exists = await this.getUser(id);
+    if (!exists) {
+      console.warn(`[STORAGE] User ${id} not found during delete attempt.`);
+      return false;
+    }
+
+    // Manually delete all related data to handle Foreign Key constraints
+    // 1. Delete data dependent on exams
+    const userExams = await db.select().from(exams).where(eq(exams.userId, id));
+    const examIds = userExams.map(e => e.id);
+    if (examIds.length > 0) {
+      await db.delete(examResults).where(inArray(examResults.examId, examIds));
+      await db.delete(healthMetrics).where(inArray(healthMetrics.examId, examIds));
+    }
+
+    // 2. Delete data dependent on appointments
+    const userAppointments = await db.select().from(appointments).where(eq(appointments.userId, id));
+    const appointmentIds = userAppointments.map(a => a.id);
+    if (appointmentIds.length > 0) {
+      await db.delete(triageRecords).where(inArray(triageRecords.appointmentId, appointmentIds));
+    }
+
+    // 2.5 Delete triage records performed BY this user (as a doctor)
+    await db.delete(triageRecords).where(eq(triageRecords.performedByUserId, id));
+
+    // 3. Delete leaf tables referencing user directly or via profiles
+    // Note: Deleting items that reference Profiles before deleting Profiles
+    await db.delete(exams).where(eq(exams.userId, id));
+    await db.delete(appointments).where(eq(appointments.userId, id));
+    await db.delete(prescriptions).where(eq(prescriptions.userId, id));
+    await db.delete(certificates).where(eq(certificates.userId, id));
+    await db.delete(diagnoses).where(eq(diagnoses.userId, id));
+    await db.delete(medications).where(eq(medications.userId, id));
+    await db.delete(habits).where(eq(habits.userId, id));
+    await db.delete(allergies).where(eq(allergies.userId, id));
+    await db.delete(doctors).where(eq(doctors.userId, id));
+    await db.delete(evolutions).where(eq(evolutions.userId, id));
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    await db.delete(userConsents).where(eq(userConsents.userId, id));
+    await db.delete(customMedications).where(eq(customMedications.userId, id));
+    await db.delete(surgeries).where(eq(surgeries.userId, id));
+
+    // 4. Handle subscriptions and clinics
+    const userClinics = await db.select().from(clinics).where(eq(clinics.adminUserId, id));
+    const clinicIds = userClinics.map(c => c.id);
+    if (clinicIds.length > 0) {
+      await db.delete(clinicInvitations).where(inArray(clinicInvitations.clinicId, clinicIds));
+      await db.delete(clinics).where(inArray(clinics.id, clinicIds));
+    }
+    await db.delete(subscriptions).where(eq(subscriptions.userId, id));
+
+    // 5. Delete specific user-related logs or anonymize?
+    // For now, let's try to delete Audit Logs where this user is the actor or target to free up FK
+    await db.delete(auditLogs).where(or(eq(auditLogs.userId, id), eq(auditLogs.targetUserId, id)));
+
+    // 6. Delete Profiles
+    await db.delete(profiles).where(eq(profiles.userId, id));
+
+    // 7. Finally delete the user
+    console.log(`[STORAGE] Deleting user row ${id}`);
+    const res = await db.delete(users).where(eq(users.id, id)).returning();
+
+    // 8. VERIFICATION
+    const check = await this.getUser(id);
+    if (check) {
+      console.error(`[STORAGE] CRITICAL: User ${id} STILL EXISTS after delete! DB delete returned:`, res);
+      throw new Error("Failed to delete user - database constraint or silent failure.");
+    }
+
+    console.log(`[STORAGE] User ${id} successfully deleted.`);
+    return true;
+  }
 
   // Appointments
   async createAppointment(a: InsertAppointment): Promise<Appointment> {

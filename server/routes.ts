@@ -877,86 +877,6 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
     return next();
   }
 
-  // Tenta recuperar a autenticação pelo cookie auxiliar
-  try {
-    const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
-      const parts = cookie.trim().split('=');
-      if (parts.length >= 2) {
-        const key = parts[0];
-        const value = parts.slice(1).join('='); // Caso o valor contenha =
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>) || {};
-
-    // Verifica o cookie simplificado auth_user_id
-    if (cookies['auth_user_id']) {
-      try {
-        const userId = parseInt(cookies['auth_user_id']);
-
-        if (!isNaN(userId)) {
-          // Recupera o usuário pelo ID
-          const user = await storage.getUser(userId);
-
-          if (user) {
-            // Define o usuário na sessão
-            return req.login(user, async (err) => {
-              if (err) {
-                return res.status(401).json({ message: "Erro de autenticação" });
-              }
-              await applyDelegatedAccess(req);
-              // Continua o fluxo
-              return next();
-            });
-          } else {
-            // Usuário não encontrado para auth_user_id
-          }
-        } else {
-          // auth_user_id inválido
-        }
-      } catch (error) {
-        // Erro ao processar auth_user_id
-      }
-    }
-    // Também tenta o cookie auth_token para compatibilidade com versões anteriores
-    else if (cookies['auth_token']) {
-      try {
-        const decodedToken = decodeURIComponent(cookies['auth_token']);
-        const authData = JSON.parse(decodedToken);
-
-        if (authData && authData.id) {
-          // Recupera o usuário pelo ID
-          const user = await storage.getUser(authData.id);
-
-          if (user) {
-            // Define o usuário na sessão
-            return req.login(user, async (err) => {
-              if (err) {
-                return res.status(401).json({ message: "Erro de autenticação" });
-              }
-              await applyDelegatedAccess(req);
-              // Continua o fluxo
-              return next();
-            });
-          } else {
-            // Usuário não encontrado
-          }
-        } else {
-          // Token sem ID válido
-        }
-      } catch (parseError) {
-        // Erro ao parsear token JSON
-      }
-    } else {
-      // Nenhum cookie de autenticação alternativa encontrado
-    }
-  } catch (error) {
-    // Erro ao processar autenticação alternativa
-  }
-
-  // Removido o bypass de análise automática
-  // Todas as requisições devem ser autenticadas
-
   // Se não estiver autenticado, retorna 401
   return res.status(401).json({ message: "Não autenticado" });
 }
@@ -2787,7 +2707,21 @@ export async function registerRoutes(app: Express): Promise<void> {
         if (err) {
           return res.status(500).json({ message: "Erro ao realizar logout durante exclusão" });
         }
-        res.status(200).json({ message: "Conta excluída com sucesso" });
+
+        // DESTROY SESSION explicitly
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying session after account deletion", err);
+          }
+
+          // CLEAR ALL COOKIES
+          res.clearCookie('connect.sid', { path: '/' });
+          res.clearCookie('auth_token', { path: '/', sameSite: 'lax' });
+          res.clearCookie('auth_user_id', { path: '/', sameSite: 'lax' });
+          res.clearCookie('active_profile_id', { path: '/', sameSite: 'lax' });
+
+          res.status(200).json({ message: "Conta excluída com sucesso" });
+        });
       });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir conta" });
