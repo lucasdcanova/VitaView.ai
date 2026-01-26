@@ -202,6 +202,11 @@ export interface IStorage {
   getCustomMedicationsByUserId(userId: number): Promise<CustomMedication[]>;
   deleteCustomMedication(id: number): Promise<boolean>;
 
+  // Bug Report operations
+  createBugReport(report: any): Promise<any>;
+  getBugReports(): Promise<any[]>;
+  updateBugReportStatus(id: number, status: string): Promise<any | undefined>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -1461,6 +1466,35 @@ export class MemStorage implements IStorage {
     this.customMedicationsMap.set(id, medication);
     return true;
   }
+
+  // Bug Report operations (MemStorage - in-memory)
+  private bugReportsMap: Map<number, any> = new Map();
+  private bugReportIdCounter: number = 1;
+
+  async createBugReport(report: any): Promise<any> {
+    const id = this.bugReportIdCounter++;
+    const newReport = {
+      ...report,
+      id,
+      status: report.status || 'new',
+      createdAt: new Date()
+    };
+    this.bugReportsMap.set(id, newReport);
+    return newReport;
+  }
+
+  async getBugReports(): Promise<any[]> {
+    return Array.from(this.bugReportsMap.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateBugReportStatus(id: number, status: string): Promise<any | undefined> {
+    const report = this.bugReportsMap.get(id);
+    if (!report) return undefined;
+    report.status = status;
+    this.bugReportsMap.set(id, report);
+    return report;
+  }
 }
 
 
@@ -2416,6 +2450,32 @@ export class DatabaseStorage implements IStorage {
         averageTicket
       }
     };
+  }
+
+  // Bug Report operations (DatabaseStorage - PostgreSQL)
+  async createBugReport(report: any): Promise<any> {
+    const result = await pool.query(
+      `INSERT INTO bug_reports (user_id, user_name, user_email, description, page_url, user_agent, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+       RETURNING *`,
+      [report.userId || null, report.userName || null, report.userEmail || null, report.description, report.pageUrl || null, report.userAgent || null, report.status || 'new']
+    );
+    return result.rows[0];
+  }
+
+  async getBugReports(): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT * FROM bug_reports ORDER BY created_at DESC`
+    );
+    return result.rows;
+  }
+
+  async updateBugReportStatus(id: number, status: string): Promise<any | undefined> {
+    const result = await pool.query(
+      `UPDATE bug_reports SET status = $1 WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+    return result.rows[0];
   }
 }
 

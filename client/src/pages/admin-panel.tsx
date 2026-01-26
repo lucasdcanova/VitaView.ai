@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
   Card,
   CardContent,
@@ -51,7 +51,10 @@ import {
   MoreVertical,
   Shield,
   UserIcon,
-  ArrowLeft
+  ArrowLeft,
+  Bug,
+  Eye,
+  CheckCircle2
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
@@ -103,6 +106,171 @@ interface UserWithSubscription extends AdminUser {
     price: number;
     interval: string;
   };
+}
+
+// Bug Report Interface
+interface BugReport {
+  id: number;
+  user_id: number | null;
+  user_name: string | null;
+  user_email: string | null;
+  description: string;
+  page_url: string | null;
+  user_agent: string | null;
+  status: 'new' | 'seen' | 'resolved';
+  created_at: string;
+}
+
+// Bug Reports Tab Component
+function BugReportsTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: bugReports = [], isLoading } = useQuery<BugReport[]>({
+    queryKey: ['/api/admin/bug-reports'],
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest('PATCH', `/api/admin/bug-reports/${id}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/bug-reports'] });
+      toast({
+        title: "Status atualizado",
+        description: "O status do relatório foi atualizado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'new':
+        return <Badge variant="destructive">Novo</Badge>;
+      case 'seen':
+        return <Badge variant="secondary">Visto</Badge>;
+      case 'resolved':
+        return <Badge variant="default" className="bg-green-600">Resolvido</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bug className="h-5 w-5" />
+          Relatórios de Bugs
+        </CardTitle>
+        <CardDescription>
+          Visualize e gerencie os relatórios de bugs enviados pelos usuários
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : bugReports.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum relatório de bug recebido
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead className="max-w-[300px]">Descrição</TableHead>
+                  <TableHead>Página</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bugReports.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {formatDate(report.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{report.user_name || 'Anônimo'}</span>
+                        {report.user_email && (
+                          <span className="text-xs text-muted-foreground">{report.user_email}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-[300px]">
+                      <p className="truncate" title={report.description}>
+                        {report.description}
+                      </p>
+                    </TableCell>
+                    <TableCell className="max-w-[150px]">
+                      {report.page_url ? (
+                        <span className="text-xs text-muted-foreground truncate block" title={report.page_url}>
+                          {report.page_url.replace(/^https?:\/\/[^/]+/, '')}
+                        </span>
+                      ) : '—'}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(report.status)}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => updateStatusMutation.mutate({ id: report.id, status: 'seen' })}
+                            disabled={report.status === 'seen'}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Marcar como Visto
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => updateStatusMutation.mutate({ id: report.id, status: 'resolved' })}
+                            disabled={report.status === 'resolved'}
+                          >
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Marcar como Resolvido
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function AdminPanel() {
@@ -362,7 +530,7 @@ export default function AdminPanel() {
       <p className="text-muted-foreground mb-6">Gerencie usuários, planos e configurações do sistema</p>
 
       <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span>Usuários</span>
@@ -370,6 +538,10 @@ export default function AdminPanel() {
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             <span>Planos</span>
+          </TabsTrigger>
+          <TabsTrigger value="recados" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            <span>Recados</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -631,6 +803,11 @@ export default function AdminPanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Aba de Recados (Bug Reports) */}
+        <TabsContent value="recados" className="space-y-4">
+          <BugReportsTab />
         </TabsContent>
 
         {/* Aba de Configurações */}

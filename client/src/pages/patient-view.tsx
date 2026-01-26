@@ -71,7 +71,7 @@ export default function PatientView() {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [showUpload, setShowUpload] = useState(false);
     const [, setLocation] = useLocation();
-    const { activeProfile } = useProfiles();
+    const { activeProfile, inServiceAppointmentId } = useProfiles();
     const { uploads } = useUploadManager();
     const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
     const { toast } = useToast();
@@ -177,7 +177,10 @@ export default function PatientView() {
         enabled: !!activeProfile?.id,
     });
 
-    const todayTriage = triageHistory.length > 0 ? triageHistory[0] : null;
+    // Filter triage for the current appointment if in service
+    const currentTriage = triageHistory.find((t: any) =>
+        inServiceAppointmentId && t.appointmentId === inServiceAppointmentId
+    ) || null;
 
     // Get recent items
     const recentExams = exams.slice(0, 3);
@@ -305,16 +308,16 @@ export default function PatientView() {
                                             </div>
 
                                             {/* SECTION 2: ATTENTION NEEDED (Triage & Alerts) - Only shows if data exists */}
-                                            {(todayTriage || alertMetrics.length > 0) && (
+                                            {(currentTriage || alertMetrics.length > 0) && (
                                                 <div>
                                                     <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                                         <AlertTriangle className="h-5 w-5 text-amber-600" />
                                                         Atenção Imediata
                                                     </h3>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {todayTriage && (
+                                                        {currentTriage && (
                                                             <div className="md:col-span-2">
-                                                                <TriageCard triage={todayTriage} />
+                                                                <TriageCard triage={currentTriage} />
                                                             </div>
                                                         )}
 

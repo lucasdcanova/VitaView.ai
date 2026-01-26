@@ -1178,6 +1178,72 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Bug Report Routes
+  // POST - Create a bug report (any authenticated user)
+  app.post("/api/bug-reports", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { description, pageUrl, userAgent } = req.body;
+
+      if (!description || description.trim().length === 0) {
+        return res.status(400).json({ message: "Descrição é obrigatória" });
+      }
+
+      const report = await storage.createBugReport({
+        userId: user?.id || null,
+        userName: user?.fullName || user?.username || null,
+        userEmail: user?.email || null,
+        description: description.trim(),
+        pageUrl: pageUrl || null,
+        userAgent: userAgent || null,
+        status: 'new'
+      });
+
+      console.log("✅ Bug report criado:", report);
+      res.status(201).json({ success: true, message: "Relatório de bug enviado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao criar bug report:", error);
+      res.status(500).json({ message: "Erro ao enviar relatório de bug" });
+    }
+  });
+
+  // GET - Get all bug reports (admin only)
+  app.get("/api/admin/bug-reports", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const reports = await storage.getBugReports();
+      res.json(reports);
+    } catch (error) {
+      console.error("Erro ao buscar bug reports:", error);
+      res.status(500).json({ message: "Erro ao buscar relatórios de bugs" });
+    }
+  });
+
+  // PATCH - Update bug report status (admin only)
+  app.patch("/api/admin/bug-reports/:id", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (isNaN(id) || !status) {
+        return res.status(400).json({ message: "Dados inválidos" });
+      }
+
+      if (!['new', 'seen', 'resolved'].includes(status)) {
+        return res.status(400).json({ message: "Status inválido" });
+      }
+
+      const updated = await storage.updateBugReportStatus(id, status);
+      if (updated) {
+        res.json(updated);
+      } else {
+        res.status(404).json({ message: "Relatório não encontrado" });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar bug report:", error);
+      res.status(500).json({ message: "Erro ao atualizar relatório de bug" });
+    }
+  });
+
   // Appointment Routes
   app.get("/api/appointments", ensureAuthenticated, async (req, res) => {
     try {

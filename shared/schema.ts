@@ -1079,3 +1079,29 @@ export type InsertExamProtocol = z.infer<typeof insertExamProtocolSchema>;
 
 export type CustomMedication = typeof customMedications.$inferSelect;
 export type InsertCustomMedication = z.infer<typeof insertCustomMedicationSchema>;
+
+// Bug Reports schema - User-submitted bug reports
+export const bugReports = pgTable("bug_reports", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  description: text("description").notNull(),
+  pageUrl: text("page_url"),
+  userAgent: text("user_agent"),
+  status: text("status").default("new").notNull(), // 'new', 'seen', 'resolved'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBugReportSchema = createInsertSchema(bugReports).pick({
+  userId: true,
+  userName: true,
+  userEmail: true,
+  description: true,
+  pageUrl: true,
+  userAgent: true,
+  status: true,
+});
+
+export type BugReport = typeof bugReports.$inferSelect;
+export type InsertBugReport = z.infer<typeof insertBugReportSchema>;
