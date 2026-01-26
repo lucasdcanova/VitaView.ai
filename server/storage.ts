@@ -1842,8 +1842,10 @@ export class DatabaseStorage implements IStorage {
     // 2.5 Delete triage records performed BY this user (as a doctor)
     await db.delete(triageRecords).where(eq(triageRecords.performedByUserId, id));
 
+
     // 3. Delete leaf tables referencing user directly or via profiles
     // Note: Deleting items that reference Profiles before deleting Profiles
+    await db.delete(healthMetrics).where(eq(healthMetrics.userId, id));
     await db.delete(exams).where(eq(exams.userId, id));
     await db.delete(appointments).where(eq(appointments.userId, id));
     await db.delete(prescriptions).where(eq(prescriptions.userId, id));
@@ -1858,6 +1860,8 @@ export class DatabaseStorage implements IStorage {
     await db.delete(userConsents).where(eq(userConsents.userId, id));
     await db.delete(customMedications).where(eq(customMedications.userId, id));
     await db.delete(surgeries).where(eq(surgeries.userId, id));
+    await db.delete(examRequests).where(eq(examRequests.userId, id));
+    await db.delete(examProtocols).where(eq(examProtocols.userId, id));
 
     // 4. Handle subscriptions and clinics
     const userClinics = await db.select().from(clinics).where(eq(clinics.adminUserId, id));

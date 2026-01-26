@@ -1122,7 +1122,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         res.status(404).json({ message: "Usuário não encontrado" });
       }
     } catch (error) {
-      res.status(500).json({ message: "Erro ao excluir usuário" });
+      console.error('[ADMIN] Error deleting user:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Erro ao excluir usuário", error: errorMessage });
     }
   });
 
