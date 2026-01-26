@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useOnboarding, OnboardingStep } from '@/hooks/use-onboarding';
+import { useLocation } from 'wouter';
+import { preloadRoutes } from '@/lib/route-utils';
 
 interface TooltipPosition {
     top: number;
@@ -68,6 +70,21 @@ export function OnboardingTour() {
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
     const [position, setPosition] = useState<TooltipPosition>({ top: 0, left: 0, arrowPosition: 'left' });
     const tooltipRef = useRef<HTMLDivElement>(null);
+    const [_, setLocation] = useLocation();
+
+    // Preload routes when tour starts
+    useEffect(() => {
+        if (isActive) {
+            preloadRoutes();
+        }
+    }, [isActive]);
+
+    // Navigate to step route if needed
+    useEffect(() => {
+        if (isActive && currentStepData?.route) {
+            setLocation(currentStepData.route);
+        }
+    }, [isActive, currentStepData, setLocation]);
 
     // Find and highlight the target element
     useEffect(() => {
@@ -86,7 +103,7 @@ export function OnboardingTour() {
         };
 
         // Small delay to ensure DOM is ready
-        const timer = setTimeout(findTarget, 100);
+        const timer = setTimeout(findTarget, 300); // Increased delay slightly to allow for route transition
         window.addEventListener('resize', findTarget);
         window.addEventListener('scroll', findTarget);
 
@@ -188,14 +205,15 @@ export function OnboardingTour() {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
+                        {/* Footer */}
+                        <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between flex-wrap gap-2">
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={skipTour}
-                                className="text-[#9E9E9E] hover:text-[#212121]"
+                                className="text-[#9E9E9E] hover:text-[#212121] text-xs h-8"
                             >
-                                Pular tour
+                                Pular
                             </Button>
                             <div className="flex gap-2">
                                 {currentStep > 0 && (
@@ -203,23 +221,24 @@ export function OnboardingTour() {
                                         variant="outline"
                                         size="sm"
                                         onClick={prevStep}
+                                        className="h-8 px-3"
                                     >
-                                        <ChevronLeft className="h-4 w-4 mr-1" />
-                                        Anterior
+                                        <ChevronLeft className="h-3 w-3 mr-1" />
+                                        <span className="text-xs">Anterior</span>
                                     </Button>
                                 )}
                                 <Button
                                     size="sm"
                                     onClick={nextStep}
-                                    className="bg-[#212121] hover:bg-[#424242] text-white"
+                                    className="bg-[#212121] hover:bg-[#424242] text-white h-8 px-4 min-w-[90px]"
                                 >
                                     {currentStep === totalSteps - 1 ? (
-                                        'Concluir'
+                                        <span className="text-xs font-medium">Concluir</span>
                                     ) : (
-                                        <>
-                                            Próximo
-                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                        </>
+                                        <div className="flex items-center justify-center">
+                                            <span className="text-xs font-medium">Próximo</span>
+                                            <ChevronRight className="h-3 w-3 ml-1" />
+                                        </div>
                                     )}
                                 </Button>
                             </div>
@@ -231,10 +250,10 @@ export function OnboardingTour() {
                                 <div
                                     key={index}
                                     className={`h-1.5 rounded-full transition-all ${index === currentStep
-                                            ? 'w-4 bg-[#212121]'
-                                            : index < currentStep
-                                                ? 'w-1.5 bg-[#9E9E9E]'
-                                                : 'w-1.5 bg-[#E0E0E0]'
+                                        ? 'w-4 bg-[#212121]'
+                                        : index < currentStep
+                                            ? 'w-1.5 bg-[#9E9E9E]'
+                                            : 'w-1.5 bg-[#E0E0E0]'
                                         }`}
                                 />
                             ))}

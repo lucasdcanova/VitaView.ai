@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { useProfiles } from "@/hooks/use-profiles";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
@@ -52,7 +53,11 @@ export function AgendaCalendar({
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
+  const { user } = useAuth();
   const { profiles, setActiveProfile, inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
+
+  // Get display name for the doctor
+  const doctorName = user?.fullName || user?.username || "Médico";
 
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
@@ -542,7 +547,7 @@ export function AgendaCalendar({
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                   <User className="w-4 h-4 text-gray-500" />
-                                  <span>Dr. Silva</span>
+                                  <span>{doctorName}</span>
                                 </div>
                                 {appointment.notes && (
                                   <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">

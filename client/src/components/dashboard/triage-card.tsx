@@ -46,7 +46,7 @@ export function TriageCard({ triage }: TriageCardProps) {
                 )}
 
                 {(triage.systolicBp || triage.heartRate || triage.temperature) && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200">
+                    <div className="grid grid-cols-4 gap-4 pt-2 border-t border-blue-200">
                         {triage.systolicBp && (
                             <div className="text-xs">
                                 <div className="text-gray-600">PA</div>

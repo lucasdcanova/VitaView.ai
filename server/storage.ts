@@ -396,7 +396,9 @@ export class MemStorage implements IStorage {
       clinicRole: null,
       preferences: null,
       crm: null,
-      specialty: null
+      specialty: null,
+      rqe: null,
+      profilePhotoUrl: null
     };
     this.users.set(id, newUser);
 
@@ -774,7 +776,14 @@ export class MemStorage implements IStorage {
   // Evolution operations
   async createEvolution(evolution: InsertEvolution): Promise<Evolution> {
     const id = this.evolutionIdCounter++;
-    const newEvolution: Evolution = { ...evolution, id, createdAt: new Date(), date: evolution.date || new Date() };
+    const newEvolution: Evolution = {
+      ...evolution,
+      id,
+      createdAt: new Date(),
+      date: evolution.date || new Date(),
+      profileId: evolution.profileId || null,
+      professionalName: evolution.professionalName || null
+    };
     this.evolutionsMap.set(id, newEvolution);
     return newEvolution;
   }
@@ -862,7 +871,16 @@ export class MemStorage implements IStorage {
   // Appointment operations
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
     const id = this.appointmentIdCounter++;
-    const newAppointment: Appointment = { ...appointment, id, createdAt: new Date() };
+    const newAppointment: Appointment = {
+      ...appointment,
+      id,
+      createdAt: new Date(),
+      status: appointment.status || 'scheduled',
+      notes: appointment.notes || null,
+      profileId: appointment.profileId || null,
+      price: appointment.price ?? null,
+      duration: appointment.duration || null
+    };
     this.appointmentsMap.set(id, newAppointment);
     return newAppointment;
   }
@@ -893,6 +911,8 @@ export class MemStorage implements IStorage {
       stripePriceId: plan.stripePriceId || null,
       features: plan.features || null,
       isActive: plan.isActive ?? true,
+      promoPrice: plan.promoPrice ?? null,
+      promoDescription: plan.promoDescription || null,
       createdAt: new Date()
     };
     this.subscriptionPlansMap.set(id, newPlan);
@@ -928,7 +948,8 @@ export class MemStorage implements IStorage {
       createdAt: now,
       canceledAt: null,
       profilesCreated: 0,
-      uploadsCount: {}
+      uploadsCount: {},
+      planId: subscription.planId || null
     };
     this.subscriptionsMap.set(id, newSubscription);
     return newSubscription;
@@ -1034,7 +1055,14 @@ export class MemStorage implements IStorage {
   // Doctor operations
   async createDoctor(doctor: InsertDoctor): Promise<Doctor> {
     const id = this.doctorIdCounter++;
-    const newDoctor: Doctor = { ...doctor, id, createdAt: new Date() };
+    const newDoctor: Doctor = {
+      ...doctor,
+      id,
+      createdAt: new Date(),
+      specialty: doctor.specialty || null,
+      isDefault: doctor.isDefault ?? false,
+      professionalType: doctor.professionalType || 'doctor'
+    };
     this.doctorsMap.set(id, newDoctor);
     return newDoctor;
   }
@@ -1212,7 +1240,8 @@ export class MemStorage implements IStorage {
       status: subscription.status || 'active',
       canceledAt: null,
       profilesCreated: 0,
-      uploadsCount: {}
+      uploadsCount: {},
+      planId: subscription.planId || null
     };
     this.subscriptionsMap.set(id, newSubscription);
     return newSubscription;
@@ -1254,7 +1283,8 @@ export class MemStorage implements IStorage {
       issueDate: p.issueDate || new Date(),
       doctorSpecialty: p.doctorSpecialty || null,
       observations: p.observations || null,
-      pdfPath: p.pdfPath || null
+      pdfPath: p.pdfPath || null,
+      profileId: p.profileId || null
     };
     this.prescriptionsMap.set(id, newP);
     return newP;
@@ -1286,7 +1316,8 @@ export class MemStorage implements IStorage {
       startTime: c.startTime || null,
       endTime: c.endTime || null,
       customText: c.customText || null,
-      pdfPath: c.pdfPath || null
+      pdfPath: c.pdfPath || null,
+      city: c.city || null
     };
     this.certificatesMap.set(id, newC);
     return newC;
@@ -1328,6 +1359,7 @@ export class MemStorage implements IStorage {
       doctorSpecialty: er.doctorSpecialty || null,
       clinicalIndication: er.clinicalIndication || null,
       observations: er.observations || null,
+      profileId: er.profileId || null,
       pdfPath: er.pdfPath || null
     };
     this.examRequestsMap.set(id, newER);

@@ -10,7 +10,7 @@ interface ProfileContextType {
   profiles: Profile[];
   isLoading: boolean;
   activeProfile: Profile | null;
-  setActiveProfile: (profile: Profile) => void;
+  setActiveProfile: (profile: Profile | null) => void;
   createProfile: (data: Omit<Profile, "id" | "userId" | "createdAt">) => void;
   updateProfile: (id: number, data: Partial<Profile>) => void;
   deleteProfile: (id: number) => void;
@@ -195,13 +195,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const defaultProfile = profiles.find((p: Profile) => p.isDefault);
-      setActiveProfileState(defaultProfile || profiles[0]);
+      // Do not auto-select a profile if none is found in cookies
+      // The user must explicitly select a patient
+      setActiveProfileState(null);
     }
   }, [profiles, activeProfile]);
 
   // Wrapper functions
-  const setActiveProfile = (profile: Profile) => {
+  const setActiveProfile = (profile: Profile | null) => {
+    if (!profile) {
+      setActiveProfileState(null);
+      setInServiceAppointmentId(null);
+      document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
+      return;
+    }
     setActiveProfileMutation.mutate(profile);
   };
 

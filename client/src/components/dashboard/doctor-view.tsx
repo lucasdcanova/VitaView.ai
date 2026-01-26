@@ -25,7 +25,7 @@ import { AgendaWidget } from "@/components/agenda/agenda-widget";
 
 import FloatingPatientBar from "@/components/floating-patient-bar";
 import CreatePatientDialog from "@/components/create-patient-dialog";
-import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
+
 import { VitalsWidget } from "@/components/dashboard/vitals-widget";
 import { DashboardCustomizeDialog } from "@/components/dashboard/dashboard-customize-dialog";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -630,8 +630,7 @@ export function DoctorView({ stats, isLoading }: DoctorViewProps) {
                 onOpenChange={setIsCreatePatientOpen}
             />
 
-            {/* Onboarding Tour */}
-            <OnboardingTour />
+
 
             {/* Customize Dashboard Dialog */}
             <DashboardCustomizeDialog

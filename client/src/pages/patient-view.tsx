@@ -312,7 +312,11 @@ export default function PatientView() {
                                                         Atenção Imediata
                                                     </h3>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {todayTriage && <TriageCard triage={todayTriage} />}
+                                                        {todayTriage && (
+                                                            <div className="md:col-span-2">
+                                                                <TriageCard triage={todayTriage} />
+                                                            </div>
+                                                        )}
 
                                                         {alertMetrics.length > 0 && (
                                                             <Card className="border-red-200 bg-red-50 shadow-sm h-full">

@@ -13,6 +13,21 @@ import { Suspense, lazy } from "react";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
+import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
+
+declare global {
+  interface Window {
+    gtag: (
+      command: string,
+      action: string,
+      params?: {
+        description?: string;
+        fatal?: boolean;
+        [key: string]: any;
+      }
+    ) => void;
+  }
+}
 
 // ============================================
 // LAZY LOADED COMPONENTS - PUBLIC PAGES (sem auth)
@@ -148,6 +163,7 @@ function AuthenticatedRoutes() {
                   </Switch>
                 </Suspense>
                 <CommandPalette />
+                <OnboardingTour />
               </TooltipProvider>
             </ThemeProvider>
           </SidebarProvider>

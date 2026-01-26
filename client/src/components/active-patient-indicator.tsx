@@ -199,6 +199,18 @@ export default function ActivePatientIndicator({
                 {/* Decorative line at top */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-charcoal" />
 
+                {/* End Attendance Button (Red X) */}
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveProfile(null);
+                    }}
+                    className="absolute top-2 right-2 z-20 p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all cursor-pointer"
+                    title="Encerrar atendimento"
+                >
+                    <X className="w-4 h-4" />
+                </div>
+
                 {/* Top Section: Patient Selection */}
                 <div
                     onClick={() => setIsDialogOpen(true)}
