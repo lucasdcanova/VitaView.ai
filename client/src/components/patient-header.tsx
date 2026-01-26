@@ -1,4 +1,5 @@
 import { Profile } from "@shared/schema";
+import { cn } from "@/lib/utils";
 import { Calendar, FileText, ShieldCheck, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +20,7 @@ interface PatientHeaderProps {
   patient?: Profile | null;
   lastExamDate?: string | null;
   showTitleAsMain?: boolean;
+  fullWidth?: boolean;
   children?: React.ReactNode;
 }
 
@@ -28,6 +30,7 @@ export default function PatientHeader({
   patient,
   lastExamDate,
   showTitleAsMain = false,
+  fullWidth = false,
   children,
 }: PatientHeaderProps) {
   const formatDate = (value?: string | null) => {
@@ -87,7 +90,10 @@ export default function PatientHeader({
   ];
 
   return (
-    <div className="bg-pureWhite border border-lightGray rounded-lg p-4 md:p-6 mb-6">
+    <div className={cn(
+      "bg-pureWhite p-4 md:p-6",
+      fullWidth ? "border-b border-lightGray" : "border border-lightGray rounded-lg mb-6"
+    )}>
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           {showTitleAsMain ? (

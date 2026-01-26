@@ -37,13 +37,15 @@ interface AgendaCalendarProps {
   weekStart?: Date;
   onNewAppointment?: () => void;
   onEditAppointment?: (appointment: Appointment) => void;
+  fullWidth?: boolean;
 }
 
 export function AgendaCalendar({
   appointments = {},
   weekStart = new Date(),
   onNewAppointment,
-  onEditAppointment
+  onEditAppointment,
+  fullWidth = false
 }: AgendaCalendarProps) {
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
@@ -232,9 +234,12 @@ export function AgendaCalendar({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className={cn(
+      "bg-white overflow-hidden flex flex-col h-full",
+      fullWidth ? "border-b border-lightGray" : "rounded-2xl shadow-2xl"
+    )}>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white">
+      <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Popover>
@@ -344,9 +349,9 @@ export function AgendaCalendar({
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-6">
+      <div className="p-6 flex-1 flex flex-col overflow-hidden">
         {viewMode === 'day' ? (
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto pr-2">
             {getDailySlots().map(({ hour, minute }) => {
               const apps = getFilteredAppointmentsForDay(currentDate).filter(app => {
                 const { hour: appHour, minute: appMinute } = parseTime(app.time);
@@ -482,9 +487,9 @@ export function AgendaCalendar({
             })}
           </div>
         ) : viewMode === 'week' ? (
-          <>
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Week Days Header */}
-            <div className="grid grid-cols-7 gap-2 mb-4">
+            <div className="grid grid-cols-7 gap-2 mb-4 shrink-0">
               {weekDays.map((day, i) => {
                 const date = addDays(startOfCurrentWeek, i);
                 const isToday = isSameDay(date, new Date());
@@ -507,11 +512,11 @@ export function AgendaCalendar({
             </div>
 
             {/* Week Time Slots Grid */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-2 flex-1 overflow-y-auto">
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
                 const date = addDays(startOfCurrentWeek, dayIndex);
                 return (
-                  <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 min-h-[200px] space-y-2">
+                  <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 h-full min-h-[200px] space-y-2">
                     {getFilteredAppointmentsForDay(date).map((appointment, idx) => {
                       const styles = getTypeStyles(appointment.type);
                       return (
@@ -631,9 +636,9 @@ export function AgendaCalendar({
                 );
               })}
             </div>
-          </>
+          </div>
         ) : (
-          <div className="grid grid-cols-7 gap-4">
+          <div className="grid grid-cols-7 gap-4 overflow-y-auto">
             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
               <div key={day} className="text-center font-semibold text-gray-500 text-sm py-2">
                 {day}

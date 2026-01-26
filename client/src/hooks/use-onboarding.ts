@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from './use-auth';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export interface OnboardingStep {
     id: string;
@@ -63,15 +65,26 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
 const ONBOARDING_STORAGE_KEY = 'vitaview_onboarding_completed';
 
 export function useOnboarding() {
+    const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [isActive, setIsActive] = useState(false);
-    const [isCompleted, setIsCompleted] = useState(true); // Default true to prevent flash
 
-    // Check localStorage on mount
+    // Check both DB preferences and localStorage (as fallback/cache)
+    const [isCompleted, setIsCompleted] = useState(() => {
+        // If user has preference set, honor it
+        if (user?.preferences && (user.preferences as any).onboardingCompleted) {
+            return true;
+        }
+        // Fallback to local storage (for immediate feedback or logged out users)
+        return localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
+    });
+
+    // Update state when user data loads
     useEffect(() => {
-        const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-        setIsCompleted(completed === 'true');
-    }, []);
+        if (user?.preferences && (user.preferences as any).onboardingCompleted) {
+            setIsCompleted(true);
+        }
+    }, [user]);
 
     // Start the tour
     const startTour = useCallback(() => {
@@ -80,11 +93,25 @@ export function useOnboarding() {
     }, []);
 
     // Complete the tour
-    const completeTour = useCallback(() => {
+    const completeTour = useCallback(async () => {
+        // Optimistic update
         localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
         setIsCompleted(true);
         setIsActive(false);
-    }, []);
+
+        // Save to backend if user is logged in
+        if (user) {
+            try {
+                await apiRequest('PATCH', '/api/user/preferences', {
+                    preferences: { onboardingCompleted: true }
+                });
+                // Invalidate query to ensure fresh data
+                queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            } catch (error) {
+                console.error("Failed to save onboarding completion to server:", error);
+            }
+        }
+    }, [user]);
 
     // Go to next step
     const nextStep = useCallback(() => {
@@ -109,14 +136,16 @@ export function useOnboarding() {
 
     // Auto-start tour for new users (only once)
     useEffect(() => {
-        if (!isCompleted) {
+        // Do not auto-start if already completed (checked via state which includes DB and local)
+        // Also wait for user to be loaded to avoid false starts
+        if (!isCompleted && user) {
             // Small delay to let the page render first
             const timer = setTimeout(() => {
                 setIsActive(true);
             }, 1500);
             return () => clearTimeout(timer);
         }
-    }, [isCompleted]);
+    }, [isCompleted, user]);
 
     return {
         steps: ONBOARDING_STEPS,

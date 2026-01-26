@@ -179,14 +179,15 @@ export default function Agenda() {
             <div className="flex flex-1 relative">
                 <Sidebar />
 
-                <main className="flex-1 bg-gray-50 px-6 py-8">
-                    <div className="max-w-7xl mx-auto">
+                <main className="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden">
+                    <div className="flex-1 flex flex-col h-full w-full p-0 overflow-hidden">
                         <PatientHeader
                             title="Agenda"
                             description="Gerencie suas consultas e visualize seus compromissos."
                             patient={undefined}
                             lastExamDate={null}
                             showTitleAsMain={true}
+                            fullWidth={true}
                         >
                             <div className="w-full md:w-[500px] space-y-2">
                                 <div className="relative">
@@ -255,10 +256,11 @@ export default function Agenda() {
                             </div>
                         </PatientHeader>
 
-                        <div className="mt-6">
+                        <div className="mt-6 flex-1 overflow-auto">
                             <AgendaCalendar
                                 onNewAppointment={handleNewAppointment}
                                 onEditAppointment={handleEditAppointment}
+                                fullWidth={true}
                             />
                         </div>
                     </div>
