@@ -58,6 +58,14 @@ export function AgendaCalendar({
   const { user } = useAuth();
   const { profiles, setActiveProfile, inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
 
+  // Current time state for the red line indicator
+  const [now, setNow] = useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
   // Get display name for the doctor
   const doctorName = user?.fullName || user?.username || "Médico";
 
@@ -176,6 +184,19 @@ export function AgendaCalendar({
   };
 
   const handleStartService = (appointment: Appointment) => {
+    // If already in progress, just resume checking the patient locally
+    if (appointment.status === 'in_progress') {
+      if (appointment.profileId) {
+        setPatientInService(appointment.profileId, appointment.id);
+        setLocation('/atendimento');
+        toast({
+          title: "Atendimento retomado",
+          description: `Retomando atendimento de ${appointment.patientName}`
+        });
+      }
+      return;
+    }
+
     updateStatusMutation.mutate(
       { id: appointment.id, status: 'in_progress' },
       {
@@ -373,12 +394,47 @@ export function AgendaCalendar({
                   <div className="flex-1 space-y-3 relative">
                     <div className="absolute top-2 left-0 w-full h-px bg-gray-100 group-hover:bg-gray-200 transition-colors -z-10"></div>
 
+                    {/* Current Time Indicator Line */}
+                    {(() => {
+                      const isToday = isSameDay(currentDate, new Date());
+                      const currentHour = now.getHours();
+                      const currentMinute = now.getMinutes();
+
+                      // Check if current time falls within this slot (slot start <= now < slot start + 30)
+                      // The slot starts at 'hour' and 'minute' (0 or 30)
+                      const isCurrentSlot = isToday && currentHour === hour && currentMinute >= minute && currentMinute < (minute + 30);
+
+                      if (isCurrentSlot) {
+                        // Calculate percentage: (minutes passed in this 30min slot / 30) * 100
+                        const minutesInSlot = currentMinute - minute;
+                        const percent = (minutesInSlot / 30) * 100;
+
+                        // We add a small offset (e.g. top-2 is for the divider line usually at the text baseline)
+                        // If top-2 is roughly where the specific time text aligns, we might want to align relative to the container height
+                        // The container has min-h-[80px]. Let's assume linear distribution for now or just visual marker.
+                        // Actually the divider is at top-2 (~8px). 
+                        // Let's position relatively.
+
+                        return (
+                          <div
+                            className="absolute w-full flex items-center z-10 pointer-events-none"
+                            style={{ top: `${percent}%` }}
+                          >
+                            <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shadow-sm ring-1 ring-white"></div>
+                            <div className="h-px bg-red-500 w-full shadow-[0_0_2px_rgba(239,68,68,0.5)]"></div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+
                     {apps.length > 0 ? (
                       apps.map(app => {
                         const styles = getTypeStyles(app.type);
                         const appointmentDate = parseAppointmentDate(app.date);
                         const isToday = isSameDay(appointmentDate, new Date());
-                        const canStartService = isToday && app.status !== 'in_progress' && app.status !== 'completed';
+                        const isActive = app.id === inServiceAppointmentId;
+                        const canStartService = isToday && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
 
                         return (
                           <div key={app.id} className={cn(
@@ -422,7 +478,7 @@ export function AgendaCalendar({
                                       handleStartService(app);
                                     }}
                                     className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1 group"
-                                    title="Clique para iniciar atendimento"
+                                    title={app.status === 'in_progress' ? "Retomar atendimento" : "Iniciar atendimento"}
                                   >
                                     <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     {app.patientName}
@@ -453,11 +509,11 @@ export function AgendaCalendar({
                                   disabled={updateStatusMutation.isPending}
                                 >
                                   <Play className="w-4 h-4 mr-2" />
-                                  Iniciar Atendimento
+                                  {app.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
                                 </Button>
                               ) : (
                                 <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium w-full text-center">
-                                  {app.status === 'completed' ? 'Concluído' : app.status === 'in_progress' ? 'Em Atendimento' : 'Agendado'}
+                                  {app.status === 'completed' ? 'Concluído' : isActive ? 'Em Atendimento' : 'Agendado'}
                                 </div>
                               )}
 
@@ -576,7 +632,8 @@ export function AgendaCalendar({
                                 {(() => {
                                   const appointmentDate = parseAppointmentDate(appointment.date);
                                   const isToday = isSameDay(appointmentDate, new Date());
-                                  const canStartService = isToday && appointment.status !== 'in_progress' && appointment.status !== 'completed';
+                                  const isActive = appointment.id === inServiceAppointmentId;
+                                  const canStartService = isToday && appointment.status !== 'completed' && (!appointment.status || appointment.status === 'scheduled' || (appointment.status === 'in_progress' && !isActive));
 
                                   return (
                                     <>
@@ -588,7 +645,7 @@ export function AgendaCalendar({
                                           disabled={updateStatusMutation.isPending}
                                         >
                                           <Play className="w-4 h-4 mr-1" />
-                                          Iniciar Atendimento
+                                          {appointment.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
                                         </Button>
                                       )}
 
