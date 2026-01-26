@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { storage } from "./server/storage";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";

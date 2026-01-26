@@ -13,6 +13,15 @@ declare global {
   }
 }
 
+// Extend SessionData to include passport property used by passport.js
+declare module 'express-session' {
+  interface SessionData {
+    passport?: {
+      user?: number;
+    };
+  }
+}
+
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -85,6 +94,32 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Middleware to clean up orphaned sessions (user no longer exists in DB)
+  app.use((req, res, next) => {
+    // Check if session has a user reference but passport didn't authenticate
+    // This happens when deserializeUser returns false (user not found in DB)
+    if (req.session && req.session.passport?.user && !req.user) {
+      console.log('[AUTH] Cleaning up orphaned session for missing user:', req.session.passport.user);
+
+      // Destroy the invalid session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('[AUTH] Error destroying orphaned session:', err);
+        }
+
+        // Clear all auth-related cookies
+        res.clearCookie('connect.sid', { path: '/' });
+        res.clearCookie('auth_token', { path: '/' });
+        res.clearCookie('auth_user_id', { path: '/' });
+
+        // Continue to the next middleware - the user will see the login page
+        next();
+      });
+    } else {
+      next();
+    }
+  });
+
   passport.use(
     new LocalStrategy(
       {
@@ -132,10 +167,13 @@ export function setupAuth(app: Express) {
       const user = await storage.getUser(id);
       if (user) {
         console.log(`[AUTH] Session restored for user: ${user.email || user.username}`);
+        done(null, user);
       } else {
-        console.log(`[AUTH] User not found for session id: ${id}`);
+        console.log(`[AUTH] User not found for session id: ${id} - invalidating session`);
+        // Return false to indicate invalid session (user no longer exists)
+        // This prevents the "Failed to deserialize user" error
+        done(null, false);
       }
-      done(null, user);
     } catch (error) {
       console.error(`[AUTH] Error deserializing session:`, error);
       done(error);
