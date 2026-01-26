@@ -716,28 +716,7 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
       description: evolution.text,
       originalData: evolution,
     })) : []),
-    ...(Array.isArray(triageHistory) ? triageHistory.map((triage: any) => ({
-      id: triage.id,
-      type: "triage" as const,
-      date: triage.createdAt,
-      title: "Anamnese / Triagem",
-      description: triage.chiefComplaint ? `Queixa: ${triage.chiefComplaint}` : "Registro de triagem",
-      originalData: triage,
-      details: {
-        chiefComplaint: triage.chiefComplaint,
-        history: triage.currentIllnessHistory,
-        vitals: {
-          bp: triage.systolicBp && triage.diastolicBp ? `${triage.systolicBp}/${triage.diastolicBp} mmHg` : null,
-          hr: triage.heartRate ? `${triage.heartRate} bpm` : null,
-          temp: triage.temperature ? `${triage.temperature}°C` : null,
-          spo2: triage.oxygenSaturation ? `${triage.oxygenSaturation}%` : null,
-          hgt: triage.bloodGlucose ? `${triage.bloodGlucose} mg/dL` : null,
-        },
-        painScale: triage.painScale,
-        manchester: triage.manchesterPriority,
-        notes: triage.notes
-      }
-    })) : [])
+
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const onSubmit = (data: DiagnosisForm) => {

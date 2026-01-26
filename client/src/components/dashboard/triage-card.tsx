@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TriageBadge } from "@/components/triage/triage-badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface TriageData {
     manchesterPriority: string;
@@ -10,6 +12,7 @@ interface TriageData {
     heartRate?: number;
     temperature?: number;
     oxygenSaturation?: number;
+    createdAt?: string;
 }
 
 interface TriageCardProps {
@@ -23,9 +26,14 @@ export function TriageCard({ triage }: TriageCardProps) {
         <Card className="border border-blue-200 bg-blue-50 shadow-sm">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                    <CardTitle className="text-base text-gray-900 flex items-center gap-2 flex-1">
                         <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                         Triagem do Dia
+                        {triage.createdAt && (
+                            <span className="text-xs text-gray-500 font-normal ml-auto mr-4">
+                                {format(new Date(triage.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                        )}
                     </CardTitle>
                     <TriageBadge priority={triage.manchesterPriority as "emergent" | "very_urgent" | "urgent" | "standard" | "non_urgent"} showLabel={false} />
                 </div>
