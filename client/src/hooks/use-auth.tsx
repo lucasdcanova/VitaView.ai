@@ -63,7 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Configurar o cookie auxiliar para autenticação - REMOVED
       // document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
-      // Popup de registro bem-sucedido removido conforme solicitado
+
+      // Show success message
+      toast({
+        title: "Conta criada com sucesso! 🎉",
+        description: "Bem-vindo ao VitaView! Você será redirecionado para o painel.",
+      });
+
+      // Redirect to dashboard after a brief delay
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
     },
     onError: (error: Error) => {
       toast({
