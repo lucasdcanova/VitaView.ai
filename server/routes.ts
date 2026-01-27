@@ -5555,7 +5555,12 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const userId = (req.user as any).id;
       const range = req.query.range as string || '30d';
-      const data = await storage.getAnalyticsData(userId, range);
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+
+      console.log('[Analytics] Request params:', { range, startDate, endDate });
+
+      const data = await storage.getAnalyticsData(userId, range, startDate, endDate);
       res.json(data);
     } catch (error) {
       console.error('Error fetching analytics:', error);

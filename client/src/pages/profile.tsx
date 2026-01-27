@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical, ImagePlus } from "lucide-react";
+import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical, ImagePlus, HelpCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -52,6 +52,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1473,7 +1479,7 @@ export default function Profile() {
 
               {/* Settings and Preferences */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Configurações</h2>
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Preferências</h2>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -1538,15 +1544,94 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <hr className="my-6 border-gray-200" />
-
-
-
-
                 <div className="mt-6 flex justify-end">
                   <Button type="button">
-                    Salvar configurações
+                    Salvar preferências
                   </Button>
+                </div>
+
+                <hr className="my-6 border-gray-200" />
+
+                {/* Help Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <HelpCircle className="h-5 w-5 text-primary-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">Ajuda</h2>
+                  </div>
+
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-b border-gray-100">
+                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                        Como prescrever um medicamento?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Para prescrever um medicamento, acesse a ficha do paciente e vá até a aba "Receituário". Lá você pode adicionar medicamentos de uso contínuo ou gerar receitas de uso agudo. Basta selecionar o medicamento, preencher a posologia e clicar em "Gerar Receita".
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="item-2" className="border-b border-gray-100">
+                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                        Como cadastrar um novo paciente?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Clique em "Pacientes" no menu lateral e depois em "+ Novo Paciente". Preencha os dados pessoais do paciente e clique em "Salvar". O paciente estará disponível para seleção em sua lista.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="item-3" className="border-b border-gray-100">
+                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                        Como fazer upload de exames?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Acesse a ficha do paciente e vá até a aba "Exames". Clique em "Enviar Exame" e selecione o arquivo PDF do exame. A plataforma irá analisar automaticamente os resultados e destacar valores alterados.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="item-4" className="border-b border-gray-100">
+                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                        Como agendar uma consulta?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Vá até "Agenda" no menu lateral. Clique em uma data e horário disponível ou use o botão "+ Nova Consulta". Selecione o paciente, tipo de atendimento e confirme o agendamento.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="item-5" className="border-b border-gray-100">
+                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                        Como emitir uma receita controlada?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Ao adicionar um medicamento controlado, o sistema automaticamente identifica o tipo de receita necessária (A, B1, B2 ou C) e gera o documento com o formato adequado, incluindo numeração e campos obrigatórios para identificação do comprador.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
+                  {/* Contact Section */}
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Não encontrou o que procurava? Envie suas dúvidas ou sugestões:
+                    </p>
+                    <a
+                      href="mailto:suporte@vitaview.ai?subject=Dúvida/Sugestão - VitaView AI"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors text-sm font-medium"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Enviar e-mail para suporte
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, asc, and, or, inArray, sql, gt, ne } from "drizzle-orm";
+import { eq, desc, asc, and, or, inArray, sql, gt, ne, gte, lte } from "drizzle-orm";
 import logger from "./logger";
 
 // Fix for type issues - use any to bypass complex type definitions
@@ -116,7 +116,7 @@ export interface IStorage {
   updateSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined>;
 
   // Analytics operations
-  getAnalyticsData(userId: number, range?: string): Promise<any>;
+  getAnalyticsData(userId: number, range?: string, startDate?: string, endDate?: string): Promise<any>;
 
   // Notification operations
   getAppointmentsByDate(date: string): Promise<Appointment[]>;
@@ -1264,7 +1264,7 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async getAnalyticsData(userId: number, range: string = '30d'): Promise<any> {
+  async getAnalyticsData(userId: number, range: string = '30d', startDate?: string, endDate?: string): Promise<any> {
     return {
       examsByType: [],
       activityData: [],
@@ -2338,22 +2338,28 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getAnalyticsData(userId: number, range: string = '30d'): Promise<any> {
+  async getAnalyticsData(userId: number, range: string = '30d', customStartDate?: string, customEndDate?: string): Promise<any> {
     const now = new Date();
     let startDate = new Date();
 
     // Calculate start date based on range
-    if (range === '7d') startDate.setDate(now.getDate() - 7);
+    if (range === 'custom' && customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      // customEndDate is used for filtering, current 'now' can be replaced with endDate for more precise filtering if needed
+    } else if (range === '7d') startDate.setDate(now.getDate() - 7);
     else if (range === '90d') startDate.setDate(now.getDate() - 90);
     else if (range === '1y') startDate.setFullYear(now.getFullYear() - 1);
     else startDate.setDate(now.getDate() - 30); // Default 30d
+
+    const endDate = range === 'custom' && customEndDate ? new Date(customEndDate) : now;
 
     // 1. Exam Counts by Type (for Pie Chart)
     const userExams = await db.select()
       .from(exams)
       .where(and(
         eq(exams.userId, userId),
-        sql`${exams.uploadDate} >= ${startDate.toISOString()}`
+        gte(exams.uploadDate, startDate),
+        lte(exams.uploadDate, endDate)
       ));
 
     const examTypeCount: Record<string, number> = {};
@@ -2376,21 +2382,38 @@ export class DatabaseStorage implements IStorage {
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const activityData: any[] = [];
 
-    // Simple aggregation for the last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const monthName = months[d.getMonth()];
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
+    // Calculate months between startDate and endDate
+    const monthsToShow: { year: number; month: number; name: string }[] = [];
+    const current = new Date(startDate);
+    current.setDate(1); // Start from first day of month
 
+    while (current <= endDate) {
+      monthsToShow.push({
+        year: current.getFullYear(),
+        month: current.getMonth() + 1,
+        name: months[current.getMonth()]
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+
+    // If no months, show at least the month of the start date
+    if (monthsToShow.length === 0) {
+      monthsToShow.push({
+        year: startDate.getFullYear(),
+        month: startDate.getMonth() + 1,
+        name: months[startDate.getMonth()]
+      });
+    }
+
+    // Aggregate data for each month in the selected period
+    for (const m of monthsToShow) {
       // Count exams
       const examsInMonth = await db.select({ count: sql<number>`count(*)` })
         .from(exams)
         .where(and(
           eq(exams.userId, userId),
-          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${month}`,
-          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${year}`
+          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${m.month}`,
+          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${m.year}`
         ));
 
       // Count new patients
@@ -2398,8 +2421,8 @@ export class DatabaseStorage implements IStorage {
         .from(profiles)
         .where(and(
           eq(profiles.userId, userId),
-          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${month}`,
-          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${year}`
+          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${m.month}`,
+          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${m.year}`
         ));
 
       // Calculate revenue
@@ -2408,21 +2431,36 @@ export class DatabaseStorage implements IStorage {
         .from(appointments)
         .where(and(
           eq(appointments.userId, userId),
-          sql`extract(month from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${month}`,
-          sql`extract(year from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${year}`
+          sql`extract(month from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${m.month}`,
+          sql`extract(year from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${m.year}`
         ));
 
       activityData.push({
-        name: monthName,
+        name: m.name,
         exames: Number(examsInMonth[0].count),
         pacientes: Number(patientsInMonth[0].count),
-        faturamento: Number(revenueInMonth[0]?.total || 0) / 100 // Convert cents to real currency unit if needed, usually kept in cents for frontend formatting but here keeping consistent with request
+        faturamento: Number(revenueInMonth[0]?.total || 0) / 100 // Convert cents to real currency unit if needed
       });
     }
 
     // 3. Totals
-    const totalPatients = (await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.userId, userId)))[0].count;
-    const totalExams = (await db.select({ count: sql<number>`count(*)` }).from(exams).where(eq(exams.userId, userId)))[0].count;
+    // Total patients created within the period
+    const totalPatientsInPeriod = (await db.select({ count: sql<number>`count(*)` })
+      .from(profiles)
+      .where(and(
+        eq(profiles.userId, userId),
+        gte(profiles.createdAt, startDate),
+        lte(profiles.createdAt, endDate)
+      )))[0].count;
+
+    // Total exams in selected period
+    const totalExamsInPeriod = (await db.select({ count: sql<number>`count(*)` })
+      .from(exams)
+      .where(and(
+        eq(exams.userId, userId),
+        gte(exams.uploadDate, startDate),
+        lte(exams.uploadDate, endDate)
+      )))[0].count;
 
     // Financial Totals based on range
     const financialTotals = await db.select({
@@ -2432,7 +2470,8 @@ export class DatabaseStorage implements IStorage {
       .from(appointments)
       .where(and(
         eq(appointments.userId, userId),
-        sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDate.toISOString().split('T')[0]}`
+        sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDate.toISOString().split('T')[0]}`,
+        sql`to_date(${appointments.date}, 'YYYY-MM-DD') <= ${endDate.toISOString().split('T')[0]}`
       ));
 
     const totalRevenue = Number(financialTotals[0]?.revenue || 0);
@@ -2443,8 +2482,8 @@ export class DatabaseStorage implements IStorage {
       examsByType,
       activityData,
       summary: {
-        totalPatients: Number(totalPatients),
-        totalExams: Number(totalExams),
+        totalPatients: Number(totalPatientsInPeriod),
+        totalExams: Number(totalExamsInPeriod),
         mostFrequentExam: examsByType.sort((a, b) => b.value - a.value)[0]?.name || "N/A",
         totalRevenue,
         averageTicket

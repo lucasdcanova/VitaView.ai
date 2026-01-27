@@ -1,26 +1,49 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Loader2, TrendingUp, PieChart as PieChartIcon, Activity, FileText, Users } from "lucide-react";
+import { Loader2, TrendingUp, PieChart as PieChartIcon, Activity, FileText, Users, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ReportsPage() {
     const [range, setRange] = useState("30d");
+    const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+    const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
+    const [isStartDateOpen, setIsStartDateOpen] = useState(false);
+    const [isEndDateOpen, setIsEndDateOpen] = useState(false);
 
     const { data: analytics, isLoading } = useQuery({
-        queryKey: ["/api/analytics", range],
+        queryKey: ["/api/analytics", range, customStartDate?.toISOString(), customEndDate?.toISOString()],
         queryFn: async () => {
-            const res = await fetch(`/api/analytics?range=${range}`);
+            // Build query params inside the function to avoid stale closure
+            const params = range === "custom" && customStartDate && customEndDate
+                ? `range=custom&startDate=${customStartDate.toISOString()}&endDate=${customEndDate.toISOString()}`
+                : `range=${range}`;
+            const res = await fetch(`/api/analytics?${params}`);
             if (!res.ok) throw new Error("Failed to fetch analytics");
             return res.json();
-        }
+        },
+        enabled: range !== "custom" || (!!customStartDate && !!customEndDate)
     });
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+    const handleRangeChange = (value: string) => {
+        setRange(value);
+        if (value !== "custom") {
+            setCustomStartDate(undefined);
+            setCustomEndDate(undefined);
+        }
+    };
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -36,17 +59,80 @@ export default function ReportsPage() {
                                 <p className="text-gray-500 mt-1">Controle financeiro e fluxo de pacientes.</p>
                             </div>
 
-                            <Select value={range} onValueChange={setRange}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Período" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                                    <SelectItem value="1y">Último ano</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Select value={range} onValueChange={handleRangeChange}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Período" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                                        <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                                        <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                                        <SelectItem value="1y">Último ano</SelectItem>
+                                        <SelectItem value="custom">Personalizado</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                {range === "custom" && (
+                                    <div className="flex items-center gap-2">
+                                        <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "w-[140px] justify-start text-left font-normal",
+                                                        !customStartDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Data inicial"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={customStartDate}
+                                                    onSelect={(date) => {
+                                                        setCustomStartDate(date);
+                                                        setIsStartDateOpen(false);
+                                                    }}
+                                                    disabled={(date) => date > new Date() || (customEndDate ? date > customEndDate : false)}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <span className="text-gray-500">até</span>
+
+                                        <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "w-[140px] justify-start text-left font-normal",
+                                                        !customEndDate && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data final"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={customEndDate}
+                                                    onSelect={(date) => {
+                                                        setCustomEndDate(date);
+                                                        setIsEndDateOpen(false);
+                                                    }}
+                                                    disabled={(date) => date > new Date() || (customStartDate ? date < customStartDate : false)}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {isLoading ? (
