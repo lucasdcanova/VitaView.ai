@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 
@@ -12,6 +11,7 @@ interface AppointmentCardProps {
         label: string;
     };
     isInService?: boolean;
+    triageData?: any; // Triage data passed from parent (batch fetched)
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -37,13 +37,7 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string;
     },
 };
 
-export function AppointmentCard({ appointment, styles, isInService = false }: AppointmentCardProps) {
-    // Query triage data at component level (proper hook usage)
-    const { data: triageData } = useQuery<any>({
-        queryKey: [`/api/triage/appointment/${appointment.id}`],
-        enabled: !!appointment.id,
-    });
-
+export function AppointmentCard({ appointment, styles, isInService = false, triageData }: AppointmentCardProps) {
     const isInProgress = appointment.status === 'in_progress';
     const isCompleted = appointment.status === 'completed';
     // Only show "active" visual cues if the appointment is in progress AND it is the one currently in service in the global context
@@ -90,3 +84,4 @@ export function AppointmentCard({ appointment, styles, isInService = false }: Ap
         </motion.div>
     );
 }
+

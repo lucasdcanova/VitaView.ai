@@ -1381,6 +1381,29 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Batch endpoint for fetching multiple triages at once (performance optimization)
+  app.post("/api/triage/batch", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      const { appointmentIds } = req.body;
+      if (!Array.isArray(appointmentIds)) {
+        return res.status(400).json({ message: "appointmentIds deve ser um array" });
+      }
+
+      const triages = await storage.getTriagesByAppointmentIds(appointmentIds);
+      // Return as a map for easy lookup by appointmentId
+      const triageMap: Record<number, any> = {};
+      triages.forEach(t => {
+        triageMap[t.appointmentId] = t;
+      });
+      res.json(triageMap);
+    } catch (error) {
+      console.error('Error fetching triages batch:', error);
+      res.status(500).json({ message: "Erro ao buscar triagens" });
+    }
+  });
+
   app.get("/api/triage/appointment/:appointmentId", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");

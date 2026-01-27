@@ -8,6 +8,7 @@ interface AppointmentPopoverHeaderProps {
     };
     canStartService?: boolean;
     onStartService?: () => void;
+    triageData?: any; // Triage data passed from parent
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; label: string }> = {
@@ -18,12 +19,7 @@ const PRIORITY_CONFIG: Record<string, { color: string; label: string }> = {
     non_urgent: { color: "bg-blue-500", label: "Não Urgente" },
 };
 
-export function AppointmentPopoverHeader({ appointment, styles, canStartService, onStartService }: AppointmentPopoverHeaderProps) {
-    // Query triage data at component level (proper hook usage)
-    const { data: triageData } = useQuery<any>({
-        queryKey: [`/api/triage/appointment/${appointment.id}`],
-        enabled: !!appointment.id,
-    });
+export function AppointmentPopoverHeader({ appointment, styles, canStartService, onStartService, triageData }: AppointmentPopoverHeaderProps) {
 
     const config = triageData?.manchesterPriority
         ? PRIORITY_CONFIG[triageData.manchesterPriority]

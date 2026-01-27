@@ -73,6 +73,22 @@ export function AgendaCalendar({
     queryKey: ["/api/appointments"],
   });
 
+  // Batch fetch all triages for appointments (performance optimization)
+  const appointmentIds = React.useMemo(() =>
+    appointmentsList.map(a => a.id).filter(Boolean),
+    [appointmentsList]
+  );
+
+  const { data: triageMap = {} } = useQuery<Record<number, any>>({
+    queryKey: ["/api/triage/batch", appointmentIds],
+    queryFn: async () => {
+      if (appointmentIds.length === 0) return {};
+      const res = await apiRequest("POST", "/api/triage/batch", { appointmentIds });
+      return res.json();
+    },
+    enabled: appointmentIds.length > 0,
+  });
+
   // Status update mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
@@ -583,6 +599,7 @@ export function AgendaCalendar({
                                 appointment={appointment}
                                 styles={styles}
                                 isInService={appointment.id === inServiceAppointmentId}
+                                triageData={triageMap[appointment.id]}
                               />
                             </div>
                           </PopoverTrigger>
@@ -598,6 +615,7 @@ export function AgendaCalendar({
                                     styles={styles}
                                     canStartService={canStart}
                                     onStartService={() => handleStartService(appointment)}
+                                    triageData={triageMap[appointment.id]}
                                   />
                                 );
                               })()}

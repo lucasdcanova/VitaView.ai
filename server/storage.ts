@@ -170,6 +170,7 @@ export interface IStorage {
   // Triage operations
   createTriageRecord(record: any): Promise<any>;
   getTriageByAppointmentId(appointmentId: number): Promise<any | null>;
+  getTriagesByAppointmentIds(appointmentIds: number[]): Promise<any[]>;
   updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined>;
   getTriageHistoryByProfileId(profileId: number): Promise<any[]>;
 
@@ -1220,6 +1221,12 @@ export class MemStorage implements IStorage {
     return triage || null;
   }
 
+  async getTriagesByAppointmentIds(appointmentIds: number[]): Promise<any[]> {
+    return Array.from(this.triageRecordsMap.values()).filter(
+      t => appointmentIds.includes(t.appointmentId)
+    );
+  }
+
   async updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined> {
     const existing = this.triageRecordsMap.get(id);
     if (!existing) return undefined;
@@ -2189,6 +2196,11 @@ export class DatabaseStorage implements IStorage {
     return triage || null;
   }
 
+  async getTriagesByAppointmentIds(appointmentIds: number[]): Promise<any[]> {
+    if (appointmentIds.length === 0) return [];
+    return await db.select().from(triageRecords).where(inArray(triageRecords.appointmentId, appointmentIds));
+  }
+
   async updateTriageRecord(id: number, record: Partial<any>): Promise<any | undefined> {
     const [updated] = await db.update(triageRecords)
       .set({ ...record, updatedAt: new Date() })
@@ -2353,34 +2365,10 @@ export class DatabaseStorage implements IStorage {
 
     const endDate = range === 'custom' && customEndDate ? new Date(customEndDate) : now;
 
-    // 1. Exam Counts by Type (for Pie Chart)
-    const userExams = await db.select()
-      .from(exams)
-      .where(and(
-        eq(exams.userId, userId),
-        gte(exams.uploadDate, startDate),
-        lte(exams.uploadDate, endDate)
-      ));
-
-    const examTypeCount: Record<string, number> = {};
-    userExams.forEach(exam => {
-      // Try to parse original content to get type, or use a default
-      let type = "Outros";
-      try {
-        if (exam.originalContent) {
-          const content = JSON.parse(exam.originalContent);
-          if (content.examType) type = content.examType;
-        }
-      } catch (e) { }
-
-      examTypeCount[type] = (examTypeCount[type] || 0) + 1;
-    });
-
-    const examsByType = Object.entries(examTypeCount).map(([name, value]) => ({ name, value }));
+    // All queries are now consolidated into a single Promise.all below for performance
 
     // 2. Activity Trends (Exams, Patients & Revenue over time)
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    const activityData: any[] = [];
 
     // Calculate months between startDate and endDate
     const monthsToShow: { year: number; month: number; name: string }[] = [];
@@ -2405,75 +2393,132 @@ export class DatabaseStorage implements IStorage {
       });
     }
 
-    // Aggregate data for each month in the selected period
-    for (const m of monthsToShow) {
-      // Count exams
-      const examsInMonth = await db.select({ count: sql<number>`count(*)` })
+    // OPTIMIZED: Run ALL queries in parallel with a single Promise.all
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    const [
+      userExams,
+      examsByMonth,
+      patientsByMonth,
+      revenueByMonth,
+      totalPatientsResult,
+      totalExamsResult,
+      financialTotals
+    ] = await Promise.all([
+      // 1. User exams for pie chart
+      db.select()
         .from(exams)
         .where(and(
           eq(exams.userId, userId),
-          sql`EXTRACT(MONTH FROM ${exams.uploadDate}) = ${m.month}`,
-          sql`EXTRACT(YEAR FROM ${exams.uploadDate}) = ${m.year}`
-        ));
+          gte(exams.uploadDate, startDate),
+          lte(exams.uploadDate, endDate)
+        )),
 
-      // Count new patients
-      const patientsInMonth = await db.select({ count: sql<number>`count(*)` })
+      // 2. Exams aggregated by month/year
+      db.select({
+        month: sql<number>`EXTRACT(MONTH FROM ${exams.uploadDate})::int`,
+        year: sql<number>`EXTRACT(YEAR FROM ${exams.uploadDate})::int`,
+        count: sql<number>`count(*)`
+      })
+        .from(exams)
+        .where(and(
+          eq(exams.userId, userId),
+          gte(exams.uploadDate, startDate),
+          lte(exams.uploadDate, endDate)
+        ))
+        .groupBy(sql`EXTRACT(MONTH FROM ${exams.uploadDate})`, sql`EXTRACT(YEAR FROM ${exams.uploadDate})`),
+
+      // 3. Patients aggregated by month/year
+      db.select({
+        month: sql<number>`EXTRACT(MONTH FROM ${profiles.createdAt})::int`,
+        year: sql<number>`EXTRACT(YEAR FROM ${profiles.createdAt})::int`,
+        count: sql<number>`count(*)`
+      })
         .from(profiles)
         .where(and(
           eq(profiles.userId, userId),
-          sql`EXTRACT(MONTH FROM ${profiles.createdAt}) = ${m.month}`,
-          sql`EXTRACT(YEAR FROM ${profiles.createdAt}) = ${m.year}`
-        ));
+          gte(profiles.createdAt, startDate),
+          lte(profiles.createdAt, endDate)
+        ))
+        .groupBy(sql`EXTRACT(MONTH FROM ${profiles.createdAt})`, sql`EXTRACT(YEAR FROM ${profiles.createdAt})`),
 
-      // Calculate revenue
-      // appointments.date is text YYYY-MM-DD
-      const revenueInMonth = await db.select({ total: sql<number>`sum(${appointments.price})` })
+      // 4. Revenue aggregated by month/year
+      db.select({
+        month: sql<number>`EXTRACT(MONTH FROM to_date(${appointments.date}, 'YYYY-MM-DD'))::int`,
+        year: sql<number>`EXTRACT(YEAR FROM to_date(${appointments.date}, 'YYYY-MM-DD'))::int`,
+        total: sql<number>`sum(${appointments.price})`
+      })
         .from(appointments)
         .where(and(
           eq(appointments.userId, userId),
-          sql`extract(month from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${m.month}`,
-          sql`extract(year from to_date(${appointments.date}, 'YYYY-MM-DD')) = ${m.year}`
-        ));
+          sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDateStr}`,
+          sql`to_date(${appointments.date}, 'YYYY-MM-DD') <= ${endDateStr}`
+        ))
+        .groupBy(sql`EXTRACT(MONTH FROM to_date(${appointments.date}, 'YYYY-MM-DD'))`, sql`EXTRACT(YEAR FROM to_date(${appointments.date}, 'YYYY-MM-DD'))`),
 
-      activityData.push({
+      // 5. Total patients in period
+      db.select({ count: sql<number>`count(*)` })
+        .from(profiles)
+        .where(and(
+          eq(profiles.userId, userId),
+          gte(profiles.createdAt, startDate),
+          lte(profiles.createdAt, endDate)
+        )),
+
+      // 6. Total exams in period
+      db.select({ count: sql<number>`count(*)` })
+        .from(exams)
+        .where(and(
+          eq(exams.userId, userId),
+          gte(exams.uploadDate, startDate),
+          lte(exams.uploadDate, endDate)
+        )),
+
+      // 7. Financial totals
+      db.select({
+        revenue: sql<number>`sum(${appointments.price})`,
+        count: sql<number>`count(*)`
+      })
+        .from(appointments)
+        .where(and(
+          eq(appointments.userId, userId),
+          sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDateStr}`,
+          sql`to_date(${appointments.date}, 'YYYY-MM-DD') <= ${endDateStr}`
+        ))
+    ]);
+
+    // Process exam types for pie chart
+    const examTypeCount: Record<string, number> = {};
+    userExams.forEach(exam => {
+      let type = "Outros";
+      try {
+        if (exam.originalContent) {
+          const content = JSON.parse(exam.originalContent);
+          if (content.examType) type = content.examType;
+        }
+      } catch (e) { }
+      examTypeCount[type] = (examTypeCount[type] || 0) + 1;
+    });
+    const examsByType = Object.entries(examTypeCount).map(([name, value]) => ({ name, value }));
+
+    // Build activity data from aggregated results
+    const activityData = monthsToShow.map(m => {
+      const examData = examsByMonth.find(e => e.month === m.month && e.year === m.year);
+      const patientData = patientsByMonth.find(p => p.month === m.month && p.year === m.year);
+      const revenueData = revenueByMonth.find(r => r.month === m.month && r.year === m.year);
+
+      return {
         name: m.name,
-        exames: Number(examsInMonth[0].count),
-        pacientes: Number(patientsInMonth[0].count),
-        faturamento: Number(revenueInMonth[0]?.total || 0) / 100 // Convert cents to real currency unit if needed
-      });
-    }
+        exames: Number(examData?.count || 0),
+        pacientes: Number(patientData?.count || 0),
+        faturamento: Number(revenueData?.total || 0) / 100
+      };
+    });
 
-    // 3. Totals
-    // Total patients created within the period
-    const totalPatientsInPeriod = (await db.select({ count: sql<number>`count(*)` })
-      .from(profiles)
-      .where(and(
-        eq(profiles.userId, userId),
-        gte(profiles.createdAt, startDate),
-        lte(profiles.createdAt, endDate)
-      )))[0].count;
-
-    // Total exams in selected period
-    const totalExamsInPeriod = (await db.select({ count: sql<number>`count(*)` })
-      .from(exams)
-      .where(and(
-        eq(exams.userId, userId),
-        gte(exams.uploadDate, startDate),
-        lte(exams.uploadDate, endDate)
-      )))[0].count;
-
-    // Financial Totals based on range
-    const financialTotals = await db.select({
-      revenue: sql<number>`sum(${appointments.price})`,
-      count: sql<number>`count(*)`
-    })
-      .from(appointments)
-      .where(and(
-        eq(appointments.userId, userId),
-        sql`to_date(${appointments.date}, 'YYYY-MM-DD') >= ${startDate.toISOString().split('T')[0]}`,
-        sql`to_date(${appointments.date}, 'YYYY-MM-DD') <= ${endDate.toISOString().split('T')[0]}`
-      ));
-
+    // Extract totals
+    const totalPatientsInPeriod = totalPatientsResult[0].count;
+    const totalExamsInPeriod = totalExamsResult[0].count;
     const totalRevenue = Number(financialTotals[0]?.revenue || 0);
     const payingAppointmentsCount = Number(financialTotals[0]?.count || 0);
     const averageTicket = payingAppointmentsCount > 0 ? Math.round(totalRevenue / payingAppointmentsCount) : 0;
