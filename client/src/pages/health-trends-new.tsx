@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useLocation } from "wouter";
@@ -681,7 +681,7 @@ export default function HealthTrendsNew({
   });
 
 
-  const timelineItems: TimelineItem[] = [
+  const timelineItems: TimelineItem[] = useMemo(() => [
     ...(Array.isArray(exams) ? exams.map((exam: any) => {
       const originalContent = exam.originalContent ? JSON.parse(exam.originalContent) : null;
       const examType = originalContent?.examType || "Exame de laboratório";
@@ -745,7 +745,7 @@ export default function HealthTrendsNew({
       originalData: evolution,
     })) : []),
 
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [exams, diagnoses, surgeries, evolutions]);
 
   const onSubmit = (data: DiagnosisForm) => {
     addDiagnosisMutation.mutate(data);

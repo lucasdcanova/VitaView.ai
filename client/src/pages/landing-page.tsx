@@ -1699,7 +1699,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Profissional de Saúde</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Vita Pro</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
@@ -1738,7 +1738,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Clínicas Multidisciplinares</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Vita Team</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">
@@ -1777,7 +1777,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Título do card */}
-                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Hospitais</h3>
+                <h3 className="text-xl font-bold text-center text-[#212121] mb-4">Vita Enterprise</h3>
 
                 {/* Lista de benefícios */}
                 <ul className="space-y-3">

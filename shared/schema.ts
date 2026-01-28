@@ -377,6 +377,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   features: json("features"),
   promoPrice: integer("promo_price"), // in cents
   promoDescription: text("promo_description"),
+  trialPeriodDays: integer("trial_period_days").default(0), // Number of trial days
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -444,6 +445,7 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   features: true,
   promoPrice: true,
   promoDescription: true,
+  trialPeriodDays: true,
   isActive: true,
 });
 

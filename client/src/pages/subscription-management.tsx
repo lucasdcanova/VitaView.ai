@@ -48,6 +48,7 @@ interface SubscriptionPlan {
   promoDescription?: string | null;
   interval: string;
   features: string[] | string; // Can be array or string depending on API
+  trialPeriodDays?: number | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -225,14 +226,14 @@ const SubscriptionManagement = () => {
   const categories = [
     {
       id: 'solo' as PlanCategory,
-      title: 'Profissional de Saúde',
+      title: 'Vita Pro',
       description: 'Planos a partir de R$ 99/mês',
       icon: Users,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
     {
       id: 'clinic' as PlanCategory,
-      title: 'Clínica Multiprofissional',
+      title: 'Vita Team',
       description: 'Planos a partir de R$ 299/mês',
       icon: Building,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
@@ -257,15 +258,17 @@ const SubscriptionManagement = () => {
 
     switch (category) {
       case 'solo':
+      case 'solo':
         return normalizedPlans.filter(plan =>
           plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'profissional de saúde'
+          plan.normalizedName === 'vita pro'
         );
+      case 'clinic':
       case 'clinic':
         return normalizedPlans.filter(plan =>
           plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'clínica multiprofissional' ||
-          plan.normalizedName === 'clínica multiprofissional+'
+          plan.normalizedName === 'vita team' ||
+          plan.normalizedName === 'vita business'
         );
       case 'hospital':
         return normalizedPlans.filter(plan =>
@@ -588,7 +591,7 @@ const SubscriptionManagement = () => {
                         <Building className="h-12 w-12 text-muted-foreground mb-4" />
                         <h3 className="text-lg font-semibold mb-2">Configure sua Clínica</h3>
                         <p className="text-muted-foreground mb-6 max-w-md">
-                          Você possui um plano de clínica multiprofissional. Configure sua clínica para
+                          Você possui um plano Vita Team ou Vita Business. Configure sua clínica para
                           começar a convidar outros profissionais.
                         </p>
                         <Button
@@ -855,7 +858,7 @@ const SubscriptionManagement = () => {
 
                   return (
                     <Card key={plan.id} className={`flex flex-col relative overflow-hidden ${isCurrentPlan ? 'border-[#212121] border-2 shadow-md' :
-                      plan.name === 'Profissional de Saúde' ? 'border-gray-200 shadow-sm' : ''
+                      plan.name === 'Vita Pro' ? 'border-gray-200 shadow-sm' : ''
                       }`}>
                       {isCurrentPlan && (
                         <div className="absolute top-0 right-0 bg-[#212121] text-white text-[10px] uppercase font-bold px-3 py-1 rounded-bl-lg">
@@ -867,13 +870,17 @@ const SubscriptionManagement = () => {
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col gap-1">
                             <CardTitle className="text-xl">{plan.name}</CardTitle>
-                            {plan.promoPrice && (
+                            {plan.trialPeriodDays && plan.trialPeriodDays > 0 ? (
+                              <Badge className="w-fit bg-green-600 text-white text-[10px] uppercase font-bold px-2 py-0.5">
+                                1 Mês Grátis
+                              </Badge>
+                            ) : plan.promoPrice ? (
                               <Badge className="w-fit bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5">
                                 Promoção
                               </Badge>
-                            )}
+                            ) : null}
                           </div>
-                          {plan.name === 'Profissional de Saúde' && !isCurrentPlan && (
+                          {plan.name === 'Vita Pro' && !isCurrentPlan && (
                             <Badge className="bg-[#212121] text-white">Popular</Badge>
                           )}
                         </div>
@@ -885,16 +892,24 @@ const SubscriptionManagement = () => {
                           <div className="flex flex-col">
                             <div className="flex items-baseline gap-1">
                               <span className="text-3xl font-bold">
-                                {plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
-                                  plan.price === 0 ? 'Grátis' :
-                                    plan.name === 'Hospitais' ? 'Sob consulta' :
-                                      `R$${(plan.price / 100).toFixed(2)}`}
+                                {plan.trialPeriodDays && plan.trialPeriodDays > 0 ? '1 Mês Grátis' :
+                                  plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
+                                    plan.price === 0 ? 'Grátis' :
+                                      plan.name === 'Hospitais' ? 'Sob consulta' :
+                                        `R$${(plan.price / 100).toFixed(2)}`}
                               </span>
-                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && (
+                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && !(plan.trialPeriodDays && plan.trialPeriodDays > 0) && (
                                 <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
                               )}
                             </div>
-                            {plan.promoPrice && (
+                            {plan.trialPeriodDays && plan.trialPeriodDays > 0 && plan.price > 0 && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                  Depois R$ {(plan.price / 100).toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}
+                                </span>
+                              </div>
+                            )}
+                            {plan.promoPrice && !plan.trialPeriodDays && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-muted-foreground line-through">
                                   R$${(plan.price / 100).toFixed(2)}
@@ -1003,10 +1018,16 @@ const SubscriptionManagement = () => {
                   </div>
                   <div className="text-2xl font-bold text-primary">
                     {selectedPlan.promoPrice ? `R$ ${(selectedPlan.promoPrice / 100).toFixed(2)}` :
-                      selectedPlan.price === 0 ? 'Grátis' : `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
-                    <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                      selectedPlan.price === 0 ? 'Grátis' :
+                        selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? '1 Mês Grátis' :
+                          `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
+                    {!selectedPlan.trialPeriodDays && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
                   </div>
-                  {selectedPlan.promoPrice && (
+                  {selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? (
+                    <div className="text-xs text-green-600 font-medium mt-1">
+                      Cancele a qualquer momento antes do fim do período de teste.
+                    </div>
+                  ) : selectedPlan.promoPrice && (
                     <div className="text-xs text-red-500 font-medium mt-1">
                       Preço promocional válido para o 1º mês
                     </div>

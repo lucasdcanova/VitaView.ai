@@ -919,6 +919,7 @@ export class MemStorage implements IStorage {
       isActive: plan.isActive ?? true,
       promoPrice: plan.promoPrice ?? null,
       promoDescription: plan.promoDescription || null,
+      trialPeriodDays: plan.trialPeriodDays ?? 0,
       createdAt: new Date()
     };
     this.subscriptionPlansMap.set(id, newPlan);
@@ -1538,7 +1539,8 @@ export class DatabaseStorage implements IStorage {
       await db.execute(sql`
         ALTER TABLE subscription_plans 
         ADD COLUMN IF NOT EXISTS promo_price INTEGER,
-        ADD COLUMN IF NOT EXISTS promo_description TEXT
+        ADD COLUMN IF NOT EXISTS promo_description TEXT,
+        ADD COLUMN IF NOT EXISTS trial_period_days INTEGER DEFAULT 0
       `);
 
       const existingPlans = await this.getSubscriptionPlans();
@@ -1550,45 +1552,80 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: 10,
           price: 0,
           interval: "month",
-          features: ["Limite de 20 pacientes", "10 uploads por paciente", "Análise de 1 página por upload", "Agenda básica"],
+          features: [
+            "Limite de 20 pacientes",
+            "10 uploads por paciente",
+            "Análise de 1 página por upload",
+            "Agenda básica",
+            "Suporte via comunidade"
+          ],
           promoPrice: null,
           promoDescription: null,
+          trialPeriodDays: 0,
           isActive: true
         },
         {
-          name: "Profissional de Saúde",
+          name: "Vita Pro",
           description: "Ideal para médicos e terapeutas em carreira solo",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
           price: 9900,
           interval: "month",
-          features: ["Pacientes ilimitados", "Extrações por IA ilimitadas", "Prontuário inteligente completo", "Agenda inteligente com lembretes", "Suporte prioritário via WhatsApp"],
-          promoPrice: 4900,
-          promoDescription: "no 1º mês",
+          features: [
+            "Pacientes ilimitados",
+            "Extrações de exames por IA ilimitadas",
+            "Prontuário inteligente completo",
+            "Agenda inteligente com lembretes",
+            "Prescrição Digital com alerta de interações",
+            "Transcrição de consultas com IA",
+            "Análise de tendências de saúde",
+            "Suporte prioritário via WhatsApp"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 30,
           isActive: true
         },
         {
-          name: "Clínica Multiprofissional",
+          name: "Vita Team",
           description: "Gestão completa para clínicas pequenas",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
           price: 29900,
           interval: "month",
-          features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+          features: [
+            "Tudo do plano Vita Pro",
+            "Até 5 profissionais inclusos",
+            "Conta administradora",
+            "Gerenciamento de equipe",
+            "Relatórios consolidados da clínica",
+            "Personalização de modelos de documentos",
+            "Treinamento de onboarding"
+          ],
           promoPrice: null,
           promoDescription: null,
+          trialPeriodDays: 30,
           isActive: true
         },
         {
-          name: "Clínica Multiprofissional+",
+          name: "Vita Business",
           description: "Gestão completa para clínicas maiores",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
           price: 49900,
           interval: "month",
-          features: ["Tudo do plano Profissional", "Profissionais ilimitados (5+)", "Conta administradora", "Gerenciamento de equipe avançado", "Relatórios consolidados", "Suporte prioritário"],
+          features: [
+            "Tudo do plano Vita Team",
+            "Profissionais ilimitados (5+)",
+            "Gestão financeira da clínica",
+            "API de integração",
+            "Gerente de conta dedicado",
+            "SLA de suporte premium",
+            "Personalização Whitelabel (logo na área do paciente)"
+          ],
           promoPrice: null,
           promoDescription: null,
+          trialPeriodDays: 30,
           isActive: true
         },
         {
@@ -1598,23 +1635,56 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 99900,
           interval: "month",
-          features: ["Profissionais ilimitados", "Integração HL7/FHIR", "Análise de dados populacional", "Gestor de conta dedicado", "SLA de suporte 24/7"],
+          features: [
+            "Infraestrutura dedicada",
+            "Integração com sistemas hospitalares (HL7/FHIR)",
+            "SSO / Active Directory",
+            "Compliance personalizado",
+            "Auditoria avançada",
+            "Treinamento in-company"
+          ],
           promoPrice: null,
           promoDescription: null,
+          trialPeriodDays: 0,
           isActive: true
         }
       ];
 
-      for (const std of standardPlans) {
-        const existing = existingPlans.find(p => p.name === std.name);
-        if (existing) {
-          await db.update(subscriptionPlans).set(std).where(eq(subscriptionPlans.id, existing.id));
+      // Insert or update plans
+      for (const plan of standardPlans) {
+        // Check if plan exists (by name, also checking old names to rename them)
+        let existingPlan = existingPlans.find(p => p.name === plan.name);
+
+        // Handle renames
+        if (!existingPlan) {
+          if (plan.name === "Vita Pro") existingPlan = existingPlans.find(p => p.name === "Profissional de Saúde");
+          else if (plan.name === "Vita Team") existingPlan = existingPlans.find(p => p.name === "Clínica Multiprofissional");
+          else if (plan.name === "Vita Business") existingPlan = existingPlans.find(p => p.name === "Clínica Multiprofissional+");
+        }
+
+        if (existingPlan) {
+          // Update existing plan
+          await db.update(subscriptionPlans)
+            .set({
+              name: plan.name,
+              description: plan.description,
+              maxProfiles: plan.maxProfiles,
+              maxUploadsPerProfile: plan.maxUploadsPerProfile,
+              price: plan.price,
+              features: plan.features,
+              promoPrice: plan.promoPrice,
+              promoDescription: plan.promoDescription,
+              trialPeriodDays: plan.trialPeriodDays,
+              isActive: plan.isActive
+            })
+            .where(eq(subscriptionPlans.id, existingPlan.id));
         } else {
-          await this.createSubscriptionPlan(std as InsertSubscriptionPlan);
+          // Create new plan
+          await this.createSubscriptionPlan(plan);
         }
       }
     } catch (error) {
-      console.error("Error setting up subscription plans:", error);
+      console.error("Error setting up default subscription plans:", error);
     }
   }
 
