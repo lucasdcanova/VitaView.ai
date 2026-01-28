@@ -258,12 +258,10 @@ const SubscriptionManagement = () => {
 
     switch (category) {
       case 'solo':
-      case 'solo':
         return normalizedPlans.filter(plan =>
           plan.normalizedName === 'gratuito' ||
           plan.normalizedName === 'vita pro'
         );
-      case 'clinic':
       case 'clinic':
         return normalizedPlans.filter(plan =>
           plan.normalizedName === 'gratuito' ||

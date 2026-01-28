@@ -39,7 +39,8 @@ import {
     PRESCRIPTION_TYPES,
     CONTROLLED_MEDICATIONS
 } from "@/components/dialogs";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
+import { FeatureGate } from '@/components/ui/feature-gate';
 import type { Profile, Prescription, CustomMedication } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,11 @@ interface AcutePrescriptionItem {
     quantity?: string;
     notes?: string;
     prescriptionType: 'padrao' | 'especial' | 'A' | 'B1' | 'B2' | 'C' | 'C1'; // Matches PDF generator keys
+}
+
+interface UserSubscription {
+    subscription: { status: string } | null;
+    plan: { name: string } | null;
 }
 
 interface VitaPrescriptionsProps {
@@ -91,6 +97,11 @@ export default function VitaPrescriptions({ patient, medications: propMedication
             queryClient.invalidateQueries({ queryKey: ["/api/custom-medications"] });
             toast({ title: "Medicamento removido", description: "O medicamento personalizado foi excluído." });
         },
+    });
+
+    const { data: subscriptionData } = useQuery<UserSubscription>({
+        queryKey: ['/api/user-subscription'],
+        staleTime: 5 * 60 * 1000,
     });
 
     // --- Continuous Medications State ---
@@ -1569,18 +1580,35 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         </div>
 
                         <div className="flex gap-2 items-end">
-                            <Button
-                                className={`flex-1 h-9 text-sm shadow-lg ${editingPrescriptionId ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}
-                                onClick={handleSaveAndPrintPrescription}
-                                disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending || acuteItems.length === 0 || !user}
-                            >
-                                <Printer className="h-4 w-4 mr-1" />
-                                {(createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending)
-                                    ? "Salvando..."
-                                    : editingPrescriptionId
-                                        ? "Atualizar e Imprimir"
-                                        : "Salvar e Imprimir"}
-                            </Button>
+                            {(() => {
+                                const prescriptionsToday = prescriptionHistory.filter(p => isToday(new Date(p.createdAt))).length;
+                                const isFreePlan = subscriptionData?.plan?.name === 'Gratuito';
+                                const limitReached = isFreePlan && prescriptionsToday >= 1;
+
+                                const saveButton = (
+                                    <Button
+                                        className={`flex-1 h-9 text-sm shadow-lg ${editingPrescriptionId ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}
+                                        onClick={handleSaveAndPrintPrescription}
+                                        disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending || acuteItems.length === 0 || !user}
+                                    >
+                                        <Printer className="h-4 w-4 mr-1" />
+                                        {(createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending)
+                                            ? "Salvando..."
+                                            : editingPrescriptionId
+                                                ? "Atualizar e Imprimir"
+                                                : "Salvar e Imprimir"}
+                                    </Button>
+                                );
+
+                                if (limitReached && !editingPrescriptionId) { // Allow updating existing ones? Or strict? "1 por dia" usually means creating. Editing implies it was already created.
+                                    return (
+                                        <FeatureGate>
+                                            {saveButton}
+                                        </FeatureGate>
+                                    )
+                                }
+                                return saveButton;
+                            })()}
                         </div>
                     </CardContent>
                 </Card>

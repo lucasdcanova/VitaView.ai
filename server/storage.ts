@@ -1553,11 +1553,12 @@ export class DatabaseStorage implements IStorage {
           price: 0,
           interval: "month",
           features: [
-            "Limite de 20 pacientes",
-            "10 uploads por paciente",
-            "Análise de 1 página por upload",
-            "Agenda básica",
-            "Suporte via comunidade"
+            "Atendimento: Anamnese básica",
+            "Prescrição: Limite de 1 prescrição por dia",
+            "Exames: Protocolos clínicos básicos",
+            "Envio de resultados: 10 uploads/mês (1 arquivo por vez)",
+            "Agenda: Básica",
+            "Pacientes: Limite de 20 pacientes"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -1572,14 +1573,14 @@ export class DatabaseStorage implements IStorage {
           price: 9900,
           interval: "month",
           features: [
-            "Pacientes ilimitados",
-            "Extrações de exames por IA ilimitadas",
+            "Atendimento: Anamnese com gravação e IA",
+            "Prescrição: Ilimitada + Alerta de interações",
+            "Exames: Protocolos editáveis e personalizados",
+            "Envio de resultados: Uploads ilimitados",
+            "Agenda: Marcação com IA e triagem",
+            "Pacientes: Ilimitados",
             "Prontuário inteligente completo",
-            "Agenda inteligente com lembretes",
-            "Prescrição Digital com alerta de interações",
-            "Transcrição de consultas com IA",
-            "Análise de tendências de saúde",
-            "Suporte prioritário via WhatsApp"
+            "Análise de tendências de saúde"
           ],
           promoPrice: null,
           promoDescription: null,

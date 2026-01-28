@@ -8,30 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Heart,
-    LineChart,
-    LayoutDashboard,
-    Activity,
-    Pill,
-    AlertTriangle,
-    FileText,
-    FileSignature,
-    Calendar,
-    TrendingUp,
-    TrendingDown,
-    Minus,
-    Users,
-    Stethoscope,
-    Upload,
-    FileUpIcon,
-    Loader2,
-    ClipboardList,
-    ShieldCheck,
-    Building2,
-    CalendarDays,
-    User
-} from "lucide-react";
+import { Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles } from 'lucide-react';
+import { FeatureGate } from '@/components/ui/feature-gate';
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useForm } from "react-hook-form";

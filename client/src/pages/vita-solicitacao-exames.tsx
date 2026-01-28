@@ -37,6 +37,7 @@ import {
     Activity,
     Stethoscope
 } from "lucide-react";
+import { FeatureGate } from '@/components/ui/feature-gate';
 import { cn } from "@/lib/utils";
 
 // Banco de dados de exames comuns - EXPANDIDO
@@ -890,9 +891,11 @@ export default function VitaSolicitacaoExames({ patient }: VitaSolicitacaoExames
                                 {/* Create Protocol Dialog */}
                                 <Dialog open={createProtocolOpen} onOpenChange={setCreateProtocolOpen}>
                                     <DialogTrigger asChild>
-                                        <Button size="sm" className="h-6 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2">
-                                            <PlusCircle className="h-3 w-3 mr-1" /> Criar
-                                        </Button>
+                                        <FeatureGate feature="create-protocol">
+                                            <Button size="sm" className="h-6 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2">
+                                                <PlusCircle className="h-3 w-3 mr-1" /> Criar
+                                            </Button>
+                                        </FeatureGate>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>

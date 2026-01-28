@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { FeatureGate } from '@/components/ui/feature-gate';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -543,10 +544,12 @@ export function AnamnesisCard() {
                                 <p className="text-sm text-gray-600">Grave a consulta e a IA preenche a anamnese automaticamente</p>
                             </div>
                         </div>
-                        <ConsultationRecorder
-                            onTranscriptionComplete={handleTranscriptionComplete}
-                            profileId={activeProfile?.id}
-                        />
+                        <FeatureGate feature="ai-recording">
+                            <ConsultationRecorder
+                                onTranscriptionComplete={handleTranscriptionComplete}
+                                profileId={activeProfile?.id}
+                            />
+                        </FeatureGate>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -616,33 +619,37 @@ export function AnamnesisCard() {
                             )}
                             Salvar como Consulta
                         </Button>
-                        <Button
-                            type="button"
-                            onClick={handleEnhanceAnamnesis}
-                            disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
-                            variant="secondary"
-                            className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
-                        >
-                            {enhanceAnamnesisMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Wand2 className="h-4 w-4" />
-                            )}
-                            Melhorar com IA
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleAnalyzeAnamnesis}
-                            disabled={analyzeAnamnesisMutation.isPending}
-                            className="gap-2"
-                        >
-                            {analyzeAnamnesisMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Sparkles className="h-4 w-4" />
-                            )}
-                            Extrair dados com IA
-                        </Button>
+                        <FeatureGate feature="ai-enhance">
+                            <Button
+                                type="button"
+                                onClick={handleEnhanceAnamnesis}
+                                disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
+                                variant="secondary"
+                                className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                            >
+                                {enhanceAnamnesisMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Wand2 className="h-4 w-4" />
+                                )}
+                                Melhorar com IA
+                            </Button>
+                        </FeatureGate>
+                        <FeatureGate feature="ai-analyze">
+                            <Button
+                                type="button"
+                                onClick={handleAnalyzeAnamnesis}
+                                disabled={analyzeAnamnesisMutation.isPending}
+                                className="gap-2"
+                            >
+                                {analyzeAnamnesisMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Sparkles className="h-4 w-4" />
+                                )}
+                                Extrair dados com IA
+                            </Button>
+                        </FeatureGate>
                         <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
                             Limpar texto
                         </Button>
