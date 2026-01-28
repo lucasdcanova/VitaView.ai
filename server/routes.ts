@@ -2460,6 +2460,81 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Unified Patient Dashboard - Returns all patient data in a single request
+  // This reduces waterfall API calls and improves page load performance
+  app.get("/api/patient-dashboard/:profileId", ensureAuthenticated, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.profileId);
+      const userId = req.user!.id;
+
+      if (isNaN(profileId)) {
+        return res.status(400).json({ message: "ID de perfil inválido" });
+      }
+
+      // Verify the profile belongs to this user
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      // Fetch all data in parallel for maximum performance
+      const [
+        diagnoses,
+        surgeries,
+        allergies,
+        exams,
+        healthMetrics,
+        triageHistory,
+        medicationsResult
+      ] = await Promise.all([
+        storage.getDiagnosesByUserId(userId),
+        storage.getSurgeriesByUserId(userId),
+        storage.getAllergiesByProfileId(profileId),
+        storage.getExamsByUserId(userId, profileId),
+        storage.getHealthMetricsByUserId(userId, profileId),
+        storage.getTriageHistoryByProfileId(profileId),
+        pool.query(
+          `SELECT * FROM medications 
+           WHERE user_id = $1 AND is_active = true
+           ORDER BY created_at DESC`,
+          [userId]
+        )
+      ]);
+
+      // Transform medications to camelCase
+      const medications = medicationsResult.rows.map(m => ({
+        id: m.id,
+        userId: m.user_id,
+        name: m.name,
+        format: m.format,
+        dosage: m.dosage,
+        dosageUnit: m.dosage_unit,
+        frequency: m.frequency,
+        doseAmount: m.dose_amount,
+        prescriptionType: m.prescription_type,
+        quantity: m.quantity,
+        administrationRoute: m.administration_route,
+        notes: m.notes,
+        startDate: m.start_date,
+        isActive: m.is_active,
+        createdAt: m.created_at
+      }));
+
+      res.json({
+        diagnoses: diagnoses || [],
+        surgeries: surgeries || [],
+        allergies: allergies || [],
+        exams: exams || [],
+        healthMetrics: healthMetrics || [],
+        triageHistory: triageHistory || [],
+        medications: medications || []
+      });
+    } catch (error) {
+      console.error("[PATIENT-DASHBOARD] Error fetching patient data:", error);
+      res.status(500).json({ message: "Erro ao buscar dados do paciente" });
+    }
+  });
+
   // API route for health insights
   // Nova rota para analisar um exame já extraído com a OpenAI
   app.post("/api/exams/:id/analyze", ensureAuthenticated, async (req, res) => {

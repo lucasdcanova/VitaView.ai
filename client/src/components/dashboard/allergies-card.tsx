@@ -18,9 +18,10 @@ type AllergyForm = AllergyFormData;
 
 interface AllergiesCardProps {
     profileId?: number;
+    allergies?: any[]; // Optional - if provided, will use this data instead of fetching
 }
 
-export function AllergiesCard({ profileId }: AllergiesCardProps) {
+export function AllergiesCard({ profileId, allergies: propAllergies }: AllergiesCardProps) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -32,10 +33,14 @@ export function AllergiesCard({ profileId }: AllergiesCardProps) {
         ? [`/api/allergies/patient/${profileId}`]
         : ["/api/allergies"];
 
-    const { data: allergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
+    // Only fetch if allergies are not provided as props
+    const { data: fetchedAllergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
         queryKey,
-        enabled: profileId !== undefined // Optional: disable if profileId is explicitly passed but null (though ? handles undefined)
+        enabled: !propAllergies && profileId !== undefined // Disable fetch if data provided via props
     });
+
+    // Use prop data if available, otherwise use fetched data
+    const allergies = propAllergies || fetchedAllergies;
 
     const allergyForm = useForm<AllergyForm>({
         resolver: zodResolver(allergySchema),

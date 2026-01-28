@@ -59,9 +59,11 @@ interface AcutePrescriptionItem {
 
 interface VitaPrescriptionsProps {
     patient: Profile;
+    medications?: any[]; // Optional - if provided, will use this data instead of fetching
+    allergies?: any[]; // Optional - if provided, will use this data instead of fetching
 }
 
-export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
+export default function VitaPrescriptions({ patient, medications: propMedications, allergies: propAllergies }: VitaPrescriptionsProps) {
     const { toast } = useToast();
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -279,16 +281,19 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
         enabled: !!patient.id
     });
 
-    // Fetches patient allergies
-    const { data: allergies = [] } = useQuery<any[]>({
+    // Fetches patient allergies (only if not provided via props)
+    const { data: fetchedAllergies = [] } = useQuery<any[]>({
         queryKey: [`/api/allergies/patient/${patient.id}`],
-        enabled: !!patient.id
+        enabled: !propAllergies && !!patient.id
     });
+    const allergies = propAllergies || fetchedAllergies;
 
-    // Fetches continuous medications
-    const { data: medications = [] } = useQuery<any[]>({
+    // Fetches continuous medications (only if not provided via props)
+    const { data: fetchedMedications = [] } = useQuery<any[]>({
         queryKey: ["/api/medications"],
+        enabled: !propMedications
     });
+    const medications = propMedications || fetchedMedications;
 
     // Mutations
 
@@ -750,35 +755,23 @@ export default function VitaPrescriptions({ patient }: VitaPrescriptionsProps) {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Header & Allergies - Integrated Row */}
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                {/* Allergies Warning (Left side if present, otherwise empty space keeps alignment) */}
-                <div className="flex-1 w-full">
-                    {allergies.length > 0 && (
-                        <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-md flex items-start h-full">
-                            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <div>
-                                <h3 className="text-red-800 font-semibold text-sm">Alergias Conhecidas</h3>
-                                <ul className="mt-1 list-disc list-inside text-sm text-red-700">
-                                    {allergies.map((allergy: any) => (
-                                        <li key={allergy.id}>
-                                            <span className="font-medium">{allergy.allergen}</span>
-                                            {allergy.reaction && <span className="text-red-600"> - {allergy.reaction}</span>}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    )}
+            {/* Allergies Warning */}
+            {allergies.length > 0 && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-md flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                        <h3 className="text-red-800 font-semibold text-sm">Alergias Conhecidas</h3>
+                        <ul className="mt-1 list-disc list-inside text-sm text-red-700">
+                            {allergies.map((allergy: any) => (
+                                <li key={allergy.id}>
+                                    <span className="font-medium">{allergy.allergen}</span>
+                                    {allergy.reaction && <span className="text-red-600"> - {allergy.reaction}</span>}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
-
-                {/* Professional Info (Right side) */}
-                <div className="w-full md:w-auto min-w-[250px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex flex-col items-end flex-shrink-0">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
-                    <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                    {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
-                </div>
-            </div>
+            )}
 
             {/* 2-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

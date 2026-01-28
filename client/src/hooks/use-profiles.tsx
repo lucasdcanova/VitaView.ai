@@ -163,9 +163,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         // Ignore cookie errors no-op
       }
 
-      // Refresh all data for the new profile
-      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      // Refresh patient dashboard data for the new profile
+      queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", profile.id] });
     },
     onError: (error) => {
       toast({
@@ -235,9 +234,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         // Ignore cookie errors
       }
-      // Refresh data for the new profile
-      queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
+      // Refresh patient dashboard data for the new profile
+      queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", profile.id] });
     }
   };
 

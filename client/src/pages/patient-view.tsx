@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -39,6 +39,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 import { TriageCard } from "@/components/dashboard/triage-card";
 import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
@@ -49,12 +50,27 @@ import { AllergiesCard } from "@/components/dashboard/allergies-card";
 import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/components/dialogs/diagnosis-dialog";
 import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
 
-import HealthTrendsNew from "./health-trends-new";
-import VitaPrescriptions from "./vita-prescricoes";
-import VitaCertificates from "./vita-atestados";
-import VitaSolicitacaoExames from "./vita-solicitacao-exames";
+// Lazy load heavy tab components for better initial page load
+const HealthTrendsNew = lazy(() => import("./health-trends-new"));
+const VitaPrescriptions = lazy(() => import("./vita-prescricoes"));
+const VitaCertificates = lazy(() => import("./vita-atestados"));
+const VitaSolicitacaoExames = lazy(() => import("./vita-solicitacao-exames"));
+
 import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
+
+// Loading skeleton for lazy-loaded tabs
+const TabLoadingSkeleton = () => (
+    <div className="animate-pulse space-y-4 p-4">
+        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+        <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-full"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+        </div>
+        <div className="h-32 bg-gray-200 rounded"></div>
+    </div>
+);
 
 // Função para calcular idade
 const calculateAge = (birthDate: string | null | undefined): number | null => {
@@ -76,6 +92,7 @@ export default function PatientView() {
     const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     // Dialog States
     const [isDiagnosisDialogOpen, setIsDiagnosisDialogOpen] = useState(false);
@@ -147,35 +164,27 @@ export default function PatientView() {
         }
     };
 
-    // Fetch patient data for dashboard
-    const { data: diagnoses = [] } = useQuery<any[]>({
-        queryKey: ["/api/diagnoses"],
-    });
-
-    const { data: medications = [] } = useQuery<any[]>({
-        queryKey: ["/api/medications"],
-    });
-
-    const { data: allergies = [] } = useQuery<any[]>({
-        queryKey: ["/api/allergies"],
-    });
-
-    const { data: exams = [] } = useQuery<any[]>({
-        queryKey: ["/api/exams"],
-    });
-
-    const { data: healthMetrics = [] } = useQuery<any[]>({
-        queryKey: ["/api/health-metrics"],
-    });
-
-    const { data: surgeries = [] } = useQuery<any[]>({
-        queryKey: ["/api/surgeries"],
-    });
-
-    const { data: triageHistory = [] } = useQuery<any[]>({
-        queryKey: [`/api/triage/history/${activeProfile?.id}`],
+    // Fetch all patient data in a single consolidated query for performance
+    const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+        queryKey: ["/api/patient-dashboard", activeProfile?.id],
+        queryFn: async () => {
+            const res = await apiRequest("GET", `/api/patient-dashboard/${activeProfile?.id}`);
+            return res.json();
+        },
         enabled: !!activeProfile?.id,
+        staleTime: 30000, // 30 seconds - data is considered fresh
     });
+
+    // Destructure all the data from the consolidated response
+    const {
+        diagnoses = [],
+        medications = [],
+        allergies = [],
+        exams = [],
+        healthMetrics = [],
+        surgeries = [],
+        triageHistory = []
+    } = dashboardData || {};
 
     // Filter triage for the current appointment if in service
     const currentTriage = triageHistory.find((t: any) =>
@@ -245,6 +254,15 @@ export default function PatientView() {
                                         </p>
                                     )}
                                 </div>
+
+                                {/* Doctor Prescriber Info - Right side of header */}
+                                {user && (
+                                    <div className="hidden md:flex min-w-[200px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex-col items-end flex-shrink-0">
+                                        <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
+                                        <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
+                                        {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
+                                    </div>
+                                )}
                             </div>
                         </header>
 
@@ -359,7 +377,7 @@ export default function PatientView() {
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="md:col-span-2">
-                                                        <AllergiesCard profileId={activeProfile.id} />
+                                                        <AllergiesCard profileId={activeProfile.id} allergies={allergies} />
                                                     </div>
                                                     <ComorbiditiesCard
                                                         diagnoses={diagnoses}
@@ -400,7 +418,9 @@ export default function PatientView() {
                             {/* Vita Prescrições Tab */}
                             <TabsContent value="prescricoes" className="mt-0">
                                 {activeProfile ? (
-                                    <VitaPrescriptions patient={activeProfile} />
+                                    <Suspense fallback={<TabLoadingSkeleton />}>
+                                        <VitaPrescriptions patient={activeProfile} medications={medications} allergies={allergies} />
+                                    </Suspense>
                                 ) : (
                                     <Card className="text-center py-12">
                                         <CardContent>
@@ -416,7 +436,18 @@ export default function PatientView() {
                             {/* Timeline Tab - Redirect to actual page */}
                             <TabsContent value="timeline" className="mt-0">
                                 {activeProfile ? (
-                                    <HealthTrendsNew embedded={true} />
+                                    <Suspense fallback={<TabLoadingSkeleton />}>
+                                        <HealthTrendsNew
+                                            embedded={true}
+                                            diagnoses={diagnoses}
+                                            medications={medications}
+                                            allergies={allergies}
+                                            surgeries={surgeries}
+                                            triageHistory={triageHistory}
+                                            exams={exams}
+                                            healthMetrics={healthMetrics}
+                                        />
+                                    </Suspense>
                                 ) : (
                                     <Card className="text-center py-12">
                                         <CardContent>
@@ -457,7 +488,9 @@ export default function PatientView() {
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                             {/* Left Column: Solicitação de Exames */}
                                             <div>
-                                                <VitaSolicitacaoExames patient={activeProfile} />
+                                                <Suspense fallback={<TabLoadingSkeleton />}>
+                                                    <VitaSolicitacaoExames patient={activeProfile} />
+                                                </Suspense>
                                             </div>
 
                                             {/* Right Column: Upload + Lista de Resultados */}
@@ -549,7 +582,9 @@ export default function PatientView() {
                             {/* Vita Atestados Tab */}
                             <TabsContent value="atestados" className="mt-0">
                                 {activeProfile ? (
-                                    <VitaCertificates patient={activeProfile} />
+                                    <Suspense fallback={<TabLoadingSkeleton />}>
+                                        <VitaCertificates patient={activeProfile} />
+                                    </Suspense>
                                 ) : (
                                     <Card className="text-center py-12">
                                         <CardContent>

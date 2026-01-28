@@ -145,9 +145,26 @@ interface TimelineItem {
 
 interface HealthTrendsNewProps {
   embedded?: boolean;
+  // Optional pre-fetched data to avoid duplicate API calls
+  diagnoses?: any[];
+  medications?: any[];
+  allergies?: any[];
+  surgeries?: any[];
+  triageHistory?: any[];
+  exams?: any[];
+  healthMetrics?: any[];
 }
 
-export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewProps = {}) {
+export default function HealthTrendsNew({
+  embedded = false,
+  diagnoses: propDiagnoses,
+  medications: propMedications,
+  allergies: propAllergies,
+  surgeries: propSurgeries,
+  triageHistory: propTriageHistory,
+  exams: propExams,
+  healthMetrics: propHealthMetrics
+}: HealthTrendsNewProps = {}) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -283,25 +300,35 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
     },
   });
 
-  const { data: exams = [], isLoading: examsLoading } = useQuery({
+  const { data: fetchedExams = [], isLoading: examsLoading } = useQuery({
     queryKey: ["/api/exams"],
+    enabled: !propExams,
   });
+  const exams = propExams || fetchedExams;
 
-  const { data: diagnoses = [], isLoading: diagnosesLoading } = useQuery<any[]>({
+  const { data: fetchedDiagnoses = [], isLoading: diagnosesLoading } = useQuery<any[]>({
     queryKey: ["/api/diagnoses"],
+    enabled: !propDiagnoses,
   });
+  const diagnoses = propDiagnoses || fetchedDiagnoses;
 
-  const { data: medications = [], isLoading: medicationsLoading } = useQuery<any[]>({
+  const { data: fetchedMedications = [], isLoading: medicationsLoading } = useQuery<any[]>({
     queryKey: ["/api/medications"],
+    enabled: !propMedications,
   });
+  const medications = propMedications || fetchedMedications;
 
-  const { data: allergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
+  const { data: fetchedAllergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
     queryKey: ["/api/allergies"],
+    enabled: !propAllergies,
   });
+  const allergies = propAllergies || fetchedAllergies;
 
-  const { data: surgeries = [], isLoading: surgeriesLoading } = useQuery<any[]>({
+  const { data: fetchedSurgeries = [], isLoading: surgeriesLoading } = useQuery<any[]>({
     queryKey: ["/api/surgeries"],
+    enabled: !propSurgeries,
   });
+  const surgeries = propSurgeries || fetchedSurgeries;
 
   const { data: habits = [] } = useQuery<any[]>({
     queryKey: ["/api/habits"],
@@ -316,11 +343,12 @@ export default function HealthTrendsNew({ embedded = false }: HealthTrendsNewPro
     enabled: !!activeProfile?.id,
   });
 
-  // Query para buscar histórico de triagens do paciente
-  const { data: triageHistory = [] } = useQuery<any[]>({
+  // Query para buscar histórico de triagens do paciente (only if not provided via props)
+  const { data: fetchedTriageHistory = [] } = useQuery<any[]>({
     queryKey: [`/api/triage/history/${activeProfile?.id}`],
-    enabled: !!activeProfile?.id,
+    enabled: !propTriageHistory && !!activeProfile?.id,
   });
+  const triageHistory = propTriageHistory || fetchedTriageHistory;
 
   // Pegar a triagem mais recente (do dia atual se existir)
   const todayTriage = triageHistory.length > 0 ? triageHistory[0] : null;
