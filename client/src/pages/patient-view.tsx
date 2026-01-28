@@ -38,6 +38,7 @@ const HealthTrendsNew = lazy(() => import("./health-trends-new"));
 const VitaPrescriptions = lazy(() => import("./vita-prescricoes"));
 const VitaCertificates = lazy(() => import("./vita-atestados"));
 const VitaSolicitacaoExames = lazy(() => import("./vita-solicitacao-exames"));
+const ExamTimeline = lazy(() => import("./exam-timeline"));
 
 import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
@@ -281,6 +282,13 @@ export default function PatientView() {
                                     Exames
                                 </TabsTrigger>
                                 <TabsTrigger
+                                    value="evolution"
+                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                >
+                                    <TrendingUp className="h-4 w-4 mr-2" />
+                                    Evolução
+                                </TabsTrigger>
+                                <TabsTrigger
                                     value="atestados"
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
@@ -416,7 +424,7 @@ export default function PatientView() {
                             </TabsContent>
 
 
-                            {/* Timeline Tab - Redirect to actual page */}
+                            {/* Timeline Tab (Histórico do Paciente - Aberto para todos) */}
                             <TabsContent value="timeline" className="mt-0">
                                 {activeProfile ? (
                                     <Suspense fallback={<TabLoadingSkeleton />}>
@@ -559,6 +567,30 @@ export default function PatientView() {
                                             </div>
                                         </div>
                                     </div>
+                                )}
+                            </TabsContent>
+
+                            {/* Evolution Tab (Gated) */}
+                            <TabsContent value="evolution" className="mt-0">
+                                {activeProfile ? (
+                                    <Suspense fallback={<TabLoadingSkeleton />}>
+                                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1 w-full">
+                                            <ExamTimeline
+                                                embedded={true}
+                                                activeProfile={activeProfile}
+                                                exams={exams}
+                                                healthMetrics={healthMetrics}
+                                            />
+                                        </div>
+                                    </Suspense>
+                                ) : (
+                                    <Card className="text-center py-12">
+                                        <CardContent>
+                                            <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Nenhum paciente selecionado</h3>
+                                            <p className="text-gray-600 mb-4">Selecione um paciente na sidebar para visualizar a evolução clínica.</p>
+                                        </CardContent>
+                                    </Card>
                                 )}
                             </TabsContent>
 

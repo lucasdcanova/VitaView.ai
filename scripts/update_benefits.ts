@@ -23,14 +23,13 @@ async function main() {
 
     // Vita Common Features
     const vitaFeatures = [
-        "Anamnese Inteligente com Gravação de Voz",
-        "Prescrição Ilimitada com Alerta de Interações",
-        "Protocolos de Exames Personalizáveis",
-        "Upload Ilimitado de Resultados de Exames",
-        "Agendamento Inteligente e Triagem Pré-Consulta",
-        "Gestão de Pacientes Ilimitada",
-        "Prontuário Eletrônico Completo e Inteligente",
-        "Análise Avançada de Tendências de Saúde"
+        "Anamnese **com IA** e Gravação de Voz",
+        "Prescrição **Ilimitada** com Alerta de Interações",
+        "Protocolos de Exames **Personalizáveis**",
+        "Upload **Ilimitado** de Resultados de Exames",
+        "Agendamento **com IA** e Triagem Pré-Consulta",
+        "**Gestão de Pacientes Ilimitada**",
+        "**Gráficos de Evolução** de Exames"
     ];
 
     // 2. Update Vita Pro

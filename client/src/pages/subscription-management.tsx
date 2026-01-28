@@ -456,7 +456,7 @@ const SubscriptionManagement = () => {
                           {Array.isArray(currentPlan?.features) && currentPlan?.features.map((feature, index) => (
                             <li key={index} className="flex items-start text-sm">
                               <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                              {feature}
+                              <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                             </li>
                           ))}
                         </ul>
@@ -924,7 +924,12 @@ const SubscriptionManagement = () => {
                           {(Array.isArray(plan.features) ? plan.features : []).map((feature: string, index: number) => (
                             <li key={index} className="flex items-start text-sm">
                               <Check className="h-4 w-4 text-[#212121] mr-2 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-600">{feature}</span>
+                              <span
+                                className="text-gray-600"
+                                dangerouslySetInnerHTML={{
+                                  __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
+                                }}
+                              />
                             </li>
                           ))}
                         </ul>

@@ -46,6 +46,7 @@ export interface IStorage {
   createExamResult(result: InsertExamResult): Promise<ExamResult>;
   getExamResult(id: number): Promise<ExamResult | undefined>;
   getExamResultByExamId(examId: number): Promise<ExamResult | undefined>;
+  updateExamResult(id: number, data: Partial<InsertExamResult>): Promise<ExamResult>;
 
   // Health metrics operations
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
@@ -621,6 +622,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.examResults.values()).find(
       (result) => result.examId === examId
     );
+  }
+
+  async updateExamResult(id: number, data: Partial<InsertExamResult>): Promise<ExamResult> {
+    const existing = this.examResults.get(id);
+    if (!existing) throw new Error("Exam result not found");
+    const updated = { ...existing, ...data };
+    this.examResults.set(id, updated);
+    return updated;
   }
 
   // Health metrics operations
@@ -1573,14 +1582,13 @@ export class DatabaseStorage implements IStorage {
           price: 9900,
           interval: "month",
           features: [
-            "Atendimento: Anamnese com gravação e IA",
-            "Prescrição: Ilimitada + Alerta de interações",
-            "Exames: Protocolos editáveis e personalizados",
-            "Envio de resultados: Uploads ilimitados",
-            "Agenda: Marcação com IA e triagem",
-            "Pacientes: Ilimitados",
-            "Prontuário inteligente completo",
-            "Análise de tendências de saúde"
+            "Anamnese **com IA** e Gravação de Voz",
+            "Prescrição **Ilimitada** com Alerta de Interações",
+            "Protocolos de Exames **Personalizáveis**",
+            "Upload **Ilimitado** de Resultados de Exames",
+            "Agendamento **com IA** e Triagem Pré-Consulta",
+            "**Gestão de Pacientes Ilimitada**",
+            "**Gráficos de Evolução** de Exames"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -1595,10 +1603,10 @@ export class DatabaseStorage implements IStorage {
           price: 29900,
           interval: "month",
           features: [
-            "Tudo do plano Vita Pro",
-            "Até 5 profissionais inclusos",
-            "Conta administradora",
-            "Gerenciamento de equipe",
+            "Tudo do plano **Vita Pro**",
+            "Até **5 profissionais** inclusos",
+            "**Conta administradora**",
+            "**Gerenciamento de equipe**",
             "Relatórios consolidados da clínica",
             "Personalização de modelos de documentos",
             "Treinamento de onboarding"
@@ -1616,9 +1624,9 @@ export class DatabaseStorage implements IStorage {
           price: 49900,
           interval: "month",
           features: [
-            "Tudo do plano Vita Team",
-            "Profissionais ilimitados (5+)",
-            "Gestão financeira da clínica",
+            "Tudo do plano **Vita Team**",
+            "**Profissionais ilimitados** (5+)",
+            "**Gestão financeira** da clínica",
             "API de integração",
             "Gerente de conta dedicado",
             "SLA de suporte premium",
@@ -1797,6 +1805,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(examResults.examId, examId))
       .orderBy(desc(examResults.id));
     return r;
+  }
+
+  async updateExamResult(id: number, data: Partial<InsertExamResult>): Promise<ExamResult> {
+    const [updated] = await db.update(examResults)
+      .set(data)
+      .where(eq(examResults.id, id))
+      .returning();
+    if (!updated) throw new Error("Exam result not found");
+    return updated;
   }
 
   // Health Metrics
