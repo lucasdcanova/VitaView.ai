@@ -11,7 +11,7 @@ async function main() {
         .set({
             features: [
                 "Atendimento: Anamnese básica",
-                "Prescrição: Limite de 1 prescrição por dia",
+                "Prescrição: Ilimitada",
                 "Exames: Protocolos clínicos básicos",
                 "Envio de resultados: 10 uploads/mês (1 arquivo por vez)",
                 "Agenda: Básica",

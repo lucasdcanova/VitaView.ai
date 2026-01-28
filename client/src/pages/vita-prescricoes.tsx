@@ -1580,35 +1580,18 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         </div>
 
                         <div className="flex gap-2 items-end">
-                            {(() => {
-                                const prescriptionsToday = prescriptionHistory.filter(p => isToday(new Date(p.createdAt))).length;
-                                const isFreePlan = subscriptionData?.plan?.name === 'Gratuito';
-                                const limitReached = isFreePlan && prescriptionsToday >= 1;
-
-                                const saveButton = (
-                                    <Button
-                                        className={`flex-1 h-9 text-sm shadow-lg ${editingPrescriptionId ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}
-                                        onClick={handleSaveAndPrintPrescription}
-                                        disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending || acuteItems.length === 0 || !user}
-                                    >
-                                        <Printer className="h-4 w-4 mr-1" />
-                                        {(createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending)
-                                            ? "Salvando..."
-                                            : editingPrescriptionId
-                                                ? "Atualizar e Imprimir"
-                                                : "Salvar e Imprimir"}
-                                    </Button>
-                                );
-
-                                if (limitReached && !editingPrescriptionId) { // Allow updating existing ones? Or strict? "1 por dia" usually means creating. Editing implies it was already created.
-                                    return (
-                                        <FeatureGate>
-                                            {saveButton}
-                                        </FeatureGate>
-                                    )
-                                }
-                                return saveButton;
-                            })()}
+                            <Button
+                                className={`flex-1 h-9 text-sm shadow-lg ${editingPrescriptionId ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'}`}
+                                onClick={handleSaveAndPrintPrescription}
+                                disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending || acuteItems.length === 0 || !user}
+                            >
+                                <Printer className="h-4 w-4 mr-1" />
+                                {(createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending)
+                                    ? "Salvando..."
+                                    : editingPrescriptionId
+                                        ? "Atualizar e Imprimir"
+                                        : "Salvar e Imprimir"}
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
