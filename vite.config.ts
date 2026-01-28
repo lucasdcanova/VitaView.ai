@@ -4,7 +4,7 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { visualizer } from "rollup-plugin-visualizer";
 
-const backendPort = Number(process.env.PORT || process.env.VITE_BACKEND_PORT || 5000);
+const backendPort = Number(process.env.PORT || process.env.VITE_BACKEND_PORT || 5001);
 
 export default defineConfig({
   plugins: [
@@ -31,15 +31,15 @@ export default defineConfig({
       brotliSize: true,
     }),
     ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
+      process.env.REPL_ID !== undefined
       ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
+        await import("@replit/vite-plugin-cartographer").then((m) =>
+          m.cartographer(),
+        ),
+      ]
       : []),
   ].filter(Boolean),
-  
+
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -47,9 +47,9 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
-  
+
   root: path.resolve(import.meta.dirname, "client"),
-  
+
   // Development server configuration
   server: {
     port: 5173,
@@ -74,7 +74,7 @@ export default defineConfig({
       ],
     },
   },
-  
+
   // Build configuration with performance optimizations
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
@@ -134,7 +134,7 @@ export default defineConfig({
     },
     sourcemap: process.env.NODE_ENV !== 'production',
   },
-  
+
   // CSS configuration
   css: {
     devSourcemap: true,
@@ -144,7 +144,7 @@ export default defineConfig({
       },
     },
   },
-  
+
   // Dependencies optimization
   optimizeDeps: {
     include: [
@@ -162,21 +162,21 @@ export default defineConfig({
       target: 'es2021',
     },
   },
-  
+
   // Performance and caching
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
     __PROD__: JSON.stringify(process.env.NODE_ENV === 'production'),
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
   },
-  
+
   // Preview configuration
   preview: {
     port: 4173,
     host: true,
     strictPort: true,
   },
-  
+
   // Experimental features
   experimental: {
     renderBuiltUrl(filename, { hostType }) {
