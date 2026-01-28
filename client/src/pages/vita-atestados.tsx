@@ -181,13 +181,6 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">Atestados</h1>
                     <p className="text-gray-500">Emissão de atestados médicos para <span className="font-semibold text-primary">{patient.name}</span>.</p>
                 </div>
-
-                {/* Professional Info */}
-                <div className="w-full md:w-auto min-w-[250px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex flex-col items-end">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
-                    <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                    {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
-                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">

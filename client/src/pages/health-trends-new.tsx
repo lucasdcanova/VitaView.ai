@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { generateLegalReportPDF, LegalReportItem } from "@/lib/legal-report-pdf";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -884,35 +885,59 @@ export default function HealthTrendsNew({
 
   // Função para exportar dados para PDF
   const handleExportToPDF = async () => {
-    const newTab = window.open('', '_blank');
-    if (newTab) {
-      newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Relatório de Saúde...</div></body></html>');
+    if (!activeProfile) {
+      toast({ title: "Erro", description: "Selecione um paciente", variant: "destructive" });
+      return;
     }
 
     try {
-      const response = await apiRequest("POST", "/api/export-health-report", {});
+      toast({ title: "Gerando PDF...", description: "Aguarde enquanto preparamos o relatório jurídico." });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        if (newTab) newTab.location.href = url;
-        else window.open(url, '_blank');
+      const reportItems: LegalReportItem[] = timelineItems.map(item => {
+        // Map types to user friendly names
+        let typeName = 'Evento';
+        switch (item.type) {
+          case 'exam': typeName = 'Exame'; break;
+          case 'diagnosis': typeName = 'Diagnóstico'; break;
+          case 'surgery': typeName = 'Cirurgia'; break;
+          case 'triage': typeName = 'Consult/Triagem'; break;
+          case 'medication': typeName = 'Medicamento'; break;
+          case 'allergy': typeName = 'Alergia'; break;
+          case 'evolution': typeName = 'Evolução'; break;
+          default: typeName = item.type;
+        }
 
-        toast({
-          title: "Relatório gerado",
-          description: "Seu relatório de saúde foi aberto em uma nova aba.",
-        });
-      } else {
-        newTab?.close();
-        throw new Error("Erro ao gerar relatório");
-      }
-    } catch (error) {
-      newTab?.close();
-      toast({
-        title: "Erro na exportação",
-        description: "Não foi possível gerar o relatório. Tente novamente.",
-        variant: "destructive",
+        return {
+          date: new Date(item.date),
+          type: typeName,
+          description: item.title,
+          details: item.description
+            ? item.description.replace(/<[^>]*>?/gm, "") // Strip HTML if any
+            : ""
+        };
       });
+
+      const doc = generateLegalReportPDF({
+        patientName: activeProfile.name,
+        patientDoc: activeProfile.cpf || "",
+        patientBirth: activeProfile.birthDate ? format(new Date(activeProfile.birthDate), "dd/MM/yyyy") : "",
+        reportDate: new Date(),
+        generatedBy: "Sistema VitaView AI",
+        items: reportItems
+      });
+
+      // Open in new tab instead of downloading
+      const pdfBlob = doc.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
+
+      // Cleanup after a delay to ensure the tab has loaded
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      toast({ title: "Sucesso", description: "Relatório gerado em nova aba." });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro", description: "Falha ao gerar PDF", variant: "destructive" });
     }
   };
 
