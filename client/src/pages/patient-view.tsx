@@ -8,7 +8,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles } from 'lucide-react';
+import {
+    Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles,
+    Users, User, Building2, CalendarDays, LayoutDashboard, Pill,
+    Heart, LineChart, FileSignature, TrendingUp, TrendingDown, Minus,
+    AlertTriangle, ClipboardList, ShieldCheck, Loader2
+} from 'lucide-react';
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
