@@ -10,12 +10,12 @@ async function main() {
     await db.update(subscriptionPlans)
         .set({
             features: [
-                "Atendimento: Anamnese básica",
-                "Prescrição: Ilimitada",
-                "Exames: Protocolos clínicos básicos",
-                "Envio de resultados: 10 uploads/mês (1 arquivo por vez)",
-                "Agenda: Básica",
-                "Pacientes: Limite de 20 pacientes"
+                "Anamnese Digital Estruturada",
+                "Prescrição Inteligente Ilimitada",
+                "Protocolos Clínicos Pré-definidos",
+                "Leitura de 10 exames/mês com IA",
+                "Gestão Simplificada de Consultas",
+                "Gestão de até 20 Pacientes Ativos"
             ]
         })
         .where(eq(subscriptionPlans.name, "Gratuito"));
@@ -23,14 +23,14 @@ async function main() {
 
     // Vita Common Features
     const vitaFeatures = [
-        "Atendimento: Anamnese com gravação e IA",
-        "Prescrição: Ilimitada + Alerta de interações",
-        "Exames: Protocolos editáveis e personalizados",
-        "Envio de resultados: Uploads ilimitados",
-        "Agenda: Marcação com IA e triagem",
-        "Pacientes: Ilimitados",
-        "Prontuário inteligente completo",
-        "Análise de tendências de saúde"
+        "Anamnese Inteligente com Gravação de Voz",
+        "Prescrição Ilimitada com Alerta de Interações",
+        "Protocolos de Exames Personalizáveis",
+        "Upload Ilimitado de Resultados de Exames",
+        "Agendamento Inteligente e Triagem Pré-Consulta",
+        "Gestão de Pacientes Ilimitada",
+        "Prontuário Eletrônico Completo e Inteligente",
+        "Análise Avançada de Tendências de Saúde"
     ];
 
     // 2. Update Vita Pro
@@ -44,10 +44,10 @@ async function main() {
         .set({
             features: [
                 ...vitaFeatures,
-                "Até 5 profissionais inclusos",
-                "Conta administradora",
-                "Gerenciamento de equipe",
-                "Relatórios consolidados"
+                "Acesso para até 5 Profissionais",
+                "Painel Administrativo Centralizado",
+                "Ferramentas de Gestão de Equipe",
+                "Relatórios de Produtividade Consolidados"
             ]
         })
         .where(eq(subscriptionPlans.name, "Vita Team"));
@@ -58,11 +58,12 @@ async function main() {
         .set({
             features: [
                 ...vitaFeatures,
-                "Profissionais ilimitados (5+)",
                 "Gestão financeira da clínica",
-                "API de integração",
-                "Gerente de conta dedicado",
-                "Personalização Whitelabel"
+                "Profissionais Ilimitados",
+                "API de Integração Dedicada",
+                "Personalização White-label (Sua Marca)",
+                "Treinamento e Onboarding Dedicado",
+                "SLA de Atendimento Garantido"
             ]
         })
         .where(eq(subscriptionPlans.name, "Vita Business"));
