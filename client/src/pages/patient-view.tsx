@@ -317,45 +317,17 @@ export default function PatientView() {
                                             </div>
 
                                             {/* SECTION 2: ATTENTION NEEDED (Triage & Alerts) - Only shows if data exists */}
-                                            {(currentTriage || alertMetrics.length > 0) && (
+                                            {/* SECTION 2: ATTENTION NEEDED (Triage) - Only shows if data exists */}
+                                            {currentTriage && (
                                                 <div>
                                                     <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                                         <AlertTriangle className="h-5 w-5 text-amber-600" />
                                                         Atenção Imediata
                                                     </h3>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {currentTriage && (
-                                                            <div className="md:col-span-2">
-                                                                <TriageCard triage={currentTriage} />
-                                                            </div>
-                                                        )}
-
-                                                        {alertMetrics.length > 0 && (
-                                                            <Card className="border-red-200 bg-red-50 shadow-sm h-full">
-                                                                <CardHeader className="pb-3">
-                                                                    <CardTitle className="text-red-700 flex items-center gap-2 text-base">
-                                                                        <Activity className="h-5 w-5" />
-                                                                        Alertas de Sinais Vitais
-                                                                    </CardTitle>
-                                                                </CardHeader>
-                                                                <CardContent>
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                        {alertMetrics.slice(0, 4).map((metric: any) => (
-                                                                            <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
-                                                                                <div>
-                                                                                    <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
-                                                                                    <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
-                                                                                </div>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    {getTrendIcon(metric.change)}
-                                                                                    <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </CardContent>
-                                                            </Card>
-                                                        )}
+                                                        <div className="md:col-span-2">
+                                                            <TriageCard triage={currentTriage} />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
@@ -574,13 +546,42 @@ export default function PatientView() {
                             <TabsContent value="evolution" className="mt-0">
                                 {activeProfile ? (
                                     <Suspense fallback={<TabLoadingSkeleton />}>
-                                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1 w-full">
-                                            <ExamTimeline
-                                                embedded={true}
-                                                activeProfile={activeProfile}
-                                                exams={exams}
-                                                healthMetrics={healthMetrics}
-                                            />
+                                        <div className="space-y-6">
+                                            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1 w-full">
+                                                <ExamTimeline
+                                                    embedded={true}
+                                                    activeProfile={activeProfile}
+                                                    exams={exams}
+                                                    healthMetrics={healthMetrics}
+                                                />
+                                            </div>
+
+                                            {alertMetrics.length > 0 && (
+                                                <Card className="border-red-200 bg-red-50 shadow-sm">
+                                                    <CardHeader className="pb-3">
+                                                        <CardTitle className="text-red-700 flex items-center gap-2 text-base">
+                                                            <Activity className="h-5 w-5" />
+                                                            Alertas de Sinais Vitais
+                                                        </CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                            {alertMetrics.map((metric: any) => (
+                                                                <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
+                                                                    <div>
+                                                                        <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
+                                                                        <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {getTrendIcon(metric.change)}
+                                                                        <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
                                         </div>
                                     </Suspense>
                                 ) : (
