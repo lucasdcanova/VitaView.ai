@@ -42,6 +42,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { CID10_DATABASE } from "@/data/cid10-database";
 import ProfileSwitcher from "@/components/profile-switcher";
 import { TriageBadge } from "@/components/triage/triage-badge";
+import { formatMetricDisplayName } from "@shared/exam-normalizer";
 import {
   FileText,
   Calendar,
@@ -696,7 +697,7 @@ export default function HealthTrendsNew({
 
         if (abnormalMetrics.length > 0) {
           const keyFindings = abnormalMetrics.slice(0, 2).map((m: any) =>
-            `${m.name}: ${m.value}${m.unit || ""} (${m.status})`
+            `${formatMetricDisplayName(m.name)}: ${m.value}${m.unit || ""} (${m.status})`
           );
           resultSummary = keyFindings.join(", ");
           if (abnormalMetrics.length > 2) {
