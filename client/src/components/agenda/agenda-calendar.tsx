@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -165,6 +165,7 @@ export function AgendaCalendar({
       case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
       case "procedimento": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
       case "urgencia": return { bg: "bg-red-100", border: "border-red-500", text: "text-red-900", subtext: "text-red-800", label: "text-red-600", dot: "bg-red-500" };
+      case "blocked": return { bg: "bg-gray-200", border: "border-gray-400", text: "text-gray-600", subtext: "text-gray-500", label: "text-gray-500", dot: "bg-gray-400" };
       default: return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
     }
   };
@@ -333,6 +334,7 @@ export function AgendaCalendar({
                   <SelectItem value="exames">Exames</SelectItem>
                   <SelectItem value="procedimento">Procedimento</SelectItem>
                   <SelectItem value="urgencia">Urgência</SelectItem>
+                  <SelectItem value="blocked">Bloqueados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -450,7 +452,8 @@ export function AgendaCalendar({
                         const appointmentDate = parseAppointmentDate(app.date);
                         const isToday = isSameDay(appointmentDate, new Date());
                         const isActive = app.id === inServiceAppointmentId;
-                        const canStartService = isToday && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
+                        const isBlocked = app.type === 'blocked';
+                        const canStartService = isToday && !isBlocked && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
 
                         return (
                           <div key={app.id} className={cn(
@@ -500,9 +503,12 @@ export function AgendaCalendar({
                                     {app.patientName}
                                   </button>
                                 ) : (
-                                  <span className="text-gray-800">{app.patientName}</span>
+                                  <span className="text-gray-800 flex items-center gap-2">
+                                    {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
+                                    {app.patientName}
+                                  </span>
                                 )}
-                                {app.profileId && (
+                                {app.profileId && !isBlocked && (
                                   <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-blue-600" title="Ver perfil">
                                     <User className="h-4 w-4" />
                                   </Button>
@@ -537,12 +543,14 @@ export function AgendaCalendar({
                                 <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                   Editar
                                 </Button>
-                                <Button variant="outline" size="sm" className="flex-1" onClick={() => {
-                                  setSelectedAppointment(app);
-                                  setTriageDialogOpen(true);
-                                }}>
-                                  Triagem
-                                </Button>
+                                {!isBlocked && (
+                                  <Button variant="outline" size="sm" className="flex-1" onClick={() => {
+                                    setSelectedAppointment(app);
+                                    setTriageDialogOpen(true);
+                                  }}>
+                                    Triagem
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -608,7 +616,8 @@ export function AgendaCalendar({
                               {(() => {
                                 const appointmentDate = parseAppointmentDate(appointment.date);
                                 const isToday = isSameDay(appointmentDate, new Date());
-                                const canStart = isToday && appointment.status !== 'in_progress' && appointment.status !== 'completed';
+                                const isBlocked = appointment.type === 'blocked';
+                                const canStart = isToday && !isBlocked && appointment.status !== 'in_progress' && appointment.status !== 'completed';
                                 return (
                                   <AppointmentPopoverHeader
                                     appointment={appointment}
@@ -796,6 +805,10 @@ export function AgendaCalendar({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-gray-800 rounded"></div>
             <span className="text-xs text-gray-600">Finalizado</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gray-400 rounded"></div>
+            <span className="text-xs text-gray-600">Bloqueado</span>
           </div>
         </div>
       </div>

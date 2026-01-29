@@ -759,18 +759,21 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       1. Extraia o nome do paciente. Tente associar com a lista de pacientes disponíveis.
       2. Determine a data do agendamento (formato YYYY-MM-DD). Se for relativo (ex: "daqui a 30 dias"), calcule a data.
       3. Determine o horário (formato HH:mm). Se não especificado, sugira um horário comercial padrão (ex: 09:00, 14:00).
-      4. Determine o tipo de consulta: "consulta", "retorno", "exames" ou "urgencia".
-      5. Extraia observações adicionais.
-      6. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
+      4. Determine o tipo de consulta: "consulta", "retorno", "exames", "urgencia" ou "blocked" (para bloqueios de agenda).
+      5. Se for um comando de bloqueio (ex: "bloquear férias", "folga"), defina type="blocked".
+      6. Se for um período (ex: "ferias semana que vem", "bloquear do dia 10 ao dia 15"), extraia data inicial (date) e data final (endDate).
+      7. Extraia observações adicionais.
+      8. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
       
       PACIENTES DISPONÍVEIS:
       ${availablePatients.map(p => `- ID ${p.id}: ${p.name}`).join('\n')}
 
       RESPONDA APENAS COM O JSON:
       {
-        "patientName": "Nome Completo do Paciente (da lista se houver match)",
-        "patientId": 123 (ID da lista se houver match, ou null),
+        "patientName": "Nome Completo do Paciente (ou 'Bloqueio' se for blocked)",
+        "patientId": 123 (ID da lista ou null),
         "date": "YYYY-MM-DD",
+        "endDate": "YYYY-MM-DD" (opcional, apenas para periodos),
         "time": "HH:mm",
         "type": "tipo_identificado",
         "notes": "observações",

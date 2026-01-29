@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown, Lock, UserPlus, CalendarRange } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
     Dialog,
     DialogContent,
@@ -48,13 +49,12 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
-    profileId: z.string({
-        required_error: "Selecione um paciente.",
-    }),
+    profileId: z.string().optional(),
     patientName: z.string().optional(),
-    type: z.enum(["consulta", "retorno", "exames", "urgencia", "procedimento"], {
+    type: z.enum(["consulta", "retorno", "exames", "urgencia", "procedimento", "blocked"], {
         required_error: "Selecione o tipo de consulta.",
     }),
     date: z.date({
@@ -65,6 +65,17 @@ const formSchema = z.object({
     }),
     price: z.string().optional(),
     notes: z.string().optional(),
+    isRange: z.boolean().optional(),
+    endDate: z.date().optional(),
+    isAllDay: z.boolean().optional(),
+}).refine((data) => {
+    if (data.type !== 'blocked' && !data.profileId) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Selecione um paciente.",
+    path: ["profileId"],
 });
 
 interface NewAppointmentModalProps {
@@ -82,8 +93,24 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         defaultValues: {
             time: "09:00",
             notes: "",
+            type: "consulta",
+            isRange: false,
+            isAllDay: false,
         },
     });
+
+    const [mode, setMode] = useState<"appointment" | "blocked">("appointment");
+
+    // Watch type to sync with mode if initialData loaded
+    useEffect(() => {
+        const type = form.getValues("type");
+        if (type === "blocked" && mode !== "blocked") {
+            setMode("blocked");
+        } else if (type !== "blocked" && mode === "blocked") {
+            // Keep it consistent?
+            // Actually initialData logic below handles this
+        }
+    }, []);
 
     useEffect(() => {
         if (open) {
@@ -96,19 +123,29 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                 }
 
                 form.reset({
-                    profileId: initialData.userId ? initialData.userId.toString() : (initialData.profileId ? initialData.profileId.toString() : ""),
+                    profileId: initialData.userId ? initialData.userId.toString() : (initialData.profileId ? initialData.profileId.toString() : undefined),
                     type: initialData.type,
                     date: new Date(initialData.date + 'T12:00:00'),
                     time: initialData.time,
                     notes: initialData.notes || "",
                     price: priceFormatted
                 });
+
+                if (initialData.type === 'blocked') {
+                    setMode("blocked");
+                } else {
+                    setMode("appointment");
+                }
             } else {
                 form.reset({
+                    type: "consulta",
                     time: "09:00",
                     notes: "",
-                    price: ""
+                    price: "",
+                    isRange: false,
+                    isAllDay: false
                 });
+                setMode("appointment");
             }
         }
     }, [open, initialData, form]);
@@ -122,10 +159,16 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         const selectedProfile = profiles.find((p: any) => p.id.toString() === values.profileId);
 
         let priceAmount = undefined;
-        if (values.price) {
+        if (values.price && mode === 'appointment') {
             // Convert "1.234,56" to 123456 (cents)
             const cleanPrice = values.price.replace(/\./g, "").replace(",", "");
             priceAmount = parseInt(cleanPrice);
+        }
+
+        // Force blocked type if mode is blocked
+        if (mode === 'blocked') {
+            values.type = 'blocked';
+            values.profileId = undefined;
         }
 
         // Format date as YYYY-MM-DD string for the backend
@@ -134,14 +177,37 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         const submissionData = {
             ...values,
             date: formattedDate, // Override the Date object with formatted string
-            profileId: parseInt(values.profileId),
-            patientName: selectedProfile ? selectedProfile.name : "Paciente",
+            profileId: values.profileId ? parseInt(values.profileId) : undefined,
+            patientName: mode === 'blocked' ? "Horário Bloqueado" : (selectedProfile ? selectedProfile.name : "Paciente"),
             price: priceAmount,
         };
 
         console.log(submissionData);
         if (onSuccess) {
-            onSuccess(submissionData);
+            // Check if it's a range block
+            if (values.isRange && values.endDate && values.type === 'blocked') {
+                const startDate = values.date;
+                const endDate = values.endDate;
+                const appointments = [];
+
+                // Clone date to iterate
+                let currentDate = new Date(startDate);
+
+                while (currentDate <= endDate) {
+                    appointments.push({
+                        ...submissionData,
+                        date: format(currentDate, 'yyyy-MM-dd'),
+                        // If all day, we might want to create multiple blocks or a special all-day block
+                        // For now, let's just stick to the specific time or maybe create a block for AM and PM?
+                        // Simple approach: Create one block at the specified time
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                onSuccess(appointments);
+            } else {
+                onSuccess(submissionData);
+            }
         }
         onOpenChange(false);
         form.reset();
@@ -154,99 +220,145 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Editar Consulta" : "Nova Consulta"}</DialogTitle>
+                    <DialogTitle>{isEditing ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
                     <DialogDescription>
-                        {isEditing ? "Altere os dados da consulta." : "Selecione um paciente e preencha os dados da consulta."}
+                        {isEditing ? "Altere os dados do agendamento." : "Agende uma consulta ou bloqueie um horário."}
                     </DialogDescription>
                 </DialogHeader>
+
+                <Tabs value={mode} onValueChange={(v) => {
+                    setMode(v as "appointment" | "blocked");
+                    if (v === "blocked") {
+                        form.setValue("type", "blocked");
+                        form.clearErrors("profileId");
+                    } else {
+                        form.setValue("type", "consulta");
+                    }
+                }} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="appointment" className="flex items-center gap-2">
+                            <UserPlus className="w-4 h-4" />
+                            Agendamento
+                        </TabsTrigger>
+                        <TabsTrigger value="blocked" className="flex items-center gap-2">
+                            <Lock className="w-4 h-4" />
+                            Bloqueio
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="profileId"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Paciente</FormLabel>
-                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant="outline"
-                                                    role="combobox"
-                                                    aria-expanded={openCombobox}
-                                                    className={cn(
-                                                        "w-full justify-between",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value
-                                                        ? profiles.find((profile) => profile.id.toString() === field.value)?.name
-                                                        : "Selecione o paciente"}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[400px] p-0">
-                                            <Command>
-                                                <CommandInput placeholder="Buscar paciente..." />
-                                                <CommandList>
-                                                    <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {profiles.map((profile) => (
-                                                            <CommandItem
-                                                                value={profile.name}
-                                                                key={profile.id}
-                                                                onSelect={() => {
-                                                                    form.setValue("profileId", profile.id.toString());
-                                                                    setOpenCombobox(false);
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mr-2 h-4 w-4",
-                                                                        profile.id.toString() === field.value
-                                                                            ? "opacity-100"
-                                                                            : "opacity-0"
-                                                                    )}
-                                                                />
-                                                                {profile.name}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="grid grid-cols-2 gap-4">
+                        {mode === 'appointment' && (
                             <FormField
                                 control={form.control}
-                                name="type"
+                                name="profileId"
                                 render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="consulta">Consulta</SelectItem>
-                                                <SelectItem value="retorno">Retorno</SelectItem>
-                                                <SelectItem value="exames">Exames</SelectItem>
-                                                <SelectItem value="procedimento">Procedimento</SelectItem>
-                                                <SelectItem value="urgencia">Urgência</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Paciente</FormLabel>
+                                        <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        aria-expanded={openCombobox}
+                                                        className={cn(
+                                                            "w-full justify-between",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value
+                                                            ? profiles.find((profile) => profile.id.toString() === field.value)?.name
+                                                            : "Selecione o paciente"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[400px] p-0">
+                                                <Command>
+                                                    <CommandInput placeholder="Buscar paciente..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {profiles.map((profile) => (
+                                                                <CommandItem
+                                                                    value={profile.name}
+                                                                    key={profile.id}
+                                                                    onSelect={() => {
+                                                                        form.setValue("profileId", profile.id.toString());
+                                                                        setOpenCombobox(false);
+                                                                    }}
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "mr-2 h-4 w-4",
+                                                                            profile.id.toString() === field.value
+                                                                                ? "opacity-100"
+                                                                                : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    {profile.name}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {mode === 'appointment' ? (
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tipo</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="consulta">Consulta</SelectItem>
+                                                    <SelectItem value="retorno">Retorno</SelectItem>
+                                                    <SelectItem value="exames">Exames</SelectItem>
+                                                    <SelectItem value="procedimento">Procedimento</SelectItem>
+                                                    <SelectItem value="urgencia">Urgência</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            ) : (
+                                <div className="space-y-3">
+                                    <FormField
+                                        control={form.control}
+                                        name="isRange"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">Bloquear Período</FormLabel>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
 
                             <FormField
                                 control={form.control}
@@ -272,7 +384,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                 name="date"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Data</FormLabel>
+                                        <FormLabel>{form.watch("isRange") ? "Data Inicial" : "Data"}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -309,34 +421,80 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="price"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Valor (R$)</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">R$</span>
-                                                <Input
-                                                    className="pl-9"
-                                                    placeholder="0,00"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        let value = e.target.value.replace(/\D/g, "");
-                                                        if (value) {
-                                                            value = (parseInt(value) / 100).toFixed(2).replace(".", ",");
-                                                            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            {mode === 'appointment' && (
+                                <FormField
+                                    control={form.control}
+                                    name="price"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Valor (R$)</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">R$</span>
+                                                    <Input
+                                                        className="pl-9"
+                                                        placeholder="0,00"
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            let value = e.target.value.replace(/\D/g, "");
+                                                            if (value) {
+                                                                value = (parseInt(value) / 100).toFixed(2).replace(".", ",");
+                                                                value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                                            }
+                                                            field.onChange(value);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
+                            {mode === 'blocked' && form.watch("isRange") && (
+                                <FormField
+                                    control={form.control}
+                                    name="endDate"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Data Final</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn(
+                                                                "w-full pl-3 text-left font-normal",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(field.value, "PPP", { locale: ptBR })
+                                                            ) : (
+                                                                <span>Data final</span>
+                                                            )}
+                                                            <CalendarRange className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) =>
+                                                            date < (form.getValues("date") || new Date())
                                                         }
-                                                        field.onChange(value);
-                                                    }}
-                                                />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
                         </div>
 
                         <FormField
@@ -358,7 +516,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                         />
 
                         <DialogFooter>
-                            <Button type="submit">{isEditing ? "Salvar Alterações" : "Agendar"}</Button>
+                            <Button type="submit">{isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Bloquear Horário" : "Agendar")}</Button>
                         </DialogFooter>
                     </form>
                 </Form>

@@ -34,15 +34,24 @@ export default function Agenda() {
 
     // Create appointment mutation
     const createAppointmentMutation = useMutation({
-        mutationFn: async (appointment: any) => {
-            const res = await apiRequest("POST", "/api/appointments", appointment);
-            return res.json();
+        mutationFn: async (appointment: any | any[]) => {
+            if (Array.isArray(appointment)) {
+                // Bulk create
+                // We'll just loop here or create a bulk endpoint. 
+                // Loop is safer for now without backend changes.
+                const promises = appointment.map(apt => apiRequest("POST", "/api/appointments", apt));
+                const results = await Promise.all(promises);
+                return results;
+            } else {
+                const res = await apiRequest("POST", "/api/appointments", appointment);
+                return res.json();
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
             toast({
-                title: "Agendamento criado",
-                description: "O agendamento foi realizado com sucesso.",
+                title: "Algendamento realizado",
+                description: "Operação realizada com sucesso.",
             });
             setAiProposal(null);
             setAiCommand("");
@@ -297,7 +306,12 @@ export default function Agenda() {
                                 <span className="col-span-2 font-medium">{aiProposal.patientName}</span>
 
                                 <span className="font-semibold text-slate-500">Data:</span>
-                                <span className="col-span-2 font-medium">{format(new Date(aiProposal.date + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                                <span className="col-span-2 font-medium">
+                                    {format(new Date(aiProposal.date + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                    {aiProposal.endDate && (
+                                        <> até {format(new Date(aiProposal.endDate + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</>
+                                    )}
+                                </span>
 
                                 <span className="font-semibold text-slate-500">Horário:</span>
                                 <span className="col-span-2 font-medium">{aiProposal.time}</span>
@@ -318,10 +332,37 @@ export default function Agenda() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => createAppointmentMutation.mutate({
-                                ...aiProposal,
-                                profileId: aiProposal.patientId
-                            })}
+                            onClick={() => {
+                                if (aiProposal.endDate && aiProposal.type === 'blocked') {
+                                    // Parse dates ensuring local time handling (append time if normalized to date string)
+                                    // However, aiProposal.date is YYYY-MM-DD.
+                                    // New Date("YYYY-MM-DD") treats as UTC. 
+                                    // New Date("YYYY-MM-DDPHH:mm:ss") treats as Local.
+                                    // Let's use the time from proposal or default 12:00 to avoid timezone shifts on date boundaries if simpler.
+                                    const startDate = new Date(aiProposal.date + 'T12:00:00');
+                                    const endDate = new Date(aiProposal.endDate + 'T12:00:00');
+                                    const appointments = [];
+
+                                    let currentDate = new Date(startDate);
+
+                                    while (currentDate <= endDate) {
+                                        appointments.push({
+                                            ...aiProposal,
+                                            date: format(currentDate, 'yyyy-MM-dd'),
+                                            profileId: undefined,
+                                            endDate: undefined // remove endDate from individual AP
+                                        });
+                                        currentDate.setDate(currentDate.getDate() + 1);
+                                    }
+
+                                    createAppointmentMutation.mutate(appointments);
+                                } else {
+                                    createAppointmentMutation.mutate({
+                                        ...aiProposal,
+                                        profileId: aiProposal.patientId
+                                    });
+                                }
+                            }}
                             className="bg-gray-900 hover:bg-black"
                         >
                             Confirmar Agendamento
