@@ -30,10 +30,11 @@ export function LandingLabView() {
                     </motion.span>
 
                     <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-4 md:mb-6">
-                        <span className="text-[#212121]">View Laboratorial</span>
+                        Leitura de Exames <span className="text-blue-600">via IA</span>
                     </h2>
-                    <p className="text-base md:text-lg text-[#9E9E9E] mb-6 md:mb-8 max-w-2xl mx-auto px-2">
-                        Compare valores ao longo do tempo, identifique tendências e visualize resultados em relação aos valores de referência.
+                    <p className="text-base md:text-lg text-[#616161] mb-6 md:mb-8 max-w-2xl mx-auto px-2">
+                        Nossa Inteligência Artificial lê, interpreta e organiza os resultados dos exames automaticamente.
+                        Transforme PDFs em gráficos de evolução em segundos.
                     </p>
                 </motion.div>
 

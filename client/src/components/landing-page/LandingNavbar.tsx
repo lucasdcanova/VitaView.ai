@@ -13,6 +13,7 @@ export function LandingNavbar() {
         { id: "como-funciona", label: "View Laboratorial" },
         { id: "agenda", label: "Agenda" },
         { id: "beneficios", label: "Benefícios" },
+        { id: "precos", label: "Planos" },
         { id: "para-quem", label: "Para Quem" },
         { id: "depoimentos", label: "Depoimentos" }
     ];
@@ -42,7 +43,7 @@ export function LandingNavbar() {
                     </motion.div>
 
                     {/* Desktop navigation - design minimalista */}
-                    <div className="hidden md:flex space-x-8 text-[#212121]">
+                    <div className="hidden lg:flex space-x-6 text-[#212121]">
                         {navItems.map((item) => (
                             <motion.a
                                 key={item.id}
@@ -77,18 +78,34 @@ export function LandingNavbar() {
                         </button>
                     </div>
 
-                    {/* Login/Access button with improved animation */}
-                    <motion.div
-                        className="hidden md:block"
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                    >
-                        <Link href="/auth">
-                            <Button variant="default" className="bg-[#212121] hover:bg-[#424242] text-white px-6 py-2 font-heading font-bold rounded-lg">
-                                Acessar <ChevronRight className="ml-1 h-4 w-4" />
-                            </Button>
-                        </Link>
-                    </motion.div>
+                    {/* Action Buttons */}
+                    <div className="hidden md:flex items-center gap-4">
+                        <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                        >
+                            <a
+                                href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20VitaView%20AI"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Button variant="outline" className="border-[#212121] text-[#212121] hover:bg-gray-100 font-bold hidden xl:flex">
+                                    Agendar Demo
+                                </Button>
+                            </a>
+                        </motion.div>
+
+                        <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                        >
+                            <Link href="/auth">
+                                <Button variant="default" className="bg-[#212121] hover:bg-[#424242] text-white px-6 py-2 font-heading font-bold rounded-lg shadow-md">
+                                    Acessar <ChevronRight className="ml-1 h-4 w-4" />
+                                </Button>
+                            </Link>
+                        </motion.div>
+                    </div>
                 </div>
             </motion.nav>
 

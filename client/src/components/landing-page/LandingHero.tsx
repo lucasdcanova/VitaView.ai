@@ -47,11 +47,12 @@ export function LandingHero() {
 
 
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-tight mb-5 md:mb-6">
-                        <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: O Prontuário que pensa com você.
+                        <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: Simples. Objetiva. <span className="text-[#212121] decoration-4 underline decoration-[#E0E0E0]">Completa.</span>
                     </h1>
 
-                    <p className="text-base md:text-xl text-[#9E9E9E] font-body mb-6 md:mb-8 max-w-lg">
-                        Dados do paciente, histórico e tendências de saúde apresentados com clareza, permitindo que você foque no cuidado humano.
+                    <p className="text-base md:text-xl text-[#616161] font-body mb-6 md:mb-8 max-w-lg leading-relaxed">
+                        A plataforma de gestão clínica que entrega <strong>tudo o que você precisa</strong> sem complexidade.
+                        Prontuário inteligente, IA avançada e interface direta por um valor que faz sentido.
                     </p>
 
                     {/* Benefícios em lista */}
