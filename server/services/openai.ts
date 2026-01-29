@@ -762,8 +762,9 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       4. Determine o tipo de consulta: "consulta", "retorno", "exames", "urgencia" ou "blocked" (para bloqueios de agenda).
       5. Se for um comando de bloqueio (ex: "bloquear férias", "folga"), defina type="blocked".
       6. Se for um período (ex: "ferias semana que vem", "bloquear do dia 10 ao dia 15"), extraia data inicial (date) e data final (endDate).
-      7. Extraia observações adicionais.
-      8. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
+      7. IMPORTANTE: Se o usuário disser "semana que vem" ou "próxima semana", calcule o range da SEGUNDA-FEIRA até a SEXTA-FEIRA da semana seguinte e preencha endDate.
+      8. Extraia observações adicionais.
+      9. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
       
       PACIENTES DISPONÍVEIS:
       ${availablePatients.map(p => `- ID ${p.id}: ${p.name}`).join('\n')}
