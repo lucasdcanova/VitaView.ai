@@ -3515,6 +3515,109 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
         ],
         commonFrequencies: ["3x ao dia", "4x ao dia", "Quando necessário"],
     },
+    // VACINAS
+    {
+        name: "Vacina Influenza (Gripe)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM (Dose anual)" },
+            { dosage: "0.25", unit: "ml", format: "ampola", commonDose: "0.25ml IM (Pediátrico)", indication: "6 meses a 35 meses" },
+        ],
+        commonFrequencies: ["Dose única", "Anual"],
+        notes: "Campanha anual. Contraindicação: anafilaxia a ovo (relativa).",
+    },
+    {
+        name: "Vacina Hepatite B",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "20", unit: "mcg/ml", format: "ampola", commonDose: "1ml (20mcg) IM", indication: "Adulto" },
+            { dosage: "10", unit: "mcg/0.5ml", format: "ampola", commonDose: "0.5ml (10mcg) IM", indication: "Pediátrico/Adolescente < 20 anos" },
+        ],
+        commonFrequencies: ["0, 1 e 6 meses"],
+        notes: "Esquema de 3 doses.",
+    },
+    {
+        name: "Vacina Dupla Adulto (dT)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM" },
+        ],
+        commonFrequencies: ["A cada 10 anos", "0, 2 e 6 meses"],
+        notes: "Tétano e Difteria. Reforço a cada 10 anos.",
+    },
+    {
+        name: "Vacina Tríplice Viral",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml SC" },
+        ],
+        commonFrequencies: ["Dose única"],
+        notes: "Sarampo, Caxumba, Rubéola. Via Subcutânea.",
+    },
+    {
+        name: "Vacina Febre Amarela",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml SC" },
+        ],
+        commonFrequencies: ["Dose única", "Reforço se necessário"],
+        notes: "Via Subcutânea. Atenção a contraindicações (imunossuprimidos, idosos).",
+    },
+    {
+        name: "Vacina Pneumocócica 23 (VPP23)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM" },
+        ],
+        commonFrequencies: ["Dose única", "Reforço em 5 anos"],
+        notes: "Pneumo 23 valente. Indicada para idosos e comorbidades.",
+    },
+    {
+        name: "Vacina Pneumocócica 13 (VPC13)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM" },
+        ],
+        commonFrequencies: ["Dose única"],
+        notes: "Prevenar 13. Conjugada.",
+    },
+    {
+        name: "Vacina Herpes Zóster (Shingrix)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM" },
+        ],
+        commonFrequencies: ["0 e 2 meses"],
+        notes: "Recombinante inativada. 2 doses com intervalo de 2-6 meses.",
+    },
+    {
+        name: "Vacina HPV Quadrivalente",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml IM" },
+        ],
+        commonFrequencies: ["0 e 6 meses"],
+        notes: "Gardasil. Meninas 9-14 anos, Meninos 11-14 anos (SUS).",
+    },
+    {
+        name: "Vacina Dengue (Qdenga)",
+        category: "Vacina",
+        route: "injetavel",
+        presentations: [
+            { dosage: "0.5", unit: "ml", format: "ampola", commonDose: "0.5ml SC" },
+        ],
+        commonFrequencies: ["0 e 3 meses"],
+        notes: "Via Subcutânea. Vírus atenuado.",
+    },
 ];
 
 // Interface para item de medicamento com apresentação

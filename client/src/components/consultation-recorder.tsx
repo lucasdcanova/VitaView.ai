@@ -1,8 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play } from "lucide-react";
+import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 interface ConsultationRecorderProps {
   onTranscriptionComplete: (result: {
@@ -33,6 +44,8 @@ export function ConsultationRecorder({
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [recordingTime, setRecordingTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -270,16 +283,47 @@ export function ConsultationRecorder({
     switch (recordingState) {
       case "idle":
         return (
-          <Button
-            variant="default"
-            size="default"
-            onClick={startRecording}
-            disabled={disabled}
-            className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-4 py-2"
-          >
-            <Mic className="h-4 w-4" />
-            Gravar Consulta
-          </Button>
+          <>
+            <Button
+              variant="default"
+              size="default"
+              onClick={() => setShowConsentDialog(true)}
+              disabled={disabled}
+              className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-4 py-2"
+            >
+              <Mic className="h-4 w-4" />
+              Gravar Consulta
+            </Button>
+
+            <AlertDialog open={showConsentDialog} onOpenChange={setShowConsentDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <Info className="h-5 w-5 text-blue-600" />
+                    Consentimento do Paciente
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-base text-gray-700">
+                    É <strong>extremamente importante</strong> solicitar e confirmar o consentimento do paciente antes de iniciar a gravação.
+                    <br /><br />
+                    Recomendamos que você inicie a gravação perguntando: <br />
+                    <em>"Podemos gravar esta consulta para auxiliar no seu prontuário?"</em>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      setShowConsentDialog(false);
+                      startRecording();
+                    }}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Entendi, Iniciar Gravação
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         );
 
       case "recording":
