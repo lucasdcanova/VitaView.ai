@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -209,6 +209,10 @@ export interface IStorage {
   getBugReports(): Promise<any[]>;
   updateBugReportStatus(id: number, status: string): Promise<any | undefined>;
 
+  // TUSS operations
+  createTussProcedure(procedure: InsertTussProcedure): Promise<TussProcedure>;
+  searchTussProcedures(query: string, limit?: number): Promise<TussProcedure[]>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -234,7 +238,9 @@ export class MemStorage implements IStorage {
   private prescriptionsMap: Map<number, Prescription>;
   private certificatesMap: Map<number, Certificate>;
   private allergiesMap: Map<number, any>;
+  private tussProceduresMap: Map<number, TussProcedure>;
   sessionStore: SessionStore;
+
 
   private userIdCounter: number = 1;
   private profileIdCounter: number = 1;
@@ -256,6 +262,8 @@ export class MemStorage implements IStorage {
   private prescriptionIdCounter: number = 1;
   private certificateIdCounter: number = 1;
   private allergyIdCounter: number = 1;
+  private tussProcedureIdCounter: number = 1;
+
 
 
   constructor() {
@@ -281,6 +289,8 @@ export class MemStorage implements IStorage {
     this.prescriptionsMap = new Map();
     this.certificatesMap = new Map();
     this.allergiesMap = new Map();
+    this.tussProceduresMap = new Map();
+
 
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -1512,7 +1522,36 @@ export class MemStorage implements IStorage {
     this.bugReportsMap.set(id, report);
     return report;
   }
+
+  // TUSS operations
+  // TUSS operations
+  async createTussProcedure(procedure: InsertTussProcedure): Promise<TussProcedure> {
+    const id = this.tussProcedureIdCounter++;
+    const newP: TussProcedure = {
+      ...procedure,
+      id,
+      createdAt: new Date(),
+      code: procedure.code || null,
+      category: procedure.category || null,
+      type: procedure.type || null,
+      description: procedure.description || null,
+      isActive: procedure.isActive ?? true
+    };
+    this.tussProceduresMap.set(id, newP);
+    return newP;
+  }
+
+  async searchTussProcedures(query: string, limit: number = 20): Promise<TussProcedure[]> {
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.tussProceduresMap.values())
+      .filter(p =>
+        p.isActive &&
+        (p.name.toLowerCase().includes(lowerQuery) || (p.code && p.code.toLowerCase().includes(lowerQuery)))
+      )
+      .slice(0, limit);
+  }
 }
+
 
 
 export class DatabaseStorage implements IStorage {
@@ -1788,6 +1827,27 @@ export class DatabaseStorage implements IStorage {
     if (!exists) return false;
     await db.delete(exams).where(eq(exams.id, id));
     return true;
+  }
+
+  // TUSS Operations - DatabaseStorage
+  async createTussProcedure(procedure: InsertTussProcedure): Promise<TussProcedure> {
+    const [newP] = await db.insert(tussProcedures).values(procedure).returning();
+    return newP;
+  }
+
+  async searchTussProcedures(query: string, limit: number = 20): Promise<TussProcedure[]> {
+    return await db.select()
+      .from(tussProcedures)
+      .where(
+        and(
+          eq(tussProcedures.isActive, true),
+          or(
+            sql`${tussProcedures.name} ILIKE ${'%' + query + '%'}`,
+            sql`${tussProcedures.code} ILIKE ${'%' + query + '%'}`
+          )
+        )
+      )
+      .limit(limit);
   }
 
   // Exam results

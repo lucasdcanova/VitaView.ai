@@ -1,4 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +18,32 @@ interface ExamSelectorProps {
 export function ExamSelector({ onAddExam }: ExamSelectorProps) {
     const [searchValue, setSearchValue] = useState("");
 
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchValue);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchValue]);
+
+    const { data: searchResults, isLoading } = useQuery({
+        queryKey: ['tuss-search', debouncedSearch],
+        queryFn: async () => {
+            if (!debouncedSearch) return [];
+            const res = await apiRequest("GET", `/api/tuss/search?q=${encodeURIComponent(debouncedSearch)}`);
+            return res.json();
+        },
+        enabled: debouncedSearch.length > 1
+    });
+
     const filteredExams = useMemo(() => {
         if (!searchValue) return [];
-        return ALL_EXAMS.filter(exam =>
-            exam.name.toLowerCase().includes(searchValue.toLowerCase())
-        ).slice(0, 20); // Limit results for performance
-    }, [searchValue]);
+        if (searchResults && Array.isArray(searchResults)) return searchResults;
+        // Fallback or loading state handled in UI
+        return [];
+    }, [searchValue, searchResults]);
+
 
     const handleAdd = (exam: typeof ALL_EXAMS[0]) => {
         onAddExam(exam);
@@ -46,7 +69,12 @@ export function ExamSelector({ onAddExam }: ExamSelectorProps) {
                 {searchValue ? (
                     <ScrollArea className="h-[400px]">
                         <div className="p-2 space-y-1">
-                            {filteredExams.length > 0 ? (
+                            {isLoading && searchValue ? (
+                                <div className="p-4 text-center text-gray-400">
+                                    <span className="animate-pulse">Buscando na tabela TUSS...</span>
+                                </div>
+                            ) : filteredExams.length > 0 ? (
+
                                 filteredExams.map((exam, idx) => (
                                     <button
                                         key={`${exam.name}-${idx}`}

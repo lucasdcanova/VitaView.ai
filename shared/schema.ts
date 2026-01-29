@@ -731,6 +731,30 @@ export type InsertTriageRecord = z.infer<typeof insertTriageRecordSchema>;
 // HIPAA/LGPD COMPLIANCE TABLES
 // ========================================
 
+// TUSS / Exam Database schema
+export const tussProcedures = pgTable("tuss_procedures", {
+  id: serial("id").primaryKey(),
+  code: text("code").unique(), // TUSS code (can be custom if starting with "CUST-")
+  name: text("name").notNull(),
+  category: text("category"), // Hematologia, Radiologia, etc.
+  type: text("type"), // laboratorial, imagem, etc. (mapped from TUSS groups)
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTussProcedureSchema = createInsertSchema(tussProcedures).pick({
+  code: true,
+  name: true,
+  category: true,
+  type: true,
+  description: true,
+  isActive: true,
+});
+
+export type TussProcedure = typeof tussProcedures.$inferSelect;
+export type InsertTussProcedure = z.infer<typeof insertTussProcedureSchema>;
+
 // User Consents - LGPD Art. 8
 export const userConsents = pgTable("user_consents", {
   id: serial("id").primaryKey(),

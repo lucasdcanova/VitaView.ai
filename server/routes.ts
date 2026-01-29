@@ -33,6 +33,8 @@ import { registerDocumentRoutes } from "./routes/documents";
 import { registerSecurityRoutes } from "./routes/security.routes";
 import { registerPatientRoutes } from "./routes/patient.routes";
 import { generateCertificateHTML, generatePrescriptionHTML, generateExamReportHTML, generateHealthReportHTML } from "./services/document-templates";
+import { seedTussDatabase } from "./services/tuss-seed";
+
 
 const normalizeFileType = (type?: string | null) => {
   if (!type) return undefined;
@@ -4029,5 +4031,24 @@ export async function registerRoutes(app: Express): Promise<void> {
     res.sendStatus(204);
   });
 
+
+  // TUSS Routes
+  app.get("/api/tuss/search", ensureAuthenticated, async (req, res) => {
+    try {
+      const query = req.query.q as string || "";
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+
+      const results = await storage.searchTussProcedures(query, limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching TUSS procedures:", error);
+      res.status(500).json({ message: "Error searching procedures" });
+    }
+  });
+
+  // Init TUSS Seed
+  seedTussDatabase(storage).catch(err => console.error("Failed to seed TUSS:", err));
+
   // Server creation is now handled by httpsConfig in index.ts
+
 }
