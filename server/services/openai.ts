@@ -745,13 +745,37 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       existingAppointments = fileAnalyses.filter(Boolean).join("\n");
     }
 
+    // Calculate helpful dates
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 is Sunday
+    const daysUntilNextMonday = (1 + 7 - currentDay) % 7 || 7;
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+
+    const nextFriday = new Date(nextMonday);
+    nextFriday.setDate(nextMonday.getDate() + 4);
+
+    // Calculate month ranges
+    const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const startOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const endOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
     const prompt = `
       Você é uma assistente de agendamento médico inteligente.
       Sua tarefa é extrair informações de um comando de texto para criar um agendamento.
       
       COMANDO: "${command}"
       
-      DATA ATUAL: ${new Date().toISOString().split('T')[0]}
+      CONTEXTO DE DATAS (IMPORTANTE):
+      - DATA ATUAL: ${today.toISOString().split('T')[0]} (Dia da semana: ${today.toLocaleDateString('pt-BR', { weekday: 'long' })})
+      - PRÓXIMA SEGUNDA (Início "Semana que vem"): ${nextMonday.toISOString().split('T')[0]}
+      - PRÓXIMA SEXTA (Fim "Semana que vem"): ${nextFriday.toISOString().split('T')[0]}
+      - INÍCIO MÊS ATUAL: ${startOfCurrentMonth.toISOString().split('T')[0]} (Nome: ${startOfCurrentMonth.toLocaleDateString('pt-BR', { month: 'long' })})
+      - FIM MÊS ATUAL: ${endOfCurrentMonth.toISOString().split('T')[0]}
+      - INÍCIO PRÓXIMO MÊS: ${startOfNextMonth.toISOString().split('T')[0]} (Nome: ${startOfNextMonth.toLocaleDateString('pt-BR', { month: 'long' })})
+      - FIM PRÓXIMO MÊS: ${endOfNextMonth.toISOString().split('T')[0]}
       
       ${existingAppointments ? `COMPROMISSOS EXISTENTES NA AGENDA:\n${existingAppointments}\n\nIMPORTANTE: Verifique se há conflitos de horário e sugira alternativas se necessário.` : ''}
       
@@ -762,10 +786,48 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       4. Determine o tipo de consulta: "consulta", "retorno", "exames", "urgencia" ou "blocked" (para bloqueios de agenda).
       5. Se for um comando de bloqueio (ex: "bloquear férias", "folga"), defina type="blocked".
       6. Se for um período (ex: "ferias semana que vem", "bloquear do dia 10 ao dia 15"), extraia data inicial (date) e data final (endDate).
-      7. IMPORTANTE: Se o usuário disser "semana que vem" ou "próxima semana", calcule o range da SEGUNDA-FEIRA até a SEXTA-FEIRA da semana seguinte e preencha endDate.
-      8. Extraia observações adicionais.
-      9. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
+      7. IMPORTANTE: Se o usuário disser "semana que vem" ou "próxima semana", USE EXATAMENTE as datas calculadas acima: date = "${nextMonday.toISOString().split('T')[0]}" e endDate = "${nextFriday.toISOString().split('T')[0]}".
+      8. IMPORTANTE: Se o usuário disser "próximo mês" ou "mês de [NOME DO PRÓXIMO MÊS]", USE EXATAMENTE: date = "${startOfNextMonth.toISOString().split('T')[0]}" e endDate = "${endOfNextMonth.toISOString().split('T')[0]}".
+      9. IMPORTANTE: Se o usuário disser "mês atual" ou "mês de [NOME DO MÊS ATUAL]", USE EXATAMENTE: date = "${startOfCurrentMonth.toISOString().split('T')[0]}" e endDate = "${endOfCurrentMonth.toISOString().split('T')[0]}".
+      10. Extraia observações adicionais.
+      11. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
       
+      EXEMPLOS DE RESPOSTA:
+      
+      Comando: "Bloquear agenda na próxima semana, vou viajar"
+      Resposta Esperada:
+      {
+        "patientName": "Bloqueio de Agenda",
+        "date": "${nextMonday.toISOString().split('T')[0]}", 
+        "endDate": "${nextFriday.toISOString().split('T')[0]}", 
+        "time": "08:00",
+        "type": "blocked",
+        "notes": "Bloquear agenda na próxima semana, vou viajar",
+        "isAllDay": true
+      }
+      
+      Comando: "Bloquear agenda em fevereiro"
+      Resposta Esperada:
+      {
+        "patientName": "Bloqueio de Agenda",
+        "date": "2026-02-01", 
+        "endDate": "2026-02-28", 
+        "time": "08:00",
+        "type": "blocked",
+        "notes": "Bloquear agenda em fevereiro",
+        "isAllDay": true
+      }
+
+      Comando: "Marcar retorno para Maria amanhã às 15h"
+      Resposta Esperada:
+      {
+        "patientName": "Maria",
+        "date": "YYYY-MM-DD", // Data calculada para amanhã
+        "time": "15:00",
+        "type": "retorno",
+        "notes": ""
+      }
+
       PACIENTES DISPONÍVEIS:
       ${availablePatients.map(p => `- ID ${p.id}: ${p.name}`).join('\n')}
 
@@ -778,6 +840,7 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
         "time": "HH:mm",
         "type": "tipo_identificado",
         "notes": "observações",
+        "isAllDay": true/false,
         "conflicts": ["lista de conflitos se houver"],
         "suggestedAlternatives": ["horários alternativos se houver conflitos"]
       }
