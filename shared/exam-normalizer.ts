@@ -398,7 +398,8 @@ export function formatMetricDisplayName(name: string): string {
     'ca', 'cea', 'afp', 'beta-hcg', 'ck', 'ck-mb', 'ldh', 'ggt', 'ast',
     'alt', 'tgo', 'tgp', 'fa', 'dhl', 'cpk', 'pt', 'ttpa', 'tp', 'ttp',
     'ch50', 'c3', 'c4', 'dna', 'rna', 'hla', 'ana', 'anca', 'hiv', 'hcv',
-    'hbv', 'cmv', 'ebv', 'hsv', 'vzv', 'toxo', 'rubéola', 'citomegalovírus'
+    'hbv', 'cmv', 'ebv', 'hsv', 'vzv', 'toxo', 'rubéola', 'citomegalovírus',
+    'b12', 'fsh', 'lh', 'acth', 'pth', 'lpa', 'vdrl', 'ft4', 'ft3'
   ];
 
   // Dividir em palavras
@@ -495,6 +496,21 @@ export function formatMetricDisplayName(name: string): string {
         return 'Anti';
       case 'triiodotironina':
         return 'Triiodotironina';
+      case 'ph':
+        return 'pH';
+      case 'hba1c':
+        return 'HbA1c';
+      case 'rh':
+        return 'Rh';
+      case 'u':
+      case 'urina':
+        return 'Urina';
+      case 'i':
+        return 'I';
+      case 'ii':
+        return 'II';
+      case 'iii':
+        return 'III';
       default:
         // Capitalizar primeira letra
         return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);

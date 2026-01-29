@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfiles } from "@/hooks/use-profiles";
+import { formatMetricDisplayName } from "@shared/exam-normalizer";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -281,13 +282,15 @@ export default function PatientView() {
                                     <LineChart className="h-4 w-4 mr-2" />
                                     Exames
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="evolution"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
-                                >
-                                    <TrendingUp className="h-4 w-4 mr-2" />
-                                    Evolução
-                                </TabsTrigger>
+                                <FeatureGate>
+                                    <TabsTrigger
+                                        value="evolution"
+                                        className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    >
+                                        <TrendingUp className="h-4 w-4 mr-2" />
+                                        Evolução
+                                    </TabsTrigger>
+                                </FeatureGate>
                                 <TabsTrigger
                                     value="atestados"
                                     className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
@@ -569,7 +572,7 @@ export default function PatientView() {
                                                             {alertMetrics.map((metric: any) => (
                                                                 <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
                                                                     <div>
-                                                                        <p className="font-medium text-gray-800 text-sm">{metric.name}</p>
+                                                                        <p className="font-medium text-gray-800 text-sm">{formatMetricDisplayName(metric.name)}</p>
                                                                         <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
                                                                     </div>
                                                                     <div className="flex items-center gap-2">

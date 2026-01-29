@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import type { Exam, HealthMetric } from "@shared/schema";
-import { normalizeExamName } from "@shared/exam-normalizer";
+import { normalizeExamName, formatMetricDisplayName } from "@shared/exam-normalizer";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useProfiles } from "@/hooks/use-profiles";
 import Sidebar from "@/components/layout/sidebar";
@@ -47,33 +47,7 @@ function formatDateToBR(dateString: string | Date): string {
   });
 }
 
-// Função para formatar nomes de métricas
-function formatMetricDisplayName(name: string): string {
-  const normalizedName = normalizeExamName(name);
 
-  const displayMap: Record<string, string> = {
-    'eritrócitos': 'Eritrócitos',
-    'hemoglobina': 'Hemoglobina',
-    'hematócrito': 'Hematócrito',
-    'vcm': 'VCM',
-    'hcm': 'HCM',
-    'chcm': 'CHCM',
-    'rdw': 'RDW',
-    'leucócitos': 'Leucócitos',
-    'neutrófilos': 'Neutrófilos',
-    'eosinófilos': 'Eosinófilos',
-    'basófilos': 'Basófilos',
-    'monócitos': 'Monócitos',
-    'linfócitos': 'Linfócitos',
-    'plaquetas': 'Plaquetas',
-    'glicose': 'Glicose',
-    'colesterol total': 'Colesterol Total',
-    'vitamina d': 'Vitamina D',
-    'albumina': 'Albumina'
-  };
-
-  return displayMap[normalizedName] || name;
-}
 
 interface ExamTimelineProps {
   embedded?: boolean;
@@ -285,7 +259,7 @@ export default function ExamTimeline({
   if (embedded) {
     if (isLoading) {
       return (
-        <div className="w-full h-[600px] flex items-center justify-center">
+        <div className="w-full h-[400px] flex items-center justify-center">
           <Skeleton className="h-full w-full" />
         </div>
       );
@@ -352,22 +326,22 @@ export default function ExamTimeline({
               Eixo X: data dos exames • Eixo Y: valores das métricas
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             {isLoading ? (
-              <div className="w-full h-[600px] flex items-center justify-center">
+              <div className="w-full h-[400px] flex items-center justify-center">
                 <Skeleton className="h-full w-full" />
               </div>
             ) : chartData.length > 0 && availableMetrics.length > 0 ? (
-              <div className="w-full h-[600px]">
+              <div className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                  <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                       dataKey="date"
                       tick={{ fontSize: 11 }}
                       angle={-45}
                       textAnchor="end"
-                      height={100}
+                      height={80}
                       interval={0}
                     />
                     <YAxis tick={{ fontSize: 11 }} width={70} />
@@ -507,22 +481,22 @@ export default function ExamTimeline({
                   Eixo X: data dos exames • Eixo Y: valores das métricas
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-0">
                 {isLoading ? (
-                  <div className="w-full h-[600px] flex items-center justify-center">
+                  <div className="w-full h-[400px] flex items-center justify-center">
                     <Skeleton className="h-full w-full" />
                   </div>
                 ) : chartData.length > 0 && availableMetrics.length > 0 ? (
-                  <div className="w-full h-[600px]">
+                  <div className="w-full h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                      <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                         <XAxis
                           dataKey="date"
                           tick={{ fontSize: 11 }}
                           angle={-45}
                           textAnchor="end"
-                          height={100}
+                          height={80}
                           interval={0}
                         />
                         <YAxis tick={{ fontSize: 11 }} width={70} />
