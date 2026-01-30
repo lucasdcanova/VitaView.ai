@@ -68,6 +68,12 @@ export const profiles = pgTable("profiles", {
   insuranceName: text("insurance_name"),
   referralSource: text("referral_source"),
   notes: text("notes"),
+
+  // Death Registration
+  deceased: boolean("deceased").default(false),
+  deathDate: text("death_date"),
+  deathTime: text("death_time"),
+  deathCause: text("death_cause"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -86,6 +92,11 @@ export const insertProfileSchema = createInsertSchema(profiles)
     planType: true,
     isDefault: true,
     phone: true,
+    // Death fields
+    deceased: true,
+    deathDate: true,
+    deathTime: true,
+    deathCause: true,
   })
   .extend({
     relationship: z.string().optional().nullable(),
@@ -114,7 +125,13 @@ export const insertProfileSchema = createInsertSchema(profiles)
     insuranceName: z.string().optional().nullable(),
     referralSource: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
+    // Death fields validation
+    deceased: z.boolean().optional().default(false),
+    deathDate: z.string().optional().nullable(),
+    deathTime: z.string().optional().nullable(),
+    deathCause: z.string().optional().nullable(),
   });
+
 
 // Medical exam schema
 export const exams = pgTable("exams", {
@@ -228,6 +245,7 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
 export const diagnoses = pgTable("diagnoses", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   cidCode: text("cid_code").notNull(), // Código CID-10
   diagnosisDate: text("diagnosis_date").notNull(),
   status: text("status"), // ativo, em_tratamento, resolvido, cronico
@@ -237,6 +255,7 @@ export const diagnoses = pgTable("diagnoses", {
 
 export const insertDiagnosisSchema = createInsertSchema(diagnoses).pick({
   userId: true,
+  profileId: true,
   cidCode: true,
   diagnosisDate: true,
   status: true,

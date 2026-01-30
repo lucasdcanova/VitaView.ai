@@ -21,6 +21,7 @@ export function registerPatientRoutes(app: Express) {
         try {
             const diagnosisData = {
                 userId: (req.user as any).id,
+                profileId: req.body.profileId || null,
                 cidCode: req.body.cidCode,
                 diagnosisDate: req.body.diagnosisDate,
                 status: req.body.status,

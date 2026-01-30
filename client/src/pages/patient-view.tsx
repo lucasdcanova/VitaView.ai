@@ -13,7 +13,7 @@ import {
     Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles,
     Users, User, Building2, CalendarDays, LayoutDashboard, Pill,
     Heart, LineChart, FileSignature, TrendingUp, TrendingDown, Minus,
-    AlertTriangle, ClipboardList, ShieldCheck, Loader2
+    AlertTriangle, ClipboardList, ShieldCheck, Loader2, MoreVertical
 } from 'lucide-react';
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { format, differenceInYears } from "date-fns";
@@ -24,6 +24,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { TriageCard } from "@/components/dashboard/triage-card";
 import { ComorbiditiesCard } from "@/components/dashboard/comorbidities-card";
@@ -33,6 +41,7 @@ import { AllergiesCard } from "@/components/dashboard/allergies-card";
 
 import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/components/dialogs/diagnosis-dialog";
 import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
+import { RegisterDeathDialog } from "@/components/dialogs/register-death-dialog";
 
 // Lazy load heavy tab components for better initial page load
 const HealthTrendsNew = lazy(() => import("./health-trends-new"));
@@ -82,6 +91,7 @@ export default function PatientView() {
     // Dialog States
     const [isDiagnosisDialogOpen, setIsDiagnosisDialogOpen] = useState(false);
     const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
+    const [isDeathDialogOpen, setIsDeathDialogOpen] = useState(false);
 
     // Diagnosis Form & Mutation
     const diagnosisForm = useForm<DiagnosisFormData>({
@@ -95,7 +105,7 @@ export default function PatientView() {
     });
 
     const createDiagnosisMutation = useMutation({
-        mutationFn: (data: DiagnosisFormData) => apiRequest("POST", "/api/diagnoses", data),
+        mutationFn: (data: DiagnosisFormData & { profileId?: number }) => apiRequest("POST", "/api/diagnoses", data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
             toast({ title: "Sucesso", description: "Diagnóstico registrado com sucesso." });
@@ -108,7 +118,7 @@ export default function PatientView() {
     });
 
     const onAddDiagnosis = (data: DiagnosisFormData) => {
-        createDiagnosisMutation.mutate(data);
+        createDiagnosisMutation.mutate({ ...data, profileId: activeProfile?.id });
     };
 
     // Surgery Form & Mutation
@@ -240,14 +250,44 @@ export default function PatientView() {
                                     )}
                                 </div>
 
-                                {/* Doctor Prescriber Info - Right side of header */}
-                                {user && (
-                                    <div className="hidden md:flex min-w-[200px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex-col items-end flex-shrink-0">
-                                        <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
-                                        <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                                        {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
-                                    </div>
-                                )}
+                                {/* Doctor Prescriber Info & Actions - Right side of header */}
+                                <div className="flex items-center gap-4">
+                                    {user && (
+                                        <div className="hidden md:flex min-w-[200px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex-col items-end flex-shrink-0">
+                                            <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
+                                            <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
+                                            {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
+                                        </div>
+                                    )}
+
+                                    {activeProfile && (
+                                        <div className="flex items-center gap-2">
+                                            {activeProfile.deceased ? (
+                                                <Badge variant="destructive" className="px-3 py-1 flex gap-2 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
+                                                    <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
+                                                    PACIENTE FALECIDO
+                                                </Badge>
+                                            ) : (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="outline" size="icon">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem
+                                                            className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                                                            onClick={() => setIsDeathDialogOpen(true)}
+                                                        >
+                                                            <AlertTriangle className="mr-2 h-4 w-4" />
+                                                            Registrar Óbito
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </header>
 
@@ -374,6 +414,14 @@ export default function PatientView() {
                                                 isPending={createSurgeryMutation.isPending}
                                                 mode="create"
                                             />
+
+                                            {activeProfile && (
+                                                <RegisterDeathDialog
+                                                    open={isDeathDialogOpen}
+                                                    onOpenChange={setIsDeathDialogOpen}
+                                                    patient={activeProfile}
+                                                />
+                                            )}
                                         </div>
 
                                         {/* Recent Exams */}

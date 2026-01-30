@@ -1534,7 +1534,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Fetch all data in parallel for maximum performance
       const [
-        diagnoses,
+        allDiagnoses,
         surgeries,
         allergies,
         exams,
@@ -1555,6 +1555,11 @@ export async function registerRoutes(app: Express): Promise<void> {
           [userId]
         )
       ]);
+
+      // Filter diagnoses for this specific profile
+      // We also include diagnoses with null profileId to support legacy data visibility
+      // (though ideally legacy data should be migrated)
+      const diagnoses = allDiagnoses.filter(d => d.profileId === profileId || d.profileId === null);
 
       // Transform medications to camelCase
       const medications = medicationsResult.rows.map(m => ({

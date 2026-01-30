@@ -448,6 +448,10 @@ export class MemStorage implements IStorage {
       cpf: (profile as any).cpf || null,
       rg: (profile as any).rg || null,
       phone: (profile as any).phone || null,
+      deceased: (profile as any).deceased || false,
+      deathDate: (profile as any).deathDate || null,
+      deathTime: (profile as any).deathTime || null,
+      deathCause: (profile as any).deathCause || null,
       landline: (profile as any).landline || null,
       email: (profile as any).email || null,
       cep: (profile as any).cep || null,
@@ -904,7 +908,8 @@ export class MemStorage implements IStorage {
       notes: appointment.notes || null,
       profileId: appointment.profileId || null,
       price: appointment.price ?? null,
-      duration: appointment.duration || null
+      duration: appointment.duration || null,
+      isAllDay: appointment.isAllDay || null
     };
     this.appointmentsMap.set(id, newAppointment);
     return newAppointment;
@@ -1615,7 +1620,7 @@ export class DatabaseStorage implements IStorage {
         },
         {
           name: "Vita Pro",
-          description: "Ideal para médicos e terapeutas em carreira solo",
+          description: "Ideal para profissionais independentes",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
           price: 9900,
