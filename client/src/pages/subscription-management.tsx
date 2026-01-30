@@ -868,11 +868,7 @@ const SubscriptionManagement = () => {
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col gap-1">
                             <CardTitle className="text-xl">{plan.name}</CardTitle>
-                            {plan.trialPeriodDays && plan.trialPeriodDays > 0 ? (
-                              <Badge className="w-fit bg-green-600 text-white text-[10px] uppercase font-bold px-2 py-0.5">
-                                1 Mês Grátis
-                              </Badge>
-                            ) : plan.promoPrice ? (
+                            {plan.promoPrice ? (
                               <Badge className="w-fit bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5">
                                 Promoção
                               </Badge>
@@ -882,32 +878,34 @@ const SubscriptionManagement = () => {
                             <Badge className="bg-[#212121] text-white">Popular</Badge>
                           )}
                         </div>
-                        <CardDescription className="mt-2 text-sm">{plan.description}</CardDescription>
+                        <CardDescription className="mt-2 text-sm">
+                          {plan.name === 'Vita Pro' ? "Ideal para profissionais independentes" : plan.description}
+                        </CardDescription>
                       </CardHeader>
 
                       <CardContent className="flex-grow">
                         <div className="mb-6">
                           <div className="flex flex-col">
                             <div className="flex items-baseline gap-1">
-                              <span className="text-3xl font-bold">
-                                {plan.trialPeriodDays && plan.trialPeriodDays > 0 ? '1 Mês Grátis' :
+                              <span className={`text-3xl font-bold ${(plan.trialPeriodDays || 0) > 0 ? 'text-green-600' : ''}`}>
+                                {(plan.trialPeriodDays || 0) > 0 ? '1 Mês Grátis' :
                                   plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
                                     plan.price === 0 ? 'Grátis' :
                                       plan.name === 'Hospitais' ? 'Sob consulta' :
                                         `R$${(plan.price / 100).toFixed(2)}`}
                               </span>
-                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && !(plan.trialPeriodDays && plan.trialPeriodDays > 0) && (
+                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && !((plan.trialPeriodDays || 0) > 0) && (
                                 <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
                               )}
                             </div>
-                            {plan.trialPeriodDays && plan.trialPeriodDays > 0 && plan.price > 0 && (
+                            {(plan.trialPeriodDays || 0) > 0 && plan.price > 0 && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-muted-foreground">
                                   Depois R$ {(plan.price / 100).toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}
                                 </span>
                               </div>
                             )}
-                            {plan.promoPrice && !plan.trialPeriodDays && (
+                            {plan.promoPrice && !((plan.trialPeriodDays || 0) > 0) && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-muted-foreground line-through">
                                   R$${(plan.price / 100).toFixed(2)}

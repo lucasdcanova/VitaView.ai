@@ -1606,12 +1606,12 @@ export class DatabaseStorage implements IStorage {
           price: 0,
           interval: "month",
           features: [
-            "Atendimento: Anamnese básica",
-            "Prescrição: Limite de 1 prescrição por dia",
-            "Exames: Protocolos clínicos básicos",
-            "Envio de resultados: 10 uploads/mês (1 arquivo por vez)",
-            "Agenda: Básica",
-            "Pacientes: Limite de 20 pacientes"
+            "Anamnese **Básica**",
+            "Limite de **1 prescrição** por dia",
+            "Protocolos Clínicos **Básicos**",
+            "Envio de **10 uploads** de exames por mês",
+            "Agenda para **organização simples**",
+            "Gestão de até **20 pacientes**"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -1716,6 +1716,7 @@ export class DatabaseStorage implements IStorage {
         }
 
         if (existingPlan) {
+          console.log(`[STORAGE] Updating plan: ${plan.name} (ID: ${existingPlan.id})`);
           // Update existing plan
           await db.update(subscriptionPlans)
             .set({
@@ -1731,7 +1732,10 @@ export class DatabaseStorage implements IStorage {
               isActive: plan.isActive
             })
             .where(eq(subscriptionPlans.id, existingPlan.id));
+
+          console.log(`[STORAGE] Plan ${plan.name} updated successfully.`);
         } else {
+          console.log(`[STORAGE] Creating new plan: ${plan.name}`);
           // Create new plan
           await this.createSubscriptionPlan(plan);
         }
