@@ -68,7 +68,7 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
                 </div>
             )}
 
-            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-blue-900' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.time}</div>
+            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-blue-900' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
             <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-blue-800' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
                 {appointment.patientName}
             </div>

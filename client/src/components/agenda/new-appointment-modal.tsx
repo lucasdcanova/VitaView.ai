@@ -128,7 +128,9 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     date: new Date(initialData.date + 'T12:00:00'),
                     time: initialData.time,
                     notes: initialData.notes || "",
-                    price: priceFormatted
+                    price: priceFormatted,
+                    isAllDay: initialData.isAllDay || false,
+                    isRange: false // Assuming range edit isn't fully supported yet or we don't have range data in single appointment
                 });
 
                 if (initialData.type === 'blocked') {
@@ -171,6 +173,11 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
             values.profileId = undefined;
         }
 
+        // Ensure time is 00:00 if all day
+        if (values.isAllDay) {
+            values.time = "00:00";
+        }
+
         // Format date as YYYY-MM-DD string for the backend
         const formattedDate = format(values.date, 'yyyy-MM-dd');
 
@@ -182,7 +189,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
             price: priceAmount,
         };
 
-        console.log(submissionData);
+        console.log("Submitting appointment:", submissionData);
         if (onSuccess) {
             // Check if it's a range block
             if (values.isRange && values.endDate && values.type === 'blocked') {
@@ -197,9 +204,6 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     appointments.push({
                         ...submissionData,
                         date: format(currentDate, 'yyyy-MM-dd'),
-                        // If all day, we might want to create multiple blocks or a special all-day block
-                        // For now, let's just stick to the specific time or maybe create a block for AM and PM?
-                        // Simple approach: Create one block at the specified time
                     });
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
@@ -235,12 +239,18 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                         form.setValue("type", "consulta");
                     }
                 }} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                        <TabsTrigger value="appointment" className="flex items-center gap-2">
+                    <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-lg">
+                        <TabsTrigger
+                            value="appointment"
+                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md transition-all"
+                        >
                             <UserPlus className="w-4 h-4" />
                             Agendamento
                         </TabsTrigger>
-                        <TabsTrigger value="blocked" className="flex items-center gap-2">
+                        <TabsTrigger
+                            value="blocked"
+                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-sm rounded-md transition-all"
+                        >
                             <Lock className="w-4 h-4" />
                             Bloqueio
                         </TabsTrigger>
@@ -248,7 +258,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                 </Tabs>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                         {mode === 'appointment' && (
                             <FormField
                                 control={form.control}
@@ -312,7 +322,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                             />
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {mode === 'appointment' ? (
                                 <FormField
                                     control={form.control}
@@ -339,46 +349,79 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                     )}
                                 />
                             ) : (
-                                <div className="space-y-3">
-                                    <FormField
-                                        control={form.control}
-                                        name="isRange"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Bloquear Período</FormLabel>
-                                                </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
+                                <div className="col-span-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <FormField
+                                            control={form.control}
+                                            name="isRange"
+                                            render={({ field }) => (
+                                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                            id="range-mode"
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel htmlFor="range-mode" className="font-medium cursor-pointer">
+                                                        Bloquear Período
+                                                    </FormLabel>
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="w-px h-6 bg-gray-200 mx-4 hidden md:block"></div>
+
+                                        <FormField
+                                            control={form.control}
+                                            name="isAllDay"
+                                            render={({ field }) => (
+                                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={(checked) => {
+                                                                field.onChange(checked);
+                                                                if (checked) {
+                                                                    form.setValue("time", "00:00");
+                                                                } else {
+                                                                    form.setValue("time", "09:00");
+                                                                }
+                                                            }}
+                                                            id="all-day-mode"
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel htmlFor="all-day-mode" className="font-medium cursor-pointer">
+                                                        Dia Inteiro
+                                                    </FormLabel>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
                             )}
 
-                            <FormField
-                                control={form.control}
-                                name="time"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Horário</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                <Input className="pl-8" placeholder="00:00" {...field} />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {(!form.watch('isAllDay') || mode === 'appointment') && (
+                                <FormField
+                                    control={form.control}
+                                    name="time"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Horário</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                    <Input className="pl-9" placeholder="00:00" {...field} />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="date"
@@ -391,7 +434,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                     <Button
                                                         variant={"outline"}
                                                         className={cn(
-                                                            "w-full pl-3 text-left font-normal",
+                                                            "w-full pl-3 text-left font-normal border-gray-200 hover:bg-gray-50/50 hover:text-gray-900",
                                                             !field.value && "text-muted-foreground"
                                                         )}
                                                     >
@@ -465,7 +508,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                         <Button
                                                             variant={"outline"}
                                                             className={cn(
-                                                                "w-full pl-3 text-left font-normal",
+                                                                "w-full pl-3 text-left font-normal border-gray-200 hover:bg-gray-50/50 hover:text-gray-900",
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
@@ -505,8 +548,8 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                     <FormLabel>Observações</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Detalhes adicionais sobre a consulta..."
-                                            className="resize-none"
+                                            placeholder={mode === 'blocked' ? "Motivo do bloqueio..." : "Detalhes adicionais sobre a consulta..."}
+                                            className="resize-none min-h-[80px]"
                                             {...field}
                                         />
                                     </FormControl>
@@ -515,8 +558,18 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                             )}
                         />
 
-                        <DialogFooter>
-                            <Button type="submit">{isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Bloquear Horário" : "Agendar")}</Button>
+                        <DialogFooter className="pt-2">
+                            <Button
+                                type="submit"
+                                className={cn(
+                                    "w-full md:w-auto",
+                                    mode === 'blocked'
+                                        ? "bg-red-600 hover:bg-red-700 text-white"
+                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                )}
+                            >
+                                {isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Confirmar Bloqueio" : "Agendar Consulta")}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </Form>

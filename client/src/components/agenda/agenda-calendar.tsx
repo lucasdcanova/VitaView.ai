@@ -391,8 +391,77 @@ export function AgendaCalendar({
       <div className="p-6 flex-1 flex flex-col overflow-hidden">
         {viewMode === 'day' ? (
           <div className="space-y-4 overflow-y-auto pr-2">
+            {(() => {
+              const allDayApps = getFilteredAppointmentsForDay(currentDate).filter(app => !!app.isAllDay);
+              if (allDayApps.length === 0) return null;
+
+              return (
+                <div className="flex gap-4 min-h-[80px] group border-b border-gray-100 pb-4 last:border-0">
+                  <div className="w-20 flex-shrink-0 text-right">
+                    <div className="text-sm font-bold text-gray-500 pt-1">Dia Inteiro</div>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    {allDayApps.map(app => {
+                      const styles = getTypeStyles(app.type);
+                      const appointmentDate = parseAppointmentDate(app.date);
+                      const isToday = isSameDay(appointmentDate, new Date());
+                      const isActive = app.id === inServiceAppointmentId;
+                      const isBlocked = app.type === 'blocked';
+                      const canStartService = isToday && !isBlocked && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
+
+                      return (
+                        <div key={app.id} className={cn(
+                          "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-white",
+                          styles.border
+                        )}>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className={cn("px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider", styles.bg, styles.text)}>
+                                {app.type}
+                              </span>
+                              <span className="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                Dia Inteiro
+                              </span>
+                            </div>
+                            <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
+                              <span className="text-gray-800 flex items-center gap-2">
+                                {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
+                                {app.patientName}
+                              </span>
+                            </h4>
+                            {app.notes && (
+                              <p className="text-gray-600 text-sm mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
+                                "{app.notes}"
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
+                            <div className="flex gap-2 w-full">
+                              <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
+                                Editar
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteAppointmentMutation.mutate(app.id)}
+                                disabled={deleteAppointmentMutation.isPending}
+                              >
+                                Apagar
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {getDailySlots().map(({ hour, minute }) => {
               const apps = getFilteredAppointmentsForDay(currentDate).filter(app => {
+                if (app.isAllDay) return false;
                 const { hour: appHour, minute: appMinute } = parseTime(app.time);
                 const slotMinute = appMinute < 30 ? 0 : 30;
                 return appHour === hour && slotMinute === minute;
@@ -482,7 +551,7 @@ export function AgendaCalendar({
                                 </span>
                                 <span className="text-sm font-semibold text-gray-500 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" />
-                                  {app.time}
+                                  {app.isAllDay ? "Dia Inteiro" : app.time}
                                 </span>
                                 <span className="text-sm font-semibold text-gray-500">
                                   {app.duration} min
@@ -591,131 +660,156 @@ export function AgendaCalendar({
               })}
             </div>
 
+            {/* Week All Day Section */}
+            <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
+              {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                const date = addDays(startOfCurrentWeek, dayIndex);
+                const allDayApps = getFilteredAppointmentsForDay(date).filter(app => !!app.isAllDay);
+
+                if (allDayApps.length === 0) return <div key={dayIndex} />;
+
+                return (
+                  <div key={dayIndex} className="space-y-1">
+                    {allDayApps.map((appointment, idx) => {
+                      const styles = getTypeStyles(appointment.type);
+                      return (
+                        <div key={appointment.id || idx} className={cn("text-xs font-semibold p-1 rounded border mb-1 truncate", styles.bg, styles.border, styles.text)}>
+                          Dia Inteiro - {appointment.patientName}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Week Time Slots Grid */}
             <div className="grid grid-cols-7 gap-2 flex-1 overflow-y-auto">
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
                 const date = addDays(startOfCurrentWeek, dayIndex);
                 return (
                   <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 h-full min-h-[200px] space-y-2">
-                    {getFilteredAppointmentsForDay(date).map((appointment, idx) => {
-                      const styles = getTypeStyles(appointment.type);
-                      return (
-                        <Popover key={appointment.id || idx}>
-                          <PopoverTrigger asChild>
-                            <div>
-                              <AppointmentCard
-                                appointment={appointment}
-                                styles={styles}
-                                isInService={appointment.id === inServiceAppointmentId}
-                                triageData={triageMap[appointment.id]}
-                              />
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80">
-                            <div className="grid gap-4">
-                              {(() => {
-                                const appointmentDate = parseAppointmentDate(appointment.date);
-                                const isToday = isSameDay(appointmentDate, new Date());
-                                const isBlocked = appointment.type === 'blocked';
-                                const canStart = isToday && !isBlocked && appointment.status !== 'in_progress' && appointment.status !== 'completed';
-                                return (
-                                  <AppointmentPopoverHeader
-                                    appointment={appointment}
-                                    styles={styles}
-                                    canStartService={canStart}
-                                    onStartService={() => handleStartService(appointment)}
-                                    triageData={triageMap[appointment.id]}
-                                  />
-                                );
-                              })()}
-                              <div className="grid gap-2">
-                                <div className="flex items-center gap-2 text-sm">
-                                  <Clock className="w-4 h-4 text-gray-500" />
-                                  <span>{appointment.time}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="w-4 h-4 text-gray-500" />
-                                  <span>{doctorName}</span>
-                                </div>
-                                {appointment.notes && (
-                                  <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                                    {appointment.notes}
-                                  </div>
-                                )}
-                                {appointment.price && (
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <DollarSign className="w-4 h-4 text-gray-500" />
-                                    <span>
-                                      {(appointment.price / 100).toLocaleString('pt-BR', {
-                                        style: 'currency',
-                                        currency: 'BRL'
-                                      })}
-                                    </span>
-                                  </div>
-                                )}
+                    {getFilteredAppointmentsForDay(date)
+                      .filter(app => !app.isAllDay)
+                      .map((appointment, idx) => {
+                        const styles = getTypeStyles(appointment.type);
+                        return (
+                          <Popover key={appointment.id || idx}>
+                            <PopoverTrigger asChild>
+                              <div>
+                                <AppointmentCard
+                                  appointment={appointment}
+                                  styles={styles}
+                                  isInService={appointment.id === inServiceAppointmentId}
+                                  triageData={triageMap[appointment.id]}
+                                />
                               </div>
-                              <div className="flex flex-col gap-2">
-                                {/* Status action buttons - Iniciar Atendimento only for today */}
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <div className="grid gap-4">
                                 {(() => {
                                   const appointmentDate = parseAppointmentDate(appointment.date);
                                   const isToday = isSameDay(appointmentDate, new Date());
-                                  const isActive = appointment.id === inServiceAppointmentId;
-                                  const canStartService = isToday && appointment.status !== 'completed' && (!appointment.status || appointment.status === 'scheduled' || (appointment.status === 'in_progress' && !isActive));
-
+                                  const isBlocked = appointment.type === 'blocked';
+                                  const canStart = isToday && !isBlocked && appointment.status !== 'in_progress' && appointment.status !== 'completed';
                                   return (
-                                    <>
-                                      {canStartService && (
-                                        <Button
-                                          size="sm"
-                                          className="bg-blue-500 hover:bg-blue-600 text-white w-full"
-                                          onClick={() => handleStartService(appointment)}
-                                          disabled={updateStatusMutation.isPending}
-                                        >
-                                          <Play className="w-4 h-4 mr-1" />
-                                          {appointment.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
-                                        </Button>
-                                      )}
-
-                                    </>
+                                    <AppointmentPopoverHeader
+                                      appointment={appointment}
+                                      styles={styles}
+                                      canStartService={canStart}
+                                      onStartService={() => handleStartService(appointment)}
+                                      triageData={triageMap[appointment.id]}
+                                    />
                                   );
                                 })()}
-                                {/* Other action buttons */}
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-white hover:bg-gray-100"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setTriageDialogOpen(true);
-                                    }}
-                                  >
-                                    <Stethoscope className="w-4 h-4 mr-1" />
-                                    Triagem
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-white hover:bg-gray-100"
-                                    onClick={() => onEditAppointment?.(appointment)}
-                                  >
-                                    Editar
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                                    disabled={deleteAppointmentMutation.isPending}
-                                  >
-                                    Apagar
-                                  </Button>
+                                <div className="grid gap-2">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <span>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <User className="w-4 h-4 text-gray-500" />
+                                    <span>{doctorName}</span>
+                                  </div>
+                                  {appointment.notes && (
+                                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                      {appointment.notes}
+                                    </div>
+                                  )}
+                                  {appointment.price && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <DollarSign className="w-4 h-4 text-gray-500" />
+                                      <span>
+                                        {(appointment.price / 100).toLocaleString('pt-BR', {
+                                          style: 'currency',
+                                          currency: 'BRL'
+                                        })}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  {/* Status action buttons - Iniciar Atendimento only for today */}
+                                  {(() => {
+                                    const appointmentDate = parseAppointmentDate(appointment.date);
+                                    const isToday = isSameDay(appointmentDate, new Date());
+                                    const isActive = appointment.id === inServiceAppointmentId;
+                                    const canStartService = isToday && appointment.status !== 'completed' && (!appointment.status || appointment.status === 'scheduled' || (appointment.status === 'in_progress' && !isActive));
+
+                                    return (
+                                      <>
+                                        {canStartService && (
+                                          <Button
+                                            size="sm"
+                                            className="bg-blue-500 hover:bg-blue-600 text-white w-full"
+                                            onClick={() => handleStartService(appointment)}
+                                            disabled={updateStatusMutation.isPending}
+                                          >
+                                            <Play className="w-4 h-4 mr-1" />
+                                            {appointment.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
+                                          </Button>
+                                        )}
+
+                                      </>
+                                    );
+                                  })()}
+                                  {/* Other action buttons */}
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-white hover:bg-gray-100"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        setTriageDialogOpen(true);
+                                      }}
+                                    >
+                                      <Stethoscope className="w-4 h-4 mr-1" />
+                                      Triagem
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-white hover:bg-gray-100"
+                                      onClick={() => onEditAppointment?.(appointment)}
+                                    >
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                                      disabled={deleteAppointmentMutation.isPending}
+                                    >
+                                      Apagar
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      );
-                    })}
+                            </PopoverContent>
+                          </Popover>
+                        );
+                      })}
                   </div>
                 );
               })}
@@ -764,7 +858,7 @@ export function AgendaCalendar({
                       const styles = getTypeStyles(app.type);
                       return (
                         <div key={idx} className={cn("text-[10px] truncate rounded px-1 py-0.5", styles.bg, styles.text)}>
-                          {app.time} {app.patientName}
+                          {app.isAllDay ? "Dia Inteiro" : app.time} {app.patientName}
                         </div>
                       )
                     })}

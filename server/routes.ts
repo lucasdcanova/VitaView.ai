@@ -314,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/appointments", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
-      console.log("Criando agendamento:", req.body);
+      console.log("Criando agendamento. Body:", JSON.stringify(req.body, null, 2));
       const appointment = await storage.createAppointment({
         ...req.body,
         userId: req.user.id

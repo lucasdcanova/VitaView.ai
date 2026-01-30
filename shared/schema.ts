@@ -505,6 +505,7 @@ export const appointments = pgTable("appointments", {
   status: text("status").default("scheduled"), // scheduled, in_progress, completed, cancelled
   price: integer("price"), // Price in cents (BRL)
   duration: integer("duration").default(30), // Duration in minutes
+  isAllDay: boolean("is_all_day").default(false),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -519,6 +520,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   status: true,
   price: true,
   duration: true,
+  isAllDay: true,
   notes: true,
 });
 
