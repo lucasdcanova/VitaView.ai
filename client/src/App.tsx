@@ -66,6 +66,7 @@ const SubscriptionManagement = lazy(() => import("@/pages/subscription-managemen
 const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const BulkImport = lazy(() => import("@/pages/bulk-import"));
 const Patients = lazy(() => import("@/pages/patients"));
+const VitaAssist = lazy(() => import("@/pages/vita-assist"));
 
 // ============================================
 // LOADING FALLBACKS
@@ -159,6 +160,7 @@ function AuthenticatedRoutes() {
                     <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
                     <ProtectedRoute path="/admin-panel" component={AdminPanel} />
                     <ProtectedRoute path="/admin" component={AdminPanel} />
+                    <ProtectedRoute path="/vita-assist" component={VitaAssist} />
                     {/* 404 para rotas autenticadas não encontradas */}
                     <Route component={NotFound} />
                   </Switch>

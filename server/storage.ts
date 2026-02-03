@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -212,6 +212,15 @@ export interface IStorage {
   // TUSS operations
   createTussProcedure(procedure: InsertTussProcedure): Promise<TussProcedure>;
   searchTussProcedures(query: string, limit?: number): Promise<TussProcedure[]>;
+
+  // AI Conversation operations (Vita Assist)
+  createAIConversation(userId: number, profileId?: number, title?: string): Promise<AIConversation>;
+  getAIConversationsByUserId(userId: number): Promise<AIConversation[]>;
+  getAIConversation(id: number): Promise<AIConversation | undefined>;
+  updateAIConversation(id: number, data: Partial<AIConversation>): Promise<AIConversation | undefined>;
+  deleteAIConversation(id: number): Promise<boolean>;
+  addAIMessage(conversationId: number, role: string, content: string): Promise<AIMessage>;
+  getAIMessagesByConversationId(conversationId: number): Promise<AIMessage[]>;
 
   // Session store
   sessionStore: SessionStore;
@@ -1555,6 +1564,29 @@ export class MemStorage implements IStorage {
       )
       .slice(0, limit);
   }
+
+  // AI Conversation stub methods (Vita Assist) - MemStorage doesn't persist these
+  async createAIConversation(userId: number, profileId?: number, title?: string): Promise<AIConversation> {
+    throw new Error("AI conversations not supported in MemStorage");
+  }
+  async getAIConversationsByUserId(userId: number): Promise<AIConversation[]> {
+    return [];
+  }
+  async getAIConversation(id: number): Promise<AIConversation | undefined> {
+    return undefined;
+  }
+  async updateAIConversation(id: number, data: Partial<AIConversation>): Promise<AIConversation | undefined> {
+    return undefined;
+  }
+  async deleteAIConversation(id: number): Promise<boolean> {
+    return false;
+  }
+  async addAIMessage(conversationId: number, role: string, content: string): Promise<AIMessage> {
+    throw new Error("AI messages not supported in MemStorage");
+  }
+  async getAIMessagesByConversationId(conversationId: number): Promise<AIMessage[]> {
+    return [];
+  }
 }
 
 
@@ -2713,6 +2745,66 @@ export class DatabaseStorage implements IStorage {
       [status, id]
     );
     return result.rows[0];
+  }
+
+  // AI Conversation methods (Vita Assist)
+  async createAIConversation(userId: number, profileId?: number, title?: string): Promise<AIConversation> {
+    const [conversation] = await db.insert(aiConversations)
+      .values({
+        userId,
+        profileId: profileId ?? null,
+        title: title ?? null,
+      })
+      .returning();
+    return conversation;
+  }
+
+  async getAIConversationsByUserId(userId: number): Promise<AIConversation[]> {
+    return await db.select()
+      .from(aiConversations)
+      .where(eq(aiConversations.userId, userId))
+      .orderBy(desc(aiConversations.updatedAt));
+  }
+
+  async getAIConversation(id: number): Promise<AIConversation | undefined> {
+    const [conversation] = await db.select()
+      .from(aiConversations)
+      .where(eq(aiConversations.id, id));
+    return conversation;
+  }
+
+  async updateAIConversation(id: number, data: Partial<AIConversation>): Promise<AIConversation | undefined> {
+    const [updated] = await db.update(aiConversations)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(aiConversations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAIConversation(id: number): Promise<boolean> {
+    const result = await db.delete(aiConversations)
+      .where(eq(aiConversations.id, id));
+    return true;
+  }
+
+  async addAIMessage(conversationId: number, role: string, content: string): Promise<AIMessage> {
+    const [message] = await db.insert(aiMessages)
+      .values({ conversationId, role, content })
+      .returning();
+
+    // Update conversation's updatedAt
+    await db.update(aiConversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(aiConversations.id, conversationId));
+
+    return message;
+  }
+
+  async getAIMessagesByConversationId(conversationId: number): Promise<AIMessage[]> {
+    return await db.select()
+      .from(aiMessages)
+      .where(eq(aiMessages.conversationId, conversationId))
+      .orderBy(asc(aiMessages.createdAt));
   }
 }
 

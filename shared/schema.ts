@@ -1152,3 +1152,40 @@ export const insertBugReportSchema = createInsertSchema(bugReports).pick({
 
 export type BugReport = typeof bugReports.$inferSelect;
 export type InsertBugReport = z.infer<typeof insertBugReportSchema>;
+
+// AI Conversations schema - VitaConsult chat threads
+export const aiConversations = pgTable("ai_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Optional patient context
+  title: text("title"), // Auto-generated from first message
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAIConversationSchema = createInsertSchema(aiConversations).pick({
+  userId: true,
+  profileId: true,
+  title: true,
+});
+
+export type AIConversation = typeof aiConversations.$inferSelect;
+export type InsertAIConversation = z.infer<typeof insertAIConversationSchema>;
+
+// AI Messages schema - Individual messages in VitaConsult conversations
+export const aiMessages = pgTable("ai_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => aiConversations.id, { onDelete: 'cascade' }),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAIMessageSchema = createInsertSchema(aiMessages).pick({
+  conversationId: true,
+  role: true,
+  content: true,
+});
+
+export type AIMessage = typeof aiMessages.$inferSelect;
+export type InsertAIMessage = z.infer<typeof insertAIMessageSchema>;

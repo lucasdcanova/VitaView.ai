@@ -4054,6 +4054,174 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Init TUSS Seed
   seedTussDatabase(storage).catch(err => console.error("Failed to seed TUSS:", err));
 
+  // ============================================
+  // VITA ASSIST - Medical AI Assistant Routes
+  // ============================================
+
+  // Import Vita Assist functions dynamically to avoid circular dependencies
+  const { vitaAssistChat, generateConversationTitle } = await import("./services/openai");
+
+  // Send a message to Vita Assist and get a response
+  app.post("/api/vita-assist/chat", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) return res.sendStatus(401);
+
+      const { message, conversationId, profileId } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ message: "Mensagem é obrigatória" });
+      }
+
+      let conversation;
+      let messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+      // Get or create conversation
+      if (conversationId) {
+        conversation = await storage.getAIConversation(conversationId);
+        if (!conversation || conversation.userId !== user.id) {
+          return res.status(404).json({ message: "Conversa não encontrada" });
+        }
+        // Load existing messages
+        const existingMessages = await storage.getAIMessagesByConversationId(conversationId);
+        messages = existingMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      } else {
+        // Create new conversation
+        const title = await generateConversationTitle(message);
+        conversation = await storage.createAIConversation(user.id, profileId || undefined, title);
+      }
+
+      // Add user message to history
+      messages.push({ role: 'user', content: message });
+
+      // Save user message
+      await storage.addAIMessage(conversation.id, 'user', message);
+
+      // Get patient context if profileId provided
+      let patientContext = undefined;
+      if (profileId || conversation.profileId) {
+        const pId = profileId || conversation.profileId;
+        const profile = await storage.getProfile(pId);
+        if (profile) {
+          // Get diagnoses for context
+          const diagnoses = await storage.getDiagnosesByUserId(user.id);
+          const profileDiagnoses = diagnoses.filter((d: any) => d.profileId === pId);
+
+          // Get allergies for this profile
+          const allergiesData = await storage.getAllergiesByProfileId(pId);
+          const allergyNames = allergiesData.map((a: any) => a.name || a.allergen).filter(Boolean);
+
+          patientContext = {
+            name: profile.name,
+            age: profile.birthDate ? Math.floor((Date.now() - new Date(profile.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+            gender: profile.gender || undefined,
+            diagnoses: profileDiagnoses.map((d: any) => d.cidCode || d.notes).filter(Boolean),
+            allergies: allergyNames.length > 0 ? allergyNames : undefined,
+            medications: undefined // Medications would need to be fetched from prescriptions if needed
+          };
+        }
+      }
+
+      // Get AI response
+      const aiResponse = await vitaAssistChat(messages, patientContext);
+
+      // Save AI response
+      await storage.addAIMessage(conversation.id, 'assistant', aiResponse);
+
+      res.json({
+        conversationId: conversation.id,
+        message: aiResponse
+      });
+    } catch (error: any) {
+      console.error("Vita Assist chat error:", error);
+      res.status(500).json({ message: error.message || "Erro ao processar consulta" });
+    }
+  });
+
+  // List user's conversations
+  app.get("/api/vita-assist/conversations", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) return res.sendStatus(401);
+
+      const conversations = await storage.getAIConversationsByUserId(user.id);
+      res.json(conversations);
+    } catch (error: any) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Erro ao buscar conversas" });
+    }
+  });
+
+  // Get a specific conversation with messages
+  app.get("/api/vita-assist/conversations/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) return res.sendStatus(401);
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID inválido" });
+
+      const conversation = await storage.getAIConversation(id);
+      if (!conversation || conversation.userId !== user.id) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+
+      const messages = await storage.getAIMessagesByConversationId(id);
+
+      res.json({ ...conversation, messages });
+    } catch (error: any) {
+      console.error("Error fetching conversation:", error);
+      res.status(500).json({ message: "Erro ao buscar conversa" });
+    }
+  });
+
+  // Delete a conversation
+  app.delete("/api/vita-assist/conversations/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) return res.sendStatus(401);
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID inválido" });
+
+      const conversation = await storage.getAIConversation(id);
+      if (!conversation || conversation.userId !== user.id) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+
+      await storage.deleteAIConversation(id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      console.error("Error deleting conversation:", error);
+      res.status(500).json({ message: "Erro ao excluir conversa" });
+    }
+  });
+
+  // Attach patient context to a conversation
+  app.post("/api/vita-assist/conversations/:id/context", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) return res.sendStatus(401);
+
+      const id = parseInt(req.params.id);
+      const { profileId } = req.body;
+
+      if (isNaN(id)) return res.status(400).json({ message: "ID inválido" });
+      if (!profileId) return res.status(400).json({ message: "profileId é obrigatório" });
+
+      const conversation = await storage.getAIConversation(id);
+      if (!conversation || conversation.userId !== user.id) {
+        return res.status(404).json({ message: "Conversa não encontrada" });
+      }
+
+      const updated = await storage.updateAIConversation(id, { profileId });
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating conversation context:", error);
+      res.status(500).json({ message: "Erro ao atualizar contexto" });
+    }
+  });
+
   // Server creation is now handled by httpsConfig in index.ts
 
 }

@@ -1944,3 +1944,119 @@ export async function enhanceAnamnesisText(text: string): Promise<string> {
     throw new Error("Falha ao melhorar o texto com IA");
   }
 }
+
+// Vita Assist - Medical AI Assistant Chat
+interface VitaAssistMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface PatientContext {
+  name?: string;
+  age?: number;
+  gender?: string;
+  diagnoses?: string[];
+  medications?: string[];
+  allergies?: string[];
+}
+
+const VITA_ASSIST_SYSTEM_PROMPT = `Você é VitaAssist, um assistente de apoio à decisão clínica integrado a um prontuário eletrônico.
+Seu papel é auxiliar profissionais de saúde, fornecendo informações baseadas em evidências científicas, diretrizes clínicas atualizadas e literatura médica revisada por pares.
+
+REGRA FUNDAMENTAL DE ESTILO:
+- Seja EXTREMAMENTE CONCISO e OBJETIVO. Profissionais de saúde têm pouco tempo.
+- Evite repetições, introduções longas e explicações desnecessárias.
+- Vá direto ao ponto. Cada frase deve agregar valor.
+- Prefira listas curtas e bullets a parágrafos extensos.
+- Omita informações óbvias ou triviais para o público médico.
+
+Princípios obrigatórios de resposta:
+- Priorize guidelines oficiais (sociedades médicas, consensos, diretrizes).
+- Cite a fonte quando relevante (diretriz, sociedade, ano).
+- Diferencie evidência forte de opinião especializada.
+- Use linguagem técnica, objetiva e profissional.
+
+Limites de atuação:
+- Você não substitui o julgamento clínico do profissional.
+- Não forneça diagnósticos definitivos nem prescrições fechadas.
+- A decisão final é sempre do médico assistente.
+
+Formato das respostas (adapte conforme necessário, omitindo seções não aplicáveis):
+- **Resumo**: resposta direta em 1-2 frases
+- **Condutas/Opções**: lista objetiva
+- **Referência**: fonte principal (se aplicável)
+
+Use markdown. Seja breve. Responda em português brasileiro.`;
+
+export async function vitaAssistChat(
+  messages: VitaAssistMessage[],
+  patientContext?: PatientContext
+): Promise<string> {
+  if (!openai) {
+    throw new Error("OpenAI API não configurada");
+  }
+
+  let systemPrompt = VITA_ASSIST_SYSTEM_PROMPT;
+
+  // Add patient context if provided
+  if (patientContext) {
+    systemPrompt += `\n\n---\n\nCONTEXTO DO PACIENTE ATUAL:
+- Nome: ${patientContext.name || 'Não informado'}
+- Idade: ${patientContext.age ? `${patientContext.age} anos` : 'Não informada'}
+- Sexo: ${patientContext.gender || 'Não informado'}
+- Diagnósticos: ${patientContext.diagnoses?.length ? patientContext.diagnoses.join(', ') : 'Nenhum registrado'}
+- Medicamentos em uso: ${patientContext.medications?.length ? patientContext.medications.join(', ') : 'Nenhum registrado'}
+- Alergias: ${patientContext.allergies?.length ? patientContext.allergies.join(', ') : 'Nenhuma registrada'}
+
+Considere este contexto ao responder perguntas sobre este paciente.`;
+  }
+
+  const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemPrompt },
+    ...messages.map(m => ({ role: m.role, content: m.content }))
+  ];
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: chatMessages,
+      temperature: 0.4,
+      max_tokens: 4000
+    });
+
+    const content = response.choices[0].message.content;
+    return content?.trim() || "Desculpe, não consegui processar sua pergunta. Por favor, tente reformulá-la.";
+  } catch (error) {
+    logger.error("[OpenAI] Erro no Vita Assist chat", { error });
+    throw new Error("Falha ao processar consulta médica");
+  }
+}
+
+// Generate a title for a conversation based on the first message
+export async function generateConversationTitle(firstMessage: string): Promise<string> {
+  if (!openai) {
+    // Fallback: truncate the message
+    return firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: OPENAI_FALLBACK_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um assistente que gera títulos curtos e descritivos para conversas médicas. Gere um título de no máximo 50 caracteres que resuma o tema principal da pergunta. Responda APENAS com o título, sem aspas ou pontuação extra.'
+        },
+        { role: 'user', content: firstMessage }
+      ],
+      temperature: 0.3,
+      max_tokens: 50
+    });
+
+    const title = response.choices[0].message.content?.trim() || firstMessage.slice(0, 50);
+    return title.slice(0, 50);
+  } catch (error) {
+    logger.error("[OpenAI] Erro ao gerar título", { error });
+    return firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+  }
+}

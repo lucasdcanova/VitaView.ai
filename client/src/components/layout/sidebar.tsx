@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  Sparkles,
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
@@ -261,6 +262,14 @@ export default function Sidebar(props: SidebarProps) {
           <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
           <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
           <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
+
+          {/* Separador */}
+          <div className="py-2">
+            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
+          </div>
+
+          {/* AI Assistant */}
+          <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
 
 
 
