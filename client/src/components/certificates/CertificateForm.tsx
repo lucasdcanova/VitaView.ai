@@ -42,10 +42,10 @@ export function CertificateForm({
     isUserLoggedIn
 }: CertificateFormProps) {
     return (
-        <Card className="border-blue-100 shadow-md bg-gradient-to-b from-white to-blue-50/20 h-full">
-            <CardHeader className="bg-blue-50/50 border-b border-blue-100 pb-4">
+        <Card className="border-gray-200 shadow-md bg-gradient-to-b from-white to-gray-50/20 h-full">
+            <CardHeader className="bg-gray-50 border-b border-gray-200 pb-4">
                 <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
-                    <FileSignature className="h-5 w-5 text-blue-700" />
+                    <FileSignature className="h-5 w-5 text-gray-700" />
                     Emissão de Atestado
                 </CardTitle>
                 <CardDescription>Geração automática de atestados com CID.</CardDescription>
@@ -146,7 +146,7 @@ export function CertificateForm({
 
                 <div className="flex justify-end pt-4">
                     <Button
-                        className="w-full h-12 text-base shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700"
+                        className="w-full h-12 text-base shadow-lg shadow-gray-200 bg-gray-800 hover:bg-gray-900"
                         onClick={onSave}
                         disabled={isPending || !isUserLoggedIn}
                     >
