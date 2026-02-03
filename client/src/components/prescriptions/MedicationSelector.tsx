@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, ChevronsUpDown, Sparkles, RefreshCw, Pencil } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PlusCircle, Search, ChevronsUpDown, Sparkles, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     ALL_MEDICATIONS_WITH_PRESENTATIONS,
@@ -27,7 +28,10 @@ interface MedicationSelectorProps {
     doseUnit: string;
     setDoseUnit: (val: string) => void;
     quantity: string;
-    openCustomMedicationDialog: () => void;
+    setQuantity?: (val: string) => void;
+    onAddCustomMedication?: (name: string) => void;
+    customMedications?: any[];
+    onDeleteCustomMedication?: (id: number) => void;
 }
 
 export function MedicationSelector({
@@ -43,11 +47,15 @@ export function MedicationSelector({
     doseUnit,
     setDoseUnit,
     quantity,
-    openCustomMedicationDialog
+    setQuantity,
+    onAddCustomMedication,
+    customMedications = [],
+    onDeleteCustomMedication
 }: MedicationSelectorProps) {
 
     const [medOpen, setMedOpen] = useState(false);
     const [dosePopoverOpen, setDosePopoverOpen] = useState(false);
+    const [suggestionPopoverOpen, setSuggestionPopoverOpen] = useState(false);
     const [patientWeight, setPatientWeight] = useState("");
     const [frequency, setFrequency] = useState("");
 
@@ -73,6 +81,95 @@ export function MedicationSelector({
 
         return presentation || null;
     }, [selectedListItem]);
+
+    // Get full medication info (all presentations) for AI suggestions
+    const selectedMedInfo = useMemo(() => {
+        if (!selectedListItem) return null;
+        return MEDICATION_DATABASE.find(m => m.name === selectedListItem.baseName) || null;
+    }, [selectedListItem]);
+
+    // Apply dosage suggestion
+    const applyDosageSuggestion = (presentation: any) => {
+        const formatLower = presentation.format.toLowerCase();
+
+        // Set dose unit based on format
+        let unit = "cp"; // Default to comprimido (cp)
+        if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
+            unit = "cps";
+            setDose("1");
+        } else if (formatLower.includes('gotas')) {
+            unit = "gt";
+            if (presentation.commonDose) {
+                const match = presentation.commonDose.match(/(\d+)/);
+                setDose(match ? match[1] : "20");
+            } else {
+                setDose("20");
+            }
+        } else if (formatLower.includes('suspencao') || formatLower.includes('suspensão') || formatLower.includes('suspensao') ||
+            formatLower.includes('solucao') || formatLower.includes('solução') ||
+            formatLower.includes('xarope')) {
+            unit = "ml";
+            setDose("5");
+        } else if (formatLower.includes('spray') || formatLower.includes('aerosol') || formatLower.includes('aerossol')) {
+            unit = "puff";
+            if (presentation.commonDose) {
+                const match = presentation.commonDose.match(/(\d+)/);
+                setDose(match ? match[1] : "1");
+            } else {
+                setDose("1");
+            }
+        } else if (formatLower.includes('injecao') || formatLower.includes('injeção') || formatLower.includes('ampola') || formatLower.includes('injetavel') || formatLower.includes('injetável')) {
+            unit = "amp";
+            setDose("1");
+        } else {
+            // Sólidos (comprimido)
+            unit = "cp";
+            setDose("1");
+        }
+
+        // Parse common dose string for details (e.g. "200mg 5x/dia por 5 dias")
+        if (presentation.commonDose) {
+            const commonDoseLower = presentation.commonDose.toLowerCase();
+
+            // Extract Frequency
+            const frequencyMatch = presentation.commonDose.match(/(\d+x\s*(?:ao|por)\s*dia|\d+x\/dia|\d{1,2}h\s*em\s*\d{1,2}h|\d+x\s*semana)/i);
+            if (frequencyMatch) {
+                // Map matched frequency to standard value if possible
+                const matchedFreq = frequencyMatch[0];
+                let mappedFreq = matchedFreq.trim();
+
+                // Normalization attempts
+                if (matchedFreq.includes('5x')) mappedFreq = "4h em 4h"; // ou "5x ao dia" se houver opção
+                else if (matchedFreq.includes('4x')) mappedFreq = "6h em 6h";
+                else if (matchedFreq.includes('3x')) mappedFreq = "8h em 8h";
+                else if (matchedFreq.includes('2x')) mappedFreq = "12h em 12h";
+                else if (matchedFreq.includes('1x')) mappedFreq = "1x ao dia";
+
+                // If we have an exact match in our DB, use it, otherwise try to set it directly or closest
+                // For now, if presentation has explicit frequency field, use that preferred
+                if (!presentation.frequency) {
+                    setFrequency(mappedFreq);
+                }
+            } else if (commonDoseLower.includes('dose única') || commonDoseLower.includes('dose unicia') || commonDoseLower.includes('dose unica')) {
+                setFrequency("Dose única");
+                setDaysOfUse("1");
+            }
+
+            // Extract Days
+            const daysMatch = commonDoseLower.match(/por\s*(\d+)\s*dias/);
+            if (daysMatch) {
+                setDaysOfUse(daysMatch[1]);
+            }
+        }
+
+        // Use explicit frequency from presentation if available (more reliable)
+        if (presentation.frequency) {
+            setFrequency(presentation.frequency);
+        }
+
+        setDoseUnit(unit);
+        setSuggestionPopoverOpen(false);
+    };
 
 
     // Calculate pediatric dose helper
@@ -103,15 +200,45 @@ export function MedicationSelector({
         setFrequency("");
     };
 
+    const handleClear = () => {
+        setSearchValue("");
+        setFrequency("");
+        setDose("");
+        setDoseUnit("mg");
+        setDaysOfUse("");
+        setNotes("");
+        setPatientWeight("");
+    };
+
     const filteredMeds = useMemo(() => {
-        if (!searchValue) return ALL_MEDICATIONS_WITH_PRESENTATIONS;
-        return ALL_MEDICATIONS_WITH_PRESENTATIONS.filter((med) =>
-            med.displayName.toLowerCase().includes(searchValue.toLowerCase())
+        const customItems = (customMedications || []).map((c: any) => ({
+            baseName: c.name,
+            displayName: c.name,
+            dosage: c.dosage || "",
+            unit: "",
+            format: c.format || "Personalizado",
+            isCustom: true,
+            id: c.id
+        }));
+
+        const allItems = [...customItems, ...ALL_MEDICATIONS_WITH_PRESENTATIONS];
+
+        if (!searchValue) return allItems;
+        const lowerSearch = searchValue.toLowerCase();
+        return allItems.filter((med) =>
+            med.displayName.toLowerCase().includes(lowerSearch)
         );
-    }, [searchValue]);
+    }, [searchValue, customMedications]);
 
     return (
-        <Card className="border-emerald-100 shadow-sm overflow-visible z-10">
+        <Card className="border-gray-200 shadow-sm overflow-visible z-10">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+                <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4 text-gray-600" />
+                    Nova Prescrição
+                </CardTitle>
+                <CardDescription className="text-xs">Adicione medicamentos à receita.</CardDescription>
+            </CardHeader>
             <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Medication Search */}
@@ -167,8 +294,9 @@ export function MedicationSelector({
                                             )}
                                             onClick={() => {
                                                 setSearchValue(med.displayName);
-                                                setDose(med.dosage || "");
-                                                setDoseUnit(med.unit || "mg");
+                                                // Removed auto-fill of dose and unit as requested
+                                                // setDose(med.dosage || "");
+                                                // setDoseUnit(med.unit || "mg");
                                                 setMedOpen(false);
                                             }}
                                         >
@@ -176,12 +304,25 @@ export function MedicationSelector({
                                                 <span className="text-emerald-600 h-4 w-4 flex-shrink-0">
                                                     {getMedicationIcon(med.format)}
                                                 </span>
-                                                <div className="flex flex-col overflow-hidden">
+                                                <div className="flex flex-col overflow-hidden items-start flex-1 min-w-0">
                                                     <span className="font-medium truncate">{med.baseName}</span>
                                                     <span className="text-xs text-gray-500 truncate">
                                                         {med.dosage} {med.unit} ({med.format})
                                                     </span>
                                                 </div>
+                                                {(med as any).isCustom && onDeleteCustomMedication && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteCustomMedication((med as any).id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -193,28 +334,20 @@ export function MedicationSelector({
                                                 className="text-emerald-600 w-full justify-start"
                                                 onClick={() => {
                                                     setMedOpen(false);
+                                                    // If onAddCustomMedication provided, call it. 
+                                                    // This creates the custom med silently.
+                                                    if (onAddCustomMedication) {
+                                                        onAddCustomMedication(searchValue);
+                                                    }
                                                 }}
                                             >
                                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                                Usar "{searchValue}"
+                                                Adicionar "{searchValue}" como personalizado
                                             </Button>
                                         </div>
                                     )}
                                 </div>
-                                <div className="p-2 border-t bg-gray-50">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full text-xs"
-                                        onClick={() => {
-                                            setMedOpen(false);
-                                            openCustomMedicationDialog();
-                                        }}
-                                    >
-                                        <Pencil className="mr-2 h-3 w-3" />
-                                        Gerenciar Personalizados
-                                    </Button>
-                                </div>
+
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -237,102 +370,173 @@ export function MedicationSelector({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {/* Dose */}
-                    <div className="col-span-1 space-y-2">
-                        <label className="text-sm font-medium text-gray-700 flex items-center justify-between">
+                <div className="grid grid-cols-4 gap-3">
+                    {/* Dose Value with AI Suggestion */}
+                    <div className="col-span-1 space-y-1.5">
+                        <label className="text-xs font-medium text-gray-700 h-5 flex items-center justify-between">
                             Dose
-                            {selectedMedData?.isPediatric && (
-                                <Popover open={dosePopoverOpen} onOpenChange={setDosePopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full text-emerald-600">
-                                            <Sparkles className="h-3 w-3" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-4">
-                                        <div className="space-y-3">
-                                            <h4 className="font-semibold text-sm flex items-center gap-2">
-                                                <Sparkles className="h-4 w-4 text-emerald-500" />
-                                                Calculadora Pediátrica
-                                            </h4>
-                                            <div className="flex items-end gap-2">
-                                                <div className="flex-1 space-y-1">
-                                                    <label className="text-xs text-gray-500">Peso (kg)</label>
-                                                    <Input
-                                                        type="number"
-                                                        value={patientWeight}
-                                                        onChange={(e) => setPatientWeight(e.target.value)}
-                                                        placeholder="Ex: 15"
-                                                    />
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    disabled={!patientWeight}
-                                                    onClick={() => {
-                                                        const result = calculatePediatricDose(selectedMedData, parseFloat(patientWeight));
-                                                        if (result) {
-                                                            setDose(`${result.mlPerAdminLow} - ${result.mlPerAdminHigh}`);
-                                                            setDoseUnit('ml');
-                                                            setDosePopoverOpen(false);
-                                                        }
-                                                    }}
-                                                >
-                                                    Calcular
-                                                </Button>
-                                            </div>
-                                            <p className="text-xs text-gray-400">
-                                                Baseado em {selectedMedData.dosePerKg}mg/kg/dia
-                                            </p>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            )}
                         </label>
-                        <div className="flex gap-2">
+                        <div className="relative">
                             <Input
                                 value={dose}
                                 onChange={(e) => setDose(e.target.value)}
                                 placeholder="0"
-                                className="bg-white min-w-[60px]"
+                                className="bg-white text-sm pr-8"
                             />
-                            <Select value={doseUnit} onValueChange={setDoseUnit}>
-                                <SelectTrigger className="w-[100px] bg-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {DOSAGE_UNITS.map((unit) => (
-                                        <SelectItem key={unit.value} value={unit.value}>
-                                            {unit.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {selectedMedInfo ? (
+                                <Popover open={suggestionPopoverOpen} onOpenChange={setSuggestionPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700 transition-colors z-10 p-1 flex items-center justify-center rounded-sm hover:bg-blue-50"
+                                            title="Ver sugestões de dose (IA)"
+                                        >
+                                            <Sparkles className="h-4 w-4" />
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[320px] p-0" align="start" side="bottom">
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 border-b">
+                                            <div className="flex items-center gap-2 text-blue-700">
+                                                <Sparkles className="h-4 w-4" />
+                                                <span className="font-medium text-sm">Sugestão IA</span>
+                                                {selectedMedInfo.category && (
+                                                    <Badge variant="outline" className="text-xs ml-auto border-blue-200 text-blue-700">{selectedMedInfo.category}</Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="p-2 max-h-[280px] overflow-y-auto">
+                                            {/* Adult presentations */}
+                                            {selectedMedInfo.presentations.filter(p => !p.isPediatric).length > 0 && (
+                                                <>
+                                                    {selectedMedInfo.presentations.filter(p => !p.isPediatric).map((pres, idx) => (
+                                                        <div
+                                                            key={`adult-${idx}`}
+                                                            className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
+                                                            onClick={() => applyDosageSuggestion(pres)}
+                                                        >
+                                                            <div>
+                                                                <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
+                                                                <span className="text-gray-500 ml-2 text-sm">
+                                                                    ({pres.format})
+                                                                </span>
+                                                            </div>
+                                                            {pres.commonDose && (
+                                                                <span className="text-xs text-gray-500">{pres.commonDose}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            )}
+
+                                            {/* Pediatric section */}
+                                            {selectedMedInfo.presentations.filter(p => p.isPediatric).length > 0 && (
+                                                <div className="mt-2 pt-2 border-t">
+                                                    <div className="flex items-center justify-between px-2 py-1">
+                                                        <span className="text-xs text-purple-600 font-medium">👶 Pediátrico</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Peso"
+                                                                value={patientWeight}
+                                                                onChange={(e) => setPatientWeight(e.target.value)}
+                                                                className="h-6 w-16 text-xs px-2"
+                                                                min="0"
+                                                                step="0.1"
+                                                            />
+                                                            <span className="text-xs text-gray-500">kg</span>
+                                                        </div>
+                                                    </div>
+                                                    {selectedMedInfo.presentations.filter(p => p.isPediatric).map((pres, idx) => {
+                                                        const weight = parseFloat(patientWeight);
+                                                        const calculation = weight > 0 ? calculatePediatricDose(pres, weight) : null;
+
+                                                        return (
+                                                            <div
+                                                                key={`ped-${idx}`}
+                                                                className="p-2 rounded-md cursor-pointer hover:bg-purple-50 transition-colors border-l-2 border-purple-200 ml-2 mt-1"
+                                                                onClick={() => {
+                                                                    if (calculation) {
+                                                                        setDose(`${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`);
+                                                                        setDoseUnit("ml");
+                                                                        setSuggestionPopoverOpen(false);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-800">{pres.format} {pres.dosage}{pres.unit}</span>
+                                                                    {calculation && (
+                                                                        <span className="text-xs text-purple-600 font-medium">
+                                                                            {calculation.mlPerAdminLow}-{calculation.mlPerAdminHigh} ml
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {pres.dosePerKg && (
+                                                                    <span className="text-xs text-gray-400">{pres.dosePerKg}mg/kg/dia</span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-2 bg-gray-50 border-t text-xs text-gray-400 flex items-start gap-1">
+                                            ⚕️ Sugestões baseadas em referências gerais.
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 cursor-not-allowed z-10 p-1 flex items-center justify-center"
+                                    title="Selecione um medicamento para ver sugestões"
+                                    disabled
+                                >
+                                    <Sparkles className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
+                    {/* Dose Unit */}
+                    <div className="col-span-1 space-y-1.5">
+                        <label className="text-xs font-medium text-gray-700 h-5 flex items-center">Unidade</label>
+                        <Select value={doseUnit} onValueChange={setDoseUnit}>
+                            <SelectTrigger className="bg-white text-sm">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {DOSAGE_UNITS.map((unit) => (
+                                    <SelectItem key={unit.value} value={unit.value}>
+                                        {unit.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {/* Days of Use */}
-                    <div className="col-span-1 space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Dias</label>
+                    <div className="col-span-1 space-y-1.5">
+                        <label className="text-xs font-medium text-gray-700 h-5 flex items-center">Dias</label>
                         <Input
                             type="number"
                             value={daysOfUse}
                             onChange={(e) => setDaysOfUse(e.target.value)}
                             placeholder="7"
-                            className="bg-white"
+                            className="bg-white text-sm"
                         />
                     </div>
 
                     {/* Quantity (Auto-calc display + override) */}
-                    <div className="col-span-1 md:col-span-2 space-y-2">
-                        <label className="text-sm font-medium text-gray-700 flex justify-between">
+                    <div className="col-span-1 space-y-1.5">
+                        <label className="text-xs font-medium text-gray-700 h-5 flex items-center gap-1">
                             Quantidade
-                            {quantity && <span className="text-xs text-emerald-600 font-normal flex items-center"><RefreshCw className="h-3 w-3 mr-1" />Calculado</span>}
+                            {quantity && <RefreshCw className="h-3 w-3 text-gray-400" />}
                         </label>
                         <Input
                             value={quantity}
-                            readOnly
-                            className="bg-gray-50 text-gray-500 border-gray-200 cursor-not-allowed"
-                            placeholder="Calculado automaticamente..."
+                            onChange={(e) => setQuantity && setQuantity(e.target.value)}
+                            className="bg-white text-sm"
+                            placeholder="Auto"
                         />
                     </div>
                 </div>
@@ -348,9 +552,17 @@ export function MedicationSelector({
                     />
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 flex gap-2">
                     <Button
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                        variant="outline"
+                        className="w-1/3 text-gray-600 hover:bg-gray-50"
+                        onClick={handleClear}
+                        title="Limpar todos os campos"
+                    >
+                        Limpar
+                    </Button>
+                    <Button
+                        className="w-2/3 bg-gray-800 hover:bg-gray-900 text-white text-sm"
                         onClick={handleAdd}
                         disabled={!searchValue || !frequency || !dose}
                     >

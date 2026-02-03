@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, FileText, AlertTriangle, Save, Printer } from "lucide-react";
+import { Trash2, FileText, AlertTriangle, Save, Printer, Pencil } from "lucide-react";
 import { PrescriptionTypeBadge } from "@/components/dialogs";
 import type { AcutePrescriptionItem } from "@/hooks/use-prescription-logic";
 
@@ -12,6 +12,7 @@ interface ActivePrescriptionFormProps {
     observations: string;
     onObservationsChange: (value: string) => void;
     onRemoveItem: (id: string) => void;
+    onEditItem: (id: string) => void;
     onSaveAndPrint: () => void;
     isEditing: boolean;
 }
@@ -21,48 +22,54 @@ export function ActivePrescriptionForm({
     observations,
     onObservationsChange,
     onRemoveItem,
+    onEditItem,
     onSaveAndPrint,
     isEditing
 }: ActivePrescriptionFormProps) {
+    // Don't render anything when empty - MedicationSelector already provides context
     if (items.length === 0) {
-        return (
-            <Card className="border-dashed border-2 bg-gray-50/50 h-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
-                <FileText className="h-12 w-12 mb-4 opacity-20" />
-                <p>Nenhum medicamento adicionado.</p>
-                <p className="text-sm">Selecione um medicamento acima para começar.</p>
-            </Card>
-        );
+        return null;
     }
 
     return (
-        <Card className="border-green-100 shadow-md h-fit">
-            <CardHeader className="bg-green-50/50 border-b border-green-100 pb-4">
-                <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-green-700" />
+        <Card className="border-gray-200 shadow-sm h-fit">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+                <CardTitle className="text-base text-gray-900 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-600" />
                     Receita Atual
-                    <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 ml-2">
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700 hover:bg-gray-200 ml-2 text-xs">
                         {items.length} {items.length === 1 ? 'item' : 'itens'}
                     </Badge>
                 </CardTitle>
-                <CardDescription>Revise os medicamentos antes de imprimir.</CardDescription>
+                <CardDescription className="text-xs">Revise os medicamentos antes de imprimir.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 <div className="divide-y divide-gray-100">
                     {items.map((item) => (
-                        <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors group">
+                        <div key={item.id} className="p-3 hover:bg-gray-50 transition-colors group">
                             <div className="flex justify-between items-start mb-1">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-800">{item.name}</h4>
+                                    <h4 className="font-medium text-sm text-gray-800">{item.name}</h4>
                                     <PrescriptionTypeBadge type={item.prescriptionType === 'padrao' ? 'common' : item.prescriptionType} />
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => onRemoveItem(item.id)}
-                                    className="text-gray-400 hover:text-red-500 h-8 w-8 p-0"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onEditItem(item.id)}
+                                        className="text-gray-400 hover:text-gray-600 h-7 w-7 p-0"
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onRemoveItem(item.id)}
+                                        className="text-gray-400 hover:text-red-500 h-7 w-7 p-0"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
                                 <div><span className="font-medium text-gray-500">Dose:</span> {item.dosage}</div>
@@ -99,7 +106,7 @@ export function ActivePrescriptionForm({
                     </div>
 
                     <Button
-                        className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                        className="w-full bg-gray-800 hover:bg-gray-900 text-white shadow-sm text-sm"
                         size="lg"
                         onClick={onSaveAndPrint}
                     >
@@ -117,6 +124,6 @@ export function ActivePrescriptionForm({
                     </Button>
                 </div>
             </CardContent>
-        </Card>
+        </Card >
     );
 }

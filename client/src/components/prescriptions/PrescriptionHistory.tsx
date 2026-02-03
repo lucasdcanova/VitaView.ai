@@ -28,12 +28,12 @@ export function PrescriptionHistory({ prescriptions, onReprint, onEdit }: Prescr
 
     return (
         <Card className="border-gray-200 mt-8">
-            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-4">
-                <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-                    <History className="h-5 w-5 text-gray-500" />
+            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+                <CardTitle className="text-base text-gray-800 flex items-center gap-2">
+                    <History className="h-4 w-4 text-gray-500" />
                     Histórico de Receitas
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                     Acesse e reimprima receitas anteriores.
                 </CardDescription>
             </CardHeader>

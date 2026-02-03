@@ -256,7 +256,7 @@ export default function PatientView() {
                                         <div className="hidden md:flex min-w-[200px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex-col items-end flex-shrink-0">
                                             <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
                                             <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                                            {user?.crm && <span className="text-xs text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded">CRM: {user.crm}</span>}
+                                            {user?.crm && <span className="text-xs text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">CRM: {user.crm}</span>}
                                         </div>
                                     )}
 

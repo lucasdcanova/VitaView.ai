@@ -74,7 +74,7 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
                 </HoverCardTrigger>
                 <HoverCardContent className="w-80 bg-[#212121] text-white border-none p-4 shadow-xl">
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 font-semibold text-lg text-[#00E5FF]">
+                        <div className="flex items-center gap-2 font-semibold text-lg text-white">
                             <Lock className="h-5 w-5" />
                             <span>Recurso Premium</span>
                         </div>

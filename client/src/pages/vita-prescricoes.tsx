@@ -92,7 +92,10 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         doseUnit={logic.receituarioDoseUnit}
                         setDoseUnit={logic.setReceituarioDoseUnit}
                         quantity={logic.receituarioQuantity}
-                        openCustomMedicationDialog={customMedLogic.openDialog}
+                        setQuantity={logic.setReceituarioQuantity}
+                        onAddCustomMedication={(name) => customMedLogic.createCustomMedication({ name })}
+                        customMedications={customMedLogic.customMedications}
+                        onDeleteCustomMedication={customMedLogic.deleteCustomMedication}
                     />
 
                     {/* Active List */}
@@ -101,6 +104,7 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         observations={logic.prescriptionObservations}
                         onObservationsChange={logic.setPrescriptionObservations}
                         onRemoveItem={logic.removeAcuteItem}
+                        onEditItem={logic.editAcuteItem}
                         onSaveAndPrint={logic.handleSaveAndPrintPrescription}
                         isEditing={!!logic.editingPrescriptionId}
                     />
@@ -140,18 +144,7 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 isRemovePending={continuousMedsLogic.isPending}
             />
 
-            {/* Custom Medications Dialog (Add/Manage Custom DB) */}
-            <MedicationDialog
-                open={customMedLogic.isDialogOpen}
-                onOpenChange={customMedLogic.setIsDialogOpen}
-                form={customMedLogic.form}
-                onSubmit={customMedLogic.handleSubmit}
-                isPending={customMedLogic.isPending}
-                mode="create" // Custom meds logic currently only supports creating new custom meds via this dialog? 
-            // Actually useCustomMedications hook handles creating custom items into the DB.
-            // We might need to adjust logic if we want to EDIT custom meds.
-            // For now, keeping as create-only or as-is from original logic.
-            />
+
 
         </div>
     );

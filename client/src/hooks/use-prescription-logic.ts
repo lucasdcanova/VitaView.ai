@@ -61,7 +61,12 @@ export function useCustomMedications() {
         });
     };
 
-    const openDialog = () => {
+    const openDialog = (initialName?: string) => {
+        if (initialName) {
+            form.setValue("name", initialName);
+        } else {
+            form.reset();
+        }
         setIsDialogOpen(true);
     };
 
@@ -200,6 +205,30 @@ export function usePrescriptionLogic(patient: Profile) {
     };
 
     const removeAcuteItem = (id: string) => {
+        setAcuteItems(acuteItems.filter(i => i.id !== id));
+    };
+
+    const editAcuteItem = (id: string) => {
+        const item = acuteItems.find(i => i.id === id);
+        if (!item) return;
+
+        // Populate form fields with item data
+        setReceituarioSearchValue(item.name);
+
+        // Parse dosage (e.g., "1 comprimido" -> dose="1", unit="comprimido")
+        const dosageParts = item.dosage.split(' ');
+        if (dosageParts.length >= 2) {
+            setReceituarioDose(dosageParts[0]);
+            setReceituarioDoseUnit(dosageParts.slice(1).join(' '));
+        } else {
+            setReceituarioDose(item.dosage);
+        }
+
+        setReceituarioDaysOfUse(item.daysOfUse?.toString() || "7");
+        setReceituarioNotes(item.notes || "");
+        setReceituarioQuantity(item.quantity || "");
+
+        // Remove item from list (will be re-added when user clicks "Adicionar à Receita")
         setAcuteItems(acuteItems.filter(i => i.id !== id));
     };
 
@@ -403,6 +432,7 @@ export function usePrescriptionLogic(patient: Profile) {
         // Actions
         addMedicationToReceituario,
         removeAcuteItem,
+        editAcuteItem,
         handleSaveAndPrintPrescription,
         handleEditPrescription,
         handleRenewPrescription
