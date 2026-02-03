@@ -1716,7 +1716,6 @@ export class DatabaseStorage implements IStorage {
         }
 
         if (existingPlan) {
-          console.log(`[STORAGE] Updating plan: ${plan.name} (ID: ${existingPlan.id})`);
           // Update existing plan
           await db.update(subscriptionPlans)
             .set({
@@ -1732,10 +1731,7 @@ export class DatabaseStorage implements IStorage {
               isActive: plan.isActive
             })
             .where(eq(subscriptionPlans.id, existingPlan.id));
-
-          console.log(`[STORAGE] Plan ${plan.name} updated successfully.`);
         } else {
-          console.log(`[STORAGE] Creating new plan: ${plan.name}`);
           // Create new plan
           await this.createSubscriptionPlan(plan);
         }
