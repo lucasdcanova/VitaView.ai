@@ -5,6 +5,7 @@ import type { IStorage } from "../storage";
 
 import logger from "../logger";
 import { ModelRouter, type TaskComplexity } from "./model-router";
+import { AICacheService } from "./ai-cache";
 
 const sanitizePhysicianName = (value?: string | null) => {
   if (!value) return null;
@@ -458,19 +459,12 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 
     try {
       // Call the actual OpenAI API
-      // Call the actual OpenAI API
       const taskName = "generateHealthInsights";
       const complexity: TaskComplexity = "complex"; // Insights requerem raciocínio
       const model = ModelRouter.getModel(taskName, complexity);
 
-      const response = await callOpenAIApi(prompt, model);
-
-      // Tracking is handled inside callOpenAIApi if we modify it to return usage, 
-      // but callOpenAIApi returns content directly.
-      // Let's modify callOpenAIApi to handle tracking or return usage.
-      // For now, simpler to track inside callOpenAIApi if possible, 
-      // but ModelRouter needs taskName. 
-      // Let's pass taskName to callOpenAIApi as well.
+      // Pass complexity to enable proper cache TTL (e.g. complex tasks have shorter TTL)
+      const response = await callOpenAIApi(prompt, model, taskName, complexity);
 
       return response;
     } catch (apiError) {
@@ -482,18 +476,42 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 }
 
 // Function to call the OpenAI API
-async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call") {
+async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call", complexityData?: TaskComplexity) {
   try {
     if (!openai) {
       throw new Error("OpenAI client not initialized");
     }
 
     const model = modelOverride || OPENAI_MODEL;
-    const response = await openai.chat.completions.create({
-      model: model,
-      messages: [{ role: "user", content: prompt }],
+    const cacheParams = {
       temperature: 0.3,
       max_tokens: OPENAI_MAX_OUTPUT_TOKENS
+    };
+
+    // 1. Check Cache
+    const messages = [{ role: "user", content: prompt }];
+    const cacheHash = AICacheService.generateHash(model, messages, cacheParams);
+
+    // Only use cache for some operations or if complexity is provided
+    // For now, enable for all GET calls (which these essentially are)
+    const cachedResponse = await AICacheService.get(cacheHash);
+
+    if (cachedResponse) {
+      // Re-hydrate the usage tracking if we stored it? 
+      // Current cache stores just the response body (JSON object).
+      // We might want to track 'saved tokens' in ModelRouter?
+      // model-router trackUsage logic might need update to handle 'cached' events.
+      // For now, log and return.
+      logger.info(`[OpenAI] Returning cached response for ${taskNameForTracking}`);
+      return cachedResponse;
+    }
+
+    // 2. Call API
+    const response = await openai.chat.completions.create({
+      model: model,
+      messages: messages as any, // Cast to any to avoid strict type mismatch with OpenAI SDK versions
+      temperature: cacheParams.temperature,
+      max_tokens: cacheParams.max_tokens
     });
 
     if (response.usage) {
@@ -505,37 +523,47 @@ async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameFor
       throw new Error("Empty response from OpenAI API");
     }
 
+    let parsedResponse;
     try {
       // Tentar analisar a resposta como JSON
-      return JSON.parse(content);
+      parsedResponse = JSON.parse(content);
     } catch (parseError) {
-
+      // ... existing error handling logic ...
       // Se não for um JSON válido, tente extrair um JSON válido do conteúdo
       try {
-        // Tentar localizar um objeto JSON na resposta
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const jsonStr = jsonMatch[0];
-          return JSON.parse(jsonStr);
+          parsedResponse = JSON.parse(jsonStr);
         }
       } catch (extractError) {
-        // Failed to extract JSON from response
+        // Failed
       }
 
-      // Se ainda falhar, retorne um objeto estruturado básico
-      return {
-        contextualAnalysis: "Não foi possível analisar a resposta da IA. Por favor, tente novamente.",
-        possibleDiagnoses: [],
-        recommendations: ["Consulte um médico para uma análise profissional."],
-        specialists: ["Clínico Geral"],
-        lifestyle: {
-          diet: "Mantenha uma alimentação balanceada.",
-          exercise: "Pratique exercícios regularmente.",
-          sleep: "Mantenha um sono de qualidade."
-        },
-        riskFactors: []
-      };
+      if (!parsedResponse) {
+        // Fallback object logic
+        parsedResponse = {
+          contextualAnalysis: "Não foi possível analisar a resposta da IA. Por favor, tente novamente.",
+          possibleDiagnoses: [],
+          recommendations: ["Consulte um médico para uma análise profissional."],
+          specialists: ["Clínico Geral"],
+          lifestyle: { diet: "", exercise: "", sleep: "" },
+          riskFactors: []
+        };
+      }
     }
+
+    // 3. Save to Cache
+    if (parsedResponse) {
+      await AICacheService.set(cacheHash, parsedResponse, {
+        model,
+        prompt,
+        complexity: complexityData || 'medium'
+      });
+    }
+
+    return parsedResponse;
+
   } catch (error) {
     throw error;
   }
@@ -1052,8 +1080,8 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     const complexity: TaskComplexity = "medium"; // Análise holística de dados já extraídos
     const model = ModelRouter.getModel(taskName, complexity);
 
-    // Pass model and taskName to updated callOpenAIApi
-    const insightsResponse = await callOpenAIApi(prompt, model, taskName);
+    // Pass model, taskName and complexity to updated callOpenAIApi
+    const insightsResponse = await callOpenAIApi(prompt, model, taskName, complexity);
 
     // 7. Atualizar o exame para refletir a análise completa
     await storage.updateExam(examId, {

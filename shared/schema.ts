@@ -1219,6 +1219,32 @@ export const insertAIUsageSchema = createInsertSchema(aiUsage).pick({
 export type AIUsage = typeof aiUsage.$inferSelect;
 export type InsertAIUsage = z.infer<typeof insertAIUsageSchema>;
 
+// AI Cache schema
+export const aiCache = pgTable("ai_cache", {
+  id: serial("id").primaryKey(),
+  hash: text("hash").notNull().unique(), // SHA-256 (prompt + model + params)
+  prompt: text("prompt"), // Optional for debug/audit
+  response: json("response").notNull(),
+  model: text("model").notNull(),
+  complexity: text("complexity"), // simple, medium, complex
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  hitCount: integer("hit_count").default(0).notNull()
+});
+
+export const insertAICacheSchema = createInsertSchema(aiCache).pick({
+  hash: true,
+  prompt: true,
+  response: true,
+  model: true,
+  complexity: true,
+  expiresAt: true
+});
+
+// Types for AI Cache
+export type AICache = typeof aiCache.$inferSelect;
+export type InsertAICache = z.infer<typeof insertAICacheSchema>;
+
 // Fair Use Limits by Plan
 export const FAIR_USE_LIMITS = {
   free: {
