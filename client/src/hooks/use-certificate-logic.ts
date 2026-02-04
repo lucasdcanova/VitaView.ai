@@ -25,7 +25,7 @@ export function useCertificateLogic(patient: PatientData) {
     const [certEndTime, setCertEndTime] = useState("");
     const [certCid, setCertCid] = useState("");
     const [patientDoc, setPatientDoc] = useState("");
-    const [certCity, setCertCity] = useState("São Paulo");
+    const [certCity, setCertCity] = useState("");
     const [customCertText, setCustomCertText] = useState("");
 
     // Initialize patient doc from profile
@@ -34,6 +34,13 @@ export function useCertificateLogic(patient: PatientData) {
             setPatientDoc(patient.cpf);
         }
     }, [patient]);
+
+    // Initialize city from user's profile
+    useEffect(() => {
+        if (user?.address) {
+            setCertCity(user.address);
+        }
+    }, [user]);
 
     const { data: certificateHistory = [] } = useQuery<Certificate[]>({
         queryKey: [`/api/certificates/patient/${patient.id}`],

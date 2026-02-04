@@ -101,7 +101,7 @@ export function CertificateForm({
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Cidade (Data)</label>
+                            <label className="text-sm font-medium text-gray-700">Local</label>
                             <Input placeholder="Ex: São Paulo" value={certCity} onChange={e => setCertCity(e.target.value)} />
                         </div>
 

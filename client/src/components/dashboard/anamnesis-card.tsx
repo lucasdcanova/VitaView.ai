@@ -587,74 +587,76 @@ export function AnamnesisCard() {
                             </div>
                         </div>
                     )}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                            type="button"
-                            onClick={() => {
-                                if (!anamnesisText.trim()) {
-                                    toast({
-                                        title: "Texto vazio",
-                                        description: "Escreva algo para salvar.",
-                                        variant: "destructive"
-                                    });
-                                    return;
-                                }
-                                if (!activeProfile?.id) {
-                                    toast({
-                                        title: "Nenhum paciente selecionado",
-                                        description: "Selecione um paciente antes de salvar a evolução.",
-                                        variant: "destructive"
-                                    });
-                                    return;
-                                }
-                                addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
-                            }}
-                            disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
-                            className="gap-2 bg-green-600 hover:bg-green-700"
-                        >
-                            {addEvolutionMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Save className="h-4 w-4" />
-                            )}
-                            Salvar como Consulta
-                        </Button>
-                        <FeatureGate feature="ai-enhance">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 type="button"
-                                onClick={handleEnhanceAnamnesis}
-                                disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
-                                variant="secondary"
-                                className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                                onClick={() => {
+                                    if (!anamnesisText.trim()) {
+                                        toast({
+                                            title: "Texto vazio",
+                                            description: "Escreva algo para salvar.",
+                                            variant: "destructive"
+                                        });
+                                        return;
+                                    }
+                                    if (!activeProfile?.id) {
+                                        toast({
+                                            title: "Nenhum paciente selecionado",
+                                            description: "Selecione um paciente antes de salvar a evolução.",
+                                            variant: "destructive"
+                                        });
+                                        return;
+                                    }
+                                    addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
+                                }}
+                                disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
+                                className="gap-2 bg-green-600 hover:bg-green-700"
                             >
-                                {enhanceAnamnesisMutation.isPending ? (
+                                {addEvolutionMutation.isPending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <Wand2 className="h-4 w-4" />
+                                    <Save className="h-4 w-4" />
                                 )}
-                                Melhorar com IA
+                                Salvar como Consulta
                             </Button>
-                        </FeatureGate>
-                        <FeatureGate feature="ai-analyze">
-                            <Button
-                                type="button"
-                                onClick={handleAnalyzeAnamnesis}
-                                disabled={analyzeAnamnesisMutation.isPending}
-                                className="gap-2"
-                            >
-                                {analyzeAnamnesisMutation.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4" />
-                                )}
-                                Extrair dados com IA
+                            <FeatureGate feature="ai-enhance">
+                                <Button
+                                    type="button"
+                                    onClick={handleEnhanceAnamnesis}
+                                    disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
+                                    variant="secondary"
+                                    className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                                >
+                                    {enhanceAnamnesisMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Wand2 className="h-4 w-4" />
+                                    )}
+                                    Melhorar com IA
+                                </Button>
+                            </FeatureGate>
+                            <FeatureGate feature="ai-analyze">
+                                <Button
+                                    type="button"
+                                    onClick={handleAnalyzeAnamnesis}
+                                    disabled={analyzeAnamnesisMutation.isPending}
+                                    className="gap-2"
+                                >
+                                    {analyzeAnamnesisMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="h-4 w-4" />
+                                    )}
+                                    Extrair dados com IA
+                                </Button>
+                            </FeatureGate>
+                            <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
+                                Limpar texto
                             </Button>
-                        </FeatureGate>
-                        <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
-                            Limpar texto
-                        </Button>
-                        <p className="text-sm text-gray-500">
-                            A IA sugere registros prontos para revisão antes de aplicar ao prontuário.
+                        </div>
+                        <p className="text-sm text-gray-500 text-right max-w-[280px]">
+                            A IA sugere registros prontos para revisão<br />antes de aplicar ao prontuário.
                         </p>
                     </div>
                 </CardContent>

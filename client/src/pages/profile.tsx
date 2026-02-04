@@ -726,7 +726,7 @@ export default function Profile() {
                             name="address"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Endereço</FormLabel>
+                                <FormLabel>Cidade</FormLabel>
                                 <FormControl>
                                   <Input {...field} name={field.name} autoComplete="address-line1" />
                                 </FormControl>
