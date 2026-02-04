@@ -2,7 +2,9 @@ import OpenAI from "openai";
 import type { ExamResult, User, Exam } from "@shared/schema";
 import type { HealthMetric } from "@shared/schema";
 import type { IStorage } from "../storage";
+
 import logger from "../logger";
+import { ModelRouter, type TaskComplexity } from "./model-router";
 
 const sanitizePhysicianName = (value?: string | null) => {
   if (!value) return null;
@@ -456,7 +458,21 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 
     try {
       // Call the actual OpenAI API
-      return await callOpenAIApi(prompt);
+      // Call the actual OpenAI API
+      const taskName = "generateHealthInsights";
+      const complexity: TaskComplexity = "complex"; // Insights requerem raciocínio
+      const model = ModelRouter.getModel(taskName, complexity);
+
+      const response = await callOpenAIApi(prompt, model);
+
+      // Tracking is handled inside callOpenAIApi if we modify it to return usage, 
+      // but callOpenAIApi returns content directly.
+      // Let's modify callOpenAIApi to handle tracking or return usage.
+      // For now, simpler to track inside callOpenAIApi if possible, 
+      // but ModelRouter needs taskName. 
+      // Let's pass taskName to callOpenAIApi as well.
+
+      return response;
     } catch (apiError) {
       return getFallbackInsights(patientData);
     }
@@ -466,18 +482,23 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 }
 
 // Function to call the OpenAI API
-async function callOpenAIApi(prompt: string) {
+async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call") {
   try {
     if (!openai) {
       throw new Error("OpenAI client not initialized");
     }
 
+    const model = modelOverride || OPENAI_MODEL;
     const response = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model: model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       max_tokens: OPENAI_MAX_OUTPUT_TOKENS
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskNameForTracking, model, response.usage);
+    }
 
     const content = response.choices[0].message.content;
     if (!content) {
@@ -841,13 +862,21 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
       throw new Error("OpenAI client not initialized");
     }
 
+    const taskName = "parseAppointmentCommand";
+    const complexity: TaskComplexity = "simple";
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model: model,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, // Enforce JSON Output
       temperature: 0.1, // Lower temperature for more deterministic/rigid parsing
       max_tokens: 1000
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage);
+    }
 
     const content = response.choices[0].message.content;
     if (!content) {
@@ -1018,7 +1047,13 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     `;
 
     // 6. Chamar a API da OpenAI
-    const insightsResponse = await callOpenAIApi(prompt);
+    // 6. Chamar a API da OpenAI
+    const taskName = "analyzeExtractedExam";
+    const complexity: TaskComplexity = "medium"; // Análise holística de dados já extraídos
+    const model = ModelRouter.getModel(taskName, complexity);
+
+    // Pass model and taskName to updated callOpenAIApi
+    const insightsResponse = await callOpenAIApi(prompt, model, taskName);
 
     // 7. Atualizar o exame para refletir a análise completa
     await storage.updateExam(examId, {
@@ -1177,8 +1212,11 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       }
 
       const pdfBuffer = Buffer.from(fileContent, "base64");
+      // Converter Buffer para ArrayBuffer/Uint8Array compatível com File
+      const pdfUint8Array = new Uint8Array(pdfBuffer);
+
       const uploadedFile = await openai.files.create({
-        file: new File([pdfBuffer], `exam-${Date.now()}.pdf`, { type: "application/pdf" }),
+        file: new File([pdfUint8Array], `exam-${Date.now()}.pdf`, { type: "application/pdf" }),
         purpose: "assistants"
       });
       uploadedFileId = uploadedFile.id;
@@ -1417,13 +1455,21 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
       }
 
       // Chama a API da OpenAI
+      const taskName = "generateChronologicalReport";
+      const complexity: TaskComplexity = "complex"; // Relatório cronológico é complexo
+      const model = ModelRouter.getModel(taskName, complexity);
+
       const response = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
+        model: model,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.2,
         max_tokens: OPENAI_MAX_OUTPUT_TOKENS
       });
+
+      if (response.usage) {
+        ModelRouter.trackUsage(taskName, model, response.usage);
+      }
 
       const content = response.choices[0].message.content;
       if (!content) {
@@ -1479,8 +1525,12 @@ Anamnese:
 `;
 
   try {
+    const taskName = "extractRecordFromAnamnesis";
+    const complexity: TaskComplexity = "medium"; // Pode variar, vamos usar medium para garantir qualidade na extração
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.responses.create({
-      model: OPENAI_MODEL,
+      model: model as any, // Cast necessário se o tipo do SDK divergir, mas geralmente aceita string
       input: [
         {
           role: "user",
@@ -1635,8 +1685,12 @@ export async function extractPatientNameFromExam(fileContent: string, fileType: 
       Exemplo de resposta quando não encontrado: "NOT_FOUND"
     `;
 
+    const taskName = "extractPatientNameFromExam";
+    const complexity: TaskComplexity = "simple";
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.chat.completions.create({
-      model: OPENAI_FALLBACK_MODEL, // Usar modelo mais rápido para esta tarefa simples
+      model: model, // Usar modelo mais rápido via Router
       messages: [
         { role: "system", content: prompt },
         { role: "user", content: `Documento de exame:\n\n${fileContent.substring(0, 2000)}` } // Limitar a 2000 caracteres para economizar tokens
@@ -1644,6 +1698,10 @@ export async function extractPatientNameFromExam(fileContent: string, fileType: 
       temperature: 0.1, // Baixa temperatura para respostas mais determinísticas
       max_tokens: 50 // Nome do paciente não deve precisar de muitos tokens
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage);
+    }
 
     const extractedName = response.choices[0].message.content?.trim();
 
@@ -1698,8 +1756,9 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
     const extension = extensionMap[mimeType] || 'webm';
     const filename = `consultation-${Date.now()}.${extension}`;
 
-    // Criar File object para a API
-    const audioFile = new File([audioBuffer], filename, { type: mimeType });
+    // Criar File object para a API garantindo compatibilidade de tipos
+    const audioUint8Array = new Uint8Array(audioBuffer);
+    const audioFile = new File([audioUint8Array], filename, { type: mimeType });
 
     logger.info("[OpenAI Whisper] Iniciando transcrição", {
       filename,
@@ -1929,8 +1988,12 @@ export async function enhanceAnamnesisText(text: string): Promise<string> {
   `;
 
   try {
+    const taskName = "enhanceAnamnesisText";
+    const complexity: TaskComplexity = "simple"; // Tarefa de formatação é simples
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model: model,
       messages: [
         { role: "system", content: "Você é um assistente médico especializado em documentação clínica." },
         { role: "user", content: prompt }
@@ -1938,6 +2001,10 @@ export async function enhanceAnamnesisText(text: string): Promise<string> {
       temperature: 0.3,
       max_tokens: 2000
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage);
+    }
 
     const content = response.choices[0].message.content;
     return content?.trim() || text;
@@ -2019,12 +2086,20 @@ Considere este contexto ao responder perguntas sobre este paciente.`;
   ];
 
   try {
+    const taskName = "vitaAssistChat";
+    const complexity: TaskComplexity = "medium"; // Assistente clínico requer bom raciocínio
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
+      model: model,
       messages: chatMessages,
       temperature: 0.4,
       max_tokens: 4000
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage);
+    }
 
     const content = response.choices[0].message.content;
     return content?.trim() || "Desculpe, não consegui processar sua pergunta. Por favor, tente reformulá-la.";
@@ -2042,8 +2117,12 @@ export async function generateConversationTitle(firstMessage: string): Promise<s
   }
 
   try {
+    const taskName = "generateConversationTitle";
+    const complexity: TaskComplexity = "simple"; // Geração de título é simples
+    const model = ModelRouter.getModel(taskName, complexity);
+
     const response = await openai.chat.completions.create({
-      model: OPENAI_FALLBACK_MODEL,
+      model: model,
       messages: [
         {
           role: 'system',
@@ -2054,6 +2133,10 @@ export async function generateConversationTitle(firstMessage: string): Promise<s
       temperature: 0.3,
       max_tokens: 50
     });
+
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage);
+    }
 
     const title = response.choices[0].message.content?.trim() || firstMessage.slice(0, 50);
     return title.slice(0, 50);
