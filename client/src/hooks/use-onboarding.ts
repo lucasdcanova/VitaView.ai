@@ -21,25 +21,33 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         route: '/agenda'
     },
     {
-        id: 'anamnesis',
+        id: 'pacientes',
         target: '[data-tour="nav-pacientes"]',
-        title: '2. Anamnese',
+        title: '2. Pacientes',
         description: 'Gerencie sua base de pacientes. Ao acessar um paciente, você poderá registrar toda a anamnese, histórico clínico e evoluções de forma detalhada e segura.',
         placement: 'right',
         route: '/pacientes'
     },
     {
-        id: 'prescription',
-        target: '[data-tour="patient-selector"]',
-        title: '3. Prescrição',
-        description: 'Selecione um paciente ativo aqui para iniciar o atendimento. Utilize nossa IA para gerar prescrições inteligentes, receitas de controle especial e atestados em segundos.',
+        id: 'vita-assist',
+        target: '[data-tour="nav-vita-assist"]',
+        title: '3. Vita Assist',
+        description: 'Seu assistente de IA para medicina. Tire dúvidas clínicas, consulte protocolos e obtenha suporte inteligente para suas decisões médicas.',
         placement: 'right',
-        route: '/agenda'
+        route: '/vita-assist'
+    },
+    {
+        id: 'subscription',
+        target: '[data-tour="nav-assinatura"]',
+        title: '4. Minha Assinatura',
+        description: 'Gerencie seu plano, faturas e métodos de pagamento. Acompanhe o status da sua assinatura e faça upgrades conforme sua necessidade.',
+        placement: 'right',
+        route: '/subscription'
     },
     {
         id: 'reports',
         target: '[data-tour="nav-relatorios"]',
-        title: '4. Relatórios',
+        title: '5. Relatórios',
         description: 'Acompanhe métricas detalhadas da sua clínica ou consultório. Visualize dados financeiros, volume de atendimentos e estatísticas de saúde dos seus pacientes.',
         placement: 'right',
         route: '/reports'
@@ -47,18 +55,10 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     {
         id: 'settings',
         target: '[data-tour="nav-configuracoes"]',
-        title: '5. Configurações',
-        description: 'Personalize sua experiência. IMPORTANTE: Acesse esta área agora para completar seu perfil profissional, adicionar seu CRM e configurar suas preferências de atendimento para um perfil mais completo.',
+        title: '6. Configurações',
+        description: 'Personalize sua experiência. IMPORTANTE: Acesse esta área agora para completar seu perfil profissional, adicionar seu CRM e configurar suas preferências de atendimento.',
         placement: 'right',
         route: '/profile'
-    },
-    {
-        id: 'subscription',
-        target: '[data-tour="nav-assinatura"]',
-        title: '6. Minha Assinatura',
-        description: 'Gerencie seu plano, faturas e métodos de pagamento. Acompanhe o status da sua assinatura e faça upgrades conforme sua necessidade.',
-        placement: 'right',
-        route: '/subscription'
     },
 ];
 

@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { EXAM_DATABASE, EXAM_PROTOCOLS, ALL_EXAMS } from "@/constants/exam-database";
 import { CustomProtocol } from "@/hooks/use-exam-protocols";
+import { FeatureGate } from "@/components/ui/feature-gate";
 
 interface SelectedExam {
     id: string;
@@ -145,99 +146,101 @@ export function ActiveRequestList({
                             <div className="flex items-center gap-1">
                                 {!protocolLogic.deleteMode ? (
                                     <>
-                                        {/* Create Protocol Dialog */}
-                                        <Dialog open={protocolLogic.createProtocolOpen} onOpenChange={protocolLogic.setCreateProtocolOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="h-6 text-[10px] text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-2">
-                                                    <PlusCircle className="mr-1 h-3 w-3" />
-                                                    Criar Novo
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-                                                <DialogHeader>
-                                                    <DialogTitle>Criar Novo Protocolo</DialogTitle>
-                                                    <DialogDescription>
-                                                        Crie um conjunto de exames para acesso rápido.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-
-                                                <div className="flex-1 overflow-y-auto py-4 space-y-6">
-                                                    <div className="grid grid-cols-1 gap-4">
-                                                        <div className="space-y-2">
-                                                            <Label>Nome do Protocolo</Label>
-                                                            <Input
-                                                                placeholder="Ex: Check-up Cardiológico"
-                                                                value={protocolLogic.newProtocolData.name}
-                                                                onChange={(e) => protocolLogic.setNewProtocolData({ ...protocolLogic.newProtocolData, name: e.target.value })}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        <Label>Selecionar Exames ({protocolLogic.newProtocolData.exams.length})</Label>
-                                                        <div className="relative">
-                                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                                                            <Input
-                                                                placeholder="Buscar exames..."
-                                                                value={protocolLogic.newProtocolSearch}
-                                                                onChange={(e) => protocolLogic.setNewProtocolSearch(e.target.value)}
-                                                                className="pl-9"
-                                                            />
-                                                        </div>
-
-                                                        <div className="border rounded-md h-[250px] overflow-hidden flex flex-col">
-                                                            <ScrollArea className="flex-1">
-                                                                <div className="divide-y">
-                                                                    {filteredExamsForProtocol.map((exam, idx) => {
-                                                                        const isSelected = protocolLogic.newProtocolData.exams.some((e: any) => e.name === exam.name);
-                                                                        return (
-                                                                            <div
-                                                                                key={idx}
-                                                                                className={cn(
-                                                                                    "flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors",
-                                                                                    isSelected && "bg-gray-100"
-                                                                                )}
-                                                                                onClick={() => {
-                                                                                    if (isSelected) {
-                                                                                        protocolLogic.setNewProtocolData({
-                                                                                            ...protocolLogic.newProtocolData,
-                                                                                            exams: protocolLogic.newProtocolData.exams.filter((e: any) => e.name !== exam.name)
-                                                                                        });
-                                                                                    } else {
-                                                                                        protocolLogic.setNewProtocolData({
-                                                                                            ...protocolLogic.newProtocolData,
-                                                                                            exams: [...protocolLogic.newProtocolData.exams, { name: exam.name, type: exam.type }]
-                                                                                        });
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <Checkbox checked={isSelected} />
-                                                                                    <div>
-                                                                                        <span className="text-sm block">
-                                                                                            {exam.name}
-                                                                                            {exam.tuss && <span className="ml-1 text-[10px] text-gray-400 font-mono">({exam.tuss})</span>}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <Badge variant="outline" className="text-[10px] h-5">{exam.category}</Badge>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </ScrollArea>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <DialogFooter>
-                                                    <Button variant="outline" onClick={() => protocolLogic.setCreateProtocolOpen(false)}>Cancelar</Button>
-                                                    <Button onClick={protocolLogic.handleCreateProtocol} disabled={!protocolLogic.newProtocolData.name || protocolLogic.newProtocolData.exams.length === 0}>
-                                                        Salvar Protocolo
+                                        {/* Create Protocol Dialog - Premium Feature */}
+                                        <FeatureGate>
+                                            <Dialog open={protocolLogic.createProtocolOpen} onOpenChange={protocolLogic.setCreateProtocolOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-2">
+                                                        <PlusCircle className="mr-1 h-3 w-3" />
+                                                        Criar Novo
                                                     </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Criar Novo Protocolo</DialogTitle>
+                                                        <DialogDescription>
+                                                            Crie um conjunto de exames para acesso rápido.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+
+                                                    <div className="flex-1 overflow-y-auto py-4 space-y-6">
+                                                        <div className="grid grid-cols-1 gap-4">
+                                                            <div className="space-y-2">
+                                                                <Label>Nome do Protocolo</Label>
+                                                                <Input
+                                                                    placeholder="Ex: Check-up Cardiológico"
+                                                                    value={protocolLogic.newProtocolData.name}
+                                                                    onChange={(e) => protocolLogic.setNewProtocolData({ ...protocolLogic.newProtocolData, name: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            <Label>Selecionar Exames ({protocolLogic.newProtocolData.exams.length})</Label>
+                                                            <div className="relative">
+                                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                                                <Input
+                                                                    placeholder="Buscar exames..."
+                                                                    value={protocolLogic.newProtocolSearch}
+                                                                    onChange={(e) => protocolLogic.setNewProtocolSearch(e.target.value)}
+                                                                    className="pl-9"
+                                                                />
+                                                            </div>
+
+                                                            <div className="border rounded-md h-[250px] overflow-hidden flex flex-col">
+                                                                <ScrollArea className="flex-1">
+                                                                    <div className="divide-y">
+                                                                        {filteredExamsForProtocol.map((exam, idx) => {
+                                                                            const isSelected = protocolLogic.newProtocolData.exams.some((e: any) => e.name === exam.name);
+                                                                            return (
+                                                                                <div
+                                                                                    key={idx}
+                                                                                    className={cn(
+                                                                                        "flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors",
+                                                                                        isSelected && "bg-gray-100"
+                                                                                    )}
+                                                                                    onClick={() => {
+                                                                                        if (isSelected) {
+                                                                                            protocolLogic.setNewProtocolData({
+                                                                                                ...protocolLogic.newProtocolData,
+                                                                                                exams: protocolLogic.newProtocolData.exams.filter((e: any) => e.name !== exam.name)
+                                                                                            });
+                                                                                        } else {
+                                                                                            protocolLogic.setNewProtocolData({
+                                                                                                ...protocolLogic.newProtocolData,
+                                                                                                exams: [...protocolLogic.newProtocolData.exams, { name: exam.name, type: exam.type }]
+                                                                                            });
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <Checkbox checked={isSelected} />
+                                                                                        <div>
+                                                                                            <span className="text-sm block">
+                                                                                                {exam.name}
+                                                                                                {exam.tuss && <span className="ml-1 text-[10px] text-gray-400 font-mono">({exam.tuss})</span>}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <Badge variant="outline" className="text-[10px] h-5">{exam.category}</Badge>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </ScrollArea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <DialogFooter>
+                                                        <Button variant="outline" onClick={() => protocolLogic.setCreateProtocolOpen(false)}>Cancelar</Button>
+                                                        <Button onClick={protocolLogic.handleCreateProtocol} disabled={!protocolLogic.newProtocolData.name || protocolLogic.newProtocolData.exams.length === 0}>
+                                                            Salvar Protocolo
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </FeatureGate>
 
                                         <Button
                                             variant="ghost"
@@ -286,8 +289,8 @@ export function ActiveRequestList({
                                         className={cn(
                                             "relative flex items-center gap-2 p-2 rounded-lg border text-left transition-all",
                                             protocolLogic?.deleteMode
-                                                ? isDeleting ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-red-200"
-                                                : "bg-white border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                                                ? isDeleting ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 hover:border-red-200"
+                                                : "bg-gray-100 border-gray-200 hover:border-gray-400 hover:bg-gray-200"
                                         )}
                                         onClick={() => {
                                             if (protocolLogic?.deleteMode) {
@@ -297,8 +300,8 @@ export function ActiveRequestList({
                                             }
                                         }}
                                     >
-                                        <div className="p-1.5 rounded-md flex-shrink-0 bg-gray-100">
-                                            <Icon className="h-3.5 w-3.5 text-gray-600" />
+                                        <div className="p-1.5 rounded-md flex-shrink-0 bg-gray-200">
+                                            <Icon className="h-3.5 w-3.5 text-gray-900" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <span className="text-xs font-medium text-gray-800 block truncate">{(protocol as any).name}</span>

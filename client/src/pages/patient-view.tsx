@@ -221,24 +221,24 @@ export default function PatientView() {
                                     </h1>
                                     {activeProfile ? (
                                         <div className="mt-2">
-                                            <p className="text-lg font-semibold text-gray-800">{activeProfile.name}</p>
-                                            <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-gray-600">
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <p className="text-lg font-semibold text-gray-800">{activeProfile.name}</p>
                                                 {calculateAge(activeProfile.birthDate) !== null && (
-                                                    <span className="flex items-center gap-1">
+                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
                                                         <User className="h-4 w-4 text-gray-400" />
                                                         {calculateAge(activeProfile.birthDate)} anos
                                                     </span>
                                                 )}
-                                                {activeProfile.insuranceName && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Building2 className="h-4 w-4 text-gray-400" />
-                                                        {activeProfile.insuranceName}
-                                                    </span>
-                                                )}
                                                 {activeProfile.createdAt && (
-                                                    <span className="flex items-center gap-1">
+                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
                                                         <CalendarDays className="h-4 w-4 text-gray-400" />
                                                         Paciente desde {format(new Date(activeProfile.createdAt), "MMM 'de' yyyy", { locale: ptBR })}
+                                                    </span>
+                                                )}
+                                                {activeProfile.insuranceName && (
+                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
+                                                        <Building2 className="h-4 w-4 text-gray-400" />
+                                                        {activeProfile.insuranceName}
                                                     </span>
                                                 )}
                                             </div>
@@ -377,10 +377,6 @@ export default function PatientView() {
 
                                             {/* SECTION 3: CLINICAL HISTORY GRID (2x2 Symmetric Layout) */}
                                             <div>
-                                                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                                    <ClipboardList className="h-5 w-5 text-primary-600" />
-                                                    Histórico e Condições
-                                                </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="md:col-span-2">
                                                         <AllergiesCard profileId={activeProfile.id} allergies={allergies} />

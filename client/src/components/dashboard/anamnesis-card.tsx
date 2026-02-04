@@ -522,15 +522,13 @@ export function AnamnesisCard() {
             <Card className="border border-primary-100 shadow-md">
                 <CardHeader className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
-                                <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
-                            </div>
-                            <CardDescription>
-                                Grave a consulta ou descreva o quadro clínico. A IA identifica diagnósticos, medicamentos e alergias.
-                            </CardDescription>
+                        <div className="flex items-center gap-2">
+                            <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
+                            <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
                         </div>
+                        <p className="text-sm text-gray-500 text-right max-w-[420px]">
+                            Grave a consulta ou descreva o quadro clínico.<br />A IA identifica diagnósticos, medicamentos e alergias.
+                        </p>
                     </div>
 
                     {/* Destaque para gravação de consulta */}

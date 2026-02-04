@@ -252,24 +252,17 @@ export default function Sidebar(props: SidebarProps) {
         <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
-
-          {/* Separador */}
-          <div className="py-2">
-            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
-          </div>
-
-          {/* Configurações */}
-          <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
-          <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
-          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
-
-          {/* Separador */}
-          <div className="py-2">
-            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
-          </div>
-
-          {/* AI Assistant */}
           <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
+
+          {/* Separador */}
+          <div className="py-2">
+            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
+          </div>
+
+          {/* Configurações e Assinatura */}
+          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
+          <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
+          <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
 
 
 

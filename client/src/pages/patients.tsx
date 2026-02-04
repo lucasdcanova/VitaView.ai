@@ -453,7 +453,7 @@ export default function Patients() {
                         </Button>
                         <Button
                           size="sm"
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                          className="flex-1 bg-charcoal hover:bg-charcoal/90 text-white"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStartService(profile);
