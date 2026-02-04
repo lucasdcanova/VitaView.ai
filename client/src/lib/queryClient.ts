@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,6 +13,34 @@ async function throwIfResNotOk(res: Response) {
       // Ignore JSON parse error and fallback to text
     }
     throw new Error(text || res.statusText);
+  }
+}
+
+// Helper to check for AI warnings
+function checkAIWarning(res: Response) {
+  const warning = res.headers.get("X-AI-Warning");
+  if (warning) {
+    const delay = res.headers.get("X-AI-Throttle-Delay");
+
+    let title = "Aviso de uso de IA";
+    let description = "Você está se aproximando do limite de uso.";
+    let variant: "default" | "destructive" = "default";
+
+    if (warning === 'weary') {
+      title = "Uso de IA elevado";
+      description = `Limite mensal excedido levemente. Pequeno atraso aplicado (${delay || '2000'}ms).`;
+    } else if (warning === 'critical') {
+      title = "Limite de IA excedido";
+      description = `Você excedeu significativamente seu limite. A velocidade foi reduzida (${delay || '5000'}ms).`;
+      variant = "destructive";
+    }
+
+    toast({
+      title,
+      description,
+      variant: variant,
+      duration: 5000,
+    });
   }
 }
 
@@ -46,6 +75,7 @@ export async function apiRequest(
       }
 
       await throwIfResNotOk(res);
+      checkAIWarning(res);
       return res;
     } catch (error) {
       lastError = error as Error;
@@ -81,6 +111,7 @@ export const getQueryFn: <T>(options: {
           return null;
         }
 
+        checkAIWarning(res);
         await throwIfResNotOk(res);
         const data = await res.json();
         return data;

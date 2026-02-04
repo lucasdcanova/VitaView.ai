@@ -70,27 +70,33 @@ export const checkFairUse = (resource: 'aiRequests' | 'transcriptionMinutes' | '
 
             // Check if limit exceeded (if not unlimited)
             if (!isUnlimited && currentUsage >= limit) {
-                // Soft limit - throttle instead of block for first 10% overage
-                const overage = currentUsage - limit;
-                const overagePercentage = overage / limit;
+                // Elastic Limit - Soft Throttle Logic
+                const overageRatio = currentUsage / limit;
+                let delay = 0;
+                let warningLevel = '';
 
-                if (overagePercentage < 0.1) {
-                    // Warning header
-                    res.setHeader('X-Fair-Use-Warning', 'Limit exceeded, throttling applied');
-                    // Add artificial delay (throttle)
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    return next();
+                if (overageRatio < 1.2) {
+                    // Up to 20% overage: 2s delay (Check engine warning)
+                    delay = 2000;
+                    warningLevel = 'weary';
+                } else if (overageRatio < 1.5) {
+                    // Up to 50% overage: 5s delay (Orange warning)
+                    delay = 5000;
+                    warningLevel = 'critical';
                 } else {
-                    // Hard block after 10% overage
-                    return res.status(429).json({
-                        message: "Limite de uso excedido para este recurso no seu plano atual.",
-                        code: "FAIR_USE_LIMIT_EXCEEDED",
-                        resource,
-                        limit,
-                        currentUsage,
-                        upgradeRequired: true
-                    });
+                    // > 50% overage: 10s delay (Red warning)
+                    delay = 10000;
+                    warningLevel = 'critical';
                 }
+
+                // Apply headers and delay
+                res.setHeader('X-AI-Warning', warningLevel);
+                res.setHeader('X-AI-Throttle-Delay', delay);
+
+                console.log(`[FairUse] Throttling user ${userId} for ${resource}. Usage: ${currentUsage}/${limit} (${(overageRatio * 100).toFixed(1)}%). Delay: ${delay}ms`);
+
+                // Artificially delay the response
+                await new Promise(resolve => setTimeout(resolve, delay));
             }
 
             // Add usage headers
