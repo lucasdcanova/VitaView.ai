@@ -1189,3 +1189,54 @@ export const insertAIMessageSchema = createInsertSchema(aiMessages).pick({
 
 export type AIMessage = typeof aiMessages.$inferSelect;
 export type InsertAIMessage = z.infer<typeof insertAIMessageSchema>;
+
+// AI Usage Tracking schema - Fair use limits
+export const aiUsage = pgTable("ai_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: text("date").notNull(), // YYYY-MM-DD format for daily tracking
+
+  // Daily counters
+  aiRequests: integer("ai_requests").default(0).notNull(),
+  aiTokensUsed: integer("ai_tokens_used").default(0).notNull(),
+  transcriptionMinutes: integer("transcription_minutes").default(0).notNull(),
+  examAnalyses: integer("exam_analyses").default(0).notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAIUsageSchema = createInsertSchema(aiUsage).pick({
+  userId: true,
+  date: true,
+  aiRequests: true,
+  aiTokensUsed: true,
+  transcriptionMinutes: true,
+  examAnalyses: true,
+});
+
+export type AIUsage = typeof aiUsage.$inferSelect;
+export type InsertAIUsage = z.infer<typeof insertAIUsageSchema>;
+
+// Fair Use Limits by Plan
+export const FAIR_USE_LIMITS = {
+  free: {
+    aiRequestsPerMonth: 50,
+    tokensPerRequest: 4000,
+    transcriptionMinutesPerMonth: 30,
+    examAnalysesPerMonth: 10,
+  },
+  paid: {
+    aiRequestsPerMonth: 5000,
+    tokensPerRequest: 8000,
+    transcriptionMinutesPerMonth: 300,
+    examAnalysesPerMonth: 500,
+  },
+  addon_transcription: {
+    transcriptionMinutesPerMonth: -1, // unlimited
+  },
+  addon_advanced_ai: {
+    aiRequestsPerMonth: -1, // unlimited
+    tokensPerRequest: 16000,
+  },
+} as const;

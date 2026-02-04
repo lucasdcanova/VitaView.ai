@@ -90,6 +90,30 @@ export default function Agenda() {
         }
     });
 
+    // Delete blocked appointments mutation
+    const deleteBlockedAppointmentsMutation = useMutation({
+        mutationFn: async ({ startDate, endDate }: { startDate: string, endDate: string }) => {
+            const res = await apiRequest("DELETE", "/api/appointments/blocks", { startDate, endDate });
+            return res.json();
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            toast({
+                title: "Agenda desbloqueada",
+                description: `${data.count} bloqueios foram removidos.`,
+            });
+            setAiProposal(null);
+            setAiCommand("");
+        },
+        onError: () => {
+            toast({
+                title: "Erro",
+                description: "Não foi possível desbloquear a agenda.",
+                variant: "destructive",
+            });
+        }
+    });
+
     // File upload handlers
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -313,8 +337,12 @@ export default function Agenda() {
                                     )}
                                 </span>
 
-                                <span className="font-semibold text-slate-500">Horário:</span>
-                                <span className="col-span-2 font-medium">{aiProposal.time}</span>
+                                {(!aiProposal.isAllDay || (aiProposal.type !== 'blocked' && aiProposal.type !== 'unblock')) && (
+                                    <>
+                                        <span className="font-semibold text-slate-500">Horário:</span>
+                                        <span className="col-span-2 font-medium">{aiProposal.time}</span>
+                                    </>
+                                )}
 
                                 <span className="font-semibold text-slate-500">Tipo:</span>
                                 <span className="col-span-2 capitalize font-medium">{aiProposal.type}</span>
@@ -333,7 +361,11 @@ export default function Agenda() {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
-                                if (aiProposal.endDate && aiProposal.type === 'blocked') {
+                                if (aiProposal.type === 'unblock') {
+                                    const startDate = aiProposal.date;
+                                    const endDate = aiProposal.endDate || aiProposal.date;
+                                    deleteBlockedAppointmentsMutation.mutate({ startDate, endDate });
+                                } else if (aiProposal.endDate && aiProposal.type === 'blocked') {
                                     // Parse dates ensuring local time handling (append time if normalized to date string)
                                     // However, aiProposal.date is YYYY-MM-DD.
                                     // New Date("YYYY-MM-DD") treats as UTC. 
@@ -363,13 +395,13 @@ export default function Agenda() {
                                     });
                                 }
                             }}
-                            className="bg-gray-900 hover:bg-black"
+                            className={aiProposal && aiProposal.type === 'unblock' ? "bg-red-600 hover:bg-red-700" : "bg-gray-900 hover:bg-black"}
                         >
-                            Confirmar Agendamento
+                            {aiProposal && aiProposal.type === 'unblock' ? 'Remover Bloqueios' : 'Confirmar Agendamento'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </div >
     );
 }

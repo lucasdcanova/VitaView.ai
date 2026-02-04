@@ -763,100 +763,102 @@ export async function parseAppointmentCommand(command: string, files?: Express.M
     const endOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
     const prompt = `
-      Você é uma assistente de agendamento médico inteligente.
+      Você é um assistente de agendamento médico de alta precisão.
       Sua tarefa é extrair informações de um comando de texto para criar um agendamento.
       
-      COMANDO: "${command}"
+      COMANDO DO USUÁRIO: "${command}"
       
-      CONTEXTO DE DATAS (IMPORTANTE):
-      - DATA ATUAL: ${today.toISOString().split('T')[0]} (Dia da semana: ${today.toLocaleDateString('pt-BR', { weekday: 'long' })})
-      - PRÓXIMA SEGUNDA (Início "Semana que vem"): ${nextMonday.toISOString().split('T')[0]}
-      - PRÓXIMA SEXTA (Fim "Semana que vem"): ${nextFriday.toISOString().split('T')[0]}
-      - INÍCIO MÊS ATUAL: ${startOfCurrentMonth.toISOString().split('T')[0]} (Nome: ${startOfCurrentMonth.toLocaleDateString('pt-BR', { month: 'long' })})
+      CONTEXTO DE DATAS (USE ESTAS REFERÊNCIAS):
+      - DATA DE HOJE (BASE): ${today.toISOString().split('T')[0]} (${today.toLocaleDateString('pt-BR', { weekday: 'long' })})
+      - PRÓXIMA SEGUNDA (Semana que vem): ${nextMonday.toISOString().split('T')[0]}
+      - PRÓXIMA SEXTA: ${nextFriday.toISOString().split('T')[0]}
+      - INÍCIO MÊS ATUAL: ${startOfCurrentMonth.toISOString().split('T')[0]}
       - FIM MÊS ATUAL: ${endOfCurrentMonth.toISOString().split('T')[0]}
-      - INÍCIO PRÓXIMO MÊS: ${startOfNextMonth.toISOString().split('T')[0]} (Nome: ${startOfNextMonth.toLocaleDateString('pt-BR', { month: 'long' })})
+      - INÍCIO PRÓXIMO MÊS: ${startOfNextMonth.toISOString().split('T')[0]}
       - FIM PRÓXIMO MÊS: ${endOfNextMonth.toISOString().split('T')[0]}
       
-      ${existingAppointments ? `COMPROMISSOS EXISTENTES NA AGENDA:\n${existingAppointments}\n\nIMPORTANTE: Verifique se há conflitos de horário e sugira alternativas se necessário.` : ''}
+      ${existingAppointments ? `COMPROMISSOS JÁ EXISTENTES PARA CONTEXTO:\n${existingAppointments}\n` : ''}
       
-      INSTRUÇÕES:
-      1. Extraia o nome do paciente. Tente associar com a lista de pacientes disponíveis.
-      2. Determine a data do agendamento (formato YYYY-MM-DD). Se for relativo (ex: "daqui a 30 dias"), calcule a data.
-      3. Determine o horário (formato HH:mm). Se não especificado, sugira um horário comercial padrão (ex: 09:00, 14:00).
-      4. Determine o tipo de consulta: "consulta", "retorno", "exames", "urgencia" ou "blocked" (para bloqueios de agenda).
-      5. Se for um comando de bloqueio (ex: "bloquear férias", "folga"), defina type="blocked".
-      6. Se for um período (ex: "ferias semana que vem", "bloquear do dia 10 ao dia 15"), extraia data inicial (date) e data final (endDate).
-      7. IMPORTANTE: Se o usuário disser "semana que vem" ou "próxima semana", USE EXATAMENTE as datas calculadas acima: date = "${nextMonday.toISOString().split('T')[0]}" e endDate = "${nextFriday.toISOString().split('T')[0]}".
-      8. IMPORTANTE: Se o usuário disser "próximo mês" ou "mês de [NOME DO PRÓXIMO MÊS]", USE EXATAMENTE: date = "${startOfNextMonth.toISOString().split('T')[0]}" e endDate = "${endOfNextMonth.toISOString().split('T')[0]}".
-      9. IMPORTANTE: Se o usuário disser "mês atual" ou "mês de [NOME DO MÊS ATUAL]", USE EXATAMENTE: date = "${startOfCurrentMonth.toISOString().split('T')[0]}" e endDate = "${endOfCurrentMonth.toISOString().split('T')[0]}".
-      10. Extraia observações adicionais.
-      11. Se houver conflitos com compromissos existentes, inclua no campo "conflicts" e sugira horários alternativos.
-      
-      EXEMPLOS DE RESPOSTA:
-      
-      Comando: "Bloquear agenda na próxima semana, vou viajar"
-      Resposta Esperada:
-      {
-        "patientName": "Bloqueio de Agenda",
-        "date": "${nextMonday.toISOString().split('T')[0]}", 
-        "endDate": "${nextFriday.toISOString().split('T')[0]}", 
-        "time": "08:00",
-        "type": "blocked",
-        "notes": "Bloquear agenda na próxima semana, vou viajar",
-        "isAllDay": true
-      }
-      
-      Comando: "Bloquear agenda em fevereiro"
-      Resposta Esperada:
-      {
-        "patientName": "Bloqueio de Agenda",
-        "date": "2026-02-01", 
-        "endDate": "2026-02-28", 
-        "time": "08:00",
-        "type": "blocked",
-        "notes": "Bloquear agenda em fevereiro",
-        "isAllDay": true
-      }
-
-      Comando: "Marcar retorno para Maria amanhã às 15h"
-      Resposta Esperada:
-      {
-        "patientName": "Maria",
-        "date": "YYYY-MM-DD", // Data calculada para amanhã
-        "time": "15:00",
-        "type": "retorno",
-        "notes": ""
-      }
-
-      PACIENTES DISPONÍVEIS:
+      PACIENTES CADASTRADOS (Para correlação de nomes):
       ${availablePatients.map(p => `- ID ${p.id}: ${p.name}`).join('\n')}
 
-      RESPONDA APENAS COM O JSON:
+      REGRA PRINCIPAL:
+      Você deve analisar o comando e retornar APENAS um objeto JSON válido.
+      
+      INSTRUÇÕES DE INTERPRETAÇÃO:
+      
+      1. TIPO DE AGENDAMENTO ("type"):
+         - "consulta": Agendamento padrão, consultas novas.
+         - "retorno": Se mencionar "retorno", "volta", "revisão".
+         - "exames": Se mencionar "exame", "analise", "coleta".
+         - "urgencia": Se mencionar "urgência", "emergência", "dor", "prioridade".
+         - "blocked": Se mencionar "bloquear", "férias", "folga", "recesso", "não atender" (PARA CRIAR BLOQUEIO).
+         - "unblock": Se mencionar "desbloquear", "liberar", "cancelar bloqueio", "remover bloqueio", "estou de volta" (PARA REMOVER BLOQUEIO).
+
+      2. DATA ("date" e "endDate"):
+         - Formato YYYY-MM-DD.
+         - Se for período (ex: "semana que vem", "do dia X ao dia Y"), preencha "date" (início) e "endDate" (fim).
+         - "Semana que vem" = ${nextMonday.toISOString().split('T')[0]} até ${nextFriday.toISOString().split('T')[0]}.
+         - "Mês que vem" = ${startOfNextMonth.toISOString().split('T')[0]} até ${endOfNextMonth.toISOString().split('T')[0]}.
+         - "Bloquear férias em Outubro" -> date: primeiro dia de outubro, endDate: último dia de outubro (do ano atual, ou próximo se outubro já passou).
+
+      3. HORÁRIO ("time"):
+         - Formato HH:mm.
+         - Se não especificado: "09:00" (padrão).
+         - Se for dia todo ("isAllDay"): "08:00".
+
+      4. PACIENTE ("patientId" e "patientName"):
+         - Tente encontrar o nome mais próximo na lista de PACIENTES CADASTRADOS.
+         - Se encontrar, use o ID e o Nome exato da lista.
+         - Se não encontrar na lista, extraia o nome do texto (ex: "Paciente para [Nome]").
+         - Se for "type": "blocked", o "patientName" deve ser o motivo do bloqueio (ex: "Bloqueio de Agenda", "Férias", "Feriado").
+         - Se for "type": "unblock", o "patientName" pode ser "Desbloqueio de Agenda" ou vazio.
+         
+      5. OBSERVAÇÕES ("notes"):
+         - Qualquer detalhe extra (sintomas, motivo, observações).
+
+      RESPOSTA ESTRITAMENTE EM JSON NESTE FORMATO:
       {
-        "patientName": "Nome Completo do Paciente (ou 'Bloqueio' se for blocked)",
-        "patientId": 123 (ID da lista ou null),
+        "patientName": string,
+        "patientId": number | null,
         "date": "YYYY-MM-DD",
-        "endDate": "YYYY-MM-DD" (opcional, apenas para periodos),
+        "endDate": "YYYY-MM-DD" | null,
         "time": "HH:mm",
-        "type": "tipo_identificado",
-        "notes": "observações",
-        "isAllDay": true/false,
-        "conflicts": ["lista de conflitos se houver"],
-        "suggestedAlternatives": ["horários alternativos se houver conflitos"]
+        "type": "consulta" | "retorno" | "exames" | "urgencia" | "blocked" | "unblock",
+        "notes": string,
+        "isAllDay": boolean,
+        "conflicts": string[],
+        "suggestedAlternatives": string[]
       }
     `;
 
     if (!process.env.OPENAI_API_KEY) {
-      // Fallback for dev without API key
-      console.log("Using local parsing fallback for appointment command");
+      console.log("Using local parsing fallback for appointment command (No API Key)");
       return parseLocalCommand(command, availablePatients);
     }
 
-    const response = await callOpenAIApi(prompt);
-    return response;
+    if (!openai) {
+      throw new Error("OpenAI client not initialized");
+    }
+
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }, // Enforce JSON Output
+      temperature: 0.1, // Lower temperature for more deterministic/rigid parsing
+      max_tokens: 1000
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    return JSON.parse(content);
   } catch (error) {
     console.error("Error parsing appointment command:", error);
-    throw new Error("Falha ao processar comando de agendamento");
+    // Fallback to local parser on error if needed, or rethrow
+    return parseLocalCommand(command, availablePatients);
   }
 }
 

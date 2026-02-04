@@ -107,6 +107,7 @@ export interface IStorage {
   getAppointmentsByUserId(userId: number): Promise<Appointment[]>;
   updateAppointment(id: number, appointment: Partial<Appointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: number): Promise<boolean>;
+  deleteBlockedAppointmentsByRange(userId: number, startDate: string, endDate: string): Promise<number>;
 
   // Subscription operations
   getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
@@ -239,6 +240,7 @@ export class MemStorage implements IStorage {
   private surgeriesMap: Map<number, any>;
   private evolutionsMap: Map<number, Evolution>;
   private appointmentsMap: Map<number, Appointment>;
+
   private habitsMap: Map<number, any>;
   private doctorsMap: Map<number, Doctor>;
   private clinicsMap: Map<number, Clinic>;
@@ -1587,9 +1589,21 @@ export class MemStorage implements IStorage {
   async getAIMessagesByConversationId(conversationId: number): Promise<AIMessage[]> {
     return [];
   }
+
+  async deleteBlockedAppointmentsByRange(userId: number, startDate: string, endDate: string): Promise<number> {
+    const deleted = Array.from(this.appointmentsMap.values()).filter(a =>
+      a.userId === userId &&
+      a.type === 'blocked' &&
+      a.date >= startDate &&
+      a.date <= endDate
+    );
+
+    for (const apt of deleted) {
+      this.appointmentsMap.delete(apt.id);
+    }
+    return deleted.length;
+  }
 }
-
-
 
 export class DatabaseStorage implements IStorage {
 
@@ -1655,7 +1669,7 @@ export class DatabaseStorage implements IStorage {
           description: "Ideal para profissionais independentes",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
-          price: 9900,
+          price: 7900,
           interval: "month",
           features: [
             "Anamnese **com IA** e Gravação de Voz",
@@ -1671,12 +1685,58 @@ export class DatabaseStorage implements IStorage {
           trialPeriodDays: 30,
           isActive: true
         },
+        // Vita Pro Semestral - 10% desconto (79 * 6 * 0.9 = 426.60)
+        {
+          name: "Vita Pro Semestral",
+          description: "Ideal para profissionais independentes - Pague 6 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 42660,
+          interval: "6month",
+          features: [
+            "Anamnese **com IA** e Gravação de Voz",
+            "Prescrição **Ilimitada** com Alerta de Interações",
+            "Protocolos de Exames **Personalizáveis**",
+            "Upload **Ilimitado** de Resultados de Exames",
+            "Agendamento **com IA** e Triagem Pré-Consulta",
+            "**Gestão de Pacientes Ilimitada**",
+            "**Gráficos de Evolução** de Exames",
+            "**Economize 10%** no plano semestral"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
+          isActive: true
+        },
+        // Vita Pro Anual - 20% desconto (79 * 12 * 0.8 = 758.40)
+        {
+          name: "Vita Pro Anual",
+          description: "Ideal para profissionais independentes - Pague 12 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 75840,
+          interval: "year",
+          features: [
+            "Anamnese **com IA** e Gravação de Voz",
+            "Prescrição **Ilimitada** com Alerta de Interações",
+            "Protocolos de Exames **Personalizáveis**",
+            "Upload **Ilimitado** de Resultados de Exames",
+            "Agendamento **com IA** e Triagem Pré-Consulta",
+            "**Gestão de Pacientes Ilimitada**",
+            "**Gráficos de Evolução** de Exames",
+            "**Economize 20%** no plano anual"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
+          isActive: true
+        },
         {
           name: "Vita Team",
           description: "Gestão completa para clínicas pequenas",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
-          price: 29900,
+          price: 14900,
           interval: "month",
           features: [
             "Tudo do plano **Vita Pro**",
@@ -1692,12 +1752,58 @@ export class DatabaseStorage implements IStorage {
           trialPeriodDays: 30,
           isActive: true
         },
+        // Vita Team Semestral - 10% desconto (149 * 6 * 0.9 = 804.60)
+        {
+          name: "Vita Team Semestral",
+          description: "Gestão completa para clínicas pequenas - Pague 6 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 80460,
+          interval: "6month",
+          features: [
+            "Tudo do plano **Vita Pro**",
+            "Até **5 profissionais** inclusos",
+            "**Conta administradora**",
+            "**Gerenciamento de equipe**",
+            "Relatórios consolidados da clínica",
+            "Personalização de modelos de documentos",
+            "Treinamento de onboarding",
+            "**Economize 10%** no plano semestral"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
+          isActive: true
+        },
+        // Vita Team Anual - 20% desconto (149 * 12 * 0.8 = 1430.40)
+        {
+          name: "Vita Team Anual",
+          description: "Gestão completa para clínicas pequenas - Pague 12 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 143040,
+          interval: "year",
+          features: [
+            "Tudo do plano **Vita Pro**",
+            "Até **5 profissionais** inclusos",
+            "**Conta administradora**",
+            "**Gerenciamento de equipe**",
+            "Relatórios consolidados da clínica",
+            "Personalização de modelos de documentos",
+            "Treinamento de onboarding",
+            "**Economize 20%** no plano anual"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
+          isActive: true
+        },
         {
           name: "Vita Business",
           description: "Gestão completa para clínicas maiores",
           maxProfiles: -1,
           maxUploadsPerProfile: -1,
-          price: 49900,
+          price: 24900,
           interval: "month",
           features: [
             "Tudo do plano **Vita Team**",
@@ -1711,6 +1817,52 @@ export class DatabaseStorage implements IStorage {
           promoPrice: null,
           promoDescription: null,
           trialPeriodDays: 30,
+          isActive: true
+        },
+        // Vita Business Semestral - 10% desconto (249 * 6 * 0.9 = 1344.60)
+        {
+          name: "Vita Business Semestral",
+          description: "Gestão completa para clínicas maiores - Pague 6 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 134460,
+          interval: "6month",
+          features: [
+            "Tudo do plano **Vita Team**",
+            "**Profissionais ilimitados** (5+)",
+            "**Gestão financeira** da clínica",
+            "API de integração",
+            "Gerente de conta dedicado",
+            "SLA de suporte premium",
+            "Personalização Whitelabel (logo na área do paciente)",
+            "**Economize 10%** no plano semestral"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
+          isActive: true
+        },
+        // Vita Business Anual - 20% desconto (249 * 12 * 0.8 = 2390.40)
+        {
+          name: "Vita Business Anual",
+          description: "Gestão completa para clínicas maiores - Pague 12 meses",
+          maxProfiles: -1,
+          maxUploadsPerProfile: -1,
+          price: 239040,
+          interval: "year",
+          features: [
+            "Tudo do plano **Vita Team**",
+            "**Profissionais ilimitados** (5+)",
+            "**Gestão financeira** da clínica",
+            "API de integração",
+            "Gerente de conta dedicado",
+            "SLA de suporte premium",
+            "Personalização Whitelabel (logo na área do paciente)",
+            "**Economize 20%** no plano anual"
+          ],
+          promoPrice: null,
+          promoDescription: null,
+          trialPeriodDays: 0,
           isActive: true
         },
         {
@@ -2165,6 +2317,19 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
   async deleteAppointment(id: number): Promise<boolean> { await db.delete(appointments).where(eq(appointments.id, id)); return true; }
+  async deleteBlockedAppointmentsByRange(userId: number, startDate: string, endDate: string): Promise<number> {
+    const result = await db.delete(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          eq(appointments.type, 'blocked'),
+          gte(appointments.date, startDate),
+          lte(appointments.date, endDate)
+        )
+      )
+      .returning();
+    return result.length;
+  }
 
   // Subscriptions
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {

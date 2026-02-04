@@ -105,6 +105,7 @@ interface ClinicData {
 }
 
 type PlanCategory = 'solo' | 'clinic' | 'hospital' | null;
+type BillingPeriod = 'month' | '6month' | 'year';
 
 const SubscriptionManagement = () => {
   const { toast } = useToast();
@@ -115,6 +116,7 @@ const SubscriptionManagement = () => {
 
   // States for Plans Logic
   const [selectedCategory, setSelectedCategory] = useState<PlanCategory>('solo');
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('month');
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
@@ -227,14 +229,14 @@ const SubscriptionManagement = () => {
     {
       id: 'solo' as PlanCategory,
       title: 'Vita Pro',
-      description: 'Planos a partir de R$ 99/mês',
+      description: 'Planos a partir de R$ 79/mês',
       icon: Users,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
     {
       id: 'clinic' as PlanCategory,
       title: 'Vita Team',
-      description: 'Planos a partir de R$ 299/mês',
+      description: 'Planos a partir de R$ 149/mês',
       icon: Building,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
@@ -247,35 +249,46 @@ const SubscriptionManagement = () => {
     }
   ];
 
-  // Filter plans based on selected category
+  // Filter plans based on selected category and billing period
   const getPlansForCategory = (category: PlanCategory) => {
     if (!category) return [];
 
     const normalizedPlans = allPlans.map(p => ({
       ...p,
-      normalizedName: (p.name || "").toLowerCase().trim()
+      normalizedName: (p.name || "").toLowerCase().trim(),
+      baseName: (p.name || "").toLowerCase().replace(' semestral', '').replace(' anual', '').trim()
     }));
 
+    // Get base plan names for each category
+    let basePlanNames: string[] = [];
     switch (category) {
       case 'solo':
-        return normalizedPlans.filter(plan =>
-          plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'vita pro'
-        );
+        basePlanNames = ['gratuito', 'vita pro'];
+        break;
       case 'clinic':
-        return normalizedPlans.filter(plan =>
-          plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'vita team' ||
-          plan.normalizedName === 'vita business'
-        );
+        basePlanNames = ['gratuito', 'vita team', 'vita business'];
+        break;
       case 'hospital':
-        return normalizedPlans.filter(plan =>
-          plan.normalizedName === 'gratuito' ||
-          plan.normalizedName === 'hospitais'
-        );
+        basePlanNames = ['gratuito', 'hospitais'];
+        break;
       default:
         return [];
     }
+
+    // Filter by base name and interval
+    return normalizedPlans.filter(plan => {
+      // Check if plan belongs to this category
+      const belongsToCategory = basePlanNames.includes(plan.baseName);
+      if (!belongsToCategory) return false;
+
+      // Gratuito is always monthly
+      if (plan.baseName === 'gratuito') {
+        return billingPeriod === 'month';
+      }
+
+      // Filter by billing period
+      return plan.interval === billingPeriod;
+    });
   };
 
   const plans = getPlansForCategory(selectedCategory);
@@ -850,6 +863,48 @@ const SubscriptionManagement = () => {
                 })}
               </div>
 
+              {/* Billing Period Selector */}
+              <div className="flex items-center justify-center gap-2 py-4">
+                <span className="text-sm text-muted-foreground mr-2">Período:</span>
+                <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                  <button
+                    onClick={() => setBillingPeriod('month')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'month'
+                      ? 'bg-[#212121] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    Mensal
+                  </button>
+                  <button
+                    onClick={() => setBillingPeriod('6month')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${billingPeriod === '6month'
+                      ? 'bg-[#212121] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    Semestral
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${billingPeriod === '6month' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'
+                      }`}>
+                      -10%
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setBillingPeriod('year')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${billingPeriod === 'year'
+                      ? 'bg-[#212121] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    Anual
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${billingPeriod === 'year' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'
+                      }`}>
+                      -20%
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
                 {plans.map((plan) => {
                   const isCurrentPlan = currentPlan?.id === plan.id && hasActiveSubscription;
@@ -892,16 +947,33 @@ const SubscriptionManagement = () => {
                                   plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
                                     plan.price === 0 ? 'Grátis' :
                                       plan.name === 'Hospitais' ? 'Sob consulta' :
-                                        `R$${(plan.price / 100).toFixed(2)}`}
+                                        `R$${(plan.price / 100).toFixed(2).replace('.', ',')}`}
                               </span>
                               {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && !((plan.trialPeriodDays || 0) > 0) && (
-                                <span className="text-sm text-muted-foreground">/{plan.interval === 'month' ? 'mês' : 'ano'}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  /{plan.interval === 'month' ? 'mês' : plan.interval === '6month' ? 'semestre' : 'ano'}
+                                </span>
                               )}
                             </div>
+                            {/* Show equivalent monthly price for semi-annual and annual plans */}
+                            {plan.interval === '6month' && plan.price > 0 && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-green-600 font-medium">
+                                  ≈ R$ {((plan.price / 100) / 6).toFixed(2).replace('.', ',')}/mês
+                                </span>
+                              </div>
+                            )}
+                            {plan.interval === 'year' && plan.price > 0 && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-green-600 font-medium">
+                                  ≈ R$ {((plan.price / 100) / 12).toFixed(2).replace('.', ',')}/mês
+                                </span>
+                              </div>
+                            )}
                             {(plan.trialPeriodDays || 0) > 0 && plan.price > 0 && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-muted-foreground">
-                                  Depois R$ {(plan.price / 100).toFixed(2)}/{plan.interval === 'month' ? 'mês' : 'ano'}
+                                  Depois R$ {(plan.price / 100).toFixed(2).replace('.', ',')}/mês
                                 </span>
                               </div>
                             )}

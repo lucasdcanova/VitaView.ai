@@ -361,6 +361,26 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+
+  app.delete("/api/appointments/blocks", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      const { startDate, endDate } = req.body;
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Datas de início e fim são obrigatórias" });
+      }
+
+      console.log(`[APPOINTMENT] Clearing blocks for user ${req.user.id} from ${startDate} to ${endDate}`);
+      const count = await storage.deleteBlockedAppointmentsByRange(req.user.id, startDate, endDate);
+
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error('[APPOINTMENT] Error clearing blocks:', error);
+      res.status(500).json({ message: "Erro ao desbloquear agenda" });
+    }
+  });
+
   app.delete("/api/appointments/:id", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
@@ -380,6 +400,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao apagar agendamento" });
     }
   });
+
+
 
   // Configure multer for AI scheduling file uploads
   const aiScheduleUpload = multer({
