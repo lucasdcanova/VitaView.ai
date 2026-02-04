@@ -2048,14 +2048,8 @@ interface VitaAssistMessage {
   content: string;
 }
 
-interface PatientContext {
-  name?: string;
-  age?: number;
-  gender?: string;
-  diagnoses?: string[];
-  medications?: string[];
-  allergies?: string[];
-}
+// Interface removida pois o contexto agora é uma string formatada pelo ContextManager
+// interface PatientContext { ... }
 
 const VITA_ASSIST_SYSTEM_PROMPT = `Você é VitaAssist, um assistente de apoio à decisão clínica integrado a um prontuário eletrônico.
 Seu papel é auxiliar profissionais de saúde, fornecendo informações baseadas em evidências científicas, diretrizes clínicas atualizadas e literatura médica revisada por pares.
@@ -2087,7 +2081,7 @@ Use markdown. Seja breve. Responda em português brasileiro.`;
 
 export async function vitaAssistChat(
   messages: VitaAssistMessage[],
-  patientContext?: PatientContext
+  patientContext?: string
 ): Promise<string> {
   if (!openai) {
     throw new Error("OpenAI API não configurada");
@@ -2097,15 +2091,7 @@ export async function vitaAssistChat(
 
   // Add patient context if provided
   if (patientContext) {
-    systemPrompt += `\n\n---\n\nCONTEXTO DO PACIENTE ATUAL:
-- Nome: ${patientContext.name || 'Não informado'}
-- Idade: ${patientContext.age ? `${patientContext.age} anos` : 'Não informada'}
-- Sexo: ${patientContext.gender || 'Não informado'}
-- Diagnósticos: ${patientContext.diagnoses?.length ? patientContext.diagnoses.join(', ') : 'Nenhum registrado'}
-- Medicamentos em uso: ${patientContext.medications?.length ? patientContext.medications.join(', ') : 'Nenhum registrado'}
-- Alergias: ${patientContext.allergies?.length ? patientContext.allergies.join(', ') : 'Nenhuma registrada'}
-
-Considere este contexto ao responder perguntas sobre este paciente.`;
+    systemPrompt += `\n\n---\n\n${patientContext}\n\nConsidere este contexto ao responder perguntas sobre este paciente.`;
   }
 
   const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [

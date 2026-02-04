@@ -4151,6 +4151,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Import Vita Assist functions dynamically to avoid circular dependencies
   const { vitaAssistChat, generateConversationTitle } = await import("./services/openai");
 
+  // Import ContextManager
+  const { ContextManager } = await import("./services/context-manager");
+  const contextManager = new ContextManager(storage);
+
   // Send a message to Vita Assist and get a response
   app.post("/api/vita-assist/chat", ensureAuthenticated, async (req, res) => {
     try {
@@ -4188,28 +4192,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.addAIMessage(conversation.id, 'user', message);
 
       // Get patient context if profileId provided
-      let patientContext = undefined;
+      let patientContext: string | undefined = undefined;
       if (profileId || conversation.profileId) {
         const pId = profileId || conversation.profileId;
-        const profile = await storage.getProfile(pId);
-        if (profile) {
-          // Get diagnoses for context
-          const diagnoses = await storage.getDiagnosesByUserId(user.id);
-          const profileDiagnoses = diagnoses.filter((d: any) => d.profileId === pId);
-
-          // Get allergies for this profile
-          const allergiesData = await storage.getAllergiesByProfileId(pId);
-          const allergyNames = allergiesData.map((a: any) => a.name || a.allergen).filter(Boolean);
-
-          patientContext = {
-            name: profile.name,
-            age: profile.birthDate ? Math.floor((Date.now() - new Date(profile.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
-            gender: profile.gender || undefined,
-            diagnoses: profileDiagnoses.map((d: any) => d.cidCode || d.notes).filter(Boolean),
-            allergies: allergyNames.length > 0 ? allergyNames : undefined,
-            medications: undefined // Medications would need to be fetched from prescriptions if needed
-          };
-        }
+        // Use Lean RAG Context
+        patientContext = await contextManager.getLeanContext(user.id, pId, message);
       }
 
       // Get AI response
