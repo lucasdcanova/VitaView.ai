@@ -11,6 +11,7 @@ import { CID10_DATABASE } from "../shared/data/cid10-database";
 import { biometricTwoFactorAuth } from "./auth/biometric-2fa";
 import { advancedSecurity } from "./middleware/advanced-security";
 import { ensureAuthenticated } from "./middleware/auth.middleware";
+import { checkFairUse, trackUsage } from "./middleware/fair-use";
 import { rbacSystem } from "./auth/rbac-system";
 import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
@@ -230,6 +231,53 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
     } catch (error) {
       res.status(500).json({ message: "Erro ao alterar plano" });
+    }
+  });
+
+  // AI Usage Statistics Routes (Admin)
+  app.get("/api/admin/usage-stats", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const { month } = req.query;
+      const yearMonth = (month as string) || new Date().toISOString().slice(0, 7); // YYYY-MM
+
+      const stats = await storage.getAllUsersUsageStats(yearMonth);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching usage stats:', error);
+      res.status(500).json({ message: "Erro ao buscar estatísticas de uso" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/usage", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { month } = req.query;
+      const yearMonth = (month as string) || new Date().toISOString().slice(0, 7);
+
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+
+      const usage = await storage.getMonthlyAIUsage(userId, yearMonth);
+      res.json(usage);
+    } catch (error) {
+      console.error('Error fetching user usage:', error);
+      res.status(500).json({ message: "Erro ao buscar uso do usuário" });
+    }
+  });
+
+  // User Usage Route (Self)
+  app.get("/api/my-usage", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { month } = req.query;
+      const yearMonth = (month as string) || new Date().toISOString().slice(0, 7);
+
+      const usage = await storage.getMonthlyAIUsage(user.id, yearMonth);
+      res.json(usage);
+    } catch (error) {
+      console.error('Error fetching my usage:', error);
+      res.status(500).json({ message: "Erro ao buscar meu uso" });
     }
   });
 
@@ -958,6 +1006,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         aiProvider: (analysisResult as any)?.aiProvider
       });
 
+      // Track usage
+      await trackUsage((req.user as any).id, 'examAnalyses', 1);
+      await trackUsage((req.user as any).id, 'aiRequests', 1);
+      // Estimate tokens (simulated for file analysis)
+      await trackUsage((req.user as any).id, 'aiTokensUsed', 2000);
+
       res.json({
         ...analysisResult,
         fileType: normalizedFileType,
@@ -1011,6 +1065,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post(
     "/api/analyze/openai",
     ensureAuthenticated,
+    checkFairUse('examAnalyses'),
+    checkFairUse('aiRequests'),
     uploadAnalysis.single("file"),
     handleVisionAnalysis
   );
@@ -2066,75 +2122,87 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Endpoint para transcrição de áudio de consulta
-  app.post("/api/consultation/transcribe", ensureAuthenticated, audioTranscriptionUpload.single('audio'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "Arquivo de áudio é obrigatório" });
-      }
-
-      logger.info("[Transcription] Iniciando transcrição de consulta", {
-        userId: req.user?.id,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype
-      });
-
-      // Transcrever o áudio
-      const transcription = await transcribeConsultationAudio(
-        req.file.buffer,
-        req.file.mimetype
-      );
-
-      if (!transcription || !transcription.trim()) {
-        return res.status(400).json({ message: "Não foi possível transcrever o áudio. Verifique a qualidade da gravação." });
-      }
-
-      // Buscar dados do paciente ativo se houver profileId
-      let patientData = null;
-      const profileId = req.body.profileId ? parseInt(req.body.profileId) : null;
-
-      if (profileId) {
-        try {
-          const profile = await storage.getProfile(profileId);
-          if (profile && profile.userId === req.user!.id) {
-            patientData = {
-              name: profile.name,
-              gender: profile.gender,
-              birthDate: profile.birthDate,
-              // Adicionar mais dados do prontuário se disponíveis
-            };
-          }
-        } catch (err) {
-          logger.warn("[Transcription] Erro ao buscar perfil do paciente", { profileId, error: err });
+  // Endpoint para transcrição de áudio de consulta
+  app.post(
+    "/api/consultation/transcribe",
+    ensureAuthenticated,
+    checkFairUse('transcriptionMinutes'),
+    audioTranscriptionUpload.single('audio'),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ message: "Arquivo de áudio é obrigatório" });
         }
+
+        logger.info("[Transcription] Iniciando transcrição de consulta", {
+          userId: req.user?.id,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype
+        });
+
+        // Transcrever o áudio
+        const transcription = await transcribeConsultationAudio(
+          req.file.buffer,
+          req.file.mimetype
+        );
+
+        if (!transcription || !transcription.trim()) {
+          return res.status(400).json({ message: "Não foi possível transcrever o áudio. Verifique a qualidade da gravação." });
+        }
+
+        // Buscar dados do paciente ativo se houver profileId
+        let patientData = null;
+        const profileId = req.body.profileId ? parseInt(req.body.profileId) : null;
+
+        if (profileId) {
+          try {
+            const profile = await storage.getProfile(profileId);
+            if (profile && profile.userId === req.user!.id) {
+              patientData = {
+                name: profile.name,
+                gender: profile.gender,
+                birthDate: profile.birthDate,
+                // Adicionar mais dados do prontuário se disponíveis
+              };
+            }
+          } catch (err) {
+            logger.warn("[Transcription] Erro ao buscar perfil do paciente", { profileId, error: err });
+          }
+        }
+        // Processar transcrição e gerar anamnese profissional
+        const result = await processTranscriptionToAnamnesis(transcription, patientData);
+
+        logger.info("[Transcription] Transcrição e processamento concluídos", {
+          userId: req.user?.id,
+          transcriptionLength: transcription.length,
+          anamnesisLength: result.anamnesis.length,
+          diagnosesCount: result.extractedData.diagnoses.length
+        });
+
+        // Track usage
+        const user = req.user as any;
+        // Estimate minutes from file size (very rough approx: 1MB ~= 1 min mp3/m4a)
+        const estimatedMinutes = Math.ceil((req.file?.size || 1024 * 1024) / (1024 * 1024));
+        await trackUsage(user.id, 'transcriptionMinutes', estimatedMinutes);
+        await trackUsage(user.id, 'aiRequests', 1);
+
+        res.json({
+          success: true,
+          transcription,
+          anamnesis: result.anamnesis,
+          extractedData: result.extractedData
+        });
+
+      } catch (error) {
+        logger.error("[Transcription] Erro na transcrição de consulta", {
+          userId: req.user?.id,
+          message: error instanceof Error ? error.message : String(error)
+        });
+        res.status(500).json({
+          message: error instanceof Error ? error.message : "Erro ao transcrever áudio da consulta"
+        });
       }
-
-      // Processar transcrição e gerar anamnese profissional
-      const result = await processTranscriptionToAnamnesis(transcription, patientData);
-
-      logger.info("[Transcription] Transcrição e processamento concluídos", {
-        userId: req.user?.id,
-        transcriptionLength: transcription.length,
-        anamnesisLength: result.anamnesis.length,
-        diagnosesCount: result.extractedData.diagnoses.length
-      });
-
-      res.json({
-        success: true,
-        transcription,
-        anamnesis: result.anamnesis,
-        extractedData: result.extractedData
-      });
-
-    } catch (error) {
-      logger.error("[Transcription] Erro na transcrição de consulta", {
-        userId: req.user?.id,
-        message: error instanceof Error ? error.message : String(error)
-      });
-      res.status(500).json({
-        message: error instanceof Error ? error.message : "Erro ao transcrever áudio da consulta"
-      });
-    }
-  });
+    });
 
   // PROFILE PHOTO UPLOAD
   // ============================================================================

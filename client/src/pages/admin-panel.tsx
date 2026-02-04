@@ -54,10 +54,118 @@ import {
   ArrowLeft,
   Bug,
   Eye,
-  CheckCircle2
+  CheckCircle2,
+  LineChart,
+  Activity,
+  Mic
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+
+// AI Usage Stats Interface
+interface AIUsageStat {
+  userId: number;
+  username: string;
+  fullName: string | null;
+  planName: string | null;
+  aiRequests: number;
+  transcriptionMinutes: number;
+  examAnalyses: number;
+}
+
+// AI Usage Tab Component
+function AIUsageTab() {
+  const { data: usageStats = [], isLoading } = useQuery<AIUsageStat[]>({
+    queryKey: ['/api/admin/usage-stats'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const getUsageColor = (value: number, limit: number) => {
+    const percentage = value / limit;
+    if (percentage >= 1) return "text-red-500 font-bold";
+    if (percentage >= 0.8) return "text-yellow-600 font-semibold";
+    return "text-green-600";
+  };
+
+  const getUsageBadge = (value: number, limit: number) => {
+    const percentage = limit > 0 ? value / limit : 0;
+    if (percentage >= 1) return <Badge variant="destructive">Excedido</Badge>;
+    if (percentage >= 0.8) return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Alto Uso</Badge>;
+    return <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Normal</Badge>;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          Monitoramento de Uso de IA (Fair Use)
+        </CardTitle>
+        <CardDescription>
+          Acompanhe o consumo de recursos de IA e transcrição por usuário neste mês (Limites Elásticos)
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : usageStats.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum dado de uso registrado este mês
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead className="text-right">Req. IA</TableHead>
+                  <TableHead className="text-right">Transcrição (min)</TableHead>
+                  <TableHead className="text-right">Análises Exame</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usageStats.map((stat) => (
+                  <TableRow key={stat.userId}>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{stat.fullName || stat.username}</span>
+                        <span className="text-xs text-muted-foreground">ID: {stat.userId}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {stat.planName ? (
+                        <Badge variant="secondary">{stat.planName}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Gratuito</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {stat.aiRequests}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {stat.transcriptionMinutes}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {stat.examAnalyses}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {/* Lógica simplificada de status baseada em requisições (pode ser refinada por plano) */}
+                      {getUsageBadge(stat.aiRequests, stat.planName ? 5000 : 50)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // Interface para usuários
 interface AdminUser {
@@ -539,6 +647,10 @@ export default function AdminPanel() {
             <CreditCard className="h-4 w-4" />
             <span>Planos</span>
           </TabsTrigger>
+          <TabsTrigger value="ai-usage" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span>Uso de IA</span>
+          </TabsTrigger>
           <TabsTrigger value="recados" className="flex items-center gap-2">
             <Bug className="h-4 w-4" />
             <span>Recados</span>
@@ -803,6 +915,11 @@ export default function AdminPanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Aba de Uso de IA */}
+        <TabsContent value="ai-usage" className="space-y-4">
+          <AIUsageTab />
         </TabsContent>
 
         {/* Aba de Recados (Bug Reports) */}

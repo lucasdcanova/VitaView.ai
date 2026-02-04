@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -223,6 +223,12 @@ export interface IStorage {
   addAIMessage(conversationId: number, role: string, content: string): Promise<AIMessage>;
   getAIMessagesByConversationId(conversationId: number): Promise<AIMessage[]>;
 
+  // AI Usage Tracking operations (Fair Use)
+  getAIUsageForDate(userId: number, date: string): Promise<AIUsage | undefined>;
+  incrementAIUsage(userId: number, date: string, field: 'aiRequests' | 'aiTokensUsed' | 'transcriptionMinutes' | 'examAnalyses', amount: number): Promise<AIUsage>;
+  getMonthlyAIUsage(userId: number, yearMonth: string): Promise<{ aiRequests: number; aiTokensUsed: number; transcriptionMinutes: number; examAnalyses: number }>;
+  getAllUsersUsageStats(yearMonth: string): Promise<Array<{ userId: number; username: string; fullName: string | null; planName: string | null; aiRequests: number; transcriptionMinutes: number; examAnalyses: number }>>;
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -426,7 +432,8 @@ export class MemStorage implements IStorage {
       crm: null,
       specialty: null,
       rqe: null,
-      profilePhotoUrl: null
+      profilePhotoUrl: null,
+      addons: []
     };
     this.users.set(id, newUser);
 
@@ -1602,6 +1609,84 @@ export class MemStorage implements IStorage {
       this.appointmentsMap.delete(apt.id);
     }
     return deleted.length;
+  }
+
+  // AI Usage Tracking - MemStorage (in-memory)
+  private aiUsageMap: Map<string, AIUsage> = new Map(); // key: `${userId}-${date}`
+  private aiUsageIdCounter: number = 1;
+
+  async getAIUsageForDate(userId: number, date: string): Promise<AIUsage | undefined> {
+    return this.aiUsageMap.get(`${userId}-${date}`);
+  }
+
+  async incrementAIUsage(userId: number, date: string, field: 'aiRequests' | 'aiTokensUsed' | 'transcriptionMinutes' | 'examAnalyses', amount: number): Promise<AIUsage> {
+    const key = `${userId}-${date}`;
+    let usage = this.aiUsageMap.get(key);
+
+    if (!usage) {
+      usage = {
+        id: this.aiUsageIdCounter++,
+        userId,
+        date,
+        aiRequests: 0,
+        aiTokensUsed: 0,
+        transcriptionMinutes: 0,
+        examAnalyses: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    usage[field] += amount;
+    usage.updatedAt = new Date();
+    this.aiUsageMap.set(key, usage);
+    return usage;
+  }
+
+  async getMonthlyAIUsage(userId: number, yearMonth: string): Promise<{ aiRequests: number; aiTokensUsed: number; transcriptionMinutes: number; examAnalyses: number }> {
+    const totals = { aiRequests: 0, aiTokensUsed: 0, transcriptionMinutes: 0, examAnalyses: 0 };
+
+    for (const [key, usage] of Array.from(this.aiUsageMap.entries())) {
+      if (key.startsWith(`${userId}-${yearMonth}`)) {
+        totals.aiRequests += usage.aiRequests;
+        totals.aiTokensUsed += usage.aiTokensUsed;
+        totals.transcriptionMinutes += usage.transcriptionMinutes;
+        totals.examAnalyses += usage.examAnalyses;
+      }
+    }
+
+    return totals;
+  }
+
+  async getAllUsersUsageStats(yearMonth: string): Promise<Array<{ userId: number; username: string; fullName: string | null; planName: string | null; aiRequests: number; transcriptionMinutes: number; examAnalyses: number }>> {
+    // Simplified for MemStorage - in real DB this would be a proper join
+    const userStats = new Map<number, { aiRequests: number; transcriptionMinutes: number; examAnalyses: number }>();
+
+    for (const [key, usage] of Array.from(this.aiUsageMap.entries())) {
+      if (key.includes(yearMonth)) {
+        const current = userStats.get(usage.userId) || { aiRequests: 0, transcriptionMinutes: 0, examAnalyses: 0 };
+        current.aiRequests += usage.aiRequests;
+        current.transcriptionMinutes += usage.transcriptionMinutes;
+        current.examAnalyses += usage.examAnalyses;
+        userStats.set(usage.userId, current);
+      }
+    }
+
+    const results: Array<{ userId: number; username: string; fullName: string | null; planName: string | null; aiRequests: number; transcriptionMinutes: number; examAnalyses: number }> = [];
+    for (const [userId, stats] of Array.from(userStats.entries())) {
+      const user = this.users.get(userId);
+      if (user) {
+        results.push({
+          userId,
+          username: user.username,
+          fullName: user.fullName,
+          planName: null,
+          ...stats
+        });
+      }
+    }
+
+    return results;
   }
 }
 
@@ -2970,6 +3055,92 @@ export class DatabaseStorage implements IStorage {
       .from(aiMessages)
       .where(eq(aiMessages.conversationId, conversationId))
       .orderBy(asc(aiMessages.createdAt));
+  }
+
+  // AI Usage Tracking - DatabaseStorage
+  async getAIUsageForDate(userId: number, date: string): Promise<AIUsage | undefined> {
+    const [usage] = await db.select()
+      .from(aiUsage)
+      .where(and(eq(aiUsage.userId, userId), eq(aiUsage.date, date)));
+    return usage;
+  }
+
+  async incrementAIUsage(userId: number, date: string, field: 'aiRequests' | 'aiTokensUsed' | 'transcriptionMinutes' | 'examAnalyses', amount: number): Promise<AIUsage> {
+    // Try to get existing record
+    const existing = await this.getAIUsageForDate(userId, date);
+
+    if (existing) {
+      // Update existing record
+      const updateData: Partial<AIUsage> = { updatedAt: new Date() };
+      (updateData as any)[field] = existing[field] + amount;
+
+      const [updated] = await db.update(aiUsage)
+        .set(updateData)
+        .where(and(eq(aiUsage.userId, userId), eq(aiUsage.date, date)))
+        .returning();
+      return updated;
+    } else {
+      // Create new record
+      const newRecord: any = {
+        userId,
+        date,
+        aiRequests: 0,
+        aiTokensUsed: 0,
+        transcriptionMinutes: 0,
+        examAnalyses: 0
+      };
+      newRecord[field] = amount;
+
+      const [created] = await db.insert(aiUsage).values(newRecord).returning();
+      return created;
+    }
+  }
+
+  async getMonthlyAIUsage(userId: number, yearMonth: string): Promise<{ aiRequests: number; aiTokensUsed: number; transcriptionMinutes: number; examAnalyses: number }> {
+    const results = await db.select({
+      aiRequests: sql<number>`COALESCE(SUM(${aiUsage.aiRequests}), 0)`,
+      aiTokensUsed: sql<number>`COALESCE(SUM(${aiUsage.aiTokensUsed}), 0)`,
+      transcriptionMinutes: sql<number>`COALESCE(SUM(${aiUsage.transcriptionMinutes}), 0)`,
+      examAnalyses: sql<number>`COALESCE(SUM(${aiUsage.examAnalyses}), 0)`
+    })
+      .from(aiUsage)
+      .where(and(
+        eq(aiUsage.userId, userId),
+        sql`${aiUsage.date} LIKE ${yearMonth + '%'}`
+      ));
+
+    return results[0] || { aiRequests: 0, aiTokensUsed: 0, transcriptionMinutes: 0, examAnalyses: 0 };
+  }
+
+  async getAllUsersUsageStats(yearMonth: string): Promise<Array<{ userId: number; username: string; fullName: string | null; planName: string | null; aiRequests: number; transcriptionMinutes: number; examAnalyses: number }>> {
+    const results = await db.select({
+      userId: users.id,
+      username: users.username,
+      fullName: users.fullName,
+      aiRequests: sql<number>`COALESCE(SUM(${aiUsage.aiRequests}), 0)`,
+      transcriptionMinutes: sql<number>`COALESCE(SUM(${aiUsage.transcriptionMinutes}), 0)`,
+      examAnalyses: sql<number>`COALESCE(SUM(${aiUsage.examAnalyses}), 0)`
+    })
+      .from(users)
+      .leftJoin(aiUsage, and(
+        eq(users.id, aiUsage.userId),
+        sql`${aiUsage.date} LIKE ${yearMonth + '%'}`
+      ))
+      .groupBy(users.id, users.username, users.fullName)
+      .orderBy(desc(sql`SUM(${aiUsage.aiRequests})`));
+
+    // Add plan names
+    const enrichedResults = await Promise.all(results.map(async (r) => {
+      const subscription = await this.getUserSubscription(r.userId);
+      let planName = null;
+      if (subscription?.planId) {
+        const plan = await this.getSubscriptionPlan(subscription.planId);
+        planName = plan?.name || null;
+      }
+      return { ...r, planName };
+    }));
+
+    return enrichedResults;
   }
 }
 

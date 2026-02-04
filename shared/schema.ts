@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   clinicId: integer("clinic_id"), // Reference to clinic (set after clinic creation)
   clinicRole: text("clinic_role"), // 'admin' | 'member'
   preferences: json("preferences"), // Store user preferences like dashboard layout
+  addons: json("addons").default("[]"), // Active add-ons: ["transcription_power", "advanced_ai"]
 });
 
 // Profiles schema
