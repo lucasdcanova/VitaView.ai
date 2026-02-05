@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 import logger from "../logger";
@@ -216,6 +216,30 @@ export class S3Service {
   static isSensitiveFile(fileType: string): boolean {
     return SENSITIVE_FILE_TYPES.includes(fileType);
   }
+
+  /**
+   * Altera a classe de armazenamento de um objeto (Hot -> Cold)
+   * Usa CopyObject para subscrever o objeto com nova StorageClass
+   */
+  static async transitionObject(key: string, storageClass: 'STANDARD' | 'STANDARD_IA' | 'GLACIER'): Promise<void> {
+    try {
+      const command = new CopyObjectCommand({
+        Bucket: BUCKET_NAME,
+        CopySource: `${BUCKET_NAME}/${key}`, // Copia de si mesmo
+        Key: key,
+        StorageClass: storageClass,
+        MetadataDirective: "COPY", // Mantém metadados originais
+      });
+
+      if (!s3Client) throw new Error("S3 client not initialized");
+      await s3Client.send(command);
+
+      logger.info(`[S3] Classe de armazenamento alterada: ${key} -> ${storageClass}`);
+    } catch (error) {
+      logger.error(`[S3] Erro ao transicionar objeto ${key}:`, error);
+      throw new Error("Falha ao alterar classe de armazenamento");
+    }
+  }
 }
 
 // Implementação de fallback local
@@ -273,5 +297,9 @@ if (!s3Client) {
     if (fs.existsSync(filePath)) {
       await unlinkAsync(filePath);
     }
+  };
+
+  S3Service.transitionObject = async (key: string, storageClass: string) => {
+    logger.info(`[LocalS3] "Simulating" transition of ${key} to ${storageClass}`);
   };
 }

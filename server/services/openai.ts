@@ -324,7 +324,7 @@ const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || "gpt-4o";
 const OPENAI_MAX_OUTPUT_TOKENS = Number(process.env.OPENAI_ANALYSIS_MAX_OUTPUT_TOKENS || "4000");
 
 // Initialize OpenAI using the API key from environment variables
-let openai: OpenAI | null = null;
+export let openai: OpenAI | null = null;
 
 if (process.env.OPENAI_API_KEY) {
   openai = new OpenAI({
@@ -334,7 +334,8 @@ if (process.env.OPENAI_API_KEY) {
   // OpenAI API key not found. OpenAI features will use fallback responses.
 }
 
-export async function generateHealthInsights(examResult: ExamResult, patientData?: any) {
+// Update signature to accept context
+export async function generateHealthInsights(examResult: ExamResult, patientData?: any, userId?: number, clinicId?: number) {
   try {
 
     const patientContext = formatPatientContext(patientData);
@@ -464,7 +465,7 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
       const model = ModelRouter.getModel(taskName, complexity);
 
       // Pass complexity to enable proper cache TTL (e.g. complex tasks have shorter TTL)
-      const response = await callOpenAIApi(prompt, model, taskName, complexity);
+      const response = await callOpenAIApi(prompt, model, taskName, complexity, userId, clinicId);
 
       return response;
     } catch (apiError) {
@@ -476,7 +477,7 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 }
 
 // Function to call the OpenAI API
-async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call", complexityData?: TaskComplexity) {
+async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call", complexityData?: TaskComplexity, userId?: number, clinicId?: number) {
   try {
     if (!openai) {
       throw new Error("OpenAI client not initialized");
@@ -515,7 +516,7 @@ async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameFor
     });
 
     if (response.usage) {
-      ModelRouter.trackUsage(taskNameForTracking, model, response.usage);
+      ModelRouter.trackUsage(taskNameForTracking, model, response.usage, userId, clinicId);
     }
 
     const content = response.choices[0].message.content;
@@ -1081,7 +1082,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     const model = ModelRouter.getModel(taskName, complexity);
 
     // Pass model, taskName and complexity to updated callOpenAIApi
-    const insightsResponse = await callOpenAIApi(prompt, model, taskName, complexity);
+    const insightsResponse = await callOpenAIApi(prompt, model, taskName, complexity, userId);
 
     // 7. Atualizar o exame para refletir a análise completa
     await storage.updateExam(examId, {
@@ -1129,7 +1130,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
  * @param fileType - Tipo do arquivo (pdf, jpeg, png)
  * @returns Resultado da análise com métricas de saúde e recomendações
  */
-export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: string) {
+export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: string, userId?: number, clinicId?: number) {
   // Verificar se a API key está disponível
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OpenAI API key not available");
@@ -1513,7 +1514,7 @@ export async function generateChronologicalReport(examResults: ExamResult[], use
   }
 }
 
-export async function extractRecordFromAnamnesis(text: string) {
+export async function extractRecordFromAnamnesis(text: string, userId?: number, clinicId?: number) {
   if (!text || !text.trim()) {
     throw new Error("Texto da anamnese é obrigatório");
   }
@@ -1554,24 +1555,23 @@ Anamnese:
 
   try {
     const taskName = "extractRecordFromAnamnesis";
-    const complexity: TaskComplexity = "medium"; // Pode variar, vamos usar medium para garantir qualidade na extração
+    const complexity: TaskComplexity = "medium";
     const model = ModelRouter.getModel(taskName, complexity);
 
-    const response = await openai.responses.create({
-      model: model as any, // Cast necessário se o tipo do SDK divergir, mas geralmente aceita string
-      input: [
-        {
-          role: "user",
-          content: [{ type: "input_text", text: instructions }],
-        },
-      ],
+    const response = await openai.chat.completions.create({
+      model: model,
+      messages: [{ role: "user", content: instructions }],
       temperature: 0.2,
-      max_output_tokens: 1200,
+      max_tokens: 1200, // corrected property name from max_output_tokens
     });
 
-    const content = extractResponseText(response);
+    if (response.usage) {
+      ModelRouter.trackUsage(taskName, model, response.usage, userId, clinicId);
+    }
+
+    const content = response.choices[0].message.content;
     const sanitized = stripMarkdownCodeFence(content);
-    const jsonPayload = sanitized ? extractJsonPayload(sanitized) : null;
+    const jsonPayload = sanitized ? extractJsonPayload(sanitized as string) : null;
 
     if (!jsonPayload) {
       throw new Error("Resposta da OpenAI sem JSON válido");
@@ -1688,7 +1688,7 @@ function getFallbackChronologicalReport(examResults: ExamResult[], user: UserInf
  * @param fileType Tipo do arquivo (pdf, jpeg, png)
  * @returns Nome do paciente extraído ou null se não encontrado
  */
-export async function extractPatientNameFromExam(fileContent: string, fileType: string): Promise<string | null> {
+export async function extractPatientNameFromExam(fileContent: string, fileType: string, userId?: number, clinicId?: number): Promise<string | null> {
   try {
     if (!openai) {
       logger.warn("OpenAI client not initialized, cannot extract patient name");
@@ -1728,7 +1728,7 @@ export async function extractPatientNameFromExam(fileContent: string, fileType: 
     });
 
     if (response.usage) {
-      ModelRouter.trackUsage(taskName, model, response.usage);
+      ModelRouter.trackUsage(taskName, model, response.usage, userId, clinicId);
     }
 
     const extractedName = response.choices[0].message.content?.trim();
@@ -1764,7 +1764,7 @@ async function extractAppointmentsFromPDF(file: any): Promise<string> {
  * @param mimeType Tipo MIME do áudio (audio/webm, audio/mp3, etc.)
  * @returns Texto transcrito
  */
-export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType: string): Promise<string> {
+export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType: string, userId?: number, clinicId?: number): Promise<string> {
   if (!openai) {
     throw new Error("OpenAI client not initialized. API key may be missing.");
   }
@@ -1802,6 +1802,17 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
       prompt: "Transcrição de consulta médica em português brasileiro. Termos médicos, medicamentos, diagnósticos, sintomas."
     });
 
+    // Approximate token usage for audio duration (or just count 1 request)
+    // Whisper doesn't return token usage, so we might need a different strategy or just log the event.
+    // For now, let's log with 0 tokens to at least record the activity in ai_cost_logs
+    // or estimate based on text length (approx 1 token per 0.75 words, 1 word ~ 5 chars -> 1 token ~ 4 chars)
+    const estimatedTokens = Math.ceil(transcription.length / 4);
+    ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
+      prompt_tokens: 0,
+      completion_tokens: estimatedTokens,
+      total_tokens: estimatedTokens
+    }, userId, clinicId);
+
     logger.info("[OpenAI Whisper] Transcrição concluída", {
       transcriptionLength: transcription.length
     });
@@ -1821,7 +1832,7 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
  * @param patientData Dados do paciente para contextualização
  * @returns Anamnese formatada profissionalmente
  */
-export async function processTranscriptionToAnamnesis(transcription: string, patientData?: any): Promise<{
+export async function processTranscriptionToAnamnesis(transcription: string, patientData?: any, userId?: number, clinicId?: number): Promise<{
   anamnesis: string;
   extractedData: {
     summary: string;
@@ -1992,7 +2003,7 @@ Esta anamnese foi gerada a partir de transcrição automática e requer revisão
  * @param text Texto original da anamnese
  * @returns Texto melhorado
  */
-export async function enhanceAnamnesisText(text: string): Promise<string> {
+export async function enhanceAnamnesisText(text: string, userId?: number, clinicId?: number): Promise<string> {
   if (!openai) {
     throw new Error("OpenAI client not initialized");
   }
@@ -2081,7 +2092,9 @@ Use markdown. Seja breve. Responda em português brasileiro.`;
 
 export async function vitaAssistChat(
   messages: VitaAssistMessage[],
-  patientContext?: string
+  patientContext?: string,
+  userId?: number,
+  clinicId?: number
 ): Promise<string> {
   if (!openai) {
     throw new Error("OpenAI API não configurada");
@@ -2157,5 +2170,25 @@ export async function generateConversationTitle(firstMessage: string): Promise<s
   } catch (error) {
     logger.error("[OpenAI] Erro ao gerar título", { error });
     return firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+  }
+}
+
+// Generate Embeddings for Vector Search
+export async function generateEmbedding(text: string): Promise<number[]> {
+  if (!openai) {
+    throw new Error("OpenAI not initialized");
+  }
+
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-3-small", // Efficient and cheap
+      input: text,
+      encoding_format: "float",
+    });
+
+    return response.data[0].embedding;
+  } catch (error) {
+    logger.error("[OpenAI] Failed to generate embedding", { error });
+    throw error;
   }
 }

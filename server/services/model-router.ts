@@ -1,4 +1,6 @@
 import logger from "../logger";
+import { db } from "../db";
+import { aiCostLogs } from "@shared/schema";
 
 export type TaskComplexity = 'simple' | 'medium' | 'complex';
 
@@ -39,12 +41,14 @@ export class ModelRouter {
     }
 
     /**
-     * Registra o custo estimado da operação.
+     * Registra o custo estimado da operação no banco de dados.
      */
-    static trackUsage(
+    static async trackUsage(
         taskName: string,
         modelId: string,
-        usage: { prompt_tokens: number; completion_tokens: number }
+        usage: { prompt_tokens: number; completion_tokens: number },
+        userId?: number,
+        clinicId?: number
     ) {
         const config = AVAILABLE_MODELS[modelId];
         if (!config) {
@@ -60,7 +64,24 @@ export class ModelRouter {
             task: taskName,
             model: modelId,
             tokens: usage,
-            estimatedCost: totalCost.toFixed(6)
+            estimatedCost: totalCost.toFixed(6),
+            userId,
+            clinicId
         });
+
+        // Async log to DB to not block the main thread
+        try {
+            await db.insert(aiCostLogs).values({
+                userId,
+                clinicId,
+                model: modelId,
+                inputTokens: usage.prompt_tokens,
+                outputTokens: usage.completion_tokens,
+                costUsd: totalCost.toFixed(6) as any, // Cast for decimal
+                taskType: taskName,
+            });
+        } catch (error) {
+            logger.error(`[ModelRouter] Failed to log cost`, { error });
+        }
     }
 }

@@ -31,6 +31,7 @@ const COMPLIANCE_CONFIG = {
 // Types
 interface AuditLogEntry {
     userId?: number;
+    clinicId?: number;
     targetUserId?: number;
     action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'EXPORT' | 'LOGIN' | 'LOGOUT' | 'CONSENT' | 'REVOKE_CONSENT';
     resourceType: string;
@@ -86,18 +87,22 @@ class ComplianceService {
             const userAgent = entry.userAgent || req?.headers['user-agent'];
             const sessionId = entry.sessionId || this.getSessionId(req);
 
+            // Extract clinicId from request (injected by ensureTenant middleware)
+            const clinicId = entry.clinicId || (req as any)?.tenantId || (req as any)?.user?.clinicId;
+
             // Redact sensitive information from values
             const redactedOldValue = this.redactSensitiveData(entry.oldValue);
             const redactedNewValue = this.redactSensitiveData(entry.newValue);
 
             await pool.query(`
         INSERT INTO audit_logs (
-          user_id, target_user_id, action, resource_type, resource_id,
+          user_id, clinic_id, target_user_id, action, resource_type, resource_id,
           ip_address, user_agent, session_id, request_method, request_path,
           status_code, old_value, new_value, access_reason, severity, compliance_flags
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       `, [
                 entry.userId || null,
+                clinicId || null,
                 entry.targetUserId || null,
                 entry.action,
                 entry.resourceType,

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, json, date, doublePrecision, decimal, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -39,6 +39,7 @@ export const profiles = pgTable("profiles", {
   bloodType: text("blood_type"),
   planType: text("plan_type"),
   isDefault: boolean("is_default").default(false),
+  clinicId: integer("clinic_id").references(() => clinics.id), // Tenant ID
   createdAt: timestamp("created_at").defaultNow().notNull(),
 
   // Identification
@@ -98,6 +99,7 @@ export const insertProfileSchema = createInsertSchema(profiles)
     deathDate: true,
     deathTime: true,
     deathCause: true,
+    clinicId: true,
   })
   .extend({
     relationship: z.string().optional().nullable(),
@@ -131,6 +133,7 @@ export const insertProfileSchema = createInsertSchema(profiles)
     deathDate: z.string().optional().nullable(),
     deathTime: z.string().optional().nullable(),
     deathCause: z.string().optional().nullable(),
+    clinicId: z.number().int().optional().nullable(),
   });
 
 
@@ -138,6 +141,7 @@ export const insertProfileSchema = createInsertSchema(profiles)
 export const exams = pgTable("exams", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  clinicId: integer("clinic_id").references(() => clinics.id), // Tenant ID
   profileId: integer("profile_id").references(() => profiles.id),
   name: text("name").notNull(),
   fileType: text("file_type").notNull(), // pdf, jpeg, png
@@ -149,6 +153,11 @@ export const exams = pgTable("exams", {
   originalContent: text("original_content"), // Store the raw text from the exam
   filePath: text("file_path"), // Path/Key to the stored file
   processingError: text("processing_error"), // Error message if processing fails
+
+  // Storage Lifecycle
+  storageClass: text("storage_class").default("hot").notNull(), // 'hot', 'cold', 'glacier'
+  lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
+  storageMigratedAt: timestamp("storage_migrated_at"),
 });
 
 export const insertExamSchema = createInsertSchema(exams)
@@ -161,7 +170,8 @@ export const insertExamSchema = createInsertSchema(exams)
     examDate: true,
     requestingPhysician: true,
     originalContent: true,
-    filePath: true
+    filePath: true,
+    clinicId: true,
   })
   .extend({
     profileId: z.number().int().optional().nullable()
@@ -193,6 +203,7 @@ export const healthMetrics = pgTable("health_metrics", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   profileId: integer("profile_id").references(() => profiles.id),
+  clinicId: integer("clinic_id"), // Tenant ID
   examId: integer("exam_id"), // vinculação com o exame específico
   name: text("name").notNull(), // colesterol, glicemia, etc
   value: text("value").notNull(),
@@ -209,6 +220,8 @@ export const healthMetrics = pgTable("health_metrics", {
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
   .pick({
     userId: true,
+    profileId: true,
+    clinicId: true,
     examId: true,
     name: true,
     value: true,
@@ -517,6 +530,7 @@ export type InsertEvolution = z.infer<typeof insertEvolutionSchema>;
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  clinicId: integer("clinic_id"), // Tenant context
   profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   patientName: text("patient_name").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
@@ -532,6 +546,7 @@ export const appointments = pgTable("appointments", {
 
 export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   userId: true,
+  clinicId: true,
   profileId: true,
   patientName: true,
   date: true,
@@ -803,16 +818,42 @@ export const insertUserConsentSchema = createInsertSchema(userConsents).pick({
   version: true,
   ipAddress: true,
   userAgent: true,
-  expiresAt: true,
 });
 
 export type UserConsent = typeof userConsents.$inferSelect;
 export type InsertUserConsent = z.infer<typeof insertUserConsentSchema>;
 
+
+// Storage Logs - Audit trail for storage policies
+export const storageLogs = pgTable("storage_logs", {
+  id: serial("id").primaryKey(),
+  examId: integer("exam_id").notNull().references(() => exams.id),
+  previousClass: text("previous_class").notNull(),
+  newClass: text("new_class").notNull(),
+  reason: text("reason").notNull(), // 'auto_policy', 'manual_admin'
+  migratedAt: timestamp("migrated_at").defaultNow().notNull(),
+  fileSize: integer("file_size"), // in bytes, for cost calculation
+  costSavingsEstimate: text("cost_savings_estimate"), // optional text for reporting
+});
+
+export const insertStorageLogSchema = createInsertSchema(storageLogs).pick({
+  examId: true,
+  previousClass: true,
+  newClass: true,
+  reason: true,
+  fileSize: true,
+  costSavingsEstimate: true
+});
+
+export type StorageLog = typeof storageLogs.$inferSelect;
+export type InsertStorageLog = z.infer<typeof insertStorageLogSchema>;
+
+
 // Audit Logs - HIPAA §164.312(b), LGPD Art. 37
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id), // null for anonymous/system actions
+  clinicId: integer("clinic_id").references(() => clinics.id), // Tenant Context
   targetUserId: integer("target_user_id").references(() => users.id), // User whose data was accessed
   action: text("action").notNull(), // 'CREATE', 'READ', 'UPDATE', 'DELETE', 'EXPORT', 'LOGIN', 'LOGOUT'
   resourceType: text("resource_type").notNull(), // 'exam', 'profile', 'prescription', 'diagnosis', etc.
@@ -833,6 +874,7 @@ export const auditLogs = pgTable("audit_logs", {
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).pick({
   userId: true,
+  clinicId: true,
   targetUserId: true,
   action: true,
   resourceType: true,
@@ -1256,7 +1298,7 @@ export const FAIR_USE_LIMITS = {
   paid: {
     aiRequestsPerMonth: 5000,
     tokensPerRequest: 8000,
-    transcriptionMinutesPerMonth: 60, // Reduced from 300
+    transcriptionMinutesPerMonth: 500,
     examAnalysesPerMonth: 500,
   },
   addon_transcription: {
@@ -1267,3 +1309,103 @@ export const FAIR_USE_LIMITS = {
     tokensPerRequest: 16000,
   },
 } as const;
+
+// --- Support Automation Schema ---
+
+// Knowledge Base Articles (with Vector Support via JSONB for now)
+export const supportArticles = pgTable("support_articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(), // Markdown allowed
+  category: text("category").notNull(), // 'billing', 'clinical', 'technical', etc.
+  embedding: json("embedding"), // Vector representation (array of numbers)
+  clinicId: integer("clinic_id"), // Optional: for private clinic articles
+  isPublic: boolean("is_public").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSupportArticleSchema = createInsertSchema(supportArticles).pick({
+  title: true,
+  content: true,
+  category: true,
+  clinicId: true,
+  isPublic: true,
+});
+
+export type SupportArticle = typeof supportArticles.$inferSelect;
+export type InsertSupportArticle = z.infer<typeof insertSupportArticleSchema>;
+
+// AI Cost Logs for Audit & Governance
+export const aiCostLogs = pgTable("ai_cost_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  clinicId: integer("clinic_id").references(() => clinics.id), // Tenant Context
+  model: text("model").notNull(),
+  inputTokens: integer("input_tokens").notNull(),
+  outputTokens: integer("output_tokens").notNull(),
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  taskType: text("task_type").notNull(), // 'chat', 'analysis', 'transcription'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Support Tickets
+export const supportTickets = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  clinicId: integer("clinic_id").references(() => clinics.id), // Context is important
+  subject: text("subject").notNull(),
+  status: text("status").default("open").notNull(), // 'open', 'in_progress', 'closed', 'bot_resolved'
+  priority: text("priority").default("medium").notNull(), // 'low', 'medium', 'high', 'critical'
+  source: text("source").default("web").notNull(), // 'bot', 'web', 'email'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).pick({
+  userId: true,
+  clinicId: true,
+  subject: true,
+  status: true,
+  priority: true,
+  source: true,
+});
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
+// Ticket Messages
+export const supportMessages = pgTable("support_messages", {
+  id: serial("id").primaryKey(),
+  ticketId: integer("ticket_id").notNull().references(() => supportTickets.id),
+  senderType: text("sender_type").notNull(), // 'user', 'bot', 'agent'
+  senderId: integer("sender_id"), // User ID or Agent ID (null for bot)
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).pick({
+  ticketId: true,
+  senderType: true,
+  senderId: true,
+  content: true,
+});
+
+export type SupportMessage = typeof supportMessages.$inferSelect;
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+
+// Specialty Templates (Automated Onboarding)
+export const specialtyTemplates = pgTable("specialty_templates", {
+  id: serial("id").primaryKey(),
+  specialty: text("specialty").notNull().unique(), // e.g., 'cardiology', 'dermatology'
+  config: json("config").notNull(), // Stores default favs, anamnesis fields, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSpecialtyTemplateSchema = createInsertSchema(specialtyTemplates).pick({
+  specialty: true,
+  config: true,
+});
+
+export type SpecialtyTemplate = typeof specialtyTemplates.$inferSelect;
+export type InsertSpecialtyTemplate = z.infer<typeof insertSpecialtyTemplateSchema>;

@@ -3,14 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { pool, db } from "./db";
-import { prescriptions, medications, insertCustomMedicationSchema } from "@shared/schema";
-import { inArray, and, eq, desc } from "drizzle-orm";
+import { inArray, and, eq, desc, sql } from "drizzle-orm";
+// ... imports ...
+import { prescriptions, medications, insertCustomMedicationSchema, aiCostLogs, users } from "@shared/schema";
 import Stripe from "stripe";
 import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
 import { biometricTwoFactorAuth } from "./auth/biometric-2fa";
 import { advancedSecurity } from "./middleware/advanced-security";
 import { ensureAuthenticated } from "./middleware/auth.middleware";
+import { ensureTenant } from "./middleware/tenant.middleware";
 import { checkFairUse, trackUsage } from "./middleware/fair-use";
 import { rbacSystem } from "./auth/rbac-system";
 import { intrusionDetection } from "./security/intrusion-detection";
@@ -35,6 +37,7 @@ import { registerSecurityRoutes } from "./routes/security.routes";
 import { registerPatientRoutes } from "./routes/patient.routes";
 import { generateCertificateHTML, generatePrescriptionHTML, generateExamReportHTML, generateHealthReportHTML } from "./services/document-templates";
 import { seedTussDatabase } from "./services/tuss-seed";
+import { StorageManager } from "./services/storage-manager";
 
 
 const normalizeFileType = (type?: string | null) => {
@@ -106,9 +109,30 @@ function logRequest(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Helper to parse preferences safely
+const parsePreferences = (prefs: any) => {
+  if (typeof prefs === 'string') {
+    try {
+      return JSON.parse(prefs);
+    } catch (e) {
+      return {};
+    }
+  }
+  return prefs || {};
+};
+
+import { complianceService } from "./services/compliance.service";
+import { knowledgeBaseService } from "./services/knowledge-base";
+import { supportBotService } from "./services/support-bot";
+import { onboardingService } from "./services/onboarding";
+import { insertSupportArticleSchema } from "@shared/schema";
+
 export async function registerRoutes(app: Express): Promise<void> {
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
+
+  // Enforce Multi-Tenancy for all API routes defined below
+  app.use("/api", ensureTenant);
 
   // Register document routes (Prescriptions & Certificates)
   registerDocumentRoutes(app);
@@ -265,6 +289,22 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: "Erro ao buscar uso do usuário" });
     }
   });
+
+  // Storage Management Route (Admin)
+  app.post("/api/admin/storage/run-migration", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const result = await StorageManager.runMigrationPolicy();
+      res.json({
+        success: true,
+        message: "Política de storage executada",
+        details: result
+      });
+    } catch (error) {
+      console.error('Error running storage migration:', error);
+      res.status(500).json({ message: "Erro ao executar migração de storage" });
+    }
+  });
+
 
   // User Usage Route (Self)
   app.get("/api/my-usage", ensureAuthenticated, async (req, res) => {
@@ -658,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
           // Extrair nome do paciente usando IA
           const { extractPatientNameFromExam } = await import('./services/openai');
-          const extractedName = await extractPatientNameFromExam(textContent, fileType);
+          const extractedName = await extractPatientNameFromExam(textContent, fileType, userId, req.tenantId);
 
           if (extractedName) {
             logger.info(`Extracted patient name: ${extractedName}`);
@@ -678,6 +718,7 @@ export async function registerRoutes(app: Express): Promise<void> {
               const newProfile = await storage.createProfile({
                 userId,
                 name: extractedName,
+                deceased: false,
                 // Outros campos podem ser preenchidos depois pelo médico
               });
               profileId = newProfile.id;
@@ -857,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Extração direta com OpenAI
-      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, fileType);
+      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, fileType, req.user!.id, req.tenantId);
 
       // Preparar o resumo final
       const quickSummary = {
@@ -997,7 +1038,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
       }
 
-      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType);
+      const analysisResult = await analyzeDocumentWithOpenAI(fileContent, normalizedFileType, req.user!.id, req.tenantId);
       logger.info("[Analysis] Resultado obtido via OpenAI", {
         requestId,
         normalizedFileType,
@@ -1573,11 +1614,22 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
       let userId = req.user.id;
 
-      const exam = await storage.getExam(examId);
+      const exam = await storage.getExam(examId, req.tenantId);
 
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
       }
+
+      // Log PHI Access (LGPD)
+      await complianceService.logPHIAccess(
+        userId,
+        exam.profileId || 0, // 0 if not linked yet
+        'exam',
+        examId,
+        'READ',
+        'treatment',
+        req
+      );
 
       // Para diagnóstico, permitimos acesso mesmo sem autenticação
       if (req.isAuthenticated() && userId !== exam.userId) {
@@ -1605,10 +1657,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Verify the profile belongs to this user
-      const profile = await storage.getProfile(profileId);
+      const profile = await storage.getProfile(profileId, req.tenantId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Acesso negado" });
       }
+
+      // Log PHI Access (LGPD) - Accessing Full Patient Record
+      await complianceService.logPHIAccess(
+        userId,
+        profileId,
+        'patient_dashboard',
+        profileId,
+        'READ',
+        'treatment',
+        req
+      );
 
       // Fetch all data in parallel for maximum performance
       const [
@@ -1779,7 +1842,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const enrichedPatientData = await buildPatientRecordContext(ownerId, patientData || {});
 
       // Chamada à OpenAI com contexto do paciente
-      const insights = await generateHealthInsights(examResult, enrichedPatientData);
+      const insights = await generateHealthInsights(examResult, enrichedPatientData, req.user!.id, req.tenantId);
       res.json(insights);
     } catch (error) {
       res.status(500).json({ message: "Erro ao gerar insights" });
@@ -2066,7 +2129,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Não falhar a análise se salvar a evolução falhar
       }
 
-      const record = await extractRecordFromAnamnesis(text);
+      const record = await extractRecordFromAnamnesis(text, req.user!.id, req.tenantId);
       res.json(record);
     } catch (error) {
       logger.error("[PatientRecord] Falha ao analisar anamnese com IA", {
@@ -2085,7 +2148,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Texto da anamnese é obrigatório" });
       }
 
-      const enhancedText = await enhanceAnamnesisText(text);
+      const enhancedText = await enhanceAnamnesisText(text, req.user!.id, req.tenantId);
       res.json({ text: enhancedText });
     } catch (error) {
       logger.error("[PatientRecord] Falha ao melhorar anamnese com IA", {
@@ -2143,7 +2206,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Transcrever o áudio
         const transcription = await transcribeConsultationAudio(
           req.file.buffer,
-          req.file.mimetype
+          req.file.mimetype,
+          req.user!.id,
+          req.tenantId
         );
 
         if (!transcription || !transcription.trim()) {
@@ -2170,7 +2235,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           }
         }
         // Processar transcrição e gerar anamnese profissional
-        const result = await processTranscriptionToAnamnesis(transcription, patientData);
+        const result = await processTranscriptionToAnamnesis(transcription, patientData, req.user!.id, req.tenantId);
 
         logger.info("[Transcription] Transcrição e processamento concluídos", {
           userId: req.user?.id,
@@ -3564,6 +3629,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         isDefault: isDefault || false,
       });
 
+      if (newDoctor.specialty) {
+        onboardingService.applySpecialtyTemplate(user.id, newDoctor.specialty).catch(err => {
+          console.error("Error applying onboarding template:", err);
+        });
+      }
+
       console.log("✅ Médico criado com sucesso:", newDoctor);
       res.status(201).json(newDoctor);
     } catch (error) {
@@ -3599,6 +3670,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         professionalType: professionalType || "doctor",
         isDefault: isDefault || false,
       });
+
+      // Apply template if specialty changed/set
+      if (updatedDoctor?.specialty && updatedDoctor.specialty !== doctor.specialty) {
+        onboardingService.applySpecialtyTemplate(user.id, updatedDoctor.specialty).catch(err => {
+          console.error("Error applying onboarding template:", err);
+        });
+      }
 
       console.log("✅ Médico atualizado com sucesso:", updatedDoctor);
       res.json(updatedDoctor);
@@ -4200,7 +4278,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Get AI response
-      const aiResponse = await vitaAssistChat(messages, patientContext);
+      const aiResponse = await vitaAssistChat(messages, patientContext, user.id, (req as any).tenantId);
 
       // Save AI response
       await storage.addAIMessage(conversation.id, 'assistant', aiResponse);
@@ -4300,5 +4378,93 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Server creation is now handled by httpsConfig in index.ts
+
+  // --- Admin AI Cost Audit ---
+  app.get("/api/admin/ai-costs", ensureAuthenticated, async (req, res) => {
+    // Check if user is admin
+    if (req.user!.role !== 'admin') {
+      return res.status(403).json({ message: "Acesso negado: Apenas administradores" });
+    }
+
+    try {
+      const { month } = req.query; // 'YYYY-MM' format, optional
+
+      // Aggregate costs by user AND task type (action)
+      const logs = await db.select({
+        userId: aiCostLogs.userId,
+        username: users.username,
+        taskType: aiCostLogs.taskType,
+        totalInput: sql<number>`sum(${aiCostLogs.inputTokens})`,
+        totalOutput: sql<number>`sum(${aiCostLogs.outputTokens})`,
+        totalCost: sql<number>`sum(${aiCostLogs.costUsd})`,
+        requestCount: sql<number>`count(*)`
+      })
+        .from(aiCostLogs)
+        .leftJoin(users, eq(aiCostLogs.userId, users.id))
+        .groupBy(aiCostLogs.userId, users.username, aiCostLogs.taskType)
+        .orderBy(desc(sql`sum(${aiCostLogs.costUsd})`)); // Top spenders first
+
+      // Also get detailed logs if needed, or summary by day
+      // For now, returning user summary
+
+      res.json(logs);
+    } catch (error) {
+      console.error("Erro ao buscar auditoria de custos:", error);
+      res.status(500).json({ message: "Erro ao buscar auditoria" });
+    }
+  });
+
+  // --- Support Automation & Knowledge Base Routes ---
+
+  app.get("/api/support/articles", ensureAuthenticated, async (req, res) => {
+    try {
+      // Allow fetching public articles or tenant-specific ones
+      const articles = await knowledgeBaseService.listArticles(req.tenantId);
+      res.json(articles);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to list articles" });
+    }
+  });
+
+  app.get("/api/support/search", ensureAuthenticated, async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) return res.status(400).json({ message: "Query required" });
+
+      const results = await knowledgeBaseService.searchArticles(query, 5, req.tenantId);
+      res.json(results);
+    } catch (error) {
+      console.error("KB Search Error:", error);
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
+  app.post("/api/support/articles", ensureAuthenticated, async (req, res) => {
+    try {
+      // TODO: strict admin check
+      const data = insertSupportArticleSchema.parse(req.body);
+      const article = await knowledgeBaseService.createArticle(data);
+      res.json(article);
+    } catch (error) {
+      console.error("KB Create Error:", error);
+      res.status(400).json({ message: "Invalid article data" });
+    }
+  });
+
+  app.post("/api/support/chat", ensureAuthenticated, async (req, res) => {
+    try {
+      const { message } = req.body;
+      if (!message) return res.status(400).json({ message: "Message required" });
+
+      const result = await supportBotService.handleChat(req.user!.id, message, req.tenantId);
+      res.json(result);
+    } catch (error) {
+      console.error("Support Chat Error:", error);
+      res.status(500).json({ message: "Chat failed" });
+    }
+  });
+
+  // Seed Onboarding Templates (Run once on startup)
+  onboardingService.seedTemplates().catch(err => console.error("Failed to seed templates:", err));
 
 }

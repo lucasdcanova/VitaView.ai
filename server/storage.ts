@@ -25,8 +25,8 @@ export interface IStorage {
 
   // Profile operations
   createProfile(profile: InsertProfile): Promise<Profile>;
-  getProfile(id: number): Promise<Profile | undefined>;
-  getProfilesByUserId(userId: number): Promise<Profile[]>;
+  getProfile(id: number, clinicId?: number): Promise<Profile | undefined>;
+  getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]>;
   updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined>;
   deleteProfile(id: number): Promise<boolean>;
   getDefaultProfileForUser(userId: number): Promise<Profile | undefined>;
@@ -34,11 +34,9 @@ export interface IStorage {
   // Bulk import operations
   createProfilesBulk(profiles: Partial<InsertProfile>[]): Promise<Profile[]>;
   findDuplicateProfiles(userId: number, names: string[], cpfs: (string | null)[]): Promise<Profile[]>;
-
-  // Exam operations
   createExam(exam: InsertExam): Promise<Exam>;
-  getExam(id: number): Promise<Exam | undefined>;
-  getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]>;
+  getExam(id: number, clinicId?: number): Promise<Exam | undefined>;
+  getExamsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<Exam[]>;
   updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined>;
   deleteExam(id: number): Promise<boolean>;
 
@@ -50,7 +48,7 @@ export interface IStorage {
 
   // Health metrics operations
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
-  getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]>;
+  getHealthMetricsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<HealthMetric[]>;
   getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]>;
   deleteHealthMetric(id: number): Promise<boolean>;
   deleteAllHealthMetricsByUserId(userId: number, profileId?: number): Promise<number>;
@@ -455,6 +453,7 @@ export class MemStorage implements IStorage {
     const newProfile: Profile = {
       id,
       userId: profile.userId,
+      clinicId: (profile as any).clinicId || null,
       name: profile.name,
       relationship: profile.relationship || null,
       birthDate: profile.birthDate || null,
@@ -504,13 +503,15 @@ export class MemStorage implements IStorage {
     return newProfile;
   }
 
-  async getProfile(id: number): Promise<Profile | undefined> {
-    return this.profiles.get(id);
+  async getProfile(id: number, clinicId?: number): Promise<Profile | undefined> {
+    const profile = this.profiles.get(id);
+    if (clinicId && profile && (profile as any).clinicId !== clinicId) return undefined;
+    return profile;
   }
 
-  async getProfilesByUserId(userId: number): Promise<Profile[]> {
+  async getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]> {
     return Array.from(this.profiles.values()).filter(
-      (profile) => profile.userId === userId
+      (profile) => profile.userId === userId && (!clinicId || (profile as any).clinicId === clinicId)
     );
   }
 
@@ -594,6 +595,7 @@ export class MemStorage implements IStorage {
     const newExam: Exam = {
       ...exam,
       id,
+      clinicId: (exam as any).clinicId || null,
       uploadDate: new Date(),
       originalContent: exam.originalContent || null,
       laboratoryName: exam.laboratoryName || null,
@@ -602,18 +604,26 @@ export class MemStorage implements IStorage {
       profileId: exam.profileId ?? null,
       filePath: exam.filePath ?? null,
       processingError: (exam as any).processingError || null,
+      storageClass: "hot",
+      lastAccessedAt: new Date(),
+      storageMigratedAt: null,
     };
     this.exams.set(id, newExam);
     return newExam;
   }
 
-  async getExam(id: number): Promise<Exam | undefined> {
-    return this.exams.get(id);
+  async getExam(id: number, clinicId?: number): Promise<Exam | undefined> {
+    const exam = this.exams.get(id);
+    if (clinicId && exam && (exam as any).clinicId !== clinicId) return undefined;
+    return exam;
   }
 
-  async getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]> {
+  async getExamsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<Exam[]> {
     return Array.from(this.exams.values()).filter(
-      (exam) => exam.userId === userId && (!profileId || exam.profileId === profileId)
+      (exam) =>
+        exam.userId === userId &&
+        (!profileId || exam.profileId === profileId) &&
+        (!clinicId || (exam as any).clinicId === clinicId)
     );
   }
 
@@ -672,12 +682,13 @@ export class MemStorage implements IStorage {
       name: metric.name,
       value: metric.value,
       userId: metric.userId,
+      profileId: metric.profileId ?? null,
+      clinicId: (metric as any).clinicId || null, // Added clinicId
       examId: metric.examId || null,
       date: metric.date || new Date(),
       status: metric.status || null,
       unit: metric.unit || null,
       change: metric.change || null,
-      profileId: metric.profileId ?? null,
       referenceMin: metric.referenceMin || null,
       referenceMax: metric.referenceMax || null
     };
@@ -685,10 +696,14 @@ export class MemStorage implements IStorage {
     return newMetric;
   }
 
-  async getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]> {
-    return Array.from(this.healthMetricsMap.values()).filter(
-      (metric) => metric.userId === userId && (!profileId || metric.profileId === profileId)
-    );
+  async getHealthMetricsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<HealthMetric[]> {
+    return Array.from(this.healthMetricsMap.values())
+      .filter((m) =>
+        m.userId === userId &&
+        (!profileId || m.profileId === profileId) &&
+        (!clinicId || (m as any).clinicId === clinicId)
+      )
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 
   async getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]> {
@@ -921,6 +936,7 @@ export class MemStorage implements IStorage {
     const newAppointment: Appointment = {
       ...appointment,
       id,
+      clinicId: (appointment as any).clinicId || null,
       createdAt: new Date(),
       status: appointment.status || 'scheduled',
       notes: appointment.notes || null,
@@ -2038,12 +2054,16 @@ export class DatabaseStorage implements IStorage {
     const [newProfile] = await db.insert(profiles).values(profile).returning();
     return newProfile;
   }
-  async getProfile(id: number): Promise<Profile | undefined> {
-    const [profile] = await db.select().from(profiles).where(eq(profiles.id, id));
+  async getProfile(id: number, clinicId?: number): Promise<Profile | undefined> {
+    let q = db.select().from(profiles).where(eq(profiles.id, id));
+    if (clinicId) q = (q as any).where(eq(profiles.clinicId, clinicId));
+    const [profile] = await q;
     return profile;
   }
-  async getProfilesByUserId(userId: number): Promise<Profile[]> {
-    return await db.select().from(profiles).where(eq(profiles.userId, userId));
+  async getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]> {
+    let q = db.select().from(profiles).where(eq(profiles.userId, userId));
+    if (clinicId) q = (q as any).where(eq(profiles.clinicId, clinicId));
+    return await q;
   }
   async updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined> {
     if (profile.isDefault) {
@@ -2083,13 +2103,16 @@ export class DatabaseStorage implements IStorage {
     const [newExam] = await db.insert(exams).values(exam).returning();
     return newExam;
   }
-  async getExam(id: number): Promise<Exam | undefined> {
-    const [exam] = await db.select().from(exams).where(eq(exams.id, id));
+  async getExam(id: number, clinicId?: number): Promise<Exam | undefined> {
+    let q = db.select().from(exams).where(eq(exams.id, id));
+    if (clinicId) q = (q as any).where(eq(exams.clinicId, clinicId));
+    const [exam] = await q;
     return exam;
   }
-  async getExamsByUserId(userId: number, profileId?: number): Promise<Exam[]> {
+  async getExamsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<Exam[]> {
     let q = db.select().from(exams).where(eq(exams.userId, userId));
     if (profileId) q = (q as any).where(eq(exams.profileId, profileId));
+    if (clinicId) q = (q as any).where(eq(exams.clinicId, clinicId));
     return await q;
   }
   async updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined> {
@@ -2155,9 +2178,10 @@ export class DatabaseStorage implements IStorage {
     const [newM] = await db.insert(healthMetrics).values(metric).returning();
     return newM;
   }
-  async getHealthMetricsByUserId(userId: number, profileId?: number): Promise<HealthMetric[]> {
+  async getHealthMetricsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<HealthMetric[]> {
     let q = db.select().from(healthMetrics).where(eq(healthMetrics.userId, userId));
     if (profileId) q = (q as any).where(eq(healthMetrics.profileId, profileId));
+    if (clinicId) q = (q as any).where(eq(healthMetrics.clinicId, clinicId));
     return await q;
   }
   async getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]> {

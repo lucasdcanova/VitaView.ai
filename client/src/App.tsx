@@ -15,6 +15,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { FloatingBugButton } from "@/components/floating-bug-button";
+import { SupportWidget } from "@/components/support-widget";
 
 declare global {
   interface Window {
@@ -67,6 +68,10 @@ const AdminPanel = lazy(() => import("@/pages/admin-panel"));
 const BulkImport = lazy(() => import("@/pages/bulk-import"));
 const Patients = lazy(() => import("@/pages/patients"));
 const VitaAssist = lazy(() => import("@/pages/vita-assist"));
+const AdminAICosts = lazy(() => import("@/pages/admin/ai-costs"));
+const KnowledgeBaseAdmin = lazy(() => import("@/pages/admin/knowledge-base"));
+
+// ...
 
 // ============================================
 // LOADING FALLBACKS
@@ -160,6 +165,8 @@ function AuthenticatedRoutes() {
                     <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
                     <ProtectedRoute path="/admin-panel" component={AdminPanel} />
                     <ProtectedRoute path="/admin" component={AdminPanel} />
+                    <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
+                    <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
                     <ProtectedRoute path="/vita-assist" component={VitaAssist} />
                     {/* 404 para rotas autenticadas não encontradas */}
                     <Route component={NotFound} />
@@ -168,6 +175,7 @@ function AuthenticatedRoutes() {
                 <CommandPalette />
                 <OnboardingTour />
                 <FloatingBugButton />
+                <SupportWidget />
               </TooltipProvider>
             </ThemeProvider>
           </SidebarProvider>
