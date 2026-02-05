@@ -20,7 +20,7 @@ export function SupportWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'bot', content: 'Olá! Sou o Vitabot. Como posso ajudar você hoje?' }
+        { role: 'bot', content: 'Olá! Sou o VitaBot. Como posso ajudar você hoje?' }
     ]);
     const { user } = useAuth();
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -70,7 +70,7 @@ export function SupportWidget() {
             {/* Floating Button (Above Bug Button) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-24 right-6 z-50 flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 group"
+                className="fixed bottom-24 right-6 z-50 flex items-center justify-center w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 group"
                 aria-label="Suporte"
             >
                 {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6 group-hover:animate-pulse" />}
@@ -80,29 +80,29 @@ export function SupportWidget() {
             {isOpen && (
                 <Card className="fixed bottom-40 right-6 z-50 w-[350px] h-[500px] flex flex-col shadow-2xl border-none ring-1 ring-black/5">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-t-lg flex items-center justify-between text-white">
+                    <div className="bg-primary p-4 rounded-t-lg flex items-center justify-between text-primary-foreground">
                         <div className="flex items-center gap-2">
-                            <div className="bg-white/20 p-1 rounded-full">
+                            <div className="bg-primary-foreground/20 p-1 rounded-full">
                                 <Bot className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-sm">Suporte VitaView</h3>
-                                <p className="text-xs text-blue-100">IA Online • Resposta imediata</p>
+                                <h3 className="font-semibold text-sm text-white">Suporte VitaView</h3>
+                                <p className="text-xs text-primary-foreground/80">IA Online • Resposta imediata</p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20 h-8 w-8" onClick={() => setIsOpen(false)}>
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
 
                     {/* Messages Area */}
-                    <ScrollArea className="flex-1 p-4 bg-slate-50">
+                    <ScrollArea className="flex-1 p-4 bg-secondary/30">
                         <div className="space-y-4" ref={scrollRef}>
                             {messages.map((msg, idx) => (
                                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user'
-                                            ? 'bg-blue-600 text-white rounded-tr-none'
-                                            : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
+                                        ? 'bg-blue-600 text-white rounded-tr-none'
+                                        : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
                                         }`}>
                                         {msg.content}
                                         {msg.suggestedActions?.includes('open_ticket') && (

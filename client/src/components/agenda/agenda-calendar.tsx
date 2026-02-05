@@ -49,7 +49,7 @@ export function AgendaCalendar({
 }: AgendaCalendarProps) {
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [, setLocation] = useLocation();
