@@ -1250,13 +1250,13 @@ export const FAIR_USE_LIMITS = {
   free: {
     aiRequestsPerMonth: 50,
     tokensPerRequest: 4000,
-    transcriptionMinutesPerMonth: 30,
+    transcriptionMinutesPerMonth: 15, // Reduced from 30
     examAnalysesPerMonth: 10,
   },
   paid: {
     aiRequestsPerMonth: 5000,
     tokensPerRequest: 8000,
-    transcriptionMinutesPerMonth: 300,
+    transcriptionMinutesPerMonth: 60, // Reduced from 300
     examAnalysesPerMonth: 500,
   },
   addon_transcription: {

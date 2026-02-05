@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play, Info } from "lucide-react";
+import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play, Info, Sparkles } from "lucide-react";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -45,6 +46,8 @@ export function ConsultationRecorder({
   const [recordingTime, setRecordingTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [, setLocation] = useLocation();
 
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -235,6 +238,15 @@ export function ConsultationRecorder({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 403 && errorData.code === 'TRANSCRIPTION_LIMIT_EXCEEDED') {
+          setShowUpgradeDialog(true);
+          // Não jogar erro para não mostrar o card de erro genérico, apenas abrir o dialog
+          setRecordingState("idle");
+          setRecordingTime(0);
+          return;
+        }
+
         throw new Error(errorData.message || `Erro ${response.status}`);
       }
 
@@ -319,6 +331,34 @@ export function ConsultationRecorder({
                     className="bg-red-600 hover:bg-red-700"
                   >
                     Entendi, Iniciar Gravação
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2 text-primary-700">
+                    <Sparkles className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                    Limite de Transcrição Excedido
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-base text-gray-700">
+                    Você atingiu o limite de minutos de transcrição do seu plano atual.
+                    <br /><br />
+                    Para continuar transcrevendo ilimitadamente sem interrupções, ative o pacote <strong>Transcription Power</strong>.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Agora não</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      setShowUpgradeDialog(false);
+                      setLocation("/subscription");
+                    }}
+                    className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white border-none"
+                  >
+                    Fazer Upgrade Agora
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

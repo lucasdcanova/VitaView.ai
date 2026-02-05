@@ -70,6 +70,23 @@ export const checkFairUse = (resource: 'aiRequests' | 'transcriptionMinutes' | '
 
             // Check if limit exceeded (if not unlimited)
             if (!isUnlimited && currentUsage >= limit) {
+                // SPECIAL CASE: Transcription Hard Block (unless addon)
+                if (resource === 'transcriptionMinutes') {
+                    // Check for transcription add-on specifically
+                    const hasTranscriptionAddon = addons.includes('transcription_power') || addons.includes('addon_transcription');
+
+                    if (!hasTranscriptionAddon) {
+                        return res.status(403).json({
+                            message: "Limite de transcrição excedido. Adquira o pacote Transcription Power para continuar.",
+                            code: "TRANSCRIPTION_LIMIT_EXCEEDED",
+                            resource,
+                            limit,
+                            currentUsage,
+                            upgradeRequired: true
+                        });
+                    }
+                }
+
                 // Elastic Limit - Soft Throttle Logic
                 const overageRatio = currentUsage / limit;
                 let delay = 0;
