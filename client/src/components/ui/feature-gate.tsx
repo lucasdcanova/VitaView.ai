@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Slot } from "@radix-ui/react-slot";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FeatureGateProps {
     children: React.ReactNode;
@@ -33,15 +34,17 @@ interface UserSubscription {
 export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
     ({ children, ...props }, ref) => {
         const [, setLocation] = useLocation();
+        const { user } = useAuth();
         const { data: subscriptionData, isLoading } = useQuery<UserSubscription>({
             queryKey: ['/api/user-subscription'],
             staleTime: 5 * 60 * 1000, // Cache for 5 minutes
         });
 
-        // Determine if user has access (Plan is NOT "Gratuito" and subscription is active)
+        // Determine if user has access (Plan is NOT "Gratuito" and subscription is active) OR user is admin
         const isVitaPlan =
-            subscriptionData?.subscription?.status === 'active' &&
-            subscriptionData?.plan?.name !== 'Gratuito';
+            (subscriptionData?.subscription?.status === 'active' &&
+                subscriptionData?.plan?.name !== 'Gratuito') ||
+            user?.role === 'admin';
 
         if (isVitaPlan || isLoading) {
             // Unlocked state: Forward ref and spread props using Slot to merge with children

@@ -133,32 +133,109 @@ export class FinancialService {
     /**
      * Aggregate all KPIs for the dashboard
      */
+    /**
+     * Calculate New MRR (Last 30 days)
+     * Sum of prices of new subscriptions created in the last 30 days.
+     */
+    async calculateNewMRR() {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+
+        const newSubs = await db
+            .select({
+                price: subscriptionPlans.price,
+                interval: subscriptionPlans.interval,
+            })
+            .from(subscriptions)
+            .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+            .where(
+                and(
+                    eq(subscriptions.status, 'active'),
+                    gte(subscriptions.createdAt, thirtyDaysAgo)
+                )
+            );
+
+        let newMrr = 0;
+        for (const sub of newSubs) {
+            if (sub.interval === 'month') {
+                newMrr += sub.price;
+            } else if (sub.interval === 'year') {
+                newMrr += sub.price / 12;
+            }
+        }
+        return newMrr / 100;
+    }
+
+    /**
+     * Calculate New Users (Last 30 days)
+     */
+    async calculateNewUsers() {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+
+        const result = await db
+            .select({ count: count() })
+            .from(users)
+            .where(gte(users.createdAt, thirtyDaysAgo));
+
+        return result[0]?.count || 0;
+    }
+
+    /**
+     * Aggregate all KPIs for the dashboard
+     */
     async getDashboardKPIs() {
         const mrr = await this.calculateMRR();
         const mau = await this.calculateMAU();
-        const churn = await this.calculateChurn();
+        const churn = await this.calculateChurn(); // returns percentage (e.g. 5.5)
         const aiMetrics = await this.getAICostMetrics();
         const featureStats = await this.getFeatureUsageStats();
 
-        // Mock/Hardcoded values for missing data points
+        const newMrr = await this.calculateNewMRR();
+        const newUsers = await this.calculateNewUsers();
+
+        // Calculate Paying Users Count for ARPPU
+        const activeSubsCountResult = await db
+            .select({ count: count() })
+            .from(subscriptions)
+            .where(eq(subscriptions.status, 'active'));
+        const payingUsers = activeSubsCountResult[0]?.count || 0;
+
+        // ARPPU (Average Revenue Per Paying User)
+        const arppu = payingUsers > 0 ? mrr / payingUsers : 0;
+
+        // ARPU (Average Revenue Per Active User - typical SaaS def varies, sometimes same as ARPPU)
+        // Let's keep existing logic of ARPU relative to MAU if we want Revenue Per Active User (including free)
         const arpu = mau > 0 ? mrr / mau : 0;
+
+        // LTV Calculation: ARPU / Churn Rate
+        // Churn is in percentage (0-100), need decimal (0-1). Avoid div by zero.
+        // Using ARPPU for LTV is more standard for SaaS revenue LTV.
+        const churnDecimal = churn > 0 ? churn / 100 : 0.01; // prevent div by zero
+        const ltv = arppu / churnDecimal;
+
+        // Net Revenue (Estimated)
+        const netRevenue = mrr - aiMetrics.totalCost;
 
         return {
             financial: {
                 mrr,
                 arr: mrr * 12,
                 churnRate: churn,
-                arpu
+                arpu, // Revenue per MAU (Broad)
+                arppu, // Revenue per Paying Customer (Specific)
+                ltv,
+                newMrr,
+                netRevenue
             },
             operational: {
                 mau,
-                activeClinics: 0, // Not tracked yet for this view
-                totalUsers: 0 // Could query total user count
+                activeClinics: 0,
+                totalUsers: 0, // Could query total user count if needed
+                newUsers
             },
             ai: {
                 totalCost: aiMetrics.totalCost,
                 costPerAveUser: aiMetrics.costPerUser,
-                grossMargin: 0, // Needs revenue attribution per AI feature
+                grossMargin: 0,
                 costToRevenueRatio: mrr > 0 ? (aiMetrics.totalCost / mrr) * 100 : 0,
                 features: featureStats
             }

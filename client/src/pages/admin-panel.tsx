@@ -384,8 +384,8 @@ function BugReportsTab() {
 // Financial KPI Dashboard Component
 function FinancialDashboardTab() {
   const { data: kpis, isLoading, error } = useQuery<{
-    financial: { mrr: number; arr: number; churnRate: number; arpu: number };
-    operational: { mau: number; totalUsers: number };
+    financial: { mrr: number; arr: number; churnRate: number; arpu: number; arppu: number; ltv: number; newMrr: number; netRevenue: number };
+    operational: { mau: number; totalUsers: number; newUsers: number };
     ai: {
       totalCost: number;
       costPerAveUser: number;
@@ -439,14 +439,17 @@ function FinancialDashboardTab() {
           <CardTitle className="text-lg font-bold text-gray-800">KPI Executivo</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Row 1: High Level */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <p className="text-sm text-blue-600 font-semibold uppercase">MRR (Recorrente)</p>
               <h3 className="text-2xl font-bold text-blue-900">{formatCurrency(kpis.financial.mrr)}</h3>
+              <p className="text-xs text-blue-700 mt-1">Novos (30d): {formatCurrency(kpis.financial.newMrr)}</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg border border-green-100">
               <p className="text-sm text-green-600 font-semibold uppercase">MAU (Ativos/Mes)</p>
               <h3 className="text-2xl font-bold text-green-900">{kpis.operational.mau}</h3>
+              <p className="text-xs text-green-700 mt-1">Novos Usuários: +{kpis.operational.newUsers}</p>
             </div>
             <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
               <p className="text-sm text-orange-600 font-semibold uppercase">Churn Mensal</p>
@@ -454,9 +457,31 @@ function FinancialDashboardTab() {
               <p className="text-xs text-orange-700 mt-1">Meta: &le; 3%</p>
             </div>
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-              <p className="text-sm text-purple-600 font-semibold uppercase">LTV / CAC</p>
-              <h3 className="text-2xl font-bold text-purple-900">-</h3>
-              <p className="text-xs text-purple-700 mt-1">Sem dados de Mkt</p>
+              <p className="text-sm text-purple-600 font-semibold uppercase">LTV (Estimado)</p>
+              <h3 className="text-2xl font-bold text-purple-900">{formatCurrency(kpis.financial.ltv)}</h3>
+              <p className="text-xs text-purple-700 mt-1">ARPU / Churn</p>
+            </div>
+          </div>
+
+          {/* Row 2: Secondary Indicators */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <p className="text-sm text-gray-600 font-semibold uppercase">ARPPU (Pagantes)</p>
+              <h3 className="text-xl font-bold text-gray-900">{formatCurrency(kpis.financial.arppu)}</h3>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <p className="text-sm text-gray-600 font-semibold uppercase">ARPU (Geral)</p>
+              <h3 className="text-xl font-bold text-gray-900">{formatCurrency(kpis.financial.arpu)}</h3>
+            </div>
+            <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+              <p className="text-sm text-indigo-600 font-semibold uppercase">Receita Líquida (Est.)</p>
+              <h3 className="text-xl font-bold text-indigo-900">{formatCurrency(kpis.financial.netRevenue)}</h3>
+              <p className="text-xs text-indigo-700 mt-1">MRR - Custos IA</p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 opacity-60">
+              <p className="text-sm text-gray-600 font-semibold uppercase">CAC (Mkt)</p>
+              <h3 className="text-xl font-bold text-gray-900">-</h3>
+              <p className="text-xs text-gray-500 mt-1">Não trackeado</p>
             </div>
           </div>
         </CardContent>
