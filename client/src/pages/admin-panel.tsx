@@ -381,6 +381,152 @@ function BugReportsTab() {
   );
 }
 
+// Financial KPI Dashboard Component
+function FinancialDashboardTab() {
+  const { data: kpis, isLoading, error } = useQuery<{
+    financial: { mrr: number; arr: number; churnRate: number; arpu: number };
+    operational: { mau: number; totalUsers: number };
+    ai: {
+      totalCost: number;
+      costPerAveUser: number;
+      costToRevenueRatio: number;
+      features: { feature: string; cost: number; usageCount: number }[]
+    };
+  }>({
+    queryKey: ['/api/admin/financial-kpi'],
+    staleTime: 1000 * 60 * 15, // 15 minutes
+  });
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-800 rounded-md border border-red-200">
+        <p className="font-bold flex items-center gap-2">
+          ⚠️ Erro ao carregar dados financeiros
+        </p>
+        <p className="mt-1 text-sm">{(error as Error).message}</p>
+        <p className="text-xs text-gray-500 mt-2">Verifique se você tem permissão ou se o servidor está rodando.</p>
+      </div>
+    );
+  }
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val * 5.7);
+  };
+
+  const formatUSD = (val: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  }
+
+  const formatPercent = (val: number) => {
+    return `${val.toFixed(2)}%`;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!kpis) return <div>Erro ao carregar dados financeiros</div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Section 1: Executive KPIs */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-bold text-gray-800">KPI Executivo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <p className="text-sm text-blue-600 font-semibold uppercase">MRR (Recorrente)</p>
+              <h3 className="text-2xl font-bold text-blue-900">{formatCurrency(kpis.financial.mrr)}</h3>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+              <p className="text-sm text-green-600 font-semibold uppercase">MAU (Ativos/Mes)</p>
+              <h3 className="text-2xl font-bold text-green-900">{kpis.operational.mau}</h3>
+            </div>
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+              <p className="text-sm text-orange-600 font-semibold uppercase">Churn Mensal</p>
+              <h3 className="text-2xl font-bold text-orange-900">{formatPercent(kpis.financial.churnRate)}</h3>
+              <p className="text-xs text-orange-700 mt-1">Meta: &le; 3%</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <p className="text-sm text-purple-600 font-semibold uppercase">LTV / CAC</p>
+              <h3 className="text-2xl font-bold text-purple-900">-</h3>
+              <p className="text-xs text-purple-700 mt-1">Sem dados de Mkt</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Section 2: AI Costs & Economics */}
+        <Card>
+          <CardHeader className="bg-amber-50/50 pb-2 border-b border-amber-100">
+            <CardTitle className="text-base font-bold text-amber-900">Custos e Estimativas da IA</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Custo Total Mensal (IA)</TableCell>
+                  <TableCell className="text-right text-red-600 font-bold">{formatUSD(kpis.ai.totalCost)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Custo IA / Receita (%)</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={kpis.ai.costToRevenueRatio > 20 ? "destructive" : "secondary"} className={kpis.ai.costToRevenueRatio <= 20 ? "bg-green-100 text-green-800" : ""}>
+                      {formatPercent(kpis.ai.costToRevenueRatio)}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Custo IA por Usuário Ativo</TableCell>
+                  <TableCell className="text-right">{formatUSD(kpis.ai.costPerAveUser)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Margem da IA (%)</TableCell>
+                  <TableCell className="text-right text-gray-400 italic">N/A (Requer atribuição)</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Section 3: Feature Breakdown */}
+        <Card>
+          <CardHeader className="bg-slate-50/50 pb-2 border-b border-slate-100">
+            <CardTitle className="text-base font-bold text-slate-800">Uso por Feature (Top Cost)</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 max-h-[300px] overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Feature</TableHead>
+                  <TableHead className="text-right">Custo</TableHead>
+                  <TableHead className="text-right">Uso (Qtd)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {kpis.ai.features.map((feat, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="font-medium capitalize">{feat.feature?.replace(/_/g, ' ') || 'Outros'}</TableCell>
+                    <TableCell className="text-right">{formatUSD(feat.cost)}</TableCell>
+                    <TableCell className="text-right">{feat.usageCount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
@@ -638,7 +784,7 @@ export default function AdminPanel() {
       <p className="text-muted-foreground mb-6">Gerencie usuários, planos e configurações do sistema</p>
 
       <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+        <TabsList className="grid w-full grid-cols-6 lg:w-[800px]">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span>Usuários</span>
@@ -654,6 +800,10 @@ export default function AdminPanel() {
           <TabsTrigger value="recados" className="flex items-center gap-2">
             <Bug className="h-4 w-4" />
             <span>Recados</span>
+          </TabsTrigger>
+          <TabsTrigger value="finance" className="flex items-center gap-2">
+            <LineChart className="h-4 w-4" />
+            <span>Financeiro</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -925,6 +1075,11 @@ export default function AdminPanel() {
         {/* Aba de Recados (Bug Reports) */}
         <TabsContent value="recados" className="space-y-4">
           <BugReportsTab />
+        </TabsContent>
+
+        {/* Aba Financeira */}
+        <TabsContent value="finance" className="space-y-4">
+          <FinancialDashboardTab />
         </TabsContent>
 
         {/* Aba de Configurações */}

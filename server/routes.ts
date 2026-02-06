@@ -29,6 +29,7 @@ import { nanoid } from "nanoid";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 import { sendClinicInvitationEmail } from "./services/email.service";
+import { financialService } from "./services/financial_service";
 import fs from "fs";
 import path from "path";
 import { notificationScheduler } from "./services/notification-scheduler";
@@ -4411,6 +4412,26 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error("Erro ao buscar auditoria de custos:", error);
       res.status(500).json({ message: "Erro ao buscar auditoria" });
+    }
+  });
+
+  // Financial KPI Dashboard Route
+  app.get("/api/admin/financial-kpi", ensureAuthenticated, async (req, res) => {
+    // Basic admin check
+    const user = req.user as any;
+    console.log(`[FinancialKPI] Access attempt by user ${user?.id} (${user?.username}) role=${user?.role}`);
+
+    if (user.role !== 'admin') {
+      console.log(`[FinancialKPI] Access DENIED for user ${user?.username}`);
+      return res.status(403).json({ message: "Acesso negado: Apenas administradores" });
+    }
+
+    try {
+      const kpis = await financialService.getDashboardKPIs();
+      res.json(kpis);
+    } catch (error) {
+      console.error("Error fetching financial KPIs:", error);
+      res.status(500).json({ message: "Erro ao calcular KPIs financeiros" });
     }
   });
 
