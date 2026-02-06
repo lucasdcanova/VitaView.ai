@@ -4,11 +4,11 @@ import { LineChart, ArrowRight } from "lucide-react";
 
 export function LandingLabView() {
     return (
-        <section id="como-funciona" className="py-12 md:py-24 bg-gradient-to-b from-[#E0E0E0] to-[#F4F4F4] relative overflow-hidden">
+        <section id="como-funciona" className="py-12 md:py-24 bg-transparent relative overflow-hidden">
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute left-0 top-20 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
-                <div className="absolute right-0 bottom-20 w-80 h-80 bg-[#F4F4F4] rounded-full opacity-40 blur-3xl"></div>
+                <div className="absolute left-0 top-20 w-72 h-72 bg-[#FFFFFF] rounded-full opacity-5 blur-3xl"></div>
+                <div className="absolute right-0 bottom-20 w-80 h-80 bg-[#FFFFFF] rounded-full opacity-5 blur-3xl"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -20,7 +20,7 @@ export function LandingLabView() {
                     className="text-center mb-8 md:mb-16"
                 >
                     <motion.span
-                        className="inline-block px-4 py-1.5 bg-[#F4F4F4] text-[#212121] rounded-full text-sm font-medium mb-4 md:mb-6"
+                        className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full text-sm font-medium mb-4 md:mb-6"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -29,10 +29,10 @@ export function LandingLabView() {
                         Análise Inteligente
                     </motion.span>
 
-                    <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-4 md:mb-6">
-                        Leitura de Exames <span className="text-blue-600">via IA</span>
+                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-4 md:mb-6">
+                        Leitura de Exames <span className="text-[#9E9E9E]">via IA</span>
                     </h2>
-                    <p className="text-base md:text-lg text-[#616161] mb-6 md:mb-8 max-w-2xl mx-auto px-2">
+                    <p className="text-base md:text-lg text-[#E0E0E0] mb-6 md:mb-8 max-w-2xl mx-auto px-2">
                         Nossa Inteligência Artificial lê, interpreta e organiza os resultados dos exames automaticamente.
                         Transforme PDFs em gráficos de evolução em segundos.
                     </p>
@@ -40,24 +40,24 @@ export function LandingLabView() {
 
                 {/* Lab Results Analyzer Interface */}
                 <motion.div
-                    className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto"
+                    className="bg-black/40 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto border border-white/10"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.2 }}
                 >
                     {/* Analyzer Header */}
-                    <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white">
+                    <div className="bg-[#111111] p-6 text-white border-b border-white/10">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <LineChart className="w-8 h-8" />
+                                <LineChart className="w-8 h-8 text-white" />
                                 <div>
                                     <h3 className="text-2xl font-bold">Análise Comparativa</h3>
-                                    <p className="text-sm text-[#E0E0E0]">Paciente: Maria Silva - Últimos 6 meses</p>
+                                    <p className="text-sm text-[#9E9E9E]">Paciente: Maria Silva - Últimos 6 meses</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-[#212121] hover:bg-[#9E9E9E] rounded-lg text-sm font-medium transition-colors">
+                                <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-colors text-white">
                                     Exportar PDF
                                 </button>
                             </div>
@@ -69,7 +69,7 @@ export function LandingLabView() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             {/* Hemoglobina Chart */}
                             <motion.div
-                                className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0]"
+                                className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -77,10 +77,10 @@ export function LandingLabView() {
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 className="text-lg font-bold text-[#212121]">Hemoglobina</h4>
+                                        <h4 className="text-lg font-bold text-white">Hemoglobina</h4>
                                         <p className="text-sm text-[#9E9E9E]">Referência: 12.0 - 16.0 g/dL</p>
                                     </div>
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold border border-emerald-500/30">
                                         Normal
                                     </span>
                                 </div>
@@ -89,9 +89,9 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-red-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-red-400 to-red-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "75%" }}
                                                 viewport={{ once: true }}
@@ -103,22 +103,22 @@ export function LandingLabView() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-red-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-red-400 to-red-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "80%" }}
                                                 viewport={{ once: true }}
                                                 transition={{ duration: 0.8, delay: 0.3 }}
                                             >
-                                                <span className="text-xs font-semibold text-white">14.2</span>
+                                                <span className="text-xs font-semibold text-black">14.2</span>
                                             </motion.div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-2 text-sm">
-                                    <div className="flex items-center gap-1 text-green-600">
+                                    <div className="flex items-center gap-1 text-emerald-400">
                                         <span className="text-lg">↗</span>
                                         <span className="font-semibold">+7.6%</span>
                                     </div>
@@ -128,7 +128,7 @@ export function LandingLabView() {
 
                             {/* Glicemia Chart */}
                             <motion.div
-                                className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0]"
+                                className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -136,10 +136,10 @@ export function LandingLabView() {
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 className="text-lg font-bold text-[#212121]">Glicemia em Jejum</h4>
+                                        <h4 className="text-lg font-bold text-white">Glicemia em Jejum</h4>
                                         <p className="text-sm text-[#9E9E9E]">Referência: 70 - 100 mg/dL</p>
                                     </div>
-                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
+                                    <span className="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-semibold border border-amber-500/30">
                                         Atenção
                                     </span>
                                 </div>
@@ -148,9 +148,9 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-amber-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "85%" }}
                                                 viewport={{ once: true }}
@@ -162,22 +162,22 @@ export function LandingLabView() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-amber-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "90%" }}
                                                 viewport={{ once: true }}
                                                 transition={{ duration: 0.8, delay: 0.3 }}
                                             >
-                                                <span className="text-xs font-semibold text-white">108</span>
+                                                <span className="text-xs font-semibold text-black">108</span>
                                             </motion.div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-2 text-sm">
-                                    <div className="flex items-center gap-1 text-amber-600">
+                                    <div className="flex items-center gap-1 text-amber-400">
                                         <span className="text-lg">↗</span>
                                         <span className="font-semibold">+5.9%</span>
                                     </div>
@@ -187,7 +187,7 @@ export function LandingLabView() {
 
                             {/* Colesterol Total Chart */}
                             <motion.div
-                                className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0] hidden md:block"
+                                className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 hidden md:block"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -195,10 +195,10 @@ export function LandingLabView() {
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 className="text-lg font-bold text-[#212121]">Colesterol Total</h4>
+                                        <h4 className="text-lg font-bold text-white">Colesterol Total</h4>
                                         <p className="text-sm text-[#9E9E9E]">Referência: {'<'} 200 mg/dL</p>
                                     </div>
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold border border-emerald-500/30">
                                         Normal
                                     </span>
                                 </div>
@@ -207,9 +207,9 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-blue-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "78%" }}
                                                 viewport={{ once: true }}
@@ -221,22 +221,22 @@ export function LandingLabView() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-blue-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-blue-400 to-blue-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "72%" }}
                                                 viewport={{ once: true }}
                                                 transition={{ duration: 0.8, delay: 0.3 }}
                                             >
-                                                <span className="text-xs font-semibold text-white">180</span>
+                                                <span className="text-xs font-semibold text-black">180</span>
                                             </motion.div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-2 text-sm">
-                                    <div className="flex items-center gap-1 text-green-600">
+                                    <div className="flex items-center gap-1 text-emerald-400">
                                         <span className="text-lg">↘</span>
                                         <span className="font-semibold">-7.7%</span>
                                     </div>
@@ -246,7 +246,7 @@ export function LandingLabView() {
 
                             {/* Creatinina Chart */}
                             <motion.div
-                                className="bg-[#F4F4F4] rounded-xl p-4 md:p-6 border border-[#E0E0E0] hidden md:block"
+                                className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 hidden md:block"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -254,10 +254,10 @@ export function LandingLabView() {
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 className="text-lg font-bold text-[#212121]">Creatinina</h4>
+                                        <h4 className="text-lg font-bold text-white">Creatinina</h4>
                                         <p className="text-sm text-[#9E9E9E]">Referência: 0.6 - 1.2 mg/dL</p>
                                     </div>
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+                                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold border border-emerald-500/30">
                                         Normal
                                     </span>
                                 </div>
@@ -266,9 +266,9 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-emerald-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "65%" }}
                                                 viewport={{ once: true }}
@@ -280,22 +280,22 @@ export function LandingLabView() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-emerald-100 rounded-full h-6 relative overflow-hidden">
+                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
                                             <motion.div
-                                                className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full rounded-full flex items-center justify-end pr-2"
+                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: "67%" }}
                                                 viewport={{ once: true }}
                                                 transition={{ duration: 0.8, delay: 0.3 }}
                                             >
-                                                <span className="text-xs font-semibold text-white">0.92</span>
+                                                <span className="text-xs font-semibold text-black">0.92</span>
                                             </motion.div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-2 text-sm">
-                                    <div className="flex items-center gap-1 text-gray-500">
+                                    <div className="flex items-center gap-1 text-white/60">
                                         <span className="text-lg">→</span>
                                         <span className="font-semibold">+2.2%</span>
                                     </div>
@@ -306,29 +306,29 @@ export function LandingLabView() {
 
                         {/* Summary Section */}
                         <motion.div
-                            className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-[#E0E0E0]"
+                            className="mt-8 bg-white/5 rounded-xl p-6 border border-white/10"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.5 }}
                         >
                             <div className="flex items-start gap-4">
-                                <div className="p-3 bg-[#E0E0E0] rounded-lg">
-                                    <LineChart className="w-6 h-6 text-[#9E9E9E]" />
+                                <div className="p-3 bg-white/10 rounded-lg">
+                                    <LineChart className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-[#212121] mb-2">Resumo da Análise</h4>
-                                    <p className="text-[#212121] text-sm mb-3">
+                                    <h4 className="text-lg font-bold text-white mb-2">Resumo da Análise</h4>
+                                    <p className="text-[#E0E0E0] text-sm mb-3">
                                         Visualização comparativa dos últimos 2 meses. Os dados apresentados são apenas informativos e não substituem a avaliação clínica profissional.
                                     </p>
                                     <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
+                                        <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-white border border-white/10">
                                             3 valores normais
                                         </span>
-                                        <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
+                                        <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-white border border-white/10">
                                             1 requer atenção
                                         </span>
-                                        <span className="px-3 py-1 bg-white rounded-full text-xs font-medium text-[#212121] border border-[#E0E0E0]">
+                                        <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-white border border-white/10">
                                             Período: Mar-Abr 2025
                                         </span>
                                     </div>
@@ -348,10 +348,10 @@ export function LandingLabView() {
                 >
                     <Link href="/auth?tab=register">
                         <button
-                            className="bg-[#212121] hover:bg-[#212121] text-white font-bold py-4 px-8 rounded-lg shadow-lg text-lg"
+                            className="bg-white hover:bg-[#E0E0E0] text-[#111111] font-bold py-4 px-8 rounded-lg shadow-lg text-lg transition-colors"
                         >
                             Comece agora gratuitamente
-                            <ArrowRight className="ml-2 h-5 w-5 inline" />
+                            <ArrowRight className="ml-2 h-5 w-5 inline text-[#111111]" />
                         </button>
                     </Link>
                 </motion.div>

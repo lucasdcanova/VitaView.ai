@@ -3,7 +3,7 @@ import { Calendar, ChevronDown, ChevronRight, Brain, MessageSquare, Zap } from "
 
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className="py-12 md:py-16 bg-[#212121] text-white relative overflow-hidden scroll-mt-16">
+        <section id="agenda" className="py-12 md:py-16 bg-transparent text-white relative overflow-hidden scroll-mt-16">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

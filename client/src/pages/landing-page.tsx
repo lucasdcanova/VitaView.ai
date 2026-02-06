@@ -7,7 +7,7 @@ import { LandingHero } from "@/components/landing-page/LandingHero";
 import { LandingVitaTimeline } from "@/components/landing-page/LandingVitaTimeline";
 import { LandingLabView } from "@/components/landing-page/LandingLabView";
 import { LandingAppointmentScheduler } from "@/components/landing-page/LandingAppointmentScheduler";
-import { LandingBenefits } from "@/components/landing-page/LandingBenefits";
+import { LandingFeatures } from "@/components/landing-page/LandingFeatures";
 import { LandingForWhom } from "@/components/landing-page/LandingForWhom";
 import { LandingTestimonials } from "@/components/landing-page/LandingTestimonials";
 import { LandingPricing } from "@/components/landing-page/LandingPricing";
@@ -93,7 +93,7 @@ export default function LandingPage() {
   // Variáveis de animação removidas (movidas para LandingHero)
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#FFFFFF] via-[#111111] to-[#000000] overflow-hidden">
       {/* Background elements - minimalista, sem gradientes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Elementos decorativos sutis em escala de cinza */}
@@ -113,7 +113,7 @@ export default function LandingPage() {
       <LandingAppointmentScheduler />
 
       {/* Benefits Section */}
-      <LandingBenefits />
+      <LandingFeatures />
       <LandingForWhom />
       <LandingSecurity />
       <LandingPricing />

@@ -13,6 +13,7 @@ import {
     FlaskConical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DemoRequestDialog } from "@/components/landing-page/DemoRequestDialog";
 
 export function LandingHero() {
     const containerVariants = {
@@ -36,7 +37,7 @@ export function LandingHero() {
     };
 
     return (
-        <section className="pt-28 pb-12 md:pt-32 md:pb-16 px-5 sm:px-6 lg:px-8 relative bg-pureWhite min-h-screen flex flex-col justify-center">
+        <section className="pt-28 pb-12 md:pt-36 md:pb-24 px-5 sm:px-6 lg:px-8 relative bg-transparent flex flex-col justify-start">
             <motion.div
                 className="flex flex-col md:flex-row items-center"
                 initial="hidden"
@@ -47,35 +48,25 @@ export function LandingHero() {
 
 
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-tight mb-5 md:mb-6">
-                        <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: Simples. Objetiva. <span className="text-[#212121] decoration-4 underline decoration-[#E0E0E0]">Completa.</span>
+                        <span className="tracking-tight">VitaView</span><span className="text-[#9E9E9E] ml-1">AI</span>: O Prontuário que <span className="text-[#212121] decoration-4 underline decoration-[#E0E0E0]">pensa com você.</span>
                     </h1>
 
                     <p className="text-base md:text-xl text-[#616161] font-body mb-6 md:mb-8 max-w-lg leading-relaxed">
-                        A plataforma de gestão clínica que entrega <strong>tudo o que você precisa</strong> sem complexidade.
-                        Prontuário inteligente, IA avançada e interface direta por um valor que faz sentido.
+                        Uma plataforma <strong>simples, objetiva e completa</strong>.
+                        Concentre-se no paciente enquanto nossa IA cuida da burocracia, da anamnese à prescrição.
                     </p>
 
-                    {/* Benefícios em lista */}
-                    <div className="mb-6 md:mb-8 space-y-3 md:space-y-3 hidden md:block">
-                        {[
-                            { icon: <ShieldCheck className="h-5 w-5 text-[#212121]" />, text: "Conformidade HIPAA e LGPD" },
-                            { icon: <Brain className="h-5 w-5 text-[#212121]" />, text: "Organização Inteligente de Dados Clínicos" },
-                            { icon: <Activity className="h-5 w-5 text-[#212121]" />, text: "Monitoramento Remoto de Pacientes" }
-                        ].map((item, index) => (
-                            <motion.div
-                                key={index}
-                                className="flex items-center space-x-3"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.3 + (index * 0.1) }}
-                            >
-                                <div className="flex-shrink-0 p-1.5 bg-[#E0E0E0] rounded-full">
-                                    {item.icon}
-                                </div>
-                                <p className="text-[#212121] font-body">{item.text}</p>
-                            </motion.div>
-                        ))}
+                    {/* Benefícios em lista - Removido para limpar e focar nos pilares abaixo */}
+                    <div className="mb-8 hidden md:block">
+                        <p className="text-sm text-[#9E9E9E] font-medium mb-2">PLATAFORMA INTEGRADA:</p>
+                        <div className="flex gap-4 text-[#424242] text-sm font-medium">
+                            <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Anamnese</span>
+                            <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Prescrição</span>
+                            <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> IA Assist</span>
+                        </div>
                     </div>
+
+
 
                     {/* Estatísticas animadas */}
                     <div className="grid grid-cols-3 gap-4 mb-8 hidden md:grid">
@@ -91,7 +82,7 @@ export function LandingHero() {
                             whileHover={{ y: -5 }}
                         >
                             <h3 className="text-2xl md:text-3xl font-heading font-bold text-[#212121]">30%</h3>
-                            <p className="text-sm text-[#9E9E9E] font-body">Menos Tempo Desperdiçado</p>
+                            <p className="text-sm text-[#9E9E9E] font-body">Menos Tempo Desperdício</p>
                         </motion.div>
                         <motion.div
                             className="text-center p-4 bg-pureWhite rounded-lg border border-[#E0E0E0]"
@@ -114,16 +105,16 @@ export function LandingHero() {
                                 </Button>
                             </motion.div>
                         </Link>
-                        <a href="#demonstracoes">
+                        <DemoRequestDialog>
                             <motion.div
                                 whileHover={{ scale: 1.03 }}
                                 whileTap={{ scale: 0.97 }}
                             >
-                                <Button size="lg" variant="outline" className="border-2 border-[#212121] text-[#212121] hover:bg-[#E0E0E0] px-6 md:px-8 py-5 md:py-6 rounded-lg flex items-center font-heading font-bold text-sm md:text-base">
-                                    <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" /> Ver Demonstração
+                                <Button size="lg" variant="outline" className="border-2 border-[#212121] text-[#212121] hover:bg-[#E0E0E0] px-6 md:px-8 py-5 md:py-6 rounded-lg flex items-center font-heading font-bold text-sm md:text-base cursor-pointer">
+                                    <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" /> Agendar Demonstração
                                 </Button>
                             </motion.div>
-                        </a>
+                        </DemoRequestDialog>
                     </div>
                 </motion.div>
 
@@ -234,13 +225,18 @@ export function LandingHero() {
 
                         {/* Floating Badges */}
                         <motion.div
-                            className="absolute -top-5 -right-5 p-3 bg-white rounded-lg shadow-lg z-20 hidden md:block"
+                            className="absolute -top-12 -right-8 p-4 bg-white rounded-xl shadow-xl z-20 hidden md:block border border-[#E0E0E0]"
                             animate={{ y: [0, -10, 0] }}
                             transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
                         >
-                            <div className="flex items-center space-x-2">
-                                <Brain className="w-5 h-5 text-[#212121]" />
-                                <span className="text-sm font-medium">Processamento IA</span>
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-[#212121] p-2.5 rounded-lg">
+                                    <Brain className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-[#9E9E9E] font-bold uppercase tracking-wider leading-none mb-1">Pioneiros em</p>
+                                    <p className="text-sm font-bold text-[#212121] leading-tight">Interpretação de<br />Exames com IA</p>
+                                </div>
                             </div>
                         </motion.div>
 
@@ -258,8 +254,8 @@ export function LandingHero() {
                 </motion.div>
             </motion.div>
 
-            {/* Badges flutuantes na parte de baixo - design minimalista */}
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-2 px-6 bg-pureWhite border border-[#E0E0E0] rounded-t-xl text-xs md:text-sm text-[#212121] hidden sm:flex">
+            {/* Badges flutuantes na parte de baixo - design minimalista estilo "ilha" */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 md:space-x-4 py-2 px-6 bg-pureWhite border border-[#E0E0E0] rounded-full shadow-sm text-xs md:text-sm text-[#212121] hidden sm:flex z-10">
                 <span className="flex items-center">
                     <Shield className="w-4 h-4 mr-1 text-[#212121]" /> Dados protegidos
                 </span>
@@ -270,6 +266,7 @@ export function LandingHero() {
                     <FlaskConical className="w-4 h-4 mr-1 text-[#212121]" /> Interpretação clínica
                 </span>
             </div>
-        </section>
+
+        </section >
     );
 }
