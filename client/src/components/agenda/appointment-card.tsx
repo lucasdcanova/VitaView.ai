@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Play } from "lucide-react";
+import { Play, Video } from "lucide-react";
 
 interface AppointmentCardProps {
     appointment: any;
@@ -70,7 +70,12 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
             <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-blue-900' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
             <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-blue-800' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
-                {appointment.patientName}
+                <div className="flex items-center gap-1">
+                    {appointment.isTelemedicine && (
+                        <Video className="w-3 h-3 text-blue-500" />
+                    )}
+                    {appointment.patientName}
+                </div>
             </div>
             <div className={`text-xs capitalize ${showActiveIndicator ? 'text-blue-600' : isCompleted ? 'text-gray-400' : styles.label}`}>{appointment.type}</div>
 

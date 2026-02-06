@@ -435,6 +435,75 @@ export function usePrescriptionLogic(patient: Profile) {
         editAcuteItem,
         handleSaveAndPrintPrescription,
         handleEditPrescription,
-        handleRenewPrescription
+        handleRenewPrescription,
+        handleFinalizePrescription: async () => {
+            if (acuteItems.length === 0) {
+                toast({ title: "Prescrição vazia", description: "Adicione pelo menos um medicamento.", variant: "destructive" });
+                return;
+            }
+
+            if (!user) {
+                toast({ title: "Erro", description: "Usuário não identificado.", variant: "destructive" });
+                return;
+            }
+
+            // Save first if new
+            const doctorName = user.fullName || user.username || "Dr. VitaView";
+            const doctorCrm = user.crm || "CRM pendente";
+            const doctorSpecialty = user.specialty || "Clínica Médica";
+
+            const prescriptionData = {
+                profileId: patient.id,
+                userId: patient.userId,
+                doctorName,
+                doctorCrm,
+                doctorSpecialty,
+                medications: acuteItems.map(item => ({
+                    name: item.name,
+                    dosage: item.dosage,
+                    frequency: `${item.frequency}${item.daysOfUse ? ` por ${item.daysOfUse} dias` : ''}`,
+                    notes: item.notes,
+                    prescriptionType: item.prescriptionType
+                })),
+                issueDate: new Date().toISOString(),
+                validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                observations: prescriptionObservations || undefined,
+                status: 'active'
+            };
+
+            try {
+                let savedId = editingPrescriptionId;
+
+                // If not saved yet, save it first
+                if (!savedId) {
+                    const savedData = await createPrescriptionMutation.mutateAsync(prescriptionData);
+                    savedId = savedData.id;
+                } else {
+                    // Check if we need to update before finalizing?
+                    // Currently finalize uses what's in DB. 
+                    // So we MUST update if there are changes.
+                    await updatePrescriptionMutation.mutateAsync({
+                        id: savedId,
+                        data: prescriptionData
+                    });
+                }
+
+                // Finalize call
+                const res = await apiRequest("POST", `/api/prescriptions/${savedId}/finalize`, {});
+                await res.json();
+
+                toast({ title: "Sucesso", description: "Receita finalizada e assinada digitalmente (CFM/ICP-Brasil compliance)." });
+
+                // Cleanup
+                setAcuteItems([]);
+                setEditingPrescriptionId(null);
+                setPrescriptionObservations("");
+                queryClient.invalidateQueries({ queryKey: [`/api/prescriptions/patient/${patient.id}`] });
+
+            } catch (error) {
+                console.error("Finalize error:", error);
+                toast({ title: "Erro", description: "Falha ao finalizar receita. Verifique se já não está assinada.", variant: "destructive" });
+            }
+        }
     };
 }

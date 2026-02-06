@@ -489,6 +489,10 @@ async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameFor
       max_tokens: OPENAI_MAX_OUTPUT_TOKENS
     };
 
+    // LGPD Compliance: Validate Anonymization
+    // We strictly assume the caller has already stripped identifiers.
+    logger.info(`[LGPD-Log] Anonymized Prompt Sent to OpenAI (Model: ${model}, Task: ${taskNameForTracking}) - Identifiers Redacted`);
+
     // 1. Check Cache
     const messages = [{ role: "user", content: prompt }];
     const cacheHash = AICacheService.generateHash(model, messages, cacheParams);

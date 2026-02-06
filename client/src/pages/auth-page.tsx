@@ -51,6 +51,9 @@ const registerSchema = z.object({
   acceptedTerms: z.boolean().refine(val => val === true, {
     message: "Você deve aceitar os Termos de Uso para continuar",
   }),
+  acceptedHealthData: z.boolean().refine(val => val === true, {
+    message: "O aceite para processamento de dados é obrigatório (LGPD)",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -88,6 +91,7 @@ export default function AuthPage() {
       password: "",
       confirmPassword: "",
       acceptedTerms: false,
+      acceptedHealthData: false,
     },
   });
 
@@ -97,10 +101,28 @@ export default function AuthPage() {
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const { confirmPassword, acceptedTerms, ...registerData } = values;
-    // Add timestamp of terms acceptance
+
+    // LGPD Consents Payload
+    const consents = [
+      {
+        consentType: 'terms_and_privacy',
+        granted: true,
+        purpose: 'Registration and basic service usage',
+        legalBasis: 'consent',
+        version: '1.0'
+      },
+      {
+        consentType: 'health_data_processing',
+        granted: true,
+        purpose: 'Clinical analysis and AI processing of health records',
+        legalBasis: 'consent',
+        version: '1.0'
+      }
+    ];
+
     const dataWithTerms = {
       ...registerData,
-      acceptedTermsAt: new Date().toISOString(),
+      consents,
     };
     registerMutation.mutate(dataWithTerms as any);
   };
@@ -365,6 +387,28 @@ export default function AuthPage() {
                               <Link href="/privacidade" target="_blank" className="text-[#212121] underline font-semibold hover:text-[#424242]">
                                 Política de Privacidade
                               </Link>
+                            </FormLabel>
+                            <FormMessage className="text-[#D32F2F]" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={registerForm.control}
+                      name="acceptedHealthData"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-[#E0E0E0] p-4 mt-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-[#212121] data-[state=checked]:border-[#212121]"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-body text-[#424242] cursor-pointer">
+                              Concordo com o <span className="font-bold text-[#212121]">processamento de meus dados de saúde</span> para fins de análise clínica e uso de Inteligência Artificial, conforme descrito na Política de Privacidade.
                             </FormLabel>
                             <FormMessage className="text-[#D32F2F]" />
                           </div>

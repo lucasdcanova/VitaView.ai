@@ -68,6 +68,8 @@ const formSchema = z.object({
     isRange: z.boolean().optional(),
     endDate: z.date().optional(),
     isAllDay: z.boolean().optional(),
+    isTelemedicine: z.boolean().optional(),
+    meetingLink: z.string().optional(),
 }).refine((data) => {
     if (data.type !== 'blocked' && !data.profileId) {
         return false;
@@ -96,6 +98,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
             type: "consulta",
             isRange: false,
             isAllDay: false,
+            isTelemedicine: false,
         },
     });
 
@@ -130,7 +133,9 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     notes: initialData.notes || "",
                     price: priceFormatted,
                     isAllDay: initialData.isAllDay || false,
-                    isRange: false // Assuming range edit isn't fully supported yet or we don't have range data in single appointment
+                    isRange: false, // Assuming range edit isn't fully supported yet or we don't have range data in single appointment
+                    isTelemedicine: initialData.isTelemedicine || false,
+                    meetingLink: initialData.meetingLink || "",
                 });
 
                 if (initialData.type === 'blocked') {
@@ -324,30 +329,56 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {mode === 'appointment' ? (
-                                <FormField
-                                    control={form.control}
-                                    name="type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Tipo</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="consulta">Consulta</SelectItem>
-                                                    <SelectItem value="retorno">Retorno</SelectItem>
-                                                    <SelectItem value="exames">Exames</SelectItem>
-                                                    <SelectItem value="procedimento">Procedimento</SelectItem>
-                                                    <SelectItem value="urgencia">Urgência</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tipo</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecione" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="consulta">Consulta</SelectItem>
+                                                        <SelectItem value="retorno">Retorno</SelectItem>
+                                                        <SelectItem value="exames">Exames</SelectItem>
+                                                        <SelectItem value="procedimento">Procedimento</SelectItem>
+                                                        <SelectItem value="urgencia">Urgência</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Telemedicine Switch */}
+                                    {/* This will be placed next to Type, taking up the other slot */}
+                                    <div className="flex items-end pb-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="isTelemedicine"
+                                            render={({ field }) => (
+                                                <FormItem className="flex items-center space-x-2 space-y-0 border p-2 rounded-md w-full bg-slate-50">
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                                        Teleconsulta
+                                                        <span className="text-xs text-muted-foreground bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">CFM</span>
+                                                    </FormLabel>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </>
+
                             ) : (
                                 <div className="col-span-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
                                     <div className="flex items-center justify-between">
@@ -420,6 +451,23 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                 />
                             )}
                         </div>
+
+                        {/* Meeting Link Field - Only visible if Telemedicine is checked */}
+                        {form.watch("isTelemedicine") && mode === 'appointment' && (
+                            <FormField
+                                control={form.control}
+                                name="meetingLink"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Link da Reunião (Meet/Zoom)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="https://..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField

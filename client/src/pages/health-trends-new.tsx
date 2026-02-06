@@ -742,9 +742,10 @@ export default function HealthTrendsNew({
       id: evolution.id,
       type: "evolution" as const,
       date: evolution.date,
-      title: "Evolução Médica",
+      title: evolution.isSigned ? "Evolução Médica (Assinada)" : "Evolução Médica",
       description: evolution.text,
       originalData: evolution,
+      isSigned: evolution.isSigned,
     })) : []),
 
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [exams, diagnoses, surgeries, evolutions]);
@@ -902,8 +903,6 @@ export default function HealthTrendsNew({
           case 'diagnosis': typeName = 'Diagnóstico'; break;
           case 'surgery': typeName = 'Cirurgia'; break;
           case 'triage': typeName = 'Consult/Triagem'; break;
-          case 'medication': typeName = 'Medicamento'; break;
-          case 'allergy': typeName = 'Alergia'; break;
           case 'evolution': typeName = 'Evolução'; break;
           default: typeName = item.type;
         }

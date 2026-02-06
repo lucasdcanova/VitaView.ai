@@ -386,6 +386,9 @@ export const evolutions = pgTable("evolutions", {
   text: text("text").notNull(),
   professionalName: text("professional_name"), // Name of the professional who created this evolution
   date: timestamp("date").defaultNow().notNull(),
+  isSigned: boolean("is_signed").default(false).notNull(),
+  signatureHash: text("signature_hash"), // SHA-256 hash of the content
+  signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -540,6 +543,8 @@ export const appointments = pgTable("appointments", {
   price: integer("price"), // Price in cents (BRL)
   duration: integer("duration").default(30), // Duration in minutes
   isAllDay: boolean("is_all_day").default(false),
+  isTelemedicine: boolean("is_telemedicine").default(false),
+  meetingLink: text("meeting_link"), // Google Meet / Zoom link
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -556,6 +561,8 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   price: true,
   duration: true,
   isAllDay: true,
+  isTelemedicine: true,
+  meetingLink: true,
   notes: true,
 });
 
@@ -608,6 +615,9 @@ export const prescriptions = pgTable("prescriptions", {
   observations: text("observations"),
   pdfPath: text("pdf_path"), // Caminho do PDF gerado
   status: text("status").default("active").notNull(), // active, cancelled
+  isSigned: boolean("is_signed").default(false).notNull(),
+  signatureHash: text("signature_hash"),
+  signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

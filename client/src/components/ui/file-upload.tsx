@@ -54,7 +54,13 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         <p className="text-sm text-gray-500 mb-4">ou</p>
         <Button variant="outline" type="button">Selecionar arquivos</Button>
         <input {...getInputProps()} />
-        <p className="text-xs text-gray-500 mt-4">PDF, JPEG, PNG (máx. 50MB)</p>
+        <div className="mt-4 space-y-1">
+          <p className="text-xs text-gray-500">PDF, JPEG, PNG (máx. 50MB)</p>
+          <div className="flex items-center justify-center gap-2 text-[10px] text-amber-600 bg-amber-50 py-1 px-2 rounded-full inline-block">
+            <AlertCircle className="w-3 h-3" />
+            <span>Processamento por IA: Auxílio à organização, não substitui avaliação médica.</span>
+          </div>
+        </div>
       </div>
 
       {/* Active Uploads List */}

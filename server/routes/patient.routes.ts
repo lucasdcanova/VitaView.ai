@@ -4,13 +4,32 @@ import { pool } from "../db";
 import { ensureAuthenticated } from "../middleware/auth.middleware";
 import { generateChronologicalReport } from "../services/openai";
 import logger from "../logger";
+import { createHash } from "crypto";
 
 export function registerPatientRoutes(app: Express) {
 
     // --- Diagnoses ---
     app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
         try {
-            const diagnoses = await storage.getDiagnosesByUserId((req.user as any).id);
+            const userId = (req.user as any).id;
+            const diagnoses = await storage.getDiagnosesByUserId(userId);
+
+            // LGPD Audit Log
+            await storage.createAuditLog({
+                userId: userId,
+                action: "READ",
+                resourceType: "patient_diagnoses",
+                resourceId: null, // List view
+                ipAddress: req.ip || null,
+                userAgent: req.get('User-Agent') || null,
+                requestMethod: "GET",
+                requestPath: "/api/diagnoses",
+                statusCode: 200,
+                accessReason: "clinical_history_view",
+                severity: "INFO",
+                complianceFlags: { lgpd: true }
+            });
+
             res.json(diagnoses || []);
         } catch (error) {
             res.status(500).json({ message: "Erro ao buscar diagnósticos" });
@@ -209,6 +228,57 @@ export function registerPatientRoutes(app: Express) {
         }
     });
 
+    app.post("/api/evolutions/:id/finalize", ensureAuthenticated, async (req, res) => {
+        try {
+            const evolutionId = parseInt(req.params.id);
+            const evolution = await storage.getEvolution(evolutionId);
+
+            if (!evolution) {
+                return res.status(404).json({ message: "Evolução não encontrada" });
+            }
+
+            if (evolution.userId !== (req.user as any).id) {
+                return res.status(403).json({ message: "Acesso negado" });
+            }
+
+            if (evolution.isSigned) {
+                return res.status(400).json({ message: "Evolução já está finalizada e assinada." });
+            }
+
+            // Create signature hash (Simulating digital signature for CFM NGS-1/2)
+            // In a real NGS-2 scenario, this would involve a client-side certificate token.
+            const contentToSign = `${evolution.id}:${evolution.userId}:${evolution.date.toISOString()}:${evolution.text}`;
+            const signatureHash = createHash('sha256').update(contentToSign).digest('hex');
+
+            const updatedEvolution = await storage.updateEvolution(evolutionId, {
+                isSigned: true,
+                signatureHash: signatureHash,
+                signedAt: new Date(),
+            });
+
+            // Log for Audit
+            await storage.createAuditLog({
+                userId: (req.user as any).id,
+                action: "SIGN",
+                resourceType: "patient_evolution",
+                resourceId: evolutionId,
+                ipAddress: req.ip || null,
+                userAgent: req.get('User-Agent') || null,
+                requestMethod: "POST",
+                requestPath: `/api/evolutions/${evolutionId}/finalize`,
+                statusCode: 200,
+                accessReason: "document_finalization",
+                severity: "INFO",
+                complianceFlags: { cfm: true, lgpd: true }
+            });
+
+            res.json(updatedEvolution);
+        } catch (error) {
+            console.error("Erro ao finalizar evolução:", error);
+            res.status(500).json({ message: "Erro ao finalizar evolução" });
+        }
+    });
+
     app.delete("/api/evolutions/:id", ensureAuthenticated, async (req, res) => {
         try {
             const evolutionId = parseInt(req.params.id);
@@ -343,7 +413,25 @@ export function registerPatientRoutes(app: Express) {
     // --- Profiles ---
     app.get("/api/profiles", ensureAuthenticated, async (req, res) => {
         try {
-            const profiles = await storage.getProfilesByUserId((req.user as any).id);
+            const userId = (req.user as any).id;
+            const profiles = await storage.getProfilesByUserId(userId);
+
+            // LGPD Audit Log
+            await storage.createAuditLog({
+                userId: userId,
+                action: "READ",
+                resourceType: "user_profiles",
+                resourceId: null,
+                ipAddress: req.ip || null,
+                userAgent: req.get('User-Agent') || null,
+                requestMethod: "GET",
+                requestPath: "/api/profiles",
+                statusCode: 200,
+                accessReason: "profile_list_view",
+                severity: "INFO",
+                complianceFlags: { lgpd: true }
+            });
+
             res.json(profiles);
         } catch (error) {
             res.status(500).json({ message: "Erro ao buscar perfis do usuário" });

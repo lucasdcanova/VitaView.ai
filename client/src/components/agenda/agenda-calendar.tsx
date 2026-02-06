@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -569,11 +569,13 @@ export function AgendaCalendar({
                                     title={app.status === 'in_progress' ? "Retomar atendimento" : "Iniciar atendimento"}
                                   >
                                     <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {app.isTelemedicine && <Video className="w-4 h-4 text-blue-500 mr-1" />}
                                     {app.patientName}
                                   </button>
                                 ) : (
                                   <span className="text-gray-800 flex items-center gap-2">
                                     {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
+                                    {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-blue-500" />}
                                     {app.patientName}
                                   </span>
                                 )}

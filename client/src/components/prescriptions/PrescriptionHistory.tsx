@@ -56,6 +56,11 @@ export function PrescriptionHistory({ prescriptions, onReprint, onEdit }: Prescr
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">
+                                        {prescription.isSigned && (
+                                            <span className="mb-1 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10" title="Assinatura Eletrônica avançada (Integridade e Autoria garantidas pelo sistema)">
+                                                Assinado Eletronicamente
+                                            </span>
+                                        )}
                                         <span className="text-sm font-medium text-gray-700 max-w-[200px] truncate text-right">
                                             {formatMedicationNames(prescription.medications as any[])}
                                         </span>
@@ -91,9 +96,10 @@ export function PrescriptionHistory({ prescriptions, onReprint, onEdit }: Prescr
                                                 e.stopPropagation();
                                                 onEdit(prescription);
                                             }}
+                                            disabled={prescription.isSigned}
                                         >
                                             <Pencil className="h-4 w-4 mr-2" />
-                                            Editar / Copiar
+                                            {prescription.isSigned ? "Assinado (Bloqueado)" : "Editar / Copiar"}
                                         </Button>
                                         <Button
                                             variant="secondary"

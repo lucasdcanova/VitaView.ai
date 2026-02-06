@@ -14,7 +14,9 @@ interface ActivePrescriptionFormProps {
     onRemoveItem: (id: string) => void;
     onEditItem: (id: string) => void;
     onSaveAndPrint: () => void;
+    onFinalize: () => void;
     isEditing: boolean;
+    isSigning?: boolean;
 }
 
 export function ActivePrescriptionForm({
@@ -24,7 +26,9 @@ export function ActivePrescriptionForm({
     onRemoveItem,
     onEditItem,
     onSaveAndPrint,
-    isEditing
+    onFinalize,
+    isEditing,
+    isSigning
 }: ActivePrescriptionFormProps) {
     // Don't render anything when empty - MedicationSelector already provides context
     if (items.length === 0) {
@@ -105,23 +109,43 @@ export function ActivePrescriptionForm({
                         />
                     </div>
 
-                    <Button
-                        className="w-full bg-gray-800 hover:bg-gray-900 text-white shadow-sm text-sm"
-                        size="lg"
-                        onClick={onSaveAndPrint}
-                    >
-                        {isEditing ? (
-                            <>
-                                <Save className="h-5 w-5 mr-2" />
-                                Atualizar e Imprimir Receita
-                            </>
-                        ) : (
-                            <>
-                                <Printer className="h-5 w-5 mr-2" />
-                                Salvar e Imprimir Receita
-                            </>
-                        )}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            className="w-full bg-gray-800 hover:bg-gray-900 text-white shadow-sm text-sm"
+                            size="lg"
+                            onClick={onSaveAndPrint}
+                            disabled={isSigning}
+                        >
+                            {isEditing ? (
+                                <>
+                                    <Save className="h-5 w-5 mr-2" />
+                                    Atualizar e Imprimir Receita
+                                </>
+                            ) : (
+                                <>
+                                    <Printer className="h-5 w-5 mr-2" />
+                                    Salvar e Imprimir Receita
+                                </>
+                            )}
+                        </Button>
+
+                        <Button
+                            className="w-full border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 shadow-sm text-sm"
+                            variant="outline"
+                            size="lg"
+                            onClick={onFinalize}
+                            disabled={isSigning}
+                        >
+                            {isSigning ? (
+                                <>Assinando Digitalmente...</>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Finalizar e Assinar (CFM)
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card >

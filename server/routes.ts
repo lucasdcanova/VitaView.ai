@@ -145,6 +145,78 @@ export async function registerRoutes(app: Express): Promise<void> {
   registerPatientRoutes(app);
 
 
+
+  // LGPD: Data Subject Rights
+  // 1. Export Data (Right to Portability)
+  app.get("/api/user/export", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Aggregate all user data
+      const profiles = await storage.getProfilesByUserId(userId);
+      const exams = await storage.getExamsByUserId(userId);
+      const appointments = await storage.getAppointmentsByUserId(userId);
+      const diagnoses = await storage.getDiagnosesByUserId(userId);
+      const surgeries = await storage.getSurgeriesByUserId(userId);
+      const evolutions = await storage.getEvolutionsByUserId(userId);
+      const habits = await storage.getHabitsByUserId(userId);
+      const allergies = await storage.getAllergiesByUserId(userId);
+      const medications = await storage.getCustomMedicationsByUserId(userId);
+      // const conversations = await storage.getAIConversationsByUserId(userId); // Add if available in IStorage
+
+      const exportData = {
+        user: { ...user, password: "[REDACTED]" },
+        profiles,
+        exams,
+        appointments,
+        medical_records: {
+          diagnoses,
+          surgeries,
+          evolutions,
+          habits,
+          allergies,
+          medications
+        },
+        // ai_conversations: conversations,
+        exported_at: new Date().toISOString(),
+        legal_notice: "This data export is provided in compliance with LGPD (Lei Geral de Proteção de Dados - Lei 13.709/2018)."
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=vitaview_export_${userId}_${Date.now()}.json`);
+      res.json(exportData);
+    } catch (error) {
+      console.error("[LGPD] Export error:", error);
+      res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
+  // 2. Delete Account (Right to Erasure)
+  app.delete("/api/user/me", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      console.log(`[LGPD] User ${userId} requested account deletion (Right to Erasure)`);
+
+      const success = await storage.deleteUser(userId);
+
+      if (success) {
+        req.logout((err) => {
+          if (err) console.error("Logout error after deletion:", err);
+          res.clearCookie('connect.sid');
+          res.status(200).json({ message: "Account permanently deleted" });
+        });
+      } else {
+        res.status(500).json({ message: "Failed to delete account" });
+      }
+    } catch (error) {
+      console.error("[LGPD] Delete error:", error);
+      res.status(500).json({ message: "Error processing deletion request" });
+    }
+  });
+
   // Admin User Management Routes
   app.get("/api/admin/users", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
     try {

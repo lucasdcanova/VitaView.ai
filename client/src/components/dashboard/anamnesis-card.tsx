@@ -618,6 +618,53 @@ export function AnamnesisCard() {
                                 )}
                                 Salvar como Consulta
                             </Button>
+
+                            <FeatureGate feature="cfm-compliance">
+                                <Button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!anamnesisText.trim() || !activeProfile?.id) return;
+
+                                        try {
+                                            // 1. Save Evolution
+                                            const res = await apiRequest("POST", "/api/evolutions", {
+                                                text: anamnesisText,
+                                                profileId: activeProfile.id
+                                            });
+                                            const savedEvo = await res.json();
+
+                                            // 2. Finalize
+                                            await apiRequest("POST", `/api/evolutions/${savedEvo.id}/finalize`, {});
+
+                                            toast({
+                                                title: "Sucesso",
+                                                description: "Evolução salva e assinada digitalmente (CFM).",
+                                            });
+
+                                            setAnamnesisText("");
+                                            queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
+                                            if (inServiceAppointmentId) {
+                                                await apiRequest("PATCH", `/api/appointments/${inServiceAppointmentId}`, { status: 'completed' });
+                                                queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+                                                clearPatientInService();
+                                            }
+
+                                        } catch (err) {
+                                            console.error(err);
+                                            toast({
+                                                title: "Erro",
+                                                description: "Falha ao assinar evolução.",
+                                                variant: "destructive"
+                                            });
+                                        }
+                                    }}
+                                    disabled={!anamnesisText.trim() || !activeProfile?.id}
+                                    className="gap-2 bg-blue-700 hover:bg-blue-800 text-white"
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Finalizar e Assinar (CFM)
+                                </Button>
+                            </FeatureGate>
                             <FeatureGate feature="ai-enhance">
                                 <Button
                                     type="button"

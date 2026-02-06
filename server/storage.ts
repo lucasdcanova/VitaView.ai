@@ -1,6 +1,6 @@
 import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -196,7 +196,16 @@ export interface IStorage {
   deleteExamProtocol(id: number): Promise<boolean>;
 
   // Prescription update
-  updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined>;
+  // Prescription update
+  updatePrescription(id: number, data: Partial<Prescription>): Promise<Prescription | undefined>;
+  getPrescription(id: number): Promise<Prescription | undefined>;
+
+  // Evolution update
+  updateEvolution(id: number, data: Partial<Evolution>): Promise<Evolution | undefined>;
+
+  // Appointment update
+  updateAppointment(id: number, data: Partial<Appointment>): Promise<Appointment | undefined>;
+  getAppointment(id: number): Promise<Appointment | undefined>;
 
   // Custom Medications operations
   createCustomMedication(medication: InsertCustomMedication): Promise<CustomMedication>;
@@ -208,11 +217,7 @@ export interface IStorage {
   getBugReports(): Promise<any[]>;
   updateBugReportStatus(id: number, status: string): Promise<any | undefined>;
 
-  // TUSS operations
-  createTussProcedure(procedure: InsertTussProcedure): Promise<TussProcedure>;
-  searchTussProcedures(query: string, limit?: number): Promise<TussProcedure[]>;
-
-  // AI Conversation operations (Vita Assist)
+  // Custom Medications operations (AI)
   createAIConversation(userId: number, profileId?: number, title?: string): Promise<AIConversation>;
   getAIConversationsByUserId(userId: number): Promise<AIConversation[]>;
   getAIConversation(id: number): Promise<AIConversation | undefined>;
@@ -227,12 +232,19 @@ export interface IStorage {
   getMonthlyAIUsage(userId: number, yearMonth: string): Promise<{ aiRequests: number; aiTokensUsed: number; transcriptionMinutes: number; examAnalyses: number }>;
   getAllUsersUsageStats(yearMonth: string): Promise<Array<{ userId: number; username: string; fullName: string | null; planName: string | null; aiRequests: number; transcriptionMinutes: number; examAnalyses: number }>>;
 
+  // User Consent operations
+  createUserConsent(consent: InsertUserConsent): Promise<UserConsent>;
+
+  // Audit Log operations
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
   // Session store
   sessionStore: SessionStore;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private auditLogsMap: Map<number, AuditLog>;
   private profiles: Map<number, Profile>;
   private exams: Map<number, Exam>;
   private examResults: Map<number, ExamResult>;
@@ -278,6 +290,7 @@ export class MemStorage implements IStorage {
   private certificateIdCounter: number = 1;
   private allergyIdCounter: number = 1;
   private tussProcedureIdCounter: number = 1;
+  private auditLogIdCounter: number = 1;
 
 
 
@@ -296,6 +309,7 @@ export class MemStorage implements IStorage {
     this.evolutionsMap = new Map();
     this.appointmentsMap = new Map();
     this.habitsMap = new Map();
+    this.auditLogsMap = new Map();
     this.doctorsMap = new Map();
     this.clinicsMap = new Map();
     this.clinicInvitationsMap = new Map();
@@ -844,7 +858,10 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       date: evolution.date || new Date(),
       profileId: evolution.profileId || null,
-      professionalName: evolution.professionalName || null
+      professionalName: evolution.professionalName || null,
+      isSigned: false,
+      signatureHash: null,
+      signedAt: null
     };
     this.evolutionsMap.set(id, newEvolution);
     return newEvolution;
@@ -940,6 +957,8 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       status: appointment.status || 'scheduled',
       notes: appointment.notes || null,
+      meetingLink: appointment.meetingLink || null,
+      isTelemedicine: appointment.isTelemedicine || false,
       profileId: appointment.profileId || null,
       price: appointment.price ?? null,
       duration: appointment.duration || null,
@@ -947,6 +966,10 @@ export class MemStorage implements IStorage {
     };
     this.appointmentsMap.set(id, newAppointment);
     return newAppointment;
+  }
+
+  async getAppointment(id: number): Promise<Appointment | undefined> {
+    return this.appointmentsMap.get(id);
   }
 
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
@@ -1355,10 +1378,16 @@ export class MemStorage implements IStorage {
       doctorSpecialty: p.doctorSpecialty || null,
       observations: p.observations || null,
       pdfPath: p.pdfPath || null,
-      profileId: p.profileId || null
+      profileId: p.profileId || null,
+      isSigned: false,
+      signatureHash: null,
+      signedAt: null
     };
     this.prescriptionsMap.set(id, newP);
     return newP;
+  }
+  async getPrescription(id: number): Promise<Prescription | undefined> {
+    return this.prescriptionsMap.get(id);
   }
   async getPrescriptionsByProfileId(profileId: number): Promise<Prescription[]> {
     return Array.from(this.prescriptionsMap.values())
@@ -1407,13 +1436,24 @@ export class MemStorage implements IStorage {
   }
 
   // Prescription update - MemStorage
-  async updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined> {
+  async updatePrescription(id: number, data: Partial<Prescription>): Promise<Prescription | undefined> {
     const p = this.prescriptionsMap.get(id);
     if (!p) return undefined;
-    const updated = { ...p, ...data, issueDate: data.issueDate || p.issueDate } as Prescription;
+    const updated = { ...p, ...data, issueDate: data.issueDate ? new Date(data.issueDate) : p.issueDate } as Prescription;
     this.prescriptionsMap.set(id, updated);
     return updated;
   }
+
+  // Evolution update - MemStorage
+  async updateEvolution(id: number, data: Partial<Evolution>): Promise<Evolution | undefined> {
+    const e = this.evolutionsMap.get(id);
+    if (!e) return undefined;
+    const updated = { ...e, ...data };
+    this.evolutionsMap.set(id, updated);
+    return updated;
+  }
+
+
 
   // Exam Request operations - MemStorage
   private examRequestsMap: Map<number, ExamRequest> = new Map();
@@ -1588,6 +1628,52 @@ export class MemStorage implements IStorage {
         (p.name.toLowerCase().includes(lowerQuery) || (p.code && p.code.toLowerCase().includes(lowerQuery)))
       )
       .slice(0, limit);
+  }
+
+  // User Consent operations - MemStorage
+  private userConsentsMap = new Map<number, UserConsent>();
+  private userConsentIdCounter = 1;
+
+  async createUserConsent(consent: InsertUserConsent): Promise<UserConsent> {
+    const id = this.userConsentIdCounter++;
+    const newConsent: UserConsent = {
+      ...consent,
+      id,
+      createdAt: new Date(),
+      grantedAt: new Date(),
+      revokedAt: null,
+      expiresAt: null,
+      ipAddress: consent.ipAddress || null,
+      userAgent: consent.userAgent || null,
+    };
+    this.userConsentsMap.set(id, newConsent);
+    return newConsent;
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const id = this.auditLogIdCounter++;
+    const newLog: AuditLog = {
+      ...log,
+      id,
+      createdAt: new Date(),
+      userId: log.userId ?? null,
+      clinicId: log.clinicId ?? null,
+      targetUserId: log.targetUserId ?? null,
+      resourceId: log.resourceId ?? null,
+      ipAddress: log.ipAddress ?? null,
+      userAgent: log.userAgent ?? null,
+      sessionId: log.sessionId ?? null,
+      requestMethod: log.requestMethod ?? null,
+      requestPath: log.requestPath ?? null,
+      statusCode: log.statusCode ?? null,
+      oldValue: log.oldValue ?? null,
+      newValue: log.newValue ?? null,
+      accessReason: log.accessReason ?? null,
+      severity: log.severity ?? "INFO",
+      complianceFlags: log.complianceFlags ?? null,
+    };
+    this.auditLogsMap.set(id, newLog);
+    return newLog;
   }
 
   // AI Conversation stub methods (Vita Assist) - MemStorage doesn't persist these
@@ -2418,13 +2504,16 @@ export class DatabaseStorage implements IStorage {
     const [newA] = await db.insert(appointments).values(a).returning();
     return newA;
   }
+
+  async getAppointment(id: number): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+    return appointment;
+  }
+
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
     return await db.select().from(appointments).where(eq(appointments.userId, userId)).orderBy(asc(appointments.date), asc(appointments.time));
   }
-  async updateAppointment(id: number, a: Partial<Appointment>): Promise<Appointment | undefined> {
-    const [updated] = await db.update(appointments).set(a).where(eq(appointments.id, id)).returning();
-    return updated;
-  }
+
   async deleteAppointment(id: number): Promise<boolean> { await db.delete(appointments).where(eq(appointments.id, id)); return true; }
   async deleteBlockedAppointmentsByRange(userId: number, startDate: string, endDate: string): Promise<number> {
     const result = await db.delete(appointments)
@@ -2680,6 +2769,10 @@ export class DatabaseStorage implements IStorage {
     const [newP] = await db.insert(prescriptions).values(p).returning();
     return newP;
   }
+  async getPrescription(id: number): Promise<Prescription | undefined> {
+    const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.id, id));
+    return prescription;
+  }
   async getPrescriptionsByProfileId(profileId: number): Promise<Prescription[]> {
     return await db.select().from(prescriptions)
       .where(eq(prescriptions.profileId, profileId))
@@ -2710,14 +2803,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Prescription update - DatabaseStorage
-  async updatePrescription(id: number, data: Partial<InsertPrescription>): Promise<Prescription | undefined> {
-    const [updated] = await db.update(prescriptions)
-      .set(data)
-      .where(eq(prescriptions.id, id))
-      .returning();
-    return updated;
-  }
+
 
   // Exam Request operations - DatabaseStorage
   async createExamRequest(er: InsertExamRequest): Promise<ExamRequest> {
@@ -3165,6 +3251,41 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return enrichedResults;
+  }
+
+  // User Consent operations - DatabaseStorage
+  async createUserConsent(consent: InsertUserConsent): Promise<UserConsent> {
+    const [result] = await db
+      .insert(userConsents)
+      .values(consent)
+      .returning();
+    return result;
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [result] = await db
+      .insert(auditLogs)
+      .values(log)
+      .returning();
+    return result;
+  }
+
+  // Prescription update - DatabaseStorage
+  async updatePrescription(id: number, update: Partial<Prescription>): Promise<Prescription | undefined> {
+    const [updated] = await db.update(prescriptions).set(update).where(eq(prescriptions.id, id)).returning();
+    return updated;
+  }
+
+  // Evolution update - DatabaseStorage
+  async updateEvolution(id: number, update: Partial<Evolution>): Promise<Evolution | undefined> {
+    const [updated] = await db.update(evolutions).set(update).where(eq(evolutions.id, id)).returning();
+    return updated;
+  }
+
+  // Appointment update - DatabaseStorage
+  async updateAppointment(id: number, update: Partial<Appointment>): Promise<Appointment | undefined> {
+    const [updated] = await db.update(appointments).set(update).where(eq(appointments.id, id)).returning();
+    return updated;
   }
 }
 

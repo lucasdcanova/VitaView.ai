@@ -106,6 +106,7 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         onRemoveItem={logic.removeAcuteItem}
                         onEditItem={logic.editAcuteItem}
                         onSaveAndPrint={logic.handleSaveAndPrintPrescription}
+                        onFinalize={logic.handleFinalizePrescription}
                         isEditing={!!logic.editingPrescriptionId}
                     />
                 </div>

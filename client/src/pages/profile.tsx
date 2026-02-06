@@ -616,6 +616,12 @@ export default function Profile() {
                     >
                       Segurança
                     </TabsTrigger>
+                    <TabsTrigger
+                      value="privacy"
+                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                    >
+                      Privacidade (LGPD)
+                    </TabsTrigger>
                   </TabsList>
 
                   {/* Personal Data Tab */}
@@ -1409,68 +1415,98 @@ export default function Profile() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-200">
-                        <h3 className="text-lg font-medium text-red-600 mb-3">Zona de perigo</h3>
-                        <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</p>
+                    </div>
+                  </TabsContent>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive">
-                              Excluir minha conta
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá todos os seus dados de nossos servidores.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                                onClick={(e) => {
-                                  e.preventDefault(); // Impede o fechamento imediato
-                                  // Abre o segundo diálogo de confirmação
-                                  setShowSecondConfirmation(true);
-                                }}
-                              >
-                                Continuar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                  <TabsContent value="privacy">
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Seus Dados e Privacidade (LGPD)</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Em conformidade com a Lei Geral de Proteção de Dados (LGPD), você tem total controle sobre suas informações.
+                        </p>
 
-                        {/* Segundo diálogo de confirmação */}
-                        <AlertDialog open={showSecondConfirmation} onOpenChange={setShowSecondConfirmation}>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-red-600">Confirmação Final</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Por favor, confirme novamente. Você perderá acesso a:
-                                <ul className="list-disc list-inside mt-2 mb-2">
-                                  <li>Todos os prontuários de pacientes</li>
-                                  <li>Histórico de exames e receitas</li>
-                                  <li>Configurações personalizadas</li>
-                                </ul>
-                                <strong>Todos os dados serão apagados permanentemente agora.</strong>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setShowSecondConfirmation(false)}>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                                onClick={() => {
-                                  deleteAccountMutation.mutate();
-                                  setShowSecondConfirmation(false);
-                                }}
-                              >
-                                Sim, excluir tudo permanentemente
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                          <h4 className="text-blue-800 font-medium mb-2">Direito à Portabilidade</h4>
+                          <p className="text-sm text-blue-600 mb-4">
+                            Você pode baixar uma cópia completa de todos os seus dados armazenados em nossa plataforma, incluindo prontuários, exames e histórico.
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                            onClick={() => window.open('/api/user/export', '_blank')}
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Exportar meus dados (JSON)
+                          </Button>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-200">
+                          <h3 className="text-lg font-medium text-red-600 mb-3">Zona de perigo</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            O <strong>Direito ao Esquecimento</strong> permite que você solicite a exclusão completa de sua conta e dados associados.
+                          </p>
+                          <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</p>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive">
+                                Excluir minha conta
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta e removerá todos os seus dados de nossos servidores.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowSecondConfirmation(true);
+                                  }}
+                                >
+                                  Continuar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+
+                          <AlertDialog open={showSecondConfirmation} onOpenChange={setShowSecondConfirmation}>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-red-600">Confirmação Final</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Por favor, confirme novamente. Você perderá acesso a:
+                                  <ul className="list-disc list-inside mt-2 mb-2">
+                                    <li>Todos os prontuários de pacientes</li>
+                                    <li>Histórico de exames e receitas</li>
+                                    <li>Configurações personalizadas</li>
+                                  </ul>
+                                  <strong>Todos os dados serão apagados permanentemente agora.</strong>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setShowSecondConfirmation(false)}>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                  onClick={() => {
+                                    deleteAccountMutation.mutate();
+                                    setShowSecondConfirmation(false);
+                                  }}
+                                >
+                                  Sim, excluir tudo permanentemente
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     </div>
                   </TabsContent>

@@ -182,7 +182,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { fullName, email, password } = req.body;
+      const { fullName, email, password, consents } = req.body;
 
       // Validate required fields
       if (!fullName || !email || !password) {
@@ -220,6 +220,28 @@ export function setupAuth(app: Express) {
         message: "Envie seus exames médicos para análise e obtenha insights valiosos sobre sua saúde.",
         read: false
       });
+
+      // LGPD: Record User Consents
+      if (Array.isArray(consents)) {
+        for (const consent of consents) {
+          try {
+            await storage.createUserConsent({
+              userId: user.id,
+              consentType: consent.consentType,
+              granted: consent.granted,
+              purpose: consent.purpose,
+              legalBasis: consent.legalBasis,
+              version: consent.version || "1.0",
+              ipAddress: req.ip || "0.0.0.0",
+              userAgent: req.get('User-Agent') || "Unknown"
+            });
+            console.log(`[AUTH] Consent recorded: ${consent.consentType} for user ${user.id}`);
+          } catch (err) {
+            console.error(`[AUTH] Failed to record consent ${consent.consentType}:`, err);
+            // Non-blocking error for now, but logged
+          }
+        }
+      }
 
       req.login(user, (err) => {
         if (err) {
