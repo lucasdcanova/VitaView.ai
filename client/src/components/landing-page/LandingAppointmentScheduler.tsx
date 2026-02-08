@@ -3,7 +3,7 @@ import { Calendar, ChevronDown, ChevronRight, Brain, MessageSquare, Zap } from "
 
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className="py-12 md:py-16 bg-transparent text-white relative overflow-hidden scroll-mt-16">
+        <section id="agenda" className="py-12 md:py-16 bg-white text-[#212121] relative overflow-hidden scroll-mt-16">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -12,9 +12,9 @@ export function LandingAppointmentScheduler() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-8 md:mb-12"
                 >
-                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">Agenda Inteligente</h2>
-                    <p className="text-base md:text-xl text-white text-opacity-90 max-w-3xl mx-auto px-2">
-                        Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica com a ajuda de um <span className="font-bold text-[#E0E0E0]">assistente de IA</span> que entende comandos de texto e fotos da sua agenda.
+                    <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-3 md:mb-4">Agenda Inteligente</h2>
+                    <p className="text-base md:text-xl text-[#616161] max-w-3xl mx-auto px-2">
+                        Gerencie suas consultas com facilidade. Visualize compromissos, horários disponíveis e organize sua rotina clínica com a ajuda de um <span className="font-bold text-[#212121]">assistente de IA</span> que entende comandos de texto e fotos da sua agenda.
                     </p>
                 </motion.div>
 
@@ -212,15 +212,15 @@ export function LandingAppointmentScheduler() {
                     }}
                 >
                     <motion.div
-                        className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
                         variants={{
                             hidden: { opacity: 0, y: 30 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
                         whileHover={{
                             scale: 1.03,
-                            backgroundColor: "rgba(255,255,255,0.15)",
-                            borderColor: "rgba(255,255,255,0.4)"
+                            backgroundColor: "#FFFFFF",
+                            borderColor: "#212121"
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
@@ -230,22 +230,22 @@ export function LandingAppointmentScheduler() {
                         >
                             <Brain className="w-6 h-6 text-[#212121]" />
                         </motion.div>
-                        <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Assistente IA de Agendamento</h4>
-                        <p className="text-white/80 text-sm">
+                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Assistente IA de Agendamento</h4>
+                        <p className="text-[#616161] text-sm">
                             Envie fotos da sua agenda atual e a IA organiza automaticamente seus compromissos, evitando conflitos de horários.
                         </p>
                     </motion.div>
 
                     <motion.div
-                        className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
                         variants={{
                             hidden: { opacity: 0, y: 30 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
                         whileHover={{
                             scale: 1.03,
-                            backgroundColor: "rgba(255,255,255,0.15)",
-                            borderColor: "rgba(255,255,255,0.4)"
+                            backgroundColor: "#FFFFFF",
+                            borderColor: "#212121"
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
@@ -255,22 +255,22 @@ export function LandingAppointmentScheduler() {
                         >
                             <MessageSquare className="w-6 h-6 text-[#212121]" />
                         </motion.div>
-                        <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Comandos por Texto</h4>
-                        <p className="text-white/80 text-sm">
+                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Comandos por Texto</h4>
+                        <p className="text-[#616161] text-sm">
                             Digite comandos como "agende retorno do João para próxima terça às 10h" e a IA cria o agendamento para você.
                         </p>
                     </motion.div>
 
                     <motion.div
-                        className="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/20 cursor-pointer group"
+                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
                         variants={{
                             hidden: { opacity: 0, y: 30 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
                         whileHover={{
                             scale: 1.03,
-                            backgroundColor: "rgba(255,255,255,0.15)",
-                            borderColor: "rgba(255,255,255,0.4)"
+                            backgroundColor: "#FFFFFF",
+                            borderColor: "#212121"
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
@@ -280,8 +280,8 @@ export function LandingAppointmentScheduler() {
                         >
                             <Zap className="w-6 h-6 text-[#212121]" />
                         </motion.div>
-                        <h4 className="text-lg font-bold text-white mb-2 group-hover:text-[#E0E0E0] transition-colors">Sugestões Inteligentes</h4>
-                        <p className="text-white/80 text-sm">
+                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Sugestões Inteligentes</h4>
+                        <p className="text-[#616161] text-sm">
                             Receba sugestões de horários otimizados baseados no seu padrão de atendimento e disponibilidade.
                         </p>
                     </motion.div>

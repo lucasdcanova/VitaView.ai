@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { LandingNavbar } from "@/components/landing-page/LandingNavbar";
 import { LandingHero } from "@/components/landing-page/LandingHero";
+import { LandingAnamnesis } from "@/components/landing-page/LandingAnamnesis";
 import { LandingVitaTimeline } from "@/components/landing-page/LandingVitaTimeline";
 import { LandingLabView } from "@/components/landing-page/LandingLabView";
 import { LandingAppointmentScheduler } from "@/components/landing-page/LandingAppointmentScheduler";
@@ -93,7 +94,7 @@ export default function LandingPage() {
   // Variáveis de animação removidas (movidas para LandingHero)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FFFFFF] via-[#111111] to-[#000000] overflow-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Background elements - minimalista, sem gradientes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Elementos decorativos sutis em escala de cinza */}
@@ -103,6 +104,7 @@ export default function LandingPage() {
 
       <LandingNavbar />
       <LandingHero />
+      <LandingAnamnesis />
       <LandingVitaTimeline />
 
       {/* Appointment Scheduler Calendar */}

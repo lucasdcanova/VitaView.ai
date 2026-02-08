@@ -4,11 +4,11 @@ import { LineChart, ArrowRight } from "lucide-react";
 
 export function LandingLabView() {
     return (
-        <section id="como-funciona" className="py-12 md:py-24 bg-transparent relative overflow-hidden">
+        <section id="como-funciona" className="py-12 md:py-24 bg-[#0A0A0A] relative overflow-hidden">
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute left-0 top-20 w-72 h-72 bg-[#FFFFFF] rounded-full opacity-5 blur-3xl"></div>
-                <div className="absolute right-0 bottom-20 w-80 h-80 bg-[#FFFFFF] rounded-full opacity-5 blur-3xl"></div>
+                <div className="absolute left-0 top-20 w-72 h-72 bg-white rounded-full opacity-5 blur-3xl"></div>
+                <div className="absolute right-0 bottom-20 w-80 h-80 bg-white rounded-full opacity-5 blur-3xl"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">

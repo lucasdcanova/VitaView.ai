@@ -17,11 +17,11 @@ import {
 
 export function LandingVitaTimeline() {
     return (
-        <section id="demonstracoes" className="py-12 md:py-16 mt-[0] bg-transparent text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        <section id="demonstracoes" className="py-12 md:py-16 mt-[0] bg-white text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
             {/* Elementos decorativos minimalistas */}
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-20 right-10 w-56 h-56 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
-                <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#424242] rounded-full opacity-20 blur-3xl"></div>
+                <div className="absolute top-20 right-10 w-56 h-56 bg-[#F5F5F5] rounded-full opacity-50 blur-3xl"></div>
+                <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#F5F5F5] rounded-full opacity-50 blur-3xl"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -42,10 +42,10 @@ export function LandingVitaTimeline() {
                         Vita Timeline
                     </motion.span>
 
-                    <h2 className="text-2xl md:text-4xl font-heading font-bold text-white mb-4 md:mb-6">
+                    <h2 className="text-2xl md:text-4xl font-heading font-bold text-[#212121] mb-4 md:mb-6">
                         Linha de <span className="text-[#9E9E9E]">Vida</span> do Paciente
                     </h2>
-                    <p className="text-base md:text-lg text-[#E0E0E0] font-body max-w-3xl mx-auto px-2">
+                    <p className="text-base md:text-lg text-[#616161] font-body max-w-3xl mx-auto px-2">
                         Tenha uma visão holística da jornada de saúde do seu paciente. Acesse exames, métricas vitais e histórico clínico em um dashboard centralizado e seguro.
                     </p>
                 </motion.div>
@@ -290,8 +290,8 @@ export function LandingVitaTimeline() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
                         >
-                            <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Analise exames com eficiência e precisão</h3>
-                            <p className="text-base md:text-lg text-white text-opacity-90 mb-4 md:mb-6">
+                            <h3 className="text-xl md:text-2xl font-bold text-[#212121] mb-3">Analise exames com eficiência e precisão</h3>
+                            <p className="text-base md:text-lg text-[#616161] text-opacity-90 mb-4 md:mb-6">
                                 Nossos relatórios transformam dados brutos em insights clínicos, ajudando você a monitorar:
                             </p>
 
@@ -340,8 +340,8 @@ export function LandingVitaTimeline() {
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-white">{item.title}</h4>
-                                            <p className="text-white text-opacity-85">{item.description}</p>
+                                            <h4 className="font-medium text-[#212121]">{item.title}</h4>
+                                            <p className="text-[#616161] text-opacity-85">{item.description}</p>
                                         </div>
                                     </motion.li>
                                 ))}

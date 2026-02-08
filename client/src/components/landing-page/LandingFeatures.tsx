@@ -43,7 +43,7 @@ export function LandingFeatures() {
     ];
 
     return (
-        <section id="recursos" className="py-20 md:py-32 bg-transparent relative">
+        <section id="recursos" className="py-20 md:py-32 bg-[#0A0A0A] relative">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-20">
                     <span className="text-sm font-bold tracking-widest text-white/60 uppercase mb-3 block">
