@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { LandingNavbar } from "@/components/landing-page/LandingNavbar";
 import { LandingHero } from "@/components/landing-page/LandingHero";
-import { LandingVitaTimeline } from "@/components/landing-page/LandingVitaTimeline";
 import { LandingLabView } from "@/components/landing-page/LandingLabView";
 import { LandingAppointmentScheduler } from "@/components/landing-page/LandingAppointmentScheduler";
 import { LandingFeatures } from "@/components/landing-page/LandingFeatures";
@@ -103,9 +102,6 @@ export default function LandingPage() {
 
       <LandingNavbar />
       <LandingHero />
-      <LandingVitaTimeline />
-
-      {/* Appointment Scheduler Calendar */}
       <LandingLabView />
 
 

@@ -52,7 +52,7 @@ export function LandingLabView() {
                             <div className="flex items-center gap-4">
                                 <LineChart className="w-8 h-8 text-white" />
                                 <div>
-                                    <h3 className="text-2xl font-bold">Análise Comparativa</h3>
+                                    <h3 className="text-2xl font-bold text-white">Análise Comparativa</h3>
                                     <p className="text-sm text-[#9E9E9E]">Paciente: Maria Silva - Últimos 6 meses</p>
                                 </div>
                             </div>
