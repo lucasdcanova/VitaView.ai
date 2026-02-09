@@ -21,7 +21,7 @@ export function LandingPricing() {
                         transition={{ duration: 0.5 }}
                     >
                         <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] mb-6">
-                            Simples, Completo e <span className="text-blue-600">Acessível</span>.
+                            Simples, Completo e <span className="text-[#212121] underline decoration-4 decoration-[#E0E0E0]">Acessível</span>.
                         </h2>
                         <p className="text-lg text-[#757575] font-body">
                             Nosso diferencial é entregar tudo o que você precisa sem cobrar mais por isso.
