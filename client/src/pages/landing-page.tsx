@@ -11,6 +11,7 @@ import { LandingForWhom } from "@/components/landing-page/LandingForWhom";
 import { LandingTestimonials } from "@/components/landing-page/LandingTestimonials";
 import { LandingPricing } from "@/components/landing-page/LandingPricing";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
+import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
 import { LandingFAQ } from "@/components/landing-page/LandingFAQ";
 import { LandingFooter } from "@/components/landing-page/LandingFooter";
 
@@ -103,7 +104,7 @@ export default function LandingPage() {
       <LandingNavbar />
       <LandingHero />
       <LandingLabView />
-
+      <LandingPrescription />
 
       {/* Appointment Scheduler Calendar */}
       <LandingAppointmentScheduler />
