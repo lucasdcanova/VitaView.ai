@@ -106,7 +106,7 @@ export function LandingAISuggestions() {
                                 </span>
                             </h2>
                             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-                                Esqueça a busca manual por posologias. Nossa IA analisa o contexto do paciente e sugere a dose correta diretamente no campo de prescrição, economizando cliques e segundos preciosos.
+                                Esqueça a busca manual por posologias. Nossa IA analisa o contexto do paciente e sugere a posologia mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.
                             </p>
 
                             <div className="grid grid-cols-1 gap-6 mb-8">
