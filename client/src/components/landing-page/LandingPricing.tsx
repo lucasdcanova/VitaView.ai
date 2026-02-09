@@ -91,12 +91,11 @@ export function LandingPricing() {
 
                         <ul className="space-y-4 mb-8">
                             {[
-                                "Acesso completo à plataforma",
-                                "IA Ilimitada para transcrições",
-                                "Armazenamento seguro",
-                                "Agenda Inteligente",
-                                "Prescrição Digital",
-                                "Suporte Prioritário"
+                                "Pacientes ilimitados",
+                                "Extrações por IA ilimitadas",
+                                "Prontuário inteligente completo",
+                                "Agenda inteligente com lembretes",
+                                "Suporte prioritário via WhatsApp"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center">
                                     <div className="bg-[#212121] rounded-full p-1 mr-3 flex-shrink-0">
@@ -135,10 +134,10 @@ export function LandingPricing() {
                         </div>
                         <ul className="space-y-4 mb-8 border-t border-[#E0E0E0] pt-6">
                             {[
-                                "Múltiplos profissionais",
-                                "Gestão de permissões",
-                                "API dedicada",
-                                "Onboarding personalizado",
+                                "Profissionais ilimitados",
+                                "Integração HL7/FHIR",
+                                "Análise de dados populacional",
+                                "Gestor de conta dedicado",
                                 "SLA de suporte 24/7"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center text-[#616161]">
