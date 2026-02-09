@@ -39,7 +39,7 @@ export function LandingAISuggestions() {
                                     <div className="relative">
                                         <div className="flex items-center bg-[#1A1A1A] border border-white/20 rounded-lg p-4 shadow-inner">
                                             <div className="w-px h-6 bg-white/20 mr-4 animate-pulse"></div>
-                                            <span className="text-lg text-white font-medium">Amoxicili</span>
+                                            <span className="text-lg text-white font-medium">Dipi</span>
                                         </div>
 
                                         {/* AI Suggestion Dropdown/Tooltip */}
@@ -52,7 +52,7 @@ export function LandingAISuggestions() {
                                         >
                                             <div className="p-1">
                                                 <div className="flex items-center justify-between px-3 py-2 bg-white/5 rounded">
-                                                    <span className="text-white font-medium">Amoxicilina 500mg</span>
+                                                    <span className="text-white font-medium">Dipirona 500mg</span>
                                                     <span className="text-xs bg-white text-black px-1.5 py-0.5 rounded font-bold">IA</span>
                                                 </div>
                                             </div>
@@ -62,10 +62,10 @@ export function LandingAISuggestions() {
                                                     <Sparkles className="w-4 h-4 text-white mt-1 shrink-0" />
                                                     <div>
                                                         <p className="text-sm text-white/90 font-medium mb-1">
-                                                            Sugestão para Infecção Respiratória:
+                                                            Sugestão para Dor/Febre:
                                                         </p>
                                                         <p className="text-xs text-white/60">
-                                                            Tomar 1 cápsula (500mg) a cada 8 horas por 7 dias.
+                                                            Tomar 1 comprimido (500mg) a cada 6 horas se necessário.
                                                         </p>
                                                         <div className="mt-2 flex gap-2">
                                                             <span className="text-[10px] border border-white/20 rounded px-1.5 py-0.5 text-white/50">Baseado no histórico</span>
