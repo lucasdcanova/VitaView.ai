@@ -12,6 +12,7 @@ import { LandingTestimonials } from "@/components/landing-page/LandingTestimonia
 import { LandingPricing } from "@/components/landing-page/LandingPricing";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
 import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
+import { LandingAISuggestions } from "@/components/landing-page/LandingAISuggestions";
 import { LandingFAQ } from "@/components/landing-page/LandingFAQ";
 import { LandingFooter } from "@/components/landing-page/LandingFooter";
 
@@ -105,6 +106,7 @@ export default function LandingPage() {
       <LandingHero />
       <LandingLabView />
       <LandingPrescription />
+      <LandingAISuggestions />
 
       {/* Appointment Scheduler Calendar */}
       <LandingAppointmentScheduler />
