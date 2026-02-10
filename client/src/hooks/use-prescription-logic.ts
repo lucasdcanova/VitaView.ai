@@ -130,9 +130,10 @@ export function usePrescriptionLogic(patient: Profile) {
             setAcuteItems([]);
             setEditingPrescriptionId(null);
         },
-        onError: (err) => {
+        onError: (err: any) => {
             console.error(err);
-            toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
+            const msg = err.message || "Falha ao salvar receita.";
+            toast({ title: "Erro", description: msg, variant: "destructive" });
         }
     });
 
@@ -314,10 +315,11 @@ export function usePrescriptionLogic(patient: Profile) {
             setEditingPrescriptionId(null);
             setPrescriptionObservations("");
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             if (pdfWindow) pdfWindow.close();
-            toast({ title: "Erro", description: "Falha ao salvar receita.", variant: "destructive" });
+            const msg = error.message || "Falha ao salvar receita.";
+            toast({ title: "Erro", description: msg, variant: "destructive" });
         }
     };
 
@@ -409,10 +411,11 @@ export function usePrescriptionLogic(patient: Profile) {
 
             toast({ title: "Sucesso", description: "Receita renovada e gerada!" });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             if (pdfWindow) pdfWindow.close();
-            toast({ title: "Erro", description: "Falha ao renovar receita.", variant: "destructive" });
+            const msg = error.message || "Falha ao renovar receita.";
+            toast({ title: "Erro", description: msg, variant: "destructive" });
         }
     };
 

@@ -14,6 +14,7 @@ import { advancedSecurity } from "./middleware/advanced-security";
 import { ensureAuthenticated } from "./middleware/auth.middleware";
 import { ensureTenant } from "./middleware/tenant.middleware";
 import { checkFairUse, trackUsage } from "./middleware/fair-use";
+import { checkPrescriptionLimit } from "./middleware/prescription-limit";
 import { rbacSystem } from "./auth/rbac-system";
 import { intrusionDetection } from "./security/intrusion-detection";
 import { encryptedBackup } from "./backup/encrypted-backup";
@@ -821,6 +822,21 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Paciente inválido para este profissional." });
       }
 
+      // Verificação de Limite de Uploads do Plano
+      const subscription = await storage.getUserSubscription(userId);
+      if (subscription) {
+        const plan = await storage.getSubscriptionPlan(subscription.planId);
+        // Se o plano tiver limite (diferente de -1)
+        if (plan && plan.maxUploadsPerProfile !== -1) {
+          const currentExamCount = await storage.getExamsCountByProfileId(profileId);
+          if (currentExamCount >= plan.maxUploadsPerProfile) {
+            return res.status(403).json({
+              message: `Limite de exames por paciente atingido (${plan.maxUploadsPerProfile}). Faça um upgrade para enviar mais exames.`
+            });
+          }
+        }
+      }
+
       // Upload para S3/Local
       const s3Result = await S3Service.uploadExamDocument({
         userId,
@@ -898,6 +914,21 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (!profileId || Number.isNaN(profileId)) {
         return res.status(400).json({ message: "Selecione um paciente." });
+      }
+
+      // Verificação de Limite de Uploads do Plano (Múltiplos)
+      const subscription = await storage.getUserSubscription(userId);
+      if (subscription) {
+        const plan = await storage.getSubscriptionPlan(subscription.planId);
+        // Se o plano tiver limite (diferente de -1)
+        if (plan && plan.maxUploadsPerProfile !== -1) {
+          const currentExamCount = await storage.getExamsCountByProfileId(profileId);
+          if (currentExamCount + files.length > plan.maxUploadsPerProfile) {
+            return res.status(403).json({
+              message: `Limite de exames por paciente atingido (${plan.maxUploadsPerProfile}). Você tem ${currentExamCount} exames e tentou enviar mais ${files.length}. Faça um upgrade.`
+            });
+          }
+        }
       }
 
       const results = [];
@@ -3971,7 +4002,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Create prescription route
-  app.post("/api/prescriptions", ensureAuthenticated, async (req, res) => {
+  app.post("/api/prescriptions", ensureAuthenticated, checkFairUse('aiRequests'), checkPrescriptionLimit, async (req, res) => {
     try {
       const user = req.user as any;
       const { profileId, doctorName, doctorCrm, doctorSpecialty, patientName, medications, issueDate, validUntil, observations, status } = req.body;

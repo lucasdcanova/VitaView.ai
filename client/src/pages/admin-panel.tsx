@@ -1442,7 +1442,7 @@ export default function AdminPanel() {
       {/* Dialog de Alteração de Plano */}
       {selectedUser && (
         <Dialog open={isChangePlanOpen} onOpenChange={setIsChangePlanOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Alterar Plano</DialogTitle>
               <DialogDescription>
@@ -1454,31 +1454,101 @@ export default function AdminPanel() {
                 Plano atual: <strong>{selectedUser.plan?.name || "Gratuito"}</strong>
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {subscriptionPlans.map((plan) => (
-                  <Card
-                    key={plan.id}
-                    className={`cursor-pointer hover:border-primary transition-all duration-200 ${selectedUser.subscription?.planId === plan.id ? 'border-primary bg-primary/5' : ''
-                      }`}
-                    onClick={() => handleChangePlan(plan.id)}
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="font-semibold text-lg mb-2">
-                        {plan.price === 0
-                          ? "Grátis"
-                          : `R$${(plan.price / 100).toFixed(2)}/${plan.interval === 'month' ? 'mês' : 'ano'}`
-                        }
-                      </div>
-                      <ul className="text-sm space-y-1">
-                        <li>{plan.maxProfiles} perfis</li>
-                        <li>{plan.maxUploadsPerProfile} uploads por perfil</li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Group plans by base name */}
+                {(() => {
+                  const planGroups: Record<string, typeof subscriptionPlans> = {};
+                  const planOrder = ['gratuito', 'vita pro', 'vita team', 'vita business', 'hospitais'];
+
+                  subscriptionPlans.forEach((plan) => {
+                    const baseName = plan.name
+                      .replace(/ mensal| semestral| anual/i, '')
+                      .trim()
+                      .toLowerCase();
+                    if (!planGroups[baseName]) {
+                      planGroups[baseName] = [];
+                    }
+                    planGroups[baseName].push(plan);
+                  });
+
+                  return planOrder
+                    .filter(name => planGroups[name])
+                    .map((baseName) => {
+                      const group = planGroups[baseName];
+                      const monthly = group.find(p => p.interval === 'month');
+                      const semiannual = group.find(p => p.interval === '6month');
+                      const annual = group.find(p => p.interval === 'year');
+                      const representativePlan = monthly || group[0];
+                      const isCurrentPlan = group.some(p => selectedUser.subscription?.planId === p.id);
+                      const displayName = representativePlan.name
+                        .replace(/ mensal| semestral| anual/i, '')
+                        .trim();
+
+                      return (
+                        <Card
+                          key={baseName}
+                          className={`transition-all duration-200 ${isCurrentPlan ? 'border-primary bg-primary/5' : ''}`}
+                        >
+                          <CardHeader className="p-4 pb-2">
+                            <CardTitle className="text-sm font-semibold">{displayName}</CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                              {representativePlan.price === 0
+                                ? "Grátis"
+                                : `A partir de R$${(representativePlan.price / 100).toFixed(0)}/mês`
+                              }
+                            </p>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0 space-y-2">
+                            <div className="space-y-1.5">
+                              {monthly && (
+                                <Button
+                                  variant={selectedUser.subscription?.planId === monthly.id ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-full text-xs h-8 justify-between"
+                                  onClick={() => handleChangePlan(monthly.id)}
+                                >
+                                  <span>Mensal</span>
+                                  <span className="font-normal">{monthly.price === 0 ? 'Grátis' : `R$${(monthly.price / 100).toFixed(0)}`}</span>
+                                </Button>
+                              )}
+                              {semiannual && (
+                                <Button
+                                  variant={selectedUser.subscription?.planId === semiannual.id ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-full text-xs h-8 justify-between"
+                                  onClick={() => handleChangePlan(semiannual.id)}
+                                >
+                                  <span>Semestral</span>
+                                  <span className="font-normal">{`R$${(semiannual.price / 100).toFixed(0)}`}</span>
+                                </Button>
+                              )}
+                              {annual && (
+                                <Button
+                                  variant={selectedUser.subscription?.planId === annual.id ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-full text-xs h-8 justify-between"
+                                  onClick={() => handleChangePlan(annual.id)}
+                                >
+                                  <span>Anual</span>
+                                  <span className="font-normal">{`R$${(annual.price / 100).toFixed(0)}`}</span>
+                                </Button>
+                              )}
+                              {!monthly && !semiannual && !annual && (
+                                <Button
+                                  variant={isCurrentPlan ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-full text-xs h-8"
+                                  onClick={() => handleChangePlan(representativePlan.id)}
+                                >
+                                  Selecionar
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    });
+                })()}
               </div>
             </div>
             <DialogFooter>

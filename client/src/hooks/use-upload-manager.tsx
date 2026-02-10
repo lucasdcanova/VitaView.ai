@@ -131,7 +131,10 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                 body: JSON.stringify({ files: filePayloads, profileId })
             });
 
-            if (!response.ok) throw new Error("Falha no upload");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Falha no upload");
+            }
 
             const data = await response.json();
 
@@ -160,10 +163,11 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                 description: "Seus arquivos estão sendo processados em segundo plano."
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload error", error);
-            setUploads(prev => prev.map(u => newUploads.find(nu => nu.id === u.id) ? { ...u, status: 'failed', error: "Falha no envio" } : u));
-            toast({ title: "Erro no upload", description: "Não foi possível enviar os arquivos.", variant: "destructive" });
+            const msg = error.message || "Não foi possível enviar os arquivos.";
+            setUploads(prev => prev.map(u => newUploads.find(nu => nu.id === u.id) ? { ...u, status: 'failed', error: msg } : u));
+            toast({ title: "Erro no upload", description: msg, variant: "destructive" });
         }
     }, [toast]);
 

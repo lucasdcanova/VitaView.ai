@@ -49,18 +49,19 @@ export function LandingPricing() {
                             <p className="text-sm text-[#9E9E9E] mt-2">Média de mercado para planos iniciais</p>
                         </div>
                         <ul className="space-y-4 mb-8 border-t border-[#E0E0E0] pt-6">
-                            <li className="flex items-center text-[#9E9E9E]">
-                                <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
-                                <span>Interface complexa</span>
-                            </li>
-                            <li className="flex items-center text-[#9E9E9E]">
-                                <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
-                                <span>IA vendida à parte</span>
-                            </li>
-                            <li className="flex items-center text-[#9E9E9E]">
-                                <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
-                                <span>Limite de pacientes</span>
-                            </li>
+                            {[
+                                "IA cobrada como extra",
+                                "Limite de pacientes",
+                                "Agenda sem integração",
+                                "Prescrição limitada",
+                                "Prontuário engessado",
+                                "Suporte apenas por e-mail"
+                            ].map((feature, i) => (
+                                <li key={i} className="flex items-center text-[#9E9E9E]">
+                                    <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                                    <span>{feature}</span>
+                                </li>
+                            ))}
                         </ul>
                     </motion.div>
 
@@ -77,43 +78,53 @@ export function LandingPricing() {
                         </div>
 
                         <div className="mb-6">
-                            <h3 className="text-2xl font-bold text-[#212121]">Plano Vita</h3>
+                            <h3 className="text-2xl font-bold text-[#212121]">Vita Pro</h3>
                             <p className="text-[#757575] mt-2">Para quem busca eficiência máxima.</p>
 
-                            <div className="flex items-baseline mt-6">
-                                <span className="text-5xl font-extrabold text-[#212121]">R$ 69</span>
-                                <span className="text-[#757575] font-medium ml-2">/mês</span>
+                            <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl px-4 py-3 text-center">
+                                <span className="text-sm font-bold text-green-700 uppercase tracking-wide">🎉 1º Mês Grátis</span>
                             </div>
-                            <p className="text-sm text-green-600 font-medium mt-2 bg-green-50 inline-block px-2 py-1 rounded">
-                                Economia de ~30% vs concorrentes
-                            </p>
+
+                            <div className="mt-4 text-center">
+                                <p className="text-xs text-[#9E9E9E] uppercase tracking-widest font-semibold mb-1">a partir de</p>
+                                <div className="flex items-end justify-center">
+                                    <span className="text-[#212121] text-2xl font-bold leading-none mr-0.5">R$</span>
+                                    <span className="text-6xl font-black text-[#212121] leading-none">63</span>
+                                    <span className="text-[#212121] text-2xl font-bold leading-none ml-0.5">,20</span>
+                                    <span className="text-[#757575] text-lg font-medium ml-1 mb-1">/mês</span>
+                                </div>
+                                <p className="text-xs text-[#9E9E9E] mt-2">no plano anual · <span className="line-through">R$ 79/mês</span> avulso</p>
+                            </div>
                         </div>
 
                         <ul className="space-y-4 mb-8">
                             {[
-                                "Pacientes ilimitados",
-                                "Extrações por IA ilimitadas",
-                                "Prontuário inteligente completo",
-                                "Agenda inteligente com lembretes",
-                                "Suporte prioritário via WhatsApp"
+                                "Anamnese com <strong>IA</strong> e Gravação de Voz",
+                                "Prescrição <strong>Ilimitada</strong> com Alerta de Interações",
+                                "Protocolos de Exames <strong>Personalizáveis</strong>",
+                                "Análise de Exames com <strong>IA</strong>",
+                                "Gráficos de <strong>Evolução</strong> de Exames",
+                                "Upload de Exames <strong>Ilimitados</strong>",
+                                "<strong>Vita Assist</strong> – Assistente Inteligente",
+                                "Relatórios <strong>Completos</strong>"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center">
                                     <div className="bg-[#212121] rounded-full p-1 mr-3 flex-shrink-0">
                                         <CheckCircle2 className="h-3 w-3 text-white" />
                                     </div>
-                                    <span className="text-[#212121] font-medium">{feature}</span>
+                                    <span className="text-[#212121] font-medium" dangerouslySetInnerHTML={{ __html: feature }} />
                                 </li>
                             ))}
                         </ul>
 
                         <Link href="/auth">
                             <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white h-12 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all">
-                                Começar Teste Grátis
+                                Começar Teste de 30 Dias
                                 <ChevronRight className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
                         <p className="text-xs text-center text-[#9E9E9E] mt-4">
-                            7 dias grátis. Cancele quando quiser.
+                            30 dias grátis. Cancele quando quiser.
                         </p>
                     </motion.div>
 

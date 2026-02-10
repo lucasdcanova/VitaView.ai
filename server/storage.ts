@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, asc, and, or, inArray, sql, gt, ne, gte, lte } from "drizzle-orm";
+import { eq, desc, asc, and, or, inArray, sql, gt, ne, gte, lte, count } from "drizzle-orm";
 import logger from "./logger";
 
 // Fix for type issues - use any to bypass complex type definitions
@@ -125,6 +125,9 @@ export interface IStorage {
   getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
   getUserSubscription(userId: number): Promise<Subscription | undefined>;
   createUserSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getPrescriptionsByUserId(userId: number): Promise<Prescription[]>;
+  getPrescriptionsCountByUserIdAndDate(userId: number, startDate: Date, endDate: Date): Promise<number>;
+  getExamsCountByProfileId(profileId: number): Promise<number>;
   updateUserSubscription(id: number, data: Partial<Subscription>): Promise<Subscription | undefined>;
   cancelUserSubscription(id: number): Promise<Subscription | undefined>;
   incrementProfileCount(subscriptionId: number): Promise<number>;
@@ -235,6 +238,9 @@ export interface IStorage {
   // User Consent operations
   createUserConsent(consent: InsertUserConsent): Promise<UserConsent>;
 
+  // TUSS Procedures
+  searchTussProcedures(query: string, limit?: number): Promise<any[]>;
+
   // Audit Log operations
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
 
@@ -338,43 +344,54 @@ export class MemStorage implements IStorage {
       maxUploadsPerProfile: 10,
       price: 0,
       interval: "month",
-      features: ["Limite de 20 pacientes", "10 uploads por paciente", "Análise de 1 página por upload", "Agenda básica"],
+      features: [
+        "Anamnese Básica sem IA",
+        "Prescrição Digital Limitada (10/mês)",
+        "Protocolos Clínicos Padrão",
+        "Agenda Básica",
+        "Gerenciamento de Pacientes Limitado (20)",
+        "Upload de Exames Limitado (10/mês)",
+        "Relatórios Básicos"
+      ],
       isActive: true
     });
 
     // Plano Profissional de Saúde
     await this.createSubscriptionPlan({
       name: "Profissional de Saúde",
-      description: "Ideal para médicos e terapeutas em carreira solo",
+      description: "Ideal para médicos e terapeutas em carreira solo. 1º mês grátis.",
       maxProfiles: -1,
       maxUploadsPerProfile: -1,
-      price: 9900, // R$ 99,00
+      price: 7900, // R$ 79,00
       interval: "month",
       features: ["Pacientes ilimitados", "Extrações por IA ilimitadas", "Prontuário inteligente completo", "Agenda inteligente com lembretes", "Suporte prioritário via WhatsApp"],
+      trialPeriodDays: 30,
       isActive: true
     });
 
     // Plano Clínica Multiprofissional (até 5 profissionais)
     await this.createSubscriptionPlan({
       name: "Clínica Multiprofissional",
-      description: "Gestão completa para clínicas pequenas",
+      description: "Gestão completa para clínicas pequenas. 1º mês grátis.",
       maxProfiles: -1,
       maxUploadsPerProfile: -1,
-      price: 29900, // R$ 299,00
+      price: 14900, // R$ 149,00
       interval: "month",
       features: ["Tudo do plano Profissional", "Até 5 profissionais inclusos", "Conta administradora", "Gerenciamento de equipe", "Relatórios consolidados"],
+      trialPeriodDays: 30,
       isActive: true
     });
 
     // Plano Clínica Multiprofissional+ (5+ profissionais)
     await this.createSubscriptionPlan({
       name: "Clínica Multiprofissional+",
-      description: "Gestão completa para clínicas maiores",
+      description: "Gestão completa para clínicas maiores. 1º mês grátis.",
       maxProfiles: -1,
       maxUploadsPerProfile: -1,
-      price: 49900, // R$ 499,00
+      price: 24900, // R$ 249,00
       interval: "month",
       features: ["Tudo do plano Profissional", "Profissionais ilimitados (5+)", "Conta administradora", "Gerenciamento de equipe avançado", "Relatórios consolidados", "Suporte prioritário"],
+      trialPeriodDays: 30,
       isActive: true
     });
 
@@ -877,6 +894,20 @@ export class MemStorage implements IStorage {
 
   async getEvolutionsByProfileId(userId: number, profileId: number): Promise<Evolution[]> {
     return Array.from(this.evolutionsMap.values()).filter(e => e.userId === userId && e.profileId === profileId);
+  }
+
+  async getPrescriptionsByUserId(userId: number): Promise<Prescription[]> {
+    return Array.from(this.prescriptionsMap.values()).filter(p => p.userId === userId);
+  }
+
+  async getExamsCountByProfileId(profileId: number): Promise<number> {
+    return Array.from(this.exams.values()).filter(e => e.profileId === profileId).length;
+  }
+
+  async getPrescriptionsCountByUserIdAndDate(userId: number, startDate: Date, endDate: Date): Promise<number> {
+    return Array.from(this.prescriptionsMap.values()).filter(
+      p => p.userId === userId && p.createdAt >= startDate && p.createdAt <= endDate
+    ).length;
   }
 
   async deleteEvolution(id: number): Promise<boolean> {
@@ -2359,6 +2390,31 @@ export class DatabaseStorage implements IStorage {
   async getEvolution(id: number): Promise<Evolution | undefined> {
     const [e] = await db.select().from(evolutions).where(eq(evolutions.id, id));
     return e;
+  }
+  async getPrescriptionsByUserId(userId: number): Promise<Prescription[]> {
+    return db.select().from(prescriptions).where(eq(prescriptions.userId, userId));
+  }
+
+  async getExamsCountByProfileId(profileId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(exams)
+      .where(eq(exams.profileId, profileId));
+    return result.count;
+  }
+
+  async getPrescriptionsCountByUserIdAndDate(userId: number, startDate: Date, endDate: Date): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(prescriptions)
+      .where(
+        and(
+          eq(prescriptions.userId, userId),
+          gte(prescriptions.createdAt, startDate),
+          lte(prescriptions.createdAt, endDate)
+        )
+      );
+    return result.count;
   }
   async getEvolutionsByUserId(userId: number): Promise<Evolution[]> {
     return await db.select().from(evolutions).where(eq(evolutions.userId, userId)).orderBy(desc(evolutions.date));

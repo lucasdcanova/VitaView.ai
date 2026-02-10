@@ -25,7 +25,8 @@ import {
   Mail,
   UserPlus,
   Trash2,
-  Crown
+  Crown,
+  ArrowRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -115,9 +116,11 @@ const SubscriptionManagement = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // States for Plans Logic
-  const [selectedCategory, setSelectedCategory] = useState<PlanCategory>('solo');
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('month');
+  const [selectedCategory, setSelectedCategory] = useState<PlanCategory>('clinic');
+  // billingPeriod removed
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [selectedInterval, setSelectedInterval] = useState<'month' | 'semester' | 'year'>('year');
+  const [selectedIntervals, setSelectedIntervals] = useState<Record<string, string>>({});
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
 
@@ -227,13 +230,6 @@ const SubscriptionManagement = () => {
 
   const categories = [
     {
-      id: 'solo' as PlanCategory,
-      title: 'Vita Pro',
-      description: 'Planos a partir de R$ 79/mês',
-      icon: Users,
-      color: 'bg-gray-50 border-gray-200 hover:bg-white'
-    },
-    {
       id: 'clinic' as PlanCategory,
       title: 'Vita Team',
       description: 'Planos a partir de R$ 149/mês',
@@ -241,58 +237,68 @@ const SubscriptionManagement = () => {
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     },
     {
+      id: 'solo' as PlanCategory,
+      title: 'Vita Business',
+      description: 'Gestão completa para clínicas',
+      icon: Users,
+      color: 'bg-gray-50 border-gray-200 hover:bg-white'
+    },
+    {
       id: 'hospital' as PlanCategory,
-      title: 'Hospitais',
-      description: 'Soluções Enterprise sob consulta',
+      title: 'Vita Enterprise',
+      description: 'Soluções para hospitais',
       icon: Hospital,
       color: 'bg-gray-50 border-gray-200 hover:bg-white'
     }
   ];
 
-  // Filter plans based on selected category and billing period
-  const getPlansForCategory = (category: PlanCategory) => {
+  // Group plans based on selected category
+  const getPlanGroups = (category: PlanCategory) => {
     if (!category) return [];
 
     const normalizedPlans = allPlans.map(p => ({
       ...p,
       normalizedName: (p.name || "").toLowerCase().trim(),
-      baseName: (p.name || "").toLowerCase().replace(' semestral', '').replace(' anual', '').trim()
+      baseName: (p.name || "").toLowerCase().replace(' semestral', '').replace(' anual', '').replace(' mensal', '').trim()
     }));
 
     // Get base plan names for each category
     let basePlanNames: string[] = [];
     switch (category) {
-      case 'solo':
-        basePlanNames = ['gratuito', 'vita pro'];
-        break;
       case 'clinic':
-        basePlanNames = ['gratuito', 'vita team', 'vita business'];
+        basePlanNames = ['vita team'];
+        break;
+      case 'solo':
+        basePlanNames = ['vita business'];
         break;
       case 'hospital':
-        basePlanNames = ['gratuito', 'hospitais'];
+        basePlanNames = ['hospitais'];
         break;
       default:
         return [];
     }
 
-    // Filter by base name and interval
-    return normalizedPlans.filter(plan => {
-      // Check if plan belongs to this category
-      const belongsToCategory = basePlanNames.includes(plan.baseName);
-      if (!belongsToCategory) return false;
+    // Filter and group
+    const categoryPlans = normalizedPlans.filter(plan => basePlanNames.includes(plan.baseName));
 
-      // Gratuito is always monthly
-      if (plan.baseName === 'gratuito') {
-        return billingPeriod === 'month';
-      }
+    const groups: Record<string, typeof categoryPlans> = {};
+    categoryPlans.forEach(plan => {
+      if (!groups[plan.baseName]) groups[plan.baseName] = [];
+      groups[plan.baseName].push(plan);
+    });
 
-      // Filter by billing period
-      return plan.interval === billingPeriod;
+    return Object.values(groups).sort((a, b) => {
+      const order = basePlanNames;
+      const nameA = a[0].baseName;
+      const nameB = b[0].baseName;
+      return order.indexOf(nameA) - order.indexOf(nameB);
     });
   };
 
-  const plans = getPlansForCategory(selectedCategory);
-  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
+  const planGroups = getPlanGroups(selectedCategory);
+
+  // Find selected plan details (for payment dialog)
+  const selectedPlan = allPlans.find(plan => plan.id === selectedPlanId);
 
   // Mutation to cancel subscription
   const cancelSubscriptionMutation = useMutation({
@@ -389,51 +395,161 @@ const SubscriptionManagement = () => {
               <p className="text-gray-500">Gerencie seu plano atual e explore novas opções.</p>
             </div>
 
-            {/* SECTION 1: Current Plan & Usage */}
+
+
+            {/* SECTION 1: Plans for Independent Professionals */}
             <section className="space-y-6">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                Meu Plano Atual
+                {(currentPlan?.name?.toLowerCase().includes('team') || currentPlan?.name?.toLowerCase().includes('business') || currentPlan?.name?.toLowerCase().includes('hospitais'))
+                  ? 'Clínicas Multiprofissionais'
+                  : 'Profissionais Independentes'}
               </h2>
 
               {!hasActiveSubscription ? (
-                <Card className="border-dashed border-2">
-                  <CardContent className="py-4 px-6">
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                      {/* Left: Plan info */}
-                      <div className="flex items-center gap-3 flex-1">
-                        <AlertCircle className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Free Plan Card - Updated with complete features list */}
+                  <Card className="border-dashed border-2 md:col-span-1 relative">
+                    <div className="absolute top-3 right-3">
+                      <Badge variant="secondary" className="text-[10px] uppercase font-bold">Plano Atual</Badge>
+                    </div>
+                    <CardHeader>
+                      <CardTitle>Plano Gratuito</CardTitle>
+                      <CardDescription>Para organizar sua rotina</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ul className="space-y-2 text-sm">
+                        {(Array.isArray(currentPlan?.features) ? currentPlan.features as string[] : []).map((feature: string, i: number) => (
+                          <li key={i} className="flex items-start">
+                            <CheckCircle className={`h-4 w-4 mr-2 mt-0.5 ${feature.includes('(') ? 'text-gray-400' : 'text-green-500'}`} />
+                            <span className={feature.includes('(') ? 'text-muted-foreground' : ''} dangerouslySetInnerHTML={{ __html: feature }} />
+                          </li>
+                        ))}
+                        {(!currentPlan?.features || currentPlan.features.length === 0) && (
+                          <>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Anamnese Básica sem IA</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Prescrição Digital Limitada (10/mês)</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Protocolos Clínicos Padrão</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Agenda Básica</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Gerenciamento de Pacientes Limitado (20)</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Upload de Exames Limitado (10/mês)</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Relatórios Básicos</span></li>
+                          </>
+                        )}
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <div className="w-full text-center text-xs text-muted-foreground">
+                        Plano atual
+                      </div>
+                    </CardFooter>
+                  </Card>
+
+                  {/* Vita Pro Card - NEW 2-COLUMN LAYOUT */}
+                  <Card className="md:col-span-2 border-primary/20 shadow-md relative overflow-hidden">
+                    <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                      RECOMENDADO
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+                      {/* LEFT COLUMN: Features */}
+                      <div className="p-6 bg-gray-50/50 border-r border-gray-100 flex flex-col justify-between">
                         <div>
-                          <h2 className="text-lg font-semibold">Plano Básico (Gratuito)</h2>
-                          <p className="text-sm text-muted-foreground">
-                            Limite de <strong>20 pacientes</strong>, <strong>10 uploads</strong>/perfil e <strong>1 página</strong>/upload
+                          <h3 className="text-xl font-bold text-gray-900 mb-1">Vita Pro</h3>
+                          <p className="text-sm text-gray-500 mb-6">Ideal para profissionais independentes</p>
+
+                          <div className="space-y-3">
+                            <ul className="space-y-2">
+                              {[
+                                "Anamnese com <strong>IA</strong> e Gravação de Voz",
+                                "Prescrição <strong>Ilimitada</strong> com Alerta de Interações",
+                                "Protocolos de Exames <strong>Personalizáveis</strong>",
+                                "Análise de Exames com <strong>IA</strong>",
+                                "Gráficos de <strong>Evolução</strong> de Exames",
+                                "Upload de Exames <strong>Ilimitados</strong>",
+                                "<strong>Vita Assist</strong> – Assistente Inteligente",
+                                "Relatórios <strong>Completos</strong>"
+                              ].map((item, i) => (
+                                <li key={i} className="flex items-start text-sm">
+                                  <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                  <span dangerouslySetInnerHTML={{ __html: item }} />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="mt-6 md:mt-0 pt-4 md:pt-0">
+                          <p className="text-xs text-muted-foreground">
+                            * Recursos de IA sujeitos a política de uso justo.
                           </p>
                         </div>
                       </div>
 
-                      {/* Right: Stats */}
-                      <div className="flex gap-3">
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
-                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Pacientes</div>
-                          <div className="text-lg font-bold">20</div>
+                      {/* RIGHT COLUMN: Pricing & Action */}
+                      <div className="p-6 flex flex-col justify-center items-center text-center bg-white">
+                        <h3 className="text-2xl font-bold text-green-600 mb-1">1º Mês Grátis</h3>
+                        <p className="text-sm text-gray-500 mb-6">Depois R$ 63,20/mês <br />(no plano anual)</p>
+
+                        <div className="w-full max-w-xs space-y-3 mb-6">
+
+                          <div className="bg-gray-50 p-1 rounded-lg border">
+                            {['Anual', 'Semestral', 'Mensal'].map((period) => {
+                              const isSelected = selectedInterval === (period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month');
+                              const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
+                              const price = period === 'Anual' ? 'R$ 63,20' : period === 'Semestral' ? 'R$ 71,10' : 'R$ 79,00';
+
+                              // Find actual plans from data
+                              const targetPlan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === (period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month'));
+
+                              return (
+                                <div
+                                  key={period}
+                                  onClick={() => {
+                                    if (targetPlan) setSelectedPlanId(targetPlan.id);
+                                    setSelectedInterval(period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month');
+                                  }}
+                                  className={`
+                                                     flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all text-sm mb-1 last:mb-0
+                                                     ${isSelected ? 'bg-white shadow-sm border border-green-200 ring-1 ring-green-100' : 'hover:bg-gray-100'}
+                                                 `}
+                                >
+                                  <div className="flex items-center">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-2 ${isSelected ? 'border-green-500' : 'border-gray-300'}`}>
+                                      {isSelected && <div className="w-2 h-2 rounded-full bg-green-500" />}
+                                    </div>
+                                    <span className={isSelected ? 'font-medium text-gray-900' : 'text-gray-600'}>{period}</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    {discount && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded mr-2">{discount} OFF</span>}
+                                    <span className={`font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>{price}/mês</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
-                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Uploads</div>
-                          <div className="text-lg font-bold">10</div>
-                        </div>
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg border text-center min-w-[70px]">
-                          <div className="text-[9px] text-muted-foreground uppercase font-bold">Páginas</div>
-                          <div className="text-lg font-bold">1</div>
-                        </div>
+
+                        <Button
+                          size="lg"
+                          className="w-full max-w-xs bg-gray-900 hover:bg-black text-white"
+                          onClick={() => {
+                            // Find the selected plan ID based on interval
+                            const plan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === selectedInterval);
+                            if (plan) handleStartPayment(plan.id);
+                          }}
+                        >
+                          Escolher este Plano
+                        </Button>
+                        <p className="text-[10px] text-gray-400 mt-4">
+                          Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === 'semester' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
+                        </p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center md:text-right mt-3">
-                      Assine um plano profissional para desbloquear recursos ilimitados.
-                    </p>
-                  </CardContent>
-                </Card>
+                  </Card>
+                </div>
               ) : (
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* ... existing active plan view ... */}
                   <Card>
                     <CardHeader>
                       <div className="flex justify-between items-start">
@@ -450,8 +566,11 @@ const SubscriptionManagement = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between py-2 border-b text-sm">
                           <span className="text-muted-foreground">Valor</span>
-                          <span className="font-medium">
-                            {currentPlan?.price === 0 ? 'Grátis' : `R$ ${(currentPlan?.price || 0) / 100},00/${currentPlan?.interval === 'month' ? 'mês' : 'ano'}`}
+                          <span className="font-medium text-lg">
+                            {currentPlan?.price === 0
+                              ? 'Grátis'
+                              : `R$ ${(currentPlan?.price ? currentPlan.price / 100 : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/${currentPlan?.interval === 'month' ? 'mês' : currentPlan?.interval === '6month' ? 'semestre' : 'ano'}`
+                            }
                           </span>
                         </div>
                         <div className="flex justify-between py-2 border-b text-sm">
@@ -476,6 +595,7 @@ const SubscriptionManagement = () => {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end border-t pt-4">
+                      {/* ... dialog ... */}
                       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
@@ -506,527 +626,625 @@ const SubscriptionManagement = () => {
                     </CardFooter>
                   </Card>
 
-                  {/* Usage Stats */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Uso e Limites</CardTitle>
-                      <CardDescription>Acompanhe a utilização dos recursos</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-8">
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center">
-                            <Users className="h-5 w-5 mr-2 text-primary" />
-                            <span className="font-medium">Perfis de Pacientes</span>
-                          </div>
-                          <span className="text-sm font-medium">
-                            {subscription?.profilesCreated} / {currentPlan?.maxProfiles === -1 ? '∞' : currentPlan?.maxProfiles}
-                          </span>
-                        </div>
-                        {currentPlan?.maxProfiles !== -1 && (
-                          <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary transition-all duration-500"
-                              style={{
-                                width: `${Math.min(((subscription?.profilesCreated || 0) / (currentPlan?.maxProfiles || 1)) * 100, 100)}%`
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
+                  {/* Smart Upsell Card */}
+                  <Card className="bg-gradient-to-br from-gray-50 to-white border-dashed border-2">
+                    <CardContent className="pt-6 h-full flex flex-col justify-center">
+                      {(() => {
+                        // Determine upsell suggestion
+                        const planName = currentPlan?.name || '';
+                        const baseName = planName.replace(/ mensal| semestral| anual/i, '').trim().toLowerCase();
+                        const currentInterval = currentPlan?.interval || 'month';
+                        const currentPrice = currentPlan?.price || 0;
 
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center">
-                            <UploadCloud className="h-5 w-5 mr-2 text-primary" />
-                            <span className="font-medium">Uploads por Perfil (este mês)</span>
-                          </div>
-                        </div>
+                        // Find plans of same tier with different intervals
+                        const sameTierPlans = subscriptionPlans.filter(p =>
+                          p.name.replace(/ mensal| semestral| anual/i, '').trim().toLowerCase() === baseName && p.isActive
+                        );
+                        const semiannualPlan = sameTierPlans.find(p => p.interval === '6month');
+                        const annualPlan = sameTierPlans.find(p => p.interval === 'year');
 
-                        <div className="space-y-4 mt-4 max-h-[160px] overflow-y-auto pr-2">
-                          {((limitsData as any)?.profiles || [])?.map((profile: any) => {
-                            const profileId = profile.id.toString();
-                            const uploadsUsed = (subscription?.uploadsCount as Record<string, number>)?.[profileId] || 0;
-                            const uploadsTotal = currentPlan?.maxUploadsPerProfile || 0;
-                            const percentage = uploadsTotal > 0 ? (uploadsUsed / uploadsTotal) * 100 : 0;
+                        // Determine next tier upgrade
+                        const tierOrder = ['gratuito', 'vita pro', 'vita team', 'vita business', 'hospitais'];
+                        const currentTierIndex = tierOrder.indexOf(baseName);
+                        const nextTierName = currentTierIndex >= 0 && currentTierIndex < tierOrder.length - 1
+                          ? tierOrder[currentTierIndex + 1]
+                          : null;
+                        const nextTierMonthly = nextTierName
+                          ? subscriptionPlans.find(p =>
+                            p.name.replace(/ mensal| semestral| anual/i, '').trim().toLowerCase() === nextTierName
+                            && p.interval === 'month' && p.isActive
+                          )
+                          : null;
 
-                            return (
-                              <div key={profile.id} className="space-y-1">
-                                <div className="flex justify-between items-center text-xs">
-                                  <span>{profile.name}</span>
-                                  <span className="text-muted-foreground">
-                                    {uploadsUsed} / {uploadsTotal === -1 ? '∞' : uploadsTotal}
-                                  </span>
+                        // Case 1: Monthly plan → suggest semiannual or annual
+                        if (currentInterval === 'month' && currentPrice > 0 && (semiannualPlan || annualPlan)) {
+                          const monthlyTotal12 = currentPrice * 12;
+                          const savingsAnnual = annualPlan ? Math.round(((monthlyTotal12 - annualPlan.price) / monthlyTotal12) * 100) : 0;
+                          const annualMonthlyEquivalent = annualPlan ? annualPlan.price / 12 : 0;
+
+                          const monthlyTotal6 = currentPrice * 6;
+                          const savingsSemi = semiannualPlan ? Math.round(((monthlyTotal6 - semiannualPlan.price) / monthlyTotal6) * 100) : 0;
+
+                          return (
+                            <div className="space-y-5">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-100 rounded-full">
+                                  <CreditCard className="h-6 w-6 text-green-700" />
                                 </div>
-                                {uploadsTotal !== -1 && (
-                                  <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-blue-500 transition-all duration-500"
-                                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                                    />
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Economize no seu plano!</h3>
+                                  <p className="text-sm text-green-700 font-medium">Melhore suas condições agora.</p>
+                                </div>
+                              </div>
+
+                              <p className="text-sm text-gray-600">
+                                Você está pagando <strong>R${(currentPrice / 100).toFixed(2)}/mês</strong>.
+                              </p>
+
+                              <div className="space-y-3">
+                                {/* Option 1: Annual (Best Value) */}
+                                {annualPlan && (
+                                  <div className="bg-white rounded-lg p-4 border border-green-200 shadow-sm relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">
+                                      RECOMENDADO
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      Economize <span className="font-bold text-green-700">{savingsAnnual}%</span> mudando para o anual:
+                                    </p>
+                                    <Button
+                                      size="lg"
+                                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-auto py-3 shadow-md transition-all hover:scale-[1.01]"
+                                      onClick={() => handleStartPayment(annualPlan.id)}
+                                    >
+                                      <div className="flex flex-col items-center w-full">
+                                        <div className="flex items-center justify-center gap-2 w-full">
+                                          <span>Mudar para Anual</span>
+                                        </div>
+                                        <span className="text-[10px] font-normal opacity-90 mt-1">
+                                          R$ {(annualMonthlyEquivalent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                                        </span>
+                                      </div>
+                                    </Button>
+                                  </div>
+                                )}
+
+                                {/* Option 2: Semiannual */}
+                                {semiannualPlan && (
+                                  <Button
+                                    variant="outline"
+                                    className="w-full justify-between h-auto py-3 border-gray-200 hover:bg-gray-50"
+                                    onClick={() => handleStartPayment(semiannualPlan.id)}
+                                  >
+                                    <div className="text-left">
+                                      <div className="font-medium text-gray-700">Plano Semestral</div>
+                                      <div className="text-xs text-muted-foreground">R$ {(semiannualPlan.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/semestre</div>
+                                    </div>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-none">-{savingsSemi}%</Badge>
+                                  </Button>
+                                )}
+
+                                {/* Option 3: Upgrade to Business (Only for Vita Team) */}
+                                {baseName === 'vita team' && nextTierMonthly && (
+                                  <div className="pt-2 border-t border-dashed border-gray-200 mt-2">
+                                    <p className="text-xs text-gray-500 mb-2 font-medium">Precisa de mais poder?</p>
+                                    <Button
+                                      variant="outline"
+                                      className="w-full justify-between h-auto py-3 border-gray-200 bg-gray-50/50 hover:bg-gray-100/80 hover:border-green-200 transition-all"
+                                      onClick={() => handleStartPayment(nextTierMonthly.id)}
+                                    >
+                                      <div className="text-left">
+                                        <div className="font-medium text-gray-900">Upgrade para Vita Business</div>
+                                        <div className="text-xs text-gray-600">Mais recursos e limites maiores</div>
+                                      </div>
+                                      <div className="p-1.5 bg-green-100 rounded-full">
+                                        <ArrowRight className="h-3.5 w-3.5 text-green-700" />
+                                      </div>
+                                    </Button>
                                   </div>
                                 )}
                               </div>
-                            );
-                          })}
-                          {((limitsData as any)?.profiles || []).length === 0 && (
-                            <p className="text-xs text-center text-muted-foreground py-4">Nenhum paciente cadastrado</p>
-                          )}
-                        </div>
-                      </div>
+                            </div>
+                          );
+                        }
+
+                        // Case 2: Semiannual plan → suggest annual
+                        if (currentInterval === '6month' && annualPlan) {
+                          const semiTotal = currentPrice * 2; // 2 semesters = 1 year
+                          const savingsAnnual = Math.round(((semiTotal - annualPlan.price) / semiTotal) * 100);
+                          const savingsValue = (semiTotal - annualPlan.price) / 100;
+                          const annualMonthlyEquivalent = annualPlan.price / 12;
+
+                          // Calculate the "difference" to complete the annual plan
+                          const upgradeDifference = Math.max(0, annualPlan.price - currentPrice);
+
+                          return (
+                            <div className="space-y-5">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-100 rounded-full">
+                                  <Crown className="h-6 w-6 text-green-700" />
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Fidelize e Economize</h3>
+                                  <p className="text-sm text-green-700 font-medium">Garanta {savingsAnnual}% de desconto no anual.</p>
+                                </div>
+                              </div>
+
+                              <div className="bg-white rounded-lg p-4 border border-green-100 shadow-sm space-y-3">
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                  <span className="text-sm text-gray-500">Sua economia anual:</span>
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none text-sm font-bold px-2">
+                                    R$ {savingsValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                  <span className="text-sm text-gray-500">Valor para completar o ano:</span>
+                                  <span className="font-bold text-green-700 text-lg">
+                                    R$ {(upgradeDifference / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+
+                                <Button
+                                  size="lg"
+                                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-6 shadow-md transition-all hover:scale-[1.02]"
+                                  onClick={() => handleStartPayment(annualPlan.id)}
+                                >
+                                  <div className="flex flex-col items-center w-full">
+                                    <div className="flex items-center justify-center gap-2 w-full">
+                                      <span>Upgrade para Anual</span>
+                                      <span className="flex items-center justify-center bg-green-800 text-white text-[10px] px-2 h-5 rounded-full font-bold">-{savingsAnnual}%</span>
+                                    </div>
+                                    <span className="text-xs font-normal opacity-90 mt-1">
+                                      Equivalente a <strong>R$ {(annualMonthlyEquivalent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</strong>
+                                    </span>
+                                  </div>
+                                </Button>
+                                <p className="text-[10px] text-center text-gray-400">
+                                  Ao assinar, você migra para o ciclo anual pagando a diferença
+                                </p>
+                              </div>
+
+                              {/* Option 3: Upgrade to Business (Only for Vita Team) */}
+                              {baseName === 'vita team' && nextTierMonthly && (
+                                <div className="pt-2 border-t border-dashed border-gray-200 mt-2">
+                                  <p className="text-xs text-gray-500 mb-2 font-medium">Precisa de mais poder?</p>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full justify-between h-auto py-3 border-gray-200 bg-gray-50/50 hover:bg-gray-100/80 hover:border-green-200 transition-all"
+                                    onClick={() => handleStartPayment(nextTierMonthly.id)}
+                                  >
+                                    <div className="text-left">
+                                      <div className="font-medium text-gray-900">Upgrade para Vita Business</div>
+                                      <div className="text-xs text-gray-600">Mais recursos e limites maiores</div>
+                                    </div>
+                                    <div className="p-1.5 bg-green-100 rounded-full">
+                                      <ArrowRight className="h-3.5 w-3.5 text-green-700" />
+                                    </div>
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // Case 3: Annual plan or no interval savings → suggest next tier
+                        if (nextTierMonthly) {
+                          return (
+                            <div className="space-y-5">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 rounded-full">
+                                  <Building className="h-6 w-6 text-blue-700" />
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Expanda sua Clínica</h3>
+                                  <p className="text-sm text-blue-700 font-medium">Conheça o plano {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}.</p>
+                                </div>
+                              </div>
+
+                              <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm space-y-4">
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                  Desbloqueie mais perfis, recursos de gestão avançada e suporte prioritário para sua equipe.
+                                </p>
+                                <Button
+                                  size="lg"
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base py-6 shadow-md transition-all hover:scale-[1.02]"
+                                  onClick={() => {
+                                    plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }}
+                                >
+                                  Ver Planos Superiores
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Case 4: Already on the highest plan
+                        return (
+                          <div className="space-y-5 text-center py-4">
+                            <div className="mx-auto w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-2">
+                              <Crown className="h-8 w-8 text-green-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-lg text-gray-900">Plano Completo</h3>
+                              <p className="text-sm text-gray-500 mt-2">
+                                Você já tem acesso a todos os recursos exclusivos da plataforma. Aproveite!
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 </div>
               )}
-            </section>
+            </section >
 
             {/* SECTION 2: Clinic Management (only for clinic plans) */}
-            {hasActiveSubscription && currentPlan?.name?.toLowerCase().includes('clínica') && (
-              <section className="space-y-6">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <Building className="h-5 w-5 text-primary" />
-                  Gestão da Clínica
-                  {clinicData?.isAdmin && (
-                    <Badge className="bg-amber-500 text-white ml-2">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Admin
-                    </Badge>
-                  )}
-                </h2>
+            {
+              hasActiveSubscription && currentPlan?.name?.toLowerCase().includes('clínica') && (
+                <section className="space-y-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Building className="h-5 w-5 text-primary" />
+                    Gestão da Clínica
+                    {clinicData?.isAdmin && (
+                      <Badge className="bg-amber-500 text-white ml-2">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Admin
+                      </Badge>
+                    )}
+                  </h2>
 
-                {/* If no clinic exists, show create clinic prompt */}
-                {!clinicData?.clinic ? (
-                  <Card className="border-dashed border-2">
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <Building className="h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Configure sua Clínica</h3>
-                        <p className="text-muted-foreground mb-6 max-w-md">
-                          Você possui um plano Vita Team ou Vita Business. Configure sua clínica para
-                          começar a convidar outros profissionais.
-                        </p>
-                        <Button
-                          onClick={() => setIsCreateClinicDialogOpen(true)}
-                          className="bg-[#212121] hover:bg-[#424242]"
-                        >
-                          <Building className="h-4 w-4 mr-2" />
-                          Criar Minha Clínica
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <>
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Profissionais</p>
-                              <p className="text-2xl font-bold">
-                                {clinicData.members.length} / {clinicData.clinic.maxProfessionals}
-                              </p>
-                            </div>
-                            <Users className="h-8 w-8 text-primary" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Convites Pendentes</p>
-                              <p className="text-2xl font-bold">{clinicData.invitations.length}</p>
-                            </div>
-                            <Mail className="h-8 w-8 text-blue-500" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Vagas Disponíveis</p>
-                              <p className="text-2xl font-bold">
-                                {Math.max(0, clinicData.clinic.maxProfessionals - clinicData.members.length)}
-                              </p>
-                            </div>
-                            <UserPlus className="h-8 w-8 text-green-500" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Team Members */}
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                          <CardTitle>{clinicData.clinic.name}</CardTitle>
-                          <CardDescription>Profissionais vinculados à clínica</CardDescription>
-                        </div>
-                        {clinicData.isAdmin && clinicData.members.length < clinicData.clinic.maxProfessionals && (
-                          <Button onClick={() => setIsInviteDialogOpen(true)} size="sm">
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Convidar
+                  {/* If no clinic exists, show create clinic prompt */}
+                  {!clinicData?.clinic ? (
+                    <Card className="border-dashed border-2">
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <Building className="h-12 w-12 text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">Configure sua Clínica</h3>
+                          <p className="text-muted-foreground mb-6 max-w-md">
+                            Você possui um plano Vita Team ou Vita Business. Configure sua clínica para
+                            começar a convidar outros profissionais.
+                          </p>
+                          <Button
+                            onClick={() => setIsCreateClinicDialogOpen(true)}
+                            className="bg-[#212121] hover:bg-[#424242]"
+                          >
+                            <Building className="h-4 w-4 mr-2" />
+                            Criar Minha Clínica
                           </Button>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {clinicData.members.map((member) => (
-                            <div
-                              key={member.id}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
-                                  {(member.fullName || member.username).charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-medium">
-                                    {member.fullName || member.username}
-                                    {member.clinicRole === 'admin' && (
-                                      <Crown className="h-4 w-4 inline ml-2 text-amber-500" />
-                                    )}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">{member.email || 'Sem email'}</p>
-                                </div>
-                              </div>
-                              {clinicData.isAdmin && member.clinicRole !== 'admin' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeMemberMutation.mutate(member.id)}
-                                  disabled={removeMemberMutation.isPending}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-
-                          {clinicData.members.length === 0 && (
-                            <div className="text-center py-6 text-muted-foreground">
-                              <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                              <p>Nenhum membro na equipe ainda</p>
-                              <p className="text-sm">Convide profissionais para colaborar</p>
-                            </div>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
+                  ) : (
+                    <>
+                      {/* Stats Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Profissionais</p>
+                                <p className="text-2xl font-bold">
+                                  {clinicData.members.length} / {clinicData.clinic.maxProfessionals}
+                                </p>
+                              </div>
+                              <Users className="h-8 w-8 text-primary" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Convites Pendentes</p>
+                                <p className="text-2xl font-bold">{clinicData.invitations.length}</p>
+                              </div>
+                              <Mail className="h-8 w-8 text-blue-500" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Vagas Disponíveis</p>
+                                <p className="text-2xl font-bold">
+                                  {Math.max(0, clinicData.clinic.maxProfessionals - clinicData.members.length)}
+                                </p>
+                              </div>
+                              <UserPlus className="h-8 w-8 text-green-500" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
 
-                    {/* Pending Invitations */}
-                    {clinicData.invitations.length > 0 && (
+                      {/* Team Members */}
                       <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Convites Pendentes</CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <div>
+                            <CardTitle>{clinicData.clinic.name}</CardTitle>
+                            <CardDescription>Profissionais vinculados à clínica</CardDescription>
+                          </div>
+                          {clinicData.isAdmin && clinicData.members.length < clinicData.clinic.maxProfessionals && (
+                            <Button onClick={() => setIsInviteDialogOpen(true)} size="sm">
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Convidar
+                            </Button>
+                          )}
                         </CardHeader>
                         <CardContent>
-                          <div className="space-y-2">
-                            {clinicData.invitations.map((invite) => (
+                          <div className="space-y-3">
+                            {clinicData.members.map((member) => (
                               <div
-                                key={invite.id}
-                                className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100"
+                                key={member.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                               >
                                 <div className="flex items-center gap-3">
-                                  <Mail className="h-5 w-5 text-blue-500" />
-                                  <span className="font-medium">{invite.email}</span>
+                                  <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                                    {(member.fullName || member.username).charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">
+                                      {member.fullName || member.username}
+                                      {member.clinicRole === 'admin' && (
+                                        <Crown className="h-4 w-4 inline ml-2 text-amber-500" />
+                                      )}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">{member.email || 'Sem email'}</p>
+                                  </div>
                                 </div>
-                                <Badge variant="outline" className="text-xs">
-                                  Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
-                                </Badge>
+                                {clinicData.isAdmin && member.clinicRole !== 'admin' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeMemberMutation.mutate(member.id)}
+                                    disabled={removeMemberMutation.isPending}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             ))}
+
+                            {clinicData.members.length === 0 && (
+                              <div className="text-center py-6 text-muted-foreground">
+                                <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                                <p>Nenhum membro na equipe ainda</p>
+                                <p className="text-sm">Convide profissionais para colaborar</p>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
-                    )}
-                  </>
-                )}
 
-                {/* Create Clinic Dialog */}
-                <Dialog open={isCreateClinicDialogOpen} onOpenChange={setIsCreateClinicDialogOpen}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Criar Clínica</DialogTitle>
-                      <DialogDescription>
-                        Defina um nome para sua clínica. Você poderá convidar até {currentPlan?.name?.includes('+') ? '5+' : '5'} profissionais.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="clinicName">Nome da Clínica</Label>
-                        <Input
-                          id="clinicName"
-                          placeholder="Ex: Clínica Integrada Saúde"
-                          value={clinicName}
-                          onChange={(e) => setClinicName(e.target.value)}
-                        />
+                      {/* Pending Invitations */}
+                      {clinicData.invitations.length > 0 && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Convites Pendentes</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {clinicData.invitations.map((invite) => (
+                                <div
+                                  key={invite.id}
+                                  className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Mail className="h-5 w-5 text-blue-500" />
+                                    <span className="font-medium">{invite.email}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </>
+                  )}
+
+                  {/* Create Clinic Dialog */}
+                  <Dialog open={isCreateClinicDialogOpen} onOpenChange={setIsCreateClinicDialogOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Criar Clínica</DialogTitle>
+                        <DialogDescription>
+                          Defina um nome para sua clínica. Você poderá convidar até {currentPlan?.name?.includes('+') ? '5+' : '5'} profissionais.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="clinicName">Nome da Clínica</Label>
+                          <Input
+                            id="clinicName"
+                            placeholder="Ex: Clínica Integrada Saúde"
+                            value={clinicName}
+                            onChange={(e) => setClinicName(e.target.value)}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsCreateClinicDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={() => createClinicMutation.mutate(clinicName)}
-                        disabled={!clinicName.trim() || createClinicMutation.isPending}
-                        className="bg-[#212121] hover:bg-[#424242]"
-                      >
-                        {createClinicMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        Criar Clínica
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateClinicDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={() => createClinicMutation.mutate(clinicName)}
+                          disabled={!clinicName.trim() || createClinicMutation.isPending}
+                          className="bg-[#212121] hover:bg-[#424242]"
+                        >
+                          {createClinicMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          Criar Clínica
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
 
-                {/* Invite Member Dialog */}
-                <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Convidar Profissional</DialogTitle>
-                      <DialogDescription>
-                        Envie um convite por email para adicionar um novo membro à sua clínica.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="inviteEmail">Email do profissional</Label>
-                        <Input
-                          id="inviteEmail"
-                          type="email"
-                          placeholder="profissional@exemplo.com"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                        />
+                  {/* Invite Member Dialog */}
+                  <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Convidar Profissional</DialogTitle>
+                        <DialogDescription>
+                          Envie um convite por email para adicionar um novo membro à sua clínica.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="inviteEmail">Email do profissional</Label>
+                          <Input
+                            id="inviteEmail"
+                            type="email"
+                            placeholder="profissional@exemplo.com"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={() => inviteMemberMutation.mutate(inviteEmail)}
-                        disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
-                        className="bg-[#212121] hover:bg-[#424242]"
-                      >
-                        {inviteMemberMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        Enviar Convite
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </section>
-            )}
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={() => inviteMemberMutation.mutate(inviteEmail)}
+                          disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
+                          className="bg-[#212121] hover:bg-[#424242]"
+                        >
+                          {inviteMemberMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          Enviar Convite
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </section>
+              )
+            }
 
 
-            {/* SECTION 3: Plan Catalog */}
+            {/* SECTION 3: Plans for Clinics */}
             <section className="space-y-8" ref={plansRef}>
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Planos Disponíveis
+                <Building className="h-5 w-5 text-primary" />
+                Clínicas Multiprofissionais
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {categories.map((category) => {
-                  const IconComponent = category.icon;
-                  const isSelected = selectedCategory === category.id;
-                  return (
-                    <Card
-                      key={category.id}
-                      className={`cursor-pointer transition-all duration-300 border-2 ${isSelected
-                        ? 'border-[#212121] bg-white shadow-lg scale-[1.02]'
-                        : 'border-transparent hover:border-gray-200 hover:bg-white'
-                        }`}
-                      onClick={() => setSelectedCategory(category.id)}
+                {/* Vita Team */}
+                <Card className="flex flex-col border-gray-200 shadow-sm hover:shadow-md transition-all">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Vita Team</CardTitle>
+                    <CardDescription className="mt-2 text-sm">Para pequenas clínicas e equipes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div>
+                      <span className="text-3xl font-bold">R$ 149</span>
+                      <span className="text-sm text-muted-foreground">/mês</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {[
+                        "Até <strong>5</strong> profissionais",
+                        "Todas as features do <strong>Vita Pro</strong>",
+                        "Gestão de equipe centralizada",
+                        "Agenda compartilhada",
+                        "Relatórios da clínica"
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white"
+                      onClick={() => {
+                        const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'month');
+                        if (plan) handleStartPayment(plan.id);
+                      }}
                     >
-                      <CardHeader className="text-center pb-2">
-                        <div className={`mx-auto mb-4 p-3 rounded-full shadow-sm transition-colors ${isSelected ? 'bg-[#212121] text-white' : 'bg-gray-100 text-gray-600'
-                          }`}>
-                          <IconComponent className="h-6 w-6" />
-                        </div>
-                        <CardTitle className="text-lg">{category.title}</CardTitle>
-                        <CardDescription className="text-xs mt-1">
-                          {category.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="text-center pb-4">
-                        <div className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-[#212121]' : 'text-gray-400'}`}>
-                          {isSelected ? 'Selecionado' : 'Clique para ver'}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                      Escolher Vita Team
+                    </Button>
+                  </CardFooter>
+                </Card>
 
-              {/* Billing Period Selector */}
-              <div className="flex items-center justify-center gap-2 py-4">
-                <span className="text-sm text-muted-foreground mr-2">Período:</span>
-                <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                  <button
-                    onClick={() => setBillingPeriod('month')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'month'
-                      ? 'bg-[#212121] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    Mensal
-                  </button>
-                  <button
-                    onClick={() => setBillingPeriod('6month')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${billingPeriod === '6month'
-                      ? 'bg-[#212121] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    Semestral
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${billingPeriod === '6month' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'
-                      }`}>
-                      -10%
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setBillingPeriod('year')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${billingPeriod === 'year'
-                      ? 'bg-[#212121] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    Anual
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${billingPeriod === 'year' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'
-                      }`}>
-                      -20%
-                    </span>
-                  </button>
-                </div>
-              </div>
+                {/* Vita Business */}
+                <Card className="flex flex-col border-primary/20 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-bl-lg">
+                    POPULAR
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-xl">Vita Business</CardTitle>
+                    <CardDescription className="mt-2 text-sm">Gestão completa para clínicas</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div>
+                      <span className="text-3xl font-bold">R$ 299</span>
+                      <span className="text-sm text-muted-foreground">/mês</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {[
+                        "Até <strong>15</strong> profissionais",
+                        "Tudo do <strong>Vita Team</strong>",
+                        "Análise de dados populacional",
+                        "Integração HL7/FHIR",
+                        "Suporte prioritário"
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white"
+                      onClick={() => {
+                        const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'month');
+                        if (plan) handleStartPayment(plan.id);
+                      }}
+                    >
+                      Escolher Vita Business
+                    </Button>
+                  </CardFooter>
+                </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-                {plans.map((plan) => {
-                  const isCurrentPlan = currentPlan?.id === plan.id && hasActiveSubscription;
-
-                  return (
-                    <Card key={plan.id} className={`flex flex-col relative overflow-hidden ${isCurrentPlan ? 'border-[#212121] border-2 shadow-md' :
-                      plan.name === 'Vita Pro' ? 'border-gray-200 shadow-sm' : ''
-                      }`}>
-                      {isCurrentPlan && (
-                        <div className="absolute top-0 right-0 bg-[#212121] text-white text-[10px] uppercase font-bold px-3 py-1 rounded-bl-lg">
-                          ATUAL
-                        </div>
-                      )}
-
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div className="flex flex-col gap-1">
-                            <CardTitle className="text-xl">{plan.name}</CardTitle>
-                            {plan.promoPrice ? (
-                              <Badge className="w-fit bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5">
-                                Promoção
-                              </Badge>
-                            ) : null}
-                          </div>
-                          {plan.name === 'Vita Pro' && !isCurrentPlan && (
-                            <Badge className="bg-[#212121] text-white">Popular</Badge>
-                          )}
-                        </div>
-                        <CardDescription className="mt-2 text-sm">
-                          {plan.name === 'Vita Pro' ? "Ideal para profissionais independentes" : plan.description}
-                        </CardDescription>
-                      </CardHeader>
-
-                      <CardContent className="flex-grow">
-                        <div className="mb-6">
-                          <div className="flex flex-col">
-                            <div className="flex items-baseline gap-1">
-                              <span className={`text-3xl font-bold ${(plan.trialPeriodDays || 0) > 0 ? 'text-green-600' : ''}`}>
-                                {(plan.trialPeriodDays || 0) > 0 ? '1 Mês Grátis' :
-                                  plan.promoPrice ? `R$${(plan.promoPrice / 100).toFixed(2)}` :
-                                    plan.price === 0 ? 'Grátis' :
-                                      plan.name === 'Hospitais' ? 'Sob consulta' :
-                                        `R$${(plan.price / 100).toFixed(2).replace('.', ',')}`}
-                              </span>
-                              {(plan.price > 0 || plan.promoPrice) && plan.name !== 'Hospitais' && !((plan.trialPeriodDays || 0) > 0) && (
-                                <span className="text-sm text-muted-foreground">
-                                  /{plan.interval === 'month' ? 'mês' : plan.interval === '6month' ? 'semestre' : 'ano'}
-                                </span>
-                              )}
-                            </div>
-                            {/* Show equivalent monthly price for semi-annual and annual plans */}
-                            {plan.interval === '6month' && plan.price > 0 && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-green-600 font-medium">
-                                  ≈ R$ {((plan.price / 100) / 6).toFixed(2).replace('.', ',')}/mês
-                                </span>
-                              </div>
-                            )}
-                            {plan.interval === 'year' && plan.price > 0 && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-green-600 font-medium">
-                                  ≈ R$ {((plan.price / 100) / 12).toFixed(2).replace('.', ',')}/mês
-                                </span>
-                              </div>
-                            )}
-                            {(plan.trialPeriodDays || 0) > 0 && plan.price > 0 && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                  Depois R$ {(plan.price / 100).toFixed(2).replace('.', ',')}/mês
-                                </span>
-                              </div>
-                            )}
-                            {plan.promoPrice && !((plan.trialPeriodDays || 0) > 0) && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-muted-foreground line-through">
-                                  R$${(plan.price / 100).toFixed(2)}
-                                </span>
-                                <span className="text-xs font-semibold text-red-500">
-                                  {plan.promoDescription || 'no primeiro mês'}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <ul className="space-y-3">
-                          {(Array.isArray(plan.features) ? plan.features : []).map((feature: string, index: number) => (
-                            <li key={index} className="flex items-start text-sm">
-                              <Check className="h-4 w-4 text-[#212121] mr-2 mt-0.5 flex-shrink-0" />
-                              <span
-                                className="text-gray-600"
-                                dangerouslySetInnerHTML={{
-                                  __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
-                                }}
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-
-                      <CardFooter>
-                        {plan.name === 'Gratuito' ? (
-                          <Button className="w-full text-xs" variant="outline" disabled>
-                            {isCurrentPlan ? 'Seu plano atual' : 'Plano Básico'}
-                          </Button>
-                        ) : selectedCategory === 'hospital' ? (
-                          <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white text-xs">
-                            Falar com Consultor
-                          </Button>
-                        ) : (
-                          <Button
-                            className={`w-full text-xs ${isCurrentPlan ? 'bg-gray-100 text-gray-500' : 'bg-[#212121] hover:bg-[#424242] text-white'}`}
-                            disabled={!!(isCurrentPlan)}
-                            onClick={() => handleStartPayment(plan.id)}
-                          >
-                            {isCurrentPlan ? 'Plano Ativo' : 'Assinar Agora'}
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
+                {/* Vita Enterprise */}
+                <Card className="flex flex-col border-gray-200 shadow-sm hover:shadow-md transition-all">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Vita Enterprise</CardTitle>
+                    <CardDescription className="mt-2 text-sm">Soluções para hospitais e redes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div>
+                      <span className="text-3xl font-bold">Sob Consulta</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {[
+                        "Profissionais <strong>ilimitados</strong>",
+                        "Tudo do <strong>Vita Business</strong>",
+                        "Gestor de conta dedicado",
+                        "SLA de suporte 24/7",
+                        "Customizações sob demanda"
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white">
+                      Falar com Consultor
+                    </Button>
+                  </CardFooter>
+                </Card>
               </div>
             </section>
 
@@ -1071,12 +1289,12 @@ const SubscriptionManagement = () => {
                 </CardContent>
               </Card>
             </section>
-          </div>
-        </main>
-      </div>
+          </div >
+        </main >
+      </div >
 
       {/* Stripe Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+      < Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Finalizar Assinatura</DialogTitle>
@@ -1118,8 +1336,8 @@ const SubscriptionManagement = () => {
             />
           )}
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 };
 
