@@ -26,7 +26,8 @@ import {
   UserPlus,
   Trash2,
   Crown,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -401,9 +402,7 @@ const SubscriptionManagement = () => {
             <section className="space-y-6">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                {(currentPlan?.name?.toLowerCase().includes('team') || currentPlan?.name?.toLowerCase().includes('business') || currentPlan?.name?.toLowerCase().includes('hospitais'))
-                  ? 'Clínicas Multiprofissionais'
-                  : 'Profissionais Independentes'}
+                Meu Plano Atual
               </h2>
 
               {!hasActiveSubscription ? (
@@ -569,7 +568,11 @@ const SubscriptionManagement = () => {
                           <span className="font-medium text-lg">
                             {currentPlan?.price === 0
                               ? 'Grátis'
-                              : `R$ ${(currentPlan?.price ? currentPlan.price / 100 : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/${currentPlan?.interval === 'month' ? 'mês' : currentPlan?.interval === '6month' ? 'semestre' : 'ano'}`
+                              : currentPlan?.interval === '6month'
+                                ? `6x de R$ ${((currentPlan?.price ? currentPlan.price / 100 : 0) / 6).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mês`
+                                : currentPlan?.interval === 'year'
+                                  ? `12x de R$ ${((currentPlan?.price ? currentPlan.price / 100 : 0) / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mês`
+                                  : `R$ ${(currentPlan?.price ? currentPlan.price / 100 : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mês`
                             }
                           </span>
                         </div>
@@ -717,27 +720,31 @@ const SubscriptionManagement = () => {
                                   >
                                     <div className="text-left">
                                       <div className="font-medium text-gray-700">Plano Semestral</div>
-                                      <div className="text-xs text-muted-foreground">R$ {(semiannualPlan.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/semestre</div>
+                                      <div className="text-xs text-muted-foreground">6x de R$ {(semiannualPlan.price / 100 / 6).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
                                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-none">-{savingsSemi}%</Badge>
                                   </Button>
                                 )}
 
                                 {/* Option 3: Upgrade to Business (Only for Vita Team) */}
-                                {baseName === 'vita team' && nextTierMonthly && (
-                                  <div className="pt-2 border-t border-dashed border-gray-200 mt-2">
-                                    <p className="text-xs text-gray-500 mb-2 font-medium">Precisa de mais poder?</p>
+                                {(baseName === 'vita team' || baseName === 'vita pro') && nextTierMonthly && (
+                                  <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                                    <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
+                                      <Sparkles className="h-4 w-4 text-yellow-400" />
+                                      Leve sua clínica ao próximo nível
+                                    </p>
+                                    <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
                                     <Button
-                                      variant="outline"
-                                      className="w-full justify-between h-auto py-3 border-gray-200 bg-gray-50/50 hover:bg-gray-100/80 hover:border-green-200 transition-all"
+                                      size="lg"
+                                      className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
                                       onClick={() => handleStartPayment(nextTierMonthly.id)}
                                     >
                                       <div className="text-left">
-                                        <div className="font-medium text-gray-900">Upgrade para Vita Business</div>
-                                        <div className="text-xs text-gray-600">Mais recursos e limites maiores</div>
+                                        <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                        <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                       </div>
-                                      <div className="p-1.5 bg-green-100 rounded-full">
-                                        <ArrowRight className="h-3.5 w-3.5 text-green-700" />
+                                      <div className="p-1.5 bg-gray-900 rounded-full">
+                                        <ArrowRight className="h-4 w-4 text-white" />
                                       </div>
                                     </Button>
                                   </div>
@@ -805,20 +812,24 @@ const SubscriptionManagement = () => {
                               </div>
 
                               {/* Option 3: Upgrade to Business (Only for Vita Team) */}
-                              {baseName === 'vita team' && nextTierMonthly && (
-                                <div className="pt-2 border-t border-dashed border-gray-200 mt-2">
-                                  <p className="text-xs text-gray-500 mb-2 font-medium">Precisa de mais poder?</p>
+                              {(baseName === 'vita team' || baseName === 'vita pro') && nextTierMonthly && (
+                                <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                                  <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
+                                    <Sparkles className="h-4 w-4 text-yellow-400" />
+                                    Leve sua clínica ao próximo nível
+                                  </p>
+                                  <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
                                   <Button
-                                    variant="outline"
-                                    className="w-full justify-between h-auto py-3 border-gray-200 bg-gray-50/50 hover:bg-gray-100/80 hover:border-green-200 transition-all"
+                                    size="lg"
+                                    className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
                                     onClick={() => handleStartPayment(nextTierMonthly.id)}
                                   >
                                     <div className="text-left">
-                                      <div className="font-medium text-gray-900">Upgrade para Vita Business</div>
-                                      <div className="text-xs text-gray-600">Mais recursos e limites maiores</div>
+                                      <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                      <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
-                                    <div className="p-1.5 bg-green-100 rounded-full">
-                                      <ArrowRight className="h-3.5 w-3.5 text-green-700" />
+                                    <div className="p-1.5 bg-gray-900 rounded-full">
+                                      <ArrowRight className="h-4 w-4 text-white" />
                                     </div>
                                   </Button>
                                 </div>
@@ -830,31 +841,25 @@ const SubscriptionManagement = () => {
                         // Case 3: Annual plan or no interval savings → suggest next tier
                         if (nextTierMonthly) {
                           return (
-                            <div className="space-y-5">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded-full">
-                                  <Building className="h-6 w-6 text-blue-700" />
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                              <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
+                                <Sparkles className="h-4 w-4 text-yellow-400" />
+                                Leve sua clínica ao próximo nível
+                              </p>
+                              <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
+                              <Button
+                                size="lg"
+                                className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                onClick={() => handleStartPayment(nextTierMonthly.id)}
+                              >
+                                <div className="text-left">
+                                  <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                  <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                 </div>
-                                <div>
-                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Expanda sua Clínica</h3>
-                                  <p className="text-sm text-blue-700 font-medium">Conheça o plano {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}.</p>
+                                <div className="p-1.5 bg-gray-900 rounded-full">
+                                  <ArrowRight className="h-4 w-4 text-white" />
                                 </div>
-                              </div>
-
-                              <div className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm space-y-4">
-                                <p className="text-sm text-gray-600 leading-relaxed">
-                                  Desbloqueie mais perfis, recursos de gestão avançada e suporte prioritário para sua equipe.
-                                </p>
-                                <Button
-                                  size="lg"
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base py-6 shadow-md transition-all hover:scale-[1.02]"
-                                  onClick={() => {
-                                    plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                  }}
-                                >
-                                  Ver Planos Superiores
-                                </Button>
-                              </div>
+                              </Button>
                             </div>
                           );
                         }
@@ -1141,8 +1146,17 @@ const SubscriptionManagement = () => {
                   </CardHeader>
                   <CardContent className="flex-grow space-y-4">
                     <div>
-                      <span className="text-3xl font-bold">R$ 149</span>
-                      <span className="text-sm text-muted-foreground">/mês</span>
+                      {(() => {
+                        const annualPlan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'year' && p.isActive);
+                        const lowestMonthly = annualPlan ? (annualPlan.price / 100 / 12) : 149;
+                        return (
+                          <>
+                            <span className="text-xs text-muted-foreground">A partir de </span>
+                            <span className="text-3xl font-bold">R$ {lowestMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                            <span className="text-sm text-muted-foreground">/mês</span>
+                          </>
+                        );
+                      })()}
                     </div>
                     <ul className="space-y-2">
                       {[
@@ -1183,8 +1197,17 @@ const SubscriptionManagement = () => {
                   </CardHeader>
                   <CardContent className="flex-grow space-y-4">
                     <div>
-                      <span className="text-3xl font-bold">R$ 299</span>
-                      <span className="text-sm text-muted-foreground">/mês</span>
+                      {(() => {
+                        const annualPlan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'year' && p.isActive);
+                        const lowestMonthly = annualPlan ? (annualPlan.price / 100 / 12) : 299;
+                        return (
+                          <>
+                            <span className="text-xs text-muted-foreground">A partir de </span>
+                            <span className="text-3xl font-bold">R$ {lowestMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                            <span className="text-sm text-muted-foreground">/mês</span>
+                          </>
+                        );
+                      })()}
                     </div>
                     <ul className="space-y-2">
                       {[

@@ -277,12 +277,7 @@ export class RBACSystem {
         isSystemRole: true,
         hierarchy: 1,
         maxDataAccess: 'all',
-        restrictions: [
-          {
-            type: 'time',
-            condition: { allowedHours: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] }
-          }
-        ]
+        restrictions: []
       },
       {
         id: 'medical_director',
@@ -402,10 +397,10 @@ export class RBACSystem {
   }> {
     try {
       const startTime = Date.now();
-      
+
       // Obter papéis do usuário
       const userRoles = this.getUserRoles(request.userId);
-      
+
       if (!userRoles || userRoles.length === 0) {
         return {
           allowed: false,
@@ -425,7 +420,7 @@ export class RBACSystem {
       // Verificar cada papel do usuário
       for (const userRole of userRoles) {
         if (!userRole.isActive) continue;
-        
+
         // Verificar expiração do papel
         if (userRole.expiresAt && userRole.expiresAt < new Date()) {
           continue;
@@ -457,7 +452,7 @@ export class RBACSystem {
             if (conditionCheck.allowed) {
               // Log de acesso bem-sucedido
               this.logAccess(request, 'ALLOW', userRole.roleId, permission.id);
-              
+
               return {
                 allowed: true,
                 conditions: conditionCheck.conditions,
@@ -479,7 +474,7 @@ export class RBACSystem {
 
       // Acesso negado
       this.logAccess(request, 'DENY', undefined, undefined);
-      
+
       return {
         allowed: false,
         reason: 'Permission not found or conditions not met',
@@ -639,15 +634,15 @@ export class RBACSystem {
       switch (restriction.type) {
         case 'time':
           const hour = new Date().getHours();
-          if (restriction.condition.allowedHours && 
-              !restriction.condition.allowedHours.includes(hour)) {
+          if (restriction.condition.allowedHours &&
+            !restriction.condition.allowedHours.includes(hour)) {
             return { allowed: false, reason: 'Outside allowed hours' };
           }
           break;
 
         case 'ip':
-          if (restriction.condition.allowedIPs && 
-              !restriction.condition.allowedIPs.includes(request.context.ip)) {
+          if (restriction.condition.allowedIPs &&
+            !restriction.condition.allowedIPs.includes(request.context.ip)) {
             return { allowed: false, reason: 'IP not allowed' };
           }
           break;
@@ -806,12 +801,12 @@ export class RBACSystem {
     // Armazenar histórico de acesso
     const history = this.accessHistory.get(request.userId) || [];
     history.push(request);
-    
+
     // Manter apenas os últimos 1000 acessos
     if (history.length > 1000) {
       history.splice(0, history.length - 1000);
     }
-    
+
     this.accessHistory.set(request.userId, history);
 
     // Log de auditoria

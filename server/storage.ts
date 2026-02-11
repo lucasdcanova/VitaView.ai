@@ -1918,8 +1918,7 @@ export class DatabaseStorage implements IStorage {
             "Upload **Ilimitado** de Resultados de Exames",
             "Agendamento **com IA** e Triagem Pré-Consulta",
             "**Gestão de Pacientes Ilimitada**",
-            "**Gráficos de Evolução** de Exames",
-            "**Economize 10%** no plano semestral"
+            "**Gráficos de Evolução** de Exames"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -1941,8 +1940,7 @@ export class DatabaseStorage implements IStorage {
             "Upload **Ilimitado** de Resultados de Exames",
             "Agendamento **com IA** e Triagem Pré-Consulta",
             "**Gestão de Pacientes Ilimitada**",
-            "**Gráficos de Evolução** de Exames",
-            "**Economize 20%** no plano anual"
+            "**Gráficos de Evolução** de Exames"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -1985,8 +1983,7 @@ export class DatabaseStorage implements IStorage {
             "**Gerenciamento de equipe**",
             "Relatórios consolidados da clínica",
             "Personalização de modelos de documentos",
-            "Treinamento de onboarding",
-            "**Economize 10%** no plano semestral"
+            "Treinamento de onboarding"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -2008,8 +2005,7 @@ export class DatabaseStorage implements IStorage {
             "**Gerenciamento de equipe**",
             "Relatórios consolidados da clínica",
             "Personalização de modelos de documentos",
-            "Treinamento de onboarding",
-            "**Economize 20%** no plano anual"
+            "Treinamento de onboarding"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -2052,8 +2048,7 @@ export class DatabaseStorage implements IStorage {
             "API de integração",
             "Gerente de conta dedicado",
             "SLA de suporte premium",
-            "Personalização Whitelabel (logo na área do paciente)",
-            "**Economize 10%** no plano semestral"
+            "Personalização Whitelabel (logo na área do paciente)"
           ],
           promoPrice: null,
           promoDescription: null,
@@ -2075,8 +2070,7 @@ export class DatabaseStorage implements IStorage {
             "API de integração",
             "Gerente de conta dedicado",
             "SLA de suporte premium",
-            "Personalização Whitelabel (logo na área do paciente)",
-            "**Economize 20%** no plano anual"
+            "Personalização Whitelabel (logo na área do paciente)"
           ],
           promoPrice: null,
           promoDescription: null,
