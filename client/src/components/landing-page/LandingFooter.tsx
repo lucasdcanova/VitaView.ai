@@ -53,7 +53,7 @@ export function LandingFooter() {
                             <span className="text-xl font-bold text-white">VitaView AI</span>
                         </div>
                         <p className="max-w-xs">
-                            A evolução da sua saúde começa com o entendimento dos seus exames.
+                            O Prontuário que pensa com você. Simples, objetivo e completo.
                         </p>
 
                         {/* Inscrição na newsletter */}
@@ -86,9 +86,10 @@ export function LandingFooter() {
                             <h3 className="text-white font-semibold mb-4">Plataforma</h3>
                             <ul className="space-y-2">
                                 {[
-                                    { label: "View Laboratorial", href: "#como-funciona" },
-                                    { label: "Vita Timeline", href: "#demonstracoes" },
-                                    { label: "FAQ", href: "#faq" }
+                                    { label: "Anamnese com IA", href: "#como-funciona" },
+                                    { label: "Prescrição Inteligente", href: "#beneficios" },
+                                    { label: "Agenda com IA", href: "#agenda" },
+                                    { label: "Planos", href: "#precos" }
                                 ].map((item, i) => (
                                     <motion.li
                                         key={item.label}

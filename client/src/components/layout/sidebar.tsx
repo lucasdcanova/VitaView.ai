@@ -7,7 +7,7 @@ import {
   LogOut,
   CreditCard,
   ShieldCheck,
-  Heart,
+  Building,
   Calendar,
   Settings,
   BarChart2,
@@ -45,7 +45,6 @@ export default function Sidebar(props: SidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { activeProfile } = useProfiles();
-
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -253,6 +252,7 @@ export default function Sidebar(props: SidebarProps) {
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
           <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
+          <NavItem href="/minha-clinica" icon={Building} label="Minha Clínica" tourId="nav-minha-clinica" />
 
           {/* Separador */}
           <div className="py-2">

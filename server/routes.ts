@@ -473,6 +473,27 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  logger.info("[DEBUG] Registering route: /api/clinic/appointments");
+  app.get("/api/clinic/appointments", ensureAuthenticated, async (req, res) => {
+    logger.info(`[DEBUG] Handling /api/clinic/appointments for user ${req.user?.id}`);
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+
+      if (!req.user.clinicId) {
+        logger.warn(`[DEBUG] User ${req.user.id} has no clinicId`);
+        return res.status(400).json({ message: "Usuário não está vinculado a uma clínica" });
+      }
+
+      logger.info(`[DEBUG] Fetching appointments for clinic ${req.user.clinicId}`);
+      const appointments = await storage.getAppointmentsByClinicId(req.user.clinicId);
+      logger.info(`[DEBUG] Found ${appointments.length} appointments`);
+      res.json(appointments || []);
+    } catch (error) {
+      console.error("Erro ao buscar agendamentos da clínica:", error);
+      res.status(500).json({ message: "Erro ao buscar agendamentos", error: (error as Error).message });
+    }
+  });
+
   app.post("/api/appointments", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");

@@ -103,6 +103,7 @@ export interface IStorage {
   // Appointment operations
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   getAppointmentsByUserId(userId: number): Promise<Appointment[]>;
+  getAppointmentsByClinicId(clinicId: number): Promise<Appointment[]>;
   updateAppointment(id: number, appointment: Partial<Appointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: number): Promise<boolean>;
   deleteBlockedAppointmentsByRange(userId: number, startDate: string, endDate: string): Promise<number>;
@@ -1005,6 +1006,12 @@ export class MemStorage implements IStorage {
 
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
     return Array.from(this.appointmentsMap.values()).filter(app => app.userId === userId);
+  }
+
+  async getAppointmentsByClinicId(clinicId: number): Promise<Appointment[]> {
+    return Array.from(this.appointmentsMap.values())
+      .filter(app => app.clinicId === clinicId)
+      .sort((a, b) => new Date(a.date + 'T' + a.time).getTime() - new Date(b.date + 'T' + b.time).getTime());
   }
 
   async updateAppointment(id: number, appointmentData: Partial<Appointment>): Promise<Appointment | undefined> {
@@ -2562,6 +2569,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
     return await db.select().from(appointments).where(eq(appointments.userId, userId)).orderBy(asc(appointments.date), asc(appointments.time));
+  }
+
+  async getAppointmentsByClinicId(clinicId: number): Promise<Appointment[]> {
+    return await db.select().from(appointments).where(eq(appointments.clinicId, clinicId)).orderBy(asc(appointments.date), asc(appointments.time));
   }
 
   async deleteAppointment(id: number): Promise<boolean> { await db.delete(appointments).where(eq(appointments.id, id)); return true; }

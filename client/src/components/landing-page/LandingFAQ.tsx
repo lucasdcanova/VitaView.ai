@@ -15,24 +15,24 @@ export function LandingFAQ() {
 
     const faqs = [
         {
-            question: "Como o VitaView AI processa os exames dos pacientes?",
-            answer: "Nossa IA extrai automaticamente dados de PDFs e imagens de exames laboratoriais, estruturando as informações em uma linha do tempo clínica. O sistema identifica valores de referência, sinaliza alterações e gera gráficos evolutivos, permitindo que você foque na análise clínica e não na digitação de dados."
+            question: "Como funciona a Anamnese com IA e gravação de voz?",
+            answer: "Durante a consulta, você ativa a gravação de voz e foca totalmente no paciente. Nossa IA transcreve a conversa em tempo real, estrutura as informações em formato clínico (queixa principal, história da doença atual, exame físico) e gera a anamnese completa automaticamente. Você só revisa e confirma."
         },
         {
-            question: "A plataforma garante a conformidade com a LGPD?",
-            answer: "Sim. O VitaView AI foi desenvolvido seguindo rigorosos protocolos de segurança e privacidade. Utilizamos criptografia de ponta a ponta, controle de acesso granular e trilhas de auditoria, garantindo que sua clínica esteja em total conformidade com a LGPD e normas do setor de saúde."
+            question: "O que a Prescrição Inteligente oferece?",
+            answer: "A prescrição inteligente permite buscar medicamentos com autocomplete, definir posologia e gerar o documento final em segundos. Além disso, o sistema alerta sobre interações medicamentosas, ajudando a evitar erros e garantindo mais segurança para o paciente."
         },
         {
-            question: "É possível compartilhar casos com outros especialistas?",
-            answer: "Com certeza. A plataforma facilita a colaboração multidisciplinar. Você pode gerar relatórios seguros e anonimizados para discussão de casos ou compartilhar o acesso controlado ao prontuário com outros profissionais da equipe de saúde, agilizando a segunda opinião."
+            question: "Como a Agenda com IA e triagem pré-consulta funcionam?",
+            answer: "A agenda inteligente organiza seus horários e permite que pacientes façam agendamento online. Antes da consulta, o sistema aplica uma triagem automática por questionário, classificando a urgência e preparando um resumo pré-consulta para que você já chegue com contexto do caso."
         },
         {
-            question: "Como a plataforma auxilia no acompanhamento de pacientes crônicos?",
-            answer: "O VitaView AI cria automaticamente gráficos de tendência para qualquer biomarcador ao longo do tempo. Isso permite visualizar rapidamente a progressão de condições crônicas, a eficácia de tratamentos e identificar padrões sutis que poderiam passar despercebidos em uma análise isolada."
+            question: "O que é o Vita Assist?",
+            answer: "O Vita Assist é seu assistente clínico com IA. Ele pode sugerir hipóteses diagnósticas com base nos dados do paciente, recomendar protocolos de exames, auxiliar na interpretação de resultados e responder dúvidas clínicas — tudo integrado ao prontuário do paciente."
         },
         {
-            question: "Quais formatos de exames são compatíveis com a importação?",
-            answer: "O sistema aceita os formatos mais comuns utilizados por laboratórios, incluindo PDF, JPG e PNG. Nossa tecnologia de OCR (Reconhecimento Óptico de Caracteres) é otimizada para layouts de laudos laboratoriais variados, garantindo alta precisão na extração dos dados."
+            question: "Quais planos estão disponíveis?",
+            answer: "Oferecemos o Vita Pro para profissionais independentes, o Vita Team para clínicas com até 5 profissionais, e o Vita Business para clínicas maiores com até 15 profissionais. Todos incluem anamnese com IA, prescrição inteligente e agenda. Planos semestrais e anuais têm desconto de até 20%."
         }
     ];
 
@@ -56,7 +56,7 @@ export function LandingFAQ() {
                         Perguntas <span className="text-[#9E9E9E]">Frequentes</span>
                     </h2>
                     <p className="text-base md:text-xl text-white text-opacity-90 max-w-2xl mx-auto px-2">
-                        Tire suas dúvidas sobre o VitaView AI e como nossa plataforma pode ajudar você a entender melhor sua saúde.
+                        Tire suas dúvidas sobre as ferramentas do VitaView AI e como elas podem transformar sua rotina clínica.
                     </p>
                 </motion.div>
 

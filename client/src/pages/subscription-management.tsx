@@ -885,246 +885,33 @@ const SubscriptionManagement = () => {
               )}
             </section >
 
-            {/* SECTION 2: Clinic Management (only for clinic plans) */}
+            {/* SECTION 2: Clinic Management → redirects to /minha-clinica */}
             {
-              hasActiveSubscription && currentPlan?.name?.toLowerCase().includes('clínica') && (
-                <section className="space-y-6">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Building className="h-5 w-5 text-primary" />
-                    Gestão da Clínica
-                    {clinicData?.isAdmin && (
-                      <Badge className="bg-amber-500 text-white ml-2">
-                        <Crown className="h-3 w-3 mr-1" />
-                        Admin
-                      </Badge>
-                    )}
-                  </h2>
-
-                  {/* If no clinic exists, show create clinic prompt */}
-                  {!clinicData?.clinic ? (
-                    <Card className="border-dashed border-2">
-                      <CardContent className="pt-6">
-                        <div className="flex flex-col items-center justify-center py-8 text-center">
-                          <Building className="h-12 w-12 text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">Configure sua Clínica</h3>
-                          <p className="text-muted-foreground mb-6 max-w-md">
-                            Você possui um plano Vita Team ou Vita Business. Configure sua clínica para
-                            começar a convidar outros profissionais.
-                          </p>
-                          <Button
-                            onClick={() => setIsCreateClinicDialogOpen(true)}
-                            className="bg-[#212121] hover:bg-[#424242]"
-                          >
-                            <Building className="h-4 w-4 mr-2" />
-                            Criar Minha Clínica
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <>
-                      {/* Stats Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Profissionais</p>
-                                <p className="text-2xl font-bold">
-                                  {clinicData.members.length} / {clinicData.clinic.maxProfessionals}
-                                </p>
-                              </div>
-                              <Users className="h-8 w-8 text-primary" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Convites Pendentes</p>
-                                <p className="text-2xl font-bold">{clinicData.invitations.length}</p>
-                              </div>
-                              <Mail className="h-8 w-8 text-blue-500" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Vagas Disponíveis</p>
-                                <p className="text-2xl font-bold">
-                                  {Math.max(0, clinicData.clinic.maxProfessionals - clinicData.members.length)}
-                                </p>
-                              </div>
-                              <UserPlus className="h-8 w-8 text-green-500" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      {/* Team Members */}
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
+              hasActiveSubscription && (currentPlan?.name?.toLowerCase().includes('team') || currentPlan?.name?.toLowerCase().includes('business')) && (
+                <section className="space-y-4">
+                  <Card className="border border-gray-200">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#212121] rounded-xl flex items-center justify-center">
+                            <Building className="h-5 w-5 text-white" />
+                          </div>
                           <div>
-                            <CardTitle>{clinicData.clinic.name}</CardTitle>
-                            <CardDescription>Profissionais vinculados à clínica</CardDescription>
+                            <h3 className="font-semibold text-gray-900">Minha Clínica</h3>
+                            <p className="text-sm text-gray-500">Gerencie equipe, agenda e configurações</p>
                           </div>
-                          {clinicData.isAdmin && clinicData.members.length < clinicData.clinic.maxProfessionals && (
-                            <Button onClick={() => setIsInviteDialogOpen(true)} size="sm">
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              Convidar
-                            </Button>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            {clinicData.members.map((member) => (
-                              <div
-                                key={member.id}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
-                                    {(member.fullName || member.username).charAt(0).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">
-                                      {member.fullName || member.username}
-                                      {member.clinicRole === 'admin' && (
-                                        <Crown className="h-4 w-4 inline ml-2 text-amber-500" />
-                                      )}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">{member.email || 'Sem email'}</p>
-                                  </div>
-                                </div>
-                                {clinicData.isAdmin && member.clinicRole !== 'admin' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeMemberMutation.mutate(member.id)}
-                                    disabled={removeMemberMutation.isPending}
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            ))}
-
-                            {clinicData.members.length === 0 && (
-                              <div className="text-center py-6 text-muted-foreground">
-                                <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                                <p>Nenhum membro na equipe ainda</p>
-                                <p className="text-sm">Convide profissionais para colaborar</p>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Pending Invitations */}
-                      {clinicData.invitations.length > 0 && (
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-base">Convites Pendentes</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2">
-                              {clinicData.invitations.map((invite) => (
-                                <div
-                                  key={invite.id}
-                                  className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <Mail className="h-5 w-5 text-blue-500" />
-                                    <span className="font-medium">{invite.email}</span>
-                                  </div>
-                                  <Badge variant="outline" className="text-xs">
-                                    Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </>
-                  )}
-
-                  {/* Create Clinic Dialog */}
-                  <Dialog open={isCreateClinicDialogOpen} onOpenChange={setIsCreateClinicDialogOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Criar Clínica</DialogTitle>
-                        <DialogDescription>
-                          Defina um nome para sua clínica. Você poderá convidar até {currentPlan?.name?.includes('+') ? '5+' : '5'} profissionais.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="clinicName">Nome da Clínica</Label>
-                          <Input
-                            id="clinicName"
-                            placeholder="Ex: Clínica Integrada Saúde"
-                            value={clinicName}
-                            onChange={(e) => setClinicName(e.target.value)}
-                          />
                         </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateClinicDialogOpen(false)}>
-                          Cancelar
-                        </Button>
                         <Button
-                          onClick={() => createClinicMutation.mutate(clinicName)}
-                          disabled={!clinicName.trim() || createClinicMutation.isPending}
-                          className="bg-[#212121] hover:bg-[#424242]"
+                          onClick={() => navigate('/minha-clinica')}
+                          variant="outline"
+                          className="gap-2"
                         >
-                          {createClinicMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Criar Clínica
+                          <ArrowRight className="h-4 w-4" />
+                          Acessar
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Invite Member Dialog */}
-                  <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Convidar Profissional</DialogTitle>
-                        <DialogDescription>
-                          Envie um convite por email para adicionar um novo membro à sua clínica.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="inviteEmail">Email do profissional</Label>
-                          <Input
-                            id="inviteEmail"
-                            type="email"
-                            placeholder="profissional@exemplo.com"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                          />
-                        </div>
                       </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
-                          Cancelar
-                        </Button>
-                        <Button
-                          onClick={() => inviteMemberMutation.mutate(inviteEmail)}
-                          disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
-                          className="bg-[#212121] hover:bg-[#424242]"
-                        >
-                          {inviteMemberMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Enviar Convite
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    </CardContent>
+                  </Card>
                 </section>
               )
             }

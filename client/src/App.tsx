@@ -70,6 +70,7 @@ const Patients = lazy(() => import("@/pages/patients"));
 const VitaAssist = lazy(() => import("@/pages/vita-assist"));
 const AdminAICosts = lazy(() => import("@/pages/admin/ai-costs"));
 const KnowledgeBaseAdmin = lazy(() => import("@/pages/admin/knowledge-base"));
+const MyClinic = lazy(() => import("@/pages/my-clinic"));
 
 // ...
 
@@ -168,6 +169,7 @@ function AuthenticatedRoutes() {
                     <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
                     <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
                     <ProtectedRoute path="/vita-assist" component={VitaAssist} />
+                    <ProtectedRoute path="/minha-clinica" component={MyClinic} />
                     {/* 404 para rotas autenticadas não encontradas */}
                     <Route component={NotFound} />
                   </Switch>
