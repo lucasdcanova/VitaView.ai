@@ -687,6 +687,24 @@ export const insertCertificateSchema = createInsertSchema(certificates, {
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
 
+// Certificate Templates schema
+export const certificateTemplates = pgTable("certificate_templates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  content: json("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCertificateTemplateSchema = createInsertSchema(certificateTemplates).pick({
+  userId: true,
+  title: true,
+  content: true,
+});
+
+export type CertificateTemplate = typeof certificateTemplates.$inferSelect;
+export type InsertCertificateTemplate = z.infer<typeof insertCertificateTemplateSchema>;
+
 // Doctors schema
 export const doctors = pgTable("doctors", {
   id: serial("id").primaryKey(),

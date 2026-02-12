@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -98,6 +98,11 @@ export interface IStorage {
 
   // Admin operations
   getAllUsers(): Promise<User[]>;
+
+  // Certificate Templates
+  createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate>;
+  getCertificateTemplates(userId: number): Promise<CertificateTemplate[]>;
+  deleteCertificateTemplate(id: number): Promise<boolean>;
   deleteUser(id: number): Promise<boolean>;
 
   // Appointment operations
@@ -271,6 +276,7 @@ export class MemStorage implements IStorage {
   private triageRecordsMap: Map<number, any>;
   private prescriptionsMap: Map<number, Prescription>;
   private certificatesMap: Map<number, Certificate>;
+  private certificateTemplatesMap: Map<number, CertificateTemplate>;
   private allergiesMap: Map<number, any>;
   private tussProceduresMap: Map<number, TussProcedure>;
   sessionStore: SessionStore;
@@ -324,6 +330,7 @@ export class MemStorage implements IStorage {
     this.triageRecordsMap = new Map();
     this.prescriptionsMap = new Map();
     this.certificatesMap = new Map();
+    this.certificateTemplatesMap = new Map();
     this.allergiesMap = new Map();
     this.tussProceduresMap = new Map();
 
@@ -1827,6 +1834,28 @@ export class MemStorage implements IStorage {
     }
 
     return results;
+  }
+
+  // Certificate Templates
+  async createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate> {
+    const id = this.certificateTemplateIdCounter++;
+    const newTemplate: CertificateTemplate = {
+      id,
+      userId: template.userId,
+      title: template.title,
+      content: template.content,
+      createdAt: new Date()
+    };
+    this.certificateTemplatesMap.set(id, newTemplate);
+    return newTemplate;
+  }
+
+  async getCertificateTemplates(userId: number): Promise<CertificateTemplate[]> {
+    return Array.from(this.certificateTemplatesMap.values()).filter(t => t.userId === userId);
+  }
+
+  async deleteCertificateTemplate(id: number): Promise<boolean> {
+    return this.certificateTemplatesMap.delete(id);
   }
 }
 
@@ -3347,6 +3376,21 @@ export class DatabaseStorage implements IStorage {
   async updateAppointment(id: number, update: Partial<Appointment>): Promise<Appointment | undefined> {
     const [updated] = await db.update(appointments).set(update).where(eq(appointments.id, id)).returning();
     return updated;
+  }
+
+  // Certificate Templates
+  async createCertificateTemplate(template: InsertCertificateTemplate): Promise<CertificateTemplate> {
+    const [newTemplate] = await db.insert(certificateTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async getCertificateTemplates(userId: number): Promise<CertificateTemplate[]> {
+    return await db.select().from(certificateTemplates).where(eq(certificateTemplates.userId, userId));
+  }
+
+  async deleteCertificateTemplate(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(certificateTemplates).where(eq(certificateTemplates.id, id)).returning();
+    return !!deleted;
   }
 }
 

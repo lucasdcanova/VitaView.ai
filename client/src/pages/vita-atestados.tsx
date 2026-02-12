@@ -54,6 +54,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
                         setCertCity={setCertCity}
                         customCertText={customCertText}
                         setCustomCertText={setCustomCertText}
+                        patientName={patient?.name || ""}
                         onSave={handleSaveAndPrintCertificate}
                         isPending={isPending}
                         isUserLoggedIn={!!user}
