@@ -183,7 +183,7 @@ export function ContinuousMedicationsCard({
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Sparkles className="h-5 w-5 text-indigo-600" />
+                            <Sparkles className="h-5 w-5 text-black" />
                             Análise de Interações Medicamentosas (IA)
                         </DialogTitle>
                     </DialogHeader>
@@ -218,7 +218,7 @@ export function ContinuousMedicationsCard({
                                         <p className="text-sm text-gray-700 mb-2">{interaction.description}</p>
                                         {interaction.management && (
                                             <p className="text-xs text-gray-500 mt-2">
-                                                <strong>Manejo:</strong> {interaction.management}
+                                                <strong>Sugestão:</strong> {interaction.management}
                                             </p>
                                         )}
                                     </div>
