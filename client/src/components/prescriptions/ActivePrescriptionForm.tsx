@@ -36,8 +36,8 @@ export function ActivePrescriptionForm({
     }
 
     return (
-        <Card className="border-gray-200 shadow-sm h-fit">
-            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+        <Card className="border-gray-300 shadow-md h-fit">
+            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
                 <CardTitle className="text-base text-gray-900 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-gray-600" />
                     Receita Atual
@@ -95,7 +95,7 @@ export function ActivePrescriptionForm({
                     ))}
                 </div>
 
-                <div className="p-4 bg-gray-50 border-t border-gray-100 space-y-4">
+                <div className="p-4 bg-gray-100 border-t border-gray-200 space-y-4">
                     <div>
                         <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                             Observações Gerais (opcional)

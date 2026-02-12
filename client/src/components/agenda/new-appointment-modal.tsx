@@ -247,7 +247,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-lg">
                         <TabsTrigger
                             value="appointment"
-                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md transition-all"
+                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#212121] data-[state=active]:shadow-sm rounded-md transition-all"
                         >
                             <UserPlus className="w-4 h-4" />
                             Agendamento
@@ -327,141 +327,99 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                             />
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {mode === 'appointment' ? (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="type"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Tipo</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Selecione" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="consulta">Consulta</SelectItem>
-                                                        <SelectItem value="retorno">Retorno</SelectItem>
-                                                        <SelectItem value="exames">Exames</SelectItem>
-                                                        <SelectItem value="procedimento">Procedimento</SelectItem>
-                                                        <SelectItem value="urgencia">Urgência</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Telemedicine Switch */}
-                                    {/* This will be placed next to Type, taking up the other slot */}
-                                    <div className="flex items-end pb-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="isTelemedicine"
-                                            render={({ field }) => (
-                                                <FormItem className="flex items-center space-x-2 space-y-0 border p-2 rounded-md w-full bg-slate-50">
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
-                                                        Teleconsulta
-                                                        <span className="text-xs text-muted-foreground bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">CFM</span>
-                                                    </FormLabel>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </>
-
-                            ) : (
-                                <div className="col-span-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <FormField
-                                            control={form.control}
-                                            name="isRange"
-                                            render={({ field }) => (
-                                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                            id="range-mode"
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel htmlFor="range-mode" className="font-medium cursor-pointer">
-                                                        Bloquear Período
-                                                    </FormLabel>
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <div className="w-px h-6 bg-gray-200 mx-4 hidden md:block"></div>
-
-                                        <FormField
-                                            control={form.control}
-                                            name="isAllDay"
-                                            render={({ field }) => (
-                                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={(checked) => {
-                                                                field.onChange(checked);
-                                                                if (checked) {
-                                                                    form.setValue("time", "00:00");
-                                                                } else {
-                                                                    form.setValue("time", "09:00");
-                                                                }
-                                                            }}
-                                                            id="all-day-mode"
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel htmlFor="all-day-mode" className="font-medium cursor-pointer">
-                                                        Dia Inteiro
-                                                    </FormLabel>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {(!form.watch('isAllDay') || mode === 'appointment') && (
+                        {mode === 'appointment' ? (
+                            <>
                                 <FormField
                                     control={form.control}
-                                    name="time"
+                                    name="type"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Horário</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
-                                                    <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                    <Input className="pl-9" placeholder="00:00" {...field} />
-                                                </div>
-                                            </FormControl>
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>Tipo</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="consulta">Consulta</SelectItem>
+                                                    <SelectItem value="retorno">Retorno</SelectItem>
+                                                    <SelectItem value="exames">Exames</SelectItem>
+                                                    <SelectItem value="procedimento">Procedimento</SelectItem>
+                                                    <SelectItem value="urgencia">Urgência</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                            )}
-                        </div>
+                            </>
 
-                        {/* Meeting Link Field - Only visible if Telemedicine is checked */}
-                        {form.watch("isTelemedicine") && mode === 'appointment' && (
+                        ) : (
+                            <div className="col-span-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <FormField
+                                        control={form.control}
+                                        name="isRange"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                        id="range-mode"
+                                                    />
+                                                </FormControl>
+                                                <FormLabel htmlFor="range-mode" className="font-medium cursor-pointer">
+                                                    Bloquear Período
+                                                </FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <div className="w-px h-6 bg-gray-200 mx-4 hidden md:block"></div>
+
+                                    <FormField
+                                        control={form.control}
+                                        name="isAllDay"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={(checked) => {
+                                                            field.onChange(checked);
+                                                            if (checked) {
+                                                                form.setValue("time", "00:00");
+                                                            } else {
+                                                                form.setValue("time", "09:00");
+                                                            }
+                                                        }}
+                                                        id="all-day-mode"
+                                                    />
+                                                </FormControl>
+                                                <FormLabel htmlFor="all-day-mode" className="font-medium cursor-pointer">
+                                                    Dia Inteiro
+                                                </FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {(!form.watch('isAllDay') || mode === 'appointment') && (
                             <FormField
                                 control={form.control}
-                                name="meetingLink"
+                                name="time"
                                 render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Link da Reunião (Meet/Zoom)</FormLabel>
+                                    <FormItem className="col-span-2 md:col-span-1">
+                                        <FormLabel>Horário</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://..." {...field} />
+                                            <div className="relative">
+                                                <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input className="pl-9" placeholder="00:00" {...field} />
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -469,12 +427,13 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                             />
                         )}
 
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="date"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-col">
+                                    <FormItem>
                                         <FormLabel>{form.watch("isRange") ? "Data Inicial" : "Data"}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -613,7 +572,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                     "w-full md:w-auto",
                                     mode === 'blocked'
                                         ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                                        : "bg-[#212121] hover:bg-[#424242] text-white"
                                 )}
                             >
                                 {isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Confirmar Bloqueio" : "Agendar Consulta")}
@@ -622,6 +581,6 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     </form>
                 </Form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

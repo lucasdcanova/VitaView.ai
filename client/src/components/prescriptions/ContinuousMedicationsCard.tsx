@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pill, PlusCircle, RefreshCw, Trash2, Pencil } from "lucide-react";
+import { Pill, PlusCircle, RefreshCw, Trash2, Pencil, Sparkles, Loader2 } from "lucide-react";
 import { MedicationDialog } from "@/components/dialogs";
 import type { MedicationFormData } from "@/components/dialogs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { FeatureGate } from "@/components/ui/feature-gate";
 
 interface ContinuousMedicationsCardProps {
     medications: any[];
@@ -27,10 +32,49 @@ export function ContinuousMedicationsCard({
     onRenewPrescription
 }: ContinuousMedicationsCardProps) {
     const allSelected = medications.length > 0 && selectedMedications.size === medications.length;
+    const { toast } = useToast();
+    const [isCheckingInteractions, setIsCheckingInteractions] = useState(false);
+    const [isInteractionDialogOpen, setIsInteractionDialogOpen] = useState(false);
+    const [interactionResult, setInteractionResult] = useState<any>(null);
+
+    const handleCheckInteractions = async () => {
+        if (medications.length < 2) {
+            toast({
+                title: "Medicamentos insuficientes",
+                description: "Adicione pelo menos 2 medicamentos para verificar interações.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsCheckingInteractions(true);
+        try {
+            const medNames = medications.map(m => m.name);
+            const response = await apiRequest("POST", "/api/medications/interactions", { medications: medNames });
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                setInteractionResult(data);
+                setIsInteractionDialogOpen(true);
+            } else {
+                throw new Error("Resposta inválida do servidor (HTML/Texto). Tente novamente.");
+            }
+        } catch (error) {
+            toast({
+                title: "Erro ao verificar interações",
+                description: error instanceof Error ? error.message : "Não foi possível realizar a análise no momento.",
+                variant: "destructive"
+            });
+            console.error("Interaction Check Error:", error);
+        } finally {
+            setIsCheckingInteractions(false);
+        }
+    };
 
     return (
-        <Card className="border-gray-200 shadow-sm h-fit">
-            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+        <Card className="border-gray-800 shadow-md h-fit">
+            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-base text-gray-900 flex items-center gap-2">
@@ -39,6 +83,22 @@ export function ContinuousMedicationsCard({
                         </CardTitle>
                         <CardDescription className="text-xs">Selecione para renovar receita.</CardDescription>
                     </div>
+                    <FeatureGate>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                            onClick={handleCheckInteractions}
+                            disabled={isCheckingInteractions || medications.length < 2}
+                        >
+                            {isCheckingInteractions ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4" />
+                            )}
+                            Checar Interação com IA
+                        </Button>
+                    </FeatureGate>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -118,6 +178,64 @@ export function ContinuousMedicationsCard({
                     </Button>
                 </div>
             </CardContent>
+
+            <Dialog open={isInteractionDialogOpen} onOpenChange={setIsInteractionDialogOpen}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-indigo-600" />
+                            Análise de Interações Medicamentosas (IA)
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {interactionResult?.summary && (
+                            <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
+                                <h4 className="font-medium text-sm mb-2 text-gray-900">Resumo</h4>
+                                <p className="text-sm text-gray-700 leading-relaxed">{interactionResult.summary}</p>
+                            </div>
+                        )}
+
+                        {interactionResult?.interactions && interactionResult.interactions.length > 0 ? (
+                            <div className="space-y-3">
+                                <h4 className="font-medium text-sm text-gray-900">Interações Identificadas</h4>
+                                {interactionResult.interactions.map((interaction: any, idx: number) => (
+                                    <div key={idx} className={`p-4 rounded-md border-l-4 ${interaction.severity === 'Alta' ? 'bg-red-50 border-red-500' :
+                                        interaction.severity === 'Moderada' ? 'bg-amber-50 border-amber-500' :
+                                            'bg-blue-50 border-blue-500'
+                                        }`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-semibold text-sm text-gray-900">
+                                                {interaction.medications.join(" + ")}
+                                            </div>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${interaction.severity === 'Alta' ? 'bg-red-100 text-red-700' :
+                                                interaction.severity === 'Moderada' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-blue-100 text-blue-700'
+                                                }`}>
+                                                Severidade: {interaction.severity}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-700 mb-2">{interaction.description}</p>
+                                        {interaction.management && (
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                <strong>Manejo:</strong> {interaction.management}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                <p>Nenhuma interação significativa encontrada entre os medicamentos analisados.</p>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end pt-4">
+                            <Button onClick={() => setIsInteractionDialogOpen(false)}>Fechar</Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }

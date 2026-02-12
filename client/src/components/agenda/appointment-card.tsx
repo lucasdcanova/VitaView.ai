@@ -24,10 +24,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string; badgeBg: string }> = {
     in_progress: {
-        bg: "bg-blue-50",
-        border: "border-blue-500",
-        badge: "text-blue-700",
-        badgeBg: "bg-blue-100"
+        bg: "bg-gray-100",
+        border: "border-[#212121]",
+        badge: "text-[#212121]",
+        badgeBg: "bg-gray-200"
     },
     completed: {
         bg: "bg-gray-200",
@@ -52,12 +52,12 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
     return (
         <motion.div
-            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-blue-400 ring-opacity-50 animate-pulse ring-4 ring-blue-500' : ''}`}
+            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-gray-400 ring-opacity-50 animate-pulse ring-4 ring-[#212121]' : ''}`}
             whileHover={{ scale: 1.02 }}
         >
             {/* Status Badge */}
             {showActiveIndicator && (
-                <div className="absolute -top-1 -right-1 flex items-center gap-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold shadow-sm">
+                <div className="absolute -top-1 -right-1 flex items-center gap-1 bg-[#212121] text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold shadow-sm">
                     <Play className="w-2.5 h-2.5 fill-current" />
                     <span>Atendendo</span>
                 </div>
@@ -68,16 +68,16 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
                 </div>
             )}
 
-            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-blue-900' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
-            <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-blue-800' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
+            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-[#212121]' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
+            <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-gray-700' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
                 <div className="flex items-center gap-1">
                     {appointment.isTelemedicine && (
-                        <Video className="w-3 h-3 text-blue-500" />
+                        <Video className="w-3 h-3 text-gray-500" />
                     )}
                     {appointment.patientName}
                 </div>
             </div>
-            <div className={`text-xs capitalize ${showActiveIndicator ? 'text-blue-600' : isCompleted ? 'text-gray-400' : styles.label}`}>{appointment.type}</div>
+            <div className={`text-xs capitalize ${showActiveIndicator ? 'text-[#212121]' : isCompleted ? 'text-gray-400' : styles.label}`}>{appointment.type}</div>
 
             {/* Manchester Priority Indicator */}
             {triageData?.manchesterPriority && !showActiveIndicator && (

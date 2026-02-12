@@ -231,8 +231,8 @@ export function MedicationSelector({
     }, [searchValue, customMedications]);
 
     return (
-        <Card className="border-gray-200 shadow-sm overflow-visible z-10">
-            <CardHeader className="bg-gray-50 border-b border-gray-100 pb-3">
+        <Card className="border-gray-800 shadow-md overflow-visible z-10">
+            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
                 <CardTitle className="text-base text-gray-900 flex items-center gap-2">
                     <PlusCircle className="h-4 w-4 text-gray-600" />
                     Nova Prescrição

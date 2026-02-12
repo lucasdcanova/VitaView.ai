@@ -406,7 +406,23 @@ export function AnamnesisCard() {
     };
 
     const addEvolutionMutation = useMutation({
-        mutationFn: (data: { text: string; date?: string; profileId: number }) => apiRequest("POST", "/api/evolutions", data),
+        mutationFn: async (data: { text: string; date?: string; profileId: number }) => {
+            // 1. Create Evolution
+            const res = await apiRequest("POST", "/api/evolutions", data);
+            const savedEvo = await res.json();
+
+            // 2. Finalize & Sign (CFM/Digital Signature) automaticaly
+            try {
+                await apiRequest("POST", `/api/evolutions/${savedEvo.id}/finalize`, {});
+
+                // Return signed evolution
+                return { ...savedEvo, isSigned: true };
+            } catch (err) {
+                console.error("Erro ao assinar evolução:", err);
+                // Return saved evolution anyway, but warn user
+                throw new Error("Evolução salva, mas falha ao assinar digitalmente.");
+            }
+        },
         onSuccess: async () => {
             // Invalidar queries de evoluções para o perfil ativo
             queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
@@ -419,27 +435,27 @@ export function AnamnesisCard() {
                     clearPatientInService();
                     toast({
                         title: "Consulta finalizada",
-                        description: "Atendimento concluído e registrado na agenda!",
+                        description: "Atendimento concluído, salvo e assinado digitalmente!",
                     });
                 } catch (err) {
                     console.error("Erro ao atualizar status do agendamento:", err);
                     toast({
                         title: "Consulta registrada",
-                        description: "Histórico salvo, mas houve erro ao atualizar a agenda.",
+                        description: "Histórico salvo e assinado, mas houve erro ao atualizar a agenda.",
                     });
                 }
             } else {
                 toast({
                     title: "Consulta registrada",
-                    description: "Histórico salvo com sucesso!",
+                    description: "Histórico salvo e assinado com sucesso!",
                 });
             }
             setAnamnesisText("");
         },
-        onError: () => {
+        onError: (error: any) => {
             toast({
                 title: "Erro",
-                description: "Erro ao salvar consulta. Tente novamente.",
+                description: error?.message || "Erro ao salvar consulta. Tente novamente.",
                 variant: "destructive",
             });
         },
@@ -609,69 +625,22 @@ export function AnamnesisCard() {
                                     addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
                                 }}
                                 disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
-                                className="gap-2 bg-green-600 hover:bg-green-700"
+                                className="gap-2 bg-[#212121] text-white hover:bg-[#424242]"
                             >
                                 {addEvolutionMutation.isPending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                     <Save className="h-4 w-4" />
                                 )}
-                                Salvar como Consulta
+                                Salvar Consulta
                             </Button>
 
-                            <FeatureGate feature="cfm-compliance">
-                                <Button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (!anamnesisText.trim() || !activeProfile?.id) return;
 
-                                        try {
-                                            // 1. Save Evolution
-                                            const res = await apiRequest("POST", "/api/evolutions", {
-                                                text: anamnesisText,
-                                                profileId: activeProfile.id
-                                            });
-                                            const savedEvo = await res.json();
-
-                                            // 2. Finalize
-                                            await apiRequest("POST", `/api/evolutions/${savedEvo.id}/finalize`, {});
-
-                                            toast({
-                                                title: "Sucesso",
-                                                description: "Evolução salva e assinada digitalmente (CFM).",
-                                            });
-
-                                            setAnamnesisText("");
-                                            queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
-                                            if (inServiceAppointmentId) {
-                                                await apiRequest("PATCH", `/api/appointments/${inServiceAppointmentId}`, { status: 'completed' });
-                                                queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-                                                clearPatientInService();
-                                            }
-
-                                        } catch (err) {
-                                            console.error(err);
-                                            toast({
-                                                title: "Erro",
-                                                description: "Falha ao assinar evolução.",
-                                                variant: "destructive"
-                                            });
-                                        }
-                                    }}
-                                    disabled={!anamnesisText.trim() || !activeProfile?.id}
-                                    className="gap-2 bg-blue-700 hover:bg-blue-800 text-white"
-                                >
-                                    <FileText className="h-4 w-4" />
-                                    Finalizar e Assinar (CFM)
-                                </Button>
-                            </FeatureGate>
                             <FeatureGate feature="ai-enhance">
                                 <Button
-                                    type="button"
-                                    onClick={handleEnhanceAnamnesis}
                                     disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
-                                    variant="secondary"
-                                    className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                                    variant="outline"
+                                    className="gap-2 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
                                 >
                                     {enhanceAnamnesisMutation.isPending ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />

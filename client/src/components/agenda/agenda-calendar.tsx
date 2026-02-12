@@ -565,22 +565,22 @@ export function AgendaCalendar({
                                       e.stopPropagation();
                                       handleStartService(app);
                                     }}
-                                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1 group"
+                                    className="text-[#212121] hover:text-[#424242] hover:underline cursor-pointer flex items-center gap-1 group"
                                     title={app.status === 'in_progress' ? "Retomar atendimento" : "Iniciar atendimento"}
                                   >
                                     <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    {app.isTelemedicine && <Video className="w-4 h-4 text-blue-500 mr-1" />}
+                                    {app.isTelemedicine && <Video className="w-4 h-4 text-gray-500 mr-1" />}
                                     {app.patientName}
                                   </button>
                                 ) : (
                                   <span className="text-gray-800 flex items-center gap-2">
                                     {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
-                                    {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-blue-500" />}
+                                    {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-gray-500" />}
                                     {app.patientName}
                                   </span>
                                 )}
                                 {app.profileId && !isBlocked && (
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-blue-600" title="Ver perfil">
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-[#212121]" title="Ver perfil">
                                     <User className="h-4 w-4" />
                                   </Button>
                                 )}
@@ -597,7 +597,7 @@ export function AgendaCalendar({
                             <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
                               {canStartService ? (
                                 <Button
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                  className="w-full bg-[#212121] hover:bg-[#424242] text-white shadow-sm"
                                   onClick={() => handleStartService(app)}
                                   disabled={updateStatusMutation.isPending}
                                 >

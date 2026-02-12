@@ -47,6 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FeatureGate } from "@/components/ui/feature-gate";
 
 // Tipo melhorado para Diagnósticos
 type Diagnosis = {
@@ -221,18 +222,22 @@ export default function DiagnosisPage() {
                         isLoading={analyzeMutation.isPending}
                       />
 
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon">
-                              <PlusCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Adicionar nova análise</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+
+
+                      <FeatureGate feature="ai-diagnosis-new">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon">
+                                <PlusCircle className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Adicionar nova análise</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FeatureGate>
                     </div>
                   </CardHeader>
                 </Card>
@@ -244,18 +249,24 @@ export default function DiagnosisPage() {
                       <InfoIcon className="h-4 w-4 mr-2" />
                       Análise
                     </TabsTrigger>
-                    <TabsTrigger value="diagnoses">
-                      <Stethoscope className="h-4 w-4 mr-2" />
-                      Diagnósticos
-                    </TabsTrigger>
-                    <TabsTrigger value="recommendations">
-                      <ClipboardList className="h-4 w-4 mr-2" />
-                      Recomendações
-                    </TabsTrigger>
-                    <TabsTrigger value="evidence">
-                      <GraduationCap className="h-4 w-4 mr-2" />
-                      Evidências
-                    </TabsTrigger>
+                    <FeatureGate feature="ai-diagnosis-results">
+                      <TabsTrigger value="diagnoses">
+                        <Stethoscope className="h-4 w-4 mr-2" />
+                        Diagnósticos
+                      </TabsTrigger>
+                    </FeatureGate>
+                    <FeatureGate feature="ai-diagnosis-rec">
+                      <TabsTrigger value="recommendations">
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Recomendações
+                      </TabsTrigger>
+                    </FeatureGate>
+                    <FeatureGate feature="ai-diagnosis-evidence">
+                      <TabsTrigger value="evidence">
+                        <GraduationCap className="h-4 w-4 mr-2" />
+                        Evidências
+                      </TabsTrigger>
+                    </FeatureGate>
                   </TabsList>
 
                   {/* Tab de Análise Contextual */}
@@ -644,8 +655,8 @@ export default function DiagnosisPage() {
                                   <div className="flex items-center mb-1">
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                       <div className={`h-3 rounded-full ${insights?.evidenceBasedAssessment?.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
-                                          insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
-                                            'w-1/3 bg-red-500'
+                                        insights?.evidenceBasedAssessment?.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
+                                          'w-1/3 bg-red-500'
                                         }`}></div>
                                     </div>
                                     <span className="ml-3 text-gray-700 font-medium min-w-16">
@@ -702,7 +713,7 @@ export default function DiagnosisPage() {
             )}
           </div>
         </main>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

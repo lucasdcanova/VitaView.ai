@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { storage } from "../storage";
 import { pool } from "../db";
 import { ensureAuthenticated } from "../middleware/auth.middleware";
-import { generateChronologicalReport } from "../services/openai";
+import { generateChronologicalReport, callOpenAIApi } from "../services/openai";
 import logger from "../logger";
 import { createHash } from "crypto";
 
@@ -729,6 +729,69 @@ export function registerPatientRoutes(app: Express) {
         } catch (error) {
             console.error("Erro ao excluir medicamento:", error);
             res.status(500).json({ message: "Erro ao excluir medicamento" });
+        }
+    });
+
+    // --- Drug Interactions (AI) ---
+    app.post("/api/medications/interactions", ensureAuthenticated, async (req, res) => {
+        try {
+            const user = req.user as any;
+
+            // Get subscription and plan details to check permissions
+            const subscription = await storage.getUserSubscription(user.id);
+            let planName = 'Gratuito';
+
+            if (subscription && subscription.planId) {
+                const plan = await storage.getSubscriptionPlan(subscription.planId);
+                if (plan) {
+                    planName = plan.name;
+                }
+            }
+
+            // Allow if plan is NOT 'Gratuito' and subscription is active
+            const isPremium = subscription?.status === 'active' && planName !== 'Gratuito';
+
+            // If not premium, deny access
+            if (!isPremium) {
+                return res.status(403).json({
+                    message: "Recurso exclusivo para planos Premium.",
+                    isPremiumFeature: true
+                });
+            }
+
+            const { medications } = req.body;
+
+            if (!medications || !Array.isArray(medications) || medications.length < 2) {
+                return res.status(400).json({ message: "É necessário fornecer pelo menos 2 medicamentos para verificar interações." });
+            }
+
+            // Construct prompt for AI
+            const prompt = `
+            Atue como um farmacologista clínico especialista.
+            Analise as possíveis interações medicamentosas entre os seguintes medicamentos: ${medications.join(", ")}.
+            Use como referência bases de dados confiáveis (ex: Drugs.com, Medscape).
+
+            Retorne APENAS um JSON no seguinte formato, sem markdown ou texto adicional:
+            {
+                "interactions": [
+                    {
+                        "medications": ["Med1", "Med2"],
+                        "severity": "Alta" | "Moderada" | "Baixa" | "Nenhuma",
+                        "description": "Explicação concisa e clínica do mecanismo e risco.",
+                        "management": "Sugestão de manejo clínico (ex: monitorar potássio, espaçar horários)."
+                    }
+                ],
+                "summary": "Resumo geral da análise."
+            }
+            Se não houver interações conhecidas, retorne o array "interactions" vazio.
+            `;
+
+            const response = await callOpenAIApi(prompt, undefined, "drug_interaction_check", "medium", (req.user as any).id);
+            res.json(response);
+
+        } catch (error) {
+            console.error("Erro ao verificar interações:", error);
+            res.status(500).json({ message: "Erro ao verificar interações com IA" });
         }
     });
 

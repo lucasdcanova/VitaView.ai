@@ -43,8 +43,7 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
         // Determine if user has access (Plan is NOT "Gratuito" and subscription is active) OR user is admin
         const isVitaPlan =
             (subscriptionData?.subscription?.status === 'active' &&
-                subscriptionData?.plan?.name !== 'Gratuito') ||
-            user?.role === 'admin';
+                subscriptionData?.plan?.name !== 'Gratuito');
 
         if (isVitaPlan || isLoading) {
             // Unlocked state: Forward ref and spread props using Slot to merge with children

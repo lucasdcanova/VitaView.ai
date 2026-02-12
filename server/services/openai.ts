@@ -477,7 +477,7 @@ export async function generateHealthInsights(examResult: ExamResult, patientData
 }
 
 // Function to call the OpenAI API
-async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call", complexityData?: TaskComplexity, userId?: number, clinicId?: number) {
+export async function callOpenAIApi(prompt: string, modelOverride?: string, taskNameForTracking: string = "general_api_call", complexityData?: TaskComplexity, userId?: number, clinicId?: number) {
   try {
     if (!openai) {
       throw new Error("OpenAI client not initialized");

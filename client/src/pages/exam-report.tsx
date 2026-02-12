@@ -76,6 +76,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { FeatureGate } from "@/components/ui/feature-gate";
 import {
   Accordion,
   AccordionContent,
@@ -614,24 +615,30 @@ export default function ExamReport() {
                         >
                           Resumo
                         </TabsTrigger>
-                        <TabsTrigger
-                          value="detailed"
-                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                        >
-                          Análise Detalhada
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="recommendations"
-                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                        >
-                          Recomendações
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="evidence"
-                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                        >
-                          Evidências Científicas
-                        </TabsTrigger>
+                        <FeatureGate feature="ai-report-detailed">
+                          <TabsTrigger
+                            value="detailed"
+                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                          >
+                            Análise Detalhada
+                          </TabsTrigger>
+                        </FeatureGate>
+                        <FeatureGate feature="ai-report-rec">
+                          <TabsTrigger
+                            value="recommendations"
+                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                          >
+                            Recomendações
+                          </TabsTrigger>
+                        </FeatureGate>
+                        <FeatureGate feature="ai-report-evidence">
+                          <TabsTrigger
+                            value="evidence"
+                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
+                          >
+                            Evidências Científicas
+                          </TabsTrigger>
+                        </FeatureGate>
                       </TabsList>
 
                       {/* Summary Tab */}
@@ -1267,7 +1274,7 @@ export default function ExamReport() {
             </div>
           </div>
         </main>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
