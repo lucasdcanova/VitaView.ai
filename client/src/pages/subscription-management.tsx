@@ -120,7 +120,7 @@ const SubscriptionManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState<PlanCategory>('clinic');
   // billingPeriod removed
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
-  const [selectedInterval, setSelectedInterval] = useState<'month' | 'semester' | 'year'>('year');
+  const [selectedInterval, setSelectedInterval] = useState<'month' | '6month' | 'year'>('year');
   const [selectedIntervals, setSelectedIntervals] = useState<Record<string, string>>({});
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
@@ -523,19 +523,19 @@ const SubscriptionManagement = () => {
 
                           <div className="bg-gray-50 p-1 rounded-lg border">
                             {['Anual', 'Semestral', 'Mensal'].map((period) => {
-                              const isSelected = selectedInterval === (period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month');
+                              const isSelected = selectedInterval === (period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month');
                               const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
                               const price = period === 'Anual' ? 'R$ 63,20' : period === 'Semestral' ? 'R$ 71,10' : 'R$ 79,00';
 
                               // Find actual plans from data
-                              const targetPlan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === (period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month'));
+                              const targetPlan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === (period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month'));
 
                               return (
                                 <div
                                   key={period}
                                   onClick={() => {
                                     if (targetPlan) setSelectedPlanId(targetPlan.id);
-                                    setSelectedInterval(period === 'Anual' ? 'year' : period === 'Semestral' ? 'semester' : 'month');
+                                    setSelectedInterval(period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month');
                                   }}
                                   className={`
                                                      flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all text-sm mb-1 last:mb-0
@@ -570,7 +570,7 @@ const SubscriptionManagement = () => {
                           Escolher este Plano
                         </Button>
                         <p className="text-[10px] text-gray-400 mt-4">
-                          Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === 'semester' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
+                          Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === '6month' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
                         </p>
                       </div>
                     </div>
@@ -1145,7 +1145,7 @@ const SubscriptionManagement = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-gray-900">{selectedPlan.name}</span>
                     <Badge variant="outline" className="bg-white">
-                      {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === 'semester' || selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
+                      {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
                     </Badge>
                   </div>
                   <div className="text-2xl font-bold text-primary">

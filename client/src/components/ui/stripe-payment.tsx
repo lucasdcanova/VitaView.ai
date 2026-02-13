@@ -180,6 +180,7 @@ interface StripePaymentProps {
 
 export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProps) => {
   const [clientSecret, setClientSecret] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -191,6 +192,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
 
     const fetchPaymentIntent = async () => {
       try {
+        setError(null);
         const response = await apiRequest('POST', '/api/create-payment-intent', { planId });
         const data = await response.json();
         if (data.clientSecret) {
@@ -199,12 +201,8 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
           throw new Error(data.message || 'Não foi possível obter o token de pagamento');
         }
       } catch (error) {
-        toast({
-          title: "Erro ao iniciar pagamento",
-          description: error instanceof Error ? error.message : "Ocorreu um erro ao preparar o pagamento.",
-          variant: "destructive",
-        });
-        onCancel?.();
+        const message = error instanceof Error ? error.message : "Ocorreu um erro ao preparar o pagamento.";
+        setError(message);
       } finally {
         setIsLoading(false);
       }
@@ -237,10 +235,10 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
     );
   }
 
-  if (!clientSecret) {
+  if (error || !clientSecret) {
     return (
       <div className="text-center py-4">
-        <p className="text-red-500">Não foi possível iniciar o pagamento. Tente novamente mais tarde.</p>
+        <p className="text-red-500">{error || 'Não foi possível iniciar o pagamento. Tente novamente mais tarde.'}</p>
         <Button onClick={onCancel} className="mt-4" variant="outline">Voltar</Button>
       </div>
     );

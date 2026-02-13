@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "@/lib/api";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -217,6 +217,50 @@ export default function Profile() {
   const professionalPhoto = profileForm.watch("professionalPhoto");
   const clinicName = profileForm.watch("clinicName");
 
+  // Profile photo URL from server (separate from the form field)
+  const profilePhotoUrl = user?.profilePhotoUrl
+    ? `/api/users/profile-photo/${user.id}?t=${Date.now()}`
+    : professionalPhoto || null;
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch('/api/users/profile-photo', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Erro ao enviar foto');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({ title: "Foto atualizada", description: "Sua foto de perfil foi atualizada com sucesso." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro ao enviar foto", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deletePhotoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('DELETE', '/api/users/profile-photo');
+      return res;
+    },
+    onSuccess: () => {
+      profileForm.setValue('professionalPhoto', '');
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({ title: "Foto removida", description: "Sua foto de perfil foi removida." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro ao remover foto", description: error.message, variant: "destructive" });
+    },
+  });
+
   const securityForm = useForm<SecurityFormValues>({
     resolver: zodResolver(securitySchema),
     defaultValues: {
@@ -271,7 +315,6 @@ export default function Profile() {
       specialty,
       rqe,
       address,
-      professionalPhoto,
       clinicName,
       bio,
       website,
@@ -290,7 +333,6 @@ export default function Profile() {
       ...basePreferences,
       professionalProfile: {
         ...(basePreferences as Record<string, any>).professionalProfile,
-        professionalPhoto,
         clinicName,
         bio,
         website,
@@ -567,9 +609,9 @@ export default function Profile() {
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
                   <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden mb-4 sm:mb-0 sm:mr-6">
-                    {professionalPhoto ? (
+                    {profilePhotoUrl ? (
                       <img
-                        src={professionalPhoto}
+                        src={profilePhotoUrl}
                         alt={user?.fullName || "Foto do profissional"}
                         className="h-full w-full object-cover"
                       />
@@ -745,67 +787,59 @@ export default function Profile() {
                         <div className="mt-8 border-t border-gray-200 pt-6">
                           <h3 className="text-lg font-medium text-gray-900 mb-4">Identidade profissional</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField
-                              control={profileForm.control}
-                              name="professionalPhoto"
-                              render={({ field }) => (
-                                <FormItem className="md:col-span-2">
-                                  <FormLabel>Foto profissional</FormLabel>
-                                  <FormControl>
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                      <div className="h-20 w-20 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                        {field.value ? (
-                                          <img
-                                            src={field.value}
-                                            alt="Foto profissional"
-                                            className="h-full w-full object-cover"
-                                          />
-                                        ) : (
-                                          <ImagePlus className="h-6 w-6 text-gray-400" />
-                                        )}
-                                      </div>
-                                      <div className="flex flex-1 flex-col gap-2">
-                                        <Input
-                                          type="file"
-                                          accept="image/*"
-                                          name={field.name}
-                                          ref={field.ref}
-                                          onChange={(event) => {
-                                            const file = event.target.files?.[0];
-                                            if (!file) return;
-                                            if (file.size > 2 * 1024 * 1024) {
-                                              toast({
-                                                title: "Arquivo muito grande",
-                                                description: "Envie uma imagem de até 2MB.",
-                                                variant: "destructive",
-                                              });
-                                              return;
-                                            }
-                                            const reader = new FileReader();
-                                            reader.onload = () => {
-                                              field.onChange(typeof reader.result === "string" ? reader.result : "");
-                                            };
-                                            reader.readAsDataURL(file);
-                                          }}
-                                        />
-                                        {field.value && (
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-fit"
-                                            onClick={() => field.onChange("")}
-                                          >
-                                            Remover foto
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            <FormItem className="md:col-span-2">
+                              <FormLabel>Foto profissional</FormLabel>
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div className="h-20 w-20 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                  {profilePhotoUrl ? (
+                                    <img
+                                      src={profilePhotoUrl}
+                                      alt="Foto profissional"
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <ImagePlus className="h-6 w-6 text-gray-400" />
+                                  )}
+                                </div>
+                                <div className="flex flex-1 flex-col gap-2">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    disabled={uploadPhotoMutation.isPending}
+                                    onChange={(event) => {
+                                      const file = event.target.files?.[0];
+                                      if (!file) return;
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        toast({
+                                          title: "Arquivo muito grande",
+                                          description: "Envie uma imagem de até 5MB.",
+                                          variant: "destructive",
+                                        });
+                                        return;
+                                      }
+                                      uploadPhotoMutation.mutate(file);
+                                    }}
+                                  />
+                                  {uploadPhotoMutation.isPending && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...
+                                    </span>
+                                  )}
+                                  {profilePhotoUrl && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-fit"
+                                      disabled={deletePhotoMutation.isPending}
+                                      onClick={() => deletePhotoMutation.mutate()}
+                                    >
+                                      {deletePhotoMutation.isPending ? "Removendo..." : "Remover foto"}
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </FormItem>
 
                             <FormField
                               control={profileForm.control}

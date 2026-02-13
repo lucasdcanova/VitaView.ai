@@ -2222,7 +2222,46 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.put("/api/user/profile", ensureAuthenticated, async (req, res) => {
     try {
-      const updatedUser = await storage.updateUser(req.user!.id, req.body);
+      const userId = req.user!.id;
+      const body = req.body;
+
+      // Whitelist allowed fields to prevent injection of sensitive fields
+      const allowedFields = [
+        'fullName', 'email', 'phoneNumber', 'crm', 'specialty', 'rqe',
+        'address', 'birthDate', 'gender', 'preferences', 'password'
+      ];
+
+      const updateData: Record<string, any> = {};
+      for (const key of allowedFields) {
+        if (body[key] !== undefined) {
+          updateData[key] = body[key];
+        }
+      }
+
+      // If updating password, hash it
+      if (updateData.password) {
+        const { scrypt, randomBytes } = await import("crypto");
+        const { promisify } = await import("util");
+        const scryptAsync = promisify(scrypt);
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync(updateData.password, salt, 64)) as Buffer;
+        updateData.password = `${buf.toString("hex")}.${salt}`;
+      }
+
+      // Merge preferences instead of overwriting
+      if (updateData.preferences && typeof updateData.preferences === 'object') {
+        const currentUser = await storage.getUser(userId);
+        const currentPrefs = currentUser?.preferences && typeof currentUser.preferences === 'object'
+          ? currentUser.preferences as Record<string, any>
+          : {};
+        updateData.preferences = { ...currentPrefs, ...updateData.preferences };
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "Nenhum campo válido para atualizar" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, updateData);
 
       if (!updatedUser) {
         return res.status(404).json({ message: "Usuário não encontrado" });
@@ -2230,8 +2269,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
-    } catch (error) {
-      res.status(500).json({ message: "Erro ao atualizar perfil" });
+    } catch (error: any) {
+      logger.error("[Profile] Error updating profile:", error);
+      res.status(500).json({ message: "Erro ao atualizar perfil: " + (error.message || "erro desconhecido") });
     }
   });
 

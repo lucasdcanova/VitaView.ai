@@ -18,13 +18,26 @@ export async function ensureTenant(req: Request, res: Response, next: NextFuncti
 
     const user = req.user as any;
 
-    if (!user.clinicId) {
-        // Should not happen after migration, but fail safe
-        return res.status(403).json({ message: "User not associated with any Organization (Tenant)" });
+    // Set tenantId if available, but don't block requests for users without a clinic
+    if (user.clinicId) {
+        req.tenantId = user.clinicId;
     }
 
-    // Inject Context
-    req.tenantId = user.clinicId;
+    next();
+}
 
+// Strict version: use on routes that REQUIRE a clinic context
+export async function requireTenant(req: Request, res: Response, next: NextFunction) {
+    if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = req.user as any;
+
+    if (!user.clinicId) {
+        return res.status(403).json({ message: "Usuário não associado a nenhuma clínica" });
+    }
+
+    req.tenantId = user.clinicId;
     next();
 }
