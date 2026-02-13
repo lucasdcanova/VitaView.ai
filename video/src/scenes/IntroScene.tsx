@@ -1,103 +1,133 @@
-import {AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, Easing} from 'remotion';
-import {Logo3D} from '../components/Logo3D';
-import {FloatingParticles} from '../components/FloatingParticles';
+import {AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, Easing, spring} from 'remotion';
+import {VitaViewLogo} from '../components/VitaViewLogo';
+import {SimpleParticles} from '../components/SimpleParticles';
 
 export const IntroScene: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
 
-  // Fade in do título
-  const titleOpacity = interpolate(frame, [0.5 * fps, 1.5 * fps], [0, 1], {
-    easing: Easing.out(Easing.quad),
-    extrapolateRight: 'clamp',
+  // Entrada do logo
+  const logoProgress = spring({
+    frame,
+    fps,
+    config: {damping: 200},
   });
 
-  // Desliza o título de baixo
-  const titleY = interpolate(frame, [0.5 * fps, 1.5 * fps], [50, 0], {
-    easing: Easing.out(Easing.exp),
-    extrapolateRight: 'clamp',
+  // Entrada do texto principal (delayed)
+  const titleProgress = spring({
+    frame: frame - 15,
+    fps,
+    config: {damping: 200},
   });
 
-  // Fade in do subtítulo
-  const subtitleOpacity = interpolate(frame, [1 * fps, 2 * fps], [0, 1], {
-    easing: Easing.out(Easing.quad),
-    extrapolateRight: 'clamp',
+  const titleOpacity = interpolate(titleProgress, [0, 1], [0, 1]);
+  const titleY = interpolate(titleProgress, [0, 1], [30, 0]);
+
+  // Entrada do subtítulo (mais delayed)
+  const subtitleProgress = spring({
+    frame: frame - 25,
+    fps,
+    config: {damping: 200},
   });
 
-  const subtitleY = interpolate(frame, [1 * fps, 2 * fps], [30, 0], {
-    easing: Easing.out(Easing.exp),
-    extrapolateRight: 'clamp',
-  });
+  const subtitleOpacity = interpolate(subtitleProgress, [0, 1], [0, 1]);
+  const subtitleY = interpolate(subtitleProgress, [0, 1], [20, 0]);
 
   return (
     <AbsoluteFill style={{backgroundColor: '#ffffff'}}>
-      {/* Partículas de fundo */}
-      <div style={{position: 'absolute', inset: 0, opacity: 0.3}}>
-        <FloatingParticles count={30} />
+      {/* Partículas simples de fundo */}
+      <div style={{position: 'absolute', inset: 0, opacity: 0.4}}>
+        <SimpleParticles count={40} />
       </div>
 
-      {/* Logo 3D */}
+      {/* Conteúdo centralizado */}
       <div
         style={{
-          position: 'absolute',
-          top: '30%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '400px',
-          height: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: '0 100px',
         }}
       >
-        <Logo3D scale={1.2} />
-      </div>
+        {/* Logo */}
+        <div style={{marginBottom: '60px'}}>
+          <VitaViewLogo size={160} delay={0} />
+        </div>
 
-      {/* Título */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '60%',
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
-        }}
-      >
-        <h1
+        {/* Nome do produto */}
+        <div
           style={{
-            fontSize: '80px',
-            fontWeight: 900,
+            display: 'flex',
+            alignItems: 'baseline',
+            marginBottom: '40px',
+            opacity: titleOpacity,
+            transform: `translateY(${titleY}px)`,
+          }}
+        >
+          <h1
+            style={{
+              fontSize: '96px',
+              fontWeight: 900,
+              color: '#212121',
+              margin: 0,
+              fontFamily: 'Inter, sans-serif',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            VitaView
+          </h1>
+          <span
+            style={{
+              fontSize: '48px',
+              fontWeight: 900,
+              color: '#9E9E9E',
+              marginLeft: '8px',
+              fontFamily: 'Inter, sans-serif',
+              position: 'relative',
+              top: '-20px',
+            }}
+          >
+            AI
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h2
+          style={{
+            fontSize: '56px',
+            fontWeight: 700,
             color: '#212121',
             margin: 0,
+            marginBottom: '20px',
+            textAlign: 'center',
             fontFamily: 'Inter, sans-serif',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.01em',
+            opacity: subtitleOpacity,
+            transform: `translateY(${subtitleY}px)`,
           }}
         >
-          VitaView<span style={{color: '#424242'}}>.ai</span>
-        </h1>
-      </div>
+          O Prontuário que{' '}
+          <span style={{color: '#9E9E9E'}}>pensa com você.</span>
+        </h2>
 
-      {/* Subtítulo */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '72%',
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          opacity: subtitleOpacity,
-          transform: `translateY(${subtitleY}px)`,
-        }}
-      >
+        {/* Subtitle */}
         <p
           style={{
-            fontSize: '32px',
-            fontWeight: 500,
-            color: '#424242',
+            fontSize: '24px',
+            fontWeight: 400,
+            color: '#757575',
             margin: 0,
+            textAlign: 'center',
             fontFamily: 'Inter, sans-serif',
+            maxWidth: '700px',
+            lineHeight: 1.5,
+            opacity: subtitleOpacity,
+            transform: `translateY(${subtitleY}px)`,
           }}
         >
-          Prontuário Inteligente com IA
+          Concentre-se no paciente enquanto nossa IA cuida da burocracia.
         </p>
       </div>
     </AbsoluteFill>

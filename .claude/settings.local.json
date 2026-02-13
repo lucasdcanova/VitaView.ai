@@ -49,7 +49,10 @@
       "Bash(python3:*)",
       "Bash(/dev/null echo __NEW_LINE_e5f2cbdb7e5fb112__ echo '=== TEST 2: Update preferences ===' curl -s -b /tmp/cookies.txt -X PUT http://localhost:3000/api/user/profile -H 'Content-Type: application/json' -d '{\"\"\"\"preferences\"\"\"\":{\"\"\"\"professionalProfile\"\"\"\":{\"\"\"\"clinicName\"\"\"\":\"\"\"\"Clínica Cardio\"\"\"\",\"\"\"\"bio\"\"\"\":\"\"\"\"Cardiologista com 10 anos de experiência\"\"\"\",\"\"\"\"website\"\"\"\":\"\"\"\"https://drcardio.com.br\"\"\"\",\"\"\"\"languages\"\"\"\":\"\"\"\"Português, Inglês\"\"\"\",\"\"\"\"consultationMode\"\"\"\":\"\"\"\"hibrido\"\"\"\"}}}' -w '\\\\nHTTP: %{http_code}')",
       "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.readline\\(\\)\\); prefs=d.get\\(''''preferences'''',{}\\); pp=prefs.get\\(''''professionalProfile'''',{}\\); print\\(f''''clinicName={pp.get\\(clinicName\\)}, bio={pp.get\\(bio\\)[:30]}..., consultationMode={pp.get\\(consultationMode\\)}''''\\)\")",
-      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.readline\\(\\)\\); print\\(f''''fullName={d.get\\(fullName\\)}, crm={d.get\\(crm\\)}, specialty={d.get\\(specialty\\)}, rqe={d.get\\(rqe\\)}''''\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.readline\\(\\)\\); print\\(f''''fullName={d.get\\(fullName\\)}, crm={d.get\\(crm\\)}, specialty={d.get\\(specialty\\)}, rqe={d.get\\(rqe\\)}''''\\)\")",
+      "Bash(chmod:*)",
+      "Bash(/tmp/test-stripe-dialog.sh:*)",
+      "Bash(npx remotion:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

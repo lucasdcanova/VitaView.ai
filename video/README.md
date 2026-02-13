@@ -1,47 +1,53 @@
-# VitaView.ai - Vídeo Promocional
+# VitaView.ai - Vídeo Promocional v2.0
 
-Vídeo de 30 segundos apresentando o VitaView.ai com elementos 3D e animações fluidas.
+Vídeo de ~22 segundos usando **elementos reais do site** VitaView.ai.
+
+## ✨ O que mudou (v2.0)
+
+### Removido ❌
+- ~~Elementos 3D com Three.js~~ (causavam erro de WebGL em headless)
+- ~~Logo 3D customizado~~
+- ~~Partículas 3D flutuantes~~
+
+### Adicionado ✅
+- **Logo oficial** VitaView (dois V's entrelaçados do SVG do site)
+- **Cores exatas** do site (#212121, #9E9E9E, #757575, #E0E0E0)
+- **Textos reais** da landing page
+  - "O Prontuário que pensa com você"
+  - "Concentre-se no paciente enquanto nossa IA cuida da burocracia"
+- **Tipografia** "VitaView" + "AI" em sobrescrito cinza (como no site)
+- **Partículas 2D simples** (sem WebGL)
+- **Ícones 2D** minimalistas (SVG) para features
+- **Design monochrome** consistente com o site
 
 ## 🎬 Características
 
 - **Duração**: ~22 segundos (650 frames a 30fps)
 - **Resolução**: 1920x1080 (Full HD)
-- **Elementos 3D**: Logo rotativo, ícones flutuantes, partículas
-- **Design**: Monochrome (preto, cinza, branco) alinhado com o site
-- **Transições**: Slides e fades suaves entre cenas
+- **Sem dependências 3D** - Renderiza em qualquer ambiente
+- **Design fiel** ao site oficial
 
 ## 📦 Estrutura
 
 ```
 video/
 ├── src/
-│   ├── components/          # Componentes 3D reutilizáveis
-│   │   ├── Logo3D.tsx       # Logo 3D com animação
-│   │   ├── FloatingParticles.tsx  # Partículas de fundo
-│   │   └── FeatureIcon3D.tsx      # Ícones 3D das features
-│   ├── scenes/              # Cenas do vídeo
-│   │   ├── IntroScene.tsx   # Intro com logo e título
-│   │   ├── FeatureScene.tsx # Template de feature
-│   │   └── OutroScene.tsx   # CTA final
-│   ├── VitaViewPromo.tsx    # Composição principal
-│   ├── Root.tsx             # Registro da composição
-│   └── index.ts             # Entry point
-├── package.json
-├── tsconfig.json
-└── remotion.config.ts
+│   ├── components/
+│   │   ├── VitaViewLogo.tsx       # Logo SVG oficial (2 V's)
+│   │   ├── SimpleParticles.tsx    # Partículas 2D
+│   │   └── FeatureIcons.tsx       # Ícones SVG (mic, doc, lab, calendar, AI)
+│   ├── scenes/
+│   │   ├── IntroScene.tsx         # Logo + headline + subtitle
+│   │   ├── FeatureScene.tsx       # Template de feature
+│   │   └── OutroScene.tsx         # CTA final
+│   ├── VitaViewPromo.tsx          # Composição principal
+│   ├── Root.tsx                   # Registro
+│   └── index.ts
+├── package.json                   # SEM Three.js
+└── README.md
 ```
 
 ## 🚀 Instalação
-
-### Opção 1: Script automático
-
-```bash
-cd video
-chmod +x install.sh
-./install.sh
-```
-
-### Opção 2: Manual
 
 ```bash
 cd video
@@ -56,10 +62,7 @@ npm install
 npm start
 ```
 
-Isso abrirá o Remotion Studio no navegador onde você pode:
-- Pré-visualizar o vídeo em tempo real
-- Ajustar propriedades
-- Testar diferentes configurações
+Abre em http://localhost:3000
 
 ### Renderizar o vídeo
 
@@ -67,114 +70,92 @@ Isso abrirá o Remotion Studio no navegador onde você pode:
 npm run build
 ```
 
-O vídeo será salvo em `video/output.mp4`.
-
-### Renderizar com configurações personalizadas
-
-```bash
-# Renderizar em 60fps
-npx remotion render VitaViewPromo output-60fps.mp4 --fps=60
-
-# Renderizar em 4K
-npx remotion render VitaViewPromo output-4k.mp4 --width=3840 --height=2160
-
-# Renderizar com codec específico
-npx remotion render VitaViewPromo output.mp4 --codec=h264-mkv
-```
+Cria `output.mp4` na pasta video/
 
 ## 🎨 Cenas
 
-### 1. Intro (3 segundos)
-- Logo 3D rotativo com cruz médica
-- Título "VitaView.ai"
-- Subtítulo "Prontuário Inteligente com IA"
-- Partículas flutuantes ao fundo
+### 1. Intro (3s)
+- Logo SVG oficial VitaView (2 V's entrelaçados)
+- "VitaView" com "AI" em sobrescrito cinza
+- Headline: "O Prontuário que pensa com você"
+- Subtitle: "Concentre-se no paciente enquanto nossa IA cuida da burocracia"
+- Partículas 2D sutis
 
-### 2. Feature: Anamnese com IA (5 segundos)
-- Ícone 3D de microfone
-- Destaca transcrição de voz e estruturação automática
-- 3 highlights principais
+### 2. Feature: Anamnese com IA (5s)
+- Ícone SVG de microfone
+- Título, descrição, 3 highlights
+- Layout 2 colunas
 
-### 3. Feature: Prescrição Digital (5 segundos)
-- Ícone 3D de documento/prescrição
-- Destaca prescrição ilimitada e alertas
-- 3 highlights principais
+### 3. Feature: Prescrição Digital (5s)
+- Ícone SVG de documento Rx
+- Título, descrição, 3 highlights
 
-### 4. Feature: Análise de Exames (5 segundos)
-- Ícone 3D de tubo de ensaio
-- Destaca análise com IA e gráficos
-- 3 highlights principais
+### 4. Feature: Análise de Exames (5s)
+- Ícone SVG de tubo de ensaio
+- Título, descrição, 3 highlights
 
-### 5. Feature: Agenda Inteligente (5 segundos)
-- Ícone 3D de calendário
-- Destaca triagem e agendamento
-- 3 highlights principais
+### 5. Feature: Agenda Inteligente (5s)
+- Ícone SVG de calendário
+- Título, descrição, 3 highlights
 
-### 6. Outro (2 segundos)
-- Logo pequeno no topo
+### 6. Outro (2s)
+- Logo pequeno
 - CTA "Comece Gratuitamente"
 - Botão pulsante "Experimente Agora"
 - URL "vitaview.ai"
+- Tagline: "O prontuário que pensa com você"
 
-## ⚙️ Personalização
+## 🎨 Cores Oficiais
 
-### Ajustar durações
+- `#212121` - Preto principal
+- `#9E9E9E` - Cinza para "AI" e textos secundários
+- `#757575` - Cinza para subtítulos
+- `#E0E0E0` - Cinza claro para partículas e detalhes
+- `#424242` - Cinza escuro para elementos de UI
+
+## 📝 Customização
+
+### Mudar durações
 
 Edite `src/VitaViewPromo.tsx`:
 
 ```tsx
 const INTRO_DURATION = 90; // 3s
-const FEATURE_DURATION = 150; // 5s cada
+const FEATURE_DURATION = 150; // 5s
 const OUTRO_DURATION = 60; // 2s
-const TRANSITION_DURATION = 20; // 0.67s cada
 ```
 
 ### Mudar cores
 
-Todas as cores estão inline nos componentes:
-- `#212121` - Preto principal
-- `#424242` - Cinza escuro
-- `#E0E0E0` - Cinza claro
-- `#FFFFFF` - Branco
+Busque e substitua nos componentes:
+- `#212121` → sua cor principal
+- `#9E9E9E` → sua cor secundária
 
-### Adicionar/remover features
+### Mudar textos
 
-Edite `src/VitaViewPromo.tsx` e adicione/remova `<TransitionSeries.Sequence>` blocks.
+Edite diretamente nos componentes de cena.
 
-### Customizar elementos 3D
+## ✅ Vantagens vs. v1.0
 
-Edite os componentes em `src/components/`:
-- `Logo3D.tsx` - Forma e animação do logo
-- `FloatingParticles.tsx` - Quantidade e comportamento das partículas
-- `FeatureIcon3D.tsx` - Formas dos ícones 3D
+1. **Renderiza em qualquer ambiente** (sem necessidade de GPU/WebGL)
+2. **Design fiel ao site** (cores, tipografia, logo oficial)
+3. **Mais leve** (sem dependências Three.js, @react-three/fiber, @react-three/drei)
+4. **Mais fácil de customizar** (SVG inline em vez de geometrias 3D)
+5. **Performance melhor** (2D é mais rápido que 3D)
 
 ## 🔧 Troubleshooting
 
-### Erro: "Cannot find module '@remotion/three'"
+### Erro "Module not found @remotion/three"
 
-```bash
-npm install
-```
+✅ Resolvido! Three.js foi removido em v2.0.
 
-### Vídeo não renderiza / tela preta
+### Vídeo em branco
 
-Certifique-se de que:
-1. Todas as animações usam `useCurrentFrame()` (não CSS)
-2. `<ThreeCanvas>` tem `width` e `height`
-3. Não há `useFrame()` do React Three Fiber
+Verifique se `npm install` foi executado.
 
-### Performance lenta no preview
+### Performance lenta
 
-- Reduza `count` em `<FloatingParticles>`
-- Simplifique geometrias 3D (menos segmentos)
-- Use `npm run build` para renderizar offline
-
-## 📝 Notas Técnicas
-
-- **Todas as animações** são baseadas em `useCurrentFrame()` para renderização determinística
-- **CSS animations/transitions são proibidos** no Remotion
-- **TransitionSeries** sobrepõe cenas, então a duração total é menor que a soma das cenas
-- **Three.js** é renderizado via `@remotion/three` para compatibilidade
+Reduza `count` em `<SimpleParticles count={40} />`.
 
 ## 📄 Licença
 

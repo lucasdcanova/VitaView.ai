@@ -4,6 +4,13 @@ import {fade} from '@remotion/transitions/fade';
 import {IntroScene} from './scenes/IntroScene';
 import {FeatureScene} from './scenes/FeatureScene';
 import {OutroScene} from './scenes/OutroScene';
+import {
+  MicrophoneIcon,
+  PrescriptionIcon,
+  LabIcon,
+  CalendarIcon,
+  AIIcon,
+} from './components/FeatureIcons';
 
 export const VitaViewPromo: React.FC = () => {
   // Duração de cada cena em frames (30 fps)
@@ -14,7 +21,7 @@ export const VitaViewPromo: React.FC = () => {
 
   return (
     <TransitionSeries>
-      {/* Intro - Logo e título */}
+      {/* Intro - Logo e headline */}
       <TransitionSeries.Sequence durationInFrames={INTRO_DURATION}>
         <IntroScene />
       </TransitionSeries.Sequence>
@@ -28,13 +35,13 @@ export const VitaViewPromo: React.FC = () => {
       <TransitionSeries.Sequence durationInFrames={FEATURE_DURATION}>
         <FeatureScene
           title="Anamnese com IA"
-          description="Transcrição de voz em tempo real com estruturação automática do prontuário"
+          description="Grave a consulta e deixe a IA estruturar todo o prontuário automaticamente"
           highlights={[
-            'Gravação de voz durante a consulta',
-            'Transcrição automática e estruturada',
+            'Transcrição em tempo real',
+            'Estruturação automática',
             'Foco total no paciente',
           ]}
-          iconType="microphone"
+          icon={<MicrophoneIcon />}
         />
       </TransitionSeries.Sequence>
 
@@ -43,17 +50,17 @@ export const VitaViewPromo: React.FC = () => {
         timing={linearTiming({durationInFrames: TRANSITION_DURATION})}
       />
 
-      {/* Feature 2 - Prescrição Inteligente */}
+      {/* Feature 2 - Prescrição Digital */}
       <TransitionSeries.Sequence durationInFrames={FEATURE_DURATION}>
         <FeatureScene
           title="Prescrição Digital"
-          description="Prescrição ilimitada com alerta automático de interações medicamentosas"
+          description="Crie prescrições ilimitadas com alertas automáticos de interações medicamentosas"
           highlights={[
             'Autocomplete de medicamentos',
             'Alerta de interações',
-            'Assinatura digital',
+            'Assinatura digital integrada',
           ]}
-          iconType="prescription"
+          icon={<PrescriptionIcon />}
         />
       </TransitionSeries.Sequence>
 
@@ -66,13 +73,13 @@ export const VitaViewPromo: React.FC = () => {
       <TransitionSeries.Sequence durationInFrames={FEATURE_DURATION}>
         <FeatureScene
           title="Análise de Exames"
-          description="IA que interpreta resultados laboratoriais e gera gráficos de evolução"
+          description="IA interpreta resultados laboratoriais e gera gráficos de evolução"
           highlights={[
             'Upload ilimitado de exames',
             'Análise automática com IA',
-            'Gráficos de evolução',
+            'Gráficos de evolução temporal',
           ]}
-          iconType="lab"
+          icon={<LabIcon />}
         />
       </TransitionSeries.Sequence>
 
@@ -85,13 +92,13 @@ export const VitaViewPromo: React.FC = () => {
       <TransitionSeries.Sequence durationInFrames={FEATURE_DURATION}>
         <FeatureScene
           title="Agenda Inteligente"
-          description="Agendamento com IA e triagem pré-consulta para otimizar seu tempo"
+          description="Triagem automática e resumo pré-consulta para otimizar seu tempo"
           highlights={[
-            'Triagem automática de urgência',
+            'Triagem de urgência com IA',
             'Agendamento online',
             'Resumo pré-consulta',
           ]}
-          iconType="calendar"
+          icon={<CalendarIcon />}
         />
       </TransitionSeries.Sequence>
 
