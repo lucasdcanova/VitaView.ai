@@ -69,6 +69,7 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
+  const landingPath = path.resolve(import.meta.dirname, "landing");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -76,9 +77,28 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Servir landing pages como HTML estático pré-renderizado (sem React)
+  const landingRoutes: Record<string, string> = {
+    '/': 'index.html',
+    '/termos': 'termos.html',
+    '/privacidade': 'privacidade.html',
+  };
+
+  if (fs.existsSync(landingPath)) {
+    for (const [route, fileName] of Object.entries(landingRoutes)) {
+      const filePath = path.resolve(landingPath, fileName);
+      if (fs.existsSync(filePath)) {
+        app.get(route, (_req, res) => {
+          res.sendFile(filePath);
+        });
+        log(`Landing page estática registrada: ${route} -> ${fileName}`);
+      }
+    }
+  }
+
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // fall through to index.html if the file doesn't exist (SPA catch-all)
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
