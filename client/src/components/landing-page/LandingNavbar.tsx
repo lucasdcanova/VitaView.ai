@@ -36,10 +36,8 @@ export function LandingNavbar() {
                     >
                         <Logo
                             size="md"
-                            showText={true}
-                            textSize="lg"
+                            showText={false}
                             variant="icon"
-                            className="font-bold tracking-tight"
                         />
                     </motion.div>
 

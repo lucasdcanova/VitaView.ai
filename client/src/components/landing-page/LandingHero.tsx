@@ -17,26 +17,15 @@ export function LandingHero() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.05 }}
-                    className="mb-6"
+                    className="mb-8"
                 >
                     <Logo
-                        size="lg"
+                        size="xl"
                         showText={true}
                         textSize="xl"
                         variant="icon"
                         className="font-bold tracking-tight"
                     />
-                </motion.div>
-
-                {/* Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#F5F5F5] border border-[#E0E0E0] text-[11px] font-bold text-[#616161] uppercase tracking-widest mb-8">
-                        Prontuário Inteligente
-                    </span>
                 </motion.div>
 
                 {/* Headline */}
