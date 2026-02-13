@@ -20,7 +20,13 @@ import { LandingFooter } from "@/components/landing-page/LandingFooter";
 
 export default function LandingPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showCookieConsent, setShowCookieConsent] = useState(true);
+  const [showCookieConsent, setShowCookieConsent] = useState(() => {
+    // Check if user has already made a choice
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('cookieConsent');
+    }
+    return true;
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +38,11 @@ export default function LandingPage() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCookieChoice = (accepted: boolean) => {
+    localStorage.setItem('cookieConsent', accepted ? 'accepted' : 'rejected');
+    setShowCookieConsent(false);
   };
 
   return (
@@ -104,14 +115,14 @@ export default function LandingPage() {
                 <div className="flex space-x-3 flex-shrink-0">
                   <button
                     type="button"
-                    onClick={() => setShowCookieConsent(false)}
+                    onClick={() => handleCookieChoice(false)}
                     className="px-4 py-2 bg-[#E0E0E0] text-[#212121] rounded-lg text-sm font-bold hover:bg-[#D5D5D5] transition-colors"
                   >
                     Rejeitar
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowCookieConsent(false)}
+                    onClick={() => handleCookieChoice(true)}
                     className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-bold transition-colors"
                   >
                     Aceitar
