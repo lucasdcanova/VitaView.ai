@@ -2804,12 +2804,13 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Stripe payment route for one-time payments
-  app.post("/api/create-payment-intent", async (req, res) => {
+  app.post("/api/create-payment-intent", ensureAuthenticated, async (req, res) => {
     try {
       if (!stripe) {
         return res.status(503).json({ message: "Stripe não configurado" });
       }
 
+      const userId = req.user!.id;
       const { planId } = req.body;
       if (!planId) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
@@ -2821,11 +2822,31 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
 
+      if (plan.price === 0) {
+        return res.status(400).json({ message: "Plano gratuito não requer pagamento" });
+      }
+
+      // Criar ou buscar customer no Stripe
+      const user = req.user!;
+      let stripeCustomerId = user.stripeCustomerId;
+
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          name: user.username,
+          metadata: { userId: userId.toString() }
+        });
+        stripeCustomerId = customer.id;
+        await storage.updateUser(userId, { stripeCustomerId });
+      }
+
       // Criar payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount: plan.price, // Preço já está em centavos
         currency: "brl",
+        customer: stripeCustomerId,
         metadata: {
+          userId: userId.toString(),
           planId: planId.toString(),
           planName: plan.name
         },
@@ -2854,10 +2875,18 @@ export async function registerRoutes(app: Express): Promise<void> {
       const userId = req.user!.id;
       const user = req.user!;
 
-      // Verificar se o usuário já tem uma assinatura ativa
+      // Se o usuário já tem assinatura ativa, cancelar a anterior para trocar de plano
       const existingSubscription = await storage.getUserSubscription(userId);
       if (existingSubscription && existingSubscription.status === "active") {
-        return res.status(400).json({ message: "Usuário já possui uma assinatura ativa" });
+        // Cancelar assinatura anterior no Stripe se existir
+        if (existingSubscription.stripeSubscriptionId && stripe) {
+          try {
+            await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+          } catch (err: any) {
+            // Ignorar erro se assinatura já foi cancelada no Stripe
+          }
+        }
+        await storage.cancelUserSubscription(existingSubscription.id);
       }
 
       // Buscar detalhes do plano
@@ -3039,6 +3068,82 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json({ received: true });
     } catch (error) {
       res.status(400).send(`Webhook Error: ${(error as Error).message}`);
+    }
+  });
+
+  // Rota para ativar assinatura após pagamento confirmado
+  app.post("/api/activate-subscription", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { planId, paymentIntentId } = req.body;
+
+      if (!planId) {
+        return res.status(400).json({ message: "ID do plano é obrigatório" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plano não encontrado" });
+      }
+
+      // Para planos pagos, verificar o pagamento no Stripe
+      if (plan.price > 0) {
+        if (!stripe || !paymentIntentId) {
+          return res.status(400).json({ message: "ID do pagamento é obrigatório para planos pagos" });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status !== 'succeeded') {
+          return res.status(400).json({ message: "Pagamento ainda não foi confirmado" });
+        }
+
+        // Verificar que o pagamento pertence a este usuário
+        if (paymentIntent.metadata.userId !== userId.toString()) {
+          return res.status(403).json({ message: "Pagamento não pertence a este usuário" });
+        }
+      }
+
+      // Cancelar assinatura existente se houver
+      const existingSubscription = await storage.getUserSubscription(userId);
+      if (existingSubscription && existingSubscription.status === "active") {
+        if (existingSubscription.stripeSubscriptionId && stripe) {
+          try {
+            await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+          } catch (err: any) {
+            // Ignorar se já cancelada
+          }
+        }
+        await storage.cancelUserSubscription(existingSubscription.id);
+      }
+
+      // Calcular período baseado no intervalo do plano
+      const now = new Date();
+      let periodEnd = new Date(now);
+      if (plan.interval === 'year') {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      } else if (plan.interval === 'semester' || plan.interval === '6month') {
+        periodEnd.setMonth(periodEnd.getMonth() + 6);
+      } else {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      }
+
+      // Criar assinatura no banco
+      const subscription = await storage.createUserSubscription({
+        userId,
+        planId,
+        status: "active",
+        stripeCustomerId: req.user!.stripeCustomerId || null,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd
+      });
+
+      res.json({
+        success: true,
+        subscription,
+        plan
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Erro ao ativar assinatura: " + error.message });
     }
   });
 

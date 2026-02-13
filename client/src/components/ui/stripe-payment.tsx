@@ -11,13 +11,6 @@ import { Loader2 } from 'lucide-react';
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const stripeEnabled = Boolean(stripePublicKey && stripePublicKey.startsWith('pk_'));
 
-// Log para debug detalhado
-console.log('=== Debug Stripe ===');
-console.log('Stripe Public Key existe:', !!stripePublicKey);
-console.log('Stripe Public Key length:', stripePublicKey?.length);
-console.log('Stripe Public Key começa com pk_:', stripePublicKey?.startsWith('pk_'));
-console.log('Ambiente:', import.meta.env.MODE);
-
 if (!stripePublicKey) {
   console.warn('VITE_STRIPE_PUBLIC_KEY não está definida nas variáveis de ambiente. Pagamentos serão desativados.');
 } else if (!stripePublicKey.startsWith('pk_')) {
@@ -30,41 +23,23 @@ let stripePromise: Promise<any> | null = null;
 const initializeStripe = async () => {
   if (!stripeEnabled) return null;
   if (stripePromise) return stripePromise;
-  
+
   try {
-    console.log('🔄 Inicializando Stripe com suporte CSP...');
-    
     // First, ensure Stripe.js is loaded via our CSP-compliant loader
     await ExternalScriptLoader.loadStripeJS();
-    
+
     // Then initialize with loadStripe
     stripePromise = loadStripe(stripePublicKey);
-    
-    const stripe = await stripePromise;
-    if (stripe) {
-      console.log('✅ Stripe carregado com sucesso via ExternalScriptLoader');
-    } else {
-      console.error('❌ Stripe retornou null - verifique a chave pública:', stripePublicKey);
-    }
-    
-    return stripe;
+
+    return await stripePromise;
   } catch (error) {
-    console.error('❌ Erro ao carregar Stripe.js:', error);
-    console.group('🔍 Diagnóstico de problemas Stripe:');
-    console.error('1. Bloqueio CSP - script-src não permite js.stripe.com');
-    console.error('2. Chave pública inválida:', stripePublicKey);
-    console.error('3. Rede/firewall bloqueando stripe.com');
-    console.error('4. Erro de CORS ou headers de segurança');
-    console.error('5. CDN Stripe indisponível');
-    console.groupEnd();
-    
+    console.error('Erro ao carregar Stripe.js:', error);
+
     // Try fallback initialization
     try {
-      console.log('🔄 Tentando inicialização fallback do Stripe...');
       stripePromise = loadStripe(stripePublicKey);
       return await stripePromise;
     } catch (fallbackError) {
-      console.error('❌ Fallback também falhou:', fallbackError);
       throw error;
     }
   }
@@ -75,17 +50,18 @@ if (stripeEnabled) {
   try {
     stripePromise = initializeStripe();
   } catch (error) {
-    console.error('❌ Falha crítica na inicialização do Stripe:', error);
+    console.error('Falha crítica na inicialização do Stripe:', error);
     stripePromise = Promise.reject(error);
   }
 }
 
 interface CheckoutFormProps {
+  planId: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-const CheckoutForm = ({ onSuccess, onCancel }: CheckoutFormProps) => {
+const CheckoutForm = ({ planId, onSuccess, onCancel }: CheckoutFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -100,29 +76,68 @@ const CheckoutForm = ({ onSuccess, onCancel }: CheckoutFormProps) => {
 
     setIsLoading(true);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.origin + '/subscription-management',
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin + '/subscription',
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Erro no pagamento",
+          description: error.message || "Ocorreu um erro ao processar o pagamento.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        onCancel?.();
+        return;
+      }
+
+      // Payment succeeded — now activate the subscription in our database
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        try {
+          const activateResponse = await apiRequest('POST', '/api/activate-subscription', {
+            planId,
+            paymentIntentId: paymentIntent.id,
+          });
+
+          if (!activateResponse.ok) {
+            const errorData = await activateResponse.json();
+            throw new Error(errorData.message || 'Erro ao ativar assinatura');
+          }
+
+          toast({
+            title: "Assinatura ativada!",
+            description: "Seu plano foi atualizado com sucesso.",
+          });
+          onSuccess?.();
+        } catch (activateError) {
+          toast({
+            title: "Pagamento confirmado",
+            description: "O pagamento foi processado, mas houve um erro ao ativar o plano. Entre em contato com o suporte.",
+            variant: "destructive",
+          });
+          onCancel?.();
+        }
+      } else {
+        toast({
+          title: "Pagamento em processamento",
+          description: "Seu pagamento está sendo processado. O plano será ativado em breve.",
+        });
+        onSuccess?.();
+      }
+    } catch (err) {
       toast({
-        title: "Erro no pagamento",
-        description: error.message || "Ocorreu um erro ao processar o pagamento.",
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao processar o pagamento.",
         variant: "destructive",
       });
-      setIsLoading(false);
       onCancel?.();
-    } else {
-      toast({
-        title: "Pagamento realizado com sucesso",
-        description: "Sua assinatura foi ativada!",
-      });
+    } finally {
       setIsLoading(false);
-      onSuccess?.();
     }
   };
 
@@ -130,18 +145,18 @@ const CheckoutForm = ({ onSuccess, onCancel }: CheckoutFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
       <div className="flex gap-4 justify-end mt-6">
-        <Button 
-          type="button" 
-          variant="outline" 
+        <Button
+          type="button"
+          variant="outline"
           onClick={onCancel}
           disabled={isLoading}
         >
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={!stripe || !elements || isLoading}
-          className="bg-[#1E3A5F] hover:bg-[#48C9B0] text-white"
+          className="bg-[#212121] hover:bg-[#424242] text-white"
         >
           {isLoading ? (
             <>
@@ -181,7 +196,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
         } else {
-          throw new Error('Não foi possível obter o token de pagamento');
+          throw new Error(data.message || 'Não foi possível obter o token de pagamento');
         }
       } catch (error) {
         toast({
@@ -196,7 +211,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
     };
 
     fetchPaymentIntent();
-  }, [planId, toast, onCancel]);
+  }, [planId]);
 
   if (!stripeEnabled) {
     return (
@@ -233,7 +248,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret, locale: 'pt-BR' }}>
-      <CheckoutForm onSuccess={onSuccess} onCancel={onCancel} />
+      <CheckoutForm planId={planId} onSuccess={onSuccess} onCancel={onCancel} />
     </Elements>
   );
 };

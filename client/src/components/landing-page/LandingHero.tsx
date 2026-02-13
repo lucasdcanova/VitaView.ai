@@ -3,12 +3,13 @@ import { Link } from "wouter";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
+import { AntigravityCanvas } from "./AntigravityCanvas";
 
 export function LandingHero() {
     return (
         <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden">
-            {/* Subtle dot grid background */}
-            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_0.5px,transparent_0.5px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+            {/* Antigravity particle background */}
+            <AntigravityCanvas className="absolute inset-0 z-0" />
 
             <div className="flex-grow flex flex-col justify-center items-center text-center max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-24 md:py-0 relative z-10">
 

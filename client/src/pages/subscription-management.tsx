@@ -358,18 +358,49 @@ const SubscriptionManagement = () => {
     await cancelSubscriptionMutation.mutateAsync();
   };
 
-  const handleStartPayment = (planId: number) => {
+  const handleStartPayment = async (planId: number) => {
+    // Verificar se é plano gratuito
+    const plan = allPlans.find(p => p.id === planId);
+    if (plan && plan.price === 0) {
+      // Ativar plano gratuito diretamente, sem Stripe
+      setIsProcessing(true);
+      try {
+        const res = await apiRequest('POST', '/api/activate-subscription', { planId });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Erro ao ativar plano');
+        }
+        toast({
+          title: 'Plano ativado!',
+          description: 'Seu plano gratuito foi ativado com sucesso.',
+        });
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription/limits'] });
+      } catch (error: any) {
+        toast({
+          title: 'Erro',
+          description: error.message || 'Erro ao ativar plano gratuito.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
     setSelectedPlanId(planId);
     setIsPaymentDialogOpen(true);
   };
 
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
+    setSelectedPlanId(null);
     toast({
       title: 'Assinatura realizada!',
       description: 'Seu plano foi atualizado com sucesso.',
     });
     refetch();
+    queryClient.invalidateQueries({ queryKey: ['/api/subscription/limits'] });
   };
 
   if (isLoadingSubscription) {
@@ -1114,7 +1145,7 @@ const SubscriptionManagement = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-gray-900">{selectedPlan.name}</span>
                     <Badge variant="outline" className="bg-white">
-                      {selectedPlan.interval === 'month' ? 'Mensal' : 'Anual'}
+                      {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === 'semester' || selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
                     </Badge>
                   </div>
                   <div className="text-2xl font-bold text-primary">
