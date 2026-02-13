@@ -4,9 +4,9 @@ import { LineChart, ArrowRight } from "lucide-react";
 
 export function LandingLabView() {
     return (
-        <section id="como-funciona" className="py-12 md:py-24 bg-[#0A0A0A] relative overflow-hidden">
+        <section id="como-funciona" className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden">
             {/* Elementos decorativos de fundo */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute left-0 top-20 w-72 h-72 bg-white rounded-full opacity-5 blur-3xl"></div>
                 <div className="absolute right-0 bottom-20 w-80 h-80 bg-white rounded-full opacity-5 blur-3xl"></div>
             </div>
@@ -340,7 +340,7 @@ export function LandingLabView() {
 
                 {/* CTA após análise */}
                 <motion.div
-                    className="mt-16 text-center"
+                    className="mt-8 md:mt-16 text-center"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}

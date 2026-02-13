@@ -5,15 +5,15 @@ import { Link } from "wouter";
 
 export function LandingAISuggestions() {
     return (
-        <section className="py-20 md:py-28 bg-[#0A0A0A] relative overflow-hidden text-white">
+        <section className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white">
             {/* Background Effects - Subtle Monochrome */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
                 <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-24">
 
                     {/* Visual Mockup - Prescription Input with AI Suggestion */}
                     <div className="lg:w-1/2 relative">

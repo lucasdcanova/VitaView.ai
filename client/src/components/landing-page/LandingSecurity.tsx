@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 
 export function LandingSecurity() {
     return (
-        <section className="py-20 md:py-28 bg-white relative overflow-hidden">
+        <section className="py-12 md:py-20 bg-white relative overflow-hidden">
             {/* Minimalist Background */}
             <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-25 pointer-events-none"></div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-24">
 
                     {/* Text Content */}
                     <div className="lg:w-1/2">
@@ -48,10 +48,10 @@ export function LandingSecurity() {
                         >
                             <div className="relative w-full max-w-md mx-auto aspect-square bg-[#111111] rounded-3xl shadow-2xl flex items-center justify-center p-8 border border-gray-800">
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl pointer-events-none" />
-                                <Lock className="w-32 h-32 text-white/90 drop-shadow-2xl" />
+                                <Lock className="w-24 h-24 md:w-32 md:h-32 text-white/90 drop-shadow-2xl" />
 
-                                {/* Floating Cards */}
-                                <div className="absolute -right-8 top-8 space-y-3">
+                                {/* Floating Cards - hidden on mobile, positioned outside on desktop */}
+                                <div className="hidden lg:block absolute -right-8 top-8 space-y-3">
                                     {[
                                         { icon: <Database className="w-4 h-4 text-[#212121]" />, text: "Backups Redundantes" },
                                         { icon: <FileKey className="w-4 h-4 text-[#212121]" />, text: "Criptografia AES-256" },
@@ -75,11 +75,31 @@ export function LandingSecurity() {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Mobile Security Features Grid */}
+                            <div className="grid grid-cols-2 gap-3 mt-6 lg:hidden">
+                                {[
+                                    { icon: <Database className="w-4 h-4 text-[#212121]" />, text: "Backups Redundantes" },
+                                    { icon: <FileKey className="w-4 h-4 text-[#212121]" />, text: "Criptografia AES-256" },
+                                    { icon: <Cloud className="w-4 h-4 text-[#212121]" />, text: "Nuvem Certificada" },
+                                    { icon: <ShieldCheck className="w-4 h-4 text-[#212121]" />, text: "Compliance Legal" },
+                                ].map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-white p-3 rounded-xl shadow-md flex items-center gap-2.5 border border-gray-100"
+                                    >
+                                        <div className="p-1.5 bg-gray-100 rounded-md">
+                                            {item.icon}
+                                        </div>
+                                        <span className="font-semibold text-xs text-gray-800 uppercase tracking-tight">{item.text}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
 
                         {/* Minimalist Decor */}
-                        <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-gray-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-                        <div className="absolute -top-10 -right-10 w-64 h-64 bg-gray-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+                        <div className="hidden md:block absolute -bottom-10 -left-10 w-64 h-64 bg-gray-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+                        <div className="hidden md:block absolute -top-10 -right-10 w-64 h-64 bg-gray-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
                     </div>
                 </div>
             </div>

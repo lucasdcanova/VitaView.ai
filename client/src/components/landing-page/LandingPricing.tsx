@@ -5,15 +5,15 @@ import { Link } from "wouter";
 
 export function LandingPricing() {
     return (
-        <section id="precos" className="py-20 md:py-28 bg-[#F4F4F4] relative overflow-hidden">
+        <section id="precos" className="py-12 md:py-20 bg-[#F4F4F4] relative overflow-hidden">
             {/* Elementos decorativos de fundo */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-1/2 right-0 w-96 h-96 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl translate-y-1/3 -translate-x-1/3"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center max-w-3xl mx-auto mb-16">
+                <div className="text-center max-w-3xl mx-auto mb-8 md:mb-16">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -31,10 +31,10 @@ export function LandingPricing() {
                     </motion.div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto items-center">
                     {/* Plano Básico (Comparativo) */}
                     <motion.div
-                        className="bg-white/50 backdrop-blur-sm rounded-2xl p-8 border border-[#E0E0E0] opacity-75 scale-95"
+                        className="bg-white/50 backdrop-blur-sm rounded-2xl p-8 border border-[#E0E0E0] opacity-75 md:scale-95"
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -67,7 +67,7 @@ export function LandingPricing() {
 
                     {/* Plano Vita - Destaque */}
                     <motion.div
-                        className="bg-white rounded-2xl p-8 md:p-10 border-2 border-[#212121] shadow-xl relative z-20 scale-105"
+                        className="bg-white rounded-2xl p-8 md:p-10 border-2 border-[#212121] shadow-xl relative z-20 md:scale-105"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}

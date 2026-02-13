@@ -37,9 +37,9 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-12 md:py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-screen flex flex-col justify-center">
+        <section id="faq" className="py-12 md:py-20 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden">
             {/* Elementos decorativos */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
                 <div className="absolute left-20 bottom-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
             </div>

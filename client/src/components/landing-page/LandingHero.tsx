@@ -42,8 +42,8 @@ export function LandingHero() {
     };
 
     return (
-        <section className="h-screen w-full relative bg-white flex flex-col overflow-hidden">
-            <div className="flex-grow flex flex-col justify-center max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 gap-8 md:gap-10">
+        <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden">
+            <div className="flex-grow flex flex-col justify-center max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 gap-6 md:gap-10 py-20 md:py-0">
 
                 {/* First Block: Hero Text vs File Upload Animation */}
                 <motion.div
@@ -95,7 +95,7 @@ export function LandingHero() {
                         {/* Wrapper for compactness on mobile */}
                         <div className="relative w-full max-w-[420px]">
                             {/* Bg Blur */}
-                            <div className="absolute -z-10 w-56 h-56 bg-[#E0E0E0] rounded-full opacity-30 blur-xl -top-8 -right-8"></div>
+                            <div className="absolute -z-10 w-56 h-56 bg-[#E0E0E0] rounded-full opacity-30 blur-xl -top-8 -right-8 hidden md:block"></div>
 
                             <motion.div
                                 className="rounded-xl shadow-lg relative z-10 bg-white overflow-hidden w-full aspect-[16/9] flex flex-col items-center justify-center border-2 border-dashed border-[#E0E0E0] bg-[#F4F4F4]/30"
@@ -153,7 +153,7 @@ export function LandingHero() {
                 </motion.div>
 
                 {/* Second Block: Voice Animation (Left) vs Voice Text (Right) */}
-                <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
+                <div className="flex flex-col-reverse md:flex-row items-center gap-6 md:gap-12">
 
                     {/* Left Content: Voice Animation Mockup */}
                     <motion.div

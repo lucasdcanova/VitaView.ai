@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function LandingPrescription() {
     return (
-        <section className="py-20 md:py-28 bg-[#FAFAFA] relative overflow-hidden">
+        <section className="py-12 md:py-20 bg-[#FAFAFA] relative overflow-hidden">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
@@ -72,8 +72,8 @@ export function LandingPrescription() {
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
                             {/* Abstract decorative elements */}
-                            <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#E0E0E0] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
-                            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-[#F5F5F5] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+                            <div className="hidden md:block absolute -top-10 -right-10 w-64 h-64 bg-[#E0E0E0] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
+                            <div className="hidden md:block absolute -bottom-10 -left-10 w-64 h-64 bg-[#F5F5F5] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
 
                             {/* Prescription Card Mockup */}
                             <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-[#E0E0E0] p-6 md:p-8">
@@ -129,7 +129,7 @@ export function LandingPrescription() {
 
                                 {/* Interactive Notification */}
                                 <motion.div
-                                    className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#212121] text-white p-4 rounded-xl shadow-xl max-w-[200px]"
+                                    className="hidden lg:block absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#212121] text-white p-4 rounded-xl shadow-xl max-w-[200px]"
                                     initial={{ opacity: 0, x: 20 }}
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}

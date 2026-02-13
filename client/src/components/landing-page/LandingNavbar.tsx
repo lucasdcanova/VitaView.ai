@@ -43,7 +43,7 @@ export function LandingNavbar() {
                     </motion.div>
 
                     {/* Desktop navigation - design minimalista */}
-                    <div className="hidden lg:flex space-x-6 text-[#212121]">
+                    <div className="hidden xl:flex space-x-5 text-[#212121]">
                         {navItems.map((item) => (
                             <motion.a
                                 key={item.id}
@@ -58,8 +58,8 @@ export function LandingNavbar() {
                         ))}
                     </div>
 
-                    {/* Mobile hamburger menu button */}
-                    <div className="md:hidden flex items-center gap-2">
+                    {/* Mobile/Tablet hamburger menu button */}
+                    <div className="xl:hidden flex items-center gap-2">
                         <Link href="/auth">
                             <Button
                                 variant="default"
@@ -79,7 +79,7 @@ export function LandingNavbar() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="hidden md:flex items-center gap-4">
+                    <div className="hidden xl:flex items-center gap-4">
                         <motion.div
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
@@ -113,7 +113,7 @@ export function LandingNavbar() {
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        className="fixed inset-0 z-40 md:hidden"
+                        className="fixed inset-0 z-40 xl:hidden"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

@@ -15,15 +15,15 @@ export function LandingAnamnesis() {
     }, []);
 
     return (
-        <section className="py-20 md:py-32 bg-[#0A0A0A] relative overflow-hidden">
+        <section className="py-12 md:py-24 bg-[#0A0A0A] relative overflow-hidden">
             {/* Background Decor */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full mix-blend-overlay filter blur-3xl opacity-50 animate-pulse"></div>
                 <div className="absolute -bottom-8 left-20 w-72 h-72 bg-white/5 rounded-full mix-blend-overlay filter blur-3xl opacity-50 animate-pulse"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-20">
 
                     {/* Lado Esquerdo: Texto */}
                     <div className="lg:w-1/2">

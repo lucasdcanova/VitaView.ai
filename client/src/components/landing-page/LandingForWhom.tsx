@@ -3,16 +3,11 @@ import { Users, Stethoscope, CheckCircle2, Building, Star, Clock, ShieldCheck } 
 
 export function LandingForWhom() {
     return (
-        <section id="para-quem" className="py-12 md:py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        <section id="para-quem" className="py-12 md:py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16">
             {/* Elementos decorativos de fundo */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute -left-20 bottom-0 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
                 <div className="absolute right-0 top-1/4 w-80 h-80 bg-[#F4F4F4] rounded-full opacity-20 blur-3xl"></div>
-                <motion.div
-                    className="absolute top-1/2 left-1/3 w-8 h-8 bg-[#E0E0E0] rounded-full opacity-50"
-                    animate={{ y: [0, 30, 0], x: [0, 15, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                />
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">

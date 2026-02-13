@@ -44,9 +44,9 @@ export function LandingBenefits() {
     ];
 
     return (
-        <section id="beneficios" className="pt-10 md:pt-12 pb-16 md:pb-24 bg-gradient-to-b from-[#F4F4F4] to-[#E0E0E0] text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        <section id="beneficios" className="py-12 md:py-20 bg-gradient-to-b from-[#F4F4F4] to-[#E0E0E0] text-[#212121] relative overflow-hidden scroll-mt-16">
             {/* Elementos decorativos de fundo */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute -right-10 -bottom-20 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
                 <div className="absolute left-1/3 -top-48 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
             </div>
@@ -115,7 +115,7 @@ export function LandingBenefits() {
 
                 {/* CTA dentro da seção de benefícios */}
                 <motion.div
-                    className="text-center mt-16"
+                    className="text-center mt-8 md:mt-16"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}

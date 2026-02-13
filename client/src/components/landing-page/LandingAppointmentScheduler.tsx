@@ -18,6 +18,39 @@ export function LandingAppointmentScheduler() {
                     </p>
                 </motion.div>
 
+                {/* Mobile Simplified Calendar View */}
+                <motion.div
+                    className="md:hidden bg-white rounded-2xl shadow-xl overflow-hidden max-w-sm mx-auto mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                    <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-4 text-white flex items-center gap-3">
+                        <Calendar className="w-5 h-5" />
+                        <div>
+                            <h3 className="text-base font-bold">Abril 2025</h3>
+                            <p className="text-xs text-[#E0E0E0]">Próximas consultas</p>
+                        </div>
+                    </div>
+                    <div className="p-4 space-y-3">
+                        {[
+                            { time: "09:00", name: "Maria Silva", type: "Consulta", color: "border-[#3B82F6]", bg: "bg-[#E8F1FB]" },
+                            { time: "14:30", name: "João Santos", type: "Retorno", color: "border-[#22C55E]", bg: "bg-[#EAF7EE]" },
+                            { time: "10:00", name: "Ana Costa", type: "Exames", color: "border-[#F59E0B]", bg: "bg-[#FFF4E5]" },
+                        ].map((apt, i) => (
+                            <div key={i} className={`${apt.bg} border-l-4 ${apt.color} rounded-lg p-3 flex items-center justify-between`}>
+                                <div>
+                                    <div className="text-xs font-semibold text-[#212121]">{apt.time}</div>
+                                    <div className="text-sm font-medium text-[#212121]">{apt.name}</div>
+                                </div>
+                                <span className="text-xs text-[#616161] font-medium">{apt.type}</span>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* Desktop Full Calendar */}
                 <motion.div
                     className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto hidden md:block"
                     initial={{ opacity: 0, y: 20 }}

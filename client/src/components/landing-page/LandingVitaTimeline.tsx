@@ -17,9 +17,9 @@ import {
 
 export function LandingVitaTimeline() {
     return (
-        <section id="demonstracoes" className="py-12 md:py-16 mt-[0] bg-white text-[#212121] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        <section id="demonstracoes" className="py-12 md:py-16 mt-[0] bg-white text-[#212121] relative overflow-hidden scroll-mt-16">
             {/* Elementos decorativos minimalistas */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute top-20 right-10 w-56 h-56 bg-[#F5F5F5] rounded-full opacity-50 blur-3xl"></div>
                 <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#F5F5F5] rounded-full opacity-50 blur-3xl"></div>
             </div>

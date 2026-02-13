@@ -34,17 +34,11 @@ export function LandingTestimonials() {
     ];
 
     return (
-        <section id="depoimentos" className="py-12 md:py-20 bg-[#F4F4F4] relative overflow-hidden scroll-mt-16 min-h-screen flex flex-col justify-center">
+        <section id="depoimentos" className="py-12 md:py-20 bg-[#F4F4F4] relative overflow-hidden scroll-mt-16">
             {/* Elementos decorativos */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
                 <div className="absolute left-0 bottom-10 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-20 blur-3xl"></div>
-
-                {/* Elementos decorativos minimalistas */}
-                <div className="absolute top-20 left-[15%] w-3 h-3 bg-[#9E9E9E] rounded-full opacity-70"></div>
-                <div className="absolute top-1/2 right-[10%] w-5 h-5 bg-[#9E9E9E] rounded-full opacity-70"></div>
-                <div className="absolute bottom-40 left-[30%] w-4 h-4 bg-[#9E9E9E] rounded-full opacity-70"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -159,13 +153,13 @@ export function LandingTestimonials() {
 
                 {/* Avaliações em formato numérico */}
                 <motion.div
-                    className="mt-16 bg-white rounded-2xl shadow-lg overflow-hidden max-w-4xl mx-auto"
+                    className="mt-8 md:mt-16 bg-white rounded-2xl shadow-lg overflow-hidden max-w-4xl mx-auto"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                    <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
                         {stats.map((stat, index) => (
                             <div key={index} className="p-6 text-center">
                                 <div className="text-2xl mb-1">{stat.icon}</div>

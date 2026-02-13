@@ -96,7 +96,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Background elements - minimalista, sem gradientes */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 hidden md:block">
         {/* Elementos decorativos sutis em escala de cinza */}
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl"></div>
         <div className="absolute top-1/3 -left-32 w-80 h-80 bg-[#E0E0E0] rounded-full opacity-20 blur-3xl"></div>
