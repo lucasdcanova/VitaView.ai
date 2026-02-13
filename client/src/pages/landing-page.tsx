@@ -13,118 +13,50 @@ import { LandingPricing } from "@/components/landing-page/LandingPricing";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
 import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
 import { LandingAISuggestions } from "@/components/landing-page/LandingAISuggestions";
+import { LandingStatsStrip } from "@/components/landing-page/LandingStatsStrip";
+import { LandingVoiceTranscription } from "@/components/landing-page/LandingVoiceTranscription";
 import { LandingFAQ } from "@/components/landing-page/LandingFAQ";
 import { LandingFooter } from "@/components/landing-page/LandingFooter";
 
 export default function LandingPage() {
-  // Estado para animações e elementos interativos
-  const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-
   const [showCookieConsent, setShowCookieConsent] = useState(true);
-  /* isMobileMenuOpen removed */
 
-  // Navigation items for reuse
-  // Navigation items removed (moved to LandingNavbar)
-
-  // Efeito para detectar scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-
-      // Mostrar botão de voltar ao topo apenas quando rolar mais para baixo
-      if (window.scrollY > 500) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 500);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Função para rolar suavemente até o topo
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-
-
-  // SEO: Set document title and meta description
-  useEffect(() => {
-    document.title = "VitaView AI - Plataforma de Gestão de Saúde Inteligente";
-
-    // Update meta description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', 'VitaView AI: Prontuário inteligente que organiza exames, histórico e tendências de saúde do paciente. HIPAA e LGPD compliant. Automatize a gestão clínica com IA.');
-
-    // Update og:title
-    let ogTitle = document.querySelector('meta[property="og:title"]');
-    if (!ogTitle) {
-      ogTitle = document.createElement('meta');
-      ogTitle.setAttribute('property', 'og:title');
-      document.head.appendChild(ogTitle);
-    }
-    ogTitle.setAttribute('content', 'VitaView AI - Plataforma de Gestão de Saúde Inteligente');
-
-    // Update og:description
-    let ogDescription = document.querySelector('meta[property="og:description"]');
-    if (!ogDescription) {
-      ogDescription = document.createElement('meta');
-      ogDescription.setAttribute('property', 'og:description');
-      document.head.appendChild(ogDescription);
-    }
-    ogDescription.setAttribute('content', 'Prontuário inteligente que organiza exames, histórico e tendências de saúde. HIPAA e LGPD compliant.');
-  }, []);
-
-  // Variáveis de animação
-  // Variáveis de animação removidas (movidas para LandingHero)
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      {/* Background elements - minimalista, sem gradientes */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 hidden md:block">
-        {/* Elementos decorativos sutis em escala de cinza */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl"></div>
-        <div className="absolute top-1/3 -left-32 w-80 h-80 bg-[#E0E0E0] rounded-full opacity-20 blur-3xl"></div>
-      </div>
-
       <LandingNavbar />
-      <LandingHero />
-      <LandingLabView />
-      <LandingPrescription />
-      <LandingAISuggestions />
 
-      {/* Appointment Scheduler Calendar */}
-      <LandingAppointmentScheduler />
-
-      {/* Benefits Section */}
-      <LandingFeatures />
-      <LandingForWhom />
-      <LandingSecurity />
-      <LandingPricing />
-      <LandingTestimonials />
-
-
-
-      <LandingFAQ />
+      <main>
+        <LandingHero />
+        <LandingStatsStrip />
+        <LandingLabView />
+        <LandingPrescription />
+        <LandingAISuggestions />
+        <LandingVoiceTranscription />
+        <LandingAppointmentScheduler />
+        <LandingFeatures />
+        <LandingForWhom />
+        <LandingSecurity />
+        <LandingPricing />
+        <LandingTestimonials />
+        <LandingFAQ />
+      </main>
 
       <LandingFooter />
 
-      {/* Botão voltar ao topo */}
+      {/* Scroll to top */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
@@ -136,17 +68,20 @@ export default function LandingPage() {
             transition={{ duration: 0.3 }}
             whileHover={{ y: -5 }}
             whileTap={{ scale: 0.9 }}
+            aria-label="Voltar ao topo"
           >
             <ArrowUp className="w-5 h-5" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Banner de consentimento de cookies */}
+      {/* Cookie consent */}
       <AnimatePresence>
         {showCookieConsent && (
           <motion.div
             className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[#E0E0E0] shadow-xl"
+            role="dialog"
+            aria-label="Consentimento de cookies"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -156,41 +91,37 @@ export default function LandingPage() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-start md:items-center space-x-3">
                   <div className="flex-shrink-0 bg-[#E0E0E0] p-2 rounded-full">
-                    <Lock className="h-5 w-5 text-[#212121]" />
+                    <Lock className="h-5 w-5 text-[#212121]" aria-hidden="true" />
                   </div>
                   <div className="text-sm text-[#9E9E9E]">
                     <p>
                       Utilizamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
-                      <a href="#" className="text-[#212121] hover:underline"> Política de Privacidade</a> e
-                      <a href="#" className="text-[#212121] hover:underline"> Termos de Uso</a>.
+                      <a href="/privacidade" className="text-[#212121] hover:underline"> Política de Privacidade</a> e
+                      <a href="/termos" className="text-[#212121] hover:underline"> Termos de Uso</a>.
                     </p>
                   </div>
                 </div>
                 <div className="flex space-x-3 flex-shrink-0">
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => setShowCookieConsent(false)}
-                    variant="outline"
-                    size="sm"
-                    className="px-4 py-2 bg-[#E0E0E0] text-[#212121] rounded-lg"
+                    className="px-4 py-2 bg-[#E0E0E0] text-[#212121] rounded-lg text-sm font-bold hover:bg-[#D5D5D5] transition-colors"
                   >
                     Rejeitar
-                  </Button>
-                  <Button
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setShowCookieConsent(false)}
-                    variant="default"
-                    size="sm"
-                    className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg font-medium"
+                    className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-bold transition-colors"
                   >
                     Aceitar
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-
-    </div >
+    </div>
   );
 }

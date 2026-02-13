@@ -21,6 +21,7 @@ export function LandingNavbar() {
     return (
         <>
             <motion.nav
+                aria-label="Navegação principal"
                 className="bg-white border-b border-[#E0E0E0] py-3 fixed top-0 left-0 right-0 z-50"
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
