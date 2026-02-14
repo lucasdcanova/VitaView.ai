@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { EXAM_DATABASE, EXAM_PROTOCOLS, ALL_EXAMS } from "@/constants/exam-database";
+import { EXAM_DATABASE, EXAM_PROTOCOLS, ALL_EXAMS, PROTOCOLS_COLORS } from "@/constants/exam-database";
 import { CustomProtocol } from "@/hooks/use-exam-protocols";
 import { FeatureGate } from "@/components/ui/feature-gate";
 
@@ -282,6 +282,8 @@ export function ActiveRequestList({
                             {allProtocols.slice(0, 6).map((protocol) => {
                                 const Icon = (protocol as any).icon || FileText;
                                 const isDeleting = protocolLogic?.deleteMode && protocolLogic.protocolsToDelete.includes((protocol as any).id);
+                                const colorKey = (protocol as any).color || 'gray';
+                                const colors = PROTOCOLS_COLORS[colorKey] || PROTOCOLS_COLORS.gray;
 
                                 return (
                                     <button
@@ -290,18 +292,28 @@ export function ActiveRequestList({
                                             "relative flex items-center gap-2 p-2 rounded-lg border text-left transition-all",
                                             protocolLogic?.deleteMode
                                                 ? isDeleting ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 hover:border-red-200"
-                                                : "bg-gray-100 border-gray-200 hover:border-gray-400 hover:bg-gray-200"
+                                                : "hover:shadow-sm"
                                         )}
+                                        style={!protocolLogic?.deleteMode ? {
+                                            backgroundColor: colors.bg,
+                                            borderColor: colors.border,
+                                        } : undefined}
                                         onClick={() => {
                                             if (protocolLogic?.deleteMode) {
                                                 protocolLogic.toggleProtocolToDelete((protocol as any).id);
                                             } else {
-                                                onApplyProtocol((protocol as any).exams);
+                                                onApplyProtocol(protocol.exams);
                                             }
                                         }}
                                     >
-                                        <div className="p-1.5 rounded-md flex-shrink-0 bg-gray-200">
-                                            <Icon className="h-3.5 w-3.5 text-gray-900" />
+                                        <div
+                                            className="p-1.5 rounded-md flex-shrink-0"
+                                            style={{
+                                                backgroundColor: colors.iconBg,
+                                                color: colors.iconColor
+                                            }}
+                                        >
+                                            <Icon className="h-3.5 w-3.5" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <span className="text-xs font-medium text-gray-800 block truncate">{(protocol as any).name}</span>

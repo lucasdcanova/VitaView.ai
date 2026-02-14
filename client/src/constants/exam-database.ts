@@ -461,3 +461,24 @@ export const ALL_EXAMS = [
     ...EXAM_DATABASE.laboratorial.map(e => ({ ...e, type: 'laboratorial' as const })),
     ...EXAM_DATABASE.imagem.map(e => ({ ...e, type: 'imagem' as const })),
 ];
+
+// Cores dos protocolos para uso compartilhado
+export const PROTOCOLS_COLORS: Record<string, { bg: string, border: string, iconBg: string, iconColor: string }> = {
+    pink: { bg: "#fdf2f8", border: "#fce7f3", iconBg: "#fce7f3", iconColor: "#db2777" },
+    red: { bg: "#fef2f2", border: "#fee2e2", iconBg: "#fee2e2", iconColor: "#dc2626" },
+    orange: { bg: "#fff7ed", border: "#ffedd5", iconBg: "#ffedd5", iconColor: "#ea580c" },
+    amber: { bg: "#fffbeb", border: "#fef3c7", iconBg: "#fef3c7", iconColor: "#d97706" },
+    yellow: { bg: "#fefce8", border: "#fef9c3", iconBg: "#fef9c3", iconColor: "#ca8a04" },
+    green: { bg: "#f0fdf4", border: "#dcfce7", iconBg: "#dcfce7", iconColor: "#16a34a" },
+    emerald: { bg: "#ecfdf5", border: "#d1fae5", iconBg: "#d1fae5", iconColor: "#059669" },
+    teal: { bg: "#f0fdfa", border: "#ccfbf1", iconBg: "#ccfbf1", iconColor: "#0d9488" },
+    cyan: { bg: "#ecfeff", border: "#cffafe", iconBg: "#cffafe", iconColor: "#0891b2" },
+    sky: { bg: "#f0f9ff", border: "#e0f2fe", iconBg: "#e0f2fe", iconColor: "#0284c7" },
+    blue: { bg: "#eff6ff", border: "#dbeafe", iconBg: "#dbeafe", iconColor: "#2563eb" },
+    indigo: { bg: "#eef2ff", border: "#e0e7ff", iconBg: "#e0e7ff", iconColor: "#4f46e5" },
+    violet: { bg: "#f5f3ff", border: "#ede9fe", iconBg: "#ede9fe", iconColor: "#7c3aed" },
+    purple: { bg: "#faf5ff", border: "#f3e8ff", iconBg: "#f3e8ff", iconColor: "#9333ea" },
+    fuchsia: { bg: "#fdf4ff", border: "#fae8ff", iconBg: "#fae8ff", iconColor: "#c026d3" },
+    rose: { bg: "#fff1f2", border: "#ffe4e6", iconBg: "#ffe4e6", iconColor: "#e11d48" },
+    gray: { bg: "#f9fafb", border: "#e5e7eb", iconBg: "#f3f4f6", iconColor: "#4b5563" },
+};

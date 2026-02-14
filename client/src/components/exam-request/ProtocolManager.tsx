@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2, Package, Check, X, Search, FileText } from "lucide-react";
-import { EXAM_PROTOCOLS, ALL_EXAMS } from "@/constants/exam-database";
+import { EXAM_PROTOCOLS, ALL_EXAMS, PROTOCOLS_COLORS } from "@/constants/exam-database";
 import { CustomProtocol } from "@/hooks/use-exam-protocols";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -94,8 +94,8 @@ export function ProtocolManager({
                                             </div>
                                             <div className="space-y-2">
                                                 <Label>Cor do Ícone</Label>
-                                                <div className="flex gap-2">
-                                                    {['blue', 'green', 'purple', 'orange', 'red', 'gray'].map(color => (
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {Object.keys(PROTOCOLS_COLORS).map(color => (
                                                         <button
                                                             key={color}
                                                             type="button"
@@ -104,9 +104,12 @@ export function ProtocolManager({
                                                                 "w-6 h-6 rounded-full border-2 transition-all",
                                                                 newProtocolData.color === color ? "border-gray-900 scale-110" : "border-transparent opacity-70 hover:opacity-100"
                                                             )}
-                                                            style={{ backgroundColor: `var(--${color}-500)` }} // Simplified, adjust if needed or use Tailwind classes
+                                                            title={color}
                                                         >
-                                                            <div className={`w-full h-full rounded-full bg-${color}-500`} />
+                                                            <div
+                                                                className="w-full h-full rounded-full"
+                                                                style={{ backgroundColor: PROTOCOLS_COLORS[color].iconColor }}
+                                                            />
                                                         </button>
                                                     ))}
                                                 </div>
@@ -217,16 +220,10 @@ export function ProtocolManager({
                 <div className="grid grid-cols-2 gap-3 pb-2">
                     {/* System Protocols */}
                     {EXAM_PROTOCOLS.map((protocol) => {
-                        // Check if hidden (needs logic from parent passing 'hidden' IDs if we want to fully support hiding system protocols)
-                        // For now, assume implemented in backend logic or passed props. 
-                        // Implementation plan says "hide system protocols" via user preferences.
-                        // But useExamProtocols hook handles the mutation.
-                        // We render all system protocols here unless we are passed a filtered list?
-                        // Ideally parent filters them before passing? Or we pass hidden IDs?
-                        // Let's assume we show them for now or logic is upstream.
-                        // For refactor simplicity, I'll render all, adding selection logic.
                         const Icon = protocol.icon;
                         const isDeleting = deleteMode && protocolsToDelete.includes(protocol.id);
+                        const colorKey = protocol.color || 'gray';
+                        const colors = PROTOCOLS_COLORS[colorKey] || PROTOCOLS_COLORS.gray;
 
                         return (
                             <div
@@ -235,8 +232,12 @@ export function ProtocolManager({
                                     "relative group flex items-start p-3 rounded-lg border transition-all cursor-pointer hover:shadow-sm",
                                     deleteMode ?
                                         (isDeleting ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-red-200") :
-                                        "bg-white border-gray-100 hover:border-blue-200"
+                                        ""
                                 )}
+                                style={!deleteMode ? {
+                                    backgroundColor: colors.bg,
+                                    borderColor: colors.border,
+                                } : undefined}
                                 onClick={() => {
                                     if (deleteMode) {
                                         toggleProtocolToDelete(protocol.id);
@@ -245,14 +246,20 @@ export function ProtocolManager({
                                     }
                                 }}
                             >
-                                <div className={cn("p-2 rounded-lg mr-3 flex-shrink-0", `bg-${protocol.color}-50`)}>
-                                    <Icon className={cn("h-5 w-5", `text-${protocol.color}-600`)} />
+                                <div
+                                    className={cn("p-2 rounded-lg mr-3 flex-shrink-0")}
+                                    style={{
+                                        backgroundColor: colors.iconBg,
+                                        color: colors.iconColor
+                                    }}
+                                >
+                                    <Icon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h4 className="font-medium text-gray-900 text-sm">{protocol.name}</h4>
                                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{protocol.description}</p>
                                     <div className="mt-1.5 flex items-center gap-1.5">
-                                        <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-gray-100 text-gray-600">
+                                        <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-white/50 text-gray-600 border-gray-200">
                                             {protocol.exams.length} exames
                                         </Badge>
                                     </div>
@@ -269,6 +276,9 @@ export function ProtocolManager({
                     {/* Custom Protocols */}
                     {customProtocols.map((protocol) => {
                         const isDeleting = deleteMode && protocolsToDelete.includes(protocol.id);
+                        const colorKey = protocol.color || 'gray';
+                        const colors = PROTOCOLS_COLORS[colorKey] || PROTOCOLS_COLORS.gray;
+
                         return (
                             <div
                                 key={protocol.id}
@@ -276,8 +286,12 @@ export function ProtocolManager({
                                     "relative group flex items-start p-3 rounded-lg border transition-all cursor-pointer hover:shadow-sm",
                                     deleteMode ?
                                         (isDeleting ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-red-200") :
-                                        "bg-white border-gray-100 hover:border-blue-200"
+                                        ""
                                 )}
+                                style={!deleteMode ? {
+                                    backgroundColor: colors.bg,
+                                    borderColor: colors.border,
+                                } : undefined}
                                 onClick={() => {
                                     if (deleteMode) {
                                         toggleProtocolToDelete(protocol.id);
@@ -286,15 +300,21 @@ export function ProtocolManager({
                                     }
                                 }}
                             >
-                                <div className={cn("p-2 rounded-lg mr-3 flex-shrink-0", "bg-gray-100")}>
+                                <div
+                                    className={cn("p-2 rounded-lg mr-3 flex-shrink-0")}
+                                    style={{
+                                        backgroundColor: colors.iconBg,
+                                        color: colors.iconColor
+                                    }}
+                                >
                                     {/* Default icon for custom */}
-                                    <FileText className="h-5 w-5 text-gray-600" />
+                                    <FileText className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h4 className="font-medium text-gray-900 text-sm">{protocol.name}</h4>
                                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{protocol.description || "Personalizado"}</p>
                                     <div className="mt-1.5 flex items-center gap-1.5">
-                                        <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-gray-100 text-gray-600">
+                                        <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-white/50 text-gray-600 border-gray-200">
                                             {protocol.exams.length} exames
                                         </Badge>
                                     </div>
