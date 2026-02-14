@@ -359,10 +359,15 @@ const SubscriptionManagement = () => {
   };
 
   const handleStartPayment = async (planId: number) => {
+    console.log('[handleStartPayment] Called with planId:', planId);
+
     // Verificar se é plano gratuito
     const plan = allPlans.find(p => p.id === planId);
+    console.log('[handleStartPayment] Found plan:', plan);
+
     if (plan && plan.price === 0) {
       // Ativar plano gratuito diretamente, sem Stripe
+      console.log('[handleStartPayment] Free plan, activating directly');
       setIsProcessing(true);
       try {
         const res = await apiRequest('POST', '/api/activate-subscription', { planId });
@@ -388,8 +393,19 @@ const SubscriptionManagement = () => {
       return;
     }
 
+    console.log('[handleStartPayment] Paid plan, opening payment dialog');
+    console.log('[handleStartPayment] Setting selectedPlanId to:', planId);
     setSelectedPlanId(planId);
+    console.log('[handleStartPayment] Setting isPaymentDialogOpen to: true');
     setIsPaymentDialogOpen(true);
+
+    // Force a re-render to ensure dialog opens
+    setTimeout(() => {
+      console.log('[handleStartPayment] Dialog state after timeout:', {
+        selectedPlanId,
+        isPaymentDialogOpen
+      });
+    }, 100);
   };
 
   const handlePaymentSuccess = () => {
@@ -560,11 +576,23 @@ const SubscriptionManagement = () => {
 
                         <Button
                           size="lg"
-                          className="w-full max-w-xs bg-gray-900 hover:bg-black text-white"
+                          className="w-full max-w-xs bg-gray-900 hover:bg-black text-white touch-manipulation"
                           onClick={() => {
+                            console.log('[Escolher Plano Button] Clicked, selectedInterval:', selectedInterval);
                             // Find the selected plan ID based on interval
                             const plan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === selectedInterval);
-                            if (plan) handleStartPayment(plan.id);
+                            console.log('[Escolher Plano Button] Found plan:', plan);
+                            if (plan) {
+                              console.log('[Escolher Plano Button] Calling handleStartPayment with plan.id:', plan.id);
+                              handleStartPayment(plan.id);
+                            } else {
+                              console.error('[Escolher Plano Button] No plan found for interval:', selectedInterval);
+                              toast({
+                                title: 'Erro',
+                                description: 'Plano não encontrado. Tente novamente.',
+                                variant: 'destructive'
+                              });
+                            }
                           }}
                         >
                           Escolher este Plano
@@ -993,10 +1021,20 @@ const SubscriptionManagement = () => {
                   </CardContent>
                   <CardFooter>
                     <Button
-                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white"
+                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white touch-manipulation"
                       onClick={() => {
+                        console.log('[Vita Team Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'month');
-                        if (plan) handleStartPayment(plan.id);
+                        console.log('[Vita Team Button] Found plan:', plan);
+                        if (plan) {
+                          handleStartPayment(plan.id);
+                        } else {
+                          toast({
+                            title: 'Erro',
+                            description: 'Plano Vita Team não encontrado. Entre em contato com o suporte.',
+                            variant: 'destructive'
+                          });
+                        }
                       }}
                     >
                       Escolher Vita Team
@@ -1044,10 +1082,20 @@ const SubscriptionManagement = () => {
                   </CardContent>
                   <CardFooter>
                     <Button
-                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white"
+                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white touch-manipulation"
                       onClick={() => {
+                        console.log('[Vita Business Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'month');
-                        if (plan) handleStartPayment(plan.id);
+                        console.log('[Vita Business Button] Found plan:', plan);
+                        if (plan) {
+                          handleStartPayment(plan.id);
+                        } else {
+                          toast({
+                            title: 'Erro',
+                            description: 'Plano Vita Business não encontrado. Entre em contato com o suporte.',
+                            variant: 'destructive'
+                          });
+                        }
                       }}
                     >
                       Escolher Vita Business
@@ -1135,7 +1183,10 @@ const SubscriptionManagement = () => {
       </div >
 
       {/* Stripe Payment Dialog */}
-      < Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} >
+      <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
+        console.log('[Payment Dialog] onOpenChange called with:', open);
+        setIsPaymentDialogOpen(open);
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Finalizar Assinatura</DialogTitle>
@@ -1169,15 +1220,24 @@ const SubscriptionManagement = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedPlanId && (
+          {selectedPlanId ? (
             <StripePayment
               planId={selectedPlanId}
               onSuccess={handlePaymentSuccess}
-              onCancel={() => setIsPaymentDialogOpen(false)}
+              onCancel={() => {
+                console.log('[StripePayment] onCancel called');
+                setIsPaymentDialogOpen(false);
+                setSelectedPlanId(null);
+              }}
             />
+          ) : (
+            <div className="text-center py-6">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Carregando detalhes do plano...</p>
+            </div>
           )}
         </DialogContent>
-      </Dialog >
+      </Dialog>
     </div >
   );
 };

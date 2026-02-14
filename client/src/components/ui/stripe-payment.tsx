@@ -189,9 +189,11 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
   useEffect(() => {
     console.log('[StripePayment] Component mounted, planId:', planId);
     console.log('[StripePayment] Stripe enabled:', stripeEnabled);
+    console.log('[StripePayment] Stripe public key:', stripePublicKey ? 'Present' : 'Missing');
 
     if (!stripeEnabled) {
       console.log('[StripePayment] Stripe disabled, stopping');
+      setError('Stripe não está configurado. Por favor, configure a chave pública do Stripe.');
       setIsLoading(false);
       return;
     }
@@ -200,13 +202,24 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
       try {
         console.log('[StripePayment] Fetching payment intent for planId:', planId);
         setError(null);
+        setIsLoading(true);
+
         const response = await apiRequest('POST', '/api/create-payment-intent', { planId });
+        console.log('[StripePayment] API response status:', response.status, response.statusText);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('[StripePayment] API error:', errorData);
+          throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
         console.log('[StripePayment] Payment intent response:', data);
 
         if (data.clientSecret) {
           console.log('[StripePayment] ClientSecret received:', data.clientSecret.substring(0, 20) + '...');
           setClientSecret(data.clientSecret);
+          setError(null);
         } else {
           throw new Error(data.message || 'Não foi possível obter o token de pagamento');
         }
@@ -214,6 +227,11 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
         console.error('[StripePayment] Error fetching payment intent:', error);
         const message = error instanceof Error ? error.message : "Ocorreu um erro ao preparar o pagamento.";
         setError(message);
+        toast({
+          title: 'Erro ao iniciar pagamento',
+          description: message,
+          variant: 'destructive'
+        });
       } finally {
         console.log('[StripePayment] Loading complete');
         setIsLoading(false);
@@ -221,19 +239,19 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
     };
 
     fetchPaymentIntent();
-  }, [planId]);
+  }, [planId, toast]);
 
   console.log('[StripePayment] Render - stripeEnabled:', stripeEnabled, 'isLoading:', isLoading, 'error:', error, 'hasClientSecret:', !!clientSecret);
 
   if (!stripeEnabled) {
     console.log('[StripePayment] Rendering: Stripe disabled message');
     return (
-      <div className="text-center py-4">
-        <p className="text-red-500 font-medium">
-          Pagamentos via Stripe estão desativados porque a variável de ambiente `VITE_STRIPE_PUBLIC_KEY` não está configurada.
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Configure a chave pública (`pk_...`) e recarregue a página para habilitar esta funcionalidade.
+      <div className="text-center py-6 space-y-4">
+        <div className="text-red-500 font-medium text-lg">
+          ⚠️ Pagamentos Temporariamente Indisponíveis
+        </div>
+        <p className="text-sm text-muted-foreground">
+          A configuração do Stripe está ausente. Entre em contato com o suporte.
         </p>
         <Button onClick={onCancel} className="mt-4" variant="outline">
           Voltar
@@ -245,26 +263,42 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
   if (isLoading) {
     console.log('[StripePayment] Rendering: Loading spinner');
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
+      <div className="flex flex-col justify-center items-center min-h-[200px] space-y-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Preparando pagamento...</p>
       </div>
     );
   }
 
   if (error || !clientSecret) {
-    console.log('[StripePayment] Rendering: Error state');
+    console.log('[StripePayment] Rendering: Error state', { error, hasClientSecret: !!clientSecret });
     return (
-      <div className="text-center py-4">
-        <p className="text-red-500">{error || 'Não foi possível iniciar o pagamento. Tente novamente mais tarde.'}</p>
-        <Button onClick={onCancel} className="mt-4" variant="outline">Voltar</Button>
+      <div className="text-center py-6 space-y-4">
+        <div className="text-red-500 font-medium">
+          {error || 'Não foi possível iniciar o pagamento. Tente novamente mais tarde.'}
+        </div>
+        <div className="space-y-2">
+          <Button onClick={onCancel} className="w-full" variant="outline">
+            Voltar
+          </Button>
+          <Button
+            onClick={() => window.location.reload()}
+            className="w-full"
+            variant="ghost"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
       </div>
     );
   }
 
   console.log('[StripePayment] Rendering: Stripe Elements with clientSecret');
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret, locale: 'pt-BR' }}>
-      <CheckoutForm planId={planId} onSuccess={onSuccess} onCancel={onCancel} />
-    </Elements>
+    <div className="py-2">
+      <Elements stripe={stripePromise} options={{ clientSecret, locale: 'pt-BR' }}>
+        <CheckoutForm planId={planId} onSuccess={onSuccess} onCancel={onCancel} />
+      </Elements>
+    </div>
   );
 };
