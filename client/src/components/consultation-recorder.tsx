@@ -432,12 +432,12 @@ export function ConsultationRecorder({
 
       case "processing":
         return (
-          <Card className="p-3 border-2 border-blue-400 bg-blue-50">
+          <Card className="p-3 border-2 border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
               <div>
-                <p className="font-medium text-blue-700">Processando gravação...</p>
-                <p className="text-xs text-blue-600">
+                <p className="font-medium text-zinc-800">Processando gravação...</p>
+                <p className="text-xs text-zinc-500">
                   Transcrevendo áudio e gerando anamnese inteligente
                 </p>
               </div>

@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Search, ChevronsUpDown, Sparkles, RefreshCw, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Search, ChevronsUpDown, Sparkles, RefreshCw, Pencil, Trash2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
     ALL_MEDICATIONS_WITH_PRESENTATIONS,
     MEDICATION_DATABASE,
@@ -52,12 +54,27 @@ export function MedicationSelector({
     customMedications = [],
     onDeleteCustomMedication
 }: MedicationSelectorProps) {
-
+    const { toast } = useToast();
     const [medOpen, setMedOpen] = useState(false);
     const [dosePopoverOpen, setDosePopoverOpen] = useState(false);
     const [suggestionPopoverOpen, setSuggestionPopoverOpen] = useState(false);
     const [patientWeight, setPatientWeight] = useState("");
     const [frequency, setFrequency] = useState("");
+
+    // Fetch user subscription to check for premium plan
+    const { data: subscriptionData } = useQuery({
+        queryKey: ['/api/user-subscription'],
+        // We don't need to block rendering if this fails, default to false (locked) or true depending on strategy.
+        // Safer to default to restricted if undefined, but let's see. 
+        // Actually, let's just fetch it.
+    });
+
+    // Check if user has a premium plan (Vita)
+    const isPremium = useMemo(() => {
+        if (!subscriptionData || !(subscriptionData as any).plan) return false;
+        const planName = (subscriptionData as any).plan.name || "";
+        return planName.includes("Vita");
+    }, [subscriptionData]);
 
     // Find the selected item from the simplified list
     const selectedListItem = useMemo(() =>
@@ -162,6 +179,10 @@ export function MedicationSelector({
             }
         }
 
+        // Apply explicit duration if available
+        if (presentation.duration) {
+            setDaysOfUse(String(presentation.duration));
+        }
         // Use explicit frequency from presentation if available (more reliable)
         if (presentation.frequency) {
             setFrequency(presentation.frequency);
@@ -229,6 +250,18 @@ export function MedicationSelector({
             med.displayName.toLowerCase().includes(lowerSearch)
         );
     }, [searchValue, customMedications]);
+
+    const handleSuggestionClick = () => {
+        if (!isPremium) {
+            toast({
+                title: "Recurso exclusivo",
+                description: "Sugestões por IA disponíveis apenas nos planos Vita.",
+                variant: "destructive"
+            });
+            return;
+        }
+        setSuggestionPopoverOpen(true);
+    };
 
     return (
         <Card className="border-gray-800 shadow-md overflow-visible z-10">
@@ -388,101 +421,164 @@ export function MedicationSelector({
                                     <PopoverTrigger asChild>
                                         <button
                                             type="button"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700 transition-colors z-10 p-1 flex items-center justify-center rounded-sm hover:bg-blue-50"
-                                            title="Ver sugestões de dose (IA)"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors z-10 p-1 flex items-center justify-center rounded-sm hover:bg-gray-100"
+                                            title={isPremium ? "Ver sugestões de dose (IA)" : "Recurso exclusivo planos Vita"}
+                                            onClick={(e) => {
+                                                // Prevent default popover trigger if not premium
+                                                if (!isPremium) {
+                                                    e.preventDefault();
+                                                    handleSuggestionClick();
+                                                }
+                                            }}
                                         >
-                                            <Sparkles className="h-4 w-4" />
+                                            {isPremium ? (
+                                                <Sparkles className="h-4 w-4" />
+                                            ) : (
+                                                <Lock className="h-3 w-3 text-gray-400" />
+                                            )}
                                         </button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[320px] p-0" align="start" side="bottom">
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 border-b">
-                                            <div className="flex items-center gap-2 text-blue-700">
-                                                <Sparkles className="h-4 w-4" />
-                                                <span className="font-medium text-sm">Sugestão IA</span>
-                                                {selectedMedInfo.category && (
-                                                    <Badge variant="outline" className="text-xs ml-auto border-blue-200 text-blue-700">{selectedMedInfo.category}</Badge>
-                                                )}
+                                    {isPremium && (
+                                        <PopoverContent className="w-[320px] p-0" align="start" side="bottom">
+                                            <div className="bg-gray-50 p-2 border-b">
+                                                <div className="flex items-center gap-2 text-gray-700">
+                                                    <Sparkles className="h-4 w-4" />
+                                                    <span className="font-medium text-sm">Sugestão IA</span>
+                                                    {selectedMedInfo.category && (
+                                                        <Badge variant="outline" className="text-xs ml-auto border-gray-200 text-gray-700">{selectedMedInfo.category}</Badge>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="p-2 max-h-[280px] overflow-y-auto">
-                                            {/* Adult presentations */}
-                                            {selectedMedInfo.presentations.filter(p => !p.isPediatric).length > 0 && (
-                                                <>
-                                                    {selectedMedInfo.presentations.filter(p => !p.isPediatric).map((pres, idx) => (
-                                                        <div
-                                                            key={`adult-${idx}`}
-                                                            className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
-                                                            onClick={() => applyDosageSuggestion(pres)}
-                                                        >
-                                                            <div>
-                                                                <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
-                                                                <span className="text-gray-500 ml-2 text-sm">
-                                                                    ({pres.format})
-                                                                </span>
-                                                            </div>
-                                                            {pres.commonDose && (
-                                                                <span className="text-xs text-gray-500">{pres.commonDose}</span>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </>
-                                            )}
-
-                                            {/* Pediatric section */}
-                                            {selectedMedInfo.presentations.filter(p => p.isPediatric).length > 0 && (
-                                                <div className="mt-2 pt-2 border-t">
-                                                    <div className="flex items-center justify-between px-2 py-1">
-                                                        <span className="text-xs text-purple-600 font-medium">👶 Pediátrico</span>
-                                                        <div className="flex items-center gap-1">
-                                                            <Input
-                                                                type="number"
-                                                                placeholder="Peso"
-                                                                value={patientWeight}
-                                                                onChange={(e) => setPatientWeight(e.target.value)}
-                                                                className="h-6 w-16 text-xs px-2"
-                                                                min="0"
-                                                                step="0.1"
-                                                            />
-                                                            <span className="text-xs text-gray-500">kg</span>
-                                                        </div>
-                                                    </div>
-                                                    {selectedMedInfo.presentations.filter(p => p.isPediatric).map((pres, idx) => {
-                                                        const weight = parseFloat(patientWeight);
-                                                        const calculation = weight > 0 ? calculatePediatricDose(pres, weight) : null;
-
-                                                        return (
+                                            <div className="p-2 max-h-[280px] overflow-y-auto">
+                                                {/* Adult presentations */}
+                                                {selectedMedInfo.presentations.filter(p => !p.isPediatric).length > 0 && (
+                                                    <>
+                                                        {selectedMedInfo.presentations.filter(p => !p.isPediatric).map((pres, idx) => (
                                                             <div
-                                                                key={`ped-${idx}`}
-                                                                className="p-2 rounded-md cursor-pointer hover:bg-purple-50 transition-colors border-l-2 border-purple-200 ml-2 mt-1"
-                                                                onClick={() => {
-                                                                    if (calculation) {
-                                                                        setDose(`${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`);
-                                                                        setDoseUnit("ml");
-                                                                        setSuggestionPopoverOpen(false);
-                                                                    }
-                                                                }}
+                                                                key={`adult-${idx}`}
+                                                                className="flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
+                                                                onClick={() => applyDosageSuggestion(pres)}
                                                             >
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-sm text-gray-800">{pres.format} {pres.dosage}{pres.unit}</span>
-                                                                    {calculation && (
-                                                                        <span className="text-xs text-purple-600 font-medium">
-                                                                            {calculation.mlPerAdminLow}-{calculation.mlPerAdminHigh} ml
-                                                                        </span>
-                                                                    )}
+                                                                <div>
+                                                                    <span className="font-semibold text-gray-900">{pres.dosage}{pres.unit}</span>
+                                                                    <span className="text-gray-500 ml-2 text-sm">
+                                                                        ({pres.format})
+                                                                    </span>
                                                                 </div>
-                                                                {pres.dosePerKg && (
-                                                                    <span className="text-xs text-gray-400">{pres.dosePerKg}mg/kg/dia</span>
+                                                                {pres.commonDose && (
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs text-gray-500">{pres.commonDose}</span>
+                                                                        {pres.duration && (
+                                                                            <span className="text-xs text-gray-400">Por {pres.duration} dias</span>
+                                                                        )}
+                                                                    </div>
                                                                 )}
                                                             </div>
-                                                        );
-                                                    })}
+                                                        ))}
+                                                    </>
+                                                )}
+
+                                                <div className="mt-2 pt-2 border-t">
+
+                                                    {/* Pediatric section */}
+                                                    {selectedMedInfo.presentations.filter(p => p.isPediatric).length > 0 && (
+                                                        <div className="mt-2 pt-2 border-t">
+                                                            <div className="flex items-center justify-between px-2 py-1">
+                                                                <span className="text-xs text-gray-600 font-medium">👶 Pediátrico</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Input
+                                                                        type="number"
+                                                                        placeholder="Peso"
+                                                                        value={patientWeight}
+                                                                        onChange={(e) => setPatientWeight(e.target.value)}
+                                                                        className="h-6 w-16 text-xs px-2"
+                                                                        min="0"
+                                                                        step="0.1"
+                                                                    />
+                                                                    <span className="text-xs text-gray-500">kg</span>
+                                                                </div>
+                                                            </div>
+                                                            {selectedMedInfo.presentations.filter(p => p.isPediatric).map((pres, idx) => {
+                                                                const weight = parseFloat(patientWeight);
+                                                                const calculation = weight > 0 ? calculatePediatricDose(pres, weight) : null;
+                                                                const showRange = calculation && calculation.mlPerAdminLow !== calculation.mlPerAdminHigh;
+                                                                const doseDisplay = calculation
+                                                                    ? (showRange ? `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}` : `${calculation.mlPerAdminLow}`)
+                                                                    : null;
+
+                                                                return (
+                                                                    <div
+                                                                        key={`ped-${idx}`}
+                                                                        className="p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors border-l-2 border-gray-300 ml-2 mt-1"
+                                                                        onClick={() => {
+                                                                            if (calculation) {
+                                                                                setDose(doseDisplay || "");
+                                                                                setDoseUnit("ml");
+
+                                                                                // Auto-fill frequency for pediatric
+                                                                                if (pres.frequency) {
+                                                                                    let freqString = "";
+                                                                                    switch (pres.frequency) {
+                                                                                        case 1: freqString = "1x ao dia"; break;
+                                                                                        case 2: freqString = "12h em 12h"; break;
+                                                                                        case 3: freqString = "8h em 8h"; break;
+                                                                                        case 4: freqString = "6h em 6h"; break;
+                                                                                        case 6: freqString = "4h em 4h"; break;
+                                                                                        default: freqString = "";
+                                                                                    }
+                                                                                    if (freqString) setFrequency(freqString);
+                                                                                }
+
+                                                                                // Auto-fill duration for pediatric
+                                                                                if (pres.duration) {
+                                                                                    setDaysOfUse(String(pres.duration));
+                                                                                }
+
+
+                                                                                setSuggestionPopoverOpen(false);
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-sm text-gray-800">{pres.format} {pres.dosage}{pres.unit}</span>
+                                                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                                                    {pres.frequency && (
+                                                                                        <span>
+                                                                                            {pres.frequency === 1 ? "1x ao dia" :
+                                                                                                pres.frequency === 2 ? "12h em 12h" :
+                                                                                                    pres.frequency === 3 ? "8h em 8h" :
+                                                                                                        pres.frequency === 4 ? "6h em 6h" :
+                                                                                                            pres.frequency === 6 ? "4h em 4h" :
+                                                                                                                `${pres.frequency}x ao dia`}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {pres.frequency && pres.duration && <span>•</span>}
+                                                                                    {pres.duration && <span>Por {pres.duration} dias</span>}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {calculation && (
+                                                                                <span className="text-xs text-gray-700 font-medium bg-gray-100 px-1.5 py-0.5 rounded">
+                                                                                    {doseDisplay} ml
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {pres.dosePerKg && (
+                                                                            <span className="text-xs text-gray-400 mt-0.5 block">{pres.dosePerKg}mg/kg/dia</span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="p-2 bg-gray-50 border-t text-xs text-gray-400 flex items-start gap-1">
-                                            ⚕️ Sugestões baseadas em referências gerais.
-                                        </div>
-                                    </PopoverContent>
+                                            </div>
+                                            <div className="p-2 bg-gray-50 border-t text-xs text-gray-400 flex items-start gap-1">
+                                                ⚕️ Sugestões baseadas em referências gerais.
+                                            </div>
+                                        </PopoverContent>
+                                    )}
                                 </Popover>
                             ) : (
                                 <button
@@ -571,6 +667,6 @@ export function MedicationSelector({
                     </Button>
                 </div>
             </CardContent>
-        </Card>
+        </Card >
     );
 }
