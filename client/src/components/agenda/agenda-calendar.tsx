@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video, UserCheck } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -49,7 +49,7 @@ export function AgendaCalendar({
 }: AgendaCalendarProps) {
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [, setLocation] = useLocation();
@@ -91,8 +91,8 @@ export function AgendaCalendar({
 
   // Status update mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiRequest("PATCH", `/api/appointments/${id}`, { status });
+    mutationFn: async ({ id, ...data }: { id: number; status?: string; checkedInAt?: Date }) => {
+      const res = await apiRequest("PATCH", `/api/appointments/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -441,6 +441,17 @@ export function AgendaCalendar({
                               <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                 Editar
                               </Button>
+                              {!isBlocked && app.status === 'scheduled' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 placeholder:opacity-50"
+                                  onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'waiting', checkedInAt: new Date() })}
+                                >
+                                  <UserCheck className="w-4 h-4 mr-1" />
+                                  Recepcionar
+                                </Button>
+                              )}
                               <Button
                                 variant="destructive"
                                 size="sm"
@@ -614,6 +625,33 @@ export function AgendaCalendar({
                                 <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                   Editar
                                 </Button>
+                                {!isBlocked && (!app.status || app.status === 'scheduled') && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                                    onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'waiting', checkedInAt: new Date() })}
+                                  >
+                                    <UserCheck className="w-4 h-4 mr-1" />
+                                    Check-in
+                                  </Button>
+                                )}
+                                {!isBlocked && app.status === 'in_progress' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    size="sm"
+                                    className="flex-1 text-gray-600 border-gray-200 hover:bg-gray-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateStatusMutation.mutate({ id: app.id, status: 'waiting', checkedInAt: new Date() });
+                                    }}
+                                    title="Voltar para sala de espera"
+                                  >
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    Recepção
+                                  </Button>
+                                )}
                                 {!isBlocked && (
                                   <Button variant="outline" size="sm" className="flex-1" onClick={() => {
                                     setSelectedAppointment(app);
@@ -763,7 +801,7 @@ export function AgendaCalendar({
                                         {canStartService && (
                                           <Button
                                             size="sm"
-                                            className="bg-blue-500 hover:bg-blue-600 text-white w-full"
+                                            className="bg-[#212121] hover:bg-[#424242] text-white w-full"
                                             onClick={() => handleStartService(appointment)}
                                             disabled={updateStatusMutation.isPending}
                                           >
@@ -775,6 +813,19 @@ export function AgendaCalendar({
                                       </>
                                     );
                                   })()}
+
+                                  {(!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-gray-700 border-gray-200 hover:bg-gray-100 w-full"
+                                      onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
+                                      disabled={updateStatusMutation.isPending}
+                                    >
+                                      <UserCheck className="w-4 h-4 mr-1" />
+                                      Recepcionar (Sala de Espera)
+                                    </Button>
+                                  )}
                                   {/* Other action buttons */}
                                   <div className="flex justify-end gap-2">
                                     <Button

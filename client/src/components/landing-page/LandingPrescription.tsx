@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, Check, Zap, Shield, RefreshCw } from "lucide-react";
+import { FileText, Check, Zap, Shield, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -33,6 +33,7 @@ export function LandingPrescription() {
                                 {[
                                     { icon: <Zap className="w-5 h-5" />, title: "Renovação em 1 clique", desc: "Repita receitas anteriores instantaneamente." },
                                     { icon: <Shield className="w-5 h-5" />, title: "Segurança Clínica", desc: "Alertas de alergias e interações medicamentosas." },
+                                    { icon: <Sparkles className="w-5 h-5" />, title: "Sugestão Inteligente", desc: "IA que sugere a melhor dose para cada medicamento." },
                                     { icon: <RefreshCw className="w-5 h-5" />, title: "Base Atualizada", desc: "Milhares de medicamentos com posologia sugerida." }
                                 ].map((item, index) => (
                                     <motion.div
@@ -117,13 +118,11 @@ export function LandingPrescription() {
                                         <RefreshCw className="w-4 h-4" />
                                         Renovar Receita
                                     </button>
-                                    <button className="px-4 border border-[#E0E0E0] rounded-lg hover:bg-[#F5F5F5] transition-colors">
-                                        <span className="sr-only">Opções</span>
-                                        <div className="flex gap-1">
-                                            <div className="w-1 h-1 bg-[#212121] rounded-full"></div>
-                                            <div className="w-1 h-1 bg-[#212121] rounded-full"></div>
-                                            <div className="w-1 h-1 bg-[#212121] rounded-full"></div>
-                                        </div>
+                                </div>
+                                <div className="mt-2">
+                                    <button className="w-full bg-white border border-[#E0E0E0] text-[#212121] py-3 rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2 hover:bg-[#F5F5F5] transition-colors">
+                                        <Shield className="w-4 h-4 text-emerald-600" />
+                                        Verificar Interações
                                     </button>
                                 </div>
 

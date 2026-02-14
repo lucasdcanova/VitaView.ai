@@ -4,8 +4,10 @@ import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar";
 import { NewAppointmentModal } from "@/components/agenda/new-appointment-modal";
+import { WaitingRoom } from "@/components/agenda/waiting-room";
+import { Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Loader2, Paperclip, X } from "lucide-react";
@@ -32,6 +34,10 @@ export default function Agenda() {
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const { data: appointments = [] } = useQuery<Appointment[]>({
+        queryKey: ["/api/appointments"],
+    });
+
     // Create appointment mutation
     const createAppointmentMutation = useMutation({
         mutationFn: async (appointment: any | any[]) => {
@@ -56,7 +62,8 @@ export default function Agenda() {
             setAiProposal(null);
             setAiCommand("");
         },
-        onError: () => {
+        onError: (error) => {
+            console.error("Error creating appointment:", error);
             toast({
                 title: "Erro",
                 description: "Não foi possível criar o agendamento.",
@@ -294,6 +301,25 @@ export default function Agenda() {
                                 onNewAppointment={handleNewAppointment}
                                 onEditAppointment={handleEditAppointment}
                                 fullWidth={true}
+                            />
+                        </div>
+
+                        <div className="p-6 pt-0">
+                            <WaitingRoom
+                                appointments={appointments}
+                                onStartService={(appointment) => {
+                                    updateAppointmentMutation.mutate({
+                                        id: appointment.id,
+                                        status: 'in_progress'
+                                    });
+                                }}
+                                onRemoveCheckIn={(appointment) => {
+                                    updateAppointmentMutation.mutate({
+                                        id: appointment.id,
+                                        status: 'scheduled',
+                                        checkedInAt: null
+                                    } as any);
+                                }}
                             />
                         </div>
                     </div>

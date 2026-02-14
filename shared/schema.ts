@@ -546,6 +546,7 @@ export const appointments = pgTable("appointments", {
   isTelemedicine: boolean("is_telemedicine").default(false),
   meetingLink: text("meeting_link"), // Google Meet / Zoom link
   notes: text("notes"),
+  checkedInAt: timestamp("checked_in_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -564,6 +565,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   isTelemedicine: true,
   meetingLink: true,
   notes: true,
+  checkedInAt: true,
 });
 
 export type Appointment = typeof appointments.$inferSelect;
@@ -692,7 +694,7 @@ export const certificateTemplates = pgTable("certificate_templates", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
-  content: json("content").notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

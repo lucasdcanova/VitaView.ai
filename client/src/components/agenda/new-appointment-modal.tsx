@@ -446,7 +446,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                         )}
                                                     >
                                                         {field.value ? (
-                                                            format(field.value, "PPP", { locale: ptBR })
+                                                            format(field.value, "dd/MM/yyyy")
                                                         ) : (
                                                             <span>Selecione uma data</span>
                                                         )}
@@ -520,7 +520,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                             )}
                                                         >
                                                             {field.value ? (
-                                                                format(field.value, "PPP", { locale: ptBR })
+                                                                format(field.value, "dd/MM/yyyy")
                                                             ) : (
                                                                 <span>Data final</span>
                                                             )}

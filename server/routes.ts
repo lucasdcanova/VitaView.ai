@@ -532,6 +532,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         console.log(`[APPOINTMENT] Done clearing other in_progress appointments`);
       }
 
+      // Parse checkedInAt to Date if present
+      if (req.body.checkedInAt) {
+        req.body.checkedInAt = new Date(req.body.checkedInAt);
+      }
+
       const updated = await storage.updateAppointment(id, req.body);
       if (!updated) {
         return res.status(404).json({ message: "Appointment not found" });
