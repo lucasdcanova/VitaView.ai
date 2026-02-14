@@ -90,7 +90,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {showCookieConsent && (
           <motion.div
-            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[#E0E0E0] shadow-xl"
+            className="fixed bottom-0 inset-x-0 z-[9998] bg-white border-t border-[#E0E0E0] shadow-xl pointer-events-auto"
             role="dialog"
             aria-label="Consentimento de cookies"
             initial={{ y: 100, opacity: 0 }}
@@ -98,32 +98,34 @@ export default function LandingPage() {
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-start md:items-center space-x-3">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-5">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-start md:items-center space-x-3 flex-1">
                   <div className="flex-shrink-0 bg-[#E0E0E0] p-2 rounded-full">
                     <Lock className="h-5 w-5 text-[#212121]" aria-hidden="true" />
                   </div>
                   <div className="text-sm text-[#9E9E9E]">
                     <p>
                       Utilizamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
-                      <a href="/privacidade" className="text-[#212121] hover:underline"> Política de Privacidade</a> e
-                      <a href="/termos" className="text-[#212121] hover:underline"> Termos de Uso</a>.
+                      <a href="/privacidade" className="text-[#212121] hover:underline ml-1"> Política de Privacidade</a> e
+                      <a href="/termos" className="text-[#212121] hover:underline ml-1"> Termos de Uso</a>.
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-3 flex-shrink-0">
+                <div className="flex space-x-3 flex-shrink-0 w-full md:w-auto">
                   <button
                     type="button"
                     onClick={() => handleCookieChoice(false)}
-                    className="px-4 py-2 bg-[#E0E0E0] text-[#212121] rounded-lg text-sm font-bold hover:bg-[#D5D5D5] transition-colors"
+                    className="flex-1 md:flex-initial px-5 py-2.5 bg-[#E0E0E0] text-[#212121] rounded-lg text-sm font-bold hover:bg-[#D5D5D5] active:bg-[#BDBDBD] transition-colors touch-manipulation min-h-[44px]"
+                    aria-label="Rejeitar cookies"
                   >
                     Rejeitar
                   </button>
                   <button
                     type="button"
                     onClick={() => handleCookieChoice(true)}
-                    className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-bold transition-colors"
+                    className="flex-1 md:flex-initial px-5 py-2.5 bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white rounded-lg text-sm font-bold transition-colors touch-manipulation min-h-[44px]"
+                    aria-label="Aceitar cookies"
                   >
                     Aceitar
                   </button>

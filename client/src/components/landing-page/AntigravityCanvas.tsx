@@ -15,12 +15,12 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         if (!ctx) return;
 
         const config = {
-            particleCount: 50,
-            speedFactor: 0.6,
+            particleCount: 120,
+            speedFactor: 0.8,
             colors: ["#212121", "#9E9E9E", "#BDBDBD", "#E0E0E0", "#424242", "#757575"],
-            gravity: -0.04,
-            interactionRadius: 160,
-            friction: 0.98,
+            gravity: -0.05,
+            interactionRadius: 220,
+            friction: 0.97,
         };
 
         let width = 0;
@@ -60,16 +60,16 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
             init(randomY: boolean) {
                 this.x = Math.random() * width;
                 this.y = randomY ? Math.random() * height : height + 50;
-                this.size = Math.random() * 14 + 4;
-                this.vx = (Math.random() - 0.5) * 2 * config.speedFactor;
-                this.vy = (Math.random() - 0.5) * 2 * config.speedFactor;
-                this.vy -= Math.random() * 1 * Math.abs(config.gravity);
+                this.size = Math.random() * 16 + 5;
+                this.vx = (Math.random() - 0.5) * 2.5 * config.speedFactor;
+                this.vy = (Math.random() - 0.5) * 2.5 * config.speedFactor;
+                this.vy -= Math.random() * 1.5 * Math.abs(config.gravity);
                 this.color = config.colors[Math.floor(Math.random() * config.colors.length)];
                 this.rotation = Math.random() * Math.PI * 2;
-                this.rotationSpeed = (Math.random() - 0.5) * 0.04;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.06;
                 this.type = Math.floor(Math.random() * 3); // 0=circle, 1=square, 2=triangle
                 this.depth = Math.random() * 0.8 + 0.4;
-                this.opacity = Math.random() * 0.4 + 0.15;
+                this.opacity = Math.random() * 0.5 + 0.2;
             }
 
             update() {
@@ -85,7 +85,7 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
                 if (dist < config.interactionRadius) {
                     const force = (config.interactionRadius - dist) / config.interactionRadius;
                     const angle = Math.atan2(dy, dx);
-                    const push = force * 3.5;
+                    const push = force * 5.5;
                     this.vx += Math.cos(angle) * push;
                     this.vy += Math.sin(angle) * push;
                 }
@@ -175,7 +175,12 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         <canvas
             ref={canvasRef}
             className={className}
-            style={{ display: "block" }}
+            style={{
+                display: "block",
+                touchAction: "none",
+                pointerEvents: "none",
+                userSelect: "none"
+            }}
         />
     );
 }

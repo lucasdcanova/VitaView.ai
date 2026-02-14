@@ -7,9 +7,9 @@ import { AntigravityCanvas } from "./AntigravityCanvas";
 
 export function LandingHero() {
     return (
-        <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden">
+        <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y">
             {/* Antigravity particle background */}
-            <AntigravityCanvas className="absolute inset-0 z-0" />
+            <AntigravityCanvas className="absolute inset-0 z-0 pointer-events-none" />
 
             <div className="flex-grow flex flex-col justify-center items-center text-center max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-24 md:py-0 relative z-10">
 
@@ -57,18 +57,23 @@ export function LandingHero() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
+                    className="relative z-20 touch-manipulation"
                 >
-                    <Link href="/auth">
-                        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <motion.div
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="inline-block"
+                    >
+                        <Link href="/auth">
                             <Button
                                 size="lg"
-                                className="bg-[#212121] hover:bg-[#424242] text-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-lg hover:shadow-xl transition-all h-auto"
+                                className="bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
                             >
                                 Começar Teste Grátis
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
-                        </motion.div>
-                    </Link>
+                        </Link>
+                    </motion.div>
                 </motion.div>
             </div>
 

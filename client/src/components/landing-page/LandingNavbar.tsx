@@ -58,20 +58,21 @@ export function LandingNavbar() {
                     </div>
 
                     {/* Mobile/Tablet hamburger menu button */}
-                    <div className="xl:hidden flex items-center gap-2">
+                    <div className="xl:hidden flex items-center gap-2 relative z-[10000]">
                         <Link href="/auth">
                             <Button
                                 variant="default"
                                 size="sm"
-                                className="bg-[#212121] hover:bg-[#424242] text-white font-heading font-bold"
+                                className="bg-[#212121] hover:bg-[#424242] text-white font-heading font-bold touch-manipulation active:scale-95 transition-transform"
                             >
                                 Acessar
                             </Button>
                         </Link>
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
                             aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+                            type="button"
                         >
                             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                         </button>
@@ -112,14 +113,14 @@ export function LandingNavbar() {
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        className="fixed inset-0 z-40 xl:hidden"
+                        className="fixed inset-0 z-[9999] xl:hidden"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
                         {/* Backdrop */}
                         <motion.div
-                            className="absolute inset-0 bg-black/50"
+                            className="absolute inset-0 bg-black/50 touch-none"
                             onClick={() => setIsMobileMenuOpen(false)}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -128,7 +129,7 @@ export function LandingNavbar() {
 
                         {/* Slide-out menu */}
                         <motion.div
-                            className="absolute right-0 top-0 h-full w-72 bg-white shadow-xl"
+                            className="absolute right-0 top-0 h-full w-72 bg-white shadow-xl overflow-y-auto touch-pan-y"
                             initial={{ x: "100%" }}
                             animate={{ x: 0 }}
                             exit={{ x: "100%" }}
@@ -140,8 +141,15 @@ export function LandingNavbar() {
                                         <motion.a
                                             key={item.id}
                                             href={`#${item.id}`}
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="block py-3 px-4 text-[#212121] hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setIsMobileMenuOpen(false);
+                                                setTimeout(() => {
+                                                    const element = document.getElementById(item.id);
+                                                    element?.scrollIntoView({ behavior: 'smooth' });
+                                                }, 300);
+                                            }}
+                                            className="block py-3 px-4 text-[#212121] hover:bg-gray-100 rounded-lg transition-colors font-medium active:bg-gray-200 cursor-pointer touch-manipulation"
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.05 }}
@@ -153,7 +161,7 @@ export function LandingNavbar() {
 
                                 <div className="mt-8 pt-6 border-t border-gray-200">
                                     <Link href="/auth">
-                                        <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white font-bold">
+                                        <Button className="w-full bg-[#212121] hover:bg-[#424242] text-white font-bold touch-manipulation active:scale-95 transition-transform">
                                             Acessar <ChevronRight className="ml-1 h-4 w-4" />
                                         </Button>
                                     </Link>

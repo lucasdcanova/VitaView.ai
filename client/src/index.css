@@ -143,9 +143,31 @@
   button,
   [role="button"],
   input[type="submit"],
-  input[type="button"] {
+  input[type="button"],
+  a {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Ensure clickable elements are always interactive */
+  button,
+  [role="button"],
+  a[href],
+  input[type="submit"],
+  input[type="button"] {
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Fix for iOS Safari button rendering */
+  button,
+  input[type="submit"],
+  input[type="button"] {
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   /* Improved tap targets for mobile */
@@ -548,6 +570,45 @@
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
+  }
+
+  /* Mobile interaction optimizations */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* Ensure canvas doesn't block interactions */
+  canvas {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Fix z-index stacking for interactive elements */
+  .interactive-element {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+
+  /* Mobile menu optimizations */
+  .mobile-menu-button {
+    position: relative;
+    z-index: 10000;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Cookie consent optimizations */
+  .cookie-consent-button {
+    min-height: 44px;
+    min-width: 100px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
   }
 
   /* Montserrat font utility */
