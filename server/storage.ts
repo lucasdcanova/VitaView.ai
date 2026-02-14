@@ -165,7 +165,9 @@ export interface IStorage {
   getClinic(id: number): Promise<Clinic | undefined>;
   getClinicByAdminId(userId: number): Promise<Clinic | undefined>;
   updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
-  addClinicMember(clinicId: number, userId: number): Promise<boolean>;
+  updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
+  addClinicMember(clinicId: number, userId: number, role?: string): Promise<boolean>;
+  removeClinicMember(clinicId: number, userId: number): Promise<boolean>;
   removeClinicMember(clinicId: number, userId: number): Promise<boolean>;
   getClinicMembers(clinicId: number): Promise<User[]>;
 
@@ -304,7 +306,7 @@ export class MemStorage implements IStorage {
   private allergyIdCounter: number = 1;
   private tussProcedureIdCounter: number = 1;
   private auditLogIdCounter: number = 1;
-
+  private certificateTemplateIdCounter: number = 1;
 
 
   constructor() {
@@ -998,6 +1000,7 @@ export class MemStorage implements IStorage {
       notes: appointment.notes || null,
       meetingLink: appointment.meetingLink || null,
       isTelemedicine: appointment.isTelemedicine || false,
+      checkedInAt: appointment.checkedInAt ? new Date(appointment.checkedInAt) : null,
       profileId: appointment.profileId || null,
       price: appointment.price ?? null,
       duration: appointment.duration || null,
@@ -1237,6 +1240,7 @@ export class MemStorage implements IStorage {
       adminUserId: clinic.adminUserId,
       subscriptionId: clinic.subscriptionId || null,
       maxProfessionals: clinic.maxProfessionals || 5,
+      maxSecretaries: clinic.maxSecretaries || 0,
       createdAt: new Date()
     };
     this.clinicsMap.set(id, newClinic);
@@ -1265,17 +1269,28 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async addClinicMember(clinicId: number, userId: number): Promise<boolean> {
+  async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
     const clinic = await this.getClinic(clinicId);
     if (!clinic) return false;
 
     const members = await this.getClinicMembers(clinicId);
-    if (members.length >= clinic.maxProfessionals) return false;
+
+    // Calculate current counts
+    const professionalsCount = members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member').length;
+    const secretariesCount = members.filter(m => m.clinicRole === 'secretary').length;
+
+    // Check limits based on role
+    if (role === 'secretary') {
+      if (secretariesCount >= clinic.maxSecretaries) return false;
+    } else {
+      // Professionals (admin or member)
+      if (professionalsCount >= clinic.maxProfessionals) return false;
+    }
 
     const user = await this.getUser(userId);
     if (!user) return false;
 
-    await this.updateUser(userId, { clinicId, clinicRole: 'member' });
+    await this.updateUser(userId, { clinicId, clinicRole: role });
     return true;
   }
 
@@ -1300,6 +1315,7 @@ export class MemStorage implements IStorage {
       clinicId: invitation.clinicId,
       email: invitation.email,
       token: invitation.token,
+      role: invitation.role || 'member',
       status: invitation.status || 'pending',
       createdAt: new Date(),
       expiresAt: invitation.expiresAt
@@ -2774,14 +2790,25 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async addClinicMember(clinicId: number, userId: number): Promise<boolean> {
+  async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
     const clinic = await this.getClinic(clinicId);
     if (!clinic) return false;
 
     const members = await this.getClinicMembers(clinicId);
-    if (members.length >= clinic.maxProfessionals) return false;
 
-    await db.update(users).set({ clinicId, clinicRole: 'member' }).where(eq(users.id, userId));
+    // Calculate current counts
+    const professionalsCount = members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member').length;
+    const secretariesCount = members.filter(m => m.clinicRole === 'secretary').length;
+
+    // Check limits based on role
+    if (role === 'secretary') {
+      if (secretariesCount >= clinic.maxSecretaries) return false;
+    } else {
+      // Professionals (admin or member)
+      if (professionalsCount >= clinic.maxProfessionals) return false;
+    }
+
+    await db.update(users).set({ clinicId, clinicRole: role }).where(eq(users.id, userId));
     return true;
   }
 

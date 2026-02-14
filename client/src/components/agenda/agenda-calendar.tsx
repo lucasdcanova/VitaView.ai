@@ -960,12 +960,7 @@ export function AgendaCalendar({
         </div>
       </div>
 
-      {/* Calendar Footer */}
-      <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          <span className="font-semibold">{Math.round(appointmentsList.length)} consultas</span> {filterType !== 'all' ? `do tipo ${filterType} ` : 'agendadas'} total
-        </div>
-      </div>
+
 
       {/* Triage Dialog */}
       {

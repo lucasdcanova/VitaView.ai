@@ -44,6 +44,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,14 +99,6 @@ const MEDICAL_SPECIALTIES = [
   "Urologia"
 ];
 
-const PROFESSIONAL_TYPES = [
-  { value: "doctor", label: "Médico", council: "CRM" },
-  { value: "nurse", label: "Enfermeiro", council: "COREN" },
-  { value: "physiotherapist", label: "Fisioterapeuta", council: "CREFITO" },
-  { value: "nutritionist", label: "Nutricionista", council: "CRN" },
-  { value: "psychologist", label: "Psicólogo", council: "CRP" },
-  { value: "other", label: "Outro", council: "Documento" },
-];
 
 const profileSchema = z.object({
   fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -134,30 +127,13 @@ const securitySchema = z.object({
   path: ["confirmPassword"],
 });
 
-const doctorSchema = z.object({
-  name: z.string().min(1, "Nome do profissional é obrigatório"),
-  crm: z.string().min(1, "Número do registro é obrigatório"),
-  specialty: z.string().optional(),
-  professionalType: z.string().min(1, "Tipo de profissional é obrigatório"),
-  isDefault: z.boolean().optional(),
-});
-
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type SecurityFormValues = z.infer<typeof securitySchema>;
-type DoctorFormValues = z.infer<typeof doctorSchema>;
-const secretarySchema = z.object({
-  fullName: z.string().min(3, "Nome da secretária é obrigatório"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-});
-
-type SecretaryFormValues = z.infer<typeof secretarySchema>;
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
@@ -358,155 +334,6 @@ export default function Profile() {
     updatePasswordMutation.mutate(values);
   };
 
-  // Doctor management state and hooks
-  const [isDoctorDialogOpen, setIsDoctorDialogOpen] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState<any>(null);
-  const [isSecretaryDialogOpen, setIsSecretaryDialogOpen] = useState(false);
-
-  const doctorForm = useForm<DoctorFormValues>({
-    resolver: zodResolver(doctorSchema),
-    defaultValues: {
-      name: "",
-      crm: "",
-      specialty: "",
-      professionalType: "doctor",
-      isDefault: false,
-    },
-  });
-
-  const secretaryForm = useForm<SecretaryFormValues>({
-    resolver: zodResolver(secretarySchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-    },
-  });
-
-  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<any[]>({
-    queryKey: ["/api/doctors"],
-  });
-
-  const { data: secretaries = [], isLoading: secretariesLoading } = useQuery<any[]>({
-    queryKey: ["/api/team/secretaries"],
-  });
-
-  const createDoctorMutation = useMutation({
-    mutationFn: (data: DoctorFormValues) => apiRequest("POST", "/api/doctors", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Profissional cadastrado",
-        description: "O profissional foi adicionado com sucesso.",
-      });
-      setIsDoctorDialogOpen(false);
-      doctorForm.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao cadastrar médico",
-        description: error.message || "Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createSecretaryMutation = useMutation({
-    mutationFn: (data: SecretaryFormValues) => apiRequest("POST", "/api/team/secretaries", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/team/secretaries"] });
-      toast({
-        title: "Secretária criada",
-        description: "O acesso da secretária foi configurado com sucesso.",
-      });
-      secretaryForm.reset();
-      setIsSecretaryDialogOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao criar secretária",
-        description: error.message || "Não foi possível criar o acesso.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteSecretaryMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/team/secretaries/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/team/secretaries"] });
-      toast({
-        title: "Secretária removida",
-        description: "O acesso foi revogado com sucesso.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro ao remover secretária",
-        description: error.message || "Não foi possível revogar o acesso.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateDoctorMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: DoctorFormValues }) =>
-      apiRequest("PUT", `/api/doctors/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Profissional atualizado",
-        description: "Os dados do profissional foram atualizados com sucesso.",
-      });
-      setIsDoctorDialogOpen(false);
-      setEditingDoctor(null);
-      doctorForm.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar médico",
-        description: error.message || "Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteDoctorMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/doctors/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Profissional removido",
-        description: "O profissional foi removido com sucesso.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao remover médico",
-        description: error.message || "Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const setDefaultDoctorMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("PUT", `/api/doctors/${id}/set-default`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Profissional padrão definido",
-        description: "Este profissional foi definido como padrão.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao definir médico padrão",
-        description: error.message || "Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Delete Account Mutation
   const [showSecondConfirmation, setShowSecondConfirmation] = useState(false);
   const deleteAccountMutation = useMutation({
@@ -531,51 +358,6 @@ export default function Profile() {
       });
     },
   });
-
-  const onDoctorSubmit = (values: DoctorFormValues) => {
-    if (editingDoctor) {
-      updateDoctorMutation.mutate({ id: editingDoctor.id, data: values });
-    } else {
-      createDoctorMutation.mutate(values);
-    }
-  };
-
-  const handleEditDoctor = (doctor: any) => {
-    setEditingDoctor(doctor);
-    doctorForm.reset({
-      name: doctor.name,
-      crm: doctor.crm,
-      specialty: doctor.specialty || "",
-      professionalType: doctor.professionalType || "doctor",
-      isDefault: doctor.isDefault,
-    });
-    setIsDoctorDialogOpen(true);
-  };
-
-  const handleAddDoctor = () => {
-    setEditingDoctor(null);
-    doctorForm.reset({
-      name: "",
-      crm: "",
-      specialty: "",
-      professionalType: "doctor",
-      isDefault: false,
-    });
-    setIsDoctorDialogOpen(true);
-  };
-
-  const onSecretarySubmit = (values: SecretaryFormValues) => {
-    createSecretaryMutation.mutate(values);
-  };
-
-  const handleAddSecretary = () => {
-    secretaryForm.reset({
-      fullName: "",
-      email: "",
-      password: "",
-    });
-    setIsSecretaryDialogOpen(true);
-  };
 
   // Medical conditions state
 
@@ -645,13 +427,6 @@ export default function Profile() {
                       Dados Profissionais
                     </TabsTrigger>
                     <TabsTrigger
-                      value="doctors"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
-                    >
-                      Minha Equipe
-                    </TabsTrigger>
-
-                    <TabsTrigger
                       value="security"
                       className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                     >
@@ -665,676 +440,197 @@ export default function Profile() {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Personal Data Tab */}
                   <TabsContent value="personal">
-                    <Form {...profileForm}>
-                      <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={profileForm.control}
-                            name="fullName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome</FormLabel>
-                                <FormControl>
-                                  <Input {...field} name={field.name} autoComplete="given-name" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={profileForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input type="email" {...field} name={field.name} autoComplete="email" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={profileForm.control}
-                            name="phoneNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Telefone</FormLabel>
-                                <FormControl>
-                                  <Input {...field} name={field.name} autoComplete="tel" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={profileForm.control}
-                            name="crm"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>CRM / Registro Profissional</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="123456/UF" {...field} name={field.name} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={profileForm.control}
-                            name="specialty"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Especialidade</FormLabel>
-                                <FormControl>
-                                  <div className="relative">
-                                    <Input
-                                      {...field}
-                                      list="specialties-list"
-                                      placeholder="Selecione ou digite sua especialidade"
-                                      autoComplete="off"
-                                    />
-                                    <datalist id="specialties-list">
-                                      {MEDICAL_SPECIALTIES.map((s) => (
-                                        <option key={s} value={s} />
-                                      ))}
-                                    </datalist>
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={profileForm.control}
-                            name="rqe"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>RQE (Reg. Qualif. Especialista)</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="12345" {...field} name={field.name} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="mt-6">
-                          <FormField
-                            control={profileForm.control}
-                            name="address"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Cidade</FormLabel>
-                                <FormControl>
-                                  <Input {...field} name={field.name} autoComplete="address-line1" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="mt-8 border-t border-gray-200 pt-6">
-                          <h3 className="text-lg font-medium text-gray-900 mb-4">Identidade profissional</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormItem className="md:col-span-2">
-                              <FormLabel>Foto profissional</FormLabel>
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                <div className="h-20 w-20 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                  {profilePhotoUrl ? (
-                                    <img
-                                      src={profilePhotoUrl}
-                                      alt="Foto profissional"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <ImagePlus className="h-6 w-6 text-gray-400" />
-                                  )}
-                                </div>
-                                <div className="flex flex-1 flex-col gap-2">
-                                  <Input
-                                    type="file"
-                                    accept="image/*"
-                                    disabled={uploadPhotoMutation.isPending}
-                                    onChange={(event) => {
-                                      const file = event.target.files?.[0];
-                                      if (!file) return;
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        toast({
-                                          title: "Arquivo muito grande",
-                                          description: "Envie uma imagem de até 5MB.",
-                                          variant: "destructive",
-                                        });
-                                        return;
-                                      }
-                                      uploadPhotoMutation.mutate(file);
-                                    }}
-                                  />
-                                  {uploadPhotoMutation.isPending && (
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...
-                                    </span>
-                                  )}
-                                  {profilePhotoUrl && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-fit"
-                                      disabled={deletePhotoMutation.isPending}
-                                      onClick={() => deletePhotoMutation.mutate()}
-                                    >
-                                      {deletePhotoMutation.isPending ? "Removendo..." : "Remover foto"}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </FormItem>
-
-                            <FormField
-                              control={profileForm.control}
-                              name="clinicName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Clínica / Consultório</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Nome da clínica" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="consultationMode"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Atendimento</FormLabel>
-                                  <Select
-                                    value={field.value}
-                                    onValueChange={field.onChange}
-                                    name={field.name}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a modalidade" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="presencial">Presencial</SelectItem>
-                                      <SelectItem value="online">Online</SelectItem>
-                                      <SelectItem value="hibrido">Híbrido</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="languages"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Idiomas</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Português, Inglês" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="website"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Site</FormLabel>
-                                  <FormControl>
-                                    <Input type="url" placeholder="https://seusite.com.br" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="linkedin"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>LinkedIn</FormLabel>
-                                  <FormControl>
-                                    <Input type="url" placeholder="https://linkedin.com/in/seunome" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="instagram"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Instagram</FormLabel>
-                                  <FormControl>
-                                    <Input type="url" placeholder="https://instagram.com/seuuser" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={profileForm.control}
-                              name="bio"
-                              render={({ field }) => (
-                                <FormItem className="md:col-span-2">
-                                  <FormLabel>Bio profissional</FormLabel>
-                                  <FormControl>
-                                    <Textarea
-                                      placeholder="Breve descrição da sua atuação, experiência ou áreas de interesse."
-                                      className="min-h-[120px]"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-end">
-                          <Button type="button" variant="outline" className="mr-3">
-                            Cancelar
-                          </Button>
-                          <Button
-                            type="submit"
-                            disabled={updateProfileMutation.isPending}
-                          >
-                            {updateProfileMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Salvando...
-                              </>
-                            ) : (
-                              "Salvar alterações"
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </TabsContent>
-
-                  {/* Doctors Tab */}
-                  <TabsContent value="doctors">
                     <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">Minha Equipe</h3>
-                          <p className="text-sm text-gray-500">Gerencie os profissionais da sua equipe de atendimento</p>
-                        </div>
-                        <Button onClick={handleAddDoctor} className="flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
-                          Adicionar Membro
-                        </Button>
-                      </div>
-
-                      {doctorsLoading ? (
-                        <div className="flex justify-center py-8">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-                        </div>
-                      ) : doctors.length === 0 ? (
-                        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                          <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                          <h3 className="text-lg font-medium text-gray-900">Nenhum membro na equipe</h3>
-                          <p className="text-gray-500 mb-4">Adicione secretárias, enfermeiros ou outros profissionais da sua equipe</p>
-                          <Button variant="outline" onClick={handleAddDoctor}>
-                            Cadastrar primeiro membro
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {doctors.map((doctor) => (
-                            <div key={doctor.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow relative">
-                              <div className="flex justify-between items-start">
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <Stethoscope className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                    <h4 className="font-medium text-gray-900">
-                                      {doctor.professionalType === 'doctor' && !doctor.name.startsWith('Dr') ? `Dr(a). ${doctor.name}` : doctor.name}
-                                    </h4>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant="outline" className="text-xs font-normal">
-                                        {PROFESSIONAL_TYPES.find(t => t.value === (doctor.professionalType || 'doctor'))?.label || 'Profissional'}
-                                      </Badge>
-                                      <p className="text-sm text-gray-500">
-                                        {PROFESSIONAL_TYPES.find(t => t.value === (doctor.professionalType || 'doctor'))?.council || 'Registro'}: {doctor.crm}
-                                      </p>
-                                    </div>
-                                    {doctor.specialty && (
-                                      <p className="text-sm text-gray-500">{doctor.specialty}</p>
-                                    )}
-                                    {doctor.isDefault && (
-                                      <Badge variant="secondary" className="mt-2 bg-blue-50 text-blue-700 hover:bg-blue-100">
-                                        <Star className="h-3 w-3 mr-1 fill-blue-700" />
-                                        Principal
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditDoctor(doctor)}>
-                                      <Edit className="h-4 w-4 mr-2" />
-                                      Editar
-                                    </DropdownMenuItem>
-                                    {!doctor.isDefault && (
-                                      <DropdownMenuItem onClick={() => setDefaultDoctorMutation.mutate(doctor.id)}>
-                                        <Star className="h-4 w-4 mr-2" />
-                                        Definir como padrão
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem
-                                      className="text-red-600 focus:text-red-600"
-                                      onClick={() => {
-                                        if (confirm("Tem certeza que deseja remover este médico?")) {
-                                          deleteDoctorMutation.mutate(doctor.id);
-                                        }
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Remover
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Informações Pessoais</h3>
+                        <Form {...profileForm}>
+                          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={profileForm.control}
+                                name="fullName"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome Completo</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} type="email" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="phoneNumber"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Telefone</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             </div>
-                          ))}
-                        </div>
-                      )}
 
-                      <Dialog open={isDoctorDialogOpen} onOpenChange={setIsDoctorDialogOpen}>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>{editingDoctor ? "Editar Profissional" : "Adicionar Profissional"}</DialogTitle>
-                            <DialogDescription>
-                              Cadastre o profissional de saúde para facilitar o registro de informações.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <Form {...doctorForm}>
-                            <form onSubmit={doctorForm.handleSubmit(onDoctorSubmit)} className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                  control={doctorForm.control}
-                                  name="professionalType"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Tipo de Profissional</FormLabel>
-                                      <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                        value={field.value}
-                                      >
+                            <Separator />
+
+                            <h3 className="text-lg font-medium text-gray-900 mb-3">Dados Profissionais</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={profileForm.control}
+                                name="crm"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>CRM / Registro</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="specialty"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Especialidade</FormLabel>
+                                    <FormControl>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                           <SelectTrigger>
-                                            <SelectValue placeholder="Selecione o tipo" />
+                                            <SelectValue placeholder="Selecione uma especialidade" />
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          {PROFESSIONAL_TYPES.map((type) => (
-                                            <SelectItem key={type.value} value={type.value}>
-                                              {type.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={doctorForm.control}
-                                  name="name"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Nome Completo *</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Nome do profissional" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                  control={doctorForm.control}
-                                  name="crm"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>
-                                        {PROFESSIONAL_TYPES.find(t => t.value === doctorForm.watch('professionalType'))?.council || 'Registro'} *
-                                      </FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="123456/UF" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={doctorForm.control}
-                                  name="specialty"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Especialidade</FormLabel>
-                                      <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                        value={field.value}
-                                      >
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Selecione a especialidade" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent className="max-h-[200px]">
                                           {MEDICAL_SPECIALTIES.map((specialty) => (
                                             <SelectItem key={specialty} value={specialty}>
                                               {specialty}
                                             </SelectItem>
                                           ))}
-                                          <SelectItem value="Outra">Outra</SelectItem>
                                         </SelectContent>
                                       </Select>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                              <FormField
-                                control={doctorForm.control}
-                                name="isDefault"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
                                     </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                      <FormLabel>
-                                        Profissional Principal
-                                      </FormLabel>
-                                      <p className="text-sm text-muted-foreground">
-                                        Este profissional será sugerido como primeira opção.
-                                      </p>
-                                    </div>
+                                    <FormMessage />
                                   </FormItem>
                                 )}
                               />
-                              <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsDoctorDialogOpen(false)}>
-                                  Cancelar
-                                </Button>
-                                <Button type="submit" disabled={createDoctorMutation.isPending || updateDoctorMutation.isPending}>
-                                  {(createDoctorMutation.isPending || updateDoctorMutation.isPending) && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  )}
-                                  Salvar
-                                </Button>
-                              </DialogFooter>
-                            </form>
-                          </Form>
-                        </DialogContent>
-                      </Dialog>
+                              <FormField
+                                control={profileForm.control}
+                                name="rqe"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>RQE</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="clinicName"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome da Clínica/Consultório</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
 
-                      <div className="border-t border-gray-200 pt-6">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <h3 className="text-lg font-medium text-gray-900">Secretária com acesso total</h3>
-                            <p className="text-sm text-gray-500">Crie um acesso para quem agenda consultas e administra o sistema.</p>
-                          </div>
-                          <Button variant="outline" onClick={handleAddSecretary} className="flex items-center gap-2">
-                            <Plus className="h-4 w-4" />
-                            Adicionar Secretária
-                          </Button>
-                        </div>
+                            <FormField
+                              control={profileForm.control}
+                              name="bio"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Biografia Profissional</FormLabel>
+                                  <FormControl>
+                                    <Textarea {...field} className="min-h-[100px]" placeholder="Conte um pouco sobre sua experiência e formação..." />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
-                        {secretariesLoading ? (
-                          <div className="flex justify-center py-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
-                          </div>
-                        ) : secretaries.length === 0 ? (
-                          <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-                            <p className="text-sm text-gray-500">Nenhuma secretária com acesso total cadastrada.</p>
-                          </div>
-                        ) : (
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {secretaries.map((secretary) => (
-                              <div key={secretary.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex items-start gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-semibold">
-                                      {secretary.fullName?.[0]?.toUpperCase() || "S"}
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium text-gray-900">{secretary.fullName}</h4>
-                                      <p className="text-sm text-gray-500">{secretary.email}</p>
-                                      <Badge variant="secondary" className="mt-2 bg-amber-50 text-amber-700">Acesso total</Badge>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => {
-                                      if (confirm("Deseja remover o acesso desta secretária?")) {
-                                        deleteSecretaryMutation.mutate(secretary.id);
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <FormField
+                                control={profileForm.control}
+                                name="website"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Site</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="https://..." />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="linkedin"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>LinkedIn</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="URL do perfil" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={profileForm.control}
+                                name="instagram"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Instagram</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="@usuario" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
 
-                        <Dialog open={isSecretaryDialogOpen} onOpenChange={setIsSecretaryDialogOpen}>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Adicionar secretária</DialogTitle>
-                              <DialogDescription>
-                                Este acesso terá controle total do sistema, incluindo agenda e prontuário.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <Form {...secretaryForm}>
-                              <form onSubmit={secretaryForm.handleSubmit(onSecretarySubmit)} className="space-y-4">
-                                <FormField
-                                  control={secretaryForm.control}
-                                  name="fullName"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Nome completo</FormLabel>
-                                      <FormControl>
-                                        <Input placeholder="Nome da secretária" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={secretaryForm.control}
-                                  name="email"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Email</FormLabel>
-                                      <FormControl>
-                                        <Input type="email" placeholder="email@clinica.com" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={secretaryForm.control}
-                                  name="password"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Senha</FormLabel>
-                                      <FormControl>
-                                        <Input type="password" placeholder="Crie uma senha segura" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <DialogFooter>
-                                  <Button type="button" variant="outline" onClick={() => setIsSecretaryDialogOpen(false)}>
-                                    Cancelar
-                                  </Button>
-                                  <Button type="submit" disabled={createSecretaryMutation.isPending}>
-                                    {createSecretaryMutation.isPending && (
-                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    )}
-                                    Criar acesso
-                                  </Button>
-                                </DialogFooter>
-                              </form>
-                            </Form>
-                          </DialogContent>
-                        </Dialog>
+                            <Button type="submit" disabled={updateProfileMutation.isPending}>
+                              {updateProfileMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Salvando...
+                                </>
+                              ) : (
+                                "Salvar alterações"
+                              )}
+                            </Button>
+                          </form>
+                        </Form>
                       </div>
                     </div>
                   </TabsContent>
 
-
-
-                  {/* Security Tab */}
                   <TabsContent value="security">
                     <div className="space-y-6">
                       <div>
@@ -1455,9 +751,7 @@ export default function Profile() {
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Seus Dados e Privacidade (LGPD)</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Em conformidade com a Lei Geral de Proteção de Dados (LGPD), você tem total controle sobre suas informações.
-                        </p>
+
 
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                           <h4 className="text-blue-800 font-medium mb-2">Direito à Portabilidade</h4>
@@ -1551,19 +845,7 @@ export default function Profile() {
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Preferências</h2>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700">Modo Escuro</h3>
-                      <p className="text-xs text-gray-500 mt-1">Alternar entre tema claro e escuro</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Switch
-                        id="dark-mode"
-                        checked={theme === 'dark'}
-                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                      />
-                    </div>
-                  </div>
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-700">Notificações por email</h3>

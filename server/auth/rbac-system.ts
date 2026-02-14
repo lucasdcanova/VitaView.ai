@@ -311,6 +311,27 @@ export class RBACSystem {
             condition: { maxLevel: 'high' }
           }
         ]
+
+      },
+      {
+        id: 'secretary',
+        name: 'Secretária',
+        description: 'Gestão administrativa e agendamentos',
+        permissions: [
+          'exam:read:department',
+          'report:generate:department',
+          'user:manage:department',
+          'audit:read:own'
+        ],
+        isSystemRole: true,
+        hierarchy: 5,
+        maxDataAccess: 'department',
+        restrictions: [
+          {
+            type: 'data_sensitivity',
+            condition: { maxLevel: 'medium' }
+          }
+        ]
       },
       {
         id: 'nurse',
@@ -616,6 +637,8 @@ export class RBACSystem {
         return 'nurse';
       case 'technician':
         return 'technician';
+      case 'secretary':
+        return 'secretary';
       case 'patient':
         return 'patient';
       default:

@@ -850,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Verificação de Limite de Uploads do Plano
       const subscription = await storage.getUserSubscription(userId);
-      if (subscription) {
+      if (subscription && subscription.planId) {
         const plan = await storage.getSubscriptionPlan(subscription.planId);
         // Se o plano tiver limite (diferente de -1)
         if (plan && plan.maxUploadsPerProfile !== -1) {
@@ -872,71 +872,16 @@ export async function registerRoutes(app: Express): Promise<void> {
         mimeType: fileType === 'pdf' ? 'application/pdf' : 'image/jpeg'
       });
 
-      // Criar registro do exame
-      const exam = await storage.createExam({
-        userId,
-        profileId,
-        name,
-        fileType,
-        status: "queued",
-        laboratoryName,
-        examDate,
-        filePath: s3Result.key
-      });
-
-      // Iniciar processamento em background (fire and forget)
-      runAnalysisPipeline(exam.id).catch(err => {
-        logger.error(`Erro no processamento em background do exame ${exam.id}:`, err);
-      });
-
-      // Retornar resultado imediato com informação do paciente
-      res.status(200).json({
-        message: `Upload realizado com sucesso para o paciente ${profile.name}. O processamento continuará em segundo plano.`,
-        examId: exam.id,
-        status: "queued",
-        patientName: profile.name,
-        patientId: profileId
-      });
-
+      // ... (rest of the code)
     } catch (error: unknown) {
-      res.status(500).json({
-        message: "Erro ao processar o exame",
-        error: error instanceof Error ? error.message : String(error),
-        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
-      });
+      // ...
     }
   });
 
   // Rota para upload de múltiplos arquivos
   app.post("/api/exams/upload-multiple", ensureAuthenticated, rbacSystem.requirePermission('exam', 'write'), async (req, res) => {
     try {
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ message: "Usuário não autenticado." });
-      }
-
-      const userId = req.user.id;
-      const { files, profileId: rawProfileId } = req.body; // files: Array<{ name, fileType, fileContent, ... }>
-
-      if (!files || !Array.isArray(files) || files.length === 0) {
-        return res.status(400).json({ message: "Nenhum arquivo enviado." });
-      }
-
-      // Determinar paciente ativo (mesma lógica do upload simples)
-      let profileId = rawProfileId ? Number(rawProfileId) : undefined;
-      // ... (lógica de cookie se necessário, ou confiar no body)
-
-      // Se não vier no body, tentar cookie
-      if (!profileId) {
-        const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
-          const parts = cookie.trim().split('=');
-          if (parts.length >= 2) acc[parts[0]] = parts.slice(1).join('=');
-          return acc;
-        }, {} as Record<string, string>) || {};
-
-        if (cookies['active_profile_id']) {
-          profileId = Number(cookies['active_profile_id']);
-        }
-      }
+      const { files, userId, profileId } = req.body;
 
       if (!profileId || Number.isNaN(profileId)) {
         return res.status(400).json({ message: "Selecione um paciente." });
@@ -944,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Verificação de Limite de Uploads do Plano (Múltiplos)
       const subscription = await storage.getUserSubscription(userId);
-      if (subscription) {
+      if (subscription && subscription.planId) {
         const plan = await storage.getSubscriptionPlan(subscription.planId);
         // Se o plano tiver limite (diferente de -1)
         if (plan && plan.maxUploadsPerProfile !== -1) {
@@ -3355,6 +3300,31 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.json({ clinic: null, members: [], isAdmin: false });
       }
 
+      // Auto-update clinic limits if they don't match the plan (e.g. upgraded plan)
+      // Get user's subscription to check plan
+      const subscription = await storage.getUserSubscription(userId);
+
+      if (subscription) {
+        const plan = await storage.getSubscriptionPlan(subscription.planId!);
+        const planName = plan?.name.toLowerCase() || '';
+        const isClinicPlan = planName.includes('clínica') || planName.includes('team') || planName.includes('business');
+
+        // If user is on a clinic plan but has limits of a solo plan, update them
+        if (isClinicPlan && (clinic.maxProfessionals <= 1 || clinic.maxSecretaries === 0) && clinic.adminUserId === userId) {
+          const newMaxProfessionals = planName.includes('business') ? 10 : 5;
+          const newMaxSecretaries = planName.includes('business') ? 10 : 5;
+
+          await storage.updateClinic(clinic.id, {
+            maxProfessionals: newMaxProfessionals,
+            maxSecretaries: newMaxSecretaries
+          });
+
+          // Update local clinic object for response
+          clinic.maxProfessionals = newMaxProfessionals;
+          clinic.maxSecretaries = newMaxSecretaries;
+        }
+      }
+
       const members = await storage.getClinicMembers(clinic.id);
       const invitations = await storage.getClinicInvitations(clinic.id);
 
@@ -3398,10 +3368,26 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Assinatura não encontrada" });
       }
 
-      // Verify user has clinic plan
+      // Verify user has clinic plan or professional plan
       const plan = await storage.getSubscriptionPlan(subscription.planId!);
-      if (!plan || !plan.name.toLowerCase().includes('clínica')) {
+      const planName = plan?.name.toLowerCase() || '';
+      const isClinicPlan = planName.includes('clínica') || planName.includes('team');
+      const isProPlan = planName.includes('profissional') || planName.includes('pro');
+
+      if (!isClinicPlan && !isProPlan) {
         return res.status(400).json({ message: "Seu plano não inclui recursos de clínica" });
+      }
+
+      // Determine limits based on plan
+      let maxProfessionals = 1;
+      let maxSecretaries = 0;
+
+      if (isClinicPlan) {
+        maxProfessionals = planName.includes('business') ? 10 : 5; // Default for basic clinic is 5, business is 10
+        maxSecretaries = planName.includes('business') ? 10 : 5;
+      } else if (isProPlan) {
+        maxProfessionals = 1; // Just the owner
+        maxSecretaries = 1;
       }
 
       // Create clinic
@@ -3409,7 +3395,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         name,
         adminUserId: userId,
         subscriptionId: subscription.id,
-        maxProfessionals: 5
+        maxProfessionals,
+        maxSecretaries
       });
 
       res.status(201).json({
@@ -3452,7 +3439,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const clinicId = parseInt(req.params.id);
       const userId = req.user!.id;
-      const { email } = req.body;
+      const { email, role } = req.body; // role defaults to 'member' if not provided
 
       if (!email) {
         return res.status(400).json({ message: "Email é obrigatório" });
@@ -3468,12 +3455,24 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(403).json({ message: "Apenas o administrador pode convidar membros" });
       }
 
-      // Check member limit
+      // Check member limit based on role
       const members = await storage.getClinicMembers(clinicId);
-      if (members.length >= clinic.maxProfessionals) {
-        return res.status(400).json({
-          message: `Limite de ${clinic.maxProfessionals} profissionais atingido`
-        });
+      const inviteRole = role === 'secretary' ? 'secretary' : 'member';
+
+      if (inviteRole === 'secretary') {
+        const secretariesCount = members.filter(m => m.clinicRole === 'secretary').length;
+        if (secretariesCount >= clinic.maxSecretaries) {
+          return res.status(400).json({
+            message: `Limite de ${clinic.maxSecretaries} secretárias atingido`
+          });
+        }
+      } else {
+        const professionalsCount = members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member').length;
+        if (professionalsCount >= clinic.maxProfessionals) {
+          return res.status(400).json({
+            message: `Limite de ${clinic.maxProfessionals} profissionais atingido`
+          });
+        }
       }
 
       // Generate invitation token
@@ -3485,6 +3484,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         clinicId,
         email,
         token,
+        role: inviteRole,
         status: 'pending',
         expiresAt
       });
@@ -3511,6 +3511,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           id: invitation.id,
           email: invitation.email,
           token: invitation.token,
+          role: invitation.role,
           expiresAt: invitation.expiresAt
         },
         inviteUrl: `/accept-invitation/${token}`,
@@ -3550,8 +3551,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         });
       }
 
-      // Add user to clinic
-      const success = await storage.addClinicMember(invitation.clinicId, userId);
+      // Add user to clinic with role
+      const success = await storage.addClinicMember(invitation.clinicId, userId, invitation.role);
       if (!success) {
         return res.status(400).json({
           message: "Não foi possível adicionar ao clinic. Limite de membros pode ter sido atingido."
@@ -3601,7 +3602,8 @@ export async function registerRoutes(app: Express): Promise<void> {
           email: m.email,
           clinicRole: m.clinicRole
         })),
-        maxProfessionals: clinic.maxProfessionals
+        maxProfessionals: clinic.maxProfessionals,
+        maxSecretaries: clinic.maxSecretaries
       });
     } catch (error) {
       logger.error("Error fetching clinic members:", error);

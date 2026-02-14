@@ -441,6 +441,7 @@ export const clinics = pgTable("clinics", {
   adminUserId: integer("admin_user_id").notNull().references(() => users.id),
   subscriptionId: integer("subscription_id").references(() => subscriptions.id),
   maxProfessionals: integer("max_professionals").notNull().default(5),
+  maxSecretaries: integer("max_secretaries").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -450,6 +451,7 @@ export const clinicInvitations = pgTable("clinic_invitations", {
   clinicId: integer("clinic_id").notNull().references(() => clinics.id),
   email: text("email").notNull(),
   token: text("token").notNull().unique(),
+  role: text("role").notNull().default("member"), // 'admin', 'member', 'secretary'
   status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'expired'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -460,12 +462,14 @@ export const insertClinicSchema = createInsertSchema(clinics).pick({
   adminUserId: true,
   subscriptionId: true,
   maxProfessionals: true,
+  maxSecretaries: true,
 });
 
 export const insertClinicInvitationSchema = createInsertSchema(clinicInvitations).pick({
   clinicId: true,
   email: true,
   token: true,
+  role: true,
   status: true,
   expiresAt: true,
 });

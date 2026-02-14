@@ -23,6 +23,7 @@ interface Clinic {
     name: string;
     adminUserId: number;
     maxProfessionals: number;
+    maxSecretaries: number;
 }
 
 interface ClinicMember {
@@ -36,6 +37,7 @@ interface ClinicMember {
 interface ClinicInvitation {
     id: number;
     email: string;
+    role: string;
     status: string;
     expiresAt: string;
 }
@@ -55,6 +57,7 @@ const MyClinic = () => {
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
     const [isCreateClinicDialogOpen, setIsCreateClinicDialogOpen] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteRole, setInviteRole] = useState<'member' | 'secretary'>('member');
     const [clinicName, setClinicName] = useState('');
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedClinicName, setEditedClinicName] = useState('');
@@ -93,12 +96,12 @@ const MyClinic = () => {
         mutationFn: async (email: string) => {
             const clinicId = clinicData?.clinic?.id;
             if (!clinicId) throw new Error('Clínica não encontrada');
-            const res = await apiRequest('POST', `/api/clinics/${clinicId}/invite`, { email });
+            const res = await apiRequest('POST', `/api/clinics/${clinicId}/invite`, { email, role: inviteRole });
             if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao enviar convite'); }
             return res.json();
         },
         onSuccess: () => {
-            toast({ title: 'Convite enviado!', description: 'O profissional receberá um email com o convite.' });
+            toast({ title: 'Convite enviado!', description: `O ${inviteRole === 'secretary' ? 'secretário(a)' : 'profissional'} receberá um email com o convite.` });
             setIsInviteDialogOpen(false);
             setInviteEmail('');
             refetchClinic();
@@ -267,130 +270,189 @@ const MyClinic = () => {
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 bg-[#F4F4F4] border border-[#E0E0E0] rounded-xl h-11">
-                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
                         </TabsTrigger>
-                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Calendar className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
                         </TabsTrigger>
-                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Settings className="h-4 w-4" /><span className="hidden sm:inline">Configurações</span>
                         </TabsTrigger>
                     </TabsList>
 
                     {/* TAB: Equipe */}
                     <TabsContent value="equipe" className="space-y-6 mt-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Card className="border border-[#E0E0E0] shadow-sm">
-                                <CardContent className="pt-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm text-[#9E9E9E]">Profissionais</p>
-                                            <p className="text-2xl font-bold text-[#212121]">{clinicData.members.length} / {clinic.maxProfessionals}</p>
-                                        </div>
-                                        <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                            <Users className="h-5 w-5 text-[#212121]" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card className="border border-[#E0E0E0] shadow-sm">
-                                <CardContent className="pt-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm text-[#9E9E9E]">Convites Pendentes</p>
-                                            <p className="text-2xl font-bold text-[#212121]">{clinicData.invitations.length}</p>
-                                        </div>
-                                        <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                            <Mail className="h-5 w-5 text-[#212121]" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card className="border border-[#E0E0E0] shadow-sm">
-                                <CardContent className="pt-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm text-[#9E9E9E]">Vagas Disponíveis</p>
-                                            <p className="text-2xl font-bold text-[#212121]">{Math.max(0, clinic.maxProfessionals - clinicData.members.length)}</p>
-                                        </div>
-                                        <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                            <UserPlus className="h-5 w-5 text-[#212121]" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                        {(() => {
+                            const professionals = clinicData.members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member');
+                            const secretaries = clinicData.members.filter(m => m.clinicRole === 'secretary');
+                            const pendingInvites = clinicData.invitations.filter(i => i.status === 'pending');
 
-                        {/* Members */}
-                        <Card className="border border-[#E0E0E0] shadow-sm">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-[#212121]">Membros da Equipe</CardTitle>
-                                    <CardDescription className="text-[#9E9E9E]">Profissionais vinculados à clínica</CardDescription>
-                                </div>
-                                {clinicData.isAdmin && clinicData.members.length < clinic.maxProfessionals && (
-                                    <Button onClick={() => setIsInviteDialogOpen(true)} size="sm" className="bg-[#212121] hover:bg-[#424242] rounded-lg">
-                                        <UserPlus className="h-4 w-4 mr-2" />Convidar
-                                    </Button>
-                                )}
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {clinicData.members.map((member) => (
-                                        <div key={member.id} className="flex items-center justify-between p-4 bg-[#F4F4F4] rounded-xl border border-[#E0E0E0] hover:border-[#BDBDBD] transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-[#212121] text-white flex items-center justify-center font-bold text-sm">
-                                                    {(member.fullName || member.username).charAt(0).toUpperCase()}
+                            const profLimit = clinic.maxProfessionals;
+                            const secLimit = clinic.maxSecretaries;
+
+                            return (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-sm text-[#9E9E9E]">Profissionais</p>
+                                                        <p className="text-2xl font-bold text-[#212121]">{professionals.length} / {profLimit}</p>
+                                                    </div>
+                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
+                                                        <Users className="h-5 w-5 text-[#212121]" />
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-[#212121]">
-                                                        {member.fullName || member.username}
-                                                        {member.clinicRole === 'admin' && <Crown className="h-4 w-4 inline ml-2 text-[#757575]" />}
-                                                    </p>
-                                                    <p className="text-sm text-[#9E9E9E]">{member.email || 'Sem email'}</p>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-sm text-[#9E9E9E]">Secretárias</p>
+                                                        <p className="text-2xl font-bold text-[#212121]">{secretaries.length} / {secLimit}</p>
+                                                    </div>
+                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
+                                                        <Users className="h-5 w-5 text-[#212121]" />
+                                                    </div>
                                                 </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-sm text-[#9E9E9E]">Convites Pendentes</p>
+                                                        <p className="text-2xl font-bold text-[#212121]">{pendingInvites.length}</p>
+                                                    </div>
+                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
+                                                        <Mail className="h-5 w-5 text-[#212121]" />
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    {/* Professionals */}
+                                    <Card className="border border-[#E0E0E0] shadow-sm">
+                                        <CardHeader className="flex flex-row items-center justify-between">
+                                            <div>
+                                                <CardTitle className="text-[#212121]">Profissionais de Saúde</CardTitle>
+                                                <CardDescription className="text-[#9E9E9E]">Médicos e profissionais vinculados</CardDescription>
                                             </div>
-                                            {clinicData.isAdmin && member.clinicRole !== 'admin' && (
-                                                <Button variant="ghost" size="sm" onClick={() => removeMemberMutation.mutate(member.id)}
-                                                    disabled={removeMemberMutation.isPending} className="text-[#D32F2F] hover:text-[#B71C1C] hover:bg-red-50">
-                                                    <Trash2 className="h-4 w-4" />
+                                            {clinicData.isAdmin && professionals.length < profLimit && (
+                                                <Button onClick={() => { setInviteRole('member'); setIsInviteDialogOpen(true); }} size="sm" className="bg-[#212121] hover:bg-[#424242] rounded-lg">
+                                                    <UserPlus className="h-4 w-4 mr-2" />Convidar Profissional
                                                 </Button>
                                             )}
-                                        </div>
-                                    ))}
-                                    {clinicData.members.length === 0 && (
-                                        <div className="text-center py-10 text-[#9E9E9E]">
-                                            <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                                            <p className="font-medium text-[#757575]">Nenhum membro na equipe ainda</p>
-                                            <p className="text-sm">Convide profissionais para colaborar</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Pending invitations */}
-                        {clinicData.invitations.length > 0 && (
-                            <Card className="border border-[#E0E0E0] shadow-sm">
-                                <CardHeader><CardTitle className="text-base text-[#212121]">Convites Pendentes</CardTitle></CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        {clinicData.invitations.map((invite) => (
-                                            <div key={invite.id} className="flex items-center justify-between p-3 bg-[#F4F4F4] rounded-xl border border-[#E0E0E0]">
-                                                <div className="flex items-center gap-3">
-                                                    <Mail className="h-5 w-5 text-[#9E9E9E]" />
-                                                    <span className="font-medium text-[#212121]">{invite.email}</span>
-                                                </div>
-                                                <Badge variant="outline" className="text-xs text-[#757575] border-[#E0E0E0]">
-                                                    Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
-                                                </Badge>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-3">
+                                                {professionals.map((member) => (
+                                                    <div key={member.id} className="flex items-center justify-between p-4 bg-[#F4F4F4] rounded-xl border border-[#E0E0E0] hover:border-[#BDBDBD] transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 rounded-full bg-[#212121] text-white flex items-center justify-center font-bold text-sm">
+                                                                {(member.fullName || member.username).charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-[#212121]">
+                                                                    {member.fullName || member.username}
+                                                                    {member.clinicRole === 'admin' && <Crown className="h-4 w-4 inline ml-2 text-[#757575]" />}
+                                                                </p>
+                                                                <p className="text-sm text-[#9E9E9E]">{member.email || 'Sem email'}</p>
+                                                            </div>
+                                                        </div>
+                                                        {clinicData.isAdmin && member.clinicRole !== 'admin' && (
+                                                            <Button variant="ghost" size="sm" onClick={() => removeMemberMutation.mutate(member.id)}
+                                                                disabled={removeMemberMutation.isPending} className="text-[#D32F2F] hover:text-[#B71C1C] hover:bg-red-50">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {professionals.length === 0 && (
+                                                    <div className="text-center py-6 text-[#9E9E9E]">
+                                                        <p>Nenhum profissional encontrado.</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Secretaries */}
+                                    <Card className="border border-[#E0E0E0] shadow-sm">
+                                        <CardHeader className="flex flex-row items-center justify-between">
+                                            <div>
+                                                <CardTitle className="text-[#212121]">Secretaria e Apoio</CardTitle>
+                                                <CardDescription className="text-[#9E9E9E]">Equipe de suporte administrativo</CardDescription>
+                                            </div>
+                                            {clinicData.isAdmin && secretaries.length < secLimit && (
+                                                <Button onClick={() => { setInviteRole('secretary'); setIsInviteDialogOpen(true); }} size="sm" variant="outline" className="border-[#212121] text-[#212121] hover:bg-[#F4F4F4] rounded-lg">
+                                                    <UserPlus className="h-4 w-4 mr-2" />Convidar Secretária
+                                                </Button>
+                                            )}
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-3">
+                                                {secretaries.map((member) => (
+                                                    <div key={member.id} className="flex items-center justify-between p-4 bg-[#F4F4F4] rounded-xl border border-[#E0E0E0] hover:border-[#BDBDBD] transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 rounded-full bg-[#E0E0E0] text-[#757575] flex items-center justify-center font-bold text-sm">
+                                                                {(member.fullName || member.username).charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-[#212121]">
+                                                                    {member.fullName || member.username}
+                                                                </p>
+                                                                <p className="text-sm text-[#9E9E9E]">{member.email || 'Sem email'}</p>
+                                                            </div>
+                                                        </div>
+                                                        {clinicData.isAdmin && (
+                                                            <Button variant="ghost" size="sm" onClick={() => removeMemberMutation.mutate(member.id)}
+                                                                disabled={removeMemberMutation.isPending} className="text-[#D32F2F] hover:text-[#B71C1C] hover:bg-red-50">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {secretaries.length === 0 && (
+                                                    <div className="text-center py-6 text-[#9E9E9E]">
+                                                        <p>Nenhuma secretária cadastrada.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Pending invitations */}
+                                    {pendingInvites.length > 0 && (
+                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                            <CardHeader><CardTitle className="text-base text-[#212121]">Convites Pendentes</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <div className="space-y-2">
+                                                    {pendingInvites.map((invite) => (
+                                                        <div key={invite.id} className="flex items-center justify-between p-3 bg-[#F4F4F4] rounded-xl border border-[#E0E0E0]">
+                                                            <div className="flex items-center gap-3">
+                                                                <Mail className="h-5 w-5 text-[#9E9E9E]" />
+                                                                <div>
+                                                                    <span className="font-medium text-[#212121] block">{invite.email}</span>
+                                                                    <span className="text-xs text-[#757575]">{invite.role === 'secretary' ? 'Secretária' : 'Profissional'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant="outline" className="text-xs text-[#757575] border-[#E0E0E0]">
+                                                                Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
+                                                            </Badge>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </TabsContent>
 
                     {/* TAB: Agenda */}
@@ -609,8 +671,10 @@ const MyClinic = () => {
                     <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle className="text-[#212121]">Convidar Profissional</DialogTitle>
-                                <DialogDescription className="text-[#9E9E9E]">Envie um convite por email para adicionar um novo membro à sua clínica.</DialogDescription>
+                                <DialogTitle className="text-[#212121]">Convidar {inviteRole === 'secretary' ? 'Secretária' : 'Profissional'}</DialogTitle>
+                                <DialogDescription className="text-[#9E9E9E]">
+                                    Envie um convite por email para adicionar um novo {inviteRole === 'secretary' ? 'membro de apoio' : 'profissional'} à sua clínica.
+                                </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
