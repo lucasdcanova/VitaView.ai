@@ -235,21 +235,21 @@ const SubscriptionManagement = () => {
       title: 'Vita Team',
       description: 'Planos a partir de R$ 149/mês',
       icon: Building,
-      color: 'bg-gray-50 border-gray-200 hover:bg-white'
+      color: 'bg-muted border-border hover:bg-card'
     },
     {
       id: 'solo' as PlanCategory,
       title: 'Vita Business',
       description: 'Gestão completa para clínicas',
       icon: Users,
-      color: 'bg-gray-50 border-gray-200 hover:bg-white'
+      color: 'bg-muted border-border hover:bg-card'
     },
     {
       id: 'hospital' as PlanCategory,
       title: 'Vita Enterprise',
       description: 'Soluções para hospitais',
       icon: Hospital,
-      color: 'bg-gray-50 border-gray-200 hover:bg-white'
+      color: 'bg-muted border-border hover:bg-card'
     }
   ];
 
@@ -436,11 +436,11 @@ const SubscriptionManagement = () => {
       <MobileHeader />
       <div className="flex flex-1 relative">
         <Sidebar />
-        <main className="flex-1 bg-gray-50 p-4 md:p-8">
+        <main className="flex-1 bg-background p-4 md:p-8">
           <div className="max-w-6xl mx-auto space-y-12">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-gray-900">Assinatura e Planos</h1>
-              <p className="text-gray-500">Gerencie seu plano atual e explore novas opções.</p>
+              <h1 className="text-3xl font-bold mb-2 text-foreground">Assinatura e Planos</h1>
+              <p className="text-muted-foreground">Gerencie seu plano atual e explore novas opções.</p>
             </div>
 
 
@@ -467,8 +467,8 @@ const SubscriptionManagement = () => {
                       <ul className="space-y-2 text-sm">
                         {(Array.isArray(currentPlan?.features) ? currentPlan.features as string[] : []).map((feature: string, i: number) => (
                           <li key={i} className="flex items-start">
-                            <CheckCircle className={`h-4 w-4 mr-2 mt-0.5 ${feature.includes('(') ? 'text-gray-400' : 'text-green-500'}`} />
-                            <span className={feature.includes('(') ? 'text-muted-foreground' : ''} dangerouslySetInnerHTML={{ __html: feature }} />
+                            <CheckCircle className={`h-4 w-4 mr-2 mt-0.5 ${feature.includes('(') ? 'text-muted-foreground' : 'text-green-500'}`} />
+                            <span className={feature.includes('(') ? 'text-muted-foreground' : 'text-foreground'} dangerouslySetInnerHTML={{ __html: feature }} />
                           </li>
                         ))}
                         {(!currentPlan?.features || currentPlan.features.length === 0) && (
@@ -498,10 +498,10 @@ const SubscriptionManagement = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                       {/* LEFT COLUMN: Features */}
-                      <div className="p-6 bg-gray-50/50 border-r border-gray-100 flex flex-col justify-between">
+                      <div className="p-6 bg-muted/50 border-r border-border flex flex-col justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">Vita Pro</h3>
-                          <p className="text-sm text-gray-500 mb-6">Ideal para profissionais independentes</p>
+                          <h3 className="text-xl font-bold text-foreground mb-1">Vita Pro</h3>
+                          <p className="text-sm text-muted-foreground mb-6">Ideal para profissionais independentes</p>
 
                           <div className="space-y-3">
                             <ul className="space-y-2">
@@ -531,13 +531,13 @@ const SubscriptionManagement = () => {
                       </div>
 
                       {/* RIGHT COLUMN: Pricing & Action */}
-                      <div className="p-6 flex flex-col justify-center items-center text-center bg-white">
+                      <div className="p-6 flex flex-col justify-center items-center text-center bg-card">
                         <h3 className="text-2xl font-bold text-green-600 mb-1">1º Mês Grátis</h3>
-                        <p className="text-sm text-gray-500 mb-6">Depois R$ 63,20/mês <br />(no plano anual)</p>
+                        <p className="text-sm text-muted-foreground mb-6">Depois R$ 63,20/mês <br />(no plano anual)</p>
 
                         <div className="w-full max-w-xs space-y-3 mb-6">
 
-                          <div className="bg-gray-50 p-1 rounded-lg border">
+                          <div className="bg-muted p-1 rounded-lg border border-border">
                             {['Anual', 'Semestral', 'Mensal'].map((period) => {
                               const isSelected = selectedInterval === (period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month');
                               const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
@@ -555,18 +555,18 @@ const SubscriptionManagement = () => {
                                   }}
                                   className={`
                                                      flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all text-sm mb-1 last:mb-0
-                                                     ${isSelected ? 'bg-white shadow-sm border border-green-200 ring-1 ring-green-100' : 'hover:bg-gray-100'}
+                                                     ${isSelected ? 'bg-card shadow-sm border border-green-200 ring-1 ring-green-100' : 'hover:bg-muted'}
                                                  `}
                                 >
                                   <div className="flex items-center">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-2 ${isSelected ? 'border-green-500' : 'border-gray-300'}`}>
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-2 ${isSelected ? 'border-green-500' : 'border-muted-foreground'}`}>
                                       {isSelected && <div className="w-2 h-2 rounded-full bg-green-500" />}
                                     </div>
-                                    <span className={isSelected ? 'font-medium text-gray-900' : 'text-gray-600'}>{period}</span>
+                                    <span className={isSelected ? 'font-medium text-foreground' : 'text-muted-foreground'}>{period}</span>
                                   </div>
                                   <div className="flex items-center">
-                                    {discount && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded mr-2">{discount} OFF</span>}
-                                    <span className={`font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>{price}/mês</span>
+                                    {discount && <span className="text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded mr-2">{discount} OFF</span>}
+                                    <span className={`font-semibold ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{price}/mês</span>
                                   </div>
                                 </div>
                               );
@@ -576,7 +576,7 @@ const SubscriptionManagement = () => {
 
                         <Button
                           size="lg"
-                          className="w-full max-w-xs bg-gray-900 hover:bg-black text-white touch-manipulation"
+                          className="w-full max-w-xs bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
                           onClick={() => {
                             console.log('[Escolher Plano Button] Clicked, selectedInterval:', selectedInterval);
                             // Find the selected plan ID based on interval
@@ -597,7 +597,7 @@ const SubscriptionManagement = () => {
                         >
                           Escolher este Plano
                         </Button>
-                        <p className="text-[10px] text-gray-400 mt-4">
+                        <p className="text-[10px] text-muted-foreground mt-4">
                           Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === '6month' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
                         </p>
                       </div>
@@ -689,7 +689,7 @@ const SubscriptionManagement = () => {
                   </Card>
 
                   {/* Smart Upsell Card */}
-                  <Card className="bg-gradient-to-br from-gray-50 to-white border-dashed border-2">
+                  <Card className="bg-gradient-to-br from-muted to-card border-dashed border-2">
                     <CardContent className="pt-6 h-full flex flex-col justify-center">
                       {(() => {
                         // Determine upsell suggestion
@@ -730,28 +730,28 @@ const SubscriptionManagement = () => {
                           return (
                             <div className="space-y-5">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-100 rounded-full">
-                                  <CreditCard className="h-6 w-6 text-green-700" />
+                                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
+                                  <CreditCard className="h-6 w-6 text-green-700 dark:text-green-400" />
                                 </div>
                                 <div>
-                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Economize no seu plano!</h3>
-                                  <p className="text-sm text-green-700 font-medium">Melhore suas condições agora.</p>
+                                  <h3 className="font-bold text-lg text-foreground leading-tight">Economize no seu plano!</h3>
+                                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">Melhore suas condições agora.</p>
                                 </div>
                               </div>
 
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 Você está pagando <strong>R${(currentPrice / 100).toFixed(2)}/mês</strong>.
                               </p>
 
                               <div className="space-y-3">
                                 {/* Option 1: Annual (Best Value) */}
                                 {annualPlan && (
-                                  <div className="bg-white rounded-lg p-4 border border-green-200 shadow-sm relative overflow-hidden">
+                                  <div className="bg-card rounded-lg p-4 border border-green-200 shadow-sm relative overflow-hidden">
                                     <div className="absolute top-0 right-0 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">
                                       RECOMENDADO
                                     </div>
-                                    <p className="text-sm text-gray-600 mb-2">
-                                      Economize <span className="font-bold text-green-700">{savingsAnnual}%</span> mudando para o anual:
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      Economize <span className="font-bold text-green-700 dark:text-green-400">{savingsAnnual}%</span> mudando para o anual:
                                     </p>
                                     <Button
                                       size="lg"
@@ -774,20 +774,20 @@ const SubscriptionManagement = () => {
                                 {semiannualPlan && (
                                   <Button
                                     variant="outline"
-                                    className="w-full justify-between h-auto py-3 border-gray-200 hover:bg-gray-50"
+                                    className="w-full justify-between h-auto py-3 border-border hover:bg-muted"
                                     onClick={() => handleStartPayment(semiannualPlan.id)}
                                   >
                                     <div className="text-left">
-                                      <div className="font-medium text-gray-700">Plano Semestral</div>
+                                      <div className="font-medium text-foreground">Plano Semestral</div>
                                       <div className="text-xs text-muted-foreground">6x de R$ {(semiannualPlan.price / 100 / 6).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-none">-{savingsSemi}%</Badge>
+                                    <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-none">-{savingsSemi}%</Badge>
                                   </Button>
                                 )}
 
                                 {/* Option 3: Upgrade to Business (Only for Vita Team) */}
                                 {(baseName === 'vita team' || baseName === 'vita pro') && nextTierMonthly && (
-                                  <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                                  <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 shadow-lg">
                                     <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
                                       <Sparkles className="h-4 w-4 text-yellow-400" />
                                       Leve sua clínica ao próximo nível
@@ -795,7 +795,7 @@ const SubscriptionManagement = () => {
                                     <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
                                     <Button
                                       size="lg"
-                                      className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                      className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
                                       onClick={() => handleStartPayment(nextTierMonthly.id)}
                                     >
                                       <div className="text-left">
@@ -830,22 +830,22 @@ const SubscriptionManagement = () => {
                                   <Crown className="h-6 w-6 text-green-700" />
                                 </div>
                                 <div>
-                                  <h3 className="font-bold text-lg text-gray-900 leading-tight">Fidelize e Economize</h3>
+                                  <h3 className="font-bold text-lg text-foreground leading-tight">Fidelize e Economize</h3>
                                   <p className="text-sm text-green-700 font-medium">Garanta {savingsAnnual}% de desconto no anual.</p>
                                 </div>
                               </div>
 
-                              <div className="bg-white rounded-lg p-4 border border-green-100 shadow-sm space-y-3">
-                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                                  <span className="text-sm text-gray-500">Sua economia anual:</span>
-                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none text-sm font-bold px-2">
+                              <div className="bg-card rounded-lg p-4 border border-green-100 dark:border-green-900/30 shadow-sm space-y-3">
+                                <div className="flex justify-between items-center pb-2 border-b border-border">
+                                  <span className="text-sm text-muted-foreground">Sua economia anual:</span>
+                                  <Badge className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 hover:bg-green-100 border-none text-sm font-bold px-2">
                                     R$ {savingsValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                   </Badge>
                                 </div>
 
-                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                                  <span className="text-sm text-gray-500">Valor para completar o ano:</span>
-                                  <span className="font-bold text-green-700 text-lg">
+                                <div className="flex justify-between items-center pb-2 border-b border-border">
+                                  <span className="text-sm text-muted-foreground">Valor para completar o ano:</span>
+                                  <span className="font-bold text-green-700 dark:text-green-400 text-lg">
                                     R$ {(upgradeDifference / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                   </span>
                                 </div>
@@ -865,7 +865,7 @@ const SubscriptionManagement = () => {
                                     </span>
                                   </div>
                                 </Button>
-                                <p className="text-[10px] text-center text-gray-400">
+                                <p className="text-[10px] text-center text-muted-foreground">
                                   Ao assinar, você migra para o ciclo anual pagando a diferença
                                 </p>
                               </div>
@@ -880,15 +880,15 @@ const SubscriptionManagement = () => {
                                   <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
                                   <Button
                                     size="lg"
-                                    className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                    className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
                                     onClick={() => handleStartPayment(nextTierMonthly.id)}
                                   >
                                     <div className="text-left">
                                       <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
-                                      <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
+                                      <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
-                                    <div className="p-1.5 bg-gray-900 rounded-full">
-                                      <ArrowRight className="h-4 w-4 text-white" />
+                                    <div className="p-1.5 bg-primary rounded-full">
+                                      <ArrowRight className="h-4 w-4 text-primary-foreground" />
                                     </div>
                                   </Button>
                                 </div>
@@ -900,7 +900,7 @@ const SubscriptionManagement = () => {
                         // Case 3: Annual plan or no interval savings → suggest next tier
                         if (nextTierMonthly) {
                           return (
-                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 shadow-lg">
                               <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
                                 <Sparkles className="h-4 w-4 text-yellow-400" />
                                 Leve sua clínica ao próximo nível
@@ -908,15 +908,15 @@ const SubscriptionManagement = () => {
                               <p className="text-xs text-gray-400 mb-3">{baseName === 'vita pro' ? 'Gerencie sua equipe, relatórios consolidados e conta administradora.' : 'Profissionais ilimitados, gestão financeira e suporte premium.'}</p>
                               <Button
                                 size="lg"
-                                className="w-full justify-between h-auto py-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
                                 onClick={() => handleStartPayment(nextTierMonthly.id)}
                               >
                                 <div className="text-left">
                                   <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
-                                  <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
+                                  <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                 </div>
-                                <div className="p-1.5 bg-gray-900 rounded-full">
-                                  <ArrowRight className="h-4 w-4 text-white" />
+                                <div className="p-1.5 bg-primary rounded-full">
+                                  <ArrowRight className="h-4 w-4 text-primary-foreground" />
                                 </div>
                               </Button>
                             </div>
@@ -930,8 +930,8 @@ const SubscriptionManagement = () => {
                               <Crown className="h-8 w-8 text-green-600" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-lg text-gray-900">Plano Completo</h3>
-                              <p className="text-sm text-gray-500 mt-2">
+                              <h3 className="font-bold text-lg text-foreground">Plano Completo</h3>
+                              <p className="text-sm text-muted-foreground mt-2">
                                 Você já tem acesso a todos os recursos exclusivos da plataforma. Aproveite!
                               </p>
                             </div>
@@ -985,7 +985,7 @@ const SubscriptionManagement = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Vita Team */}
-                <Card className="flex flex-col border-gray-200 shadow-sm hover:shadow-md transition-all">
+                <Card className="flex flex-col border-border shadow-sm hover:shadow-md transition-all">
                   <CardHeader>
                     <CardTitle className="text-xl">Vita Team</CardTitle>
                     <CardDescription className="mt-2 text-sm">Para pequenas clínicas e equipes</CardDescription>
@@ -1014,14 +1014,14 @@ const SubscriptionManagement = () => {
                       ].map((feature, i) => (
                         <li key={i} className="flex items-start text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                          <span className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                   <CardFooter>
                     <Button
-                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white touch-manipulation"
+                      className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
                       onClick={() => {
                         console.log('[Vita Team Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'month');
@@ -1075,14 +1075,14 @@ const SubscriptionManagement = () => {
                       ].map((feature, i) => (
                         <li key={i} className="flex items-start text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                          <span className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                   <CardFooter>
                     <Button
-                      className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white touch-manipulation"
+                      className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
                       onClick={() => {
                         console.log('[Vita Business Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'month');
@@ -1104,7 +1104,7 @@ const SubscriptionManagement = () => {
                 </Card>
 
                 {/* Vita Enterprise */}
-                <Card className="flex flex-col border-gray-200 shadow-sm hover:shadow-md transition-all">
+                <Card className="flex flex-col border-border shadow-sm hover:shadow-md transition-all">
                   <CardHeader>
                     <CardTitle className="text-xl">Vita Enterprise</CardTitle>
                     <CardDescription className="mt-2 text-sm">Soluções para hospitais e redes</CardDescription>
@@ -1123,13 +1123,13 @@ const SubscriptionManagement = () => {
                       ].map((feature, i) => (
                         <li key={i} className="flex items-start text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600 text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
+                          <span className="text-muted-foreground text-xs" dangerouslySetInnerHTML={{ __html: feature }} />
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full text-xs font-bold h-10 bg-[#212121] hover:bg-[#424242] text-white">
+                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
                       Falar com Consultor
                     </Button>
                   </CardFooter>
@@ -1192,10 +1192,10 @@ const SubscriptionManagement = () => {
             <DialogTitle>Finalizar Assinatura</DialogTitle>
             <DialogDescription>
               {selectedPlan && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-900">{selectedPlan.name}</span>
-                    <Badge variant="outline" className="bg-white">
+                    <span className="font-medium text-foreground">{selectedPlan.name}</span>
+                    <Badge variant="outline" className="bg-card">
                       {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
                     </Badge>
                   </div>

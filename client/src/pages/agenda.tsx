@@ -219,7 +219,7 @@ export default function Agenda() {
             <div className="flex flex-1 relative">
                 <Sidebar />
 
-                <main className="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden">
+                <main className="flex-1 bg-background flex flex-col h-full overflow-hidden">
                     <div className="flex-1 flex flex-col h-full w-full p-0 overflow-hidden">
                         <PatientHeader
                             title="Agenda"
@@ -233,7 +233,7 @@ export default function Agenda() {
                                 <div className="relative">
                                     <Input
                                         placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
-                                        className="bg-white border-gray-200 focus:border-gray-500 text-gray-800 placeholder:text-gray-400 pr-20 shadow-sm"
+                                        className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-20 shadow-sm"
                                         value={aiCommand}
                                         onChange={(e) => setAiCommand(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
@@ -241,7 +241,7 @@ export default function Agenda() {
                                     />
                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
                                         <button
-                                            className="text-gray-500 hover:text-gray-700 p-1"
+                                            className="text-muted-foreground hover:text-foreground p-1"
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={isAiLoading}
                                             title="Anexar arquivo (imagem ou PDF)"
@@ -249,7 +249,7 @@ export default function Agenda() {
                                             <Paperclip className="w-4 h-4" />
                                         </button>
                                         <button
-                                            className="text-gray-900 hover:text-black p-1"
+                                            className="text-foreground hover:text-primary p-1"
                                             onClick={handleAiCommand}
                                             disabled={isAiLoading}
                                         >
@@ -272,20 +272,20 @@ export default function Agenda() {
                                         {uploadedFiles.map((file, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 text-sm"
+                                                className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-1.5 text-sm"
                                             >
-                                                <span className="text-gray-700">
+                                                <span className="text-muted-foreground">
                                                     {file.type.startsWith('image/') ? '🖼️' : '📄'}
                                                 </span>
-                                                <span className="text-gray-700 max-w-[150px] truncate">
+                                                <span className="text-muted-foreground max-w-[150px] truncate">
                                                     {file.name}
                                                 </span>
-                                                <span className="text-gray-500 text-xs">
+                                                <span className="text-muted-foreground text-xs">
                                                     ({(file.size / 1024).toFixed(0)} KB)
                                                 </span>
                                                 <button
                                                     onClick={() => removeFile(index)}
-                                                    className="text-gray-500 hover:text-red-600 ml-1"
+                                                    className="text-muted-foreground hover:text-destructive ml-1"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -341,7 +341,7 @@ export default function Agenda() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-gray-900" />
+                            <Sparkles className="w-5 h-5 text-foreground" />
                             Confirmar Agendamento Sugerido
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -350,12 +350,12 @@ export default function Agenda() {
                     </AlertDialogHeader>
 
                     {aiProposal && (
-                        <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200 my-4">
+                        <div className="bg-muted p-4 rounded-lg space-y-3 border border-border my-4">
                             <div className="grid grid-cols-3 gap-2 text-sm">
-                                <span className="font-semibold text-slate-500">Paciente:</span>
+                                <span className="font-semibold text-muted-foreground">Paciente:</span>
                                 <span className="col-span-2 font-medium">{aiProposal.patientName}</span>
 
-                                <span className="font-semibold text-slate-500">Data:</span>
+                                <span className="font-semibold text-muted-foreground">Data:</span>
                                 <span className="col-span-2 font-medium">
                                     {format(new Date(aiProposal.date + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                                     {aiProposal.endDate && (
@@ -365,18 +365,18 @@ export default function Agenda() {
 
                                 {(!aiProposal.isAllDay || (aiProposal.type !== 'blocked' && aiProposal.type !== 'unblock')) && (
                                     <>
-                                        <span className="font-semibold text-slate-500">Horário:</span>
+                                        <span className="font-semibold text-muted-foreground">Horário:</span>
                                         <span className="col-span-2 font-medium">{aiProposal.time}</span>
                                     </>
                                 )}
 
-                                <span className="font-semibold text-slate-500">Tipo:</span>
+                                <span className="font-semibold text-muted-foreground">Tipo:</span>
                                 <span className="col-span-2 capitalize font-medium">{aiProposal.type}</span>
 
                                 {aiProposal.notes && (
                                     <>
-                                        <span className="font-semibold text-slate-500">Obs:</span>
-                                        <span className="col-span-2 text-slate-700">{aiProposal.notes}</span>
+                                        <span className="font-semibold text-muted-foreground">Obs:</span>
+                                        <span className="col-span-2 text-foreground">{aiProposal.notes}</span>
                                     </>
                                 )}
                             </div>
@@ -421,7 +421,7 @@ export default function Agenda() {
                                     });
                                 }
                             }}
-                            className={aiProposal && aiProposal.type === 'unblock' ? "bg-red-600 hover:bg-red-700" : "bg-gray-900 hover:bg-black"}
+                            className={aiProposal && aiProposal.type === 'unblock' ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary/90"}
                         >
                             {aiProposal && aiProposal.type === 'unblock' ? 'Remover Bloqueios' : 'Confirmar Agendamento'}
                         </AlertDialogAction>

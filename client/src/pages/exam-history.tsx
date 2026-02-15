@@ -143,10 +143,10 @@ export default function ExamHistory() {
 
   if (isLoadingProfiles) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm">Carregando pacientes...</p>
         </div>
       </div>
     );
@@ -158,16 +158,16 @@ export default function ExamHistory() {
         <MobileHeader />
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 bg-gray-50 px-6 py-8">
+          <main className="flex-1 bg-background px-6 py-8">
             <div className="max-w-6xl mx-auto">
               <PatientHeader
                 title="Histórico de exames"
                 description="Selecione ou cadastre um paciente para acessar a linha do tempo de exames."
                 patient={activeProfile}
               />
-              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
-                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="bg-muted/30 border border-dashed border-border rounded-2xl p-10 text-center text-muted-foreground">
+                <h2 className="text-lg font-semibold text-foreground">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-muted-foreground mt-2">
                   Utilize o seletor acima para criar ou escolher um paciente.
                 </p>
               </div>
@@ -327,25 +327,25 @@ export default function ExamHistory() {
   const getExamTypeColor = (fileType: string) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
       case 'jpeg':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800';
       case 'png':
-        return 'bg-teal-50 text-teal-700 border-teal-200';
+        return 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800';
       default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+        return 'bg-muted/50 text-muted-foreground border-border';
     }
   };
 
   const getFileIcon = (fileType: string, iconSize: number = 16) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
-        return <FileText className="text-blue-600" size={iconSize} />;
+        return <FileText className="text-blue-600 dark:text-blue-400" size={iconSize} />;
       case 'jpeg':
       case 'png':
-        return <Image className="text-teal-600" size={iconSize} />;
+        return <Image className="text-teal-600 dark:text-teal-400" size={iconSize} />;
       default:
-        return <FileText className="text-gray-600" size={iconSize} />;
+        return <FileText className="text-muted-foreground" size={iconSize} />;
     }
   };
 
@@ -404,19 +404,19 @@ export default function ExamHistory() {
       case 'analyzed':
       case 'extraction_only':
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium">
+          <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 font-medium">
             <Activity className="w-3 h-3 mr-1" /> Analisado
           </Badge>
         );
       case 'processing':
         return (
-          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-medium">
+          <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 font-medium">
             <Clock className="w-3 h-3 mr-1" /> Processando
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-medium">
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border font-medium">
             <Clock className="w-3 h-3 mr-1" /> Pendente
           </Badge>
         );
@@ -432,17 +432,17 @@ export default function ExamHistory() {
 
     return (
       <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-md">
-        <CardHeader className="pb-3 border-b border-gray-100">
+        <CardHeader className="pb-3 border-b border-border">
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className={`p-2 rounded-md flex-shrink-0 ${getExamTypeColor(exam.fileType)}`}>
                 {getFileIcon(exam.fileType, 18)}
               </div>
               <div className="min-w-0">
-                <CardTitle className="text-sm font-semibold text-gray-900 truncate">
+                <CardTitle className="text-sm font-semibold text-foreground truncate">
                   {displayName}
                 </CardTitle>
-                <CardDescription className="text-xs text-gray-500 truncate">{subtitle}</CardDescription>
+                <CardDescription className="text-xs text-muted-foreground truncate">{subtitle}</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -474,7 +474,7 @@ export default function ExamHistory() {
                     </>
                   )}
                   <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
                     onClick={() => handleDeleteClick(exam)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -487,32 +487,32 @@ export default function ExamHistory() {
         </CardHeader>
         <CardContent className="flex-1 pb-2">
           <div className="grid grid-cols-1 gap-3 text-sm">
-            <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
-              <div className="flex items-center text-gray-700">
+            <div className="flex justify-between items-center pb-2 border-b border-dashed border-border">
+              <div className="flex items-center text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-70" />
                 <span>Data do Exame:</span>
               </div>
               <span className="font-medium">
                 {exam.examDate ? formatDate(exam.examDate) : (
-                  <span className="text-gray-400 text-xs">Não informada</span>
+                  <span className="text-muted-foreground text-xs">Não informada</span>
                 )}
               </span>
             </div>
 
-            <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-200">
-              <div className="flex items-center text-gray-700">
+            <div className="flex justify-between items-center pb-2 border-b border-dashed border-border">
+              <div className="flex items-center text-muted-foreground">
                 <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
                 <span>Médico Solicitante:</span>
               </div>
               <span className="font-medium">
                 {exam.requestingPhysician || (
-                  <span className="text-gray-400 text-xs">Não informado</span>
+                  <span className="text-muted-foreground text-xs">Não informado</span>
                 )}
               </span>
             </div>
 
             <div className="flex justify-between items-center">
-              <div className="flex items-center text-gray-700">
+              <div className="flex items-center text-muted-foreground">
                 <Microscope className="h-3.5 w-3.5 mr-1.5 opacity-70" />
                 <span>Tipo de Arquivo:</span>
               </div>
@@ -522,8 +522,8 @@ export default function ExamHistory() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-gray-100">
-          <div className="text-xs text-gray-500">
+        <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-border">
+          <div className="text-xs text-muted-foreground">
             Enviado {formatRelativeDate(exam.uploadDate.toString())}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -594,11 +594,11 @@ export default function ExamHistory() {
 
                     {/* Visualization mode toggle */}
                     <div className="flex gap-3 ml-auto items-center">
-                      <div className="flex rounded-md overflow-hidden border border-gray-200" style={{ height: "40px" }}>
+                      <div className="flex rounded-md overflow-hidden border border-border" style={{ height: "40px" }}>
                         <button
                           className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${viewMode === "chronological"
-                              ? "bg-gray-100 text-gray-700"
-                              : "bg-white text-gray-700 hover:bg-gray-50"
+                            ? "bg-muted text-foreground"
+                            : "bg-card text-muted-foreground hover:bg-muted/50"
                             }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => {
@@ -610,8 +610,8 @@ export default function ExamHistory() {
                         </button>
                         <button
                           className={`px-4 h-10 flex items-center justify-center text-sm font-medium transition-colors ${viewMode === "category"
-                              ? "bg-gray-100 text-gray-700"
-                              : "bg-white text-gray-700 hover:bg-gray-50"
+                            ? "bg-muted text-foreground"
+                            : "bg-card text-muted-foreground hover:bg-muted/50"
                             }`}
                           style={{ width: "120px", border: "none", borderRadius: "0" }}
                           onClick={() => setViewMode("category")}
@@ -623,20 +623,7 @@ export default function ExamHistory() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
-                            style={{
-                              backgroundColor: "white",
-                              color: "#374151",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "6px",
-                              height: "40px",
-                              padding: "0 16px",
-                              width: "120px",
-                              fontSize: "14px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              cursor: "pointer"
-                            }}
+                            className="bg-card text-foreground border border-border rounded-md h-10 px-4 w-[120px] text-sm flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
                           >
                             <Filter className="h-5 w-5 mr-1" />
                             Filtros
@@ -721,19 +708,12 @@ export default function ExamHistory() {
                         </DropdownMenuContent>
                       </DropdownMenu>
 
-                      <div className="flex border rounded-md overflow-hidden" style={{ height: "40px" }}>
+                      <div className="flex border border-border rounded-md overflow-hidden" style={{ height: "40px" }}>
                         <button
-                          style={{
-                            backgroundColor: activeView === "grid" ? "#f1f5f9" : "white",
-                            color: "#374151",
-                            border: "none",
-                            height: "40px",
-                            width: "40px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer"
-                          }}
+                          className={cn(
+                            "h-10 w-10 flex items-center justify-center cursor-pointer border-none transition-colors",
+                            activeView === "grid" ? "bg-muted text-foreground" : "bg-card text-muted-foreground hover:bg-muted/50"
+                          )}
                           onClick={() => setActiveView("grid")}
                           title="Visualização em Grade"
                         >
@@ -742,17 +722,10 @@ export default function ExamHistory() {
                           </svg>
                         </button>
                         <button
-                          style={{
-                            backgroundColor: activeView === "list" ? "#f1f5f9" : "white",
-                            color: "#374151",
-                            border: "none",
-                            height: "40px",
-                            width: "40px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer"
-                          }}
+                          className={cn(
+                            "h-10 w-10 flex items-center justify-center cursor-pointer border-none transition-colors",
+                            activeView === "list" ? "bg-muted text-foreground" : "bg-card text-muted-foreground hover:bg-muted/50"
+                          )}
                           onClick={() => setActiveView("list")}
                           title="Visualização em Lista"
                         >
@@ -761,17 +734,10 @@ export default function ExamHistory() {
                           </svg>
                         </button>
                         <button
-                          style={{
-                            backgroundColor: activeView === "timeline" ? "#f1f5f9" : "white",
-                            color: "#374151",
-                            border: "none",
-                            height: "40px",
-                            width: "40px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer"
-                          }}
+                          className={cn(
+                            "h-10 w-10 flex items-center justify-center cursor-pointer border-none transition-colors",
+                            activeView === "timeline" ? "bg-muted text-foreground" : "bg-card text-muted-foreground hover:bg-muted/50"
+                          )}
                           onClick={() => setActiveView("timeline")}
                           title="Visualização em Linha do Tempo"
                         >
@@ -821,15 +787,15 @@ export default function ExamHistory() {
               ) : filteredAndSortedExams.length === 0 ? (
                 // Show empty state
                 <Card className="flex flex-col items-center justify-center p-8 text-center">
-                  <div className="bg-gray-100 h-16 w-16 rounded-full flex items-center justify-center mb-4">
-                    <FileText className="h-8 w-8 text-gray-400" />
+                  <div className="bg-muted h-16 w-16 rounded-full flex items-center justify-center mb-4">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     {exams && exams.length > 0
                       ? "Nenhum exame encontrado para os filtros selecionados"
                       : "Nenhum exame encontrado"}
                   </h3>
-                  <p className="text-gray-500 mb-6 max-w-md">
+                  <p className="text-muted-foreground mb-6 max-w-md">
                     {exams && exams.length > 0
                       ? "Tente ajustar os filtros ou a busca para visualizar seus exames."
                       : "Comece enviando seu primeiro exame para análise e obtenha insights valiosos sobre sua saúde."}
@@ -864,14 +830,14 @@ export default function ExamHistory() {
                     <div className="mb-6">
                       <div className="flex items-center mb-2">
                         <Tag className="h-4 w-4 mr-2 text-primary" />
-                        <h2 className="text-lg font-medium text-gray-700">Categorias de Exames</h2>
+                        <h2 className="text-lg font-medium text-foreground">Categorias de Exames</h2>
                       </div>
 
                       <div className="flex flex-wrap gap-2 mb-4">
                         <Badge
                           variant={activeCategory === "all" ? "default" : "outline"}
                           className={cn(
-                            "px-2.5 py-1 cursor-pointer hover:bg-primary-50",
+                            "px-2.5 py-1 cursor-pointer hover:bg-primary/20",
                             activeCategory === "all" ? "bg-primary hover:bg-primary" : ""
                           )}
                           onClick={() => setActiveCategory("all")}
@@ -884,7 +850,7 @@ export default function ExamHistory() {
                             key={category}
                             variant={activeCategory === category ? "default" : "outline"}
                             className={cn(
-                              "px-2.5 py-1 cursor-pointer hover:bg-primary-50",
+                              "px-2.5 py-1 cursor-pointer hover:bg-primary/20",
                               activeCategory === category ? "bg-primary hover:bg-primary" : ""
                             )}
                             onClick={() => setActiveCategory(category)}
@@ -896,10 +862,10 @@ export default function ExamHistory() {
 
                       {activeCategory !== "all" && (
                         <div className="mb-4">
-                          <h3 className="text-md font-medium text-primary-700 mb-1">
+                          <h3 className="text-md font-medium text-primary mb-1">
                             Exames na categoria: {activeCategory}
                           </h3>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             Mostrando {examsToDisplay.length} exame(s) nesta categoria
                           </p>
                         </div>
@@ -926,8 +892,8 @@ export default function ExamHistory() {
                             <div className="flex-1 p-4">
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-y-2">
                                 <div>
-                                  <div className="font-medium text-gray-800">{exam.name}</div>
-                                  <div className="text-sm text-gray-500">
+                                  <div className="font-medium text-foreground">{exam.name}</div>
+                                  <div className="text-sm text-muted-foreground">
                                     {exam.laboratoryName || "Laboratório não informado"}
                                     {exam.requestingPhysician ? ` • Dr. ${exam.requestingPhysician}` : ""}
                                   </div>
@@ -935,19 +901,19 @@ export default function ExamHistory() {
 
                                 <div className="flex items-center gap-3 mt-1">
                                   {getStatusBadge(exam.status)}
-                                  <div className="text-xs text-gray-500 ml-3 hidden md:block">
+                                  <div className="text-xs text-muted-foreground ml-3 hidden md:block">
                                     {exam.examDate ? formatDate(exam.examDate) : "Data não informada"}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mt-3">
-                                <div className="flex items-center gap-2 text-xs text-gray-500 md:hidden">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground md:hidden">
                                   <Calendar className="h-3 w-3 opacity-70" />
                                   {exam.examDate ? formatDate(exam.examDate) : "Data não informada"}
                                 </div>
 
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                   Enviado {formatRelativeDate(exam.uploadDate.toString())}
                                 </div>
 
@@ -982,8 +948,8 @@ export default function ExamHistory() {
                     </div>
                   ) : (
                     // Timeline view
-                    <div className="relative px-4 py-6 bg-white rounded-md shadow-sm">
-                      <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gray-200"></div>
+                    <div className="relative px-4 py-6 bg-card rounded-md shadow-sm">
+                      <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-border"></div>
 
                       {paginatedExams.map((exam, index) => {
                         const examDate = exam.examDate ? new Date(exam.examDate) : new Date(exam.uploadDate);
@@ -991,9 +957,9 @@ export default function ExamHistory() {
 
                         return (
                           <div key={exam.id} className="relative pl-8 mb-8 last:mb-0">
-                            <div className="absolute left-0 w-3 h-3 rounded-full bg-primary border-4 border-white z-10 mt-1.5"></div>
+                            <div className="absolute left-0 w-3 h-3 rounded-full bg-primary border-4 border-background z-10 mt-1.5"></div>
 
-                            <div className="text-sm text-gray-500 mb-1">{formattedDate}</div>
+                            <div className="text-sm text-muted-foreground mb-1">{formattedDate}</div>
 
                             <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border-l-4 border-l-primary">
                               <CardHeader className="p-4 pb-2">

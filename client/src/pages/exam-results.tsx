@@ -140,10 +140,10 @@ export default function ExamResults() {
 
   if (isLoadingProfiles) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm">Carregando pacientes...</p>
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm">Carregando pacientes...</p>
         </div>
       </div>
     );
@@ -151,7 +151,7 @@ export default function ExamResults() {
 
   if (!activeProfile) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-background">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <MobileHeader />
@@ -162,9 +162,9 @@ export default function ExamResults() {
                 description="Selecione um paciente para revisar relatórios e métricas consolidadas."
                 patient={activeProfile}
               />
-              <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-600">
-                <h2 className="text-lg font-semibold text-gray-800">Nenhum paciente selecionado</h2>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="bg-muted/30 border border-dashed border-border rounded-2xl p-10 text-center text-muted-foreground">
+                <h2 className="text-lg font-semibold text-foreground">Nenhum paciente selecionado</h2>
+                <p className="text-sm text-muted-foreground mt-2">
                   Utilize o seletor acima para criar ou escolher um paciente.
                 </p>
               </div>
@@ -278,23 +278,23 @@ export default function ExamResults() {
 
   // Helper function to map status to colors
   const getStatusColor = (status: string | null | undefined) => {
-    if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
+    if (!status) return 'bg-muted text-muted-foreground border-border';
 
     switch (status.toLowerCase()) {
       case 'normal':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900';
       case 'alto':
       case 'high':
       case 'elevado':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900';
       case 'baixo':
       case 'low':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900';
       case 'atenção':
       case 'attention':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -324,7 +324,7 @@ export default function ExamResults() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -340,7 +340,7 @@ export default function ExamResults() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <div className="flex gap-3">
                 <Link href="/upload">
-                  <Button className="bg-primary-600 hover:bg-primary-700">
+                  <Button className="bg-primary hover:bg-primary/90">
                     Novo exame
                   </Button>
                 </Link>
@@ -361,7 +361,7 @@ export default function ExamResults() {
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="w-full sm:w-1/3">
-                    <label className="text-sm font-medium mb-1 block text-gray-700">
+                    <label className="text-sm font-medium mb-1 block text-foreground">
                       Tipo de Exame
                     </label>
                     <Select
@@ -381,11 +381,11 @@ export default function ExamResults() {
                     </Select>
                   </div>
                   <div className="w-full sm:w-2/3">
-                    <label className="text-sm font-medium mb-1 block text-gray-700">
+                    <label className="text-sm font-medium mb-1 block text-foreground">
                       Pesquisar
                     </label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
                       <Input
                         type="search"
                         placeholder="Pesquisar por nome, status ou valor..."
@@ -401,12 +401,12 @@ export default function ExamResults() {
 
             {/* Alerta quando existem métricas sem exames */}
             {allHealthMetrics.length > 0 && (allExams.length === 0) && (
-              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/50 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-yellow-800">Dados desconectados detectados</h3>
-                    <p className="text-sm text-yellow-600 mt-1 mb-3">
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Dados desconectados detectados</h3>
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1 mb-3">
                       Existem {allHealthMetrics.length} métricas de saúde em seu perfil, mas nenhum exame encontrado.
                       Isso pode acontecer quando exames foram excluídos mas as métricas permaneceram no sistema.
                     </p>
@@ -456,7 +456,7 @@ export default function ExamResults() {
                   <TabsTrigger value="grid">Grade</TabsTrigger>
                   <TabsTrigger value="list">Lista</TabsTrigger>
                 </TabsList>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {filteredMetrics.length} resultado(s) encontrado(s)
                 </div>
               </div>
@@ -477,16 +477,16 @@ export default function ExamResults() {
                   ))}
                 </div>
               ) : filteredMetrics.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-12 text-center">
-                  <div className="mx-auto h-16 w-16 rounded-full bg-primary-50 flex items-center justify-center mb-4">
-                    <AlertCircle className="h-8 w-8 text-primary-500" />
+                <div className="border-2 border-dashed border-border rounded-lg p-12 text-center">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <AlertCircle className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum resultado encontrado</h3>
-                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  <h3 className="text-xl font-medium text-foreach mb-2">Nenhum resultado encontrado</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                     Não foi possível encontrar resultados com os filtros selecionados. Tente modificar seus filtros ou fazer upload de novos exames.
                   </p>
                   <Link href="/upload">
-                    <Button className="bg-primary-600 hover:bg-primary-700 mr-3">
+                    <Button className="bg-primary hover:bg-primary/90 mr-3">
                       Fazer upload de exame
                     </Button>
                   </Link>
@@ -507,7 +507,7 @@ export default function ExamResults() {
                             <div className="flex justify-between items-center mb-3">
                               <div className="text-3xl font-bold">
                                 {metrics[0]?.value}{' '}
-                                <span className="text-sm font-normal text-gray-500">{metrics[0]?.unit}</span>
+                                <span className="text-sm font-normal text-muted-foreground">{metrics[0]?.unit}</span>
                               </div>
                               <Badge className={cn("text-xs", getStatusColor(metrics[0]?.status))}>
                                 {metrics[0]?.status}
@@ -517,12 +517,12 @@ export default function ExamResults() {
                             {/* Reference Ruler */}
                             {metrics[0]?.referenceMin && metrics[0]?.referenceMax && (
                               <div className="mb-4">
-                                <div className="flex justify-between text-[10px] text-gray-400 mb-1.5 uppercase tracking-wider font-medium">
+                                <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wider font-medium">
                                   <span>{metrics[0].referenceMin}</span>
                                   <span>Referência</span>
                                   <span>{metrics[0].referenceMax}</span>
                                 </div>
-                                <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                <div className="relative h-2.5 bg-muted rounded-full overflow-hidden border border-border">
                                   {/* Calculation for ruler */}
                                   {(() => {
                                     const min = parseFloat(metrics[0].referenceMin?.replace(',', '.') || '0');
@@ -551,14 +551,14 @@ export default function ExamResults() {
                                       <>
                                         {/* Reference Range (Green Zone) */}
                                         <div
-                                          className="absolute top-0 bottom-0 bg-green-100 border-x border-green-200"
+                                          className="absolute top-0 bottom-0 bg-green-100 dark:bg-green-900/20 border-x border-green-200 dark:border-green-900"
                                           style={{ left: `${refStart}%`, width: `${refWidth}%` }}
                                         />
 
                                         {/* Value Marker */}
                                         <div
                                           className={cn(
-                                            "absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-white z-10",
+                                            "absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full shadow-sm border-2 border-background z-10",
                                             metrics[0].status === 'normal' ? "bg-green-500" :
                                               (metrics[0].status?.toLowerCase().includes('alto') || metrics[0].status?.toLowerCase().includes('high')) ? "bg-red-500" :
                                                 (metrics[0].status?.toLowerCase().includes('baixo') || metrics[0].status?.toLowerCase().includes('low')) ? "bg-blue-500" : "bg-amber-500"
@@ -570,7 +570,7 @@ export default function ExamResults() {
                                     );
                                   })()}
                                 </div>
-                                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                                   <span className="opacity-0">{metrics[0].referenceMin}</span>
                                   <span className="text-center w-full">
                                     {metrics[0].value} {metrics[0].unit}
@@ -585,8 +585,8 @@ export default function ExamResults() {
                                 {getTrendData(metrics[0]?.change).icon}
                                 {metrics[0]?.change}
                               </span>
-                              <span className="mx-2 text-gray-300">•</span>
-                              <span className="text-gray-500">
+                              <span className="mx-2 text-muted-foreground/40">•</span>
+                              <span className="text-muted-foreground">
                                 {metrics.length > 1
                                   ? `Histórico de ${metrics.length} medições`
                                   : "Primeira medição"}
@@ -638,8 +638,8 @@ export default function ExamResults() {
                   </TabsContent>
 
                   <TabsContent value="list" className="mt-0">
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 py-3 px-4 text-sm font-medium text-gray-500">
+                    <div className="bg-card rounded-xl border border-border overflow-hidden">
+                      <div className="grid grid-cols-12 bg-muted/50 border-b border-border py-3 px-4 text-sm font-medium text-muted-foreground">
                         <div className="col-span-4">Nome do exame</div>
                         <div className="col-span-2 text-center">Valor</div>
                         <div className="col-span-2 text-center">Unidade</div>
@@ -651,18 +651,18 @@ export default function ExamResults() {
                         metrics.map((metric, index) => (
                           <div
                             key={`${name}-${index}`}
-                            className="grid grid-cols-12 py-3 px-4 border-b border-gray-100 items-center hover:bg-gray-50"
+                            className="grid grid-cols-12 py-3 px-4 border-b border-border items-center hover:bg-muted/50 transition-colors"
                           >
-                            <div className="col-span-4 font-medium text-gray-800">
+                            <div className="col-span-4 font-medium text-foreground">
                               {metric.name}
                               {index === 0 && (
-                                <span className="ml-2 text-xs bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded-full">
+                                <span className="ml-2 text-xs bg-primary/10 text-primary py-0.5 px-1.5 rounded-full">
                                   Recente
                                 </span>
                               )}
                             </div>
-                            <div className="col-span-2 text-center">{metric.value}</div>
-                            <div className="col-span-2 text-center text-gray-500">{metric.unit || ''}</div>
+                            <div className="col-span-2 text-center text-foreground">{metric.value}</div>
+                            <div className="col-span-2 text-center text-muted-foreground">{metric.unit || ''}</div>
                             <div className="col-span-2 text-center">
                               <Badge className={cn("px-2 py-0.5", getStatusColor(metric.status || ''))}>
                                 {metric.status || 'N/A'}

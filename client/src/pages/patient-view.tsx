@@ -215,17 +215,17 @@ export default function PatientView() {
                         <header className="mb-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                                         <Users className="h-6 w-6" />
                                         Atendimento
                                     </h1>
                                     {activeProfile ? (
                                         <div className="mt-2">
                                             <div className="flex flex-wrap items-center gap-4">
-                                                <p className="text-lg font-semibold text-gray-800">{activeProfile.name}</p>
+                                                <p className="text-lg font-semibold text-foreground">{activeProfile.name}</p>
                                                 {calculateAge(activeProfile.birthDate) !== null && (
-                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
-                                                        <User className="h-4 w-4 text-gray-400" />
+                                                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                        <User className="h-4 w-4 text-muted-foreground" />
                                                         {calculateAge(activeProfile.birthDate)} anos
                                                     </span>
                                                 )}
@@ -273,10 +273,10 @@ export default function PatientView() {
                                 {/* Doctor Prescriber Info & Actions - Right side of header */}
                                 <div className="flex items-center gap-4">
                                     {user && (
-                                        <div className="hidden md:flex min-w-[200px] bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex-col items-end flex-shrink-0">
-                                            <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Médico Prescritor</span>
-                                            <p className="font-semibold text-gray-900 text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                                            {user?.crm && <span className="text-xs text-gray-600 font-medium bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">CRM: {user.crm}</span>}
+                                        <div className="hidden md:flex min-w-[200px] bg-card px-4 py-2 rounded-lg border border-border shadow-sm flex-col items-end flex-shrink-0">
+                                            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-0.5">Médico Prescritor</span>
+                                            <p className="font-semibold text-foreground text-sm">{user?.fullName || user?.username || "Profissional"}</p>
+                                            {user?.crm && <span className="text-xs text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded border border-border">CRM: {user.crm}</span>}
                                         </div>
                                     )}
 
@@ -287,17 +287,17 @@ export default function PatientView() {
 
                         {/* Tabs Navigation */}
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                            <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
                                 <TabsTrigger
                                     value="dashboard"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800"
+                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-muted-foreground hover:text-foreground"
                                 >
                                     <LayoutDashboard className="h-4 w-4 mr-2" />
                                     Atendimento
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="prescricoes"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
                                 >
                                     <Pill className="h-4 w-4 mr-2" />
                                     Prescrição
@@ -517,14 +517,14 @@ export default function PatientView() {
                                                         </p>
 
                                                         {/* Tips integrado */}
-                                                        <div className="bg-gradient-to-br from-primary-50 to-gray-50 rounded-lg p-4 space-y-3 border border-primary-100">
+                                                        <div className="bg-muted/50 rounded-lg p-4 space-y-3 border border-border">
                                                             <div className="flex items-start gap-2">
                                                                 <ShieldCheck className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                <p className="text-xs text-gray-600">Seus exames são tratados com segurança e confidencialidade.</p>
+                                                                <p className="text-xs text-muted-foreground">Seus exames são tratados com segurança e confidencialidade.</p>
                                                             </div>
                                                             <div className="flex items-start gap-2">
                                                                 <ClipboardList className="text-yellow-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                <p className="text-xs text-gray-600">Envie imagens com boa resolução para melhor análise.</p>
+                                                                <p className="text-xs text-muted-foreground">Envie imagens com boa resolução para melhor análise.</p>
                                                             </div>
                                                         </div>
                                                     </CardContent>
@@ -553,15 +553,15 @@ export default function PatientView() {
                                                                 {exams.map((exam: any) => (
                                                                     <div
                                                                         key={exam.id}
-                                                                        className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-white transition-all cursor-pointer"
+                                                                        className="flex items-center p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent transition-all cursor-pointer"
                                                                         onClick={() => setLocation(`/report/${exam.id}`)}
                                                                     >
-                                                                        <div className="bg-primary-100 p-2 rounded-lg mr-3">
-                                                                            <FileText className="h-5 w-5 text-primary-600" />
+                                                                        <div className="bg-primary/20 p-2 rounded-lg mr-3">
+                                                                            <FileText className="h-5 w-5 text-primary" />
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
-                                                                            <p className="font-medium text-gray-900 truncate text-sm">{exam.name || 'Exame sem título'}</p>
-                                                                            <p className="text-xs text-gray-500">
+                                                                            <p className="font-medium text-foreground truncate text-sm">{exam.name || 'Exame sem título'}</p>
+                                                                            <p className="text-xs text-muted-foreground">
                                                                                 {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
                                                                             </p>
                                                                         </div>

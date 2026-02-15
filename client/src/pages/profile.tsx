@@ -142,6 +142,21 @@ export default function Profile() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
 
+  // Theme state
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "light" | "dark") || "light";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
       ? (user.preferences as Record<string, any>).professionalProfile
@@ -413,13 +428,13 @@ export default function Profile() {
         <main className="flex-1">
           <div className="p-4 md:p-6">
             <header className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Conta profissional</h1>
-              <p className="text-gray-600">Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma</p>
+              <h1 className="text-2xl font-bold text-foreground">Conta profissional</h1>
+              <p className="text-muted-foreground">Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* User Information */}
-              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
+              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-2 border border-border">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
                   <div className="relative w-24 h-24 mb-4 sm:mb-0 sm:mr-6 group">
                     <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden">
@@ -448,10 +463,10 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800">{user?.fullName || user?.username}</h2>
-                    <p className="text-gray-500">{user?.email}</p>
+                    <h2 className="text-xl font-semibold text-foreground">{user?.fullName || user?.username}</h2>
+                    <p className="text-muted-foreground">{user?.email}</p>
                     {clinicName && (
-                      <p className="text-sm text-gray-500">{clinicName}</p>
+                      <p className="text-sm text-muted-foreground">{clinicName}</p>
                     )}
                     <div className="mt-2 flex items-center">
                       <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
@@ -466,22 +481,22 @@ export default function Profile() {
                 </div>
 
                 <Tabs defaultValue="personal">
-                  <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                  <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
                     <TabsTrigger
                       value="personal"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-muted-foreground hover:text-foreground"
                     >
                       Dados Profissionais
                     </TabsTrigger>
                     <TabsTrigger
                       value="security"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
                     >
                       Segurança
                     </TabsTrigger>
                     <TabsTrigger
                       value="privacy"
-                      className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
                     >
                       Privacidade (LGPD)
                     </TabsTrigger>
@@ -490,7 +505,7 @@ export default function Profile() {
                   <TabsContent value="personal">
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Informações Pessoais</h3>
+                        <h3 className="text-lg font-medium text-foreground mb-3">Informações Pessoais</h3>
                         <Form {...profileForm}>
                           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -535,9 +550,9 @@ export default function Profile() {
                               />
                             </div>
 
-                            <Separator />
+                            <Separator className="my-6" />
 
-                            <h3 className="text-lg font-medium text-gray-900 mb-3">Dados Profissionais</h3>
+                            <h3 className="text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
                                 control={profileForm.control}
@@ -681,7 +696,7 @@ export default function Profile() {
                   <TabsContent value="security">
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Alterar senha</h3>
+                        <h3 className="text-lg font-medium text-foreground mb-3">Alterar senha</h3>
                         <Form {...securityForm}>
                           <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-4">
                             <FormField
@@ -743,12 +758,12 @@ export default function Profile() {
                         </Form>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Verificação em duas etapas</h3>
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="text-lg font-medium text-foreground mb-3">Verificação em duas etapas</h3>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-600">Proteja sua conta com verificação em duas etapas</p>
-                            <p className="text-xs text-gray-500 mt-1">Recomendamos fortemente ativar esta camada extra de segurança.</p>
+                            <p className="text-sm text-muted-foreground">Proteja sua conta com verificação em duas etapas</p>
+                            <p className="text-xs text-muted-foreground mt-1">Recomendamos fortemente ativar esta camada extra de segurança.</p>
                           </div>
                           <div className="flex items-center">
                             <Switch id="two-factor" />
@@ -756,17 +771,17 @@ export default function Profile() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Dispositivos conectados</h3>
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="text-lg font-medium text-foreground mb-3">Dispositivos conectados</h3>
                         <div className="space-y-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start">
-                              <svg className="h-5 w-5 text-gray-500 mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="h-5 w-5 text-muted-foreground mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                               </svg>
                               <div>
-                                <p className="text-sm font-medium text-gray-800">iPhone 13 Pro</p>
-                                <p className="text-xs text-gray-500">Último acesso: Hoje, 10:23</p>
+                                <p className="text-sm font-medium text-foreground">iPhone 13 Pro</p>
+                                <p className="text-xs text-muted-foreground">Último acesso: Hoje, 10:23</p>
                               </div>
                             </div>
                             <Button variant="link" size="sm" className="text-primary-600 hover:text-primary-700">
@@ -776,12 +791,12 @@ export default function Profile() {
 
                           <div className="flex items-start justify-between">
                             <div className="flex items-start">
-                              <svg className="h-5 w-5 text-gray-500 mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="h-5 w-5 text-muted-foreground mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                               </svg>
                               <div>
-                                <p className="text-sm font-medium text-gray-800">MacBook Pro</p>
-                                <p className="text-xs text-gray-500">Último acesso: Ontem, 18:45</p>
+                                <p className="text-sm font-medium text-foreground">MacBook Pro</p>
+                                <p className="text-xs text-muted-foreground">Último acesso: Ontem, 18:45</p>
                               </div>
                             </div>
                             <Button variant="link" size="sm" className="text-primary-600 hover:text-primary-700">
@@ -797,7 +812,7 @@ export default function Profile() {
                   <TabsContent value="privacy">
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Seus Dados e Privacidade (LGPD)</h3>
+                        <h3 className="text-lg font-medium text-foreground mb-3">Seus Dados e Privacidade (LGPD)</h3>
 
 
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -817,12 +832,12 @@ export default function Profile() {
                           </Button>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-200">
+                        <div className="pt-4 border-t border-border">
                           <h3 className="text-lg font-medium text-red-600 mb-3">Zona de perigo</h3>
-                          <p className="text-sm text-gray-600 mb-4">
+                          <p className="text-sm text-muted-foreground mb-4">
                             O <strong>Direito ao Esquecimento</strong> permite que você solicite a exclusão completa de sua conta e dados associados.
                           </p>
-                          <p className="text-sm text-gray-600 mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</p>
+                          <p className="text-sm text-muted-foreground mb-4">Depois de excluir sua conta, todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</p>
 
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -888,15 +903,15 @@ export default function Profile() {
               </div>
 
               {/* Settings and Preferences */}
-              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Preferências</h2>
+              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-1 border border-border">
+                <h2 className="text-lg font-semibold mb-4 text-foreground">Preferências</h2>
 
                 <div className="space-y-4">
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700">Notificações por email</h3>
-                      <p className="text-xs text-gray-500 mt-1">Receba atualizações sobre suas análises</p>
+                      <h3 className="text-sm font-medium text-foreground">Notificações por email</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Receba atualizações sobre suas análises</p>
                     </div>
                     <div className="flex items-center">
                       <Switch
@@ -911,8 +926,8 @@ export default function Profile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700">Notificações push</h3>
-                      <p className="text-xs text-gray-500 mt-1">Receba alertas no seu dispositivo</p>
+                      <h3 className="text-sm font-medium text-foreground">Notificações push</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Receba alertas no seu dispositivo</p>
                     </div>
                     <div className="flex items-center">
                       <Switch
@@ -927,8 +942,8 @@ export default function Profile() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700">Lembretes de consultas</h3>
-                      <p className="text-xs text-gray-500 mt-1">Lembretes sobre suas consultas agendadas</p>
+                      <h3 className="text-sm font-medium text-foreground">Lembretes de consultas</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Lembretes sobre suas consultas agendadas</p>
                     </div>
                     <div className="flex items-center">
                       <Switch
@@ -940,73 +955,81 @@ export default function Profile() {
                       />
                     </div>
                   </div>
+
+                  <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground">Modo Escuro</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Alternar entre tema claro e escuro</p>
+                    </div>
+                    <div className="flex items-center">
+                      <Switch
+                        id="dark-mode"
+                        checked={theme === "dark"}
+                        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-6 flex justify-end">
-                  <Button type="button">
-                    Salvar preferências
-                  </Button>
-                </div>
-
-                <hr className="my-6 border-gray-200" />
+                <hr className="my-6 border-border" />
 
                 {/* Help Section */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <HelpCircle className="h-5 w-5 text-primary-600" />
-                    <h2 className="text-lg font-semibold text-gray-800">Ajuda</h2>
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold text-foreground">Ajuda</h2>
                   </div>
 
                   <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border-b border-gray-100">
-                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                    <AccordionItem value="item-1" className="border-b border-border">
+                      <AccordionTrigger className="text-sm text-left text-foreground hover:text-primary hover:no-underline py-3">
                         Como prescrever um medicamento?
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
+                      <AccordionContent className="text-sm text-muted-foreground">
                         Para prescrever um medicamento, acesse a ficha do paciente e vá até a aba "Receituário". Lá você pode adicionar medicamentos de uso contínuo ou gerar receitas de uso agudo. Basta selecionar o medicamento, preencher a posologia e clicar em "Gerar Receita".
                       </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="item-2" className="border-b border-gray-100">
-                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                    <AccordionItem value="item-2" className="border-b border-border">
+                      <AccordionTrigger className="text-sm text-left text-foreground hover:text-primary hover:no-underline py-3">
                         Como cadastrar um novo paciente?
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
+                      <AccordionContent className="text-sm text-muted-foreground">
                         Clique em "Pacientes" no menu lateral e depois em "+ Novo Paciente". Preencha os dados pessoais do paciente e clique em "Salvar". O paciente estará disponível para seleção em sua lista.
                       </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="item-3" className="border-b border-gray-100">
-                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                    <AccordionItem value="item-3" className="border-b border-border">
+                      <AccordionTrigger className="text-sm text-left text-foreground hover:text-primary hover:no-underline py-3">
                         Como fazer upload de exames?
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
+                      <AccordionContent className="text-sm text-muted-foreground">
                         Acesse a ficha do paciente e vá até a aba "Exames". Clique em "Enviar Exame" e selecione o arquivo PDF do exame. A plataforma irá analisar automaticamente os resultados e destacar valores alterados.
                       </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="item-4" className="border-b border-gray-100">
-                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                    <AccordionItem value="item-4" className="border-b border-border">
+                      <AccordionTrigger className="text-sm text-left text-foreground hover:text-primary hover:no-underline py-3">
                         Como agendar uma consulta?
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
+                      <AccordionContent className="text-sm text-muted-foreground">
                         Vá até "Agenda" no menu lateral. Clique em uma data e horário disponível ou use o botão "+ Nova Consulta". Selecione o paciente, tipo de atendimento e confirme o agendamento.
                       </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="item-5" className="border-b border-gray-100">
-                      <AccordionTrigger className="text-sm text-left text-gray-700 hover:text-primary-600 hover:no-underline py-3">
+                    <AccordionItem value="item-5" className="border-b border-border">
+                      <AccordionTrigger className="text-sm text-left text-foreground hover:text-primary hover:no-underline py-3">
                         Como emitir uma receita controlada?
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
+                      <AccordionContent className="text-sm text-muted-foreground">
                         Ao adicionar um medicamento controlado, o sistema automaticamente identifica o tipo de receita necessária (A, B1, B2 ou C) e gera o documento com o formato adequado, incluindo numeração e campos obrigatórios para identificação do comprador.
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
 
                   {/* Contact Section */}
-                  <div className="mt-6 pt-4 border-t border-gray-100">
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground mb-3">
                       Não encontrou o que procurava? Envie suas dúvidas ou sugestões:
                     </p>
                     <a

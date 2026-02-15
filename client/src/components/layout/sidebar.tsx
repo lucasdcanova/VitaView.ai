@@ -36,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface SidebarProps {
   isSidebarOpen?: boolean;
   setIsSidebarOpen?: (isOpen: boolean) => void;
+  className?: string;
 }
 
 export default function Sidebar(props: SidebarProps) {
@@ -156,7 +157,8 @@ export default function Sidebar(props: SidebarProps) {
         className={cn(
           "bg-pureWhite border-r border-lightGray flex-shrink-0 fixed md:sticky top-0 h-full z-50 transition-all duration-300 ease-in-out sidebar-shadow",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          isCollapsed ? 'w-20' : 'w-80' // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
+          isCollapsed ? 'w-20' : 'w-80', // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
+          props.className
         )}
       >
         {/* Toggle Button (Desktop Only) */}

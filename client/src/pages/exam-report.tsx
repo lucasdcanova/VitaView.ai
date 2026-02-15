@@ -218,15 +218,15 @@ export default function ExamReport() {
   const getLifestyleCardStyle = (category: string) => {
     switch (category) {
       case 'diet':
-        return 'bg-emerald-50 border-emerald-200';
+        return 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900';
       case 'exercise':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900';
       case 'sleep':
-        return 'bg-indigo-50 border-indigo-200';
+        return 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-900';
       case 'stress_management':
-        return 'bg-rose-50 border-rose-200';
+        return 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-muted/50 border-border';
     }
   };
 
@@ -234,13 +234,13 @@ export default function ExamReport() {
   const getConfidenceLevelColor = (level?: string) => {
     switch (level) {
       case 'alto':
-        return 'text-green-700 bg-green-50 border-green-200';
+        return 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900';
       case 'médio':
-        return 'text-amber-700 bg-amber-50 border-amber-200';
+        return 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900';
       case 'baixo':
-        return 'text-red-700 bg-red-50 border-red-200';
+        return 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900';
       default:
-        return 'text-gray-700 bg-gray-50 border-gray-200';
+        return 'text-muted-foreground bg-muted border-border';
     }
   };
 
@@ -291,12 +291,12 @@ export default function ExamReport() {
   const getFileIcon = (fileType?: string, iconSize: number = 16) => {
     switch (fileType) {
       case 'pdf':
-        return <FileText className="text-gray-500" size={16} />;
+        return <FileText className="text-muted-foreground" size={16} />;
       case 'jpeg':
       case 'png':
-        return <Image className="text-gray-500" size={16} />;
+        return <Image className="text-muted-foreground" size={16} />;
       default:
-        return <FileText className="text-gray-500" size={16} />;
+        return <FileText className="text-muted-foreground" size={16} />;
     }
   };
 
@@ -386,19 +386,19 @@ export default function ExamReport() {
   const getChangeIcon = (change?: string) => {
     if (!change) return <Minus className="h-3 w-3 text-gray-600" />;
 
-    if (change.startsWith('-')) {
-      return <ArrowDown className="h-3 w-3 text-green-600" />;
-    } else if (change.startsWith('+')) {
-      return <ArrowUp className="h-3 w-3 text-red-600" />;
+    if (change.startsWith('+')) {
+      return <ArrowUp className="h-3 w-3 text-red-600 dark:text-red-400" />;
+    } else if (change.startsWith('-')) {
+      return <ArrowDown className="h-3 w-3 text-green-600 dark:text-green-400" />;
     }
-    return <Minus className="h-3 w-3 text-gray-600" />;
+    return <Minus className="h-3 w-3 text-muted-foreground" />;
   };
 
   // Extract sample health metrics from the exam result
   const healthMetrics = data?.result?.healthMetrics as any[] || [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Diálogo de confirmação de exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -433,7 +433,7 @@ export default function ExamReport() {
 
         <main className="flex-1">
           {/* Cabeçalho */}
-          <div className="border-b bg-white shadow-sm">
+          <div className="border-b bg-card shadow-sm">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Link href="/exam-history">
@@ -442,7 +442,7 @@ export default function ExamReport() {
                   </Button>
                 </Link>
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <h1 className="text-xl font-semibold text-foreground flex items-center">
                     {isLoading ? (
                       <Skeleton className="h-6 w-32" />
                     ) : (
@@ -457,7 +457,7 @@ export default function ExamReport() {
                     )}
                   </h1>
                   {!isLoading && data?.exam && (
-                    <div className="flex items-center text-sm text-gray-500 space-x-3">
+                    <div className="flex items-center text-sm text-muted-foreground space-x-3">
                       <span>Enviado {formatRelativeDate(data.exam?.uploadDate?.toString())}</span>
                       <span>•</span>
                       <span className="flex items-center">
@@ -514,7 +514,7 @@ export default function ExamReport() {
                     if (navigator.share) {
                       navigator.share({
                         title: `Relatório de Exame - ${data?.exam.name}`,
-                        text: data?.result?.summary,
+                        text: data?.result?.summary || undefined,
                         url: window.location.href
                       }).catch(() => {
                         navigator.clipboard.writeText(window.location.href);
@@ -541,10 +541,10 @@ export default function ExamReport() {
               </div>
             </div>
 
-            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-y-2 border-t border-gray-100 bg-gray-50">
+            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-y-2 border-t border-border bg-muted/30">
               {!isLoading && data?.exam && (
                 <>
-                  <div className="flex items-center text-sm text-gray-600 mr-6">
+                  <div className="flex items-center text-sm text-muted-foreground mr-6">
                     <Calendar className="mr-2 h-4 w-4 text-primary-500" />
                     <span className="font-medium">
                       {formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
@@ -552,14 +552,14 @@ export default function ExamReport() {
                   </div>
 
                   {data.exam.laboratoryName && (
-                    <div className="flex items-center text-sm text-gray-600 mr-6">
+                    <div className="flex items-center text-sm text-muted-foreground mr-6">
                       <Building className="mr-2 h-4 w-4 text-primary-500" />
                       <span className="font-medium">{data.exam.laboratoryName}</span>
                     </div>
                   )}
 
                   {data.exam.requestingPhysician && (
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <UserRound className="mr-2 h-4 w-4 text-primary-500" />
                       <span className="font-medium">Dr. {data.exam.requestingPhysician}</span>
                     </div>
@@ -573,7 +573,7 @@ export default function ExamReport() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Report Details */}
-              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
+              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-2">
                 {isLoading ? (
                   <>
                     <div className="flex justify-between items-start mb-6">
@@ -597,8 +597,8 @@ export default function ExamReport() {
                 ) : (
                   <>
                     <div className="mb-6">
-                      <h2 className="text-xl font-semibold text-gray-800">{data?.exam.name}</h2>
-                      <p className="text-gray-500">
+                      <h2 className="text-xl font-semibold text-foreground">{data?.exam.name}</h2>
+                      <p className="text-muted-foreground">
                         {data?.result?.analysisDate
                           ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
                           : data?.exam?.uploadDate
@@ -608,7 +608,7 @@ export default function ExamReport() {
                     </div>
 
                     <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-                      <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                      <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
                         <TabsTrigger
                           value="summary"
                           className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
@@ -643,26 +643,26 @@ export default function ExamReport() {
 
                       {/* Summary Tab */}
                       <TabsContent value="summary" className="mt-6">
-                        <p className="text-gray-600 mb-4">
+                        <p className="text-muted-foreground mb-4">
                           {data?.result?.summary}
                         </p>
 
-                        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg mb-4">
+                        <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 dark:border-green-600 p-4 rounded-r-lg mb-4">
                           <div className="flex">
-                            <CheckCircle2 className="text-green-600 mr-3 flex-shrink-0" size={20} />
+                            <CheckCircle2 className="text-green-600 dark:text-green-500 mr-3 flex-shrink-0" size={20} />
                             <div>
-                              <h4 className="font-medium text-green-800">Resultado geral positivo</h4>
-                              <p className="text-sm text-green-700 mt-1">Seus resultados estão majoritariamente dentro dos intervalos de referência, indicando boa saúde geral.</p>
+                              <h4 className="font-medium text-green-800 dark:text-green-300">Resultado geral positivo</h4>
+                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">Seus resultados estão majoritariamente dentro dos intervalos de referência, indicando boa saúde geral.</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-r-lg">
                           <div className="flex">
-                            <CheckCircle2 className="text-yellow-600 mr-3 flex-shrink-0" size={20} />
+                            <CheckCircle2 className="text-yellow-600 dark:text-yellow-500 mr-3 flex-shrink-0" size={20} />
                             <div>
-                              <h4 className="font-medium text-yellow-800">Pontos de atenção</h4>
-                              <p className="text-sm text-yellow-700 mt-1">
+                              <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Pontos de atenção</h4>
+                              <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                                 {healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo' || m.status === 'alto')
                                   ? `${healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo')?.name || 'Alguns parâmetros'} em nível de atenção.`
                                   : 'Alguns parâmetros merecem atenção e acompanhamento.'}
@@ -671,32 +671,32 @@ export default function ExamReport() {
                           </div>
                         </div>
 
-                        <h3 className="font-medium text-lg text-gray-800 mt-6 mb-3">Principais parâmetros</h3>
+                        <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais parâmetros</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {healthMetrics.slice(0, 4).map((metric, index) => (
-                            <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 border border-red-100' :
-                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 border border-blue-100' :
-                                metric.status === 'atenção' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 border border-gray-100'
+                            <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
+                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
+                                metric.status === 'atenção' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
                               }`}>
                               <div className="flex justify-between mb-1">
-                                <span className="text-sm font-medium text-gray-700 flex items-center">
+                                <span className="text-sm font-medium text-foreground flex items-center">
                                   {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
                                   {metric.status !== 'normal' && (
-                                    <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
-                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                        'bg-amber-100 text-amber-800 border-amber-200'
+                                    <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
+                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
+                                        'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
                                       }`}>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
                                   )}
                                 </span>
                                 <div className="flex items-center">
-                                  <span className="text-sm text-gray-700 font-medium">{metric.value} {metric.unit}</span>
+                                  <span className="text-sm text-foreground font-medium">{metric.value} {metric.unit}</span>
                                   {metric.change && (
-                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
-                                      metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
-                                        'bg-gray-50 text-gray-700'
+                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                      metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                                        'bg-muted text-muted-foreground'
                                       }`}>
                                       {metric.change}
                                     </span>
@@ -704,17 +704,17 @@ export default function ExamReport() {
                                 </div>
                               </div>
 
-                              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 mb-1 relative">
+                              <div className="w-full bg-muted rounded-full h-2.5 mt-2 mb-1 relative">
                                 {/* Área de referência "normal" */}
                                 {(metric.referenceMin && metric.referenceMax) ? (
-                                  <div className="absolute h-full bg-green-100 rounded-full opacity-60"
+                                  <div className="absolute h-full bg-green-500/30 dark:bg-green-500/20 rounded-full"
                                     style={{
                                       left: '30%',
                                       width: '40%'
                                     }}>
                                   </div>
                                 ) : (
-                                  <div className="absolute h-full bg-gray-300 rounded-full opacity-40"
+                                  <div className="absolute h-full bg-muted rounded-full opacity-40"
                                     style={{
                                       left: '25%',
                                       width: '50%'
@@ -725,11 +725,11 @@ export default function ExamReport() {
                                 {/* Marcadores de limite para valores de referência */}
                                 {(metric.referenceMin && metric.referenceMax) && (
                                   <>
-                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50"
+                                    <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
                                       style={{ left: '30%' }}
                                       title={`Valor mínimo de referência: ${metric.referenceMin}`}>
                                     </div>
-                                    <div className="absolute h-full w-0.5 bg-green-700 opacity-50"
+                                    <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
                                       style={{ left: '70%' }}
                                       title={`Valor máximo de referência: ${metric.referenceMax}`}>
                                     </div>
@@ -759,16 +759,16 @@ export default function ExamReport() {
                                 })()}
                               </div>
 
-                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                 <div className="flex items-center">
                                   <span>
                                     Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
                                   </span>
 
                                   {metric.change && (
-                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700' :
-                                      metric.change.startsWith('-') ? 'text-green-700' :
-                                        'text-gray-700'
+                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700 dark:text-red-400' :
+                                      metric.change.startsWith('-') ? 'text-green-700 dark:text-green-400' :
+                                        'text-muted-foreground'
                                       }`}>
                                       {getChangeIcon(metric.change)}
                                       <span className="ml-0.5">{metric.change}</span>
@@ -780,7 +780,7 @@ export default function ExamReport() {
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <span className="text-primary-600 cursor-help flex items-center">
+                                        <span className="text-primary cursor-help flex items-center">
                                           <Info className="h-3 w-3 mr-1" />
                                           <span className="text-xs">Significado clínico</span>
                                         </span>
@@ -800,37 +800,37 @@ export default function ExamReport() {
                       {/* Detailed Analysis Tab */}
                       <TabsContent value="detailed">
                         <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
+                          <table className="min-w-full divide-y divide-border">
                             <thead>
                               <tr>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parâmetro</th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resultado</th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referência</th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Significado Clínico</th>
+                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Parâmetro</th>
+                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</th>
+                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Referência</th>
+                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Significado Clínico</th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-card divide-y divide-border">
                               {healthMetrics.map((metric, index) => (
-                                <tr key={index} className={index % 2 === 0 ? '' : 'bg-gray-50'}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <tr key={index} className={index % 2 === 0 ? '' : 'bg-muted/30'}>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                                     {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                     <span className="font-medium">{metric.value}</span> {metric.unit}
                                     {metric.change && (
-                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 text-red-700' :
-                                        metric.change.startsWith('-') ? 'bg-green-50 text-green-700' :
-                                          'bg-gray-50 text-gray-700'
+                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                        metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                                          'bg-muted text-muted-foreground'
                                         }`}>
                                         {getChangeIcon(metric.change)}
                                         <span className="ml-0.5">{metric.change}</span>
                                       </span>
                                     )}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                     {metric.referenceMin && metric.referenceMax ?
-                                      <span className="bg-green-50 px-2 py-0.5 rounded text-green-700">
+                                      <span className="bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-green-700 dark:text-green-400">
                                         {metric.referenceMin}-{metric.referenceMax} {metric.unit}
                                       </span> :
                                       (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
@@ -846,14 +846,14 @@ export default function ExamReport() {
                                         metric.status === 'atenção' ? 'outline' :
                                           metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
                                     } className={
-                                      metric.status === 'normal' ? 'bg-green-100 text-green-800 border-green-200' :
-                                        metric.status === 'atenção' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''
+                                      metric.status === 'normal' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900' :
+                                        metric.status === 'atenção' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900' :
+                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' : ''
                                     }>
                                       {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
                                     </Badge>
                                   </td>
-                                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                                  <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs">
                                     {metric.clinical_significance ? (
                                       <div className="truncate">
                                         <TooltipProvider>
@@ -878,9 +878,9 @@ export default function ExamReport() {
                         </div>
 
                         <div className="mt-6">
-                          <h3 className="font-medium text-lg text-gray-800 mb-3">Interpretação detalhada</h3>
+                          <h3 className="font-medium text-lg text-foreground mb-3">Interpretação detalhada</h3>
                           <div className="space-y-3">
-                            <p className="text-gray-600">
+                            <p className="text-muted-foreground">
                               {data?.result?.detailedAnalysis}
                             </p>
                           </div>
@@ -890,15 +890,15 @@ export default function ExamReport() {
                       {/* Recommendations Tab */}
                       <TabsContent value="recommendations">
                         <div className="mb-6">
-                          <h3 className="font-medium text-lg text-gray-800 mb-3">Orientações de saúde</h3>
-                          <p className="text-sm text-gray-600 mb-4">
+                          <h3 className="font-medium text-lg text-foreground mb-3">Orientações de saúde</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
                             ⚠️ Seguimos rigorosamente as diretrizes do Ministério da Saúde. Todas as orientações são gerais e não substituem consulta médica.
                           </p>
 
                           <div className="space-y-4">
                             {isLoadingInsights ? (
                               [...Array(3)].map((_, i) => (
-                                <div key={i} className="bg-primary-50 p-4 rounded-lg">
+                                <div key={i} className="bg-primary/10 p-4 rounded-lg">
                                   <div className="flex">
                                     <Skeleton className="h-6 w-6 mr-4" />
                                     <div className="w-full">
@@ -910,23 +910,23 @@ export default function ExamReport() {
                               ))
                             ) : (
                               filterRecommendations(insights?.recommendations || []).map((recommendation, index) => (
-                                <div key={index} className="bg-primary-50 p-4 rounded-lg">
+                                <div key={index} className="bg-primary/10 p-4 rounded-lg">
                                   <div className="flex">
                                     <div className="flex-shrink-0">
-                                      {index === 0 && <UserRound className="text-primary-600" size={20} />}
-                                      {index === 1 && <Apple className="text-emerald-600" size={20} />}
-                                      {index === 2 && <Dumbbell className="text-blue-600" size={20} />}
-                                      {index > 2 && <CheckCircle2 className="text-primary-600" size={20} />}
+                                      {index === 0 && <UserRound className="text-primary" size={20} />}
+                                      {index === 1 && <Apple className="text-emerald-600 dark:text-emerald-400" size={20} />}
+                                      {index === 2 && <Dumbbell className="text-blue-600 dark:text-blue-400" size={20} />}
+                                      {index > 2 && <CheckCircle2 className="text-primary" size={20} />}
                                     </div>
                                     <div className="ml-4">
-                                      <h4 className="text-base font-medium text-gray-900">
+                                      <h4 className="text-base font-medium text-foreground">
                                         {index === 0 && 'Orientação médica'}
                                         {index === 1 && 'Alimentação saudável'}
                                         {index === 2 && 'Atividade física'}
                                         {index === 3 && 'Cuidados gerais'}
                                         {index > 3 && `Orientação ${index + 1}`}
                                       </h4>
-                                      <p className="mt-1 text-sm text-gray-600">{recommendation}</p>
+                                      <p className="mt-1 text-sm text-muted-foreground">{recommendation}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -936,9 +936,9 @@ export default function ExamReport() {
                         </div>
 
                         <div>
-                          <h3 className="font-medium text-lg text-gray-800 mb-3">Especialistas sugeridos</h3>
+                          <h3 className="font-medium text-lg text-foreground mb-3">Especialistas sugeridos</h3>
 
-                          <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="bg-muted/30 p-4 rounded-lg">
                             <ul className="space-y-2">
                               {isLoadingInsights ? (
                                 [...Array(3)].map((_, i) => (
@@ -953,9 +953,9 @@ export default function ExamReport() {
                               ) : (
                                 insights?.specialists.map((specialist, index) => (
                                   <li key={index} className="flex items-start">
-                                    <CheckCircle2 className="text-primary-600 mt-0.5 mr-2 flex-shrink-0" size={18} />
+                                    <CheckCircle2 className="text-primary mt-0.5 mr-2 flex-shrink-0" size={18} />
                                     <div>
-                                      <h4 className="font-medium text-gray-800">{specialist}</h4>
+                                      <h4 className="font-medium text-foreground">{specialist}</h4>
                                     </div>
                                   </li>
                                 ))
@@ -964,9 +964,9 @@ export default function ExamReport() {
                           </div>
 
                           {insights?.lifestyle && (
-                            <div className="mt-4 p-4 bg-primary-50 rounded-lg">
-                              <h4 className="font-medium text-gray-800 mb-2">Recomendações de estilo de vida</h4>
-                              <ul className="space-y-2 text-sm text-gray-700">
+                            <div className="mt-4 p-4 bg-primary/10 rounded-lg">
+                              <h4 className="font-medium text-foreground mb-2">Recomendações de estilo de vida</h4>
+                              <ul className="space-y-2 text-sm text-foreground">
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Alimentação:</span>
                                   <span>{filterLifestyleText(insights.lifestyle.diet)}</span>
@@ -994,20 +994,20 @@ export default function ExamReport() {
                       {/* Evidências Científicas Tab */}
                       <TabsContent value="evidence">
                         <div className="mb-6">
-                          <h3 className="font-medium text-lg text-gray-800 mb-4">Parâmetros de Saúde Baseados em Evidências</h3>
+                          <h3 className="font-medium text-lg text-foreground mb-4">Parâmetros de Saúde Baseados em Evidências</h3>
 
                           {insights?.healthParameters ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                               {/* Health Score */}
-                              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                                <h4 className="text-md font-semibold text-gray-800 mb-3">Pontuação Global de Saúde</h4>
+                              <div className="bg-card border border-border rounded-xl shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-foreground mb-3">Pontuação Global de Saúde</h4>
                                 <div className="flex justify-center items-center mb-3">
                                   <div className="relative w-36 h-36 flex items-center justify-center">
                                     <svg className="w-full h-full" viewBox="0 0 36 36">
                                       <circle
                                         cx="18" cy="18" r="16"
                                         fill="none"
-                                        stroke="#e5e7eb"
+                                        className="stroke-muted"
                                         strokeWidth="3"
                                       />
                                       <circle
@@ -1028,19 +1028,19 @@ export default function ExamReport() {
                                     <div className="absolute text-2xl font-bold">{insights.healthParameters.healthScore}</div>
                                   </div>
                                 </div>
-                                <p className="text-center text-sm text-gray-600">Pontuação baseada na análise de todos os parâmetros disponíveis</p>
+                                <p className="text-center text-sm text-muted-foreground">Pontuação baseada na análise de todos os parâmetros disponíveis</p>
                               </div>
 
                               {/* Parameters Areas */}
-                              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                                <h4 className="text-md font-semibold text-gray-800 mb-3">Áreas de Saúde</h4>
+                              <div className="bg-card border border-border rounded-xl shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-foreground mb-3">Áreas de Saúde</h4>
 
                                 {insights.healthParameters.criticalAreas.length > 0 && (
                                   <div className="mb-4">
                                     <h5 className="text-sm font-medium text-red-600 mb-1">Áreas críticas</h5>
                                     <ul className="space-y-1">
                                       {insights.healthParameters.criticalAreas.map((area, idx) => (
-                                        <li key={idx} className="text-sm flex text-gray-700">
+                                        <li key={idx} className="text-sm flex text-muted-foreground">
                                           <span className="mr-2">•</span>
                                           <span>{area}</span>
                                         </li>
@@ -1054,7 +1054,7 @@ export default function ExamReport() {
                                     <h5 className="text-sm font-medium text-green-600 mb-1">Áreas estáveis</h5>
                                     <ul className="space-y-1">
                                       {insights.healthParameters.stableAreas.map((area, idx) => (
-                                        <li key={idx} className="text-sm flex text-gray-700">
+                                        <li key={idx} className="text-sm flex text-muted-foreground">
                                           <span className="mr-2">•</span>
                                           <span>{area}</span>
                                         </li>
@@ -1068,7 +1068,7 @@ export default function ExamReport() {
                                     <h5 className="text-sm font-medium text-blue-600 mb-1">Tendências de melhoria</h5>
                                     <ul className="space-y-1">
                                       {insights.healthParameters.improvementTrends.map((trend, idx) => (
-                                        <li key={idx} className="text-sm flex text-gray-700">
+                                        <li key={idx} className="text-sm flex text-muted-foreground">
                                           <span className="mr-2">•</span>
                                           <span>{trend}</span>
                                         </li>
@@ -1079,21 +1079,21 @@ export default function ExamReport() {
                               </div>
                             </div>
                           ) : (
-                            <div className="bg-gray-50 p-6 rounded-lg mb-8">
-                              <p className="text-center text-gray-500">Parâmetros de saúde não disponíveis para este exame</p>
+                            <div className="bg-muted/30 p-6 rounded-lg mb-8">
+                              <p className="text-center text-muted-foreground">Parâmetros de saúde não disponíveis para este exame</p>
                             </div>
                           )}
 
                           {insights?.evidenceBasedAssessment ? (
                             <div className="space-y-6">
                               <div>
-                                <h3 className="font-medium text-lg text-gray-800 mb-3">Diretrizes Clínicas Relevantes</h3>
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <h3 className="font-medium text-lg text-foreground mb-3">Diretrizes Clínicas Relevantes</h3>
+                                <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900">
                                   <ul className="space-y-2">
                                     {insights.evidenceBasedAssessment.clinicalGuidelines.map((guideline, idx) => (
                                       <li key={idx} className="text-sm flex items-start">
-                                        <span className="text-blue-600 font-medium mr-2">›</span>
-                                        <span className="text-gray-700">{guideline}</span>
+                                        <span className="text-blue-600 dark:text-blue-400 font-medium mr-2">›</span>
+                                        <span className="text-foreground">{guideline}</span>
                                       </li>
                                     ))}
                                   </ul>
@@ -1101,29 +1101,29 @@ export default function ExamReport() {
                               </div>
 
                               <div>
-                                <h3 className="font-medium text-lg text-gray-800 mb-3">Referências Científicas</h3>
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <h3 className="font-medium text-lg text-foreground mb-3">Referências Científicas</h3>
+                                <div className="bg-muted/30 p-4 rounded-lg border border-border">
                                   <ul className="space-y-2">
                                     {insights.evidenceBasedAssessment.studyReferences.map((reference, idx) => (
                                       <li key={idx} className="text-sm flex items-start">
-                                        <span className="text-gray-800 font-medium mr-2">[{idx + 1}]</span>
-                                        <span className="text-gray-700">{reference}</span>
+                                        <span className="text-foreground font-medium mr-2">[{idx + 1}]</span>
+                                        <span className="text-muted-foreground">{reference}</span>
                                       </li>
                                     ))}
                                   </ul>
                                 </div>
                               </div>
 
-                              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h4 className="font-medium text-gray-800 mb-2">Nível de confiança na avaliação</h4>
+                              <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                                <h4 className="font-medium text-foreground mb-2">Nível de confiança na avaliação</h4>
                                 <div className="flex items-center">
-                                  <div className="w-full bg-gray-200 rounded-full h-2.5 mr-4">
-                                    <div className={`h-2.5 rounded-full ${insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600' :
+                                  <div className="w-full bg-muted rounded-full h-2.5 mr-4">
+                                    <div className={`h-2.5 rounded-full ${insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600 dark:bg-green-500' :
                                       insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
                                         'w-1/3 bg-red-500'
                                       }`}></div>
                                   </div>
-                                  <span className="text-sm font-medium text-gray-700 w-16">{
+                                  <span className="text-sm font-medium text-foreground w-16">{
                                     insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() +
                                     insights.evidenceBasedAssessment.confidenceLevel.slice(1)
                                   }</span>
@@ -1131,8 +1131,8 @@ export default function ExamReport() {
                               </div>
                             </div>
                           ) : (
-                            <div className="bg-gray-50 p-6 rounded-lg">
-                              <p className="text-center text-gray-500">Evidências científicas não disponíveis para este exame</p>
+                            <div className="bg-muted/30 p-6 rounded-lg">
+                              <p className="text-center text-muted-foreground">Evidências científicas não disponíveis para este exame</p>
                             </div>
                           )}
                         </div>
@@ -1143,7 +1143,7 @@ export default function ExamReport() {
               </div>
 
               {/* Additional Information */}
-              <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-1">
+              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-1">
                 {isLoading ? (
                   <>
                     <Skeleton className="h-6 w-48 mb-4" />
@@ -1188,81 +1188,81 @@ export default function ExamReport() {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações do Exame</h2>
+                    <h2 className="text-lg font-semibold mb-4 text-foreground">Informações do Exame</h2>
 
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
-                        <Calendar className="text-primary-500 mr-3" size={18} />
+                        <Calendar className="text-primary mr-3" size={18} />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Data do exame</h3>
-                          <p className="text-sm text-gray-600">
+                          <h3 className="text-sm font-medium text-foreground">Data do exame</h3>
+                          <p className="text-sm text-muted-foreground">
                             {data?.exam.examDate ? formatDate(data?.exam.examDate) : formatDate(data?.exam.uploadDate.toString())}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
-                        <Building className="text-primary-500 mr-3" size={18} />
+                        <Building className="text-primary mr-3" size={18} />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Laboratório</h3>
-                          <p className="text-sm text-gray-600">{data?.exam.laboratoryName || "Laboratório Central"}</p>
+                          <h3 className="text-sm font-medium text-foreground">Laboratório</h3>
+                          <p className="text-sm text-muted-foreground">{data?.exam.laboratoryName || "Laboratório Central"}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
-                        <UserRound className="text-primary-500 mr-3" size={18} />
+                        <UserRound className="text-primary mr-3" size={18} />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Médico Solicitante</h3>
-                          <p className="text-sm text-gray-600">{data?.exam.requestingPhysician || "Não informado"}</p>
+                          <h3 className="text-sm font-medium text-foreground">Médico Solicitante</h3>
+                          <p className="text-sm text-muted-foreground">{data?.exam.requestingPhysician || "Não informado"}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
-                        <div className="mr-3 text-primary-500">
+                        <div className="mr-3 text-primary">
                           {getFileIcon(data?.exam.fileType)}
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Tipo de arquivo</h3>
-                          <p className="text-sm text-gray-600">{data?.exam.fileType.toUpperCase()}</p>
+                          <h3 className="text-sm font-medium text-foreground">Tipo de arquivo</h3>
+                          <p className="text-sm text-muted-foreground">{data?.exam.fileType.toUpperCase()}</p>
                         </div>
                       </div>
                     </div>
 
-                    <hr className="my-4 border-gray-200" />
+                    <hr className="my-4 border-border" />
 
-                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Análise por IA</h2>
+                    <h2 className="text-lg font-semibold mb-4 text-foreground">Análise por IA</h2>
 
                     <div className="space-y-4 mb-6">
                       <div className="flex items-center">
                         <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Extração do documento</h3>
-                          <p className="text-sm text-gray-600">OpenAI GPT-5 Vision</p>
+                          <h3 className="text-sm font-medium text-foreground">Extração do documento</h3>
+                          <p className="text-sm text-muted-foreground">OpenAI GPT-5 Vision</p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
                         <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Recomendações</h3>
-                          <p className="text-sm text-gray-600">OpenAI GPT-4o</p>
+                          <h3 className="text-sm font-medium text-foreground">Recomendações</h3>
+                          <p className="text-sm text-muted-foreground">OpenAI GPT-4o</p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
-                        <Calendar className="text-primary-500 mr-3" size={18} />
+                        <Calendar className="text-primary mr-3" size={18} />
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Tempo de análise</h3>
-                          <p className="text-sm text-gray-600">~2 minutos</p>
+                          <h3 className="text-sm font-medium text-foreground">Tempo de análise</h3>
+                          <p className="text-sm text-muted-foreground">~2 minutos</p>
                         </div>
                       </div>
                     </div>
 
-                    <hr className="my-4 border-gray-200" />
+                    <hr className="my-4 border-border" />
 
-                    <h2 className="text-lg font-semibold mb-4 text-gray-800">Informações</h2>
+                    <h2 className="text-lg font-semibold mb-4 text-foreground">Informações</h2>
 
-                    <div className="text-sm text-gray-600 space-y-2">
+                    <div className="text-sm text-muted-foreground space-y-2">
                       <p><strong>Data do exame:</strong> {data?.exam.examDate || 'Não informado'}</p>
                       <p><strong>Laboratório:</strong> {data?.exam.laboratoryName || 'Não informado'}</p>
                       <p><strong>Médico solicitante:</strong> {data?.exam.requestingPhysician || 'Não informado'}</p>

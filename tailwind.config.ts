@@ -17,22 +17,22 @@ export default {
       },
       colors: {
         // VitaView Design Language Colors
-        charcoal: "#212121", // Charcoal Gray
-        mediumGray: "#9E9E9E", // Medium Gray
-        lightGray: "#E0E0E0", // Light Gray
-        pureWhite: "#FFFFFF", // Pure White
-        backgroundGray: "#F4F4F4", // Light Background Gray
+        charcoal: "var(--charcoal-gray)", // Charcoal Gray
+        mediumGray: "var(--medium-gray)", // Medium Gray
+        lightGray: "var(--light-gray)", // Light Gray
+        pureWhite: "var(--pure-white)", // Pure White
+        backgroundGray: "var(--background-gray)", // Light Background Gray
 
         // Legacy/Compatibility maps
         gray: {
-          50: "#F4F4F4",
-          100: "#E0E0E0",
+          50: "var(--background-gray)",
+          100: "var(--light-gray)",
           200: "#BDBDBD",
-          300: "#9E9E9E",
+          300: "var(--medium-gray)",
           400: "#757575",
           500: "#616161",
           600: "#424242",
-          700: "#212121",
+          700: "var(--charcoal-gray)",
           800: "#1A1A1A",
           900: "#121212",
         },
@@ -50,14 +50,14 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#F4F4F4",
-          100: "#E0E0E0",
+          50: "var(--background-gray)",
+          100: "var(--light-gray)",
           200: "#BDBDBD",
-          300: "#9E9E9E",
+          300: "var(--medium-gray)",
           400: "#757575",
           500: "#616161",
           600: "#424242",
-          700: "#212121",
+          700: "var(--charcoal-gray)",
           800: "#1A1A1A",
           900: "#121212",
           950: "#0A0A0A",
@@ -89,14 +89,14 @@ export default {
           "5": "#BDBDBD",
         },
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+          DEFAULT: "var(--pure-white)",
+          foreground: "var(--charcoal-gray)",
+          primary: "var(--charcoal-gray)",
+          "primary-foreground": "var(--pure-white)",
+          accent: "var(--light-gray)",
+          "accent-foreground": "var(--charcoal-gray)",
+          border: "var(--light-gray)",
+          ring: "var(--charcoal-gray)",
         },
       },
       keyframes: {

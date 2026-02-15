@@ -73,7 +73,45 @@
   --vitaview-error: #D32F2F;
 }
 
-/* Dark mode disabled - always using light theme */
+.dark {
+  /* Dark Mode Variables */
+  --background: 0 0% 10%;    /* Dark Gray/Black */
+  --foreground: 0 0% 98%;    /* Near White */
+
+  --card: 0 0% 13%;          /* Charcoal */
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 13%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 13%;
+
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 60%;
+
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 80%;
+
+  /* VitaView Specific Overrides */
+  --vitaview-background: #1A1A1A;
+  --vitaview-primary: #FFFFFF;
+  --vitaview-secondary: #BDBDBD;
+  --pure-white: #212121; /* Invert for dark mode context if used as bg */
+  --background-gray: #121212;
+  --charcoal-gray: #F4F4F4; /* Invert text colors */
+  --light-gray: #333333;
+}
 
 @layer base {
   * {
