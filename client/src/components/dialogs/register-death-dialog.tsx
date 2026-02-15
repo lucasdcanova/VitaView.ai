@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Profile } from "@shared/schema";
-import { AlertTriangle } from "lucide-react";
+import { HeartCrack } from "lucide-react";
 
 const deathSchema = z.object({
     deathDate: z.string().min(1, "Data do óbito é obrigatória"),
@@ -96,7 +96,7 @@ export function RegisterDeathDialog({
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-red-600">
-                        <AlertTriangle className="h-5 w-5" />
+                        <HeartCrack className="h-5 w-5" />
                         Registrar Óbito
                     </DialogTitle>
                     <DialogDescription>

@@ -289,7 +289,7 @@ const MyClinic = () => {
                             const pendingInvites = clinicData.invitations.filter(i => i.status === 'pending');
 
                             const profLimit = clinic.maxProfessionals;
-                            const secLimit = clinic.maxSecretaries;
+                            const secLimit = 1; // Strict limit of 1 secretary
 
                             return (
                                 <>

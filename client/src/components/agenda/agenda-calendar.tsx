@@ -153,9 +153,39 @@ export function AgendaCalendar({
   };
 
   const getFilteredAppointmentsForDay = (date: Date) => {
-    const apps = getAppointmentsForDay(date);
-    if (filterType === "all") return apps;
-    return apps.filter(app => app.type === filterType);
+    // Shared Agenda Logic: If "Shared Agenda" is active (we'll add a toggle/prop for this later, 
+    // but for now let's assume if it's the 'agenda' tab in MyClinic it passes fullWidth=true, 
+    // or we can add a specific prop 'isSharedView').
+    // Actually, based on the user request "Agenda compartilhada nao esta funcionando", 
+    // we need to make sure we show ALL appointments when in that mode.
+
+    // In `getAppointmentsForDay` we are filtering `appointmentsList`.
+    // The `appointmentsList` comes from `/api/appointments` for normal view, 
+    // OR `/api/clinic/appointments` for shared view.
+    // The parent component seems to decide WHICH endpoint to call or pass data.
+    // Let's check where `AgendaCalendar` is used.
+
+    // If we are in "Shared Agenda" mode, we typically want to see everything.
+    // The `appointmentsList` data source is key. 
+    // If `appointments` prop is passed (which `MyClinic` does), we should use that instead of the internal query if present.
+
+    const sourceAppointments = Object.keys(appointments).length > 0
+      ? Object.values(appointments).flat()
+      : appointmentsList;
+
+    const dayApps = sourceAppointments.filter(app => {
+      let appDate: Date;
+      if (typeof app.date === 'string') {
+        if (app.date.length === 10) appDate = new Date(app.date + 'T12:00:00');
+        else appDate = new Date(app.date);
+      } else {
+        appDate = new Date(app.date);
+      }
+      return isSameDay(appDate, date);
+    });
+
+    if (filterType === "all") return dayApps;
+    return dayApps.filter(app => app.type === filterType);
   };
 
   const getTypeStyles = (type: string) => {
@@ -639,7 +669,6 @@ export function AgendaCalendar({
                                 {!isBlocked && app.status === 'in_progress' && (
                                   <Button
                                     variant="outline"
-                                    size="sm"
                                     size="sm"
                                     className="flex-1 text-gray-600 border-gray-200 hover:bg-gray-50"
                                     onClick={(e) => {

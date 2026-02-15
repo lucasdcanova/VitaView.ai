@@ -177,6 +177,7 @@ export interface IStorage {
   getClinicInvitationByToken(token: string): Promise<ClinicInvitation | undefined>;
   updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined>;
   getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]>;
+  getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]>;
 
   // Triage operations
   createTriageRecord(record: any): Promise<any>;
@@ -1447,6 +1448,16 @@ export class MemStorage implements IStorage {
     this.prescriptionsMap.set(id, newP);
     return newP;
   }
+
+  async getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]> {
+    return Array.from(this.clinicInvitationsMap.values()).filter(
+      (invitation) =>
+        invitation.clinicId === clinicId &&
+        invitation.status === 'pending' &&
+        invitation.role === role
+    );
+  }
+
   async getPrescription(id: number): Promise<Prescription | undefined> {
     return this.prescriptionsMap.get(id);
   }
@@ -3234,6 +3245,19 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return conversation;
+  }
+
+  async getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]> {
+    return await db
+      .select()
+      .from(clinicInvitations)
+      .where(
+        and(
+          eq(clinicInvitations.clinicId, clinicId),
+          eq(clinicInvitations.status, 'pending'),
+          eq(clinicInvitations.role, role)
+        )
+      );
   }
 
   async getAIConversationsByUserId(userId: number): Promise<AIConversation[]> {

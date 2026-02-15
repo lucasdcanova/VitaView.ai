@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { pool, db } from "./db";
 import { inArray, and, eq, desc, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 // ... imports ...
 import { prescriptions, medications, insertCustomMedicationSchema, aiCostLogs, users } from "@shared/schema";
 import Stripe from "stripe";
@@ -3312,7 +3313,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         // If user is on a clinic plan but has limits of a solo plan, update them
         if (isClinicPlan && (clinic.maxProfessionals <= 1 || clinic.maxSecretaries === 0) && clinic.adminUserId === userId) {
           const newMaxProfessionals = planName.includes('business') ? 10 : 5;
-          const newMaxSecretaries = planName.includes('business') ? 10 : 5;
+          const newMaxSecretaries = 1; // Strict limit of 1
 
           await storage.updateClinic(clinic.id, {
             maxProfessionals: newMaxProfessionals,
@@ -3328,8 +3329,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       const members = await storage.getClinicMembers(clinic.id);
       const invitations = await storage.getClinicInvitations(clinic.id);
 
+      // Force limit of 1 in response
+      const clinicResponse = { ...clinic, maxSecretaries: 1 };
+
       res.json({
-        clinic,
+        clinic: clinicResponse,
         members: members.map(m => ({
           id: m.id,
           username: m.username,
@@ -3384,7 +3388,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (isClinicPlan) {
         maxProfessionals = planName.includes('business') ? 10 : 5; // Default for basic clinic is 5, business is 10
-        maxSecretaries = planName.includes('business') ? 10 : 5;
+        maxSecretaries = 1; // Strict limit of 1
       } else if (isProPlan) {
         maxProfessionals = 1; // Just the owner
         maxSecretaries = 1;
@@ -3461,9 +3465,12 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (inviteRole === 'secretary') {
         const secretariesCount = members.filter(m => m.clinicRole === 'secretary').length;
-        if (secretariesCount >= clinic.maxSecretaries) {
+        const pendingSecretaryInvites = await storage.getPendingClinicInvitationsByRole(clinicId, 'secretary');
+
+        // Strict limit of 1 secretary
+        if (secretariesCount + pendingSecretaryInvites.length >= 1) {
           return res.status(400).json({
-            message: `Limite de ${clinic.maxSecretaries} secretárias atingido`
+            message: `Limite de 1 secretária atingido. Sua clínica só pode ter 1 secretária.`
           });
         }
       } else {
@@ -3603,7 +3610,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           clinicRole: m.clinicRole
         })),
         maxProfessionals: clinic.maxProfessionals,
-        maxSecretaries: clinic.maxSecretaries
+        maxSecretaries: 1 // Strict limit of 1 for now
       });
     } catch (error) {
       logger.error("Error fetching clinic members:", error);

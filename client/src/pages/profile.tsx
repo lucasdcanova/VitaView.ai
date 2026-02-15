@@ -130,15 +130,47 @@ const securitySchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type SecurityFormValues = z.infer<typeof securitySchema>;
 
+import { ImageCropper } from "@/components/profile/image-cropper";
+
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+
+  // Image cropping state
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
       ? (user.preferences as Record<string, any>).professionalProfile
       : null;
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setImageSrc(reader.result?.toString() || null);
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      // Reset input value so same file can be selected again
+      e.target.value = '';
+    }
+  };
+
+  const onCropComplete = async (croppedImageBlob: Blob) => {
+    try {
+      const file = new File([croppedImageBlob], "profile-photo.jpg", { type: "image/jpeg" });
+      await uploadPhotoMutation.mutateAsync(file);
+      setIsCropperOpen(false);
+      setImageSrc(null);
+    } catch (error) {
+      console.error("Error uploading cropped image:", error);
+    }
+  };
 
 
 
@@ -389,16 +421,31 @@ export default function Profile() {
               {/* User Information */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
-                  <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden mb-4 sm:mb-0 sm:mr-6">
-                    {profilePhotoUrl ? (
-                      <img
-                        src={profilePhotoUrl}
-                        alt={user?.fullName || "Foto do profissional"}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || "U"
-                    )}
+                  <div className="relative w-24 h-24 mb-4 sm:mb-0 sm:mr-6 group">
+                    <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden">
+                      {profilePhotoUrl ? (
+                        <img
+                          src={profilePhotoUrl}
+                          alt={user?.fullName || "Foto do profissional"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || "U"
+                      )}
+                    </div>
+                    <label
+                      htmlFor="profile-photo-upload"
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+                    >
+                      <ImagePlus className="h-6 w-6" />
+                    </label>
+                    <input
+                      type="file"
+                      id="profile-photo-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={onFileChange}
+                    />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-800">{user?.fullName || user?.username}</h2>
@@ -989,6 +1036,13 @@ export default function Profile() {
           </div>
         </main>
       </div>
+      <ImageCropper
+        imageSrc={imageSrc}
+        isOpen={isCropperOpen}
+        onClose={() => { setIsCropperOpen(false); setImageSrc(null); }}
+        onCropComplete={onCropComplete}
+        isLoading={uploadPhotoMutation.isPending}
+      />
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
     Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles,
     Users, User, Building2, CalendarDays, LayoutDashboard, Pill,
     Heart, LineChart, FileSignature, TrendingUp, TrendingDown, Minus,
-    AlertTriangle, ClipboardList, ShieldCheck, Loader2, MoreVertical
+    AlertTriangle, ClipboardList, ShieldCheck, Loader2, MoreVertical, HeartCrack
 } from 'lucide-react';
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { format, differenceInYears } from "date-fns";
@@ -229,6 +229,26 @@ export default function PatientView() {
                                                         {calculateAge(activeProfile.birthDate)} anos
                                                     </span>
                                                 )}
+                                                {activeProfile && (
+                                                    <div className="ml-2">
+                                                        {activeProfile.deceased ? (
+                                                            <Badge variant="destructive" className="px-3 py-1 flex gap-2 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
+                                                                <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
+                                                                PACIENTE FALECIDO
+                                                            </Badge>
+                                                        ) : (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 px-2 rounded-md transition-colors"
+                                                                onClick={() => setIsDeathDialogOpen(true)}
+                                                            >
+                                                                <HeartCrack className="h-4 w-4 mr-2" />
+                                                                <span className="text-xs font-medium">Registrar Óbito</span>
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 {activeProfile.createdAt && (
                                                     <span className="flex items-center gap-1 text-sm text-gray-600">
                                                         <CalendarDays className="h-4 w-4 text-gray-400" />
@@ -260,33 +280,7 @@ export default function PatientView() {
                                         </div>
                                     )}
 
-                                    {activeProfile && (
-                                        <div className="flex items-center gap-2">
-                                            {activeProfile.deceased ? (
-                                                <Badge variant="destructive" className="px-3 py-1 flex gap-2 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                                                    <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-                                                    PACIENTE FALECIDO
-                                                </Badge>
-                                            ) : (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" size="icon">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                                                            onClick={() => setIsDeathDialogOpen(true)}
-                                                        >
-                                                            <AlertTriangle className="mr-2 h-4 w-4" />
-                                                            Registrar Óbito
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                        </div>
-                                    )}
+
                                 </div>
                             </div>
                         </header>

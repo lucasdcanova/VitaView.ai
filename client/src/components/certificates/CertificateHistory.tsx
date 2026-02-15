@@ -26,8 +26,8 @@ export function CertificateHistory({ history, onReprint }: CertificateHistoryPro
                             {history.map(c => (
                                 <div key={c.id} className={`flex flex-col gap-3 p-4 rounded-lg border ${c.status === 'cancelled' ? 'bg-red-50 border-red-100 opacity-70' : 'bg-gray-50 border-gray-100 hover:bg-white hover:shadow-sm transition-all'}`}>
                                     <div className="flex gap-3 items-start">
-                                        <div className="bg-blue-100 p-2 rounded-lg mt-0.5">
-                                            <FileSignature className="h-4 w-4 text-blue-700" />
+                                        <div className="bg-gray-100 p-2 rounded-lg mt-0.5">
+                                            <FileSignature className="h-4 w-4 text-gray-700" />
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
@@ -41,7 +41,7 @@ export function CertificateHistory({ history, onReprint }: CertificateHistoryPro
                                             </p>
                                             {c.cid && (
                                                 <div className="flex mt-2">
-                                                    <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">CID: {c.cid}</span>
+                                                    <span className="text-[10px] font-medium bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">CID: {c.cid}</span>
                                                 </div>
                                             )}
                                         </div>
