@@ -787,7 +787,7 @@ const SubscriptionManagement = () => {
 
                                 {/* Option 3: Upgrade to Business (Only for Vita Team) */}
                                 {(baseName === 'vita team' || baseName === 'vita pro') && nextTierMonthly && (
-                                  <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 shadow-lg">
+                                  <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-black border border-gray-800 rounded-xl p-4 shadow-lg">
                                     <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
                                       <Sparkles className="h-4 w-4 text-yellow-400" />
                                       Leve sua clínica ao próximo nível
@@ -872,7 +872,7 @@ const SubscriptionManagement = () => {
 
                               {/* Option 3: Upgrade to Business (Only for Vita Team) */}
                               {(baseName === 'vita team' || baseName === 'vita pro') && nextTierMonthly && (
-                                <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-4 shadow-lg">
+                                <div className="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-black border border-gray-800 rounded-xl p-4 shadow-lg">
                                   <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
                                     <Sparkles className="h-4 w-4 text-yellow-400" />
                                     Leve sua clínica ao próximo nível
@@ -900,7 +900,7 @@ const SubscriptionManagement = () => {
                         // Case 3: Annual plan or no interval savings → suggest next tier
                         if (nextTierMonthly) {
                           return (
-                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 shadow-lg">
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-black border border-gray-800 rounded-xl p-4 shadow-lg">
                               <p className="text-sm text-white font-semibold mb-1 flex items-center gap-1.5">
                                 <Sparkles className="h-4 w-4 text-yellow-400" />
                                 Leve sua clínica ao próximo nível
@@ -948,16 +948,16 @@ const SubscriptionManagement = () => {
             {
               hasActiveSubscription && (currentPlan?.name?.toLowerCase().includes('team') || currentPlan?.name?.toLowerCase().includes('business')) && (
                 <section className="space-y-4">
-                  <Card className="border border-gray-200">
+                  <Card className="border border-border">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#212121] rounded-xl flex items-center justify-center">
-                            <Building className="h-5 w-5 text-white" />
+                          <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                            <Building className="h-5 w-5 text-foreground" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900">Minha Clínica</h3>
-                            <p className="text-sm text-gray-500">Gerencie equipe, agenda e configurações</p>
+                            <h3 className="font-semibold text-foreground">Minha Clínica</h3>
+                            <p className="text-sm text-muted-foreground">Gerencie equipe, agenda e configurações</p>
                           </div>
                         </div>
                         <Button

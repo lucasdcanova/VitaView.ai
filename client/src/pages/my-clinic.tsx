@@ -294,41 +294,41 @@ const MyClinic = () => {
                             return (
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                        <Card className="border border-border shadow-sm">
                                             <CardContent className="pt-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-sm text-[#9E9E9E]">Profissionais</p>
-                                                        <p className="text-2xl font-bold text-[#212121]">{professionals.length} / {profLimit}</p>
+                                                        <p className="text-sm text-muted-foreground">Profissionais</p>
+                                                        <p className="text-2xl font-bold text-foreground">{professionals.length} / {profLimit}</p>
                                                     </div>
-                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                                        <Users className="h-5 w-5 text-[#212121]" />
+                                                    <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
+                                                        <Users className="h-5 w-5 text-foreground" />
                                                     </div>
                                                 </div>
                                             </CardContent>
                                         </Card>
-                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                        <Card className="border border-border shadow-sm">
                                             <CardContent className="pt-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-sm text-[#9E9E9E]">Secretárias</p>
-                                                        <p className="text-2xl font-bold text-[#212121]">{secretaries.length} / {secLimit}</p>
+                                                        <p className="text-sm text-muted-foreground">Secretárias</p>
+                                                        <p className="text-2xl font-bold text-foreground">{secretaries.length} / {secLimit}</p>
                                                     </div>
-                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                                        <Users className="h-5 w-5 text-[#212121]" />
+                                                    <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
+                                                        <Users className="h-5 w-5 text-foreground" />
                                                     </div>
                                                 </div>
                                             </CardContent>
                                         </Card>
-                                        <Card className="border border-[#E0E0E0] shadow-sm">
+                                        <Card className="border border-border shadow-sm">
                                             <CardContent className="pt-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-sm text-[#9E9E9E]">Convites Pendentes</p>
-                                                        <p className="text-2xl font-bold text-[#212121]">{pendingInvites.length}</p>
+                                                        <p className="text-sm text-muted-foreground">Convites Pendentes</p>
+                                                        <p className="text-2xl font-bold text-foreground">{pendingInvites.length}</p>
                                                     </div>
-                                                    <div className="w-11 h-11 bg-[#F4F4F4] rounded-xl flex items-center justify-center">
-                                                        <Mail className="h-5 w-5 text-[#212121]" />
+                                                    <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
+                                                        <Mail className="h-5 w-5 text-foreground" />
                                                     </div>
                                                 </div>
                                             </CardContent>

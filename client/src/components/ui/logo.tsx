@@ -67,7 +67,7 @@ export function Logo({
         <img
           src="/LOGO COM TEXTO.PNG"
           alt="VitaView AI"
-          className={cn(fullLogoSizeClasses[size], "object-contain")}
+          className={cn(fullLogoSizeClasses[size], "object-contain mix-blend-multiply dark:brightness-0 dark:invert dark:mix-blend-screen")}
         />
       </div>
     );
@@ -83,13 +83,13 @@ export function Logo({
         <img
           src="/LOGO SEM TEXTO.jpg"
           alt="VitaView AI"
-          className={cn(sizeClasses[size], "object-contain rounded-md")}
+          className={cn(sizeClasses[size], "object-contain rounded-md mix-blend-multiply dark:invert dark:mix-blend-screen")}
         />
         {showText && (
           <div className={cn("text-center", isColumn ? "mt-2" : "ml-3", isColumn ? "" : "flex items-baseline")}>
             <span
               className={cn(
-                "font-heading font-bold text-[#212121]",
+                "font-heading font-bold text-foreground",
                 textSizeClasses[textSize]
               )}
             >
@@ -97,7 +97,7 @@ export function Logo({
             </span>
             <span
               className={cn(
-                "font-heading font-bold text-[#9E9E9E] ml-0.5",
+                "font-heading font-bold text-muted-foreground ml-0.5",
                 textSize === "xl" ? "text-lg" :
                   textSize === "lg" ? "text-base" :
                     textSize === "md" ? "text-sm" : "text-xs",
@@ -115,7 +115,7 @@ export function Logo({
   // Variante legacy (SVG original)
   return (
     <div
-      className={cn("flex items-center", onClick && "cursor-pointer", className)}
+      className={cn("flex items-center text-foreground", onClick && "cursor-pointer", className)}
       onClick={onClick}
     >
       {/* Symbol: Duas letras V estilizadas */}
@@ -133,7 +133,7 @@ export function Logo({
           {/* Primeiro V */}
           <path
             d="M8 12L18 36L28 12"
-            stroke="#212121"
+            stroke="currentColor"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -142,7 +142,7 @@ export function Logo({
           {/* Segundo V entrelaçado */}
           <path
             d="M20 12L30 36L40 12"
-            stroke="#212121"
+            stroke="currentColor"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -155,7 +155,7 @@ export function Logo({
         <div className={cn("text-center", isColumn ? "" : "flex items-baseline")}>
           <span
             className={cn(
-              "font-heading font-bold text-[#212121]",
+              "font-heading font-bold text-foreground",
               textSizeClasses[textSize]
             )}
           >
@@ -163,7 +163,7 @@ export function Logo({
           </span>
           <span
             className={cn(
-              "font-heading font-bold text-[#9E9E9E] ml-0.5",
+              "font-heading font-bold text-muted-foreground ml-0.5",
               // AI em tamanho menor (sobrescrito)
               textSize === "xl" ? "text-lg" :
                 textSize === "lg" ? "text-base" :

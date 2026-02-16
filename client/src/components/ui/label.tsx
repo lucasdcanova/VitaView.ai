@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
  * - Tipografia: Montserrat Bold
  */
 const labelVariants = cva(
-  "text-sm font-heading font-bold leading-none text-[#212121] peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-heading font-bold leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 )
 
 const Label = React.forwardRef<
