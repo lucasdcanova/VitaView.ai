@@ -45,27 +45,29 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-      <LandingNavbar />
+    <>
+      <div className="min-h-screen bg-white overflow-x-hidden">
+        <LandingNavbar />
 
-      <main>
-        <LandingHero />
-        <LandingLabView />
-        <LandingPrescription />
-        <LandingAISuggestions />
-        <LandingVoiceTranscription />
-        <LandingAppointmentScheduler />
-        <LandingFeatures />
-        <LandingForWhom />
-        <LandingSecurity />
-        <LandingPricing />
-        <LandingTestimonials />
-        <LandingFAQ />
-      </main>
+        <main>
+          <LandingHero />
+          <LandingLabView />
+          <LandingPrescription />
+          <LandingAISuggestions />
+          <LandingVoiceTranscription />
+          <LandingAppointmentScheduler />
+          <LandingFeatures />
+          <LandingForWhom />
+          <LandingSecurity />
+          <LandingPricing />
+          <LandingTestimonials />
+          <LandingFAQ />
+        </main>
 
-      <LandingFooter />
+        <LandingFooter />
+      </div>
 
-      {/* Scroll to top */}
+      {/* Scroll to top - outside overflow-x-hidden to avoid iOS fixed-position bug */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
@@ -84,11 +86,11 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Cookie consent */}
+      {/* Cookie consent - outside overflow-x-hidden to avoid iOS fixed-position bug */}
       <AnimatePresence>
         {showCookieConsent && (
           <motion.div
-            className="fixed bottom-0 inset-x-0 z-[9998] bg-white border-t border-[#E0E0E0] shadow-xl pointer-events-auto"
+            className="fixed bottom-0 inset-x-0 z-[9998] bg-white border-t border-[#E0E0E0] shadow-xl"
             role="dialog"
             aria-label="Consentimento de cookies"
             initial={{ y: 100, opacity: 0 }}
@@ -133,6 +135,6 @@ export default function LandingPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

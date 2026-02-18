@@ -15,8 +15,8 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         if (!ctx) return;
 
         const config = {
-            particleCount: 120,
-            speedFactor: 0.8,
+            particleCount: 220,
+            speedFactor: 0.7,
             colors: ["#212121", "#9E9E9E", "#BDBDBD", "#E0E0E0", "#424242", "#757575"],
             gravity: -0.05,
             interactionRadius: 220,
@@ -123,9 +123,21 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
             }
         }
 
+        // Initialize particles with grid-based distribution for full coverage
         const particles: Particle[] = [];
+        const cols = Math.ceil(Math.sqrt(config.particleCount * (width / Math.max(height, 1))));
+        const rows = Math.ceil(config.particleCount / cols);
         for (let i = 0; i < config.particleCount; i++) {
-            particles.push(new Particle());
+            const p = new Particle();
+            // Distribute across a grid with jitter for natural look
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            p.x = (col / cols) * width + (Math.random() - 0.5) * (width / cols);
+            p.y = (row / rows) * height + (Math.random() - 0.5) * (height / rows);
+            // Clamp within canvas bounds
+            p.x = Math.max(0, Math.min(width, p.x));
+            p.y = Math.max(0, Math.min(height, p.y));
+            particles.push(p);
         }
 
         function onMouseMove(e: MouseEvent) {
