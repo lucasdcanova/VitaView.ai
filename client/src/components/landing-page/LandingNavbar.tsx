@@ -22,7 +22,7 @@ export function LandingNavbar() {
         <>
             <motion.nav
                 aria-label="Navegação principal"
-                className="bg-white border-b border-[#E0E0E0] py-3 fixed top-0 left-0 right-0 z-50"
+                className="bg-white border-b border-[#E0E0E0] py-3 fixed top-0 left-0 right-0 z-[10001]"
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -113,7 +113,7 @@ export function LandingNavbar() {
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        className="fixed inset-0 z-[9999] xl:hidden"
+                        className="fixed inset-0 z-[10000] xl:hidden"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -135,7 +135,19 @@ export function LandingNavbar() {
                             exit={{ x: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         >
-                            <div className="p-6 pt-20">
+                            {/* Close button inside panel */}
+                            <div className="flex justify-end p-4 pt-5">
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+                                    aria-label="Fechar menu"
+                                    type="button"
+                                >
+                                    <X className="h-6 w-6 text-[#212121]" />
+                                </button>
+                            </div>
+
+                            <div className="px-6 pb-6">
                                 <nav className="space-y-4">
                                     {navItems.map((item, index) => (
                                         <motion.a
