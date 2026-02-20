@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pill, PlusCircle, RefreshCw, Trash2, Pencil, Sparkles, Loader2 } from "lucide-react";
 import { MedicationDialog } from "@/components/dialogs";
@@ -72,9 +73,27 @@ export function ContinuousMedicationsCard({
         }
     };
 
+    const getPrescriptionBadge = (type: string | undefined | null) => {
+        const map: Record<string, { label: string; className: string }> = {
+            padrao: { label: 'Básica', className: 'bg-gray-100 text-gray-700 border-gray-300' },
+            C: { label: 'Básica', className: 'bg-gray-100 text-gray-700 border-gray-300' },
+            especial: { label: 'Especial', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+            C1: { label: 'Especial', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+            B1: { label: 'Azul B1', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+            B2: { label: 'Azul B2', className: 'bg-sky-100 text-sky-800 border-sky-300' },
+            A: { label: 'Amarela', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+        };
+        const info = map[type || 'padrao'] || map.padrao;
+        return (
+            <Badge variant="outline" className={`text-[10px] h-5 border whitespace-nowrap ${info.className}`}>
+                {info.label}
+            </Badge>
+        );
+    };
+
     return (
         <Card className="border-gray-800 shadow-md h-fit">
-            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
+            <CardHeader className="bg-white border-b border-gray-200 pb-3">
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-base text-gray-900 flex items-center gap-2">
@@ -94,7 +113,7 @@ export function ContinuousMedicationsCard({
                             {isCheckingInteractions ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                                <Sparkles className="h-4 w-4" />
+                                <Sparkles className="h-4 w-4 text-yellow-500" />
                             )}
                             Checar Interação com IA
                         </Button>
@@ -137,6 +156,7 @@ export function ContinuousMedicationsCard({
                                         <p className="text-xs text-gray-500 mt-1 italic">Obs: {med.notes}</p>
                                     )}
                                 </div>
+                                {getPrescriptionBadge(med.prescriptionType)}
                                 <div className="flex gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button
                                         variant="ghost"
@@ -166,7 +186,7 @@ export function ContinuousMedicationsCard({
                         onClick={onRenewPrescription}
                     >
                         <RefreshCw className="h-4 w-4 mr-2" />
-                        Renovar Selecionados ({selectedMedications.size})
+                        Renovar Selecionados ({selectedMedications.size}) (Assinatura Digital)
                     </Button>
                     <Button
                         variant="outline"

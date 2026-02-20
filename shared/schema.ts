@@ -302,6 +302,8 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   dosage: true,
   dosageUnit: true,
   frequency: true,
+  doseAmount: true,
+  prescriptionType: true,
   quantity: true,
   administrationRoute: true,
   notes: true,

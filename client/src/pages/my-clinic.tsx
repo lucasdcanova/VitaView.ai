@@ -121,6 +121,16 @@ const MyClinic = () => {
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
 
+    const cancelInvitationMutation = useMutation({
+        mutationFn: async (invitationId: number) => {
+            const res = await apiRequest('DELETE', `/api/clinic/invitations/${invitationId}`);
+            if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao cancelar convite'); }
+            return res.json();
+        },
+        onSuccess: () => { toast({ title: 'Convite cancelado' }); refetchClinic(); },
+        onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
+    });
+
     const updateClinicMutation = useMutation({
         mutationFn: async (name: string) => {
             const clinicId = clinicData?.clinic?.id;
@@ -441,9 +451,21 @@ const MyClinic = () => {
                                                                     <span className="text-xs text-muted-foreground">{invite.role === 'secretary' ? 'Secretária' : 'Profissional'}</span>
                                                                 </div>
                                                             </div>
-                                                            <Badge variant="outline" className="text-xs text-muted-foreground border-border">
-                                                                Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
-                                                            </Badge>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="outline" className="text-xs text-muted-foreground border-border">
+                                                                    Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
+                                                                </Badge>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                                                    onClick={() => cancelInvitationMutation.mutate(invite.id)}
+                                                                    disabled={cancelInvitationMutation.isPending}
+                                                                    title="Cancelar convite"
+                                                                >
+                                                                    {cancelInvitationMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>

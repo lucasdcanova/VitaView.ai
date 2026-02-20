@@ -290,14 +290,14 @@ export default function PatientView() {
                             <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
                                 <TabsTrigger
                                     value="dashboard"
-                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-muted-foreground hover:text-foreground"
+                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800"
                                 >
                                     <LayoutDashboard className="h-4 w-4 mr-2" />
                                     Atendimento
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="prescricoes"
-                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
+                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <Pill className="h-4 w-4 mr-2" />
                                     Prescrição

@@ -265,7 +265,7 @@ export function MedicationSelector({
 
     return (
         <Card className="border-gray-800 shadow-md overflow-visible z-10">
-            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
+            <CardHeader className="bg-white border-b border-gray-200 pb-3">
                 <CardTitle className="text-base text-gray-900 flex items-center gap-2">
                     <PlusCircle className="h-4 w-4 text-gray-600" />
                     Nova Prescrição
@@ -432,7 +432,7 @@ export function MedicationSelector({
                                             }}
                                         >
                                             {isPremium ? (
-                                                <Sparkles className="h-4 w-4" />
+                                                <Sparkles className="h-4 w-4 text-yellow-500" />
                                             ) : (
                                                 <Lock className="h-3 w-3 text-gray-400" />
                                             )}
@@ -442,7 +442,7 @@ export function MedicationSelector({
                                         <PopoverContent className="w-[320px] p-0" align="start" side="bottom">
                                             <div className="bg-gray-50 p-2 border-b">
                                                 <div className="flex items-center gap-2 text-gray-700">
-                                                    <Sparkles className="h-4 w-4" />
+                                                    <Sparkles className="h-4 w-4 text-yellow-500" />
                                                     <span className="font-medium text-sm">Sugestão IA</span>
                                                     {selectedMedInfo.category && (
                                                         <Badge variant="outline" className="text-xs ml-auto border-gray-200 text-gray-700">{selectedMedInfo.category}</Badge>
@@ -587,7 +587,7 @@ export function MedicationSelector({
                                     title="Selecione um medicamento para ver sugestões"
                                     disabled
                                 >
-                                    <Sparkles className="h-4 w-4" />
+                                    <Sparkles className="h-4 w-4 text-yellow-500" />
                                 </button>
                             )}
                         </div>

@@ -3606,6 +3606,32 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Cancel clinic invitation
+  app.delete("/api/clinic/invitations/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).send("Unauthorized");
+      if (!req.user.clinicId) {
+        return res.status(400).json({ message: "Usuário não está vinculado a uma clínica" });
+      }
+
+      const invitationId = parseInt(req.params.id);
+      const clinic = await storage.getClinic(req.user.clinicId);
+      if (!clinic || clinic.adminUserId !== req.user.id) {
+        return res.status(403).json({ message: "Apenas o administrador pode cancelar convites" });
+      }
+
+      const updated = await storage.updateClinicInvitation(invitationId, { status: 'cancelled' });
+      if (!updated) {
+        return res.status(404).json({ message: "Convite não encontrado" });
+      }
+
+      res.json({ success: true, message: "Convite cancelado com sucesso" });
+    } catch (error) {
+      logger.error("Error cancelling invitation:", error);
+      res.status(500).json({ message: "Erro ao cancelar convite" });
+    }
+  });
+
   // Get clinic members
   app.get("/api/clinics/:id/members", ensureAuthenticated, async (req, res) => {
     try {

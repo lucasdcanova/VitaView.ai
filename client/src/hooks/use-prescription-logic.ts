@@ -309,7 +309,14 @@ export function usePrescriptionLogic(patient: Profile) {
                 }, pdfWindow);
             }
 
-            const successMsg = editingPrescriptionId ? "Receita atualizada e gerada!" : "Receita salva e gerada!";
+            // Also finalize (digitally sign) the prescription
+            try {
+                await apiRequest("POST", `/api/prescriptions/${savedData.id}/finalize`, {});
+            } catch (signError) {
+                console.warn("Assinatura digital não concluída:", signError);
+            }
+
+            const successMsg = editingPrescriptionId ? "Receita atualizada, assinada e gerada!" : "Receita salva, assinada e gerada!";
             toast({ title: "Sucesso", description: successMsg });
             setAcuteItems([]);
             setEditingPrescriptionId(null);
@@ -409,7 +416,14 @@ export function usePrescriptionLogic(patient: Profile) {
                 }, pdfWindow);
             }
 
-            toast({ title: "Sucesso", description: "Receita renovada e gerada!" });
+            // Also finalize (digitally sign) the prescription
+            try {
+                await apiRequest("POST", `/api/prescriptions/${savedData.id}/finalize`, {});
+            } catch (signError) {
+                console.warn("Assinatura digital não concluída:", signError);
+            }
+
+            toast({ title: "Sucesso", description: "Receita renovada, assinada e gerada!" });
 
         } catch (error: any) {
             console.error(error);

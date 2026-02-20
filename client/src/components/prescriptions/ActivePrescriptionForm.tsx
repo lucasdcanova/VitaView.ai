@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, FileText, AlertTriangle, Save, Printer, Pencil } from "lucide-react";
@@ -14,7 +13,7 @@ interface ActivePrescriptionFormProps {
     onRemoveItem: (id: string) => void;
     onEditItem: (id: string) => void;
     onSaveAndPrint: () => void;
-    onFinalize: () => void;
+    onFinalize?: () => void;
     isEditing: boolean;
     isSigning?: boolean;
 }
@@ -26,9 +25,7 @@ export function ActivePrescriptionForm({
     onRemoveItem,
     onEditItem,
     onSaveAndPrint,
-    onFinalize,
     isEditing,
-    isSigning
 }: ActivePrescriptionFormProps) {
     // Don't render anything when empty - MedicationSelector already provides context
     if (items.length === 0) {
@@ -37,7 +34,7 @@ export function ActivePrescriptionForm({
 
     return (
         <Card className="border-gray-300 shadow-md h-fit">
-            <CardHeader className="bg-gray-100 border-b border-gray-200 pb-3">
+            <CardHeader className="bg-white border-b border-gray-200 pb-3">
                 <CardTitle className="text-base text-gray-900 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-gray-600" />
                     Receita Atual
@@ -95,7 +92,7 @@ export function ActivePrescriptionForm({
                     ))}
                 </div>
 
-                <div className="p-4 bg-gray-100 border-t border-gray-200 space-y-4">
+                <div className="p-4 bg-white border-t border-gray-200 space-y-4">
                     <div>
                         <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                             Observações Gerais (opcional)
@@ -114,40 +111,22 @@ export function ActivePrescriptionForm({
                             className="w-full bg-gray-800 hover:bg-gray-900 text-white shadow-sm text-sm"
                             size="lg"
                             onClick={onSaveAndPrint}
-                            disabled={isSigning}
                         >
                             {isEditing ? (
                                 <>
                                     <Save className="h-5 w-5 mr-2" />
-                                    Atualizar e Imprimir Receita
+                                    Atualizar e Imprimir Receita (Assinatura Digital)
                                 </>
                             ) : (
                                 <>
                                     <Printer className="h-5 w-5 mr-2" />
-                                    Salvar e Imprimir Receita
-                                </>
-                            )}
-                        </Button>
-
-                        <Button
-                            className="w-full border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 shadow-sm text-sm"
-                            variant="outline"
-                            size="lg"
-                            onClick={onFinalize}
-                            disabled={isSigning}
-                        >
-                            {isSigning ? (
-                                <>Assinando Digitalmente...</>
-                            ) : (
-                                <>
-                                    <Save className="h-4 w-4 mr-2" />
-                                    Finalizar e Assinar (CFM)
+                                    Salvar e Imprimir Receita (Assinatura Digital)
                                 </>
                             )}
                         </Button>
                     </div>
                 </div>
             </CardContent>
-        </Card >
+        </Card>
     );
 }
