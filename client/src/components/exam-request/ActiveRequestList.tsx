@@ -526,7 +526,7 @@ export function ActiveRequestList({
                     </div>
 
                     <Button
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-10 text-sm shadow-sm"
+                        className="w-full bg-gray-800 hover:bg-gray-900 text-white h-10 text-sm shadow-sm"
                         onClick={onSaveAndPrint}
                         disabled={selectedExams.length === 0}
                     >
