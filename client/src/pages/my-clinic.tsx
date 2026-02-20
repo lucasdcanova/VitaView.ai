@@ -270,13 +270,13 @@ const MyClinic = () => {
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 bg-muted border border-border rounded-xl h-11">
-                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
                             <Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
                         </TabsTrigger>
-                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
                             <Calendar className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
                         </TabsTrigger>
-                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
                             <Settings className="h-4 w-4" /><span className="hidden sm:inline">Configurações</span>
                         </TabsTrigger>
                     </TabsList>
@@ -462,7 +462,7 @@ const MyClinic = () => {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <CardTitle className="text-foreground">Agenda da Clínica</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Visão consolidada dos agendamentos de toda a equipe</CardDescription>
+                                        <CardDescription className="text-muted-foreground">Agendamentos de hoje para toda a equipe</CardDescription>
                                     </div>
                                     <Badge variant="outline" className="flex gap-1 items-center text-muted-foreground border-border">
                                         <Calendar className="h-3 w-3" />
@@ -487,7 +487,7 @@ const MyClinic = () => {
                                     <div className="space-y-6">
                                         {Array.from(new Set(clinicAppointments.map(a => a.date))).sort().map(date => (
                                             <div key={date}>
-                                                <h4 className="text-sm font-semibold text-muted-foreground mb-3 bg-muted border border-border px-3 py-1.5 rounded-lg inline-block">
+                                                <h4 className="text-sm font-semibold mb-3 bg-muted border border-border px-3 py-1.5 rounded-lg inline-block" style={{ color: '#333' }}>
                                                     {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                                                 </h4>
                                                 <div className="space-y-3 pl-3 border-l-2 border-border ml-2">
@@ -504,11 +504,21 @@ const MyClinic = () => {
                                                                         <Users className="h-3 w-3" />
                                                                         Dr(a). {clinicData.members.find(m => m.id === apt.userId)?.fullName || clinicData.members.find(m => m.id === apt.userId)?.username || 'Desconhecido'}
                                                                     </p>
-                                                                    {apt.type && (
-                                                                        <Badge variant="secondary" className="mt-1.5 text-[10px] h-5 bg-muted text-muted-foreground border border-border">
-                                                                            {apt.type}
-                                                                        </Badge>
-                                                                    )}
+                                                                    {apt.type && (() => {
+                                                                        const typeStyles: Record<string, string> = {
+                                                                            consulta: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                                                                            retorno: 'bg-green-100 text-green-800 border-green-300',
+                                                                            exames: 'bg-purple-100 text-purple-800 border-purple-300',
+                                                                            procedimento: 'bg-blue-100 text-blue-800 border-blue-300',
+                                                                            urgencia: 'bg-red-100 text-red-800 border-red-300',
+                                                                        };
+                                                                        const style = typeStyles[apt.type] || 'bg-gray-100 text-gray-700 border-gray-300';
+                                                                        return (
+                                                                            <Badge variant="secondary" className={`mt-1.5 text-[10px] h-5 border ${style}`}>
+                                                                                {apt.type}
+                                                                            </Badge>
+                                                                        );
+                                                                    })()}
                                                                 </div>
                                                             </div>
                                                             <Badge className={

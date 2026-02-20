@@ -485,10 +485,34 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Usuário não está vinculado a uma clínica" });
       }
 
-      logger.info(`[DEBUG] Fetching appointments for clinic ${req.user.clinicId}`);
-      const appointments = await storage.getAppointmentsByClinicId(req.user.clinicId);
-      logger.info(`[DEBUG] Found ${appointments.length} appointments`);
-      res.json(appointments || []);
+      const clinicId = req.user.clinicId;
+      logger.info(`[DEBUG] Fetching clinic members for clinic ${clinicId}`);
+
+      // Get all clinic members and fetch their appointments
+      const members = await storage.getClinicMembers(clinicId);
+      logger.info(`[DEBUG] Found ${members.length} clinic members`);
+
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      logger.info(`[DEBUG] Filtering appointments for today: ${today}`);
+
+      const allAppointments: any[] = [];
+      for (const member of members) {
+        const memberAppointments = await storage.getAppointmentsByUserId(member.id);
+        // Only include today's appointments
+        const todayAppointments = memberAppointments.filter(a => a.date === today);
+        allAppointments.push(...todayAppointments);
+      }
+
+      // Sort by time
+      allAppointments.sort((a, b) => {
+        const timeA = a.time || '00:00';
+        const timeB = b.time || '00:00';
+        return timeA.localeCompare(timeB);
+      });
+
+      logger.info(`[DEBUG] Found ${allAppointments.length} appointments for today across all clinic members`);
+      res.json(allAppointments);
     } catch (error) {
       console.error("Erro ao buscar agendamentos da clínica:", error);
       res.status(500).json({ message: "Erro ao buscar agendamentos", error: (error as Error).message });
