@@ -336,6 +336,25 @@ export const insertCustomMedicationSchema = createInsertSchema(customMedications
   isActive: true,
 });
 
+// Custom Exams schema
+export const customExams = pgTable("custom_exams", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  type: text("type").default("outros"), // laboratorial, imagem, outros
+  category: text("category"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCustomExamSchema = createInsertSchema(customExams).pick({
+  userId: true,
+  name: true,
+  type: true,
+  category: true,
+  isActive: true,
+});
+
 // Allergies schema
 export const allergies = pgTable("allergies", {
   id: serial("id").primaryKey(),
@@ -1205,6 +1224,9 @@ export type InsertExamProtocol = z.infer<typeof insertExamProtocolSchema>;
 
 export type CustomMedication = typeof customMedications.$inferSelect;
 export type InsertCustomMedication = z.infer<typeof insertCustomMedicationSchema>;
+
+export type CustomExam = typeof customExams.$inferSelect;
+export type InsertCustomExam = z.infer<typeof insertCustomExamSchema>;
 
 // Bug Reports schema - User-submitted bug reports
 export const bugReports = pgTable("bug_reports", {

@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, customExams, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, CustomExam, InsertCustomExam, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -223,6 +223,11 @@ export interface IStorage {
   createCustomMedication(medication: InsertCustomMedication): Promise<CustomMedication>;
   getCustomMedicationsByUserId(userId: number): Promise<CustomMedication[]>;
   deleteCustomMedication(id: number): Promise<boolean>;
+
+  // Custom Exams operations
+  createCustomExam(exam: InsertCustomExam): Promise<CustomExam>;
+  getCustomExamsByUserId(userId: number): Promise<CustomExam[]>;
+  deleteCustomExam(id: number): Promise<boolean>;
 
   // Bug Report operations
   createBugReport(report: any): Promise<any>;
@@ -1645,6 +1650,39 @@ export class MemStorage implements IStorage {
     return true;
   }
 
+  // Custom Exams operations - MemStorage
+  private customExamsMap = new Map<number, CustomExam>();
+  private customExamIdCounter = 1;
+
+  async createCustomExam(exam: InsertCustomExam): Promise<CustomExam> {
+    const id = this.customExamIdCounter++;
+    const newExam: CustomExam = {
+      id,
+      userId: exam.userId,
+      name: exam.name,
+      type: exam.type || 'outros',
+      category: exam.category || null,
+      isActive: exam.isActive ?? true,
+      createdAt: new Date(),
+    };
+    this.customExamsMap.set(id, newExam);
+    return newExam;
+  }
+
+  async getCustomExamsByUserId(userId: number): Promise<CustomExam[]> {
+    return Array.from(this.customExamsMap.values())
+      .filter(e => e.userId === userId && e.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async deleteCustomExam(id: number): Promise<boolean> {
+    const exam = this.customExamsMap.get(id);
+    if (!exam) return false;
+    exam.isActive = false;
+    this.customExamsMap.set(id, exam);
+    return true;
+  }
+
   // Bug Report operations (MemStorage - in-memory)
   private bugReportsMap: Map<number, any> = new Map();
   private bugReportIdCounter: number = 1;
@@ -3005,6 +3043,28 @@ export class DatabaseStorage implements IStorage {
     await db.update(customMedications)
       .set({ isActive: false })
       .where(eq(customMedications.id, id));
+    return true;
+  }
+
+  // Custom Exams operations - DatabaseStorage
+  async createCustomExam(exam: InsertCustomExam): Promise<CustomExam> {
+    const [newExam] = await db.insert(customExams).values(exam).returning();
+    return newExam;
+  }
+
+  async getCustomExamsByUserId(userId: number): Promise<CustomExam[]> {
+    return await db.select().from(customExams)
+      .where(and(
+        eq(customExams.userId, userId),
+        eq(customExams.isActive, true)
+      ))
+      .orderBy(asc(customExams.name));
+  }
+
+  async deleteCustomExam(id: number): Promise<boolean> {
+    await db.update(customExams)
+      .set({ isActive: false })
+      .where(eq(customExams.id, id));
     return true;
   }
 

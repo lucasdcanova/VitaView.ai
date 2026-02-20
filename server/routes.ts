@@ -6,7 +6,7 @@ import { pool, db } from "./db";
 import { inArray, and, eq, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 // ... imports ...
-import { prescriptions, medications, insertCustomMedicationSchema, aiCostLogs, users } from "@shared/schema";
+import { prescriptions, medications, insertCustomMedicationSchema, insertCustomExamSchema, aiCostLogs, users } from "@shared/schema";
 import Stripe from "stripe";
 import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
@@ -4535,6 +4535,40 @@ export async function registerRoutes(app: Express): Promise<void> {
     if (isNaN(id)) return res.status(400).send("Invalid ID");
 
     await storage.deleteCustomMedication(id);
+    res.sendStatus(204);
+  });
+
+  // Custom Exams routes
+  app.get("/api/custom-exams", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = req.user!.id;
+    const exams = await storage.getCustomExamsByUserId(userId);
+    res.json(exams);
+  });
+
+  app.post("/api/custom-exams", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const parseResult = insertCustomExamSchema.safeParse({
+      ...req.body,
+      userId: req.user!.id
+    });
+
+    if (!parseResult.success) {
+      return res.status(400).json(parseResult.error);
+    }
+
+    const exam = await storage.createCustomExam(parseResult.data);
+    res.status(201).json(exam);
+  });
+
+  app.delete("/api/custom-exams/:id", ensureAuthenticated, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).send("Invalid ID");
+
+    await storage.deleteCustomExam(id);
     res.sendStatus(204);
   });
 
