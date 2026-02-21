@@ -312,13 +312,13 @@ const MyClinic = () => {
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 bg-muted border border-border rounded-xl h-11">
-                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
+                        <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
                         </TabsTrigger>
-                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
+                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Calendar className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
                         </TabsTrigger>
-                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" style={{ color: '#333' }}>
+                        <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Settings className="h-4 w-4" /><span className="hidden sm:inline">Configurações</span>
                         </TabsTrigger>
                     </TabsList>
@@ -541,7 +541,7 @@ const MyClinic = () => {
                                     <div className="space-y-6">
                                         {Array.from(new Set(clinicAppointments.map(a => a.date))).sort().map(date => (
                                             <div key={date}>
-                                                <h4 className="text-sm font-semibold mb-3 bg-muted border border-border px-3 py-1.5 rounded-lg inline-block" style={{ color: '#333' }}>
+                                                <h4 className="text-sm font-semibold text-foreground mb-3 bg-muted border border-border px-3 py-1.5 rounded-lg inline-block">
                                                     {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                                                 </h4>
                                                 <div className="space-y-3 pl-3 border-l-2 border-border ml-2">
