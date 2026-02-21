@@ -2,6 +2,16 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type Theme = "dark" | "light";
 
+const THEME_MANIFEST_BY_MODE: Record<Theme, string> = {
+  light: "/manifest.json",
+  dark: "/manifest-dark.json",
+};
+
+const FALLBACK_STATUS_BAR_COLOR: Record<Theme, string> = {
+  light: "#FFFFFF",
+  dark: "#171A20",
+};
+
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -39,6 +49,51 @@ const resolveInitialTheme = (storageKey: string, defaultTheme: Theme): Theme => 
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const applyPwaChrome = (theme: Theme) => {
+  const root = window.document.documentElement;
+  const computedPureWhite = window.getComputedStyle(root).getPropertyValue("--pure-white").trim();
+  const statusBarColor = computedPureWhite || FALLBACK_STATUS_BAR_COLOR[theme];
+
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.setAttribute("content", statusBarColor);
+  });
+
+  const tileColorMeta = document.querySelector<HTMLMetaElement>('meta[name="msapplication-TileColor"]');
+  if (tileColorMeta) {
+    tileColorMeta.setAttribute("content", statusBarColor);
+  }
+
+  const statusBarStyleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
+  if (statusBarStyleMeta) {
+    statusBarStyleMeta.setAttribute("content", theme === "dark" ? "black" : "default");
+  }
+
+  const themeIconPath = theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png";
+  const themeAppleIconPath = theme === "dark" ? "/apple-touch-icon-dark.png" : "/apple-touch-icon.png";
+
+  document.querySelectorAll<HTMLLinkElement>('link[data-theme-favicon="true"]').forEach((link) => {
+    link.setAttribute("href", themeIconPath);
+  });
+
+  document.querySelectorAll<HTMLLinkElement>('link[data-theme-apple-icon="true"]').forEach((link) => {
+    link.setAttribute("href", themeAppleIconPath);
+  });
+
+  const tileImageMeta = document.querySelector<HTMLMetaElement>('meta[name="msapplication-TileImage"]');
+  if (tileImageMeta) {
+    tileImageMeta.setAttribute("content", themeIconPath);
+  }
+
+  const manifestLink = document.querySelector<HTMLLinkElement>("#app-manifest") ??
+    document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  if (manifestLink) {
+    const nextManifest = THEME_MANIFEST_BY_MODE[theme];
+    if (manifestLink.getAttribute("href") !== nextManifest) {
+      manifestLink.setAttribute("href", nextManifest);
+    }
+  }
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = "light",
@@ -51,6 +106,7 @@ export function ThemeProvider({
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     root.style.colorScheme = theme;
+    applyPwaChrome(theme);
   }, [theme]);
 
   useEffect(() => {

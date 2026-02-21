@@ -1,8 +1,15 @@
-const CACHE_NAME = 'vitaview-v1';
+const CACHE_NAME = 'vitaview-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/manifest-dark.json',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
+  '/icon-192x192-dark.png',
+  '/icon-512x512-dark.png',
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-dark.png'
 ];
 
 self.addEventListener('install', (event) => {

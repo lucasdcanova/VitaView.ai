@@ -59,6 +59,12 @@ class PWAManager {
     }
   }
 
+  private getThemeAwareIconPath(): string {
+    return document.documentElement.classList.contains('dark')
+      ? '/icon-192x192-dark.png'
+      : '/icon-192x192.png';
+  }
+
   private async registerServiceWorker() {
     // Skip service worker registration in development to avoid conflicts
     if (process.env.NODE_ENV === 'development') {
@@ -164,9 +170,10 @@ class PWAManager {
 
   public async showNotification(title: string, options?: NotificationOptions): Promise<void> {
     if (this.swRegistration && 'Notification' in window && Notification.permission === 'granted') {
+      const iconPath = this.getThemeAwareIconPath();
       await this.swRegistration.showNotification(title, {
-        badge: '/assets/vitaview_logo_icon.png',
-        icon: '/assets/vitaview_logo_icon.png',
+        badge: iconPath,
+        icon: iconPath,
         ...options
       });
     }
@@ -189,7 +196,7 @@ class PWAManager {
     console.log('[PWA] App is back online');
     this.showNotification('Conectado', {
       body: 'Sua conexão foi restaurada. Sincronizando dados...',
-      icon: '/assets/vitaview_logo_icon.png'
+      icon: this.getThemeAwareIconPath()
     });
 
     // Trigger background sync for offline actions
@@ -200,7 +207,7 @@ class PWAManager {
     console.log('[PWA] App is offline');
     this.showNotification('Modo Offline', {
       body: 'Você está offline. Algumas funcionalidades podem ser limitadas.',
-      icon: '/assets/vitaview_logo_icon.png'
+      icon: this.getThemeAwareIconPath()
     });
   }
 
@@ -223,13 +230,18 @@ class PWAManager {
 
   private createInstallBanner(): HTMLElement {
     const banner = document.createElement('div');
+    const iconPath = this.getThemeAwareIconPath();
+    const isDarkTheme = document.documentElement.classList.contains('dark');
+    const bannerGradient = isDarkTheme
+      ? 'linear-gradient(135deg, #171A20 0%, #2A3039 100%)'
+      : 'linear-gradient(135deg, #212121 0%, #424242 100%)';
     banner.id = 'pwa-install-banner';
     banner.style.cssText = `
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(135deg, #1E3A5F 0%, #448C9B 100%);
+      background: ${bannerGradient};
       color: white;
       padding: 12px 16px;
       z-index: 10000;
@@ -242,7 +254,7 @@ class PWAManager {
 
     banner.innerHTML = `
       <div style="display: flex; align-items: center; gap: 12px;">
-        <img src="/assets/vitaview_logo_icon.png" alt="VitaView AI" style="width: 32px; height: 32px; border-radius: 6px;">
+        <img src="${iconPath}" alt="VitaView AI" style="width: 32px; height: 32px; border-radius: 6px;">
         <div>
           <div style="font-weight: 600; font-size: 14px;">Instalar VitaView AI</div>
           <div style="font-size: 12px; opacity: 0.9;">Acesso rápido às suas análises médicas</div>
@@ -356,6 +368,18 @@ class PWAManager {
 
   private createUpdateNotification(): HTMLElement {
     const notification = document.createElement('div');
+    const isDarkTheme = document.documentElement.classList.contains('dark');
+    const notificationBg = isDarkTheme ? '#171A20' : '#FFFFFF';
+    const notificationBorder = isDarkTheme ? '#353D49' : '#E5E7EB';
+    const notificationTitle = isDarkTheme ? '#EEF2F8' : '#1F2937';
+    const notificationText = isDarkTheme ? '#AAB3C3' : '#6B7280';
+    const updateButtonGradient = isDarkTheme
+      ? 'linear-gradient(135deg, #212121 0%, #424242 100%)'
+      : 'linear-gradient(135deg, #212121 0%, #424242 100%)';
+    const dismissButtonText = isDarkTheme ? '#AAB3C3' : '#6B7280';
+    const dismissButtonBorder = isDarkTheme ? '#4A5564' : '#D1D5DB';
+    const dismissButtonHoverBg = isDarkTheme ? '#1D2129' : '#F3F4F6';
+    const dismissButtonHoverBorder = isDarkTheme ? '#667084' : '#9CA3AF';
     notification.id = 'pwa-update-notification';
     notification.style.cssText = `
       position: fixed;
@@ -364,8 +388,8 @@ class PWAManager {
       right: 20px;
       max-width: 400px;
       margin: 0 auto;
-      background: white;
-      border: 1px solid #E5E7EB;
+      background: ${notificationBg};
+      border: 1px solid ${notificationBorder};
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       z-index: 10001;
@@ -378,7 +402,7 @@ class PWAManager {
           <div style="
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #1E3A5F 0%, #448C9B 100%);
+            background: ${updateButtonGradient};
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -388,8 +412,8 @@ class PWAManager {
             <span style="color: white; font-size: 18px;">🔄</span>
           </div>
           <div style="flex: 1;">
-            <div style="font-weight: 600; color: #1F2937; margin-bottom: 4px;">Atualização Disponível</div>
-            <div style="color: #6B7280; font-size: 14px; line-height: 1.4;">
+            <div style="font-weight: 600; color: ${notificationTitle}; margin-bottom: 4px;">Atualização Disponível</div>
+            <div style="color: ${notificationText}; font-size: 14px; line-height: 1.4;">
               Uma nova versão do VitaView AI está disponível com melhorias e correções.
             </div>
           </div>
@@ -397,7 +421,7 @@ class PWAManager {
         <div style="margin-top: 16px; display: flex; gap: 8px;">
           <button id="pwa-update-btn" style="
             flex: 1;
-            background: linear-gradient(135deg, #1E3A5F 0%, #448C9B 100%);
+            background: ${updateButtonGradient};
             color: white;
             border: none;
             padding: 12px 20px;
@@ -409,8 +433,8 @@ class PWAManager {
           ">Atualizar Agora</button>
           <button id="pwa-update-dismiss" style="
             background: transparent;
-            color: #6B7280;
-            border: 1px solid #D1D5DB;
+            color: ${dismissButtonText};
+            border: 1px solid ${dismissButtonBorder};
             padding: 12px 20px;
             border-radius: 8px;
             font-weight: 500;
@@ -433,11 +457,11 @@ class PWAManager {
         }
         #pwa-update-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+          box-shadow: 0 4px 12px rgba(33, 33, 33, 0.35);
         }
         #pwa-update-dismiss:hover {
-          background: #F3F4F6;
-          border-color: #9CA3AF;
+          background: ${dismissButtonHoverBg};
+          border-color: ${dismissButtonHoverBorder};
         }
       `;
       document.head.appendChild(style);
