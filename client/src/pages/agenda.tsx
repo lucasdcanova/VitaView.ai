@@ -242,7 +242,7 @@ export default function Agenda() {
                 status: 'in_progress',
             },
             {
-                onSuccess: () => {
+                onMutate: () => {
                     setPatientInService(appointment.profileId!, appointment.id);
                     setLocation("/atendimento");
                 },
