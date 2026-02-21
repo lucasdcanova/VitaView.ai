@@ -438,11 +438,11 @@ export default function Patients() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="w-full min-w-0 border-border text-foreground hover:bg-muted"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSelectPatient(profile);
@@ -453,7 +453,7 @@ export default function Patients() {
                         </Button>
                         <Button
                           size="sm"
-                          className="flex-1 bg-charcoal hover:bg-charcoal/90 text-white"
+                          className="w-full min-w-0 bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStartService(profile);
