@@ -3,6 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, analyzeExtractedExam, PatientData } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -168,17 +169,22 @@ export default function DiagnosisPage() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-background overflow-y-auto">
+          <PatientHeader
+            title="Análise Diagnóstica"
+            description="Avaliação especializada com diagnósticos sugeridos."
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<Stethoscope className="h-6 w-6" />}
+          >
+            <Link href="/history" className="inline-flex">
+              <Button variant="outline" size="sm" className="gap-1">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+            </Link>
+          </PatientHeader>
           <div className="p-4 md:p-6">
-            <div className="flex items-center mb-6">
-              <Link href="/history" className="mr-3 p-2 rounded-lg hover:bg-gray-100 inline-block">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Análise Diagnóstica</h1>
-                <p className="text-gray-600">Avaliação especializada com diagnósticos sugeridos</p>
-              </div>
-            </div>
 
             {isLoading ? (
               <div className="space-y-6">

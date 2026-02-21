@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 import { useProfiles } from "@/hooks/use-profiles";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -165,26 +166,20 @@ export default function Patients() {
     selectedComorbidities.length;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                  <Users className="h-8 w-8 text-gray-700" />
-                  Pacientes
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Busque e selecione um paciente para iniciar o atendimento
-                </p>
-              </div>
-
-              <div className="flex gap-2">
+        <main className="flex-1 overflow-y-auto bg-background">
+          <PatientHeader
+            title="Pacientes"
+            description="Busque e selecione um paciente para iniciar o atendimento."
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<Users className="h-6 w-6" />}
+          >
+            <div className="flex gap-2">
                 <Button
                   onClick={() => setIsCreateDialogOpen(true)}
                   className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
@@ -192,9 +187,10 @@ export default function Patients() {
                   <UserPlus className="h-4 w-4 mr-2" />
                   Novo Paciente
                 </Button>
-              </div>
             </div>
-          </div>
+          </PatientHeader>
+
+          <div className="p-4 md:p-6 lg:p-8">
 
           {/* Search and Filter Bar */}
           <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -470,6 +466,7 @@ export default function Patients() {
               })}
             </div>
           )}
+          </div>
         </main>
       </div>
 

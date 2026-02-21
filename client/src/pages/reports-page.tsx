@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -46,94 +47,94 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-background">
             <Sidebar />
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <MobileHeader />
-                <main className="flex-1 overflow-y-auto p-4 md:p-8">
-                    <div className="max-w-7xl mx-auto space-y-8">
+                <main className="flex-1 overflow-y-auto bg-background">
+                    <PatientHeader
+                        title="Relatórios Gerenciais"
+                        description="Controle financeiro e fluxo de pacientes."
+                        showTitleAsMain={true}
+                        fullWidth={true}
+                        icon={<FileText className="h-6 w-6" />}
+                    >
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Select value={range} onValueChange={handleRangeChange}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Período" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                                    <SelectItem value="1y">Último ano</SelectItem>
+                                    <SelectItem value="custom">Personalizado</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Relatórios Gerenciais</h1>
-                                <p className="text-gray-500 mt-1">Controle financeiro e fluxo de pacientes.</p>
-                            </div>
+                            {range === "custom" && (
+                                <div className="flex items-center gap-2">
+                                    <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    "w-[140px] justify-start text-left font-normal",
+                                                    !customStartDate && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Data inicial"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={customStartDate}
+                                                onSelect={(date) => {
+                                                    setCustomStartDate(date);
+                                                    setIsStartDateOpen(false);
+                                                }}
+                                                disabled={(date) => date > new Date() || (customEndDate ? date > customEndDate : false)}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
 
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Select value={range} onValueChange={handleRangeChange}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Período" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                                        <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                                        <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                                        <SelectItem value="1y">Último ano</SelectItem>
-                                        <SelectItem value="custom">Personalizado</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <span className="text-muted-foreground">até</span>
 
-                                {range === "custom" && (
-                                    <div className="flex items-center gap-2">
-                                        <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "w-[140px] justify-start text-left font-normal",
-                                                        !customStartDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Data inicial"}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={customStartDate}
-                                                    onSelect={(date) => {
-                                                        setCustomStartDate(date);
-                                                        setIsStartDateOpen(false);
-                                                    }}
-                                                    disabled={(date) => date > new Date() || (customEndDate ? date > customEndDate : false)}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-
-                                        <span className="text-gray-500">até</span>
-
-                                        <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "w-[140px] justify-start text-left font-normal",
-                                                        !customEndDate && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data final"}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={customEndDate}
-                                                    onSelect={(date) => {
-                                                        setCustomEndDate(date);
-                                                        setIsEndDateOpen(false);
-                                                    }}
-                                                    disabled={(date) => date > new Date() || (customStartDate ? date < customStartDate : false)}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                )}
-                            </div>
+                                    <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    "w-[140px] justify-start text-left font-normal",
+                                                    !customEndDate && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data final"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={customEndDate}
+                                                onSelect={(date) => {
+                                                    setCustomEndDate(date);
+                                                    setIsEndDateOpen(false);
+                                                }}
+                                                disabled={(date) => date > new Date() || (customStartDate ? date < customStartDate : false)}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            )}
                         </div>
+                    </PatientHeader>
+                    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
 
                         {isLoading ? (
                             <div className="flex items-center justify-center h-64">

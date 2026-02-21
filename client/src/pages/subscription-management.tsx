@@ -36,6 +36,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
 
 // Interfaces
@@ -481,12 +482,15 @@ const SubscriptionManagement = () => {
       <MobileHeader />
       <div className="flex flex-1 relative">
         <Sidebar />
-        <main className="flex-1 bg-background p-4 md:p-8">
-          <div className="max-w-6xl mx-auto space-y-12">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 text-foreground">Assinatura e Planos</h1>
-              <p className="text-muted-foreground">Gerencie seu plano atual e explore novas opções.</p>
-            </div>
+        <main className="flex-1 bg-background overflow-y-auto">
+          <PatientHeader
+            title="Assinatura e Planos"
+            description="Gerencie seu plano atual e explore novas opções."
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<CreditCard className="h-6 w-6" />}
+          />
+          <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
 
 
 

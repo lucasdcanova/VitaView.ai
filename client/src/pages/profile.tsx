@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import MobileNav from "@/components/layout/mobile-nav";
+import PatientHeader from "@/components/patient-header";
 import {
   Form,
   FormControl,
@@ -411,12 +412,15 @@ export default function Profile() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1">
+        <main className="flex-1 overflow-y-auto bg-background">
+          <PatientHeader
+            title="Conta profissional"
+            description="Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma."
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<Stethoscope className="h-6 w-6" />}
+          />
           <div className="p-4 md:p-6">
-            <header className="mb-6">
-              <h1 className="text-2xl font-bold text-foreground">Conta profissional</h1>
-              <p className="text-muted-foreground">Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma</p>
-            </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* User Information */}

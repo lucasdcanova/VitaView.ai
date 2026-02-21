@@ -6,6 +6,7 @@ import { Link, useRoute, useLocation } from "wouter";
 
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 import {
   FileText,
   AlertCircle,
@@ -121,45 +122,42 @@ export default function ExamResultSingle() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader />
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="container px-4 py-6 mx-auto max-w-7xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Link href="/results">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <ArrowLeft size={16} />
-                      Voltar
-                    </Button>
-                  </Link>
-                  <h1 className="text-3xl font-bold text-gray-900">Detalhes do Exame</h1>
-                </div>
-                <p className="text-gray-500 mt-1">
-                  {examData?.exam ? examData.exam.name : "Carregando detalhes..."}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Link href={`/report/${examId}`}>
-                  <Button variant="outline" className="gap-1">
-                    <FileText size={16} />
-                    Ver Relatório
-                  </Button>
-                </Link>
-                <Link href={`/diagnosis/${examId}`}>
-                  <Button className="bg-primary-600 hover:bg-primary-700 gap-1">
-                    <ArrowUpRight size={16} />
-                    Diagnóstico
-                  </Button>
-                </Link>
-              </div>
+        <main className="flex-1 overflow-y-auto bg-background">
+          <PatientHeader
+            title="Detalhes do Exame"
+            description={examData?.exam ? examData.exam.name : "Carregando detalhes..."}
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<FileText className="h-6 w-6" />}
+          >
+            <div className="flex flex-wrap gap-2">
+              <Link href="/results">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <ArrowLeft size={16} />
+                  Voltar
+                </Button>
+              </Link>
+              <Link href={`/report/${examId}`}>
+                <Button variant="outline" className="gap-1">
+                  <FileText size={16} />
+                  Ver Relatório
+                </Button>
+              </Link>
+              <Link href={`/diagnosis/${examId}`}>
+                <Button className="bg-primary hover:bg-primary/90 gap-1">
+                  <ArrowUpRight size={16} />
+                  Diagnóstico
+                </Button>
+              </Link>
             </div>
+          </PatientHeader>
+          <div className="container px-4 py-6 mx-auto max-w-7xl">
 
             {isLoading ? (
               <div className="grid grid-cols-1 gap-4">

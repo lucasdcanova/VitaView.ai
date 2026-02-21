@@ -21,6 +21,7 @@ interface PatientHeaderProps {
   lastExamDate?: string | null;
   showTitleAsMain?: boolean;
   fullWidth?: boolean;
+  icon?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -31,6 +32,7 @@ export default function PatientHeader({
   lastExamDate,
   showTitleAsMain = false,
   fullWidth = false,
+  icon,
   children,
 }: PatientHeaderProps) {
   const formatDate = (value?: string | null) => {
@@ -91,32 +93,35 @@ export default function PatientHeader({
 
   return (
     <div className={cn(
-      "bg-pureWhite p-4 md:p-6",
-      fullWidth ? "border-b border-lightGray" : "border border-lightGray rounded-lg mb-6"
+      "p-4 md:p-6 border-border bg-card",
+      fullWidth ? "border-b border-x-0 border-t-0 rounded-none" : "border rounded-2xl mb-6 shadow-sm"
     )}>
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           {showTitleAsMain ? (
             <>
               {patient && (
-                <p className="text-xs uppercase tracking-[0.2em] text-mediumGray font-body">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">
                   PACIENTE: {patientName}
                 </p>
               )}
-              <h1 className="text-3xl font-heading font-bold text-charcoal">{title}</h1>
+              <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
+                {icon && <span className="text-muted-foreground">{icon}</span>}
+                {title}
+              </h1>
             </>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-[0.2em] text-mediumGray font-body">{title}</p>
-              <h1 className="text-3xl font-heading font-bold text-charcoal">{patientName}</h1>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">{title}</p>
+              <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground">{patientName}</h1>
             </>
           )}
           {description && (
-            <p className="text-sm text-mediumGray leading-relaxed max-w-3xl font-body">{description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl font-body">{description}</p>
           )}
         </div>
         {children && (
-          <div className="flex-shrink-0 mt-4 md:mt-0">
+          <div className="w-full md:w-auto flex-shrink-0 mt-4 md:mt-0">
             {children}
           </div>
         )}

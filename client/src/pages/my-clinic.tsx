@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
 
 interface Clinic {
     id: number;
@@ -695,16 +696,14 @@ const MyClinic = () => {
             <Sidebar />
             <div className="flex-1 overflow-auto">
                 <MobileHeader />
+                <PatientHeader
+                    title="Minha Clínica"
+                    description="Gerencie sua equipe, agenda e configurações da clínica."
+                    showTitleAsMain={true}
+                    fullWidth={true}
+                    icon={<Building className="h-6 w-6" />}
+                />
                 <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
-                    {/* Header */}
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
-                            <Building className="h-7 w-7 text-muted-foreground" />
-                            Minha Clínica
-                        </h1>
-                        <p className="text-muted-foreground mt-1">Gerencie sua equipe, agenda e configurações da clínica.</p>
-                    </div>
-
                     {renderContent()}
 
                     {/* Dialogs */}
