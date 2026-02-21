@@ -57,7 +57,11 @@ import {
   CheckCircle2,
   LineChart,
   Activity,
-  Mic
+  Mic,
+  UserX,
+  FileText,
+  Calendar,
+  Printer
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
@@ -552,6 +556,279 @@ function FinancialDashboardTab() {
   );
 }
 
+// Interface for deleted user records
+interface DeletedUserRecord {
+  id: number;
+  originalUserId: number;
+  username: string | null;
+  fullName: string | null;
+  email: string | null;
+  crm: string | null;
+  specialty: string | null;
+  rqe: string | null;
+  phoneNumber: string | null;
+  address: string | null;
+  planName: string | null;
+  planPrice: number | null;
+  subscriptionStatus: string | null;
+  profileCount: number | null;
+  examCount: number | null;
+  appointmentCount: number | null;
+  prescriptionCount: number | null;
+  certificateCount: number | null;
+  originalCreatedAt: string | null;
+  deletedAt: string;
+  deletedByUserId: number | null;
+  deletionReason: string | null;
+}
+
+function DeletedUsersTab() {
+  const [selectedDeletedUser, setSelectedDeletedUser] = useState<DeletedUserRecord | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const { data: deletedUsers = [], isLoading } = useQuery<DeletedUserRecord[]>({
+    queryKey: ['/api/admin/deleted-users'],
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const handlePrintPDF = (user: DeletedUserRecord) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-BR') : 'N/A';
+    const formatPrice = (p: number | null) => p != null ? `R$ ${(p / 100).toFixed(2)}` : 'N/A';
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatório - ${user.fullName || user.username || 'Usuário'}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; }
+          h1 { font-size: 22px; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+          h2 { font-size: 16px; color: #555; margin-top: 24px; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+          .field { display: flex; margin-bottom: 8px; }
+          .label { font-weight: 600; width: 200px; color: #444; }
+          .value { flex: 1; }
+          .footer { margin-top: 40px; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+          .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+          .badge-red { background: #fee2e2; color: #991b1b; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <h1>📋 Relatório de Usuário Excluído</h1>
+        <p><span class="badge badge-red">EXCLUÍDO</span> em ${formatDate(user.deletedAt)}</p>
+
+        <h2>Dados Pessoais</h2>
+        <div class="field"><span class="label">Nome Completo:</span><span class="value">${user.fullName || 'N/A'}</span></div>
+        <div class="field"><span class="label">Username:</span><span class="value">${user.username || 'N/A'}</span></div>
+        <div class="field"><span class="label">Email:</span><span class="value">${user.email || 'N/A'}</span></div>
+        <div class="field"><span class="label">CRM:</span><span class="value">${user.crm || 'N/A'}</span></div>
+        <div class="field"><span class="label">Especialidade:</span><span class="value">${user.specialty || 'N/A'}</span></div>
+        <div class="field"><span class="label">RQE:</span><span class="value">${user.rqe || 'N/A'}</span></div>
+        <div class="field"><span class="label">Telefone:</span><span class="value">${user.phoneNumber || 'N/A'}</span></div>
+        <div class="field"><span class="label">Endereço:</span><span class="value">${user.address || 'N/A'}</span></div>
+
+        <h2>Informações do Plano</h2>
+        <div class="field"><span class="label">Plano:</span><span class="value">${user.planName || 'N/A'}</span></div>
+        <div class="field"><span class="label">Preço:</span><span class="value">${formatPrice(user.planPrice)}</span></div>
+        <div class="field"><span class="label">Status Assinatura:</span><span class="value">${user.subscriptionStatus || 'N/A'}</span></div>
+
+        <h2>Dados de Uso</h2>
+        <div class="field"><span class="label">Pacientes (Perfis):</span><span class="value">${user.profileCount ?? 0}</span></div>
+        <div class="field"><span class="label">Exames:</span><span class="value">${user.examCount ?? 0}</span></div>
+        <div class="field"><span class="label">Consultas:</span><span class="value">${user.appointmentCount ?? 0}</span></div>
+        <div class="field"><span class="label">Prescrições:</span><span class="value">${user.prescriptionCount ?? 0}</span></div>
+        <div class="field"><span class="label">Atestados:</span><span class="value">${user.certificateCount ?? 0}</span></div>
+
+        <h2>Datas</h2>
+        <div class="field"><span class="label">Conta Criada em:</span><span class="value">${formatDate(user.originalCreatedAt)}</span></div>
+        <div class="field"><span class="label">Excluído em:</span><span class="value">${formatDate(user.deletedAt)}</span></div>
+        <div class="field"><span class="label">ID Original:</span><span class="value">${user.originalUserId}</span></div>
+        ${user.deletionReason ? `<div class="field"><span class="label">Motivo:</span><span class="value">${user.deletionReason}</span></div>` : ''}
+
+        <div class="footer">
+          Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')} — VitaView.ai
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserX className="h-5 w-5" />
+          Usuários Excluídos
+        </CardTitle>
+        <CardDescription>
+          Histórico de contas excluídas. Dados arquivados para fins legais e de auditoria.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : deletedUsers.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum usuário excluído registrado
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>CRM</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead>Conta Criada</TableHead>
+                  <TableHead>Data Exclusão</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deletedUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.fullName || user.username || '—'}</TableCell>
+                    <TableCell>{user.email || '—'}</TableCell>
+                    <TableCell>{user.crm || '—'}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.planName || 'N/A'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.originalCreatedAt ? new Date(user.originalCreatedAt).toLocaleDateString('pt-BR') : '—'}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(user.deletedAt).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => { setSelectedDeletedUser(user); setIsDetailOpen(true); }}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handlePrintPDF(user)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Gerar PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+
+      {/* Dialog de Detalhes do Usuário Excluído */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Usuário Excluído</DialogTitle>
+            <DialogDescription>
+              Informações arquivadas para fins legais
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDeletedUser && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Dados Pessoais</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Nome:</span>
+                  <span>{selectedDeletedUser.fullName || '—'}</span>
+                  <span className="text-muted-foreground">Username:</span>
+                  <span>{selectedDeletedUser.username || '—'}</span>
+                  <span className="text-muted-foreground">Email:</span>
+                  <span>{selectedDeletedUser.email || '—'}</span>
+                  <span className="text-muted-foreground">CRM:</span>
+                  <span>{selectedDeletedUser.crm || '—'}</span>
+                  <span className="text-muted-foreground">Especialidade:</span>
+                  <span>{selectedDeletedUser.specialty || '—'}</span>
+                  <span className="text-muted-foreground">RQE:</span>
+                  <span>{selectedDeletedUser.rqe || '—'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Plano & Assinatura</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Plano:</span>
+                  <span>{selectedDeletedUser.planName || 'N/A'}</span>
+                  <span className="text-muted-foreground">Preço:</span>
+                  <span>{selectedDeletedUser.planPrice != null ? `R$ ${(selectedDeletedUser.planPrice / 100).toFixed(2)}` : 'N/A'}</span>
+                  <span className="text-muted-foreground">Status:</span>
+                  <span>{selectedDeletedUser.subscriptionStatus || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Dados de Uso</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Pacientes:</span>
+                  <span>{selectedDeletedUser.profileCount ?? 0}</span>
+                  <span className="text-muted-foreground">Exames:</span>
+                  <span>{selectedDeletedUser.examCount ?? 0}</span>
+                  <span className="text-muted-foreground">Consultas:</span>
+                  <span>{selectedDeletedUser.appointmentCount ?? 0}</span>
+                  <span className="text-muted-foreground">Prescrições:</span>
+                  <span>{selectedDeletedUser.prescriptionCount ?? 0}</span>
+                  <span className="text-muted-foreground">Atestados:</span>
+                  <span>{selectedDeletedUser.certificateCount ?? 0}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Datas</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Conta criada:</span>
+                  <span>{selectedDeletedUser.originalCreatedAt ? new Date(selectedDeletedUser.originalCreatedAt).toLocaleDateString('pt-BR') : '—'}</span>
+                  <span className="text-muted-foreground">Excluída em:</span>
+                  <span>{new Date(selectedDeletedUser.deletedAt).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-muted-foreground">ID Original:</span>
+                  <span>{selectedDeletedUser.originalUserId}</span>
+                </div>
+              </div>
+
+              {selectedDeletedUser.deletionReason && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Motivo</h4>
+                  <p className="text-sm">{selectedDeletedUser.deletionReason}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+            {selectedDeletedUser && (
+              <Button onClick={() => handlePrintPDF(selectedDeletedUser)}>
+                <FileText className="mr-2 h-4 w-4" />
+                Gerar PDF
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
 export default function AdminPanel() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
@@ -809,10 +1086,14 @@ export default function AdminPanel() {
       <p className="text-muted-foreground mb-6">Gerencie usuários, planos e configurações do sistema</p>
 
       <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6 lg:w-[800px]">
+        <TabsList className="grid w-full grid-cols-7 lg:w-[900px]">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span>Usuários</span>
+          </TabsTrigger>
+          <TabsTrigger value="deleted-users" className="flex items-center gap-2">
+            <UserX className="h-4 w-4" />
+            <span>Excluídos</span>
           </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
@@ -985,6 +1266,11 @@ export default function AdminPanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Aba de Usuários Excluídos */}
+        <TabsContent value="deleted-users" className="space-y-4">
+          <DeletedUsersTab />
         </TabsContent>
 
         {/* Aba de Planos */}

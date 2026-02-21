@@ -1467,3 +1467,55 @@ export const insertSpecialtyTemplateSchema = createInsertSchema(specialtyTemplat
 
 export type SpecialtyTemplate = typeof specialtyTemplates.$inferSelect;
 export type InsertSpecialtyTemplate = z.infer<typeof insertSpecialtyTemplateSchema>;
+
+// Deleted Users (archived for legal compliance)
+export const deletedUsers = pgTable("deleted_users", {
+  id: serial("id").primaryKey(),
+  originalUserId: integer("original_user_id").notNull(),
+  username: text("username"),
+  fullName: text("full_name"),
+  email: text("email"),
+  crm: text("crm"),
+  specialty: text("specialty"),
+  rqe: text("rqe"),
+  phoneNumber: text("phone_number"),
+  address: text("address"),
+  planName: text("plan_name"),
+  planPrice: integer("plan_price"), // in cents
+  subscriptionStatus: text("subscription_status"),
+  profileCount: integer("profile_count").default(0),
+  examCount: integer("exam_count").default(0),
+  appointmentCount: integer("appointment_count").default(0),
+  prescriptionCount: integer("prescription_count").default(0),
+  certificateCount: integer("certificate_count").default(0),
+  originalCreatedAt: timestamp("original_created_at"),
+  deletedAt: timestamp("deleted_at").defaultNow().notNull(),
+  deletedByUserId: integer("deleted_by_user_id"),
+  deletionReason: text("deletion_reason"),
+});
+
+export const insertDeletedUserSchema = createInsertSchema(deletedUsers).pick({
+  originalUserId: true,
+  username: true,
+  fullName: true,
+  email: true,
+  crm: true,
+  specialty: true,
+  rqe: true,
+  phoneNumber: true,
+  address: true,
+  planName: true,
+  planPrice: true,
+  subscriptionStatus: true,
+  profileCount: true,
+  examCount: true,
+  appointmentCount: true,
+  prescriptionCount: true,
+  certificateCount: true,
+  originalCreatedAt: true,
+  deletedByUserId: true,
+  deletionReason: true,
+});
+
+export type DeletedUser = typeof deletedUsers.$inferSelect;
+export type InsertDeletedUser = z.infer<typeof insertDeletedUserSchema>;

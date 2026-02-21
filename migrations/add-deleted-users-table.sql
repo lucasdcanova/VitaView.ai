@@ -1,0 +1,25 @@
+-- Migration: Create deleted_users table for soft-delete archiving
+CREATE TABLE IF NOT EXISTS deleted_users (
+  id SERIAL PRIMARY KEY,
+  original_user_id INTEGER NOT NULL,
+  username TEXT,
+  full_name TEXT,
+  email TEXT,
+  crm TEXT,
+  specialty TEXT,
+  rqe TEXT,
+  phone_number TEXT,
+  address TEXT,
+  plan_name TEXT,
+  plan_price INTEGER,
+  subscription_status TEXT,
+  profile_count INTEGER DEFAULT 0,
+  exam_count INTEGER DEFAULT 0,
+  appointment_count INTEGER DEFAULT 0,
+  prescription_count INTEGER DEFAULT 0,
+  certificate_count INTEGER DEFAULT 0,
+  original_created_at TIMESTAMP,
+  deleted_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  deleted_by_user_id INTEGER,
+  deletion_reason TEXT
+);

@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, customExams, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, customExams, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates, storageLogs, deletedUsers } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, CustomExam, InsertCustomExam, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, CustomExam, InsertCustomExam, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate, DeletedUser, InsertDeletedUser } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -104,6 +104,9 @@ export interface IStorage {
   getCertificateTemplates(userId: number): Promise<CertificateTemplate[]>;
   deleteCertificateTemplate(id: number): Promise<boolean>;
   deleteUser(id: number): Promise<boolean>;
+  softDeleteUser(id: number, deletedByUserId?: number, reason?: string): Promise<DeletedUser | null>;
+  getDeletedUsers(): Promise<DeletedUser[]>;
+  getDeletedUserById(id: number): Promise<DeletedUser | undefined>;
 
   // Appointment operations
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
@@ -992,6 +995,21 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     return this.users.delete(id);
+  }
+
+  async softDeleteUser(id: number, _deletedByUserId?: number, _reason?: string): Promise<DeletedUser | null> {
+    const user = this.users.get(id);
+    if (!user) return null;
+    this.users.delete(id);
+    return { id: 0, originalUserId: id, username: user.username, fullName: user.fullName, email: user.email, crm: user.crm, specialty: user.specialty, rqe: user.rqe, phoneNumber: user.phoneNumber, address: user.address, planName: null, planPrice: null, subscriptionStatus: null, profileCount: 0, examCount: 0, appointmentCount: 0, prescriptionCount: 0, certificateCount: 0, originalCreatedAt: user.createdAt, deletedAt: new Date(), deletedByUserId: _deletedByUserId ?? null, deletionReason: _reason ?? null };
+  }
+
+  async getDeletedUsers(): Promise<DeletedUser[]> {
+    return [];
+  }
+
+  async getDeletedUserById(_id: number): Promise<DeletedUser | undefined> {
+    return undefined;
   }
 
   // Appointment operations
@@ -2580,10 +2598,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Manually delete all related data to handle Foreign Key constraints
-    // 1. Delete data dependent on exams
+    // 1. Delete storage_logs (FK on exams) and data dependent on exams
     const userExams = await db.select().from(exams).where(eq(exams.userId, id));
     const examIds = userExams.map(e => e.id);
     if (examIds.length > 0) {
+      await db.delete(storageLogs).where(inArray(storageLogs.examId, examIds));
       await db.delete(examResults).where(inArray(examResults.examId, examIds));
       await db.delete(healthMetrics).where(inArray(healthMetrics.examId, examIds));
     }
@@ -2598,14 +2617,21 @@ export class DatabaseStorage implements IStorage {
     // 2.5 Delete triage records performed BY this user (as a doctor)
     await db.delete(triageRecords).where(eq(triageRecords.performedByUserId, id));
 
+    // 3. Delete AI conversations and messages
+    const userConversations = await db.select().from(aiConversations).where(eq(aiConversations.userId, id));
+    const conversationIds = userConversations.map(c => c.id);
+    if (conversationIds.length > 0) {
+      await db.delete(aiMessages).where(inArray(aiMessages.conversationId, conversationIds));
+      await db.delete(aiConversations).where(inArray(aiConversations.id, conversationIds));
+    }
 
-    // 3. Delete leaf tables referencing user directly or via profiles
-    // Note: Deleting items that reference Profiles before deleting Profiles
+    // 4. Delete leaf tables referencing user directly
     await db.delete(healthMetrics).where(eq(healthMetrics.userId, id));
     await db.delete(exams).where(eq(exams.userId, id));
     await db.delete(appointments).where(eq(appointments.userId, id));
     await db.delete(prescriptions).where(eq(prescriptions.userId, id));
     await db.delete(certificates).where(eq(certificates.userId, id));
+    await db.delete(certificateTemplates).where(eq(certificateTemplates.userId, id));
     await db.delete(diagnoses).where(eq(diagnoses.userId, id));
     await db.delete(medications).where(eq(medications.userId, id));
     await db.delete(habits).where(eq(habits.userId, id));
@@ -2615,11 +2641,13 @@ export class DatabaseStorage implements IStorage {
     await db.delete(notifications).where(eq(notifications.userId, id));
     await db.delete(userConsents).where(eq(userConsents.userId, id));
     await db.delete(customMedications).where(eq(customMedications.userId, id));
+    await db.delete(customExams).where(eq(customExams.userId, id));
     await db.delete(surgeries).where(eq(surgeries.userId, id));
     await db.delete(examRequests).where(eq(examRequests.userId, id));
     await db.delete(examProtocols).where(eq(examProtocols.userId, id));
+    await db.delete(aiUsage).where(eq(aiUsage.userId, id));
 
-    // 4. Handle subscriptions and clinics
+    // 5. Handle subscriptions and clinics
     const userClinics = await db.select().from(clinics).where(eq(clinics.adminUserId, id));
     const clinicIds = userClinics.map(c => c.id);
     if (clinicIds.length > 0) {
@@ -2628,18 +2656,17 @@ export class DatabaseStorage implements IStorage {
     }
     await db.delete(subscriptions).where(eq(subscriptions.userId, id));
 
-    // 5. Delete specific user-related logs or anonymize?
-    // For now, let's try to delete Audit Logs where this user is the actor or target to free up FK
+    // 6. Delete audit logs
     await db.delete(auditLogs).where(or(eq(auditLogs.userId, id), eq(auditLogs.targetUserId, id)));
 
-    // 6. Delete Profiles
+    // 7. Delete Profiles
     await db.delete(profiles).where(eq(profiles.userId, id));
 
-    // 7. Finally delete the user
+    // 8. Finally delete the user
     console.log(`[STORAGE] Deleting user row ${id}`);
     const res = await db.delete(users).where(eq(users.id, id)).returning();
 
-    // 8. VERIFICATION
+    // 9. VERIFICATION
     const check = await this.getUser(id);
     if (check) {
       console.error(`[STORAGE] CRITICAL: User ${id} STILL EXISTS after delete! DB delete returned:`, res);
@@ -2648,6 +2675,80 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`[STORAGE] User ${id} successfully deleted.`);
     return true;
+  }
+
+  async softDeleteUser(id: number, deletedByUserId?: number, reason?: string): Promise<DeletedUser | null> {
+    console.log(`[STORAGE] Soft-deleting user ${id}`);
+
+    const user = await this.getUser(id);
+    if (!user) {
+      console.warn(`[STORAGE] User ${id} not found for soft-delete.`);
+      return null;
+    }
+
+    // Gather counts before deletion
+    const userProfiles = await db.select().from(profiles).where(eq(profiles.userId, id));
+    const userExamsList = await db.select().from(exams).where(eq(exams.userId, id));
+    const userAppointmentsList = await db.select().from(appointments).where(eq(appointments.userId, id));
+    const userPrescriptionsList = await db.select().from(prescriptions).where(eq(prescriptions.userId, id));
+    const userCertificatesList = await db.select().from(certificates).where(eq(certificates.userId, id));
+
+    // Get subscription and plan info
+    const subscription = await this.getUserSubscription(id);
+    let planName: string | null = null;
+    let planPrice: number | null = null;
+    let subscriptionStatus: string | null = null;
+    if (subscription) {
+      subscriptionStatus = subscription.status;
+      if (subscription.planId) {
+        const plan = await this.getSubscriptionPlan(subscription.planId);
+        if (plan) {
+          planName = plan.name;
+          planPrice = plan.price;
+        }
+      }
+    }
+
+    // Archive user data
+    const [archivedUser] = await db.insert(deletedUsers).values({
+      originalUserId: id,
+      username: user.username,
+      fullName: user.fullName,
+      email: user.email,
+      crm: user.crm,
+      specialty: user.specialty,
+      rqe: user.rqe,
+      phoneNumber: user.phoneNumber,
+      address: user.address,
+      planName,
+      planPrice,
+      subscriptionStatus,
+      profileCount: userProfiles.length,
+      examCount: userExamsList.length,
+      appointmentCount: userAppointmentsList.length,
+      prescriptionCount: userPrescriptionsList.length,
+      certificateCount: userCertificatesList.length,
+      originalCreatedAt: user.createdAt,
+      deletedByUserId: deletedByUserId ?? null,
+      deletionReason: reason ?? null,
+    }).returning();
+
+    console.log(`[STORAGE] Archived user ${id} as deleted_user ${archivedUser.id}`);
+
+    // Now hard-delete the user and all related data
+    await this.deleteUser(id);
+
+    console.log(`[STORAGE] Soft-delete complete for user ${id}`);
+    return archivedUser;
+  }
+
+  async getDeletedUsers(): Promise<DeletedUser[]> {
+    return await db.select().from(deletedUsers).orderBy(desc(deletedUsers.deletedAt));
+  }
+
+  async getDeletedUserById(id: number): Promise<DeletedUser | undefined> {
+    const [result] = await db.select().from(deletedUsers).where(eq(deletedUsers.id, id));
+    return result;
   }
 
   // Appointments

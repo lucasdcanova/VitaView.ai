@@ -270,9 +270,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Não é possível excluir seu próprio usuário" });
       }
 
-      const success = await storage.deleteUser(id);
-      if (success) {
-        res.json({ success: true });
+      const archivedUser = await storage.softDeleteUser(id, req.user?.id);
+      if (archivedUser) {
+        res.json({ success: true, archivedUser });
       } else {
         res.status(404).json({ message: "Usuário não encontrado" });
       }
@@ -280,6 +280,35 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.error('[ADMIN] Error deleting user:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: "Erro ao excluir usuário", error: errorMessage });
+    }
+  });
+
+  // Deleted/archived users endpoints
+  app.get("/api/admin/deleted-users", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const deletedUsers = await storage.getDeletedUsers();
+      res.json(deletedUsers);
+    } catch (error) {
+      console.error('[ADMIN] Error fetching deleted users:', error);
+      res.status(500).json({ message: "Erro ao listar usuários excluídos" });
+    }
+  });
+
+  app.get("/api/admin/deleted-users/:id", rbacSystem.requirePermission('system', 'config'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+      const deletedUser = await storage.getDeletedUserById(id);
+      if (deletedUser) {
+        res.json(deletedUser);
+      } else {
+        res.status(404).json({ message: "Usuário excluído não encontrado" });
+      }
+    } catch (error) {
+      console.error('[ADMIN] Error fetching deleted user:', error);
+      res.status(500).json({ message: "Erro ao buscar usuário excluído" });
     }
   });
 
