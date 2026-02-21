@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { Menu, X, ChevronRight } from "lucide-react";
@@ -7,6 +7,7 @@ import Logo from "@/components/ui/logo";
 
 export function LandingNavbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const navItems = [
         { id: "demonstracoes", label: "Vita Timeline" },
@@ -18,20 +19,43 @@ export function LandingNavbar() {
         { id: "depoimentos", label: "Depoimentos" }
     ];
 
+    useEffect(() => {
+        const onScroll = () => setIsScrolled(window.scrollY > 8);
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
+    useEffect(() => {
+        const previousOverflow = document.body.style.overflow;
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = previousOverflow;
+        }
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isMobileMenuOpen]);
+
     return (
         <>
             <motion.nav
                 aria-label="Navegação principal"
-                className="bg-white border-b border-[#E0E0E0] py-3 fixed top-0 left-0 right-0 z-[10001]"
-                initial={{ y: -100 }}
+                className={`py-3 fixed top-0 left-0 right-0 z-[10001] transition-colors duration-300 ${
+                    isScrolled
+                        ? "bg-white/95 border-b border-[#E0E0E0] backdrop-blur-md shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]"
+                        : "bg-white border-b border-transparent"
+                }`}
+                initial={{ y: -60, opacity: 0 }}
                 animate={{ y: 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             >
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
                     <motion.div
                         className="cursor-pointer"
-                        whileHover={{ scale: 1.03 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        whileHover={{ y: -2, scale: 1.01 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                     >
                         <Logo
@@ -48,8 +72,8 @@ export function LandingNavbar() {
                                 key={item.id}
                                 href={`#${item.id}`}
                                 className="hover:text-[#9E9E9E] transition-colors relative group py-2 text-sm font-body font-medium"
-                                whileHover={{ scale: 1.03 }}
-                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                whileHover={{ y: -1 }}
+                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                             >
                                 {item.label}
                                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
@@ -81,7 +105,7 @@ export function LandingNavbar() {
                     {/* Action Buttons */}
                     <div className="hidden xl:flex items-center gap-4">
                         <motion.div
-                            whileHover={{ scale: 1.03 }}
+                            whileHover={{ y: -1 }}
                             whileTap={{ scale: 0.97 }}
                         >
                             <a
@@ -96,7 +120,7 @@ export function LandingNavbar() {
                         </motion.div>
 
                         <motion.div
-                            whileHover={{ scale: 1.03 }}
+                            whileHover={{ y: -1 }}
                             whileTap={{ scale: 0.97 }}
                         >
                             <Link href="/auth">
@@ -117,6 +141,7 @@ export function LandingNavbar() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
                     >
                         {/* Backdrop */}
                         <motion.div
@@ -125,6 +150,7 @@ export function LandingNavbar() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                         />
 
                         {/* Slide-out menu */}
@@ -133,7 +159,7 @@ export function LandingNavbar() {
                             initial={{ x: "100%" }}
                             animate={{ x: 0 }}
                             exit={{ x: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            transition={{ type: "spring", damping: 26, stiffness: 260, mass: 0.85 }}
                         >
                             {/* Close button inside panel */}
                             <div className="flex justify-end p-4 pt-5">
@@ -164,7 +190,7 @@ export function LandingNavbar() {
                                             className="block py-3 px-4 text-[#212121] hover:bg-gray-100 rounded-lg transition-colors font-medium active:bg-gray-200 cursor-pointer touch-manipulation"
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.05 }}
+                                            transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                                         >
                                             {item.label}
                                         </motion.a>

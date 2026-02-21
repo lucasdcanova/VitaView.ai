@@ -15,6 +15,20 @@
   --pure-white: #FFFFFF;
   --background-gray: #F4F4F4;
   --alert-red: #D32F2F;
+  --surface-0: #F4F4F4;
+  --surface-1: #FFFFFF;
+  --surface-2: #F7F7F7;
+  --surface-3: #EEEEEE;
+  --content-strong: #212121;
+  --content-default: #424242;
+  --content-muted: #757575;
+  --content-subtle: #9E9E9E;
+  --stroke-soft: #ECECEC;
+  --stroke-default: #E0E0E0;
+  --stroke-strong: #C9C9C9;
+  --app-background-image:
+    radial-gradient(1200px circle at 8% -10%, rgba(33, 33, 33, 0.04), transparent 45%),
+    radial-gradient(900px circle at 100% 0%, rgba(66, 66, 66, 0.05), transparent 42%);
 
   /* Mapeamento para variáveis do sistema */
   --background: 0 0% 96%;
@@ -75,42 +89,59 @@
 
 .dark {
   /* Dark Mode Variables */
-  --background: 0 0% 10%;    /* Dark Gray/Black */
-  --foreground: 0 0% 98%;    /* Near White */
+  --background: 220 15% 8%;
+  --foreground: 220 20% 94%;
 
-  --card: 0 0% 13%;          /* Charcoal */
-  --card-foreground: 0 0% 98%;
+  --card: 220 14% 11%;
+  --card-foreground: 220 20% 95%;
 
-  --popover: 0 0% 13%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 220 14% 11%;
+  --popover-foreground: 220 20% 95%;
 
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 13%;
+  --primary: 220 20% 92%;
+  --primary-foreground: 220 15% 10%;
 
-  --secondary: 0 0% 20%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 220 14% 18%;
+  --secondary-foreground: 220 20% 92%;
 
-  --muted: 0 0% 20%;
-  --muted-foreground: 0 0% 60%;
+  --muted: 220 14% 16%;
+  --muted-foreground: 220 12% 70%;
 
-  --accent: 0 0% 20%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 220 14% 18%;
+  --accent-foreground: 220 20% 92%;
 
   --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive-foreground: 220 20% 95%;
 
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 0 0% 80%;
+  --border: 220 12% 22%;
+  --input: 220 12% 22%;
+  --ring: 220 16% 78%;
 
   /* VitaView Specific Overrides */
-  --vitaview-background: #1A1A1A;
-  --vitaview-primary: #FFFFFF;
-  --vitaview-secondary: #BDBDBD;
-  --pure-white: #212121; /* Invert for dark mode context if used as bg */
-  --background-gray: #121212;
-  --charcoal-gray: #F4F4F4; /* Invert text colors */
-  --light-gray: #333333;
+  --vitaview-background: #0F1115;
+  --vitaview-primary: #F2F4F8;
+  --vitaview-primary-light: #D7DCE7;
+  --vitaview-secondary: #B3BCCB;
+  --pure-white: #171A20;
+  --background-gray: #0F1115;
+  --charcoal-gray: #EDF1F7;
+  --medium-gray: #98A1B2;
+  --light-gray: #2A2F39;
+  --surface-0: #0F1115;
+  --surface-1: #171A20;
+  --surface-2: #1D2129;
+  --surface-3: #2A3039;
+  --content-strong: #EEF2F8;
+  --content-default: #D8DDE8;
+  --content-muted: #AAB3C3;
+  --content-subtle: #8D97A9;
+  --stroke-soft: #262C35;
+  --stroke-default: #353D49;
+  --stroke-strong: #4A5564;
+  --app-background-image:
+    radial-gradient(1200px circle at 4% -20%, rgba(149, 163, 188, 0.18), transparent 48%),
+    radial-gradient(900px circle at 100% 0%, rgba(102, 112, 132, 0.2), transparent 46%),
+    linear-gradient(160deg, rgba(20, 24, 31, 0.9) 0%, rgba(14, 17, 23, 0.96) 100%);
 }
 
 @layer base {
@@ -125,7 +156,120 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     background-color: hsl(var(--background));
+    background-image: var(--app-background-image);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  /* Dark mode bridge for legacy utility classes used across pages/components.
+     Keep this in base layer so explicit `dark:*` utilities still win when present. */
+  .dark .bg-white {
+    background-color: var(--surface-1);
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-slate-50 {
+    background-color: var(--surface-0);
+  }
+
+  .dark .bg-gray-100,
+  .dark .bg-slate-100 {
+    background-color: var(--surface-2);
+  }
+
+  .dark .bg-gray-200,
+  .dark .bg-slate-200 {
+    background-color: var(--surface-3);
+  }
+
+  .dark .text-gray-900,
+  .dark .text-slate-900 {
+    color: var(--content-strong);
+  }
+
+  .dark .text-gray-800,
+  .dark .text-slate-800 {
+    color: var(--content-default);
+  }
+
+  .dark .text-gray-700,
+  .dark .text-slate-700 {
+    color: var(--content-default);
+  }
+
+  .dark .text-gray-600,
+  .dark .text-slate-600 {
+    color: var(--content-muted);
+  }
+
+  .dark .text-gray-500,
+  .dark .text-slate-500 {
+    color: var(--content-subtle);
+  }
+
+  .dark .text-gray-400,
+  .dark .text-slate-400 {
+    color: #A4ADBD;
+  }
+
+  .dark .text-gray-300,
+  .dark .text-slate-300 {
+    color: #C4CCDA;
+  }
+
+  .dark .border-gray-50,
+  .dark .border-gray-100,
+  .dark .border-slate-100 {
+    border-color: var(--stroke-soft);
+  }
+
+  .dark .border-gray-200,
+  .dark .border-slate-200 {
+    border-color: var(--stroke-default);
+  }
+
+  .dark .border-gray-300,
+  .dark .border-slate-300 {
+    border-color: var(--stroke-strong);
+  }
+
+  .dark .hover\:bg-white:hover {
+    background-color: var(--surface-1);
+  }
+
+  .dark .hover\:bg-gray-50:hover,
+  .dark .hover\:bg-slate-50:hover {
+    background-color: #1A1F27;
+  }
+
+  .dark .hover\:bg-gray-100:hover,
+  .dark .hover\:bg-slate-100:hover {
+    background-color: #252C36;
+  }
+
+  .dark .hover\:bg-gray-200:hover,
+  .dark .hover\:bg-slate-200:hover {
+    background-color: #313A47;
+  }
+
+  .dark .hover\:text-gray-700:hover,
+  .dark .hover\:text-slate-700:hover,
+  .dark .hover\:text-gray-800:hover,
+  .dark .hover\:text-slate-800:hover,
+  .dark .hover\:text-gray-900:hover,
+  .dark .hover\:text-slate-900:hover {
+    color: var(--content-strong);
+  }
+
+  .dark .from-white {
+    --tw-gradient-from: var(--surface-1) var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(23 26 32 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .dark .to-white {
+    --tw-gradient-to: var(--surface-1) var(--tw-gradient-to-position);
   }
 
   /* Tipografia baseada na linguagem de design */
@@ -477,6 +621,19 @@
     background-color: var(--charcoal-gray);
     color: var(--pure-white);
   }
+
+  /* Agenda hero: refined, restrained contrast to avoid harsh gradients */
+  .agenda-calendar-hero {
+    background: linear-gradient(145deg, #202020 0%, #2a2a2a 52%, #333333 100%);
+    border-bottom: 1px solid hsl(var(--border));
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .dark .agenda-calendar-hero {
+    background: linear-gradient(145deg, #161b24 0%, #1d2330 52%, #252e40 100%);
+    border-bottom-color: hsl(var(--border));
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  }
 }
 
 @layer utilities {
@@ -657,6 +814,36 @@
   /* Open Sans font utility */
   .font-body {
     font-family: 'Open Sans', system-ui, sans-serif;
+  }
+
+  /* Landing microinteraction timing */
+  .landing-motion {
+    --landing-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --landing-fast: 180ms;
+    --landing-base: 280ms;
+  }
+
+  .landing-motion .transition-all,
+  .landing-motion .transition-colors,
+  .landing-motion .transition-transform,
+  .landing-motion .transition-opacity,
+  .landing-motion .transition-shadow {
+    transition-timing-function: var(--landing-ease) !important;
+    transition-duration: var(--landing-base) !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .landing-motion .hover\:scale-105:hover,
+    .landing-motion .hover\:scale-110:hover {
+      transform: scale(1.03);
+    }
+  }
+
+  @media (hover: none) {
+    .landing-motion .hover\:scale-105:hover,
+    .landing-motion .hover\:scale-110:hover {
+      transform: none;
+    }
   }
 }
 

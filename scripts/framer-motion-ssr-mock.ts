@@ -56,6 +56,11 @@ export function AnimatePresence({ children }: { children?: React.ReactNode; mode
   return React.createElement(React.Fragment, null, children);
 }
 
+// MotionConfig mock
+export function MotionConfig({ children }: { children?: React.ReactNode }) {
+  return React.createElement(React.Fragment, null, children);
+}
+
 // useAnimation mock
 export function useAnimation() {
   return {
@@ -80,4 +85,4 @@ export function useTransform(value: any, from: any, to: any) {
   return useMotionValue(to?.[0] ?? 0);
 }
 
-export default { motion, AnimatePresence, useAnimation, useInView, useMotionValue, useTransform };
+export default { motion, AnimatePresence, MotionConfig, useAnimation, useInView, useMotionValue, useTransform };

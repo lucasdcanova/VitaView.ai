@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { EXAM_DATABASE, EXAM_PROTOCOLS, ALL_EXAMS, PROTOCOLS_COLORS } from "@/constants/exam-database";
 import { CustomProtocol } from "@/hooks/use-exam-protocols";
 import { FeatureGate } from "@/components/ui/feature-gate";
+import { useTheme } from "@/hooks/use-theme";
 
 interface SelectedExam {
     id: string;
@@ -72,6 +73,8 @@ export function ActiveRequestList({
     onApplyProtocol,
     protocolLogic
 }: ActiveRequestListProps) {
+    const { theme } = useTheme();
+    const isDarkMode = theme === "dark";
     const [searchValue, setSearchValue] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -129,20 +132,24 @@ export function ActiveRequestList({
         ...customProtocols.map(p => ({ ...p, isSystem: false }))
     ];
 
+    const withAlpha = (hexColor: string, alphaHex: string) => (
+        /^#[0-9A-Fa-f]{6}$/.test(hexColor) ? `${hexColor}${alphaHex}` : hexColor
+    );
+
     return (
-        <Card className="border-gray-200 shadow-md h-fit">
-            <CardHeader className="bg-gray-50 border-b border-gray-200 py-3">
-                <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-gray-700" />
+        <Card className="border-border shadow-md h-fit">
+            <CardHeader className="bg-muted/35 border-b border-border py-3">
+                <CardTitle className="text-lg text-foreground flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
                     {isEditing ? "Editando Solicitação" : "Nova Solicitação"}
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 {/* Quick Protocols Section - 3 per row */}
                 {onApplyProtocol && protocolLogic && (
-                    <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+                    <div className="p-3 border-b border-border bg-muted/25">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Protocolos Rápidos</span>
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Protocolos Rápidos</span>
                             <div className="flex items-center gap-1">
                                 {!protocolLogic.deleteMode ? (
                                     <>
@@ -150,7 +157,7 @@ export function ActiveRequestList({
                                         <FeatureGate>
                                             <Dialog open={protocolLogic.createProtocolOpen} onOpenChange={protocolLogic.setCreateProtocolOpen}>
                                                 <DialogTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-2">
+                                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted px-2">
                                                         <PlusCircle className="mr-1 h-3 w-3" />
                                                         Criar Novo
                                                     </Button>
@@ -246,7 +253,7 @@ export function ActiveRequestList({
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => protocolLogic.setDeleteMode(true)}
-                                            className="h-6 text-[10px] text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2"
+                                            className="h-6 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted px-2"
                                         >
                                             <Pencil className="mr-1 h-3 w-3" />
                                             Editar
@@ -254,7 +261,7 @@ export function ActiveRequestList({
                                     </>
                                 ) : (
                                     <div className="flex items-center gap-1">
-                                        <span className="text-[10px] text-gray-500 mr-1">{protocolLogic.protocolsToDelete.length} sel.</span>
+                                        <span className="text-[10px] text-muted-foreground mr-1">{protocolLogic.protocolsToDelete.length} sel.</span>
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -284,6 +291,14 @@ export function ActiveRequestList({
                                 const isDeleting = protocolLogic?.deleteMode && protocolLogic.protocolsToDelete.includes((protocol as any).id);
                                 const colorKey = (protocol as any).color || 'gray';
                                 const colors = PROTOCOLS_COLORS[colorKey] || PROTOCOLS_COLORS.gray;
+                                const protocolSurface = {
+                                    backgroundColor: isDarkMode ? withAlpha(colors.iconColor, "22") : colors.bg,
+                                    borderColor: isDarkMode ? withAlpha(colors.iconColor, "52") : colors.border,
+                                };
+                                const protocolIconSurface = {
+                                    backgroundColor: isDarkMode ? withAlpha(colors.iconColor, "2E") : colors.iconBg,
+                                    color: colors.iconColor,
+                                };
 
                                 return (
                                     <button
@@ -291,12 +306,13 @@ export function ActiveRequestList({
                                         className={cn(
                                             "relative flex items-center gap-2 p-2 rounded-lg border text-left transition-all",
                                             protocolLogic?.deleteMode
-                                                ? isDeleting ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 hover:border-red-200"
-                                                : "hover:shadow-sm"
+                                                ? isDeleting
+                                                    ? "border-red-500/60 bg-red-500/10"
+                                                    : "border-border bg-card/80 hover:border-red-500/40"
+                                                : "hover:shadow-sm hover:brightness-[1.02]"
                                         )}
                                         style={!protocolLogic?.deleteMode ? {
-                                            backgroundColor: colors.bg,
-                                            borderColor: colors.border,
+                                            ...protocolSurface,
                                         } : undefined}
                                         onClick={() => {
                                             if (protocolLogic?.deleteMode) {
@@ -308,16 +324,13 @@ export function ActiveRequestList({
                                     >
                                         <div
                                             className="p-1.5 rounded-md flex-shrink-0"
-                                            style={{
-                                                backgroundColor: colors.iconBg,
-                                                color: colors.iconColor
-                                            }}
+                                            style={protocolIconSurface}
                                         >
                                             <Icon className="h-3.5 w-3.5" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-xs font-medium text-gray-800 block truncate">{(protocol as any).name}</span>
-                                            <span className="text-[10px] text-gray-500">{(protocol as any).exams?.length || 0} exames</span>
+                                            <span className="text-xs font-medium text-foreground block truncate">{(protocol as any).name}</span>
+                                            <span className="text-[10px] text-muted-foreground">{(protocol as any).exams?.length || 0} exames</span>
                                         </div>
                                         {protocolLogic?.deleteMode && (
                                             <Checkbox checked={isDeleting} className="absolute top-1 right-1 h-3.5 w-3.5 data-[state=checked]:bg-red-500" />

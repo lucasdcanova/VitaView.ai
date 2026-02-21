@@ -17,7 +17,7 @@ export function LandingHero() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.05 }}
+                    transition={{ duration: 0.44, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                     className="mb-8"
                 >
                     <Logo
@@ -34,7 +34,7 @@ export function LandingHero() {
                     className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-[#212121] leading-[1.08] tracking-tight mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
+                    transition={{ duration: 0.58, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
                 >
                     O Prontuário que{" "}
                     <br className="hidden sm:block" />
@@ -46,7 +46,7 @@ export function LandingHero() {
                     className="text-base md:text-lg text-[#757575] font-body max-w-xl leading-relaxed mb-10"
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.35 }}
+                    transition={{ duration: 0.45, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 >
                     Concentre-se no paciente enquanto nossa IA cuida da burocracia.
                     Uma plataforma simples, objetiva e completa.
@@ -56,11 +56,11 @@ export function LandingHero() {
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
+                    transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     className="relative z-20 touch-manipulation"
                 >
                     <motion.div
-                        whileHover={{ scale: 1.03 }}
+                        whileHover={{ y: -2, scale: 1.015 }}
                         whileTap={{ scale: 0.97 }}
                         className="inline-block"
                     >
@@ -82,12 +82,12 @@ export function LandingHero() {
                 className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[#9E9E9E]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.6 }}
+                transition={{ delay: 1.0, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
                 <span className="text-[10px] font-medium uppercase tracking-widest">Descubra</span>
                 <motion.div
                     animate={{ y: [0, 6, 0] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 2.3, repeat: Infinity, ease: "easeInOut" }}
                 >
                     <ChevronDown className="w-4 h-4" />
                 </motion.div>

@@ -21,12 +21,12 @@ export default function MobileHeader(props: MobileHeaderProps) {
   const toggleSidebar = props.toggleSidebar || sidebarContext.toggleSidebar;
 
   return (
-    <header className="bg-white border-b border-[#E0E0E0] px-3 py-2 flex justify-between items-center sticky top-0 z-30 md:hidden">
+    <header className="bg-pureWhite/95 backdrop-blur-md border-b border-lightGray px-3 py-2 flex justify-between items-center sticky top-0 z-30 md:hidden">
       <button
         onClick={toggleSidebar}
-        className="p-2 rounded-lg hover:bg-[#E0E0E0] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#212121]"
+        className="p-2 rounded-lg hover:bg-lightGray transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-charcoal"
       >
-        <Menu className="h-5 w-5 text-[#212121]" />
+        <Menu className="h-5 w-5 text-charcoal" />
       </button>
 
       <Logo size="sm" showText={true} textSize="sm" variant="icon" />

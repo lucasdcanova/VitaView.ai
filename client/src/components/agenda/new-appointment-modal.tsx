@@ -244,10 +244,10 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                         form.setValue("type", "consulta");
                     }
                 }} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-lg">
+                    <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-muted rounded-lg">
                         <TabsTrigger
                             value="appointment"
-                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#212121] data-[state=active]:shadow-sm rounded-md transition-all"
+                            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-charcoal data-[state=active]:shadow-sm rounded-md transition-all"
                         >
                             <UserPlus className="w-4 h-4" />
                             Agendamento
@@ -356,7 +356,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                             </>
 
                         ) : (
-                            <div className="col-span-2 bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
+                            <div className="col-span-2 bg-muted/50 p-4 rounded-xl border border-border space-y-4">
                                 <div className="flex items-center justify-between">
                                     <FormField
                                         control={form.control}
@@ -377,7 +377,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                         )}
                                     />
 
-                                    <div className="w-px h-6 bg-gray-200 mx-4 hidden md:block"></div>
+                                    <div className="w-px h-6 bg-muted mx-4 hidden md:block"></div>
 
                                     <FormField
                                         control={form.control}
@@ -441,7 +441,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                     <Button
                                                         variant={"outline"}
                                                         className={cn(
-                                                            "w-full pl-3 text-left font-normal border-gray-200 hover:bg-gray-50/50 hover:text-gray-900",
+                                                            "w-full pl-3 text-left font-normal border-border hover:bg-muted/50 hover:text-foreground",
                                                             !field.value && "text-muted-foreground"
                                                         )}
                                                     >
@@ -515,7 +515,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                         <Button
                                                             variant={"outline"}
                                                             className={cn(
-                                                                "w-full pl-3 text-left font-normal border-gray-200 hover:bg-gray-50/50 hover:text-gray-900",
+                                                                "w-full pl-3 text-left font-normal border-border hover:bg-muted/50 hover:text-foreground",
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
@@ -572,7 +572,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                     "w-full md:w-auto",
                                     mode === 'blocked'
                                         ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-[#212121] hover:bg-[#424242] text-white"
+                                        : "bg-charcoal hover:bg-charcoal/85 text-white"
                                 )}
                             >
                                 {isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Confirmar Bloqueio" : "Agendar Consulta")}

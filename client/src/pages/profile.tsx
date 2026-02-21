@@ -135,15 +135,13 @@ import { ImageCropper } from "@/components/profile/image-cropper";
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
   // Image cropping state
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
-
-  // Theme state - use global ThemeProvider
-  const { theme, setTheme } = useTheme();
 
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"

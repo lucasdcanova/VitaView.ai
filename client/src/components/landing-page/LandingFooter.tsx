@@ -45,8 +45,8 @@ export function LandingFooter() {
                 >
                     <motion.div
                         className="mb-6 md:mb-0"
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        whileHover={{ y: -2, scale: 1.01 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex items-center mb-4">
                             <Logo variant="icon" size="sm" showText={false} className="mr-3" />
@@ -67,8 +67,8 @@ export function LandingFooter() {
                                 />
                                 <motion.button
                                     className="bg-[#212121] hover:bg-[#424242] px-3 py-2 rounded-r-md text-white text-sm"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    whileHover={{ y: -1, scale: 1.015 }}
+                                    whileTap={{ scale: 0.97 }}
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </motion.button>
@@ -198,8 +198,8 @@ export function LandingFooter() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.3, delay: 0.5 }}
-                            whileHover={{ y: -3, scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ y: -2, scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
                         >
                             <div className="flex items-center space-x-2">
                                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

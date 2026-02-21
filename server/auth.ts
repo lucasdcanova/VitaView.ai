@@ -303,7 +303,9 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Session check endpoint: return null instead of 401 to avoid noisy
+    // unauthorized errors in client boot/auth flows.
+    if (!req.isAuthenticated()) return res.status(200).json(null);
 
     try {
       const loggedInUser = req.user as SelectUser;

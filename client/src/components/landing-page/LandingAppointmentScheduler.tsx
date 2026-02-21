@@ -102,7 +102,7 @@ export function LandingAppointmentScheduler() {
                             <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                                 <motion.div
                                     className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">09:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Maria Silva</div>
@@ -110,7 +110,7 @@ export function LandingAppointmentScheduler() {
                                 </motion.div>
                                 <motion.div
                                     className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">14:30</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">João Santos</div>
@@ -122,7 +122,7 @@ export function LandingAppointmentScheduler() {
                             <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                                 <motion.div
                                     className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">10:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Ana Costa</div>
@@ -134,7 +134,7 @@ export function LandingAppointmentScheduler() {
                             <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                                 <motion.div
                                     className="bg-[#FDECEC] border-l-4 border-[#EF4444] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">08:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Pedro Lima</div>
@@ -142,7 +142,7 @@ export function LandingAppointmentScheduler() {
                                 </motion.div>
                                 <motion.div
                                     className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">11:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Carla Mendes</div>
@@ -150,7 +150,7 @@ export function LandingAppointmentScheduler() {
                                 </motion.div>
                                 <motion.div
                                     className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">15:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Roberto Silva</div>
@@ -162,7 +162,7 @@ export function LandingAppointmentScheduler() {
                             <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px] space-y-1 md:space-y-2">
                                 <motion.div
                                     className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">09:30</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Lucia Alves</div>
@@ -170,7 +170,7 @@ export function LandingAppointmentScheduler() {
                                 </motion.div>
                                 <motion.div
                                     className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">13:00</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Fernando Costa</div>
@@ -182,7 +182,7 @@ export function LandingAppointmentScheduler() {
                             <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[120px] md:min-h-[200px]">
                                 <motion.div
                                     className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
-                                    whileHover={{ scale: 1.02 }}
+                                    whileHover={{ scale: 1.012 }}
                                 >
                                     <div className="text-xs font-semibold text-[#212121]">10:30</div>
                                     <div className="text-xs font-medium text-[#212121] mt-1">Beatriz Souza</div>
@@ -259,7 +259,7 @@ export function LandingAppointmentScheduler() {
                     >
                         <motion.div
                             className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            whileHover={{ scale: 1.04, rotate: 2 }}
                         >
                             <Brain className="w-6 h-6 text-[#212121]" />
                         </motion.div>
@@ -284,7 +284,7 @@ export function LandingAppointmentScheduler() {
                     >
                         <motion.div
                             className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.1, rotate: -5 }}
+                            whileHover={{ scale: 1.04, rotate: -2 }}
                         >
                             <MessageSquare className="w-6 h-6 text-[#212121]" />
                         </motion.div>
@@ -309,7 +309,7 @@ export function LandingAppointmentScheduler() {
                     >
                         <motion.div
                             className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            whileHover={{ scale: 1.04, rotate: 2 }}
                         >
                             <Zap className="w-6 h-6 text-[#212121]" />
                         </motion.div>

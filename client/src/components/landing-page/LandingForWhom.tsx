@@ -40,7 +40,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+                        whileHover={{ y: -4, boxShadow: "0 20px 34px -14px rgba(0, 0, 0, 0.16)" }}
                     >
                         {/* Barra superior colorida */}
                         <div className="h-2 bg-[#212121]"></div>
@@ -79,7 +79,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.2 }}
-                        whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+                        whileHover={{ y: -4, boxShadow: "0 20px 34px -14px rgba(0, 0, 0, 0.16)" }}
                     >
                         {/* Barra superior colorida */}
                         <div className="h-2 bg-gradient-to-r from-[#212121] to-[#424242]"></div>
@@ -118,7 +118,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.3 }}
-                        whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)" }}
+                        whileHover={{ y: -4, boxShadow: "0 20px 34px -14px rgba(0, 0, 0, 0.16)" }}
                     >
                         {/* Barra superior colorida */}
                         <div className="h-2 bg-[#9E9E9E]"></div>
@@ -160,7 +160,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4 }}
-                        whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
                     >
                         <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
                             <Star className="w-6 h-6 text-[#212121]" />
@@ -176,7 +176,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4, delay: 0.1 }}
-                        whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
                     >
                         <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
                             <Clock className="w-6 h-6 text-[#212121]" />
@@ -192,7 +192,7 @@ export function LandingForWhom() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4, delay: 0.2 }}
-                        whileHover={{ scale: 1.03, boxShadow: "0 20px 30px -15px rgba(0,0,0,0.1)" }}
+                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
                     >
                         <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
                             <ShieldCheck className="w-6 h-6 text-[#212121]" />

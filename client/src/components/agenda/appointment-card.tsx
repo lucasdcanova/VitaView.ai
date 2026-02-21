@@ -24,16 +24,16 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string; badgeBg: string }> = {
     in_progress: {
-        bg: "bg-gray-100",
-        border: "border-[#212121]",
-        badge: "text-[#212121]",
-        badgeBg: "bg-gray-200"
+        bg: "bg-muted",
+        border: "border-charcoal",
+        badge: "text-charcoal",
+        badgeBg: "bg-muted"
     },
     completed: {
-        bg: "bg-gray-200",
-        border: "border-gray-800",
-        badge: "text-gray-100",
-        badgeBg: "bg-gray-800"
+        bg: "bg-muted",
+        border: "border-border",
+        badge: "text-white",
+        badgeBg: "bg-muted-foreground"
     },
 };
 
@@ -52,41 +52,40 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
     return (
         <motion.div
-            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-gray-400 ring-opacity-50 animate-pulse ring-4 ring-[#212121]' : ''}`}
+            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-ring/40 animate-pulse ring-4 ring-charcoal/70' : ''}`}
             whileHover={{ scale: 1.02 }}
         >
             {/* Status Badge */}
             {showActiveIndicator && (
-                <div className="absolute -top-1 -right-1 flex items-center gap-1 bg-[#212121] text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold shadow-sm">
+                <div className="absolute -top-1 -right-1 flex items-center gap-1 bg-charcoal text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold shadow-sm">
                     <Play className="w-2.5 h-2.5 fill-current" />
                     <span>Atendendo</span>
                 </div>
             )}
             {isCompleted && (
-                <div className="absolute -top-1 -right-1 bg-gray-400 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                <div className="absolute -top-1 -right-1 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
                     Finalizado
                 </div>
             )}
 
-            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-[#212121]' : isCompleted ? 'text-gray-500' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
-            <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-gray-700' : isCompleted ? 'text-gray-400' : styles.subtext}`}>
+            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
+            <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-foreground' : isCompleted ? 'text-muted-foreground' : styles.subtext}`}>
                 <div className="flex items-center gap-1">
                     {appointment.isTelemedicine && (
-                        <Video className="w-3 h-3 text-gray-500" />
+                        <Video className="w-3 h-3 text-muted-foreground" />
                     )}
                     {appointment.patientName}
                 </div>
             </div>
-            <div className={`text-xs capitalize ${showActiveIndicator ? 'text-[#212121]' : isCompleted ? 'text-gray-400' : styles.label}`}>{appointment.type}</div>
+            <div className={`text-xs capitalize ${showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : styles.label}`}>{appointment.type}</div>
 
             {/* Manchester Priority Indicator */}
             {triageData?.manchesterPriority && !showActiveIndicator && (
                 <div
                     className={`absolute top-1 right-1 w-3 h-3 rounded-full ${PRIORITY_COLORS[triageData.manchesterPriority]
-                        } ring-2 ring-white`}
+                        } ring-2 ring-background`}
                 />
             )}
         </motion.div>
     );
 }
-

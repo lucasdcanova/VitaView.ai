@@ -35,7 +35,7 @@ export function AgendaWidget({ appointments, maxDisplay = 4 }: AgendaWidgetProps
             case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-700" };
             case "procedimento": return { bg: "bg-indigo-100", border: "border-indigo-500", text: "text-indigo-700" };
             case "urgencia": return { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-700" };
-            default: return { bg: "bg-gray-100", border: "border-gray-500", text: "text-gray-700" };
+            default: return { bg: "bg-muted", border: "border-border", text: "text-foreground" };
         }
     };
 
@@ -68,8 +68,8 @@ export function AgendaWidget({ appointments, maxDisplay = 4 }: AgendaWidgetProps
             </CardHeader>
             <CardContent>
                 {upcomingAppointments.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                        <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <div className="text-center py-8 text-muted-foreground">
+                        <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                         <p className="text-sm">Nenhuma consulta agendada</p>
                     </div>
                 ) : (
@@ -90,10 +90,10 @@ export function AgendaWidget({ appointments, maxDisplay = 4 }: AgendaWidgetProps
                                                 {appointment.time}
                                             </span>
                                             {appointment.date && (
-                                                <span className="text-xs text-gray-500">• {appointment.date}</span>
+                                                <span className="text-xs text-muted-foreground">• {appointment.date}</span>
                                             )}
                                         </div>
-                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                        <p className="text-sm font-medium text-foreground truncate">
                                             {appointment.patient}
                                         </p>
                                         <p className={`text-xs ${colors.text}`}>

@@ -187,7 +187,7 @@ export default function Patients() {
               <div className="flex gap-2">
                 <Button
                   onClick={() => setIsCreateDialogOpen(true)}
-                  className="bg-charcoal hover:bg-charcoal/90 text-white"
+                  className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Novo Paciente

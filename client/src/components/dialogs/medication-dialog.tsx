@@ -484,7 +484,6 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
                 concentration: 32, // 32mg/ml
                 maxDailyDose: 3000,
                 frequency: 4,
-                duration: 5
             },
         ],
         commonFrequencies: ["6h em 6h", "8h em 8h", "Quando necessário"],
@@ -534,7 +533,6 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
                 dosePerKg: 5,
                 dosePerKgMax: 10,
                 frequency: 3,
-                duration: 5
             },
             {
                 dosage: "100", unit: "mg/ml", format: "Suspensão", // Alivium 100mg/ml
@@ -544,7 +542,6 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
                 dosePerKg: 5,
                 dosePerKgMax: 10,
                 frequency: 3,
-                duration: 5
             },
             {
                 dosage: "30", unit: "mg/ml", format: "Suspensão", // Alivium 30mg/ml
@@ -554,7 +551,6 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
                 dosePerKg: 5,
                 dosePerKgMax: 10,
                 frequency: 3,
-                duration: 5
             },
         ],
         commonFrequencies: ["8h em 8h", "6h em 6h"],
@@ -697,7 +693,6 @@ export const MEDICATION_DATABASE: MedicationInfo[] = [
                 concentration: 1, // 1mg/ml
                 maxDailyDose: 10,
                 frequency: 1,
-                duration: 5
             },
         ],
         commonFrequencies: ["1x ao dia"],

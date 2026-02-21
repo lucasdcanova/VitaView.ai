@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 
 interface AppointmentPopoverHeaderProps {
@@ -42,9 +41,9 @@ export function AppointmentPopoverHeader({ appointment, styles, canStartService,
                 )}
                 {/* Manchester Priority Badge */}
                 {config && (
-                    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100">
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-muted">
                         <div className={`w-3 h-3 rounded-full ${config.color}`} />
-                        <span className="text-xs font-medium text-gray-700">{config.label}</span>
+                        <span className="text-xs font-medium text-foreground">{config.label}</span>
                     </div>
                 )}
             </div>

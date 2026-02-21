@@ -96,7 +96,8 @@ export default defineConfig({
     },
     cssMinify: 'lightningcss',
     reportCompressedSize: false, // Disable for faster builds
-    chunkSizeWarningLimit: 1000,
+    // Largest intentional data chunk (CID-10 catalog) is ~1.4MB minified
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -108,7 +109,6 @@ export default defineConfig({
           'query-vendor': ['@tanstack/react-query'],
           'motion-vendor': ['framer-motion'],
           'stripe-vendor': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          'ai-vendor': ['openai'],
         },
         chunkFileNames: (chunkInfo) => {
           // Generate consistent chunk names based on content

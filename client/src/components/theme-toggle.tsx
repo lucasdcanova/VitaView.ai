@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Tooltip,
@@ -8,7 +8,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-// Dark mode disabled - this component now just shows light mode indicator
+// Theme changes are intentionally centralized in Settings > Preferences.
 export function ThemeToggle() {
     return (
         <TooltipProvider>
@@ -20,12 +20,12 @@ export function ThemeToggle() {
                         className="h-9 w-9 rounded-full hover:bg-gray-100 cursor-default"
                         disabled
                     >
-                        <Sun className="h-4 w-4 text-gray-400" />
-                        <span className="sr-only">Tema claro (dark mode desabilitado)</span>
+                        <Settings2 className="h-4 w-4 text-gray-400" />
+                        <span className="sr-only">Tema controlado em Configurações</span>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Modo claro ativo</p>
+                    <p>Altere o tema em Configurações</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>

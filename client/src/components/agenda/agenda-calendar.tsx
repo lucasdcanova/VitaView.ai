@@ -195,7 +195,7 @@ export function AgendaCalendar({
       case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
       case "procedimento": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
       case "urgencia": return { bg: "bg-red-100", border: "border-red-500", text: "text-red-900", subtext: "text-red-800", label: "text-red-600", dot: "bg-red-500" };
-      case "blocked": return { bg: "bg-gray-200", border: "border-gray-400", text: "text-gray-600", subtext: "text-gray-500", label: "text-gray-500", dot: "bg-gray-400" };
+      case "blocked": return { bg: "bg-muted", border: "border-border", text: "text-muted-foreground", subtext: "text-muted-foreground", label: "text-muted-foreground", dot: "bg-muted-foreground" };
       default: return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
     }
   };
@@ -303,11 +303,11 @@ export function AgendaCalendar({
 
   return (
     <div className={cn(
-      "bg-white overflow-hidden flex flex-col h-full",
-      fullWidth ? "border-b border-lightGray" : "rounded-2xl shadow-2xl"
+      "bg-card overflow-hidden flex flex-col h-full",
+      fullWidth ? "border-b border-border" : "rounded-2xl shadow-2xl"
     )}>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-6 text-white shrink-0">
+      <div className="agenda-calendar-hero p-6 text-white shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Popover>
@@ -318,7 +318,7 @@ export function AgendaCalendar({
                     <h3 className="text-2xl font-bold capitalize !text-white">
                       {format(currentDate, "MMMM yyyy", { locale: ptBR })}
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-white/70">
                       {viewMode === 'day' ? (
                         format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
                       ) : viewMode === 'week' ? (
@@ -344,7 +344,7 @@ export function AgendaCalendar({
           <div className="flex flex-wrap items-center gap-3">
             <Button
               onClick={onNewAppointment}
-              className="bg-white text-[#212121] hover:bg-gray-100 border-0 font-semibold"
+              className="bg-card text-charcoal hover:bg-muted border-0 font-semibold"
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -426,9 +426,9 @@ export function AgendaCalendar({
               if (allDayApps.length === 0) return null;
 
               return (
-                <div className="flex gap-4 min-h-[80px] group border-b border-gray-100 pb-4 last:border-0">
+                <div className="flex gap-4 min-h-[80px] group border-b border-border pb-4 last:border-0">
                   <div className="w-20 flex-shrink-0 text-right">
-                    <div className="text-sm font-bold text-gray-500 pt-1">Dia Inteiro</div>
+                    <div className="text-sm font-bold text-muted-foreground pt-1">Dia Inteiro</div>
                   </div>
                   <div className="flex-1 space-y-3">
                     {allDayApps.map(app => {
@@ -441,7 +441,7 @@ export function AgendaCalendar({
 
                       return (
                         <div key={app.id} className={cn(
-                          "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-white",
+                          "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-card",
                           styles.border
                         )}>
                           <div className="flex-1">
@@ -449,19 +449,19 @@ export function AgendaCalendar({
                               <span className={cn("px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider", styles.bg, styles.text)}>
                                 {app.type}
                               </span>
-                              <span className="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                              <span className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
                                 Dia Inteiro
                               </span>
                             </div>
                             <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
-                              <span className="text-gray-800 flex items-center gap-2">
-                                {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
+                              <span className="text-foreground flex items-center gap-2">
+                                {isBlocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                                 {app.patientName}
                               </span>
                             </h4>
                             {app.notes && (
-                              <p className="text-gray-600 text-sm mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
+                              <p className="text-muted-foreground text-sm mt-2 bg-muted/40 p-2 rounded-lg border border-border inline-block">
                                 "{app.notes}"
                               </p>
                             )}
@@ -475,7 +475,7 @@ export function AgendaCalendar({
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1 bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 placeholder:opacity-50"
+                                  className="flex-1 bg-muted/40 text-foreground border-border hover:bg-muted placeholder:opacity-50"
                                   onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'waiting', checkedInAt: new Date() })}
                                 >
                                   <UserCheck className="w-4 h-4 mr-1" />
@@ -509,18 +509,18 @@ export function AgendaCalendar({
               });
 
               return (
-                <div key={`${hour}-${minute}`} className="flex gap-4 min-h-[80px] group border-b border-gray-100 pb-4 last:border-0">
+                <div key={`${hour}-${minute}`} className="flex gap-4 min-h-[80px] group border-b border-border pb-4 last:border-0">
                   {/* Time Column */}
                   <div className="w-20 flex-shrink-0 text-right">
-                    <span className="text-lg font-bold text-gray-700 block -mt-1">{formatSlotTime(hour, minute)}</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-lg font-bold text-foreground block -mt-1">{formatSlotTime(hour, minute)}</span>
+                    <span className="text-xs text-muted-foreground">
                       {/* If we want to show anything else here */}
                     </span>
                   </div>
 
                   {/* Content Column */}
                   <div className="flex-1 space-y-3 relative">
-                    <div className="absolute top-2 left-0 w-full h-px bg-gray-100 group-hover:bg-gray-200 transition-colors -z-10"></div>
+                    <div className="absolute top-2 left-0 w-full h-px bg-muted group-hover:bg-muted transition-colors -z-10"></div>
 
                     {/* Current Time Indicator Line */}
                     {(() => {
@@ -567,7 +567,7 @@ export function AgendaCalendar({
 
                         return (
                           <div key={app.id} className={cn(
-                            "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-white",
+                            "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-card",
                             styles.border
                           )}>
                             {/* Left Info */}
@@ -590,11 +590,11 @@ export function AgendaCalendar({
                                 <span className={cn("px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider", styles.bg, styles.text)}>
                                   {app.type}
                                 </span>
-                                <span className="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                <span className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" />
                                   {app.isAllDay ? "Dia Inteiro" : app.time}
                                 </span>
-                                <span className="text-sm font-semibold text-gray-500">
+                                <span className="text-sm font-semibold text-muted-foreground">
                                   {app.duration} min
                                 </span>
                               </div>
@@ -606,29 +606,29 @@ export function AgendaCalendar({
                                       e.stopPropagation();
                                       handleStartService(app);
                                     }}
-                                    className="text-[#212121] hover:text-[#424242] hover:underline cursor-pointer flex items-center gap-1 group"
+                                    className="text-charcoal hover:text-charcoal/80 hover:underline cursor-pointer flex items-center gap-1 group"
                                     title={app.status === 'in_progress' ? "Retomar atendimento" : "Iniciar atendimento"}
                                   >
                                     <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    {app.isTelemedicine && <Video className="w-4 h-4 text-gray-500 mr-1" />}
+                                    {app.isTelemedicine && <Video className="w-4 h-4 text-muted-foreground mr-1" />}
                                     {app.patientName}
                                   </button>
                                 ) : (
-                                  <span className="text-gray-800 flex items-center gap-2">
-                                    {isBlocked && <Lock className="w-3.5 h-3.5 text-gray-500" />}
-                                    {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-gray-500" />}
+                                  <span className="text-foreground flex items-center gap-2">
+                                    {isBlocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                                    {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-muted-foreground" />}
                                     {app.patientName}
                                   </span>
                                 )}
                                 {app.profileId && !isBlocked && (
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-[#212121]" title="Ver perfil">
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-charcoal" title="Ver perfil">
                                     <User className="h-4 w-4" />
                                   </Button>
                                 )}
                               </h4>
 
                               {app.notes && (
-                                <p className="text-gray-600 text-sm mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
+                                <p className="text-muted-foreground text-sm mt-2 bg-muted/40 p-2 rounded-lg border border-border inline-block">
                                   "{app.notes}"
                                 </p>
                               )}
@@ -638,7 +638,7 @@ export function AgendaCalendar({
                             <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
                               {canStartService ? (
                                 <Button
-                                  className="w-full bg-[#212121] hover:bg-[#424242] text-white shadow-sm"
+                                  className="w-full bg-charcoal hover:bg-charcoal/85 text-white shadow-sm"
                                   onClick={() => handleStartService(app)}
                                   disabled={updateStatusMutation.isPending}
                                 >
@@ -646,7 +646,7 @@ export function AgendaCalendar({
                                   {app.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
                                 </Button>
                               ) : (
-                                <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium w-full text-center">
+                                <div className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium w-full text-center">
                                   {app.status === 'completed' ? 'Concluído' : isActive ? 'Em Atendimento' : 'Agendado'}
                                 </div>
                               )}
@@ -670,7 +670,7 @@ export function AgendaCalendar({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="flex-1 text-gray-600 border-gray-200 hover:bg-gray-50"
+                                    className="flex-1 text-muted-foreground border-border hover:bg-muted/40"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       updateStatusMutation.mutate({ id: app.id, status: 'waiting', checkedInAt: new Date() });
@@ -695,7 +695,7 @@ export function AgendaCalendar({
                         );
                       })
                     ) : (
-                      <div className="h-full min-h-[60px] rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-300 text-sm hover:border-gray-300 hover:text-gray-400 transition-colors cursor-pointer" onClick={onNewAppointment}>
+                      <div className="h-full min-h-[60px] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground text-sm hover:border-border hover:text-muted-foreground transition-colors cursor-pointer" onClick={onNewAppointment}>
                         <Plus className="w-4 h-4 mr-1" /> Disponível
                       </div>
                     )}
@@ -714,13 +714,13 @@ export function AgendaCalendar({
 
                 return (
                   <div key={i} className="text-center">
-                    <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{day}</div>
+                    <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">{day}</div>
                     <div className={cn(
                       "text-sm font-medium flex flex-col items-center justify-center mx-auto rounded-lg py-1 px-2",
-                      isToday ? "bg-[#212121] text-white" : "text-gray-700"
+                      isToday ? "bg-[#212121] text-white dark:bg-[#2a3242] dark:text-[#f5f7fb]" : "text-foreground"
                     )}>
                       <span className="text-lg font-bold">{format(date, "d")}</span>
-                      <span className={cn("text-[10px] uppercase", isToday ? "text-gray-300" : "text-gray-400")}>
+                      <span className={cn("text-[10px] uppercase", isToday ? "text-muted-foreground" : "text-muted-foreground")}>
                         {format(date, "MMM", { locale: ptBR })}
                       </span>
                     </div>
@@ -757,7 +757,7 @@ export function AgendaCalendar({
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
                 const date = addDays(startOfCurrentWeek, dayIndex);
                 return (
-                  <div key={dayIndex} className="bg-gray-50 rounded-lg p-2 h-full min-h-[200px] space-y-2">
+                  <div key={dayIndex} className="bg-muted/40 rounded-lg p-2 h-full min-h-[200px] space-y-2">
                     {getFilteredAppointmentsForDay(date)
                       .filter(app => !app.isAllDay)
                       .map((appointment, idx) => {
@@ -793,21 +793,21 @@ export function AgendaCalendar({
                                 })()}
                                 <div className="grid gap-2">
                                   <div className="flex items-center gap-2 text-sm">
-                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <Clock className="w-4 h-4 text-muted-foreground" />
                                     <span>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm">
-                                    <User className="w-4 h-4 text-gray-500" />
+                                    <User className="w-4 h-4 text-muted-foreground" />
                                     <span>{doctorName}</span>
                                   </div>
                                   {appointment.notes && (
-                                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                    <div className="mt-2 text-sm text-muted-foreground bg-muted/40 p-2 rounded">
                                       {appointment.notes}
                                     </div>
                                   )}
                                   {appointment.price && (
                                     <div className="flex items-center gap-2 text-sm">
-                                      <DollarSign className="w-4 h-4 text-gray-500" />
+                                      <DollarSign className="w-4 h-4 text-muted-foreground" />
                                       <span>
                                         {(appointment.price / 100).toLocaleString('pt-BR', {
                                           style: 'currency',
@@ -830,7 +830,7 @@ export function AgendaCalendar({
                                         {canStartService && (
                                           <Button
                                             size="sm"
-                                            className="bg-[#212121] hover:bg-[#424242] text-white w-full"
+                                            className="bg-charcoal hover:bg-charcoal/85 text-white w-full"
                                             onClick={() => handleStartService(appointment)}
                                             disabled={updateStatusMutation.isPending}
                                           >
@@ -847,7 +847,7 @@ export function AgendaCalendar({
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="text-gray-700 border-gray-200 hover:bg-gray-100 w-full"
+                                      className="text-foreground border-border hover:bg-muted w-full"
                                       onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
                                       disabled={updateStatusMutation.isPending}
                                     >
@@ -860,7 +860,7 @@ export function AgendaCalendar({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="bg-white hover:bg-gray-100"
+                                      className="bg-card hover:bg-muted"
                                       onClick={() => {
                                         setSelectedAppointment(appointment);
                                         setTriageDialogOpen(true);
@@ -872,7 +872,7 @@ export function AgendaCalendar({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="bg-white hover:bg-gray-100"
+                                      className="bg-card hover:bg-muted"
                                       onClick={() => onEditAppointment?.(appointment)}
                                     >
                                       Editar
@@ -900,7 +900,7 @@ export function AgendaCalendar({
         ) : (
           <div className="grid grid-cols-7 gap-4 overflow-y-auto">
             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-              <div key={day} className="text-center font-semibold text-gray-500 text-sm py-2">
+              <div key={day} className="text-center font-semibold text-muted-foreground text-sm py-2">
                 {day}
               </div>
             ))}
@@ -913,9 +913,9 @@ export function AgendaCalendar({
                 <div
                   key={i}
                   className={cn(
-                    "min-h-[100px] border rounded-lg p-2 transition-colors cursor-pointer hover:border-gray-300",
-                    isCurrentMonth ? "bg-white border-gray-100" : "bg-gray-50/50 border-gray-100 text-gray-400",
-                    isToday && "ring-2 ring-blue-500 ring-offset-2"
+                    "min-h-[100px] border rounded-lg p-2 transition-colors cursor-pointer hover:border-border",
+                    isCurrentMonth ? "bg-card border-border" : "bg-muted/50 border-border text-muted-foreground",
+                    isToday && "ring-2 ring-[#212121]/25 dark:ring-[#6e7b95]/50 ring-offset-2 ring-offset-background"
                   )}
                   onClick={() => {
                     setCurrentDate(date);
@@ -925,12 +925,12 @@ export function AgendaCalendar({
                   <div className="flex justify-between items-start mb-2">
                     <span className={cn(
                       "text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full",
-                      isToday ? "bg-[#212121] text-white" : "text-gray-700"
+                      isToday ? "bg-[#212121] text-white dark:bg-[#2a3242] dark:text-[#f5f7fb]" : "text-foreground"
                     )}>
                       {format(date, "d")}
                     </span>
                     {apps.length > 0 && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                      <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
                         {apps.length}
                       </span>
                     )}
@@ -945,7 +945,7 @@ export function AgendaCalendar({
                       )
                     })}
                     {apps.length > 3 && (
-                      <div className="text-[10px] text-gray-400 pl-1">
+                      <div className="text-[10px] text-muted-foreground pl-1">
                         + {apps.length - 3} mais
                       </div>
                     )}
@@ -960,31 +960,31 @@ export function AgendaCalendar({
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span className="text-xs text-gray-600">Consulta</span>
+            <span className="text-xs text-muted-foreground">Consulta</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-xs text-gray-600">Retorno</span>
+            <span className="text-xs text-muted-foreground">Retorno</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-xs text-gray-600">Procedimento</span>
+            <span className="text-xs text-muted-foreground">Procedimento</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-purple-500 rounded"></div>
-            <span className="text-xs text-gray-600">Exames</span>
+            <span className="text-xs text-muted-foreground">Exames</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span className="text-xs text-gray-600">Urgência</span>
+            <span className="text-xs text-muted-foreground">Urgência</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-gray-800 rounded"></div>
-            <span className="text-xs text-gray-600">Finalizado</span>
+            <div className="w-3 h-3 bg-charcoal rounded"></div>
+            <span className="text-xs text-muted-foreground">Finalizado</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-gray-400 rounded"></div>
-            <span className="text-xs text-gray-600">Bloqueado</span>
+            <div className="w-3 h-3 bg-muted-foreground rounded"></div>
+            <span className="text-xs text-muted-foreground">Bloqueado</span>
           </div>
         </div>
       </div>

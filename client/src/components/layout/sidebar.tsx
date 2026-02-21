@@ -109,11 +109,11 @@ export default function Sidebar(props: SidebarProps) {
     // When active: Standard active style (dark bg, white text)
     // When inactive but highlighted: Primary light bg, primary text, bold
     const highlightClasses = highlight && !isActive
-      ? "bg-[#212121] text-white hover:bg-[#424242] shadow-md border border-transparent"
+      ? "bg-charcoal text-pureWhite hover:brightness-110 shadow-md border border-transparent"
       : "";
 
     const highlightIconClasses = highlight && !isActive
-      ? "text-white"
+      ? "text-pureWhite"
       : "";
 
     return (
@@ -134,7 +134,7 @@ export default function Sidebar(props: SidebarProps) {
             </Link>
           </TooltipTrigger>
           {isCollapsed && (
-            <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-white border-0">
+            <TooltipContent side="right" className="ml-2 font-bold bg-charcoal text-pureWhite border-0">
               {label}
             </TooltipContent>
           )}
@@ -166,7 +166,7 @@ export default function Sidebar(props: SidebarProps) {
           <Button
             variant="outline"
             size="icon"
-            className="h-10 w-10 rounded-full bg-white border-2 border-[#212121] shadow-xl text-[#212121] hover:bg-[#212121] hover:text-white transition-all duration-300 transform hover:scale-110"
+            className="h-10 w-10 rounded-full bg-pureWhite border-2 border-charcoal shadow-xl text-charcoal hover:bg-charcoal hover:text-pureWhite transition-all duration-300 transform hover:scale-110"
             onClick={toggleCollapse}
             title={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
           >
@@ -214,12 +214,12 @@ export default function Sidebar(props: SidebarProps) {
                     <img
                       src={photoUrl}
                       alt={user?.fullName || user?.username || 'Perfil'}
-                      className="w-10 h-10 rounded-full object-cover shadow-sm border border-white"
+                      className="w-10 h-10 rounded-full object-cover shadow-sm border border-lightGray"
                     />
                   );
                 }
                 return (
-                  <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-white">
+                  <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-lightGray">
                     {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                   </div>
                 );
@@ -239,7 +239,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Patient Selector */}
-        <div className={cn("border-b border-lightGray bg-gray-50/50", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
+        <div className={cn("border-b border-lightGray bg-background/70", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
           {isCollapsed ? (
             <div className="flex justify-center" title={activeProfile?.name || "Nenhum paciente"}>
               <ActivePatientIndicator className="w-full" collapsed={true} />
@@ -280,7 +280,7 @@ export default function Sidebar(props: SidebarProps) {
                     onClick={handleNavClick}
                     className={cn(
                       "w-full flex items-center p-3 rounded-lg transition-all duration-200 mt-6",
-                      location === '/admin-panel' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50',
+                      location === '/admin-panel' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40',
                       isCollapsed && "justify-center px-2"
                     )}
                   >
@@ -301,7 +301,7 @@ export default function Sidebar(props: SidebarProps) {
                   <button
                     onClick={handleLogout}
                     className={cn(
-                      "w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-red-50 hover:text-red-600 transition-all duration-200",
+                      "w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-all duration-200",
                       isCollapsed && "justify-center px-2"
                     )}
                     aria-label="Sair da conta"
