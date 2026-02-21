@@ -137,21 +137,53 @@ const normalizePlanName = (planName?: string | null) => {
     .trim();
 };
 
-const getClinicLimitsByPlanName = (planName?: string | null) => {
-  const normalizedPlanName = normalizePlanName(planName);
+const CLINIC_ENABLED_PLAN_IDS = new Set([3, 4, 5, 8, 9, 10, 11]);
+const BUSINESS_CLINIC_PLAN_IDS = new Set([4, 5, 10, 11]);
 
-  const hasClinicAccess =
+const getClinicLimitsByPlanName = (
+  plan?:
+    | {
+      id?: number | null;
+      name?: string | null;
+      features?: unknown;
+    }
+    | null
+) => {
+  const normalizedPlanName = normalizePlanName(plan?.name);
+  const normalizedFeatureText = normalizePlanName(
+    Array.isArray(plan?.features)
+      ? (plan?.features as unknown[]).join(" ")
+      : typeof plan?.features === "string"
+        ? plan.features
+        : ""
+  );
+
+  const hasClinicAccessByName =
     normalizedPlanName.includes("team") ||
     normalizedPlanName.includes("business") ||
     normalizedPlanName.includes("hospital") ||
     normalizedPlanName.includes("clinica");
 
+  const hasClinicAccessByFeatures =
+    normalizedFeatureText.includes("equipe") ||
+    normalizedFeatureText.includes("profissionais") ||
+    normalizedFeatureText.includes("secretaria") ||
+    normalizedFeatureText.includes("secretario") ||
+    normalizedFeatureText.includes("clinica");
+
+  // Fallback for legacy/migrated subscriptions where plan name/features can be missing.
+  const hasClinicAccessByPlanId = plan?.id ? CLINIC_ENABLED_PLAN_IDS.has(plan.id) : false;
+
+  const hasClinicAccess = hasClinicAccessByName || hasClinicAccessByFeatures || hasClinicAccessByPlanId;
+
   if (!hasClinicAccess) {
     return null;
   }
 
-  const isBusinessTier =
+  const isBusinessTierByName =
     normalizedPlanName.includes("business") || normalizedPlanName.includes("hospital");
+  const isBusinessTierByPlanId = plan?.id ? BUSINESS_CLINIC_PLAN_IDS.has(plan.id) : false;
+  const isBusinessTier = isBusinessTierByName || isBusinessTierByPlanId;
 
   return {
     maxProfessionals: isBusinessTier ? 10 : 5,
@@ -3531,7 +3563,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (subscription) {
         const plan = await storage.getSubscriptionPlan(subscription.planId!);
-        const clinicLimits = getClinicLimitsByPlanName(plan?.name);
+        const clinicLimits = getClinicLimitsByPlanName(
+          plan ?? { id: subscription.planId ?? null, name: null, features: null }
+        );
 
         // If user is on a clinic plan but has limits of a solo plan, update them
         if (clinicLimits && (clinic.maxProfessionals <= 1 || clinic.maxSecretaries === 0) && clinic.adminUserId === userId) {
@@ -3598,7 +3632,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Verify user has a clinic-enabled plan
       const plan = await storage.getSubscriptionPlan(subscription.planId!);
-      const clinicLimits = getClinicLimitsByPlanName(plan?.name);
+      const clinicLimits = getClinicLimitsByPlanName(
+        plan ?? { id: subscription.planId ?? null, name: null, features: null }
+      );
 
       if (!clinicLimits) {
         return res.status(400).json({ message: "Seu plano não inclui recursos de clínica" });

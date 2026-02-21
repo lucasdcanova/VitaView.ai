@@ -385,10 +385,10 @@ export default function Patients() {
                         <div className="flex items-center gap-3">
                           <div
                             className={cn(
-                              "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0",
+                              "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 border",
                               isActive
-                                ? "bg-charcoal text-white"
-                                : "bg-gray-100 text-gray-600"
+                                ? "bg-primary text-primary-foreground border-primary/40 shadow-sm"
+                                : "bg-muted text-foreground border-border"
                             )}
                           >
                             {profile.name?.[0]?.toUpperCase() || "P"}
@@ -403,7 +403,7 @@ export default function Patients() {
                           </div>
                         </div>
                         {isActive && (
-                          <Badge className="bg-charcoal text-white">
+                          <Badge className="border-primary/40 bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-foreground">
                             Selecionado
                           </Badge>
                         )}

@@ -1,18 +1,30 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 
+class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = await res.text();
+    let message = text || res.statusText;
+
     try {
       const json = JSON.parse(text);
-      if (json.message) {
-        throw new Error(json.message);
+      if (json?.message) {
+        message = json.message;
       }
-    } catch (e) {
-      // Ignore JSON parse error and fallback to text
+    } catch {
+      // Ignore JSON parse errors and keep fallback message
     }
-    throw new Error(text || res.statusText);
+
+    throw new ApiError(message, res.status);
   }
 }
 
@@ -95,6 +107,11 @@ export async function apiRequest(
       checkAIWarning(res);
       return res;
     } catch (error) {
+      if (error instanceof ApiError) {
+        // Do not retry client errors (4xx). For 5xx, retry path is handled above.
+        throw error;
+      }
+
       lastError = normalizeNetworkError(error);
 
       // If it's a network error and we have retries left, retry

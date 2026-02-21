@@ -48,7 +48,7 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                             <p className="text-xs mt-1">Os pacientes recepcionados aparecerão aqui</p>
                         </div>
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {waitingAppointments.map((appointment) => {
                                 const checkedInTime = appointment.checkedInAt ? new Date(appointment.checkedInAt) : null;
                                 const waitingMinutes = checkedInTime ? differenceInMinutes(now, checkedInTime) : 0;
@@ -60,10 +60,10 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
 
                                 return (
                                     <div key={appointment.id} className="bg-card p-4 rounded-lg border shadow-sm flex flex-col gap-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="font-semibold text-lg text-foreground flex items-center gap-2">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="font-semibold text-lg text-foreground flex items-center gap-2 min-w-0">
                                                 <User className="w-4 h-4 text-muted-foreground" />
-                                                {appointment.patientName}
+                                                <span className="truncate">{appointment.patientName}</span>
                                             </div>
                                             <Badge variant="outline" className={`${timeColor} border-current bg-card`}>
                                                 {waitingMinutes} min
@@ -83,11 +83,11 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2 mt-2">
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="flex-1 text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border"
+                                                className="w-full min-w-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-border"
                                                 onClick={() => onRemoveCheckIn(appointment)}
                                                 title="Remover da sala de espera"
                                             >
@@ -97,7 +97,7 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="flex-1 text-muted-foreground border-border hover:bg-muted"
+                                                className="w-full min-w-0 text-muted-foreground border-border hover:bg-muted"
                                                 onClick={() => {
                                                     setSelectedAppointment(appointment);
                                                     setTriageDialogOpen(true);
@@ -108,7 +108,7 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                className="flex-[2] bg-primary text-primary-foreground hover:bg-primary/90"
+                                                className="col-span-2 w-full min-w-0 bg-primary text-primary-foreground hover:bg-primary/90"
                                                 onClick={() => onStartService(appointment)}
                                             >
                                                 <Play className="w-4 h-4 mr-1" />

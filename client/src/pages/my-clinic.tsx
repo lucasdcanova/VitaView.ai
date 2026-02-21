@@ -56,14 +56,30 @@ const normalizePlanName = (planName?: string | null) =>
         .toLowerCase()
         .trim();
 
-const hasClinicAccessByPlan = (planName?: string | null) => {
-    const normalized = normalizePlanName(planName);
-    return (
-        normalized.includes("team") ||
-        normalized.includes("business") ||
-        normalized.includes("hospital") ||
-        normalized.includes("clinica")
+const hasClinicAccessByPlan = (plan?: { name?: string | null; features?: unknown } | null) => {
+    const normalizedName = normalizePlanName(plan?.name);
+    const normalizedFeatureText = normalizePlanName(
+        Array.isArray(plan?.features)
+            ? plan.features.join(" ")
+            : typeof plan?.features === "string"
+                ? plan.features
+                : ""
     );
+
+    const hasAccessByName =
+        normalizedName.includes("team") ||
+        normalizedName.includes("business") ||
+        normalizedName.includes("hospital") ||
+        normalizedName.includes("clinica");
+
+    const hasAccessByFeatures =
+        normalizedFeatureText.includes("equipe") ||
+        normalizedFeatureText.includes("profissionais") ||
+        normalizedFeatureText.includes("secretaria") ||
+        normalizedFeatureText.includes("secretario") ||
+        normalizedFeatureText.includes("clinica");
+
+    return hasAccessByName || hasAccessByFeatures;
 };
 
 const MyClinic = () => {
@@ -161,7 +177,7 @@ const MyClinic = () => {
     });
 
     const currentPlan = subscriptionData?.plan;
-    const isClinicPlan = hasClinicAccessByPlan(currentPlan?.name);
+    const isClinicPlan = hasClinicAccessByPlan(currentPlan);
     const clinic = clinicData?.clinic;
 
     if (isLoading) {
