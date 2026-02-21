@@ -1,7 +1,7 @@
 {
   "short_name": "VitaView",
   "name": "VitaView AI",
-  "start_url": "/",
+  "start_url": "/auth",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],

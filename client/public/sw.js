@@ -1,6 +1,5 @@
-const CACHE_NAME = 'vitaview-v2';
+const CACHE_NAME = 'vitaview-v3';
 const urlsToCache = [
-  '/',
   '/index.html',
   '/manifest.json',
   '/manifest-dark.json',

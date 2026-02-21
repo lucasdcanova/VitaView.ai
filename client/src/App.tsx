@@ -1,9 +1,9 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
 import { ProfileProvider } from "@/hooks/use-profiles";
 import { UploadManagerProvider } from "@/hooks/use-upload-manager";
@@ -70,6 +70,15 @@ const AdminAICosts = lazy(() => import("@/pages/admin/ai-costs"));
 const KnowledgeBaseAdmin = lazy(() => import("@/pages/admin/knowledge-base"));
 const MyClinic = lazy(() => import("@/pages/my-clinic"));
 
+const isStandalonePwa = () => {
+  if (typeof window === "undefined") return false;
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+
+  return window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    navigatorWithStandalone.standalone === true;
+};
+
 // ...
 
 // ============================================
@@ -113,10 +122,22 @@ function LandingRoutes() {
 // AUTH ROUTES - Apenas AuthProvider (leve)
 // ============================================
 function AuthRoutes() {
+  function PwaAuthAutoRedirect() {
+    const { user, isLoading } = useAuth();
+    const [location] = useLocation();
+
+    if (!isStandalonePwa() || location !== "/auth" || isLoading || !user) {
+      return null;
+    }
+
+    return <Redirect to="/agenda" />;
+  }
+
   return (
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
+        <PwaAuthAutoRedirect />
         <Suspense fallback={<LandingLoadingFallback />}>
           <Switch>
             <Route path="/auth" component={AuthPage} />
@@ -192,6 +213,12 @@ function AppRouter() {
   // Rotas da landing page (sem nenhum provider)
   const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];
   const isLandingRoute = landingPaths.some(path => location === path);
+
+  // No PWA (standalone), nunca abrir landing: ir para auth e deixar auth decidir
+  // se redireciona para /agenda quando já autenticado.
+  if (isStandalonePwa() && isLandingRoute) {
+    return <Redirect to="/auth" />;
+  }
 
   if (isLandingRoute) {
     return <LandingRoutes />;
