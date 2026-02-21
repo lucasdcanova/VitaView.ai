@@ -535,27 +535,27 @@ export function AnamnesisCard() {
 
     return (
         <div className="space-y-8">
-            <Card className="border border-primary-100 shadow-md">
+            <Card className="border border-border shadow-md">
                 <CardHeader className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2">
-                            <CardTitle className="text-2xl text-gray-900">Anamnese inteligente</CardTitle>
-                            <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">Beta</Badge>
+                            <CardTitle className="text-2xl text-foreground">Anamnese inteligente</CardTitle>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">Beta</Badge>
                         </div>
-                        <p className="text-sm text-gray-500 text-right max-w-[420px]">
+                        <p className="text-sm text-muted-foreground text-right max-w-[420px]">
                             Grave a consulta ou descreva o quadro clínico.<br />A IA identifica diagnósticos, medicamentos e alergias.
                         </p>
                     </div>
 
                     {/* Destaque para gravação de consulta */}
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-100">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-red-200/80 dark:border-red-500/30 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/35 dark:to-orange-950/20">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-100 rounded-full">
-                                <Mic className="h-5 w-5 text-red-600" />
+                            <div className="p-2 rounded-full bg-red-100 dark:bg-red-500/20">
+                                <Mic className="h-5 w-5 text-red-600 dark:text-red-300" />
                             </div>
                             <div>
-                                <p className="font-semibold text-gray-900">Transcrição automática</p>
-                                <p className="text-sm text-gray-600">Grave a consulta e a IA preenche a anamnese automaticamente</p>
+                                <p className="font-semibold text-foreground">Transcrição automática</p>
+                                <p className="text-sm text-muted-foreground">Grave a consulta e a IA preenche a anamnese automaticamente</p>
                             </div>
                         </div>
                         <FeatureGate feature="ai-recording">

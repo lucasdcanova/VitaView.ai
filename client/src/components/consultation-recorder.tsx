@@ -314,7 +314,7 @@ export function ConsultationRecorder({
                     <Info className="h-5 w-5 text-blue-600" />
                     Consentimento do Paciente
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-base text-gray-700">
+                  <AlertDialogDescription className="text-base text-muted-foreground">
                     É <strong>extremamente importante</strong> solicitar e confirmar o consentimento do paciente antes de iniciar a gravação.
                     <br /><br />
                     Recomendamos que você inicie a gravação perguntando: <br />
@@ -339,11 +339,11 @@ export function ConsultationRecorder({
             <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2 text-primary-700">
+                  <AlertDialogTitle className="flex items-center gap-2 text-foreground">
                     <Sparkles className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                     Limite de Transcrição Excedido
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-base text-gray-700">
+                  <AlertDialogDescription className="text-base text-muted-foreground">
                     Você atingiu o limite de minutos de transcrição do seu plano atual.
                     <br /><br />
                     Para continuar transcrevendo ilimitadamente sem interrupções, ative o pacote <strong>Transcription Power</strong>.
@@ -371,16 +371,18 @@ export function ConsultationRecorder({
         return (
           <Card className={cn(
             "p-3 border-2",
-            recordingState === "recording" ? "border-red-400 bg-red-50" : "border-yellow-400 bg-yellow-50"
+            recordingState === "recording"
+              ? "border-red-300 bg-red-50 dark:border-red-500/50 dark:bg-red-500/10"
+              : "border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-500/10"
           )}>
             <div className="flex items-center gap-3">
               {/* Indicador de gravação */}
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "w-3 h-3 rounded-full",
-                  recordingState === "recording" ? "bg-red-500 animate-pulse" : "bg-yellow-500"
+                  recordingState === "recording" ? "bg-red-500 animate-pulse" : "bg-amber-500"
                 )} />
-                <span className="font-mono text-lg font-semibold text-gray-700">
+                <span className="font-mono text-lg font-semibold text-foreground">
                   {formatTime(recordingTime)}
                 </span>
               </div>
@@ -415,14 +417,14 @@ export function ConsultationRecorder({
                   variant="ghost"
                   size="sm"
                   onClick={cancelRecording}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 >
                   Cancelar
                 </Button>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {recordingState === "recording"
                 ? "Gravando consulta... Fale normalmente com o paciente."
                 : "Gravação pausada. Clique em retomar para continuar."}
@@ -432,12 +434,12 @@ export function ConsultationRecorder({
 
       case "processing":
         return (
-          <Card className="p-3 border-2 border-zinc-200 bg-zinc-50">
+          <Card className="p-3 border-2 border-border bg-muted/35">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               <div>
-                <p className="font-medium text-zinc-800">Processando gravação...</p>
-                <p className="text-xs text-zinc-500">
+                <p className="font-medium text-foreground">Processando gravação...</p>
+                <p className="text-xs text-muted-foreground">
                   Transcrevendo áudio e gerando anamnese inteligente
                 </p>
               </div>
@@ -447,12 +449,12 @@ export function ConsultationRecorder({
 
       case "success":
         return (
-          <Card className="p-3 border-2 border-green-400 bg-green-50">
+          <Card className="p-3 border-2 border-green-300 bg-green-50 dark:border-green-500/45 dark:bg-green-500/10">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-300" />
               <div>
-                <p className="font-medium text-green-700">Transcrição concluída!</p>
-                <p className="text-xs text-green-600">
+                <p className="font-medium text-green-700 dark:text-green-300">Transcrição concluída!</p>
+                <p className="text-xs text-green-700/80 dark:text-green-200/80">
                   A anamnese e os dados clínicos foram preenchidos automaticamente
                 </p>
               </div>
@@ -462,12 +464,12 @@ export function ConsultationRecorder({
 
       case "error":
         return (
-          <Card className="p-3 border-2 border-red-400 bg-red-50">
+          <Card className="p-3 border-2 border-red-300 bg-red-50 dark:border-red-500/50 dark:bg-red-500/10">
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-300 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-red-700">Erro na gravação</p>
-                <p className="text-xs text-red-600">{errorMessage}</p>
+                <p className="font-medium text-red-700 dark:text-red-300">Erro na gravação</p>
+                <p className="text-xs text-red-700/85 dark:text-red-200/85">{errorMessage}</p>
               </div>
               <Button
                 variant="ghost"
@@ -476,7 +478,7 @@ export function ConsultationRecorder({
                   setRecordingState("idle");
                   setErrorMessage(null);
                 }}
-                className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                className="text-red-700 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200 hover:bg-red-100/80 dark:hover:bg-red-500/20"
               >
                 Tentar novamente
               </Button>
