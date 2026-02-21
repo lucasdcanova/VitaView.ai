@@ -98,6 +98,37 @@ if (process.env.STRIPE_SECRET_KEY) {
   // Stripe secret key not found. Payment features will be disabled.
 }
 
+const calculatePeriodEnd = (start: Date, interval: string | null | undefined): Date => {
+  const periodEnd = new Date(start);
+
+  if (interval === "year") {
+    periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    return periodEnd;
+  }
+
+  if (interval === "semester" || interval === "6month") {
+    periodEnd.setMonth(periodEnd.getMonth() + 6);
+    return periodEnd;
+  }
+
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+  return periodEnd;
+};
+
+const getPlanChargeAmount = (plan: { price: number; promoPrice?: number | null }) => {
+  if (typeof plan.promoPrice === "number" && plan.promoPrice > 0) {
+    return plan.promoPrice;
+  }
+  return plan.price;
+};
+
+const getBillingReturnUrl = (req: Request) => {
+  if (process.env.APP_URL) {
+    return `${process.env.APP_URL.replace(/\/$/, "")}/subscription`;
+  }
+  return `${req.protocol}://${req.get("host")}/subscription`;
+};
+
 const scryptAsync = promisify(scrypt);
 
 const hashPassword = async (password: string) => {
@@ -2855,19 +2886,26 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       const userId = req.user!.id;
-      const { planId } = req.body;
-      if (!planId) {
+      const { planId } = req.body as { planId?: number | string };
+      const parsedPlanId = Number(planId);
+
+      if (!Number.isInteger(parsedPlanId)) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
       }
 
       // Buscar detalhes do plano
-      const plan = await storage.getSubscriptionPlan(planId);
-      if (!plan) {
+      const plan = await storage.getSubscriptionPlan(parsedPlanId);
+      if (!plan || !plan.isActive) {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
 
       if (plan.price === 0) {
         return res.status(400).json({ message: "Plano gratuito não requer pagamento" });
+      }
+
+      const amountToCharge = getPlanChargeAmount(plan);
+      if (!Number.isInteger(amountToCharge) || amountToCharge <= 0) {
+        return res.status(400).json({ message: "Valor do plano inválido para cobrança" });
       }
 
       // Criar ou buscar customer no Stripe
@@ -2886,13 +2924,15 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Criar payment intent
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: plan.price, // Preço já está em centavos
+        amount: amountToCharge, // Preço em centavos
         currency: "brl",
         customer: stripeCustomerId,
+        receipt_email: user.email || undefined,
         metadata: {
           userId: userId.toString(),
-          planId: planId.toString(),
-          planName: plan.name
+          planId: parsedPlanId.toString(),
+          planName: plan.name,
+          amount: amountToCharge.toString()
         },
         payment_method_types: ['card']
       });
@@ -2900,6 +2940,28 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
       res.status(500).json({ message: "Erro ao criar intenção de pagamento: " + error.message });
+    }
+  });
+
+  app.post("/api/create-billing-portal-session", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: "Stripe não configurado" });
+      }
+
+      const user = req.user!;
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ message: "Cliente Stripe não encontrado para este usuário" });
+      }
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: getBillingReturnUrl(req),
+      });
+
+      return res.json({ url: session.url });
+    } catch (error: any) {
+      return res.status(500).json({ message: "Erro ao abrir portal de cobrança: " + error.message });
     }
   });
 
@@ -2999,119 +3061,163 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   // Webhook para eventos do Stripe
   app.post("/api/webhook", async (req, res) => {
-    let event;
+    if (!stripe) {
+      return res.status(503).send("Stripe não configurado");
+    }
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      if (process.env.NODE_ENV === "production") {
+        return res.status(500).send("STRIPE_WEBHOOK_SECRET não configurado");
+      }
+      return res.status(202).json({
+        received: false,
+        message: "Webhook ignorado: configure STRIPE_WEBHOOK_SECRET para validar assinatura",
+      });
+    }
+
+    const signature = req.headers["stripe-signature"];
+    if (typeof signature !== "string" || !signature) {
+      return res.status(400).send("Webhook Error: missing stripe-signature header");
+    }
 
     try {
-      // Verificar assinatura do webhook, necessário configurar o webhook secret
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      const payload = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body ?? "");
+      const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 
-      if (webhookSecret) {
-        const signature = req.headers['stripe-signature'] as string;
-        event = stripe!.webhooks.constructEvent(
-          req.body,
-          signature,
-          webhookSecret
-        );
-      } else {
-        // Para ambiente de desenvolvimento
-        event = req.body;
-      }
-
-      // Lidar com os eventos
       switch (event.type) {
-        case 'payment_intent.succeeded':
-          const paymentIntent = event.data.object;
+        case "payment_intent.succeeded": {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          const userId = Number(paymentIntent.metadata?.userId);
+          const planId = Number(paymentIntent.metadata?.planId);
 
-          // Extrair metadados
-          const { userId, planId } = paymentIntent.metadata;
+          if (!Number.isInteger(userId) || !Number.isInteger(planId)) {
+            break;
+          }
 
-          if (userId && planId) {
-            // Criar assinatura para o usuário
-            await storage.createUserSubscription({
-              userId: parseInt(userId),
-              planId: parseInt(planId),
+          const plan = await storage.getSubscriptionPlan(planId);
+          if (!plan || !plan.isActive) {
+            break;
+          }
+
+          const expectedAmount = getPlanChargeAmount(plan);
+          if (paymentIntent.amount !== expectedAmount) {
+            logger.warn("[Stripe Webhook] payment_intent.succeeded with amount mismatch", {
+              userId,
+              planId,
+              expectedAmount,
+              paidAmount: paymentIntent.amount,
+            });
+            break;
+          }
+
+          const existingSubscription = await storage.getUserSubscription(userId);
+          if (existingSubscription?.planId === planId) {
+            break;
+          }
+
+          if (existingSubscription) {
+            await storage.cancelUserSubscription(existingSubscription.id);
+          }
+
+          const now = new Date();
+          await storage.createUserSubscription({
+            userId,
+            planId,
+            status: "active",
+            stripeCustomerId: typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
+            stripeSubscriptionId: null,
+            currentPeriodStart: now,
+            currentPeriodEnd: calculatePeriodEnd(now, plan.interval),
+          });
+
+          if (typeof paymentIntent.customer === "string") {
+            const user = await storage.getUser(userId);
+            if (user && !user.stripeCustomerId) {
+              await storage.updateUser(userId, { stripeCustomerId: paymentIntent.customer });
+            }
+          }
+
+          break;
+        }
+
+        case "setup_intent.succeeded": {
+          const setupIntent = event.data.object as Stripe.SetupIntent;
+          const userId = Number(setupIntent.metadata?.userId);
+          const planId = Number(setupIntent.metadata?.planId);
+
+          if (!Number.isInteger(userId) || !Number.isInteger(planId)) {
+            break;
+          }
+
+          const plan = await storage.getSubscriptionPlan(planId);
+          if (!plan || !plan.stripePriceId || typeof setupIntent.customer !== "string") {
+            break;
+          }
+
+          const stripeSubscription = await stripe.subscriptions.create({
+            customer: setupIntent.customer,
+            items: [{ price: plan.stripePriceId }],
+            default_payment_method: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : undefined,
+            metadata: setupIntent.metadata ?? {},
+          }) as any;
+
+          const existingSubscription = await storage.getUserSubscription(userId);
+          if (existingSubscription) {
+            await storage.cancelUserSubscription(existingSubscription.id);
+          }
+
+          await storage.createUserSubscription({
+            userId,
+            planId,
+            status: "active",
+            stripeCustomerId: setupIntent.customer,
+            stripeSubscriptionId: stripeSubscription.id,
+            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+          });
+
+          break;
+        }
+
+        case "invoice.payment_succeeded": {
+          const invoice = event.data.object as any;
+          const stripeSubscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : null;
+          if (!stripeSubscriptionId) {
+            break;
+          }
+
+          const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId) as any;
+          const relatedSubscriptions = await storage.getAllSubscriptionsByStripeId(stripeSubscriptionId);
+
+          for (const subscription of relatedSubscriptions) {
+            await storage.updateUserSubscription(subscription.id, {
               status: "active",
-              stripeCustomerId: paymentIntent.customer,
-              stripeSubscriptionId: null,
-              currentPeriodStart: new Date(),
-              currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+              canceledAt: null,
+              currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+              currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
             });
           }
           break;
+        }
 
-        case 'setup_intent.succeeded':
-          // Quando o método de pagamento é configurado com sucesso
-          const setupIntent = event.data.object;
+        case "customer.subscription.deleted": {
+          const canceledSubscription = event.data.object as Stripe.Subscription;
+          const relatedSubscriptions = await storage.getAllSubscriptionsByStripeId(canceledSubscription.id);
 
-          // Extrair metadados
-          const setupMetadata = setupIntent.metadata;
-
-          if (setupMetadata.userId && setupMetadata.planId) {
-            // Criar assinatura recorrente no Stripe
-            // Aqui precisaríamos do ID do preço no Stripe para o plano selecionado
-            const plan = await storage.getSubscriptionPlan(parseInt(setupMetadata.planId));
-
-            if (plan && plan.stripePriceId) {
-              // Criar assinatura no Stripe
-              const stripeSubscription = await stripe!.subscriptions.create({
-                customer: setupIntent.customer,
-                items: [{ price: plan.stripePriceId }],
-                default_payment_method: setupIntent.payment_method,
-                metadata: setupMetadata
-              }) as any;
-
-              // Criar assinatura no banco de dados
-              await storage.createUserSubscription({
-                userId: parseInt(setupMetadata.userId),
-                planId: parseInt(setupMetadata.planId),
-                status: "active",
-                stripeCustomerId: setupIntent.customer,
-                stripeSubscriptionId: stripeSubscription.id,
-                currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-              });
-            }
-          }
-          break;
-
-        case 'invoice.payment_succeeded':
-          // Quando um pagamento recorrente é bem-sucedido
-          const invoice = event.data.object;
-
-          if (invoice.subscription) {
-            // Atualizar período da assinatura
-            const stripeSubscription = await stripe!.subscriptions.retrieve(invoice.subscription) as any;
-
-            // Encontrar assinatura no banco de dados
-            const subscriptions = await storage.getAllSubscriptionsByStripeId(invoice.subscription);
-
-            for (const subscription of subscriptions) {
-              // Atualizar período da assinatura
-              await storage.updateUserSubscription(subscription.id, {
-                currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-              });
-            }
-          }
-          break;
-
-        case 'customer.subscription.deleted':
-          // Quando uma assinatura é cancelada
-          const canceledSubscription = event.data.object;
-
-          // Encontrar assinatura no banco de dados
-          const subscriptions = await storage.getAllSubscriptionsByStripeId(canceledSubscription.id);
-
-          for (const subscription of subscriptions) {
-            // Cancelar assinatura no banco de dados
+          for (const subscription of relatedSubscriptions) {
             await storage.cancelUserSubscription(subscription.id);
           }
           break;
+        }
+
+        default:
+          break;
       }
 
-      res.json({ received: true });
+      return res.json({ received: true });
     } catch (error) {
-      res.status(400).send(`Webhook Error: ${(error as Error).message}`);
+      return res.status(400).send(`Webhook Error: ${(error as Error).message}`);
     }
   });
 
@@ -3119,16 +3225,20 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/activate-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { planId, paymentIntentId } = req.body;
+      const { planId, paymentIntentId } = req.body as { planId?: number | string; paymentIntentId?: string };
+      const parsedPlanId = Number(planId);
 
-      if (!planId) {
+      if (!Number.isInteger(parsedPlanId)) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
       }
 
-      const plan = await storage.getSubscriptionPlan(planId);
-      if (!plan) {
+      const plan = await storage.getSubscriptionPlan(parsedPlanId);
+      if (!plan || !plan.isActive) {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
+
+      const expectedAmount = getPlanChargeAmount(plan);
+      let stripeCustomerId = req.user!.stripeCustomerId || null;
 
       // Para planos pagos, verificar o pagamento no Stripe
       if (plan.price > 0) {
@@ -3145,10 +3255,41 @@ export async function registerRoutes(app: Express): Promise<void> {
         if (paymentIntent.metadata.userId !== userId.toString()) {
           return res.status(403).json({ message: "Pagamento não pertence a este usuário" });
         }
+
+        // Verificar que o pagamento corresponde ao plano escolhido
+        if (paymentIntent.metadata.planId !== parsedPlanId.toString()) {
+          return res.status(400).json({ message: "Pagamento não corresponde ao plano selecionado" });
+        }
+
+        if (paymentIntent.currency?.toLowerCase() !== "brl") {
+          return res.status(400).json({ message: "Moeda de pagamento inválida" });
+        }
+
+        if (paymentIntent.amount !== expectedAmount) {
+          return res.status(400).json({ message: "Valor de pagamento inválido para o plano selecionado" });
+        }
+
+        if (typeof paymentIntent.customer === "string") {
+          stripeCustomerId = paymentIntent.customer;
+
+          if (!req.user!.stripeCustomerId) {
+            await storage.updateUser(userId, { stripeCustomerId: paymentIntent.customer });
+          }
+        }
       }
 
-      // Cancelar assinatura existente se houver
+      // Idempotência: se já está no mesmo plano ativo, apenas retorna sucesso
       const existingSubscription = await storage.getUserSubscription(userId);
+      if (existingSubscription && existingSubscription.status === "active" && existingSubscription.planId === parsedPlanId) {
+        return res.json({
+          success: true,
+          subscription: existingSubscription,
+          plan,
+          idempotent: true
+        });
+      }
+
+      // Cancelar assinatura existente se houver mudança de plano
       if (existingSubscription && existingSubscription.status === "active") {
         if (existingSubscription.stripeSubscriptionId && stripe) {
           try {
@@ -3162,21 +3303,14 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Calcular período baseado no intervalo do plano
       const now = new Date();
-      let periodEnd = new Date(now);
-      if (plan.interval === 'year') {
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-      } else if (plan.interval === 'semester' || plan.interval === '6month') {
-        periodEnd.setMonth(periodEnd.getMonth() + 6);
-      } else {
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-      }
+      const periodEnd = calculatePeriodEnd(now, plan.interval);
 
       // Criar assinatura no banco
       const subscription = await storage.createUserSubscription({
         userId,
-        planId,
+        planId: parsedPlanId,
         status: "active",
-        stripeCustomerId: req.user!.stripeCustomerId || null,
+        stripeCustomerId,
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd
       });
@@ -3203,26 +3337,33 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
       }
 
-      // Se tiver ID de assinatura do Stripe, cancelar no Stripe também
+      // Se tiver ID de assinatura do Stripe, agendar cancelamento no fim do período
       if (subscription.stripeSubscriptionId) {
-        try {
-          await stripe!.subscriptions.update(subscription.stripeSubscriptionId, {
-            cancel_at_period_end: true
-          });
-        } catch (error: any) {
-          // Continuar mesmo com erro no Stripe, para garantir cancelamento local
+        if (!stripe) {
+          return res.status(503).json({ message: "Stripe não configurado para cancelar assinatura" });
         }
+
+        await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+          cancel_at_period_end: true
+        });
       }
 
-      // Cancelar no banco de dados
-      const canceledSubscription = await storage.cancelUserSubscription(subscription.id);
+      // Mantém acesso até o fim do período atual
+      const now = new Date();
+      const stillInCurrentPeriod = new Date(subscription.currentPeriodEnd) > now;
+      const updatedSubscription = stillInCurrentPeriod
+        ? await storage.updateUserSubscription(subscription.id, {
+          status: "active",
+          canceledAt: now
+        })
+        : await storage.cancelUserSubscription(subscription.id);
 
       res.json({
         success: true,
-        subscription: canceledSubscription
+        subscription: updatedSubscription
       });
-    } catch (error) {
-      res.status(500).json({ message: "Erro ao cancelar assinatura" });
+    } catch (error: any) {
+      res.status(500).json({ message: "Erro ao cancelar assinatura: " + error.message });
     }
   });
 

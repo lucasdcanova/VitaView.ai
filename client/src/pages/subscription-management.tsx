@@ -313,8 +313,8 @@ const SubscriptionManagement = () => {
     },
     onSuccess: () => {
       toast({
-        title: 'Assinatura cancelada',
-        description: 'Sua assinatura foi cancelada com sucesso.',
+        title: 'Cancelamento agendado',
+        description: 'Sua assinatura permanecerá ativa até o fim do período atual.',
         variant: 'default',
       });
       setCancelDialogOpen(false);
@@ -330,6 +330,20 @@ const SubscriptionManagement = () => {
     },
     onSettled: () => {
       setIsProcessing(false);
+    }
+  });
+
+  const billingPortalMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/create-billing-portal-session');
+      return res.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao abrir portal',
+        description: error.message || 'Não foi possível abrir o portal de cobrança.',
+        variant: 'destructive',
+      });
     }
   });
 
@@ -356,6 +370,20 @@ const SubscriptionManagement = () => {
   const handleCancelSubscription = async () => {
     setIsProcessing(true);
     await cancelSubscriptionMutation.mutateAsync();
+  };
+
+  const handleManageBilling = async () => {
+    const data = await billingPortalMutation.mutateAsync();
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+
+    toast({
+      title: 'Portal indisponível',
+      description: 'Não foi possível redirecionar para o portal de cobrança.',
+      variant: 'destructive'
+    });
   };
 
   const handleStartPayment = async (planId: number) => {
@@ -493,7 +521,7 @@ const SubscriptionManagement = () => {
 
                   {/* Vita Pro Card - NEW 2-COLUMN LAYOUT */}
                   <Card className="md:col-span-2 border-primary/20 shadow-md relative overflow-hidden">
-                    <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg border-l border-b border-primary/20 shadow-sm">
                       RECOMENDADO
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 h-full">
@@ -1169,9 +1197,15 @@ const SubscriptionManagement = () => {
                   </div>
                   {hasActiveSubscription && (
                     <div className="mt-4 flex justify-end">
-                      <Button variant="outline" size="sm" className="gap-2 text-xs">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={handleManageBilling}
+                        disabled={billingPortalMutation.isPending}
+                      >
                         <CreditCard className="h-4 w-4" />
-                        Gerenciar meios de pagamento
+                        {billingPortalMutation.isPending ? 'Abrindo portal...' : 'Gerenciar meios de pagamento'}
                       </Button>
                     </div>
                   )}

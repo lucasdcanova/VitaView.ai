@@ -1088,7 +1088,10 @@ export class MemStorage implements IStorage {
   }
 
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
-    return Array.from(this.subscriptionsMap.values()).find(sub => sub.userId === userId && sub.status === "active");
+    const now = new Date();
+    return Array.from(this.subscriptionsMap.values())
+      .filter((sub) => sub.userId === userId && sub.status === "active" && new Date(sub.currentPeriodEnd) > now)
+      .sort((a, b) => new Date(b.currentPeriodEnd).getTime() - new Date(a.currentPeriodEnd).getTime())[0];
   }
 
   async createUserSubscription(subscription: InsertSubscription): Promise<Subscription> {
@@ -2794,7 +2797,18 @@ export class DatabaseStorage implements IStorage {
     return p;
   }
   async getUserSubscription(userId: number): Promise<Subscription | undefined> {
-    const [s] = await db.select().from(subscriptions).where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active")));
+    const [s] = await db
+      .select()
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.userId, userId),
+          eq(subscriptions.status, "active"),
+          gt(subscriptions.currentPeriodEnd, new Date())
+        )
+      )
+      .orderBy(desc(subscriptions.currentPeriodEnd))
+      .limit(1);
     return s;
   }
   async createUserSubscription(s: InsertSubscription): Promise<Subscription> {
@@ -3612,4 +3626,3 @@ export class DatabaseStorage implements IStorage {
 export const storage: IStorage = process.env.DATABASE_URL
   ? new DatabaseStorage()
   : new MemStorage();
-

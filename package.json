@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "stripe:validate": "ts-node --transpile-only scripts/validate-stripe.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.850.0",
