@@ -14,8 +14,6 @@ import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
-import { FloatingBugButton } from "@/components/floating-bug-button";
-import { SupportWidget } from "@/components/support-widget";
 
 declare global {
   interface Window {
@@ -176,8 +174,6 @@ function AuthenticatedRoutes() {
                 </Suspense>
                 <CommandPalette />
                 <OnboardingTour />
-                <FloatingBugButton />
-                <SupportWidget />
               </TooltipProvider>
             </ThemeProvider>
           </SidebarProvider>
