@@ -81,23 +81,7 @@
   }
 
   // =============================================
-  // 4. Cookie Consent Banner
-  // =============================================
-  var cookieBanner = document.getElementById('cookie-banner');
-  var cookieAccept = document.getElementById('cookie-accept');
-  var cookieReject = document.getElementById('cookie-reject');
-
-  function dismissCookies() {
-    if (cookieBanner) {
-      cookieBanner.classList.add('hidden');
-    }
-  }
-
-  if (cookieAccept) cookieAccept.addEventListener('click', dismissCookies);
-  if (cookieReject) cookieReject.addEventListener('click', dismissCookies);
-
-  // =============================================
-  // 5. Navbar Scroll Effect
+  // 4. Navbar Scroll Effect
   // =============================================
   var navbar = document.getElementById('landing-navbar');
   if (navbar) {
@@ -111,7 +95,7 @@
   }
 
   // =============================================
-  // 6. FAQ Accordion
+  // 5. FAQ Accordion
   // =============================================
   document.querySelectorAll('[data-faq-toggle]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -137,7 +121,7 @@
   });
 
   // =============================================
-  // 7. Smooth Scroll for Anchor Links
+  // 6. Smooth Scroll for Anchor Links
   // =============================================
   document.querySelectorAll('a[href^="#"]').forEach(function (link) {
     link.addEventListener('click', function (e) {

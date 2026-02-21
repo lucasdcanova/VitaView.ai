@@ -18,7 +18,6 @@ const DIST_LANDING = path.resolve(ROOT, 'dist', 'landing');
 
 // Páginas para pre-renderizar
 const PAGES = [
-  { route: '/', component: '../client/src/pages/landing-page.tsx', output: 'index.html' },
   { route: '/termos', component: '../client/src/pages/terms-page.tsx', output: 'termos.html' },
   { route: '/privacidade', component: '../client/src/pages/privacy-page.tsx', output: 'privacidade.html' },
   // quick-summary usa useAuth, não pode ser pre-renderizada como HTML estático
@@ -183,6 +182,13 @@ async function main() {
   // Criar diretório de output
   fs.mkdirSync(DIST_LANDING, { recursive: true });
 
+  // Limpar arquivos antigos para evitar páginas obsoletas (ex: index.html legado)
+  for (const file of fs.readdirSync(DIST_LANDING)) {
+    if (file.endsWith('.html') || file === 'landing.css') {
+      fs.rmSync(path.resolve(DIST_LANDING, file), { force: true });
+    }
+  }
+
   // Compilar Tailwind CSS
   const cssContent = await compileTailwindCSS();
 
@@ -194,14 +200,12 @@ async function main() {
       const bodyHtml = await prerenderPage(page);
 
       const titles = {
-        '/': 'VitaView AI — Prontuário Inteligente com IA para Médicos',
         '/termos': 'Termos de Uso - VitaView AI',
         '/privacidade': 'Política de Privacidade - VitaView AI',
         '/quick-summary': 'Resumo Rápido - VitaView AI',
       };
 
       const descriptions = {
-        '/': 'Prontuário inteligente que organiza exames, prescrições e histórico do paciente com IA. Transcrição de voz, análise laboratorial e agenda integrada. LGPD compliant.',
         '/termos': 'Termos de Uso da plataforma VitaView AI.',
         '/privacidade': 'Política de Privacidade da plataforma VitaView AI.',
         '/quick-summary': 'Resumo rápido sobre a plataforma VitaView AI.',

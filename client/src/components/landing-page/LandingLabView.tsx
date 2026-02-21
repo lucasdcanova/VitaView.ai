@@ -1,8 +1,62 @@
-import { motion } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import { LineChart, ArrowRight } from "lucide-react";
+import { useRef } from "react";
+
+type TrendBarProps = {
+    delay: number;
+    isActive: boolean;
+    prefersReducedMotion: boolean;
+    tone: "soft" | "solid";
+    value: string;
+    width: `${number}%` | string;
+};
+
+function TrendBar({ delay, isActive, prefersReducedMotion, tone, value, width }: TrendBarProps) {
+    const barClasses = tone === "solid"
+        ? "bg-white text-black"
+        : "bg-white/30 text-white";
+
+    return (
+        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
+            <motion.div
+                className={`${barClasses} h-full rounded-full flex items-center justify-end pr-2 relative overflow-hidden`}
+                initial={prefersReducedMotion ? false : { width: 0, opacity: 0.86, filter: "blur(1.5px)" }}
+                animate={isActive ? { width, opacity: 1, filter: "blur(0px)" } : { width: 0, opacity: 0.86, filter: "blur(1.5px)" }}
+                transition={
+                    prefersReducedMotion
+                        ? { duration: 0 }
+                        : { duration: 0.95, delay, ease: [0.22, 1, 0.36, 1] }
+                }
+            >
+                {!prefersReducedMotion && (
+                    <motion.span
+                        aria-hidden="true"
+                        className={`absolute inset-y-0 -left-8 w-10 ${
+                            tone === "solid"
+                                ? "bg-gradient-to-r from-transparent via-[#f5f5f5]/70 to-transparent"
+                                : "bg-gradient-to-r from-transparent via-white/45 to-transparent"
+                        }`}
+                        initial={{ x: "-120%" }}
+                        animate={isActive ? { x: "240%" } : { x: "-120%" }}
+                        transition={{ duration: 1.08, delay: delay + 0.28, ease: [0.4, 0, 0.2, 1] }}
+                    />
+                )}
+                <span className="relative z-10 text-xs font-semibold">{value}</span>
+            </motion.div>
+        </div>
+    );
+}
 
 export function LandingLabView() {
+    const analyzerRef = useRef<HTMLDivElement | null>(null);
+    const isAnalyzerInView = useInView(analyzerRef, {
+        once: true,
+        amount: 0.22,
+        margin: "0px 0px -12% 0px",
+    });
+    const prefersReducedMotion = useReducedMotion() ?? false;
+
     return (
         <section id="como-funciona" className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden">
             {/* Elementos decorativos de fundo */}
@@ -41,10 +95,14 @@ export function LandingLabView() {
                 {/* Lab Results Analyzer Interface */}
                 <motion.div
                     className="bg-black/40 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden max-w-6xl mx-auto border border-white/10"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
+                    ref={analyzerRef}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+                    animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                    transition={
+                        prefersReducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.62, delay: 0.08, ease: [0.22, 1, 0.36, 1] }
+                    }
                 >
                     {/* Analyzer Header */}
                     <div className="bg-[#111111] p-6 text-white border-b border-white/10">
@@ -70,10 +128,13 @@ export function LandingLabView() {
                             {/* Hemoglobina Chart */}
                             <motion.div
                                 className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.1 }}
+                                initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+                                animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                transition={
+                                    prefersReducedMotion
+                                        ? { duration: 0 }
+                                        : { duration: 0.48, delay: 0.14, ease: [0.22, 1, 0.36, 1] }
+                                }
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
@@ -89,31 +150,25 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "75%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.2 }}
-                                            >
-                                                <span className="text-xs font-semibold text-white">13.2</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.22}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="soft"
+                                            value="13.2"
+                                            width="75%"
+                                        />
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "80%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.3 }}
-                                            >
-                                                <span className="text-xs font-semibold text-black">14.2</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.3}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="solid"
+                                            value="14.2"
+                                            width="80%"
+                                        />
                                     </div>
                                 </div>
 
@@ -129,10 +184,13 @@ export function LandingLabView() {
                             {/* Glicemia Chart */}
                             <motion.div
                                 className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.2 }}
+                                initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+                                animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                transition={
+                                    prefersReducedMotion
+                                        ? { duration: 0 }
+                                        : { duration: 0.48, delay: 0.2, ease: [0.22, 1, 0.36, 1] }
+                                }
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
@@ -148,31 +206,25 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "85%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.2 }}
-                                            >
-                                                <span className="text-xs font-semibold text-white">102</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.26}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="soft"
+                                            value="102"
+                                            width="85%"
+                                        />
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "90%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.3 }}
-                                            >
-                                                <span className="text-xs font-semibold text-black">108</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.34}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="solid"
+                                            value="108"
+                                            width="90%"
+                                        />
                                     </div>
                                 </div>
 
@@ -188,10 +240,13 @@ export function LandingLabView() {
                             {/* Colesterol Total Chart */}
                             <motion.div
                                 className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 hidden md:block"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.3 }}
+                                initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+                                animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                transition={
+                                    prefersReducedMotion
+                                        ? { duration: 0 }
+                                        : { duration: 0.48, delay: 0.26, ease: [0.22, 1, 0.36, 1] }
+                                }
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
@@ -207,31 +262,25 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "78%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.2 }}
-                                            >
-                                                <span className="text-xs font-semibold text-white">195</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.28}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="soft"
+                                            value="195"
+                                            width="78%"
+                                        />
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "72%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.3 }}
-                                            >
-                                                <span className="text-xs font-semibold text-black">180</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.36}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="solid"
+                                            value="180"
+                                            width="72%"
+                                        />
                                     </div>
                                 </div>
 
@@ -247,10 +296,13 @@ export function LandingLabView() {
                             {/* Creatinina Chart */}
                             <motion.div
                                 className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 hidden md:block"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.4 }}
+                                initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+                                animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                transition={
+                                    prefersReducedMotion
+                                        ? { duration: 0 }
+                                        : { duration: 0.48, delay: 0.32, ease: [0.22, 1, 0.36, 1] }
+                                }
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
@@ -266,31 +318,25 @@ export function LandingLabView() {
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Mar</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white/30 h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "65%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.2 }}
-                                            >
-                                                <span className="text-xs font-semibold text-white">0.9</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.3}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="soft"
+                                            value="0.9"
+                                            width="65%"
+                                        />
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-xs text-[#9E9E9E] w-16">Abr</span>
-                                        <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                                            <motion.div
-                                                className="bg-white h-full rounded-full flex items-center justify-end pr-2"
-                                                initial={{ width: 0 }}
-                                                whileInView={{ width: "67%" }}
-                                                viewport={{ once: true }}
-                                                transition={{ duration: 0.8, delay: 0.3 }}
-                                            >
-                                                <span className="text-xs font-semibold text-black">0.92</span>
-                                            </motion.div>
-                                        </div>
+                                        <TrendBar
+                                            delay={0.38}
+                                            isActive={isAnalyzerInView}
+                                            prefersReducedMotion={prefersReducedMotion}
+                                            tone="solid"
+                                            value="0.92"
+                                            width="67%"
+                                        />
                                     </div>
                                 </div>
 
@@ -307,10 +353,13 @@ export function LandingLabView() {
                         {/* Summary Section */}
                         <motion.div
                             className="mt-8 bg-white/5 rounded-xl p-6 border border-white/10"
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.5 }}
+                            initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+                            animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+                            transition={
+                                prefersReducedMotion
+                                    ? { duration: 0 }
+                                    : { duration: 0.52, delay: 0.42, ease: [0.22, 1, 0.36, 1] }
+                            }
                         >
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-white/10 rounded-lg">

@@ -146,24 +146,6 @@ nav {
   transform: scale(1.01);
 }
 
-/* Cookie consent slide-up */
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.cookie-banner {
-  animation: slideUp 0.5s ease-out 1s both;
-}
-
-.cookie-banner.hidden {
-  animation: none;
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
 /* Scroll-to-top button */
 .scroll-to-top {
   opacity: 0;

@@ -795,17 +795,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Cookie consent optimizations */
-  .cookie-consent-button {
-    min-height: 44px;
-    min-width: 100px;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    cursor: pointer;
-    position: relative;
-    z-index: 1;
-  }
-
   /* Montserrat font utility */
   .font-heading {
     font-family: 'Montserrat', system-ui, sans-serif;

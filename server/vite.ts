@@ -135,7 +135,6 @@ export function serveStatic(app: Express) {
 
   // Servir landing pages como HTML estático pré-renderizado (sem React)
   const landingRoutes: Record<string, string> = {
-    '/': 'index.html',
     '/termos': 'termos.html',
     '/privacidade': 'privacidade.html',
   };
