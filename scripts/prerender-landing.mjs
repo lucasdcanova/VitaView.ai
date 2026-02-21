@@ -45,13 +45,13 @@ function htmlTemplate(title, description, bodyHtml, cssContent) {
   <meta property="og:type" content="website">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="/assets/vitaview_ai_transparent_2k.png">
+  <meta property="og:image" content="/LOGO%20COM%20TEXTO.PNG">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="/assets/vitaview_ai_transparent_2k.png">
+  <meta property="twitter:image" content="/LOGO%20COM%20TEXTO.PNG">
 
   <!-- Theme and Icons -->
   <meta name="theme-color" content="#212121">
@@ -194,14 +194,14 @@ async function main() {
       const bodyHtml = await prerenderPage(page);
 
       const titles = {
-        '/': 'VitaView AI - Plataforma de Gestão de Saúde Inteligente',
+        '/': 'VitaView AI — Prontuário Inteligente com IA para Médicos',
         '/termos': 'Termos de Uso - VitaView AI',
         '/privacidade': 'Política de Privacidade - VitaView AI',
         '/quick-summary': 'Resumo Rápido - VitaView AI',
       };
 
       const descriptions = {
-        '/': 'VitaView AI: Prontuário inteligente que organiza exames, histórico e tendências de saúde do paciente. HIPAA e LGPD compliant.',
+        '/': 'Prontuário inteligente que organiza exames, prescrições e histórico do paciente com IA. Transcrição de voz, análise laboratorial e agenda integrada. LGPD compliant.',
         '/termos': 'Termos de Uso da plataforma VitaView AI.',
         '/privacidade': 'Política de Privacidade da plataforma VitaView AI.',
         '/quick-summary': 'Resumo rápido sobre a plataforma VitaView AI.',
