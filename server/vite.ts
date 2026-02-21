@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request } from "express";
 import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
@@ -7,6 +7,42 @@ import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
+
+function stripQuery(url: string): string {
+  return url.split("?")[0];
+}
+
+function isAssetRequest(url: string): boolean {
+  const pathname = stripQuery(url);
+
+  // Any file extension should be treated as a direct asset request.
+  if (path.extname(pathname) !== "") return true;
+
+  return (
+    pathname.startsWith("/assets/") ||
+    pathname.startsWith("/@vite") ||
+    pathname.startsWith("/@fs/") ||
+    pathname.startsWith("/@id/") ||
+    pathname.startsWith("/node_modules/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/sw.js" ||
+    pathname === "/manifest.webmanifest"
+  );
+}
+
+function shouldServeSpaHtml(req: Request): boolean {
+  if (req.method !== "GET" && req.method !== "HEAD") return false;
+
+  const url = req.originalUrl || req.url || "/";
+  const pathname = stripQuery(url);
+  const accept = req.headers.accept || "";
+
+  if (pathname.startsWith("/api")) return false;
+  if (isAssetRequest(url)) return false;
+
+  // Only serve index.html for real document navigations.
+  return accept.includes("text/html");
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -40,8 +76,28 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Prevent stale production chunk requests from being answered with Vite HTML 404 pages.
+  app.use((req, res, next) => {
+    const url = req.originalUrl || req.url || "";
+    const pathname = stripQuery(url);
+    const isStaleBuildAsset =
+      req.method === "GET" &&
+      pathname.startsWith("/assets/") &&
+      /\.(js|mjs|css)$/i.test(pathname);
+
+    if (isStaleBuildAsset) {
+      return res.status(404).type("text/plain").send("Not Found");
+    }
+
+    return next();
+  });
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
+    if (!shouldServeSpaHtml(req)) {
+      return next();
+    }
+
     const url = req.originalUrl;
 
     try {
@@ -98,8 +154,15 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist (SPA catch-all)
-  app.use("*", (_req, res) => {
+  // SPA fallback only for HTML navigation requests.
+  app.use("*", (req, res, next) => {
+    if (!shouldServeSpaHtml(req)) {
+      if (isAssetRequest(req.originalUrl || req.url || "")) {
+        return res.status(404).type("text/plain").send("Not Found");
+      }
+      return next();
+    }
+
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

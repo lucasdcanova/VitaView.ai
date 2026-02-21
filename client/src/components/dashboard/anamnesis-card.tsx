@@ -548,14 +548,14 @@ export function AnamnesisCard() {
                     </div>
 
                     {/* Destaque para gravação de consulta */}
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-red-200/80 dark:border-red-500/30 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/35 dark:to-orange-950/20">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-red-100 dark:bg-red-500/20">
-                                <Mic className="h-5 w-5 text-red-600 dark:text-red-300" />
+                            <div className="p-2 rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35">
+                                <Mic className="h-5 w-5 text-red-600 dark:text-red-200" />
                             </div>
                             <div>
                                 <p className="font-semibold text-foreground">Transcrição automática</p>
-                                <p className="text-sm text-muted-foreground">Grave a consulta e a IA preenche a anamnese automaticamente</p>
+                                <p className="text-sm text-red-800/80 dark:text-red-100/80">Grave a consulta e a IA preenche a anamnese automaticamente</p>
                             </div>
                         </div>
                         <FeatureGate feature="ai-recording">

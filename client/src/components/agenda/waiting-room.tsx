@@ -108,7 +108,7 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                className="flex-[2] bg-charcoal hover:bg-charcoal/85 text-white"
+                                                className="flex-[2] bg-primary text-primary-foreground hover:bg-primary/90"
                                                 onClick={() => onStartService(appointment)}
                                             >
                                                 <Play className="w-4 h-4 mr-1" />

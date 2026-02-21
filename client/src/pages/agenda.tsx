@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
@@ -7,6 +8,7 @@ import { NewAppointmentModal } from "@/components/agenda/new-appointment-modal";
 import { WaitingRoom } from "@/components/agenda/waiting-room";
 import { Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
@@ -25,9 +27,11 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Agenda() {
+    const [, setLocation] = useLocation();
     const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState<any>(null);
     const { toast } = useToast();
+    const { profiles, setPatientInService } = useProfiles();
     const [aiCommand, setAiCommand] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiProposal, setAiProposal] = useState<any>(null);
@@ -212,6 +216,40 @@ export default function Agenda() {
         }
     };
 
+    const handleStartServiceFromWaitingRoom = (appointment: Appointment) => {
+        if (!appointment.profileId) {
+            toast({
+                title: "Paciente não identificado",
+                description: "Não é possível iniciar atendimento sem um perfil de paciente vinculado.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const hasProfile = profiles.some((profile) => profile.id === appointment.profileId);
+        if (!hasProfile) {
+            toast({
+                title: "Paciente indisponível",
+                description: "Não foi possível localizar o perfil do paciente para iniciar o atendimento.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        updateAppointmentMutation.mutate(
+            {
+                id: appointment.id,
+                status: 'in_progress',
+            },
+            {
+                onSuccess: () => {
+                    setPatientInService(appointment.profileId!, appointment.id);
+                    setLocation("/atendimento");
+                },
+            }
+        );
+    };
+
     return (
         <div className="min-h-screen flex flex-col">
             <MobileHeader />
@@ -307,12 +345,7 @@ export default function Agenda() {
                         <div className="p-6 pt-0">
                             <WaitingRoom
                                 appointments={appointments}
-                                onStartService={(appointment) => {
-                                    updateAppointmentMutation.mutate({
-                                        id: appointment.id,
-                                        status: 'in_progress'
-                                    });
-                                }}
+                                onStartService={handleStartServiceFromWaitingRoom}
                                 onRemoveCheckIn={(appointment) => {
                                     updateAppointmentMutation.mutate({
                                         id: appointment.id,

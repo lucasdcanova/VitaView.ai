@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 
+const REPORT_ONLY_UNSUPPORTED_DIRECTIVES = new Set([
+  'upgrade-insecure-requests',
+  'block-all-mixed-content',
+]);
+
 // Known trusted domains for different services
 const TRUSTED_DOMAINS = {
   stripe: [
@@ -170,16 +175,20 @@ export function applyCSPHeader(req: Request, res: Response, next: NextFunction) 
   }
 
   const cspString = formatCSPHeader(directives);
+  const reportOnlyDirectives = Object.fromEntries(
+    Object.entries(directives).filter(([directive]) => !REPORT_ONLY_UNSUPPORTED_DIRECTIVES.has(directive))
+  );
+  const reportOnlyCspString = formatCSPHeader(reportOnlyDirectives);
 
   if (isDev) {
     // Development: Report-only mode
     res.setHeader('Content-Security-Policy-Report-Only',
-      `${cspString}; report-uri /api/csp-violation-report`);
+      `${reportOnlyCspString}; report-uri /api/csp-violation-report`);
   } else {
     // Production: Enforcing mode
     res.setHeader('Content-Security-Policy', cspString);
     res.setHeader('Content-Security-Policy-Report-Only',
-      `${cspString}; report-uri /api/csp-violation-report`);
+      `${reportOnlyCspString}; report-uri /api/csp-violation-report`);
   }
 
   next();

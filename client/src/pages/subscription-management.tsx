@@ -109,6 +109,23 @@ interface ClinicData {
 type PlanCategory = 'solo' | 'clinic' | 'hospital' | null;
 type BillingPeriod = 'month' | '6month' | 'year';
 
+const normalizePlanName = (planName?: string | null) =>
+  (planName || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const hasClinicAccessByPlan = (planName?: string | null) => {
+  const normalized = normalizePlanName(planName);
+  return (
+    normalized.includes('team') ||
+    normalized.includes('business') ||
+    normalized.includes('hospital') ||
+    normalized.includes('clinica')
+  );
+};
+
 const SubscriptionManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -974,7 +991,7 @@ const SubscriptionManagement = () => {
 
             {/* SECTION 2: Clinic Management → redirects to /minha-clinica */}
             {
-              hasActiveSubscription && (currentPlan?.name?.toLowerCase().includes('team') || currentPlan?.name?.toLowerCase().includes('business')) && (
+              hasActiveSubscription && hasClinicAccessByPlan(currentPlan?.name) && (
                 <section className="space-y-4">
                   <Card className="border border-border">
                     <CardContent className="pt-6">

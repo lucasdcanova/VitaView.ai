@@ -49,6 +49,23 @@ interface ClinicData {
     isAdmin: boolean;
 }
 
+const normalizePlanName = (planName?: string | null) =>
+    (planName || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+const hasClinicAccessByPlan = (planName?: string | null) => {
+    const normalized = normalizePlanName(planName);
+    return (
+        normalized.includes("team") ||
+        normalized.includes("business") ||
+        normalized.includes("hospital") ||
+        normalized.includes("clinica")
+    );
+};
+
 const MyClinic = () => {
     const { toast } = useToast();
     const { user } = useAuth();
@@ -144,8 +161,7 @@ const MyClinic = () => {
     });
 
     const currentPlan = subscriptionData?.plan;
-    const planName = currentPlan?.name?.toLowerCase() || '';
-    const isClinicPlan = planName.includes('team') || planName.includes('business');
+    const isClinicPlan = hasClinicAccessByPlan(currentPlan?.name);
     const clinic = clinicData?.clinic;
 
     if (isLoading) {
@@ -177,7 +193,7 @@ const MyClinic = () => {
                             Ferramentas completas de equipe, agenda unificada e configurações avançadas para clínicas multiprofissionais.
                         </p>
                         <p className="text-sm text-muted-foreground mb-8">
-                            Disponível nos planos <span className="font-semibold text-foreground">Vita Team</span> e <span className="font-semibold text-foreground">Vita Business</span>.
+                            Disponível nos planos <span className="font-semibold text-foreground">Vita Team</span>, <span className="font-semibold text-foreground">Vita Business</span> e <span className="font-semibold text-foreground">Hospitais</span>.
                         </p>
                         <Button
                             onClick={() => navigate('/subscription')}

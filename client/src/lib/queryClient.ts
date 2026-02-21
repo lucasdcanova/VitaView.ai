@@ -47,6 +47,23 @@ function checkAIWarning(res: Response) {
 // Helper function to delay execution
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const normalizeNetworkError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    const message = error.message || "";
+    const isNetworkFailure =
+      error.name === "TypeError" ||
+      /failed to fetch|networkerror|load failed|err_connection_refused/i.test(message);
+
+    if (isNetworkFailure) {
+      return new Error("Não foi possível conectar ao servidor. Verifique se o backend está ativo em http://localhost:3000.");
+    }
+
+    return error;
+  }
+
+  return new Error("Erro de conexão com o servidor.");
+};
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -78,7 +95,7 @@ export async function apiRequest(
       checkAIWarning(res);
       return res;
     } catch (error) {
-      lastError = error as Error;
+      lastError = normalizeNetworkError(error);
 
       // If it's a network error and we have retries left, retry
       if (attempt < maxRetries) {
@@ -87,7 +104,7 @@ export async function apiRequest(
         continue;
       }
 
-      throw error;
+      throw lastError;
     }
   }
 

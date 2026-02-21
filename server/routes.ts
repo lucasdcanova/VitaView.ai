@@ -129,6 +129,36 @@ const getBillingReturnUrl = (req: Request) => {
   return `${req.protocol}://${req.get("host")}/subscription`;
 };
 
+const normalizePlanName = (planName?: string | null) => {
+  return (planName || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+};
+
+const getClinicLimitsByPlanName = (planName?: string | null) => {
+  const normalizedPlanName = normalizePlanName(planName);
+
+  const hasClinicAccess =
+    normalizedPlanName.includes("team") ||
+    normalizedPlanName.includes("business") ||
+    normalizedPlanName.includes("hospital") ||
+    normalizedPlanName.includes("clinica");
+
+  if (!hasClinicAccess) {
+    return null;
+  }
+
+  const isBusinessTier =
+    normalizedPlanName.includes("business") || normalizedPlanName.includes("hospital");
+
+  return {
+    maxProfessionals: isBusinessTier ? 10 : 5,
+    maxSecretaries: 1,
+  };
+};
+
 const scryptAsync = promisify(scrypt);
 
 const hashPassword = async (password: string) => {
@@ -3501,22 +3531,18 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (subscription) {
         const plan = await storage.getSubscriptionPlan(subscription.planId!);
-        const planName = plan?.name.toLowerCase() || '';
-        const isClinicPlan = planName.includes('clínica') || planName.includes('team') || planName.includes('business');
+        const clinicLimits = getClinicLimitsByPlanName(plan?.name);
 
         // If user is on a clinic plan but has limits of a solo plan, update them
-        if (isClinicPlan && (clinic.maxProfessionals <= 1 || clinic.maxSecretaries === 0) && clinic.adminUserId === userId) {
-          const newMaxProfessionals = planName.includes('business') ? 10 : 5;
-          const newMaxSecretaries = 1; // Strict limit of 1
-
+        if (clinicLimits && (clinic.maxProfessionals <= 1 || clinic.maxSecretaries === 0) && clinic.adminUserId === userId) {
           await storage.updateClinic(clinic.id, {
-            maxProfessionals: newMaxProfessionals,
-            maxSecretaries: newMaxSecretaries
+            maxProfessionals: clinicLimits.maxProfessionals,
+            maxSecretaries: clinicLimits.maxSecretaries
           });
 
           // Update local clinic object for response
-          clinic.maxProfessionals = newMaxProfessionals;
-          clinic.maxSecretaries = newMaxSecretaries;
+          clinic.maxProfessionals = clinicLimits.maxProfessionals;
+          clinic.maxSecretaries = clinicLimits.maxSecretaries;
         }
       }
 
@@ -3548,10 +3574,14 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/clinics", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { name } = req.body;
+      const clinicName = typeof req.body?.name === "string" ? req.body.name.trim() : "";
 
-      if (!name) {
-        return res.status(400).json({ message: "Nome da clínica é obrigatório" });
+      if (!clinicName) {
+        return res.status(400).json({ message: "Nome da clínica é obrigatório." });
+      }
+
+      if (clinicName.length < 3) {
+        return res.status(400).json({ message: "Nome da clínica deve ter ao menos 3 caracteres." });
       }
 
       // Check if user already has a clinic
@@ -3566,35 +3596,21 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Assinatura não encontrada" });
       }
 
-      // Verify user has clinic plan or professional plan
+      // Verify user has a clinic-enabled plan
       const plan = await storage.getSubscriptionPlan(subscription.planId!);
-      const planName = plan?.name.toLowerCase() || '';
-      const isClinicPlan = planName.includes('clínica') || planName.includes('team');
-      const isProPlan = planName.includes('profissional') || planName.includes('pro');
+      const clinicLimits = getClinicLimitsByPlanName(plan?.name);
 
-      if (!isClinicPlan && !isProPlan) {
+      if (!clinicLimits) {
         return res.status(400).json({ message: "Seu plano não inclui recursos de clínica" });
-      }
-
-      // Determine limits based on plan
-      let maxProfessionals = 1;
-      let maxSecretaries = 0;
-
-      if (isClinicPlan) {
-        maxProfessionals = planName.includes('business') ? 10 : 5; // Default for basic clinic is 5, business is 10
-        maxSecretaries = 1; // Strict limit of 1
-      } else if (isProPlan) {
-        maxProfessionals = 1; // Just the owner
-        maxSecretaries = 1;
       }
 
       // Create clinic
       const clinic = await storage.createClinic({
-        name,
+        name: clinicName,
         adminUserId: userId,
         subscriptionId: subscription.id,
-        maxProfessionals,
-        maxSecretaries
+        maxProfessionals: clinicLimits.maxProfessionals,
+        maxSecretaries: clinicLimits.maxSecretaries
       });
 
       res.status(201).json({

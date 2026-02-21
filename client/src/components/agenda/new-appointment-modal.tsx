@@ -571,8 +571,8 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                 className={cn(
                                     "w-full md:w-auto",
                                     mode === 'blocked'
-                                        ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-charcoal hover:bg-charcoal/85 text-white"
+                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        : "bg-primary text-primary-foreground hover:bg-primary/90"
                                 )}
                             >
                                 {isEditing ? "Salvar Alterações" : (mode === 'blocked' ? "Confirmar Bloqueio" : "Agendar Consulta")}

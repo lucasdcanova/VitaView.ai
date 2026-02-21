@@ -301,7 +301,7 @@ export function ConsultationRecorder({
               size="default"
               onClick={() => setShowConsentDialog(true)}
               disabled={disabled}
-              className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-4 py-2"
+              className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md hover:shadow-lg transition-all duration-200 font-medium px-4 py-2"
             >
               <Mic className="h-4 w-4" />
               Gravar Consulta
@@ -328,7 +328,7 @@ export function ConsultationRecorder({
                       setShowConsentDialog(false);
                       startRecording();
                     }}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     Entendi, Iniciar Gravação
                   </AlertDialogAction>
@@ -407,7 +407,7 @@ export function ConsultationRecorder({
                   variant="default"
                   size="sm"
                   onClick={stopRecording}
-                  className="gap-2 bg-red-600 hover:bg-red-700"
+                  className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   <Square className="h-3 w-3" />
                   Finalizar

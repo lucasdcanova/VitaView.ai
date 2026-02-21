@@ -638,7 +638,7 @@ export function AgendaCalendar({
                             <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
                               {canStartService ? (
                                 <Button
-                                  className="w-full bg-charcoal hover:bg-charcoal/85 text-white shadow-sm"
+                                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                                   onClick={() => handleStartService(app)}
                                   disabled={updateStatusMutation.isPending}
                                 >
@@ -830,7 +830,7 @@ export function AgendaCalendar({
                                         {canStartService && (
                                           <Button
                                             size="sm"
-                                            className="bg-charcoal hover:bg-charcoal/85 text-white w-full"
+                                            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
                                             onClick={() => handleStartService(appointment)}
                                             disabled={updateStatusMutation.isPending}
                                           >
