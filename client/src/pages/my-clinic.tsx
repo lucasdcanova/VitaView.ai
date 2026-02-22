@@ -488,16 +488,18 @@ const MyClinic = () => {
                                                                 <Badge variant="outline" className="text-xs text-muted-foreground border-border">
                                                                     Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
                                                                 </Badge>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                                                                    onClick={() => cancelInvitationMutation.mutate(invite.id)}
-                                                                    disabled={cancelInvitationMutation.isPending}
-                                                                    title="Cancelar convite"
-                                                                >
-                                                                    {cancelInvitationMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                                                                </Button>
+                                                                {clinicData.isAdmin && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                                                        onClick={() => cancelInvitationMutation.mutate(invite.id)}
+                                                                        disabled={cancelInvitationMutation.isPending}
+                                                                        title="Cancelar convite"
+                                                                    >
+                                                                        {cancelInvitationMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -686,9 +688,13 @@ const MyClinic = () => {
 
     // ─── Main content logic ───
     const renderContent = () => {
+        // Se o usuário já pertence a uma clínica, ele deve ver o conteúdo da clínica,
+        // independentemente do seu plano pessoal (pois é membro/secretário de uma clínica premium).
+        if (clinic) return renderClinicContent();
+
+        // Se não tem clínica, verificamos o plano para ver se ele pode criar uma.
         if (!isClinicPlan) return renderPremiumGate();
-        if (!clinic) return renderCreateClinic();
-        return renderClinicContent();
+        return renderCreateClinic();
     };
 
     return (

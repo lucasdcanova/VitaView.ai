@@ -27,6 +27,7 @@ export interface IStorage {
   createProfile(profile: InsertProfile): Promise<Profile>;
   getProfile(id: number, clinicId?: number): Promise<Profile | undefined>;
   getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]>;
+  getProfilesByClinicId(clinicId: number): Promise<Profile[]>;
   updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined>;
   deleteProfile(id: number): Promise<boolean>;
   getDefaultProfileForUser(userId: number): Promise<Profile | undefined>;
@@ -181,6 +182,7 @@ export interface IStorage {
   updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined>;
   getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]>;
   getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]>;
+  getClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]>;
 
   // Triage operations
   createTriageRecord(record: any): Promise<any>;
@@ -560,8 +562,32 @@ export class MemStorage implements IStorage {
   }
 
   async getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]> {
-    return Array.from(this.profiles.values()).filter(
+    const createdProfiles = Array.from(this.profiles.values()).filter(
       (profile) => profile.userId === userId && (!clinicId || (profile as any).clinicId === clinicId)
+    );
+
+    const userAppointments = Array.from(this.appointmentsMap.values()).filter(
+      (appointment) => (appointment as any).userId === userId
+    );
+    const profileIdsFromAppointments = Array.from(new Set(userAppointments.map(a => (a as any).profileId).filter(id => id !== null))) as number[];
+
+    const appointmentProfiles = Array.from(this.profiles.values()).filter(
+      (profile) => profileIdsFromAppointments.includes(profile.id) && (!clinicId || (profile as any).clinicId === clinicId)
+    );
+
+    const allProfiles = [...createdProfiles];
+    for (const p of appointmentProfiles) {
+      if (!allProfiles.some(existing => existing.id === p.id)) {
+        allProfiles.push(p);
+      }
+    }
+
+    return allProfiles;
+  }
+
+  async getProfilesByClinicId(clinicId: number): Promise<Profile[]> {
+    return Array.from(this.profiles.values()).filter(
+      (profile) => (profile as any).clinicId === clinicId
     );
   }
 
@@ -1484,6 +1510,13 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]> {
+    const emailLower = email.toLowerCase();
+    return Array.from(this.clinicInvitationsMap.values()).filter(
+      (invitation) => invitation.email.toLowerCase() === emailLower && invitation.status === 'pending'
+    );
+  }
+
   async getPrescription(id: number): Promise<Prescription | undefined> {
     return this.prescriptionsMap.get(id);
   }
@@ -2295,10 +2328,41 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
   async getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]> {
-    const whereClause = clinicId
+    // Busca os pacientes criados pelo usuário
+    const createdWhere = clinicId
       ? and(eq(profiles.userId, userId), eq(profiles.clinicId, clinicId))
       : eq(profiles.userId, userId);
-    return await db.select().from(profiles).where(whereClause);
+
+    const createdProfiles = await db.select().from(profiles).where(createdWhere);
+
+    // Busca os pacientes que possuem agendamento com este profissional
+    const userAppointments = await db.select({ profileId: appointments.profileId })
+      .from(appointments)
+      .where(eq(appointments.professionalId, userId));
+
+    const profileIdsFromAppointments = [...new Set(userAppointments.map(a => a.profileId).filter(id => id !== null))] as number[];
+
+    let appointmentProfiles: Profile[] = [];
+    if (profileIdsFromAppointments.length > 0) {
+      const aptWhere = clinicId
+        ? and(inArray(profiles.id, profileIdsFromAppointments), eq(profiles.clinicId, clinicId))
+        : inArray(profiles.id, profileIdsFromAppointments);
+
+      appointmentProfiles = await db.select().from(profiles).where(aptWhere);
+    }
+
+    // Merge e remove duplicados
+    const allProfiles = [...createdProfiles];
+    for (const p of appointmentProfiles) {
+      if (!allProfiles.some(existing => existing.id === p.id)) {
+        allProfiles.push(p);
+      }
+    }
+
+    return allProfiles;
+  }
+  async getProfilesByClinicId(clinicId: number): Promise<Profile[]> {
+    return await db.select().from(profiles).where(eq(profiles.clinicId, clinicId));
   }
   async updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined> {
     if (profile.isDefault) {
@@ -3437,6 +3501,18 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return conversation;
+  }
+
+  async getClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]> {
+    return await db
+      .select()
+      .from(clinicInvitations)
+      .where(
+        and(
+          sql`LOWER(${clinicInvitations.email}) = ${email.toLowerCase()}`,
+          eq(clinicInvitations.status, 'pending')
+        )
+      );
   }
 
   async getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]> {

@@ -413,12 +413,34 @@ export function registerPatientRoutes(app: Express) {
     // --- Profiles ---
     app.get("/api/profiles", ensureAuthenticated, async (req, res) => {
         try {
-            const userId = (req.user as any).id;
-            const profiles = await storage.getProfilesByUserId(userId);
+            const professionalIdParams = req.query.professionalId as string;
+            let targetUserId = (req.user as any).id;
+            const user = req.user as any;
+
+            if (professionalIdParams) {
+                const professionalId = parseInt(professionalIdParams, 10);
+
+                // Verifica se o usuário atual é secretária ou admin e pertence a uma clínica
+                if (user.clinicId && (user.clinicRole === 'secretary' || user.clinicRole === 'admin')) {
+                    // Verifica se o profissional solicitado pertence à mesma clínica
+                    const members = await storage.getClinicMembers(user.clinicId);
+                    const isMember = members.some(m => m.id === professionalId);
+
+                    if (!isMember) {
+                        return res.status(403).json({ message: "Profissional não pertence à sua clínica" });
+                    }
+
+                    targetUserId = professionalId;
+                } else {
+                    return res.status(403).json({ message: "Permissão negada para visualizar os pacientes de outro profissional" });
+                }
+            }
+
+            const profiles = await storage.getProfilesByUserId(targetUserId);
 
             // LGPD Audit Log
             await storage.createAuditLog({
-                userId: userId,
+                userId: user.id,
                 action: "READ",
                 resourceType: "user_profiles",
                 resourceId: null,
@@ -427,7 +449,7 @@ export function registerPatientRoutes(app: Express) {
                 requestMethod: "GET",
                 requestPath: "/api/profiles",
                 statusCode: 200,
-                accessReason: "profile_list_view",
+                accessReason: professionalIdParams ? "secretary_profile_list_view" : "profile_list_view",
                 severity: "INFO",
                 complianceFlags: { lgpd: true }
             });

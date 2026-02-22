@@ -588,7 +588,33 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/appointments", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
-      const appointments = await storage.getAppointmentsByUserId(req.user.id);
+
+      const professionalIdParams = req.query.professionalId as string;
+      let targetUserId = req.user.id;
+
+      if (professionalIdParams) {
+        const professionalId = parseInt(professionalIdParams, 10);
+
+        // Verifica se o usuário atual é secretária ou admin e pertence a uma clínica
+        if (req.user.clinicId && (req.user.clinicRole === 'secretary' || req.user.clinicRole === 'admin')) {
+          // Verifica se o profissional solicitado pertence à mesma clínica
+          const members = await storage.getClinicMembers(req.user.clinicId);
+          const isMember = members.some(m => m.id === professionalId);
+
+          if (!isMember) {
+            return res.status(403).json({ message: "Profissional não pertence à sua clínica" });
+          }
+
+          // Secretárias visualizam a agenda da clínica inteira quando selecionam um médico. 
+          // O front-end lida com a filtragem visual ou o backend envia todos da clinica.
+          const appointments = await storage.getAppointmentsByClinicId(req.user.clinicId);
+          return res.json(appointments || []);
+        } else {
+          return res.status(403).json({ message: "Permissão negada para visualizar a agenda de outro profissional" });
+        }
+      }
+
+      const appointments = await storage.getAppointmentsByUserId(targetUserId);
       res.json(appointments || []);
     } catch (error) {
       console.error("Erro ao buscar agendamentos:", error);
@@ -2940,8 +2966,18 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.get("/api/user-subscription", ensureAuthenticated, async (req, res) => {
     try {
-      const userId = req.user!.id;
-      const subscription = await storage.getUserSubscription(userId);
+      const user = req.user!;
+      const userId = user.id;
+      let subscription = await storage.getUserSubscription(userId);
+
+      // Se o usuário não tiver assinatura principal mas pertencer a uma clínica,
+      // ele herda a assinatura do administrador da clínica.
+      if (!subscription && user.clinicId) {
+        const clinic = await storage.getClinic(user.clinicId);
+        if (clinic) {
+          subscription = await storage.getUserSubscription(clinic.adminUserId);
+        }
+      }
 
       // Se não houver assinatura, retornar objeto vazio em vez de erro 404
       if (!subscription) {
@@ -3458,7 +3494,16 @@ export async function registerRoutes(app: Express): Promise<void> {
       const canCreateProfile = await storage.canCreateProfile(userId);
 
       // Buscar assinatura e plano do usuário para informações detalhadas
-      const subscription = await storage.getUserSubscription(userId);
+      let subscription = await storage.getUserSubscription(userId);
+
+      const user = req.user!;
+      if (!subscription && user.clinicId) {
+        const clinic = await storage.getClinic(user.clinicId);
+        if (clinic) {
+          subscription = await storage.getUserSubscription(clinic.adminUserId);
+        }
+      }
+
       let plan = null;
 
       if (subscription) {
@@ -3835,6 +3880,17 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Mark invitation as accepted
       await storage.updateClinicInvitation(invitation.id, { status: 'accepted' });
 
+      // Update session user to reflect the new clinic membership
+      user.clinicId = invitation.clinicId;
+      user.clinicRole = invitation.role;
+
+      // Ensure the session is saved with the new user state
+      req.login(user, (err) => {
+        if (err) {
+          logger.error("Error saving session after accepting invitation:", err);
+        }
+      });
+
       const clinic = await storage.getClinic(invitation.clinicId);
 
       res.json({
@@ -3845,6 +3901,73 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       logger.error("Error accepting invitation:", error);
       res.status(500).json({ message: "Erro ao aceitar convite" });
+    }
+  });
+
+  // Reject clinic invitation
+  app.post("/api/clinic-invitations/:token/reject", ensureAuthenticated, async (req, res) => {
+    try {
+      const { token } = req.params;
+      const user = req.user!;
+
+      const invitation = await storage.getClinicInvitationByToken(token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Convite não encontrado" });
+      }
+
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ message: "Este convite já foi processado" });
+      }
+
+      // Check if user's email matches invitation
+      if (user.email && user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+        return res.status(400).json({
+          message: "Este convite foi enviado para outro email"
+        });
+      }
+
+      // Mark invitation as rejected
+      await storage.updateClinicInvitation(invitation.id, { status: 'rejected' });
+
+      res.json({
+        success: true,
+        message: "Convite recusado com sucesso"
+      });
+    } catch (error) {
+      logger.error("Error rejecting invitation:", error);
+      res.status(500).json({ message: "Erro ao recusar convite" });
+    }
+  });
+
+  // Get user's pending clinic invitations
+  app.get("/api/my-invitations", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      console.log("[DEBUG] /api/my-invitations - fetching for user:", user.id, "email:", user.email);
+
+      if (!user.email) {
+        console.log("[DEBUG] /api/my-invitations - NO EMAIL RETURNED. User email is falsy.");
+        return res.json({ invitations: [] });
+      }
+
+      const pendingInvitations = await storage.getClinicInvitationsByEmail(user.email);
+      console.log(`[DEBUG] /api/my-invitations - Found ${pendingInvitations.length} invitations pending.`);
+
+      // Enrich with clinic names
+      const enrichedInvitations = await Promise.all(
+        pendingInvitations.map(async (inv) => {
+          const clinic = await storage.getClinic(inv.clinicId);
+          return {
+            ...inv,
+            clinicName: clinic?.name || "Clínica Desconhecida",
+          };
+        })
+      );
+
+      res.json({ invitations: enrichedInvitations });
+    } catch (error) {
+      logger.error("Error fetching my invitations:", error);
+      res.status(500).json({ message: "Erro ao buscar convites" });
     }
   });
 

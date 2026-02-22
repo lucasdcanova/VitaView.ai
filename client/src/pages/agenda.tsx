@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -25,21 +25,62 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function Agenda() {
     const [, setLocation] = useLocation();
+    const { user } = useAuth();
     const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState<any>(null);
     const { toast } = useToast();
-    const { profiles, setPatientInService } = useProfiles();
+    const {
+        profiles,
+        setPatientInService,
+        selectedProfessionalId,
+        setSelectedProfessionalId
+    } = useProfiles();
     const [aiCommand, setAiCommand] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiProposal, setAiProposal] = useState<any>(null);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const isSecretary = user?.clinicRole === 'secretary';
+
+    // Fetch clinic members for secretary
+    const { data: clinicData } = useQuery<{ members: any[] }>({
+        queryKey: [`/api/clinics/${user?.clinicId}/members`],
+        enabled: !!user?.clinicId && isSecretary,
+    });
+
+    const professionals = useMemo(() => {
+        if (!clinicData?.members) return [];
+        return clinicData.members.filter((m: any) => m.clinicRole === 'admin' || m.clinicRole === 'member');
+    }, [clinicData]);
+
+    // Set default professional for secretary if none selected
+    useEffect(() => {
+        if (isSecretary && professionals.length > 0 && !selectedProfessionalId) {
+            setSelectedProfessionalId(professionals[0].id);
+        }
+    }, [isSecretary, professionals, selectedProfessionalId, setSelectedProfessionalId]);
+
     const { data: appointments = [] } = useQuery<Appointment[]>({
-        queryKey: ["/api/appointments"],
+        queryKey: ["/api/appointments", selectedProfessionalId],
+        queryFn: async () => {
+            const url = selectedProfessionalId
+                ? `/api/appointments?professionalId=${selectedProfessionalId}`
+                : `/api/appointments`;
+            const res = await apiRequest("GET", url);
+            return res.json();
+        }
     });
 
     // Create appointment mutation
@@ -242,7 +283,7 @@ export default function Agenda() {
                 status: 'in_progress',
             },
             {
-                onMutate: () => {
+                onSuccess: () => {
                     setPatientInService(appointment.profileId!, appointment.id);
                     setLocation("/atendimento");
                 },
@@ -267,11 +308,30 @@ export default function Agenda() {
                             showTitleAsMain={true}
                             fullWidth={true}
                         >
-                            <div className="w-full md:w-[500px] space-y-2">
-                                <div className="relative">
+                            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-start md:items-center">
+                                {isSecretary && professionals.length > 0 && (
+                                    <div className="w-full md:w-64">
+                                        <Select
+                                            value={selectedProfessionalId?.toString()}
+                                            onValueChange={(value) => setSelectedProfessionalId(Number(value))}
+                                        >
+                                            <SelectTrigger className="w-full bg-white">
+                                                <SelectValue placeholder="Selecione um profissional" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {professionals.map((prof: any) => (
+                                                    <SelectItem key={prof.id} value={prof.id.toString()}>
+                                                        {prof.fullName || prof.username}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                                <div className="relative w-full md:w-[500px]">
                                     <Input
                                         placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
-                                        className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-20 shadow-sm"
+                                        className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-20 shadow-sm w-full"
                                         value={aiCommand}
                                         onChange={(e) => setAiCommand(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}

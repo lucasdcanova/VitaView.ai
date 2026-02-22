@@ -18,6 +18,9 @@ interface ProfileContextType {
   inServiceAppointmentId: number | null;
   setPatientInService: (profileId: number, appointmentId: number) => void;
   clearPatientInService: () => void;
+  // Secretária
+  selectedProfessionalId: number | null;
+  setSelectedProfessionalId: (id: number | null) => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | null>(null);
@@ -28,6 +31,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
   const [inServiceAppointmentId, setInServiceAppointmentId] = useState<number | null>(null);
   const previousUserIdRef = useRef<number | null>(null);
+
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
 
   const clearActiveProfile = () => {
     setActiveProfileState(null);
@@ -45,12 +50,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     isLoading,
     refetch: refetchProfiles,
   } = useQuery({
-    queryKey: ["/api/profiles"],
+    queryKey: ["/api/profiles", selectedProfessionalId],
     queryFn: async () => {
       if (!user) return [];
 
       try {
-        const res = await apiRequest("GET", "/api/profiles");
+        const url = selectedProfessionalId
+          ? `/api/profiles?professionalId=${selectedProfessionalId}`
+          : `/api/profiles`;
+        const res = await apiRequest("GET", url);
         return await res.json();
       } catch (error) {
         // Error fetching profiles
@@ -287,6 +295,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         inServiceAppointmentId,
         setPatientInService,
         clearPatientInService,
+        selectedProfessionalId,
+        setSelectedProfessionalId,
       }}
     >
       {children}

@@ -540,132 +540,138 @@ export default function Profile() {
                               />
                             </div>
 
-                            <Separator className="my-6" />
+                            {user?.clinicRole !== 'secretary' && (
+                              <>
+                                <Separator className="my-6" />
 
-                            <h3 className="text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormField
-                                control={profileForm.control}
-                                name="crm"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>CRM / Registro</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={profileForm.control}
-                                name="specialty"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Especialidade</FormLabel>
-                                    <FormControl>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <h3 className="text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                    control={profileForm.control}
+                                    name="crm"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>CRM / Registro</FormLabel>
                                         <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Selecione uma especialidade" />
-                                          </SelectTrigger>
+                                          <Input {...field} />
                                         </FormControl>
-                                        <SelectContent>
-                                          {MEDICAL_SPECIALTIES.map((specialty) => (
-                                            <SelectItem key={specialty} value={specialty}>
-                                              {specialty}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={profileForm.control}
-                                name="rqe"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>RQE</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={profileForm.control}
-                                name="clinicName"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Nome da Clínica/Consultório</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={profileForm.control}
+                                    name="specialty"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Especialidade</FormLabel>
+                                        <FormControl>
+                                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue placeholder="Selecione uma especialidade" />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              {MEDICAL_SPECIALTIES.map((specialty) => (
+                                                <SelectItem key={specialty} value={specialty}>
+                                                  {specialty}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={profileForm.control}
+                                    name="rqe"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>RQE</FormLabel>
+                                        <FormControl>
+                                          <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={profileForm.control}
+                                    name="clinicName"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Nome da Clínica/Consultório</FormLabel>
+                                        <FormControl>
+                                          <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
 
-                            <FormField
-                              control={profileForm.control}
-                              name="bio"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Biografia Profissional</FormLabel>
-                                  <FormControl>
-                                    <Textarea {...field} className="min-h-[100px]" placeholder="Conte um pouco sobre sua experiência e formação..." />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                                <FormField
+                                  control={profileForm.control}
+                                  name="bio"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Biografia Profissional</FormLabel>
+                                      <FormControl>
+                                        <Textarea {...field} className="min-h-[100px]" placeholder="Conte um pouco sobre sua experiência e formação..." />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </>
+                            )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <FormField
-                                control={profileForm.control}
-                                name="website"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Site</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="https://..." />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={profileForm.control}
-                                name="linkedin"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>LinkedIn</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="URL do perfil" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={profileForm.control}
-                                name="instagram"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Instagram</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="@usuario" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                            {user?.clinicRole !== 'secretary' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField
+                                  control={profileForm.control}
+                                  name="website"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Site</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} placeholder="https://..." />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={profileForm.control}
+                                  name="linkedin"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>LinkedIn</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} placeholder="URL do perfil" />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={profileForm.control}
+                                  name="instagram"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Instagram</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} placeholder="@usuario" />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            )}
 
                             <Button type="submit" disabled={updateProfileMutation.isPending}>
                               {updateProfileMutation.isPending ? (

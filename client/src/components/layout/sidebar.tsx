@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
+import { NotificationBell } from "@/components/notification-bell";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -175,11 +176,17 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Logo Section */}
-        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4 flex justify-center" : "p-4")} data-tour="sidebar-logo">
+        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4 flex flex-col items-center gap-4" : "p-4 flex items-center justify-between")} data-tour="sidebar-logo">
           {isCollapsed ? (
-            <Logo size="sm" showText={false} variant="icon" />
+            <>
+              <Logo size="sm" showText={false} variant="icon" />
+              <NotificationBell />
+            </>
           ) : (
-            <Logo size="md" showText={true} textSize="md" variant="icon" />
+            <>
+              <Logo size="md" showText={true} textSize="md" variant="icon" />
+              <NotificationBell />
+            </>
           )}
         </div>
 
