@@ -57,6 +57,7 @@ interface ClinicData {
     clinics?: UserClinicAccess[];
     activeClinicId?: number | null;
     activeRole?: string | null;
+    patientCount?: number;
     members: ClinicMember[];
     invitations: ClinicInvitation[];
     isAdmin: boolean;
@@ -122,11 +123,6 @@ const MyClinic = () => {
         enabled: !!user,
     });
 
-    const { data: clinicAppointments, isLoading: isLoadingAppointments } = useQuery<any[]>({
-        queryKey: ['/api/clinic/appointments', clinicData?.activeClinicId ?? clinicData?.clinic?.id ?? null],
-        enabled: !!user && !!clinicData?.clinic,
-    });
-
     const createClinicMutation = useMutation({
         mutationFn: async (name: string) => {
             const res = await apiRequest('POST', '/api/clinics', { name });
@@ -176,12 +172,11 @@ const MyClinic = () => {
                 queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
                 queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
                 queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
-                queryClient.invalidateQueries({ queryKey: ['/api/clinic/appointments'] }),
             ]);
 
             toast({
                 title: 'Clínica selecionada',
-                description: 'O contexto de pacientes e agenda foi atualizado.',
+                description: 'O contexto de pacientes da clínica ativa foi atualizado.',
             });
         },
         onError: (error: Error) => {
@@ -461,12 +456,9 @@ const MyClinic = () => {
 
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-muted border border-border rounded-xl h-11">
+                    <TabsList className="grid w-full grid-cols-2 bg-muted border border-border rounded-xl h-11">
                         <TabsTrigger value="equipe" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="agenda" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
-                            <Calendar className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
                         </TabsTrigger>
                         <TabsTrigger value="config" className="flex items-center gap-2 text-xs sm:text-sm rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                             <Settings className="h-4 w-4" /><span className="hidden sm:inline">Configurações</span>
@@ -479,13 +471,14 @@ const MyClinic = () => {
                             const professionals = clinicData.members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member');
                             const secretaries = clinicData.members.filter(m => m.clinicRole === 'secretary');
                             const pendingInvites = clinicData.invitations.filter(i => i.status === 'pending');
+                            const patientCount = clinicData.patientCount ?? 0;
 
                             const profLimit = clinic.maxProfessionals;
                             const secLimit = clinic.maxSecretaries;
 
                             return (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                                         <Card className="border border-border shadow-sm">
                                             <CardContent className="pt-6">
                                                 <div className="flex items-center justify-between">
@@ -505,6 +498,19 @@ const MyClinic = () => {
                                                     <div>
                                                         <p className="text-sm text-muted-foreground">Secretaria</p>
                                                         <p className="text-2xl font-bold text-foreground">{secretaries.length} / {secLimit}</p>
+                                                    </div>
+                                                    <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
+                                                        <Users className="h-5 w-5 text-foreground" />
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="border border-border shadow-sm">
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-sm text-muted-foreground">Pacientes</p>
+                                                        <p className="text-2xl font-bold text-foreground">{patientCount}</p>
                                                     </div>
                                                     <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
                                                         <Users className="h-5 w-5 text-foreground" />
@@ -662,92 +668,6 @@ const MyClinic = () => {
                                 </>
                             );
                         })()}
-                    </TabsContent>
-
-                    {/* TAB: Agenda */}
-                    <TabsContent value="agenda" className="space-y-6 mt-6">
-                        <Card className="border border-border shadow-sm">
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-foreground">Agenda da Clínica</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Agendamentos de hoje para toda a equipe</CardDescription>
-                                    </div>
-                                    <Badge variant="outline" className="flex gap-1 items-center text-muted-foreground border-border">
-                                        <Calendar className="h-3 w-3" />
-                                        {clinicAppointments?.length || 0} agendamentos
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoadingAppointments ? (
-                                    <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                                ) : !clinicAppointments || clinicAppointments.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <div className="w-16 h-16 bg-muted rounded-2xl border border-border flex items-center justify-center mx-auto mb-4">
-                                            <Calendar className="h-7 w-7 text-muted-foreground" />
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum agendamento encontrado</h3>
-                                        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                                            Não há agendamentos registrados para os membros da sua clínica.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-6">
-                                        {Array.from(new Set(clinicAppointments.map(a => a.date))).sort().map(date => (
-                                            <div key={date}>
-                                                <h4 className="text-sm font-semibold text-foreground mb-3 bg-muted border border-border px-3 py-1.5 rounded-lg inline-block">
-                                                    {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                                </h4>
-                                                <div className="space-y-3 pl-3 border-l-2 border-border ml-2">
-                                                    {clinicAppointments.filter(a => a.date === date).map(apt => (
-                                                        <div key={apt.id} className="flex items-start justify-between p-4 bg-card rounded-xl border border-border hover:border-gray-400 hover:shadow-sm transition-all">
-                                                            <div className="flex gap-3">
-                                                                <div className="text-center min-w-[3rem]">
-                                                                    <span className="block text-sm font-bold text-foreground">{apt.time}</span>
-                                                                    <span className="block text-[10px] text-muted-foreground">{apt.duration} min</span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-medium text-foreground">{apt.patientName}</p>
-                                                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                                        <Users className="h-3 w-3" />
-                                                                        Dr(a). {clinicData.members.find(m => m.id === apt.userId)?.fullName || clinicData.members.find(m => m.id === apt.userId)?.username || 'Desconhecido'}
-                                                                    </p>
-                                                                    {apt.type && (() => {
-                                                                        const typeStyles: Record<string, string> = {
-                                                                            consulta: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-                                                                            retorno: 'bg-green-100 text-green-800 border-green-300',
-                                                                            exames: 'bg-purple-100 text-purple-800 border-purple-300',
-                                                                            procedimento: 'bg-blue-100 text-blue-800 border-blue-300',
-                                                                            urgencia: 'bg-red-100 text-red-800 border-red-300',
-                                                                        };
-                                                                        const style = typeStyles[apt.type] || 'bg-gray-100 text-gray-700 border-gray-300';
-                                                                        return (
-                                                                            <Badge variant="secondary" className={`mt-1.5 text-[10px] h-5 border ${style}`}>
-                                                                                {apt.type}
-                                                                            </Badge>
-                                                                        );
-                                                                    })()}
-                                                                </div>
-                                                            </div>
-                                                            <Badge className={
-                                                                apt.status === 'completed' ? 'bg-muted text-foreground border border-border hover:bg-muted' :
-                                                                    apt.status === 'cancelled' ? 'bg-red-50 text-destructive border border-red-100 hover:bg-red-50' :
-                                                                        'bg-muted text-foreground border border-border hover:bg-muted'
-                                                            }>
-                                                                {apt.status === 'scheduled' ? 'Agendado' :
-                                                                    apt.status === 'completed' ? 'Concluido' :
-                                                                        apt.status === 'cancelled' ? 'Cancelado' : apt.status}
-                                                            </Badge>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
                     </TabsContent>
 
                     {/* TAB: Configurações */}

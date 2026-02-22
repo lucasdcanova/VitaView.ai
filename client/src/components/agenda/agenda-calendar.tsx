@@ -25,6 +25,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@shared/schema";
 import { TriageDialog } from "@/components/triage/triage-dialog";
@@ -47,9 +48,16 @@ export function AgendaCalendar({
   onEditAppointment,
   fullWidth = false
 }: AgendaCalendarProps) {
+  const SLOT_INTERVAL_OPTIONS = [10, 15, 20, 30, 60] as const;
   const [currentDate, setCurrentDate] = useState(weekStart);
   const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
+  const [slotIntervalMinutes, setSlotIntervalMinutes] = useState<number>(() => {
+    if (typeof window === "undefined") return 30;
+    const raw = window.localStorage.getItem("vitaview:agenda-slot-interval-minutes");
+    const parsed = raw ? Number.parseInt(raw, 10) : 30;
+    return [10, 15, 20, 30, 60].includes(parsed as any) ? parsed : 30;
+  });
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [, setLocation] = useLocation();
@@ -57,6 +65,12 @@ export function AgendaCalendar({
   const { toast } = useToast();
   const { user } = useAuth();
   const { profiles, setActiveProfile, inServiceAppointmentId, setPatientInService, clearPatientInService } = useProfiles();
+  const isMobile = useIsMobile();
+  const isStandalonePwa = typeof window !== "undefined" && (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
 
   // Current time state for the red line indicator
   const [now, setNow] = useState(new Date());
@@ -65,6 +79,18 @@ export function AgendaCalendar({
     const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
     return () => clearInterval(timer);
   }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("vitaview:agenda-slot-interval-minutes", String(slotIntervalMinutes));
+  }, [slotIntervalMinutes]);
+
+  React.useEffect(() => {
+    // Prioritize the detailed daily view on mobile/PWA where week view gets cramped.
+    if ((isMobile || isStandalonePwa) && viewMode === "week") {
+      setViewMode("day");
+    }
+  }, [isMobile, isStandalonePwa, viewMode]);
 
   // Get display name for the doctor
   const doctorName = user?.fullName || user?.username || "Médico";
@@ -190,13 +216,69 @@ export function AgendaCalendar({
 
   const getTypeStyles = (type: string) => {
     switch (type) {
-      case "consulta": return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
-      case "retorno": return { bg: "bg-green-100", border: "border-green-500", text: "text-green-900", subtext: "text-green-800", label: "text-green-600", dot: "bg-green-500" };
-      case "exames": return { bg: "bg-purple-100", border: "border-purple-500", text: "text-purple-900", subtext: "text-purple-800", label: "text-purple-600", dot: "bg-purple-500" };
-      case "procedimento": return { bg: "bg-blue-100", border: "border-blue-500", text: "text-blue-900", subtext: "text-blue-800", label: "text-blue-600", dot: "bg-blue-500" };
-      case "urgencia": return { bg: "bg-red-100", border: "border-red-500", text: "text-red-900", subtext: "text-red-800", label: "text-red-600", dot: "bg-red-500" };
-      case "blocked": return { bg: "bg-muted", border: "border-border", text: "text-muted-foreground", subtext: "text-muted-foreground", label: "text-muted-foreground", dot: "bg-muted-foreground" };
-      default: return { bg: "bg-yellow-100", border: "border-yellow-500", text: "text-yellow-900", subtext: "text-yellow-800", label: "text-yellow-600", dot: "bg-yellow-500" };
+      case "consulta":
+        return {
+          bg: "bg-yellow-100 dark:bg-amber-950/45",
+          border: "border-yellow-500 dark:border-amber-700",
+          text: "text-yellow-900 dark:text-amber-200",
+          subtext: "text-yellow-800 dark:text-amber-300",
+          label: "text-yellow-600 dark:text-amber-400",
+          dot: "bg-yellow-500"
+        };
+      case "retorno":
+        return {
+          bg: "bg-green-100 dark:bg-emerald-950/45",
+          border: "border-green-500 dark:border-emerald-700",
+          text: "text-green-900 dark:text-emerald-200",
+          subtext: "text-green-800 dark:text-emerald-300",
+          label: "text-green-600 dark:text-emerald-400",
+          dot: "bg-green-500"
+        };
+      case "exames":
+        return {
+          bg: "bg-purple-100 dark:bg-violet-950/45",
+          border: "border-purple-500 dark:border-violet-700",
+          text: "text-purple-900 dark:text-violet-200",
+          subtext: "text-purple-800 dark:text-violet-300",
+          label: "text-purple-600 dark:text-violet-400",
+          dot: "bg-purple-500"
+        };
+      case "procedimento":
+        return {
+          bg: "bg-blue-100 dark:bg-blue-950/45",
+          border: "border-blue-500 dark:border-blue-700",
+          text: "text-blue-900 dark:text-blue-200",
+          subtext: "text-blue-800 dark:text-blue-300",
+          label: "text-blue-600 dark:text-blue-400",
+          dot: "bg-blue-500"
+        };
+      case "urgencia":
+        return {
+          bg: "bg-red-100 dark:bg-red-950/45",
+          border: "border-red-500 dark:border-red-700",
+          text: "text-red-900 dark:text-red-200",
+          subtext: "text-red-800 dark:text-red-300",
+          label: "text-red-600 dark:text-red-400",
+          dot: "bg-red-500"
+        };
+      case "blocked":
+        return {
+          bg: "bg-muted dark:bg-slate-800/80",
+          border: "border-border dark:border-slate-700",
+          text: "text-muted-foreground dark:text-slate-200",
+          subtext: "text-muted-foreground dark:text-slate-300",
+          label: "text-muted-foreground dark:text-slate-400",
+          dot: "bg-muted-foreground"
+        };
+      default:
+        return {
+          bg: "bg-yellow-100 dark:bg-amber-950/45",
+          border: "border-yellow-500 dark:border-amber-700",
+          text: "text-yellow-900 dark:text-amber-200",
+          subtext: "text-yellow-800 dark:text-amber-300",
+          label: "text-yellow-600 dark:text-amber-400",
+          dot: "bg-yellow-500"
+        };
     }
   };
 
@@ -265,9 +347,14 @@ export function AgendaCalendar({
 
   const getDailySlots = () => {
     const slots: { hour: number; minute: number }[] = [];
-    for (let hour = 7; hour <= 19; hour++) {
-      slots.push({ hour, minute: 0 });
-      slots.push({ hour, minute: 30 });
+    const startMinutes = 7 * 60;
+    const endMinutesExclusive = 20 * 60;
+
+    for (let totalMinutes = startMinutes; totalMinutes < endMinutesExclusive; totalMinutes += slotIntervalMinutes) {
+      slots.push({
+        hour: Math.floor(totalMinutes / 60),
+        minute: totalMinutes % 60,
+      });
     }
     return slots;
   };
@@ -288,6 +375,19 @@ export function AgendaCalendar({
     };
   };
 
+  const getTotalMinutes = (hour: number, minute: number) => (hour * 60) + minute;
+
+  const getSlotStartForTime = (timeValue?: string | null) => {
+    const { hour, minute } = parseTime(timeValue || "00:00");
+    const total = getTotalMinutes(hour, minute);
+    const slotStart = Math.floor(total / slotIntervalMinutes) * slotIntervalMinutes;
+    return {
+      hour: Math.floor(slotStart / 60),
+      minute: slotStart % 60,
+      totalMinutes: slotStart,
+    };
+  };
+
   // Helper to parse appointment date consistently
   const parseAppointmentDate = (date: string | Date): Date => {
     if (typeof date === 'string') {
@@ -301,133 +401,252 @@ export function AgendaCalendar({
     return new Date(date);
   };
 
+  const currentDayAppointments = getFilteredAppointmentsForDay(currentDate);
+  const currentDayNonBlockedAppointments = currentDayAppointments.filter((app) => app.type !== "blocked");
+  const currentDayTelemedicineCount = currentDayNonBlockedAppointments.filter((app) => app.isTelemedicine).length;
+  const currentDayWaitingCount = currentDayNonBlockedAppointments.filter((app) => app.status === "waiting").length;
+  const currentDayInProgressCount = currentDayNonBlockedAppointments.filter((app) => app.status === "in_progress").length;
+  const currentDayCompletedCount = currentDayNonBlockedAppointments.filter((app) => app.status === "completed").length;
+  const currentDayTotalMinutes = currentDayNonBlockedAppointments.reduce((acc, app) => acc + (Number(app.duration) || 0), 0);
+  const isCurrentDateToday = isSameDay(currentDate, new Date());
+  const isCompactDayExperience = isMobile || isStandalonePwa;
+  const sortedCurrentDayAppointments = [...currentDayNonBlockedAppointments].sort((a, b) => {
+    const timeA = a.isAllDay ? "00:00" : (a.time || "00:00");
+    const timeB = b.isAllDay ? "00:00" : (b.time || "00:00");
+    return timeA.localeCompare(timeB);
+  });
+  const nextAppointmentForCurrentDay = sortedCurrentDayAppointments.find((app) => {
+    if (!isCurrentDateToday) return true;
+    if (app.status === "in_progress") return true;
+    if (app.isAllDay) return true;
+    return (app.time || "00:00") >= format(new Date(), "HH:mm");
+  }) || null;
+
+  const handleGoToday = () => {
+    setCurrentDate(new Date());
+    setViewMode("day");
+  };
+
   return (
     <div className={cn(
       "bg-card overflow-hidden flex flex-col h-full",
       fullWidth ? "border-b border-border" : "rounded-2xl shadow-2xl"
     )}>
       {/* Calendar Header */}
-      <div className="agenda-calendar-hero p-6 text-white shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" className="p-0 hover:bg-transparent !text-white hover:text-white/90">
-                  <CalendarIcon className="w-8 h-8 mr-4 !text-white" />
-                  <div className="text-left">
-                    <h3 className="text-2xl font-bold capitalize !text-white">
-                      {format(currentDate, "MMMM yyyy", { locale: ptBR })}
-                    </h3>
-                    <p className="text-sm text-white/70">
-                      {viewMode === 'day' ? (
-                        format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
-                      ) : viewMode === 'week' ? (
-                        `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })} `
-                      ) : (
-                        "Vista Mensal"
-                      )}
-                    </p>
-                  </div>
+      <div className={cn("agenda-calendar-hero text-charcoal dark:text-white shrink-0", isMobile ? "p-4" : "p-6")}>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 xl:flex-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "h-auto w-full max-w-full justify-start p-0 min-w-0 rounded-2xl border px-2 py-2 sm:px-2.5 shadow-sm overflow-hidden",
+                      "bg-white/95 border-black/5 text-charcoal hover:bg-white hover:text-charcoal",
+                      "dark:bg-transparent dark:border-transparent dark:shadow-none dark:!text-white dark:hover:bg-transparent dark:hover:text-white/90"
+                    )}
+                  >
+                    <div className={cn(
+                      "rounded-2xl border flex items-center justify-center shrink-0",
+                      "border-black/10 bg-background/95 shadow-sm",
+                      "dark:border-white/15 dark:bg-white/10 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+                      isMobile ? "w-12 h-12" : "w-14 h-14"
+                    )}>
+                      <CalendarIcon className={cn("text-charcoal dark:!text-white", isMobile ? "w-6 h-6" : "w-7 h-7")} />
+                    </div>
+                    <div className="text-left ml-3 min-w-0 flex-1 overflow-hidden">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className={cn("font-bold capitalize tracking-tight text-charcoal dark:!text-white truncate min-w-0", isMobile ? "text-lg sm:text-xl" : "text-2xl")}>
+                          {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+                        </h3>
+                        {isStandalonePwa && (
+                          <span className="shrink-0 text-[10px] uppercase tracking-[0.16em] rounded-full border border-black/10 bg-white px-2 py-1 text-charcoal/70 dark:border-white/15 dark:bg-black/20 dark:text-white/75">
+                            PWA
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm text-charcoal/70 dark:text-white/70 truncate">
+                        {viewMode === 'day' ? (
+                          format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                        ) : viewMode === 'week' ? (
+                          `Semana ${format(startOfCurrentWeek, "dd")} - ${format(endOfWeek(currentDate), "dd 'de' MMMM", { locale: ptBR })} `
+                        ) : (
+                          "Vista mensal"
+                        )}
+                      </p>
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={currentDate}
+                    onSelect={(date) => date && setCurrentDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 xl:justify-end">
+              <Button
+                onClick={onNewAppointment}
+                className="bg-card text-charcoal hover:bg-muted border-0 font-semibold shadow-sm"
+                size={isMobile ? "default" : "sm"}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Consulta
+              </Button>
+
+              <Button
+                variant="ghost"
+                size={isMobile ? "default" : "sm"}
+                className={cn(
+                  "border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal",
+                  "border-black/10 shadow-sm",
+                  "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                )}
+                onClick={handleGoToday}
+              >
+                Hoje
+              </Button>
+
+              <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-xl p-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
+                <button
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
+                  onClick={handlePrev}
+                  aria-label="Período anterior"
+                >
+                  <ChevronDown className="w-4 h-4 rotate-90" />
+                </button>
+                <button
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
+                  onClick={handleNext}
+                  aria-label="Próximo período"
+                >
+                  <ChevronDown className="w-4 h-4 -rotate-90" />
+                </button>
+              </div>
+
+              <div className="flex bg-white/80 dark:bg-white/10 rounded-xl p-1 gap-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                    viewMode === 'day' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                  )}
+                  title="Dia"
+                  onClick={() => setViewMode('day')}
+                >
+                  <List className="w-4 h-4" />
+                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Dia</span>
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={currentDate}
-                  onSelect={(date) => date && setCurrentDate(date)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                    isCompactDayExperience && "opacity-80",
+                    viewMode === 'week' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                  )}
+                  title="Semana"
+                  onClick={() => setViewMode('week')}
+                >
+                  <CalendarWeek className="w-4 h-4" />
+                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Semana</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                    viewMode === 'month' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                  )}
+                  title="Mês"
+                  onClick={() => setViewMode('month')}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Mês</span>
+                </Button>
+              </div>
+
+              <div className="w-full sm:w-auto">
+                <Select
+                  value={String(slotIntervalMinutes)}
+                  onValueChange={(value) => setSlotIntervalMinutes(Number.parseInt(value, 10))}
+                >
+                  <SelectTrigger className="h-10 w-full sm:w-[170px] bg-white/80 border-black/10 text-charcoal shadow-sm dark:bg-white/10 dark:border-white/15 dark:text-white dark:shadow-none">
+                    <SelectValue placeholder="Intervalo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SLOT_INTERVAL_OPTIONS.map((minutes) => (
+                      <SelectItem key={minutes} value={String(minutes)}>
+                        Grade: {minutes} min
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              onClick={onNewAppointment}
-              className="bg-card text-charcoal hover:bg-muted border-0 font-semibold"
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Consulta
-            </Button>
-
-            <div className="flex items-center bg-white/10 rounded-lg p-1">
-              <Filter className="w-4 h-4 ml-2 mr-1 text-white/70" />
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[130px] border-0 bg-transparent text-white focus:ring-0 focus:ring-offset-0 h-8">
-                  <SelectValue placeholder="Filtrar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="consulta">Consulta</SelectItem>
-                  <SelectItem value="retorno">Retorno</SelectItem>
-                  <SelectItem value="exames">Exames</SelectItem>
-                  <SelectItem value="procedimento">Procedimento</SelectItem>
-                  <SelectItem value="urgencia">Urgência</SelectItem>
-                  <SelectItem value="blocked">Bloqueados</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col xl:flex-row gap-3 xl:items-stretch">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
+              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Consultas do dia</p>
+                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayNonBlockedAppointments.length}</p>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Em espera</p>
+                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayWaitingCount}</p>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Atendendo</p>
+                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayInProgressCount}</p>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Carga do dia</p>
+                <p className="text-lg font-bold text-charcoal dark:text-white">{Math.round(currentDayTotalMinutes / 60)}h</p>
+              </div>
             </div>
 
-            <div className="flex gap-1 bg-white/10 rounded-lg p-1">
-              <button
-                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
-                onClick={handlePrev}
-              >
-                <ChevronDown className="w-5 h-5 rotate-90" />
-              </button>
-              <button
-                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
-                onClick={handleNext}
-              >
-                <ChevronDown className="w-5 h-5 -rotate-90" />
-              </button>
-            </div>
-
-            <div className="flex bg-white/10 rounded-lg p-1 gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'day' && "bg-white/20")}
-                title="Dia"
-                onClick={() => setViewMode('day')}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'week' && "bg-white/20")}
-                title="Semana"
-                onClick={() => setViewMode('week')}
-              >
-                <CalendarWeek className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8 text-white hover:bg-white/20", viewMode === 'month' && "bg-white/20")}
-                title="Mês"
-                onClick={() => setViewMode('month')}
-              >
-                <CalendarDays className="w-4 h-4" />
-              </Button>
+            <div className="xl:w-[320px] rounded-xl border border-black/10 bg-white/70 px-3 py-3 backdrop-blur-sm shadow-sm dark:border-white/10 dark:bg-black/15 dark:shadow-none">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70">Próxima consulta</p>
+                <span className="text-[11px] text-charcoal/60 dark:text-white/60">
+                  {currentDayTelemedicineCount > 0 ? `${currentDayTelemedicineCount} telemed` : `${currentDayCompletedCount} concluídas`}
+                </span>
+              </div>
+              {nextAppointmentForCurrentDay ? (
+                <div className="mt-2">
+                  <p className="text-base font-bold text-charcoal dark:text-white truncate">{nextAppointmentForCurrentDay.patientName}</p>
+                  <p className="text-sm text-charcoal/70 dark:text-white/70">
+                    {nextAppointmentForCurrentDay.isAllDay ? "Dia inteiro" : nextAppointmentForCurrentDay.time} • {nextAppointmentForCurrentDay.type}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-charcoal/70 dark:text-white/70">
+                  {isCurrentDateToday ? "Nenhuma consulta pendente para hoje." : "Nenhuma consulta para esta data."}
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-6 flex-1 flex flex-col overflow-hidden">
+      <div className={cn("flex-1 flex flex-col overflow-hidden", isCompactDayExperience ? "p-3" : "p-6")}>
         {viewMode === 'day' ? (
-          <div className="space-y-4 overflow-y-auto pr-2">
+          <div className={cn("space-y-4 overflow-y-auto", isCompactDayExperience ? "pr-0" : "pr-2")}>
             {(() => {
               const allDayApps = getFilteredAppointmentsForDay(currentDate).filter(app => !!app.isAllDay);
               if (allDayApps.length === 0) return null;
 
               return (
-                <div className="flex gap-4 min-h-[80px] group border-b border-border pb-4 last:border-0">
-                  <div className="w-20 flex-shrink-0 text-right">
+                <div className={cn("flex gap-4 group border-b border-border pb-4 last:border-0", isCompactDayExperience ? "min-h-[64px]" : "min-h-[80px]")}>
+                  <div className={cn("flex-shrink-0 text-right", isCompactDayExperience ? "w-16" : "w-20")}>
                     <div className="text-sm font-bold text-muted-foreground pt-1">Dia Inteiro</div>
                   </div>
                   <div className="flex-1 space-y-3">
@@ -441,7 +660,8 @@ export function AgendaCalendar({
 
                       return (
                         <div key={app.id} className={cn(
-                          "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-card",
+                          "flex flex-col md:flex-row gap-4 rounded-xl border transition-all hover:shadow-md bg-card",
+                          isCompactDayExperience ? "p-3" : "p-4",
                           styles.border
                         )}>
                           <div className="flex-1">
@@ -466,7 +686,7 @@ export function AgendaCalendar({
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
+                          <div className={cn("flex flex-col items-end justify-center gap-2", isCompactDayExperience ? "min-w-0" : "min-w-[180px]")}>
                             <div className="flex gap-2 w-full">
                               <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                 Editar
@@ -501,18 +721,19 @@ export function AgendaCalendar({
             })()}
 
             {getDailySlots().map(({ hour, minute }) => {
+              const slotTotalMinutes = getTotalMinutes(hour, minute);
+              const slotEndMinutes = slotTotalMinutes + slotIntervalMinutes;
               const apps = getFilteredAppointmentsForDay(currentDate).filter(app => {
                 if (app.isAllDay) return false;
-                const { hour: appHour, minute: appMinute } = parseTime(app.time);
-                const slotMinute = appMinute < 30 ? 0 : 30;
-                return appHour === hour && slotMinute === minute;
+                const appSlot = getSlotStartForTime(app.time);
+                return appSlot.totalMinutes === slotTotalMinutes;
               });
 
               return (
-                <div key={`${hour}-${minute}`} className="flex gap-4 min-h-[80px] group border-b border-border pb-4 last:border-0">
+                <div key={`${hour}-${minute}`} className={cn("flex gap-4 group border-b border-border pb-4 last:border-0", isCompactDayExperience ? "min-h-[64px]" : "min-h-[80px]")}>
                   {/* Time Column */}
-                  <div className="w-20 flex-shrink-0 text-right">
-                    <span className="text-lg font-bold text-foreground block -mt-1">{formatSlotTime(hour, minute)}</span>
+                  <div className={cn("flex-shrink-0 text-right", isCompactDayExperience ? "w-14" : "w-20")}>
+                    <span className={cn("font-bold text-foreground block -mt-1", isCompactDayExperience ? "text-sm" : "text-lg")}>{formatSlotTime(hour, minute)}</span>
                     <span className="text-xs text-muted-foreground">
                       {/* If we want to show anything else here */}
                     </span>
@@ -525,17 +746,12 @@ export function AgendaCalendar({
                     {/* Current Time Indicator Line */}
                     {(() => {
                       const isToday = isSameDay(currentDate, new Date());
-                      const currentHour = now.getHours();
-                      const currentMinute = now.getMinutes();
-
-                      // Check if current time falls within this slot (slot start <= now < slot start + 30)
-                      // The slot starts at 'hour' and 'minute' (0 or 30)
-                      const isCurrentSlot = isToday && currentHour === hour && currentMinute >= minute && currentMinute < (minute + 30);
+                      const nowTotalMinutes = getTotalMinutes(now.getHours(), now.getMinutes());
+                      const isCurrentSlot = isToday && nowTotalMinutes >= slotTotalMinutes && nowTotalMinutes < slotEndMinutes;
 
                       if (isCurrentSlot) {
-                        // Calculate percentage: (minutes passed in this 30min slot / 30) * 100
-                        const minutesInSlot = currentMinute - minute;
-                        const percent = (minutesInSlot / 30) * 100;
+                        const minutesInSlot = nowTotalMinutes - slotTotalMinutes;
+                        const percent = (minutesInSlot / slotIntervalMinutes) * 100;
 
                         // We add a small offset (e.g. top-2 is for the divider line usually at the text baseline)
                         // If top-2 is roughly where the specific time text aligns, we might want to align relative to the container height
@@ -567,7 +783,8 @@ export function AgendaCalendar({
 
                         return (
                           <div key={app.id} className={cn(
-                            "flex flex-col md:flex-row gap-4 p-4 rounded-xl border transition-all hover:shadow-md bg-card",
+                            "flex flex-col md:flex-row gap-4 rounded-xl border transition-all hover:shadow-md bg-card",
+                            isCompactDayExperience ? "p-3" : "p-4",
                             styles.border
                           )}>
                             {/* Left Info */}
@@ -635,7 +852,7 @@ export function AgendaCalendar({
                             </div>
 
                             {/* Right Actions */}
-                            <div className="flex flex-col items-end justify-center gap-2 min-w-[180px]">
+                            <div className={cn("flex flex-col items-end justify-center gap-2", isCompactDayExperience ? "min-w-0" : "min-w-[180px]")}>
                               {canStartService ? (
                                 <Button
                                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
@@ -695,8 +912,15 @@ export function AgendaCalendar({
                         );
                       })
                     ) : (
-                      <div className="h-full min-h-[60px] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground text-sm hover:border-border hover:text-muted-foreground transition-colors cursor-pointer" onClick={onNewAppointment}>
-                        <Plus className="w-4 h-4 mr-1" /> Disponível
+                      <div
+                        className={cn(
+                          "h-full rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-border hover:text-muted-foreground transition-colors cursor-pointer",
+                          isCompactDayExperience ? "min-h-[44px] text-xs" : "min-h-[60px] text-sm"
+                        )}
+                        onClick={onNewAppointment}
+                      >
+                        <Plus className={cn(isCompactDayExperience ? "w-3.5 h-3.5 mr-1" : "w-4 h-4 mr-1")} />
+                        {isCompactDayExperience ? "Livre" : "Disponível"}
                       </div>
                     )}
                   </div>
@@ -957,7 +1181,7 @@ export function AgendaCalendar({
         )}
 
         {/* Legend */}
-        <div className="mt-6 flex flex-wrap gap-4 justify-center">
+        <div className={cn("mt-6 flex flex-wrap gap-4 justify-center", isCompactDayExperience && "gap-x-3 gap-y-2")}>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-yellow-500 rounded"></div>
             <span className="text-xs text-muted-foreground">Consulta</span>

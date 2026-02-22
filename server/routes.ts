@@ -604,9 +604,8 @@ export async function registerRoutes(app: Express): Promise<void> {
             return res.status(403).json({ message: "Profissional não pertence à sua clínica" });
           }
 
-          // Secretárias visualizam a agenda da clínica inteira quando selecionam um médico. 
-          // O front-end lida com a filtragem visual ou o backend envia todos da clinica.
-          const appointments = await storage.getAppointmentsByClinicId(req.user.clinicId);
+          // Agenda é sempre exclusiva do profissional selecionado.
+          const appointments = await storage.getAppointmentsByUserId(professionalId);
           return res.json(appointments || []);
         } else {
           return res.status(403).json({ message: "Permissão negada para visualizar a agenda de outro profissional" });
@@ -623,47 +622,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   logger.info("[DEBUG] Registering route: /api/clinic/appointments");
   app.get("/api/clinic/appointments", ensureAuthenticated, async (req, res) => {
-    logger.info(`[DEBUG] Handling /api/clinic/appointments for user ${req.user?.id}`);
-    try {
-      if (!req.user) return res.status(401).send("Unauthorized");
-
-      if (!req.user.clinicId) {
-        logger.warn(`[DEBUG] User ${req.user.id} has no clinicId`);
-        return res.status(400).json({ message: "Usuário não está vinculado a uma clínica" });
-      }
-
-      const clinicId = req.user.clinicId;
-      logger.info(`[DEBUG] Fetching clinic members for clinic ${clinicId}`);
-
-      // Get all clinic members and fetch their appointments
-      const members = await storage.getClinicMembers(clinicId);
-      logger.info(`[DEBUG] Found ${members.length} clinic members`);
-
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
-      logger.info(`[DEBUG] Filtering appointments for today: ${today}`);
-
-      const allAppointments: any[] = [];
-      for (const member of members) {
-        const memberAppointments = await storage.getAppointmentsByUserId(member.id);
-        // Only include today's appointments
-        const todayAppointments = memberAppointments.filter(a => a.date === today);
-        allAppointments.push(...todayAppointments);
-      }
-
-      // Sort by time
-      allAppointments.sort((a, b) => {
-        const timeA = a.time || '00:00';
-        const timeB = b.time || '00:00';
-        return timeA.localeCompare(timeB);
-      });
-
-      logger.info(`[DEBUG] Found ${allAppointments.length} appointments for today across all clinic members`);
-      res.json(allAppointments);
-    } catch (error) {
-      console.error("Erro ao buscar agendamentos da clínica:", error);
-      res.status(500).json({ message: "Erro ao buscar agendamentos", error: (error as Error).message });
-    }
+    return res.status(410).json({
+      message: "A agenda é exclusiva do profissional. Use /api/appointments para o médico selecionado."
+    });
   });
 
   app.post("/api/appointments", ensureAuthenticated, async (req, res) => {
@@ -3636,6 +3597,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           clinics: [],
           activeClinicId: null,
           activeRole: null,
+          patientCount: 0,
           members: [],
           invitations: [],
           isAdmin: false,
@@ -3671,6 +3633,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       const members = await storage.getClinicMembers(clinic.id);
       const invitations = await storage.getClinicInvitations(clinic.id);
+      const clinicProfiles = await storage.getProfilesByClinicId(clinic.id);
 
       res.json({
         clinic,
@@ -3687,6 +3650,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         })),
         activeClinicId: clinic.id,
         activeRole: activeMembership.role,
+        patientCount: clinicProfiles.length,
         members: members.map(m => ({
           id: m.id,
           username: m.username,

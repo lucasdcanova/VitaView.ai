@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -48,6 +49,11 @@ export default function Sidebar(props: SidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { activeProfile } = useProfiles();
+  const { data: clinicContext } = useQuery<{ clinic: { name: string } | null }>({
+    queryKey: ["/api/my-clinic", user?.id ?? null, user?.clinicId ?? null],
+    enabled: !!user && !!user?.clinicId,
+    retry: false,
+  });
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -73,6 +79,7 @@ export default function Sidebar(props: SidebarProps) {
   const isSecretary = loggedInAs?.role === 'secretary';
   const displayName = isSecretary ? loggedInAs.name : (user?.fullName || user?.username || "Doutor");
   const displayRole = isSecretary ? 'Secretária' : 'Profissional de saúde';
+  const selectedClinicName = clinicContext?.clinic?.name || null;
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 768) {
@@ -157,7 +164,7 @@ export default function Sidebar(props: SidebarProps) {
 
       <aside
         className={cn(
-          "bg-pureWhite border-r border-lightGray flex-shrink-0 fixed md:sticky top-0 h-full z-50 transition-all duration-300 ease-in-out sidebar-shadow",
+          "bg-pureWhite border-r border-lightGray flex flex-col flex-shrink-0 fixed md:sticky top-0 h-[100dvh] min-h-[100dvh] z-50 transition-all duration-300 ease-in-out sidebar-shadow overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-20' : 'w-80', // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
           props.className
@@ -249,7 +256,13 @@ export default function Sidebar(props: SidebarProps) {
                   <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayName}>
                     {displayName}
                   </h3>
-                  <p className="text-xs text-mediumGray font-body truncate">
+                  {selectedClinicName ? (
+                    <p className="text-xs text-charcoal/80 font-body truncate flex items-center gap-1" title={selectedClinicName}>
+                      <Building className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{selectedClinicName}</span>
+                    </p>
+                  ) : null}
+                  <p className="text-[11px] text-mediumGray font-body truncate">
                     {displayRole}
                   </p>
                 </div>
@@ -270,7 +283,8 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className={cn("space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
+        <nav className={cn("flex-1 min-h-0 overflow-y-auto custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
+          <div className="space-y-1">
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
           <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
@@ -312,9 +326,10 @@ export default function Sidebar(props: SidebarProps) {
               </Tooltip>
             </TooltipProvider>
           )}
+          </div>
 
           {/* Logout Button */}
-          <div className="pt-6 mt-auto">
+          <div className="pt-6 mt-6 sticky bottom-0 bg-pureWhite">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>

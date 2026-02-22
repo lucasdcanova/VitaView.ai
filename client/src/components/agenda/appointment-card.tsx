@@ -24,14 +24,14 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string; badgeBg: string }> = {
     in_progress: {
-        bg: "bg-muted",
-        border: "border-charcoal",
+        bg: "bg-muted dark:bg-slate-700/90",
+        border: "border-charcoal dark:border-slate-300",
         badge: "text-charcoal",
         badgeBg: "bg-muted"
     },
     completed: {
-        bg: "bg-muted",
-        border: "border-border",
+        bg: "bg-muted dark:bg-slate-800/80",
+        border: "border-border dark:border-slate-700",
         badge: "text-white",
         badgeBg: "bg-muted-foreground"
     },
@@ -52,7 +52,7 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
     return (
         <motion.div
-            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-ring/40 animate-pulse ring-4 ring-charcoal/70' : ''}`}
+            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md dark:hover:shadow-black/30 transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-ring/40 animate-pulse ring-4 ring-charcoal/70 dark:ring-slate-200/25' : ''}`}
             whileHover={{ scale: 1.02 }}
         >
             {/* Status Badge */}
