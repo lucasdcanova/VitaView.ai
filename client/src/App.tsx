@@ -9,7 +9,7 @@ import { ProfileProvider } from "@/hooks/use-profiles";
 import { UploadManagerProvider } from "@/hooks/use-upload-manager";
 import { ProtectedRoute } from "@/lib/protected-route";
 import ErrorBoundary from "@/components/ui/error-boundary";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
@@ -215,6 +215,49 @@ function AppRouter() {
   const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];
   const isLandingRoute = landingPaths.some(path => location === path);
 
+  // Rotas de autenticação (apenas AuthProvider)
+  const authPaths = ['/auth', '/forgot-password'];
+  const isAuthRoute = authPaths.some(path => location === path);
+  const shouldForceLightPublicTheme = isLandingRoute || location === "/auth";
+
+  // Public routes must always stay in light mode regardless of saved theme.
+  useEffect(() => {
+    if (!shouldForceLightPublicTheme) return;
+
+    const root = document.documentElement;
+    root.classList.remove("dark", "light");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", "#FFFFFF");
+    });
+
+    const tileColorMeta = document.querySelector<HTMLMetaElement>('meta[name="msapplication-TileColor"]');
+    if (tileColorMeta) {
+      tileColorMeta.setAttribute("content", "#FFFFFF");
+    }
+
+    const statusBarStyleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (statusBarStyleMeta) {
+      statusBarStyleMeta.setAttribute("content", "default");
+    }
+
+    const manifestLink = document.querySelector<HTMLLinkElement>("#app-manifest") ??
+      document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (manifestLink) {
+      manifestLink.setAttribute("href", "/manifest.json");
+    }
+
+    document.querySelectorAll<HTMLLinkElement>('link[data-theme-favicon="true"]').forEach((link) => {
+      link.setAttribute("href", "/icon-192x192.png");
+    });
+
+    document.querySelectorAll<HTMLLinkElement>('link[data-theme-apple-icon="true"]').forEach((link) => {
+      link.setAttribute("href", "/apple-touch-icon.png");
+    });
+  }, [shouldForceLightPublicTheme]);
+
   // No PWA (standalone), nunca abrir landing: ir para auth e deixar auth decidir
   // se redireciona para /agenda quando já autenticado.
   if (isStandalonePwa() && isLandingRoute) {
@@ -224,10 +267,6 @@ function AppRouter() {
   if (isLandingRoute) {
     return <LandingRoutes />;
   }
-
-  // Rotas de autenticação (apenas AuthProvider)
-  const authPaths = ['/auth', '/forgot-password'];
-  const isAuthRoute = authPaths.some(path => location === path);
 
   if (isAuthRoute) {
     return <AuthRoutes />;
