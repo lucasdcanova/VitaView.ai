@@ -50,7 +50,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     isLoading,
     refetch: refetchProfiles,
   } = useQuery({
-    queryKey: ["/api/profiles", selectedProfessionalId],
+    queryKey: ["/api/profiles", user?.id ?? null, selectedProfessionalId ?? null],
     queryFn: async () => {
       if (!user) return [];
 
@@ -66,6 +66,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
     },
     enabled: !!user,
+    refetchOnMount: "always",
   });
 
   // Create new profile
