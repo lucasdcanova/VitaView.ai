@@ -354,7 +354,7 @@ const MyClinic = () => {
                                             <CardContent className="pt-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-sm text-muted-foreground">Secretárias</p>
+                                                        <p className="text-sm text-muted-foreground">Secretaria</p>
                                                         <p className="text-2xl font-bold text-foreground">{secretaries.length} / {secLimit}</p>
                                                     </div>
                                                     <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center">
@@ -433,7 +433,7 @@ const MyClinic = () => {
                                             </div>
                                             {clinicData.isAdmin && secretaries.length < secLimit && (
                                                 <Button onClick={() => { setInviteRole('secretary'); setIsInviteDialogOpen(true); }} size="sm" variant="outline" className="border-primary text-primary hover:bg-muted rounded-lg">
-                                                    <UserPlus className="h-4 w-4 mr-2" />Convidar Secretária
+                                                    <UserPlus className="h-4 w-4 mr-2" />Convidar
                                                 </Button>
                                             )}
                                         </CardHeader>
@@ -462,7 +462,7 @@ const MyClinic = () => {
                                                 ))}
                                                 {secretaries.length === 0 && (
                                                     <div className="text-center py-6 text-muted-foreground">
-                                                        <p>Nenhuma secretária cadastrada.</p>
+                                                        <p>Nenhum cadastro.</p>
                                                     </div>
                                                 )}
                                             </div>
