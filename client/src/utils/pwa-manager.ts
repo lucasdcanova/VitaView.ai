@@ -30,12 +30,21 @@ class PWAManager {
   }
 
   private setupEventListeners() {
+    const shouldUseCustomInstallPrompt = () =>
+      document.documentElement.dataset.pwaInstallPrompt === 'custom';
+
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e: Event) => {
-      e.preventDefault();
-      this.deferredPrompt = e as BeforeInstallPromptEvent;
-      // Banner de instalação desabilitado - pode ser ativado manualmente se necessário
-      // this.showInstallBanner();
+      if (shouldUseCustomInstallPrompt()) {
+        e.preventDefault();
+        this.deferredPrompt = e as BeforeInstallPromptEvent;
+        // Banner de instalação desabilitado - pode ser ativado manualmente se necessário
+        // this.showInstallBanner();
+        return;
+      }
+
+      // Keep native browser behavior by default to avoid blocked banner warnings.
+      this.deferredPrompt = null;
     });
 
     // Listen for app installed event

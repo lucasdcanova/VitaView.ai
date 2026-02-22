@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const stripeEnabled = Boolean(stripePublicKey && stripePublicKey.startsWith('pk_'));
-const stripePromise = stripeEnabled ? loadStripe(stripePublicKey as string) : Promise.resolve(null);
 
 interface CheckoutFormProps {
   planId: number;
@@ -139,6 +138,10 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [retryToken, setRetryToken] = useState(0);
+  const stripePromise = useMemo(
+    () => (stripeEnabled ? loadStripe(stripePublicKey as string) : Promise.resolve(null)),
+    []
+  );
 
   const elementOptions = useMemo(() => ({
     clientSecret,

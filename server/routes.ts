@@ -1878,9 +1878,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "ID de perfil inválido" });
       }
 
-      // Verify the profile belongs to this user
-      const profile = await storage.getProfile(profileId, req.tenantId);
-      if (!profile || profile.userId !== userId) {
+      // Verify profile ownership by user ID only.
+      // Tenant filtering here can hide valid legacy profiles with null clinicId.
+      const profile = await storage.getProfile(profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Paciente não encontrado" });
+      }
+      if (profile.userId !== userId) {
         return res.status(403).json({ message: "Acesso negado" });
       }
 

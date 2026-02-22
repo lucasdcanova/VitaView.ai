@@ -48,7 +48,7 @@ export function usePWA() {
     };
 
     const handleBeforeInstallPrompt = () => {
-      setPwaState(prev => ({ ...prev, canInstall: true }));
+      setPwaState(prev => ({ ...prev, canInstall: pwaManager.canInstall() }));
     };
 
     const handleAppInstalled = () => {
