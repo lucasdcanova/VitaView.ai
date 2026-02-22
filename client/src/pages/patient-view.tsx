@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -81,7 +81,7 @@ export default function PatientView() {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [showUpload, setShowUpload] = useState(false);
     const [, setLocation] = useLocation();
-    const { activeProfile, inServiceAppointmentId } = useProfiles();
+    const { activeProfile, inServiceAppointmentId, setActiveProfile } = useProfiles();
     const { uploads } = useUploadManager();
     const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
     const { toast } = useToast();
@@ -160,15 +160,29 @@ export default function PatientView() {
     };
 
     // Fetch all patient data in a single consolidated query for performance
-    const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+    const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useQuery({
         queryKey: ["/api/patient-dashboard", activeProfile?.id],
         queryFn: async () => {
             const res = await apiRequest("GET", `/api/patient-dashboard/${activeProfile?.id}`);
             return res.json();
         },
         enabled: !!activeProfile?.id,
+        retry: (failureCount, error: any) => error?.status !== 403 && failureCount < 1,
         staleTime: 30000, // 30 seconds - data is considered fresh
     });
+
+    useEffect(() => {
+        const error = dashboardError as any;
+        if (error?.status !== 403) return;
+
+        setActiveProfile(null);
+        toast({
+            title: "Paciente indisponível",
+            description: "O paciente selecionado não está mais disponível para este usuário. Selecione outro paciente.",
+            variant: "destructive",
+        });
+        setLocation("/pacientes");
+    }, [dashboardError, setActiveProfile, setLocation, toast]);
 
     // Destructure all the data from the consolidated response
     const {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { generateExamRequestPDF, type ExamRequestData } from "@/lib/exam-request-pdf";
+import type { ExamRequestData } from "@/lib/exam-request-pdf";
 
 // Interface para exame selecionado
 export interface SelectedExam {
@@ -52,6 +52,11 @@ export function useExamRequestLogic(patient: PatientData) {
     const [clinicalIndication, setClinicalIndication] = useState("");
     const [observations, setObservations] = useState("");
     const [editingRequestId, setEditingRequestId] = useState<number | null>(null);
+
+    const loadExamRequestPdfGenerator = async () => {
+        const { generateExamRequestPDF } = await import("@/lib/exam-request-pdf");
+        return generateExamRequestPDF;
+    };
 
     // Query para histórico
     const { data: examRequestHistory = [] } = useQuery<ExamRequestRecord[]>({
@@ -187,6 +192,7 @@ export function useExamRequestLogic(patient: PatientData) {
                     clinicalIndication: savedData.clinicalIndication || undefined,
                     observations: savedData.observations || undefined
                 };
+                const generateExamRequestPDF = await loadExamRequestPdfGenerator();
                 generateExamRequestPDF(pdfData, pdfWindow);
             }
 
@@ -199,9 +205,11 @@ export function useExamRequestLogic(patient: PatientData) {
         }
     };
 
-    const handleReprint = (request: any) => {
+    const handleReprint = async (request: any) => {
         const pdfWindow = window.open('', '_blank');
-        if (pdfWindow) {
+        if (!pdfWindow) return;
+
+        try {
             const pdfData: ExamRequestData = {
                 doctorName: request.doctorName,
                 doctorCrm: request.doctorCrm,
@@ -218,7 +226,16 @@ export function useExamRequestLogic(patient: PatientData) {
                 clinicalIndication: request.clinicalIndication || undefined,
                 observations: request.observations || undefined
             };
+            const generateExamRequestPDF = await loadExamRequestPdfGenerator();
             generateExamRequestPDF(pdfData, pdfWindow);
+        } catch (error) {
+            console.error(error);
+            pdfWindow.close();
+            toast({
+                title: "Erro",
+                description: "Falha ao gerar PDF da solicitação.",
+                variant: "destructive"
+            });
         }
     };
 

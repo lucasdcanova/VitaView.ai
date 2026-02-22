@@ -1878,15 +1878,31 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "ID de perfil inválido" });
       }
 
-      // Verify profile ownership by user ID only.
-      // Tenant filtering here can hide valid legacy profiles with null clinicId.
+      // Allow access for owner user or clinic members in the same tenant.
+      // This keeps clinic collaboration working while preserving authorization checks.
       const profile = await storage.getProfile(profileId);
       if (!profile) {
         return res.status(404).json({ message: "Paciente não encontrado" });
       }
-      if (profile.userId !== userId) {
+      const requesterClinicId = (req.user as any)?.clinicId as number | null | undefined;
+      const profileBelongsToUser = profile.userId === userId;
+
+      let profileBelongsToTenant = false;
+      if (requesterClinicId) {
+        // Prefer profile clinic relation when available
+        if (profile.clinicId && profile.clinicId === requesterClinicId) {
+          profileBelongsToTenant = true;
+        } else {
+          // Legacy fallback: profile may have null clinicId, then check profile owner's clinic
+          const profileOwner = await storage.getUser(profile.userId);
+          profileBelongsToTenant = !!profileOwner?.clinicId && profileOwner.clinicId === requesterClinicId;
+        }
+      }
+
+      if (!profileBelongsToUser && !profileBelongsToTenant) {
         return res.status(403).json({ message: "Acesso negado" });
       }
+      const dataOwnerUserId = profile.userId;
 
       // Log PHI Access (LGPD) - Accessing Full Patient Record
       await complianceService.logPHIAccess(
@@ -1909,17 +1925,17 @@ export async function registerRoutes(app: Express): Promise<void> {
         triageHistory,
         medicationsResult
       ] = await Promise.all([
-        storage.getDiagnosesByUserId(userId),
-        storage.getSurgeriesByUserId(userId),
+        storage.getDiagnosesByUserId(dataOwnerUserId),
+        storage.getSurgeriesByUserId(dataOwnerUserId),
         storage.getAllergiesByProfileId(profileId),
-        storage.getExamsByUserId(userId, profileId),
-        storage.getHealthMetricsByUserId(userId, profileId),
+        storage.getExamsByUserId(dataOwnerUserId, profileId, req.tenantId),
+        storage.getHealthMetricsByUserId(dataOwnerUserId, profileId, req.tenantId),
         storage.getTriageHistoryByProfileId(profileId),
         pool.query(
           `SELECT * FROM medications 
            WHERE user_id = $1 AND is_active = true
            ORDER BY created_at DESC`,
-          [userId]
+          [dataOwnerUserId]
         )
       ]);
 
