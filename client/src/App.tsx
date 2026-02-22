@@ -9,11 +9,12 @@ import { ProfileProvider } from "@/hooks/use-profiles";
 import { UploadManagerProvider } from "@/hooks/use-upload-manager";
 import { ProtectedRoute } from "@/lib/protected-route";
 import ErrorBoundary from "@/components/ui/error-boundary";
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
 
 declare global {
   interface Window {
@@ -33,42 +34,42 @@ declare global {
 // LAZY LOADED COMPONENTS - PUBLIC PAGES (sem auth)
 // Carregados independentemente, sem providers pesados
 // ============================================
-const Home = lazy(() => import("@/pages/home"));
-const TermsPage = lazy(() => import("@/pages/terms-page"));
-const PrivacyPage = lazy(() => import("@/pages/privacy-page"));
-const QuickSummaryPage = lazy(() => import("@/pages/quick-summary-page"));
-const NotFound = lazy(() => import("@/pages/not-found"));
+const Home = lazyWithRetry(() => import("@/pages/home"), "page-home");
+const TermsPage = lazyWithRetry(() => import("@/pages/terms-page"), "page-terms");
+const PrivacyPage = lazyWithRetry(() => import("@/pages/privacy-page"), "page-privacy");
+const QuickSummaryPage = lazyWithRetry(() => import("@/pages/quick-summary-page"), "page-quick-summary");
+const NotFound = lazyWithRetry(() => import("@/pages/not-found"), "page-not-found");
 
 // ============================================
 // LAZY LOADED COMPONENTS - AUTH PAGES (precisam de AuthProvider)
 // ============================================
-const AuthPage = lazy(() => import("@/pages/auth-page"));
-const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const AuthPage = lazyWithRetry(() => import("@/pages/auth-page"), "page-auth");
+const ForgotPasswordPage = lazyWithRetry(() => import("@/pages/forgot-password"), "page-forgot-password");
 
 // ============================================
 // LAZY LOADED COMPONENTS - AUTHENTICATED PAGES
 // Carregados apenas após login
 // ============================================
-const UploadExams = lazy(() => import("@/pages/upload-exams"));
-const ExamHistory = lazy(() => import("@/pages/exam-history"));
-const ExamReport = lazy(() => import("@/pages/exam-report"));
-const ExamResults = lazy(() => import("@/pages/exam-results"));
-const ExamResultSingle = lazy(() => import("@/pages/exam-result-single"));
-const Profile = lazy(() => import("@/pages/profile"));
-const DiagnosisPage = lazy(() => import("@/pages/diagnosis-page"));
-const HealthTrends = lazy(() => import("@/pages/health-trends-new"));
-const PatientView = lazy(() => import("@/pages/patient-view"));
-const ExamTimeline = lazy(() => import("@/pages/exam-timeline"));
-const ReportsPage = lazy(() => import("@/pages/reports-page"));
-const Agenda = lazy(() => import("@/pages/agenda"));
-const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
-const AdminPanel = lazy(() => import("@/pages/admin-panel"));
-const BulkImport = lazy(() => import("@/pages/bulk-import"));
-const Patients = lazy(() => import("@/pages/patients"));
-const VitaAssist = lazy(() => import("@/pages/vita-assist"));
-const AdminAICosts = lazy(() => import("@/pages/admin/ai-costs"));
-const KnowledgeBaseAdmin = lazy(() => import("@/pages/admin/knowledge-base"));
-const MyClinic = lazy(() => import("@/pages/my-clinic"));
+const UploadExams = lazyWithRetry(() => import("@/pages/upload-exams"), "page-upload-exams");
+const ExamHistory = lazyWithRetry(() => import("@/pages/exam-history"), "page-exam-history");
+const ExamReport = lazyWithRetry(() => import("@/pages/exam-report"), "page-exam-report");
+const ExamResults = lazyWithRetry(() => import("@/pages/exam-results"), "page-exam-results");
+const ExamResultSingle = lazyWithRetry(() => import("@/pages/exam-result-single"), "page-exam-result-single");
+const Profile = lazyWithRetry(() => import("@/pages/profile"), "page-profile");
+const DiagnosisPage = lazyWithRetry(() => import("@/pages/diagnosis-page"), "page-diagnosis");
+const HealthTrends = lazyWithRetry(() => import("@/pages/health-trends-new"), "page-health-trends");
+const PatientView = lazyWithRetry(() => import("@/pages/patient-view"), "page-patient-view");
+const ExamTimeline = lazyWithRetry(() => import("@/pages/exam-timeline"), "page-exam-timeline");
+const ReportsPage = lazyWithRetry(() => import("@/pages/reports-page"), "page-reports");
+const Agenda = lazyWithRetry(() => import("@/pages/agenda"), "page-agenda");
+const SubscriptionManagement = lazyWithRetry(() => import("@/pages/subscription-management"), "page-subscription");
+const AdminPanel = lazyWithRetry(() => import("@/pages/admin-panel"), "page-admin-panel");
+const BulkImport = lazyWithRetry(() => import("@/pages/bulk-import"), "page-bulk-import");
+const Patients = lazyWithRetry(() => import("@/pages/patients"), "page-patients");
+const VitaAssist = lazyWithRetry(() => import("@/pages/vita-assist"), "page-vita-assist");
+const AdminAICosts = lazyWithRetry(() => import("@/pages/admin/ai-costs"), "page-admin-ai-costs");
+const KnowledgeBaseAdmin = lazyWithRetry(() => import("@/pages/admin/knowledge-base"), "page-admin-knowledge-base");
+const MyClinic = lazyWithRetry(() => import("@/pages/my-clinic"), "page-my-clinic");
 
 const isStandalonePwa = () => {
   if (typeof window === "undefined") return false;

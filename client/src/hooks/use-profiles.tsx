@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
@@ -27,6 +27,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
   const [inServiceAppointmentId, setInServiceAppointmentId] = useState<number | null>(null);
+  const previousUserIdRef = useRef<number | null>(null);
+
+  const clearActiveProfile = () => {
+    setActiveProfileState(null);
+    setInServiceAppointmentId(null);
+    try {
+      document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
+    } catch (err) {
+      // ignore cookie errors
+    }
+  };
 
   // Fetch user's profiles
   const {
@@ -200,12 +211,31 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, [profiles, activeProfile]);
 
+  // Clear stale profile when session switches to a different user
+  useEffect(() => {
+    const currentUserId = user?.id ?? null;
+    const previousUserId = previousUserIdRef.current;
+
+    if (previousUserId !== null && previousUserId !== currentUserId) {
+      clearActiveProfile();
+    }
+
+    previousUserIdRef.current = currentUserId;
+  }, [user?.id]);
+
+  // Defensive cleanup when active profile no longer belongs to the loaded profile list
+  useEffect(() => {
+    if (!activeProfile) return;
+    const profileStillExists = profiles.some((p: Profile) => p.id === activeProfile.id);
+    if (!profileStillExists) {
+      clearActiveProfile();
+    }
+  }, [profiles, activeProfile]);
+
   // Wrapper functions
   const setActiveProfile = (profile: Profile | null) => {
     if (!profile) {
-      setActiveProfileState(null);
-      setInServiceAppointmentId(null);
-      document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
+      clearActiveProfile();
       return;
     }
     setActiveProfileMutation.mutate(profile);

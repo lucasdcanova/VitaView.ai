@@ -443,6 +443,7 @@ export function registerPatientRoutes(app: Express) {
             const profileData = {
                 ...req.body,
                 userId: (req.user as any).id,
+                clinicId: req.tenantId ?? null,
                 createdAt: new Date()
             };
 

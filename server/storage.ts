@@ -2288,15 +2288,17 @@ export class DatabaseStorage implements IStorage {
     return newProfile;
   }
   async getProfile(id: number, clinicId?: number): Promise<Profile | undefined> {
-    let q = db.select().from(profiles).where(eq(profiles.id, id));
-    if (clinicId) q = (q as any).where(eq(profiles.clinicId, clinicId));
-    const [profile] = await q;
+    const whereClause = clinicId
+      ? and(eq(profiles.id, id), eq(profiles.clinicId, clinicId))
+      : eq(profiles.id, id);
+    const [profile] = await db.select().from(profiles).where(whereClause);
     return profile;
   }
   async getProfilesByUserId(userId: number, clinicId?: number): Promise<Profile[]> {
-    let q = db.select().from(profiles).where(eq(profiles.userId, userId));
-    if (clinicId) q = (q as any).where(eq(profiles.clinicId, clinicId));
-    return await q;
+    const whereClause = clinicId
+      ? and(eq(profiles.userId, userId), eq(profiles.clinicId, clinicId))
+      : eq(profiles.userId, userId);
+    return await db.select().from(profiles).where(whereClause);
   }
   async updateProfile(id: number, profile: Partial<Profile>): Promise<Profile | undefined> {
     if (profile.isDefault) {
@@ -2337,16 +2339,24 @@ export class DatabaseStorage implements IStorage {
     return newExam;
   }
   async getExam(id: number, clinicId?: number): Promise<Exam | undefined> {
-    let q = db.select().from(exams).where(eq(exams.id, id));
-    if (clinicId) q = (q as any).where(eq(exams.clinicId, clinicId));
-    const [exam] = await q;
+    const whereClause = clinicId
+      ? and(eq(exams.id, id), eq(exams.clinicId, clinicId))
+      : eq(exams.id, id);
+    const [exam] = await db.select().from(exams).where(whereClause);
     return exam;
   }
   async getExamsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<Exam[]> {
-    let q = db.select().from(exams).where(eq(exams.userId, userId));
-    if (profileId) q = (q as any).where(eq(exams.profileId, profileId));
-    if (clinicId) q = (q as any).where(eq(exams.clinicId, clinicId));
-    return await q;
+    let whereClause = eq(exams.userId, userId);
+
+    if (profileId) {
+      whereClause = and(whereClause, eq(exams.profileId, profileId))!;
+    }
+
+    if (clinicId) {
+      whereClause = and(whereClause, eq(exams.clinicId, clinicId))!;
+    }
+
+    return await db.select().from(exams).where(whereClause);
   }
   async updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined> {
     const [updated] = await db.update(exams).set(exam).where(eq(exams.id, id)).returning();
@@ -2412,10 +2422,17 @@ export class DatabaseStorage implements IStorage {
     return newM;
   }
   async getHealthMetricsByUserId(userId: number, profileId?: number, clinicId?: number): Promise<HealthMetric[]> {
-    let q = db.select().from(healthMetrics).where(eq(healthMetrics.userId, userId));
-    if (profileId) q = (q as any).where(eq(healthMetrics.profileId, profileId));
-    if (clinicId) q = (q as any).where(eq(healthMetrics.clinicId, clinicId));
-    return await q;
+    let whereClause = eq(healthMetrics.userId, userId);
+
+    if (profileId) {
+      whereClause = and(whereClause, eq(healthMetrics.profileId, profileId))!;
+    }
+
+    if (clinicId) {
+      whereClause = and(whereClause, eq(healthMetrics.clinicId, clinicId))!;
+    }
+
+    return await db.select().from(healthMetrics).where(whereClause);
   }
   async getLatestHealthMetrics(userId: number, limit: number, profileId?: number): Promise<HealthMetric[]> {
     const metrics = await this.getHealthMetricsByUserId(userId, profileId);

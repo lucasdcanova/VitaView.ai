@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { generatePrescriptionPDF } from "@/lib/prescription-pdf";
 import type { Profile, Prescription } from "@shared/schema";
 import { MEDICATION_DATABASE, CONTROLLED_MEDICATIONS } from "@/components/dialogs";
 
@@ -286,6 +285,7 @@ export function usePrescriptionLogic(patient: Profile) {
             }
 
             if (pdfWindow) {
+                const { generatePrescriptionPDF } = await import("@/lib/prescription-pdf");
                 generatePrescriptionPDF({
                     doctorName: savedData.doctorName,
                     doctorCrm: savedData.doctorCrm,

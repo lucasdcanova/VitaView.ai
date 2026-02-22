@@ -156,6 +156,8 @@ export default defineConfig({
       '@tanstack/react-query',
       'wouter',
       'lucide-react',
+      'jspdf',
+      'jspdf-autotable',
     ],
     exclude: ['@vite/client', '@vite/env'],
     esbuildOptions: {
