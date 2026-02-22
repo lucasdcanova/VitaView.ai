@@ -467,6 +467,21 @@ export const clinics = pgTable("clinics", {
 });
 
 // Clinic invitations schema
+export const clinicMemberships = pgTable("clinic_memberships", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  role: text("role").notNull().default("member"), // 'admin', 'member', 'secretary'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertClinicMembershipSchema = createInsertSchema(clinicMemberships).pick({
+  clinicId: true,
+  userId: true,
+  role: true,
+});
+
+// Clinic invitations schema
 export const clinicInvitations = pgTable("clinic_invitations", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id").notNull().references(() => clinics.id),
@@ -546,6 +561,9 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
 export type Clinic = typeof clinics.$inferSelect;
 export type InsertClinic = z.infer<typeof insertClinicSchema>;
+
+export type ClinicMembership = typeof clinicMemberships.$inferSelect;
+export type InsertClinicMembership = z.infer<typeof insertClinicMembershipSchema>;
 
 export type ClinicInvitation = typeof clinicInvitations.$inferSelect;
 export type InsertClinicInvitation = z.infer<typeof insertClinicInvitationSchema>;

@@ -9,13 +9,20 @@ import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
+type RegisterData = Pick<InsertUser, "fullName" | "email" | "password"> & {
+  consents?: Array<Record<string, unknown>>;
+  registrationIntent?: "secretary";
+  clinicInvitationCode?: string;
+  clinicInvitationToken?: string;
+};
+
 type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
 };
 
 type LoginData = { email: string; password: string };
@@ -44,8 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
-      // Redirect to agenda after successful login
-      navigate("/agenda");
+      navigate(user?.clinicId ? "/agenda" : "/minha-clinica");
     },
     onError: (error: Error) => {
       toast({
@@ -57,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
+    mutationFn: async (credentials: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
@@ -72,9 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Bem-vindo ao VitaView! Você será redirecionado para o painel.",
       });
 
-      // Redirect to dashboard after a brief delay
+      // New users must configure or join a clinic before using the system.
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/minha-clinica");
       }, 1500);
     },
     onError: (error: Error) => {

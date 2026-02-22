@@ -142,6 +142,7 @@ function AuthRoutes() {
         <Suspense fallback={<LandingLoadingFallback />}>
           <Switch>
             <Route path="/auth" component={AuthPage} />
+            <Route path="/accept-invitation/:token" component={AuthPage} />
             <Route path="/forgot-password" component={ForgotPasswordPage} />
           </Switch>
         </Suspense>
@@ -217,7 +218,8 @@ function AppRouter() {
 
   // Rotas de autenticação (apenas AuthProvider)
   const authPaths = ['/auth', '/forgot-password'];
-  const isAuthRoute = authPaths.some(path => location === path);
+  const isAcceptInvitationRoute = location.startsWith('/accept-invitation/');
+  const isAuthRoute = authPaths.some(path => location === path) || isAcceptInvitationRoute;
   const shouldForceLightPublicTheme = isLandingRoute || location === "/auth";
 
   // Public routes must always stay in light mode regardless of saved theme.

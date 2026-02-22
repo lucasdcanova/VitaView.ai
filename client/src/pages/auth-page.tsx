@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, useRoute } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -48,6 +48,9 @@ const registerSchema = z.object({
   email: z.string().email({ message: "Digite um email válido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string(),
+  isSecretaryInviteRegistration: z.boolean().default(false),
+  clinicInvitationCode: z.string().optional(),
+  clinicInvitationToken: z.string().optional(),
   acceptedTerms: z.boolean().refine(val => val === true, {
     message: "Você deve aceitar os Termos de Uso para continuar",
   }),
@@ -57,6 +60,12 @@ const registerSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (!data.isSecretaryInviteRegistration) return true;
+  return !!data.clinicInvitationCode?.trim() || !!data.clinicInvitationToken?.trim();
+}, {
+  message: "Informe o código do convite da clínica",
+  path: ["clinicInvitationCode"],
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -65,6 +74,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [location, navigate] = useLocation();
+  const [acceptInvitationMatch, acceptInvitationParams] = useRoute("/accept-invitation/:token");
   const { user, loginMutation, registerMutation } = useAuth();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -90,17 +100,65 @@ export default function AuthPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      isSecretaryInviteRegistration: false,
+      clinicInvitationCode: "",
+      clinicInvitationToken: "",
       acceptedTerms: false,
       acceptedHealthData: false,
     },
   });
+
+  const isSecretaryInviteRegistration = registerForm.watch("isSecretaryInviteRegistration");
+  const prefilledInvitationToken = registerForm.watch("clinicInvitationToken");
+  const invitationTokenFromPath = ((acceptInvitationParams as { token?: string } | null)?.token ?? "").trim();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const tabParam = searchParams.get("tab");
+    const inviteCodeParam = (searchParams.get("inviteCode") || searchParams.get("clinicInvitationCode") || "").trim();
+    const inviteTokenParam = (searchParams.get("inviteToken") || searchParams.get("clinicInvitationToken") || "").trim();
+    const inviteEmailParam = (searchParams.get("email") || "").trim();
+    const roleParam = (searchParams.get("role") || "").trim().toLowerCase();
+    const effectiveInvitationToken = invitationTokenFromPath || inviteTokenParam;
+    const hasSecretaryInviteContext = !!inviteCodeParam || !!effectiveInvitationToken || roleParam === "secretary" || !!acceptInvitationMatch;
+
+    if (tabParam === "register" || hasSecretaryInviteContext) {
+      setTab("register");
+    }
+
+    if (hasSecretaryInviteContext) {
+      registerForm.setValue("isSecretaryInviteRegistration", true, { shouldValidate: false });
+    }
+
+    if (inviteCodeParam && !registerForm.getValues("clinicInvitationCode")) {
+      registerForm.setValue("clinicInvitationCode", inviteCodeParam.toUpperCase(), { shouldValidate: false });
+    }
+
+    if (effectiveInvitationToken && !registerForm.getValues("clinicInvitationToken")) {
+      registerForm.setValue("clinicInvitationToken", effectiveInvitationToken, { shouldValidate: false });
+    }
+
+    if (inviteEmailParam && !registerForm.getValues("email")) {
+      registerForm.setValue("email", inviteEmailParam, { shouldValidate: false });
+    }
+  }, [acceptInvitationMatch, invitationTokenFromPath, location, registerForm]);
 
   const onLoginSubmit = (values: LoginFormValues) => {
     loginMutation.mutate(values);
   };
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
-    const { confirmPassword, acceptedTerms, ...registerData } = values;
+    const {
+      confirmPassword,
+      acceptedTerms,
+      acceptedHealthData,
+      isSecretaryInviteRegistration,
+      clinicInvitationCode,
+      clinicInvitationToken,
+      ...registerData
+    } = values;
 
     // LGPD Consents Payload
     const consents = [
@@ -123,8 +181,13 @@ export default function AuthPage() {
     const dataWithTerms = {
       ...registerData,
       consents,
+      ...(isSecretaryInviteRegistration ? {
+        registrationIntent: "secretary" as const,
+        clinicInvitationCode: clinicInvitationCode?.trim() || undefined,
+        clinicInvitationToken: clinicInvitationToken?.trim() || undefined,
+      } : {}),
     };
-    registerMutation.mutate(dataWithTerms as any);
+    registerMutation.mutate(dataWithTerms);
   };
 
   return (
@@ -364,6 +427,66 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={registerForm.control}
+                      name="isSecretaryInviteRegistration"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-[#E0E0E0] p-4 mt-1">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                              className="data-[state=checked]:bg-[#212121] data-[state=checked]:border-[#212121]"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-body text-[#424242] cursor-pointer">
+                              Estou me cadastrando como <span className="font-bold text-[#212121]">secretária(o) por convite</span>
+                            </FormLabel>
+                            <p className="text-xs text-[#9E9E9E] font-body">
+                              Secretárias(os) só podem ser cadastradas(os) com convite da clínica (email ou código).
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {isSecretaryInviteRegistration && (
+                      <>
+                        <FormField
+                          control={registerForm.control}
+                          name="clinicInvitationCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-heading font-bold text-[#212121]">Código do Convite</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Ex: A1B2C3D4E5"
+                                  value={field.value || ""}
+                                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  autoComplete="off"
+                                  className="h-11 uppercase tracking-wider"
+                                  maxLength={10}
+                                />
+                              </FormControl>
+                              <FormMessage className="text-[#D32F2F]" />
+                            </FormItem>
+                          )}
+                        />
+
+                        {prefilledInvitationToken ? (
+                          <div className="rounded-md border border-[#E0E0E0] bg-[#FAFAFA] p-3">
+                            <p className="text-xs text-[#424242] font-body">
+                              Convite detectado por link. Você também pode concluir o cadastro usando apenas o código acima.
+                            </p>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
 
                     <FormField
                       control={registerForm.control}

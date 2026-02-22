@@ -1,6 +1,6 @@
-import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, customExams, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates, storageLogs, deletedUsers } from "@shared/schema";
+import { users, exams, examResults, healthMetrics, notifications, profiles, subscriptionPlans, subscriptions, diagnoses, surgeries, evolutions, appointments, doctors, habits, clinics, clinicMemberships, clinicInvitations, triageRecords, prescriptions, certificates, allergies, examRequests, examProtocols, customMedications, customExams, medications, userConsents, auditLogs, tussProcedures, aiConversations, aiMessages, aiUsage, certificateTemplates, storageLogs, deletedUsers } from "@shared/schema";
 export type { TriageRecord, InsertTriageRecord } from "@shared/schema";
-import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, CustomExam, InsertCustomExam, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate, DeletedUser, InsertDeletedUser } from "@shared/schema";
+import type { User, InsertUser, Profile, InsertProfile, Exam, InsertExam, ExamResult, InsertExamResult, HealthMetric, InsertHealthMetric, Notification, InsertNotification, SubscriptionPlan, InsertSubscriptionPlan, Subscription, InsertSubscription, Evolution, InsertEvolution, Appointment, InsertAppointment, Doctor, InsertDoctor, Habit, Clinic, InsertClinic, ClinicMembership, InsertClinicMembership, ClinicInvitation, InsertClinicInvitation, Prescription, InsertPrescription, Certificate, InsertCertificate, ExamRequest, InsertExamRequest, ExamProtocol, InsertExamProtocol, CustomMedication, InsertCustomMedication, CustomExam, InsertCustomExam, TussProcedure, InsertTussProcedure, AIConversation, InsertAIConversation, AIMessage, InsertAIMessage, AIUsage, InsertAIUsage, UserConsent, InsertUserConsent, AuditLog, InsertAuditLog, CertificateTemplate, InsertCertificateTemplate, DeletedUser, InsertDeletedUser } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -13,6 +13,12 @@ type SessionStore = any;
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
+
+export type UserClinicAccess = {
+  clinic: Clinic;
+  role: string;
+  membershipCreatedAt?: Date;
+};
 
 // Interface for all storage operations
 export interface IStorage {
@@ -168,6 +174,9 @@ export interface IStorage {
   createClinic(clinic: InsertClinic): Promise<Clinic>;
   getClinic(id: number): Promise<Clinic | undefined>;
   getClinicByAdminId(userId: number): Promise<Clinic | undefined>;
+  getClinicsForUser(userId: number): Promise<UserClinicAccess[]>;
+  getClinicMemberRole(clinicId: number, userId: number): Promise<string | null>;
+  setActiveClinicForUser(userId: number, clinicId: number): Promise<boolean>;
   updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
   updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
   addClinicMember(clinicId: number, userId: number, role?: string): Promise<boolean>;
@@ -285,6 +294,7 @@ export class MemStorage implements IStorage {
   private habitsMap: Map<number, any>;
   private doctorsMap: Map<number, Doctor>;
   private clinicsMap: Map<number, Clinic>;
+  private clinicMembershipsMap: Map<number, ClinicMembership>;
   private clinicInvitationsMap: Map<number, ClinicInvitation>;
   private triageRecordsMap: Map<number, any>;
   private prescriptionsMap: Map<number, Prescription>;
@@ -310,6 +320,7 @@ export class MemStorage implements IStorage {
   private habitIdCounter: number = 1;
   private doctorIdCounter: number = 1;
   private clinicIdCounter: number = 1;
+  private clinicMembershipIdCounter: number = 1;
   private clinicInvitationIdCounter: number = 1;
   private triageIdCounter: number = 1;
   private prescriptionIdCounter: number = 1;
@@ -338,6 +349,7 @@ export class MemStorage implements IStorage {
     this.auditLogsMap = new Map();
     this.doctorsMap = new Map();
     this.clinicsMap = new Map();
+    this.clinicMembershipsMap = new Map();
     this.clinicInvitationsMap = new Map();
     this.clinicInvitationsMap = new Map();
     this.triageRecordsMap = new Map();
@@ -1303,6 +1315,13 @@ export class MemStorage implements IStorage {
     if (adminUser) {
       await this.updateUser(clinic.adminUserId, { clinicId: id, clinicRole: 'admin' });
     }
+    this.clinicMembershipsMap.set(this.clinicMembershipIdCounter, {
+      id: this.clinicMembershipIdCounter++,
+      clinicId: id,
+      userId: clinic.adminUserId,
+      role: 'admin',
+      createdAt: new Date(),
+    });
     return newClinic;
   }
 
@@ -1312,6 +1331,45 @@ export class MemStorage implements IStorage {
 
   async getClinicByAdminId(userId: number): Promise<Clinic | undefined> {
     return Array.from(this.clinicsMap.values()).find(c => c.adminUserId === userId);
+  }
+
+  async getClinicsForUser(userId: number): Promise<UserClinicAccess[]> {
+    const memberships = Array.from(this.clinicMembershipsMap.values()).filter((m) => m.userId === userId);
+    const fromMemberships = memberships
+      .map((membership) => {
+        const clinic = this.clinicsMap.get(membership.clinicId);
+        if (!clinic) return null;
+        return { clinic, role: membership.role, membershipCreatedAt: membership.createdAt } as UserClinicAccess;
+      })
+      .filter((item): item is UserClinicAccess => !!item);
+
+    const legacyUser = await this.getUser(userId);
+    if (legacyUser?.clinicId && !fromMemberships.some((entry) => entry.clinic.id === legacyUser.clinicId)) {
+      const clinic = await this.getClinic(legacyUser.clinicId);
+      if (clinic) {
+        fromMemberships.push({ clinic, role: legacyUser.clinicRole || "member" });
+      }
+    }
+
+    return fromMemberships;
+  }
+
+  async getClinicMemberRole(clinicId: number, userId: number): Promise<string | null> {
+    const membership = Array.from(this.clinicMembershipsMap.values()).find(
+      (m) => m.clinicId === clinicId && m.userId === userId
+    );
+    if (membership) return membership.role;
+
+    const user = await this.getUser(userId);
+    if (user?.clinicId === clinicId) return user.clinicRole || null;
+    return null;
+  }
+
+  async setActiveClinicForUser(userId: number, clinicId: number): Promise<boolean> {
+    const role = await this.getClinicMemberRole(clinicId, userId);
+    if (!role) return false;
+    await this.updateUser(userId, { clinicId, clinicRole: role });
+    return true;
   }
 
   async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
@@ -1325,6 +1383,14 @@ export class MemStorage implements IStorage {
   async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
     const clinic = await this.getClinic(clinicId);
     if (!clinic) return false;
+
+    const existingMembership = Array.from(this.clinicMembershipsMap.values()).find(
+      (m) => m.clinicId === clinicId && m.userId === userId
+    );
+    if (existingMembership) {
+      await this.updateUser(userId, { clinicId, clinicRole: existingMembership.role });
+      return true;
+    }
 
     const members = await this.getClinicMembers(clinicId);
 
@@ -1343,21 +1409,57 @@ export class MemStorage implements IStorage {
     const user = await this.getUser(userId);
     if (!user) return false;
 
+    this.clinicMembershipsMap.set(this.clinicMembershipIdCounter, {
+      id: this.clinicMembershipIdCounter++,
+      clinicId,
+      userId,
+      role,
+      createdAt: new Date(),
+    });
     await this.updateUser(userId, { clinicId, clinicRole: role });
     return true;
   }
 
   async removeClinicMember(clinicId: number, userId: number): Promise<boolean> {
-    const user = await this.getUser(userId);
-    if (!user || user.clinicId !== clinicId) return false;
-    if (user.clinicRole === 'admin') return false; // Can't remove admin
+    const membershipEntry = Array.from(this.clinicMembershipsMap.entries()).find(
+      ([, m]) => m.clinicId === clinicId && m.userId === userId
+    );
 
-    await this.updateUser(userId, { clinicId: null, clinicRole: null });
+    if (membershipEntry) {
+      const [, membership] = membershipEntry;
+      if (membership.role === 'admin') return false; // Can't remove admin
+      this.clinicMembershipsMap.delete(membershipEntry[0]);
+    } else {
+      const user = await this.getUser(userId);
+      if (!user || user.clinicId !== clinicId) return false;
+      if (user.clinicRole === 'admin') return false; // Can't remove admin
+    }
+
+    const remainingClinics = await this.getClinicsForUser(userId);
+    if (remainingClinics.length > 0) {
+      await this.updateUser(userId, {
+        clinicId: remainingClinics[0].clinic.id,
+        clinicRole: remainingClinics[0].role,
+      });
+    } else {
+      await this.updateUser(userId, { clinicId: null, clinicRole: null });
+    }
     return true;
   }
 
   async getClinicMembers(clinicId: number): Promise<User[]> {
-    return Array.from(this.users.values()).filter(u => u.clinicId === clinicId);
+    const memberships = Array.from(this.clinicMembershipsMap.values()).filter((m) => m.clinicId === clinicId);
+    const membersFromMemberships = memberships.flatMap((membership) => {
+      const user = this.users.get(membership.userId);
+      if (!user) return [];
+      return [{ ...user, clinicId, clinicRole: membership.role } as User];
+    });
+
+    const legacyMembers = Array.from(this.users.values()).filter(
+      (u) => u.clinicId === clinicId && !membersFromMemberships.some((existing) => existing.id === u.id)
+    );
+
+    return [...membersFromMemberships, ...legacyMembers];
   }
 
   // Clinic invitation operations
@@ -2338,9 +2440,11 @@ export class DatabaseStorage implements IStorage {
     // Busca os pacientes que possuem agendamento com este profissional
     const userAppointments = await db.select({ profileId: appointments.profileId })
       .from(appointments)
-      .where(eq(appointments.professionalId, userId));
+      .where(eq(appointments.userId, userId));
 
-    const profileIdsFromAppointments = [...new Set(userAppointments.map(a => a.profileId).filter(id => id !== null))] as number[];
+    const profileIdsFromAppointments = Array.from(
+      new Set(userAppointments.map(a => a.profileId).filter(id => id !== null))
+    ) as number[];
 
     let appointmentProfiles: Profile[] = [];
     if (profileIdsFromAppointments.length > 0) {
@@ -3015,6 +3119,12 @@ export class DatabaseStorage implements IStorage {
   // Clinic operations
   async createClinic(clinic: InsertClinic): Promise<Clinic> {
     const [newClinic] = await db.insert(clinics).values(clinic).returning();
+    await db.insert(clinicMemberships).values({
+      clinicId: newClinic.id,
+      userId: clinic.adminUserId,
+      role: "admin",
+      createdAt: new Date(),
+    } as InsertClinicMembership);
     // Update admin user to reference this clinic
     await db.update(users).set({ clinicId: newClinic.id, clinicRole: 'admin' }).where(eq(users.id, clinic.adminUserId));
     return newClinic;
@@ -3030,6 +3140,53 @@ export class DatabaseStorage implements IStorage {
     return c;
   }
 
+  async getClinicsForUser(userId: number): Promise<UserClinicAccess[]> {
+    const membershipRows = await db.select({
+      clinic: clinics,
+      role: clinicMemberships.role,
+      membershipCreatedAt: clinicMemberships.createdAt,
+    })
+      .from(clinicMemberships)
+      .innerJoin(clinics, eq(clinicMemberships.clinicId, clinics.id))
+      .where(eq(clinicMemberships.userId, userId))
+      .orderBy(desc(clinicMemberships.createdAt));
+
+    const clinicsForUser: UserClinicAccess[] = membershipRows.map((row) => ({
+      clinic: row.clinic,
+      role: row.role,
+      membershipCreatedAt: row.membershipCreatedAt,
+    }));
+
+    // Legacy fallback until migration/backfill is fully applied.
+    const [legacyUser] = await db.select().from(users).where(eq(users.id, userId));
+    if (legacyUser?.clinicId && !clinicsForUser.some((entry) => entry.clinic.id === legacyUser.clinicId)) {
+      const [legacyClinic] = await db.select().from(clinics).where(eq(clinics.id, legacyUser.clinicId));
+      if (legacyClinic) {
+        clinicsForUser.push({ clinic: legacyClinic, role: legacyUser.clinicRole || "member" });
+      }
+    }
+
+    return clinicsForUser;
+  }
+
+  async getClinicMemberRole(clinicId: number, userId: number): Promise<string | null> {
+    const [membership] = await db.select({ role: clinicMemberships.role })
+      .from(clinicMemberships)
+      .where(and(eq(clinicMemberships.clinicId, clinicId), eq(clinicMemberships.userId, userId)));
+    if (membership?.role) return membership.role;
+
+    const [legacyUser] = await db.select().from(users).where(eq(users.id, userId));
+    if (legacyUser?.clinicId === clinicId) return legacyUser.clinicRole || null;
+    return null;
+  }
+
+  async setActiveClinicForUser(userId: number, clinicId: number): Promise<boolean> {
+    const role = await this.getClinicMemberRole(clinicId, userId);
+    if (!role) return false;
+    await db.update(users).set({ clinicId, clinicRole: role }).where(eq(users.id, userId));
+    return true;
+  }
+
   async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
     const [updated] = await db.update(clinics).set(data).where(eq(clinics.id, id)).returning();
     return updated;
@@ -3038,6 +3195,14 @@ export class DatabaseStorage implements IStorage {
   async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
     const clinic = await this.getClinic(clinicId);
     if (!clinic) return false;
+
+    const [existingMembership] = await db.select()
+      .from(clinicMemberships)
+      .where(and(eq(clinicMemberships.clinicId, clinicId), eq(clinicMemberships.userId, userId)));
+    if (existingMembership) {
+      await this.setActiveClinicForUser(userId, clinicId);
+      return true;
+    }
 
     const members = await this.getClinicMembers(clinicId);
 
@@ -3053,21 +3218,69 @@ export class DatabaseStorage implements IStorage {
       if (professionalsCount >= clinic.maxProfessionals) return false;
     }
 
+    try {
+      await db.insert(clinicMemberships).values({
+        clinicId,
+        userId,
+        role,
+        createdAt: new Date(),
+      } as InsertClinicMembership);
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        await this.setActiveClinicForUser(userId, clinicId);
+        return true;
+      }
+      throw error;
+    }
     await db.update(users).set({ clinicId, clinicRole: role }).where(eq(users.id, userId));
     return true;
   }
 
   async removeClinicMember(clinicId: number, userId: number): Promise<boolean> {
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user || user.clinicId !== clinicId) return false;
-    if (user.clinicRole === 'admin') return false;
+    const [membership] = await db.select()
+      .from(clinicMemberships)
+      .where(and(eq(clinicMemberships.clinicId, clinicId), eq(clinicMemberships.userId, userId)));
 
-    await db.update(users).set({ clinicId: null, clinicRole: null }).where(eq(users.id, userId));
+    if (membership) {
+      if (membership.role === 'admin') return false;
+      await db.delete(clinicMemberships)
+        .where(and(eq(clinicMemberships.clinicId, clinicId), eq(clinicMemberships.userId, userId)));
+    } else {
+      const [legacyUser] = await db.select().from(users).where(eq(users.id, userId));
+      if (!legacyUser || legacyUser.clinicId !== clinicId || legacyUser.clinicRole === 'admin') return false;
+    }
+
+    const remainingClinics = await this.getClinicsForUser(userId);
+    if (remainingClinics.length > 0) {
+      await db.update(users)
+        .set({ clinicId: remainingClinics[0].clinic.id, clinicRole: remainingClinics[0].role })
+        .where(eq(users.id, userId));
+    } else {
+      await db.update(users).set({ clinicId: null, clinicRole: null }).where(eq(users.id, userId));
+    }
     return true;
   }
 
   async getClinicMembers(clinicId: number): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.clinicId, clinicId));
+    const rows = await db.select({
+      user: users,
+      role: clinicMemberships.role,
+    })
+      .from(clinicMemberships)
+      .innerJoin(users, eq(clinicMemberships.userId, users.id))
+      .where(eq(clinicMemberships.clinicId, clinicId));
+
+    const membersFromMemberships = rows.map((row) => ({ ...row.user, clinicId, clinicRole: row.role } as User));
+    const legacyRows = await db.select().from(users).where(eq(users.clinicId, clinicId));
+    const merged = [...membersFromMemberships];
+
+    for (const legacyUser of legacyRows) {
+      if (!merged.some((existing) => existing.id === legacyUser.id)) {
+        merged.push(legacyUser);
+      }
+    }
+
+    return merged;
   }
 
   // Clinic invitation operations

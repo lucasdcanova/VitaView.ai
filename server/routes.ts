@@ -27,7 +27,6 @@ import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
-import { nanoid } from "nanoid";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 import { sendClinicInvitationEmail } from "./services/email.service";
@@ -3611,16 +3610,41 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const userId = req.user!.id;
       const user = req.user!;
+      const accessibleClinics = await storage.getClinicsForUser(userId);
+      const ownedClinic = await storage.getClinicByAdminId(userId);
 
-      // Check if user is part of a clinic
-      if (!user.clinicId) {
-        return res.json({ clinic: null, members: [], isAdmin: false });
+      let activeMembership = accessibleClinics.find((entry) => entry.clinic.id === user.clinicId);
+
+      // Self-heal active clinic context when it is missing/stale.
+      if (!activeMembership && accessibleClinics.length > 0) {
+        activeMembership = accessibleClinics[0];
+        await storage.setActiveClinicForUser(userId, activeMembership.clinic.id);
+        user.clinicId = activeMembership.clinic.id;
+        user.clinicRole = activeMembership.role;
+
+        req.login(user, (err) => {
+          if (err) {
+            logger.error("Error refreshing session clinic context:", err);
+          }
+        });
       }
 
-      const clinic = await storage.getClinic(user.clinicId);
-      if (!clinic) {
-        return res.json({ clinic: null, members: [], isAdmin: false });
+      // No memberships yet: force clinic setup flow (personal clinic or accept invitation)
+      if (!activeMembership) {
+        return res.json({
+          clinic: null,
+          clinics: [],
+          activeClinicId: null,
+          activeRole: null,
+          members: [],
+          invitations: [],
+          isAdmin: false,
+          requiresClinicSetup: true,
+          canCreateClinic: !ownedClinic,
+        });
       }
+
+      const clinic = await storage.getClinic(activeMembership.clinic.id) ?? activeMembership.clinic;
 
       // Auto-update clinic limits if they don't match the plan (e.g. upgraded plan)
       // Get user's subscription to check plan
@@ -3648,11 +3672,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       const members = await storage.getClinicMembers(clinic.id);
       const invitations = await storage.getClinicInvitations(clinic.id);
 
-      // Force limit of 1 in response
-      const clinicResponse = { ...clinic, maxSecretaries: 1 };
-
       res.json({
-        clinic: clinicResponse,
+        clinic,
+        clinics: accessibleClinics.map(({ clinic: accessibleClinic, role }) => ({
+          id: accessibleClinic.id,
+          name: accessibleClinic.name,
+          adminUserId: accessibleClinic.adminUserId,
+          subscriptionId: accessibleClinic.subscriptionId,
+          maxProfessionals: accessibleClinic.maxProfessionals,
+          maxSecretaries: accessibleClinic.maxSecretaries,
+          createdAt: accessibleClinic.createdAt,
+          role,
+          isActive: accessibleClinic.id === clinic.id,
+        })),
+        activeClinicId: clinic.id,
+        activeRole: activeMembership.role,
         members: members.map(m => ({
           id: m.id,
           username: m.username,
@@ -3660,12 +3694,60 @@ export async function registerRoutes(app: Express): Promise<void> {
           email: m.email,
           clinicRole: m.clinicRole
         })),
-        invitations: invitations.filter(i => i.status === 'pending'),
-        isAdmin: user.clinicRole === 'admin'
+        invitations: invitations
+          .filter(i => i.status === 'pending')
+          .map((inv) => ({
+            ...inv,
+            inviteCode: inv.token.slice(0, 10).toUpperCase(),
+          })),
+        isAdmin: activeMembership.role === 'admin',
+        requiresClinicSetup: false,
+        canCreateClinic: !ownedClinic,
       });
     } catch (error) {
       logger.error("Error fetching user clinic:", error);
       res.status(500).json({ message: "Erro ao buscar dados da clínica" });
+    }
+  });
+
+  // Select active clinic for the current session/user
+  app.post("/api/my-clinic/select", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const clinicId = Number(req.body?.clinicId);
+
+      if (!Number.isInteger(clinicId) || clinicId <= 0) {
+        return res.status(400).json({ message: "Clínica inválida" });
+      }
+
+      const role = await storage.getClinicMemberRole(clinicId, userId);
+      if (!role) {
+        return res.status(403).json({ message: "Você não tem acesso a esta clínica" });
+      }
+
+      const switched = await storage.setActiveClinicForUser(userId, clinicId);
+      if (!switched) {
+        return res.status(400).json({ message: "Não foi possível selecionar a clínica" });
+      }
+
+      req.user!.clinicId = clinicId;
+      req.user!.clinicRole = role;
+
+      req.login(req.user!, (err) => {
+        if (err) {
+          logger.error("Error saving session after clinic switch:", err);
+          return res.status(500).json({ message: "Erro ao salvar a clínica ativa na sessão" });
+        }
+
+        res.json({
+          success: true,
+          clinicId,
+          role,
+        });
+      });
+    } catch (error) {
+      logger.error("Error selecting active clinic:", error);
+      res.status(500).json({ message: "Erro ao selecionar clínica" });
     }
   });
 
@@ -3689,34 +3771,35 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Usuário já possui uma clínica" });
       }
 
-      // Get user's subscription
       const subscription = await storage.getUserSubscription(userId);
-      if (!subscription) {
-        return res.status(400).json({ message: "Assinatura não encontrada" });
-      }
-
-      // Verify user has a clinic-enabled plan
-      const plan = await storage.getSubscriptionPlan(subscription.planId!);
+      const plan = subscription?.planId ? await storage.getSubscriptionPlan(subscription.planId) : null;
       const clinicLimits = getClinicLimitsByPlanName(
-        plan ?? { id: subscription.planId ?? null, name: null, features: null }
+        plan ?? { id: subscription?.planId ?? null, name: null, features: null }
       );
 
-      if (!clinicLimits) {
-        return res.status(400).json({ message: "Seu plano não inclui recursos de clínica" });
-      }
+      // Every professional must have at least one clinic context.
+      // When the user does not have a clinic-enabled plan, create a personal clinic.
+      const effectiveClinicLimits = clinicLimits ?? {
+        maxProfessionals: 1,
+        maxSecretaries: 0,
+      };
 
       // Create clinic
       const clinic = await storage.createClinic({
         name: clinicName,
         adminUserId: userId,
-        subscriptionId: subscription.id,
-        maxProfessionals: clinicLimits.maxProfessionals,
-        maxSecretaries: clinicLimits.maxSecretaries
+        subscriptionId: subscription?.id ?? null,
+        maxProfessionals: effectiveClinicLimits.maxProfessionals,
+        maxSecretaries: effectiveClinicLimits.maxSecretaries
       });
+
+      req.user!.clinicId = clinic.id;
+      req.user!.clinicRole = 'admin';
 
       res.status(201).json({
         success: true,
-        clinic
+        clinic,
+        clinicType: clinicLimits ? "team" : "personal"
       });
     } catch (error) {
       logger.error("Error creating clinic:", error);
@@ -3759,6 +3842,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!email) {
         return res.status(400).json({ message: "Email é obrigatório" });
       }
+      const normalizedInviteEmail = String(email).trim().toLowerCase();
 
       const clinic = await storage.getClinic(clinicId);
       if (!clinic) {
@@ -3766,22 +3850,47 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Only admin can invite
-      if (clinic.adminUserId !== userId) {
+      const requesterRole = await storage.getClinicMemberRole(clinicId, userId);
+      if (requesterRole !== 'admin' && clinic.adminUserId !== userId) {
         return res.status(403).json({ message: "Apenas o administrador pode convidar membros" });
       }
 
       // Check member limit based on role
       const members = await storage.getClinicMembers(clinicId);
       const inviteRole = role === 'secretary' ? 'secretary' : 'member';
+      const existingPendingInvitation = (await storage.getClinicInvitations(clinicId)).find((inv) =>
+        inv.status === 'pending' &&
+        inv.role === inviteRole &&
+        inv.email.toLowerCase() === normalizedInviteEmail
+      );
+
+      if (existingPendingInvitation) {
+        return res.status(409).json({
+          message: "Já existe um convite pendente para este email nesta clínica.",
+          invitation: {
+            id: existingPendingInvitation.id,
+            email: existingPendingInvitation.email,
+            role: existingPendingInvitation.role,
+            expiresAt: existingPendingInvitation.expiresAt,
+            inviteCode: existingPendingInvitation.token.slice(0, 10).toUpperCase(),
+          }
+        });
+      }
 
       if (inviteRole === 'secretary') {
+        const secretaryLimit = Math.max(0, clinic.maxSecretaries ?? 0);
+        if (secretaryLimit <= 0) {
+          return res.status(400).json({
+            message: "O plano desta clínica não permite adicionar secretárias."
+          });
+        }
+
         const secretariesCount = members.filter(m => m.clinicRole === 'secretary').length;
         const pendingSecretaryInvites = await storage.getPendingClinicInvitationsByRole(clinicId, 'secretary');
 
-        // Strict limit of 1 secretary
-        if (secretariesCount + pendingSecretaryInvites.length >= 1) {
+        if (secretariesCount + pendingSecretaryInvites.length >= secretaryLimit) {
           return res.status(400).json({
-            message: `Limite de 1 secretária atingido. Sua clínica só pode ter 1 secretária.`
+            message: `Limite de ${secretaryLimit} secretária(s) atingido para o plano da clínica.`
           });
         }
       } else {
@@ -3795,12 +3904,13 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Generate invitation token
       const token = randomBytes(32).toString('hex');
+      const inviteCode = token.slice(0, 10).toUpperCase();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
 
       const invitation = await storage.createClinicInvitation({
         clinicId,
-        email,
+        email: normalizedInviteEmail,
         token,
         role: inviteRole,
         status: 'pending',
@@ -3829,10 +3939,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           id: invitation.id,
           email: invitation.email,
           token: invitation.token,
+          inviteCode,
           role: invitation.role,
           expiresAt: invitation.expiresAt
         },
         inviteUrl: `/accept-invitation/${token}`,
+        inviteCode,
         emailSent
       });
     } catch (error) {
@@ -3904,6 +4016,72 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Accept clinic invitation by generated code (same email account)
+  app.post("/api/clinic-invitations/accept-code", ensureAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const code = typeof req.body?.code === "string" ? req.body.code.trim().toUpperCase() : "";
+
+      if (!code) {
+        return res.status(400).json({ message: "Código de convite é obrigatório" });
+      }
+
+      if (!user.email) {
+        return res.status(400).json({ message: "Sua conta precisa ter email para validar o convite" });
+      }
+
+      const invitations = await storage.getClinicInvitationsByEmail(user.email);
+      const matches = invitations.filter((inv) =>
+        inv.status === "pending" &&
+        inv.token.slice(0, 10).toUpperCase() === code
+      );
+
+      if (matches.length === 0) {
+        return res.status(404).json({ message: "Convite não encontrado para este código" });
+      }
+
+      if (matches.length > 1) {
+        return res.status(409).json({ message: "Código ambíguo. Use o convite por email." });
+      }
+
+      const invitation = matches[0];
+
+      if (new Date() > invitation.expiresAt) {
+        await storage.updateClinicInvitation(invitation.id, { status: 'expired' });
+        return res.status(400).json({ message: "Este convite expirou" });
+      }
+
+      const success = await storage.addClinicMember(invitation.clinicId, user.id, invitation.role);
+      if (!success) {
+        return res.status(400).json({
+          message: "Não foi possível adicionar à clínica. O limite do plano pode ter sido atingido."
+        });
+      }
+
+      await storage.updateClinicInvitation(invitation.id, { status: 'accepted' });
+
+      user.clinicId = invitation.clinicId;
+      user.clinicRole = invitation.role;
+
+      req.login(user, async (err) => {
+        if (err) {
+          logger.error("Error saving session after accepting invitation code:", err);
+          return res.status(500).json({ message: "Erro ao salvar sessão" });
+        }
+
+        const clinic = await storage.getClinic(invitation.clinicId);
+        res.json({
+          success: true,
+          message: "Você foi adicionado à clínica com sucesso",
+          clinic
+        });
+      });
+    } catch (error) {
+      logger.error("Error accepting invitation by code:", error);
+      res.status(500).json({ message: "Erro ao aceitar convite por código" });
+    }
+  });
+
   // Reject clinic invitation
   app.post("/api/clinic-invitations/:token/reject", ensureAuthenticated, async (req, res) => {
     try {
@@ -3960,6 +4138,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           return {
             ...inv,
             clinicName: clinic?.name || "Clínica Desconhecida",
+            inviteCode: inv.token.slice(0, 10).toUpperCase(),
           };
         })
       );
@@ -3975,13 +4154,16 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.delete("/api/clinic/invitations/:id", ensureAuthenticated, async (req, res) => {
     try {
       if (!req.user) return res.status(401).send("Unauthorized");
-      if (!req.user.clinicId) {
-        return res.status(400).json({ message: "Usuário não está vinculado a uma clínica" });
-      }
 
       const invitationId = parseInt(req.params.id);
-      const clinic = await storage.getClinic(req.user.clinicId);
-      if (!clinic || clinic.adminUserId !== req.user.id) {
+      const invitation = await storage.getClinicInvitation(invitationId);
+      if (!invitation) {
+        return res.status(404).json({ message: "Convite não encontrado" });
+      }
+
+      const clinic = await storage.getClinic(invitation.clinicId);
+      const requesterRole = await storage.getClinicMemberRole(invitation.clinicId, req.user.id);
+      if (!clinic || (requesterRole !== 'admin' && clinic.adminUserId !== req.user.id)) {
         return res.status(403).json({ message: "Apenas o administrador pode cancelar convites" });
       }
 
@@ -4001,11 +4183,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/clinics/:id/members", ensureAuthenticated, async (req, res) => {
     try {
       const clinicId = parseInt(req.params.id);
-      const userId = req.user!.id;
       const user = req.user!;
 
-      // Check user belongs to this clinic
-      if (user.clinicId !== clinicId) {
+      const requesterRole = await storage.getClinicMemberRole(clinicId, user.id);
+      if (!requesterRole) {
         return res.status(403).json({ message: "Você não pertence a esta clínica" });
       }
 
@@ -4025,7 +4206,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           clinicRole: m.clinicRole
         })),
         maxProfessionals: clinic.maxProfessionals,
-        maxSecretaries: 1 // Strict limit of 1 for now
+        maxSecretaries: clinic.maxSecretaries
       });
     } catch (error) {
       logger.error("Error fetching clinic members:", error);
@@ -4045,8 +4226,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Clínica não encontrada" });
       }
 
-      // Only admin can remove members
-      if (clinic.adminUserId !== adminUserId) {
+      const requesterRole = await storage.getClinicMemberRole(clinicId, adminUserId);
+      if (requesterRole !== 'admin' && clinic.adminUserId !== adminUserId) {
         return res.status(403).json({ message: "Apenas o administrador pode remover membros" });
       }
 

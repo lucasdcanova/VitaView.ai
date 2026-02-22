@@ -421,6 +421,13 @@ export function registerPatientRoutes(app: Express) {
             const professionalIdParams = req.query.professionalId as string;
             let targetUserId = (req.user as any).id;
             const user = req.user as any;
+            const activeClinicId = req.tenantId ?? user.clinicId ?? null;
+
+            if (!activeClinicId) {
+                return res.status(409).json({
+                    message: "Selecione ou crie uma clínica antes de acessar pacientes."
+                });
+            }
 
             if (professionalIdParams) {
                 const professionalId = parseInt(professionalIdParams, 10);
@@ -447,7 +454,7 @@ export function registerPatientRoutes(app: Express) {
                 }
             }
 
-            const profiles = await storage.getProfilesByUserId(targetUserId);
+            const profiles = await storage.getProfilesByUserId(targetUserId, activeClinicId);
             res.setHeader("X-Profile-Count", String(profiles?.length ?? 0));
 
             // LGPD Audit Log
@@ -479,10 +486,14 @@ export function registerPatientRoutes(app: Express) {
 
     app.post("/api/profiles", ensureAuthenticated, async (req, res) => {
         try {
+            const activeClinicId = req.tenantId ?? (req.user as any)?.clinicId ?? null;
+            if (!activeClinicId) {
+                return res.status(409).json({ message: "Selecione ou crie uma clínica antes de cadastrar pacientes." });
+            }
             const profileData = {
                 ...req.body,
                 userId: (req.user as any).id,
-                clinicId: req.tenantId ?? (req.user as any)?.clinicId ?? null,
+                clinicId: activeClinicId,
                 createdAt: new Date()
             };
 
@@ -496,9 +507,13 @@ export function registerPatientRoutes(app: Express) {
     app.put("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
         try {
             const profileId = parseInt(req.params.id);
+            const activeClinicId = req.tenantId ?? (req.user as any)?.clinicId ?? null;
+            if (!activeClinicId) {
+                return res.status(409).json({ message: "Selecione ou crie uma clínica antes de editar pacientes." });
+            }
 
             // Verificar se o perfil existe e pertence ao usuário
-            const profile = await storage.getProfile(profileId);
+            const profile = await storage.getProfile(profileId, activeClinicId);
             if (!profile) {
                 return res.status(404).json({ message: "Perfil não encontrado" });
             }
@@ -517,9 +532,13 @@ export function registerPatientRoutes(app: Express) {
     app.delete("/api/profiles/:id", ensureAuthenticated, async (req, res) => {
         try {
             const profileId = parseInt(req.params.id);
+            const activeClinicId = req.tenantId ?? (req.user as any)?.clinicId ?? null;
+            if (!activeClinicId) {
+                return res.status(409).json({ message: "Selecione ou crie uma clínica antes de remover pacientes." });
+            }
 
             // Verificar se o perfil existe e pertence ao usuário
-            const profile = await storage.getProfile(profileId);
+            const profile = await storage.getProfile(profileId, activeClinicId);
             if (!profile) {
                 return res.status(404).json({ message: "Perfil não encontrado" });
             }
@@ -551,9 +570,13 @@ export function registerPatientRoutes(app: Express) {
             if (!profileId) {
                 return res.status(400).json({ message: "ID do perfil é obrigatório" });
             }
+            const activeClinicId = req.tenantId ?? (req.user as any)?.clinicId ?? null;
+            if (!activeClinicId) {
+                return res.status(409).json({ message: "Selecione ou crie uma clínica antes de selecionar pacientes." });
+            }
 
             // Verificar se o perfil existe e pertence ao usuário
-            const profile = await storage.getProfile(profileId);
+            const profile = await storage.getProfile(profileId, activeClinicId);
             if (!profile) {
                 return res.status(404).json({ message: "Perfil não encontrado" });
             }

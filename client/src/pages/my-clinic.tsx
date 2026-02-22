@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
@@ -15,6 +15,7 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
@@ -23,8 +24,15 @@ interface Clinic {
     id: number;
     name: string;
     adminUserId: number;
+    subscriptionId?: number | null;
     maxProfessionals: number;
     maxSecretaries: number;
+    createdAt?: string;
+}
+
+interface UserClinicAccess extends Clinic {
+    role: string;
+    isActive: boolean;
 }
 
 interface ClinicMember {
@@ -41,13 +49,19 @@ interface ClinicInvitation {
     role: string;
     status: string;
     expiresAt: string;
+    inviteCode?: string;
 }
 
 interface ClinicData {
     clinic: Clinic | null;
+    clinics?: UserClinicAccess[];
+    activeClinicId?: number | null;
+    activeRole?: string | null;
     members: ClinicMember[];
     invitations: ClinicInvitation[];
     isAdmin: boolean;
+    requiresClinicSetup?: boolean;
+    canCreateClinic?: boolean;
 }
 
 const normalizePlanName = (planName?: string | null) =>
@@ -87,17 +101,19 @@ const MyClinic = () => {
     const { toast } = useToast();
     const { user } = useAuth();
     const [, navigate] = useLocation();
+    const queryClient = useQueryClient();
 
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
     const [isCreateClinicDialogOpen, setIsCreateClinicDialogOpen] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteCodeInput, setInviteCodeInput] = useState('');
     const [inviteRole, setInviteRole] = useState<'member' | 'secretary'>('member');
     const [clinicName, setClinicName] = useState('');
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedClinicName, setEditedClinicName] = useState('');
 
     const { data: clinicData, isLoading, refetch: refetchClinic } = useQuery<ClinicData>({
-        queryKey: ['/api/my-clinic'],
+        queryKey: ['/api/my-clinic', user?.id ?? null, user?.clinicId ?? null],
         enabled: !!user,
     });
 
@@ -107,7 +123,7 @@ const MyClinic = () => {
     });
 
     const { data: clinicAppointments, isLoading: isLoadingAppointments } = useQuery<any[]>({
-        queryKey: ['/api/clinic/appointments'],
+        queryKey: ['/api/clinic/appointments', clinicData?.activeClinicId ?? clinicData?.clinic?.id ?? null],
         enabled: !!user && !!clinicData?.clinic,
     });
 
@@ -121,6 +137,9 @@ const MyClinic = () => {
             toast({ title: 'Clínica criada!', description: 'Sua clínica foi configurada com sucesso.' });
             setIsCreateClinicDialogOpen(false);
             setClinicName('');
+            queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/profiles'] });
             refetchClinic();
         },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
@@ -141,6 +160,33 @@ const MyClinic = () => {
             refetchClinic();
         },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
+    });
+
+    const selectClinicMutation = useMutation({
+        mutationFn: async (clinicId: number) => {
+            const res = await apiRequest('POST', '/api/my-clinic/select', { clinicId });
+            if (!res.ok) {
+                const e = await res.json();
+                throw new Error(e.message || 'Erro ao selecionar clínica');
+            }
+            return res.json();
+        },
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/clinic/appointments'] }),
+            ]);
+
+            toast({
+                title: 'Clínica selecionada',
+                description: 'O contexto de pacientes e agenda foi atualizado.',
+            });
+        },
+        onError: (error: Error) => {
+            toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+        }
     });
 
     const removeMemberMutation = useMutation({
@@ -165,6 +211,34 @@ const MyClinic = () => {
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
 
+    const acceptInviteCodeMutation = useMutation({
+        mutationFn: async (code: string) => {
+            const res = await apiRequest('POST', '/api/clinic-invitations/accept-code', { code });
+            if (!res.ok) {
+                const e = await res.json();
+                throw new Error(e.message || 'Erro ao aceitar convite por código');
+            }
+            return res.json();
+        },
+        onSuccess: async () => {
+            setInviteCodeInput('');
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/my-invitations'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
+            ]);
+            toast({
+                title: 'Convite aceito',
+                description: 'Você foi vinculado à clínica com sucesso.',
+            });
+            refetchClinic();
+        },
+        onError: (error: Error) => {
+            toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+        }
+    });
+
     const updateClinicMutation = useMutation({
         mutationFn: async (name: string) => {
             const clinicId = clinicData?.clinic?.id;
@@ -180,6 +254,8 @@ const MyClinic = () => {
     const currentPlan = subscriptionData?.plan;
     const isClinicPlan = hasClinicAccessByPlan(currentPlan);
     const clinic = clinicData?.clinic;
+    const accessibleClinics = clinicData?.clinics ?? [];
+    const canCreateClinic = clinicData?.canCreateClinic !== false;
 
     if (isLoading) {
         return (
@@ -264,32 +340,80 @@ const MyClinic = () => {
     );
 
     const renderCreateClinic = () => (
-        <Card className="border-2 border-dashed border-border">
-            <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-16 h-16 bg-muted rounded-2xl border border-border flex items-center justify-center mb-5">
-                        <Building className="h-7 w-7 text-muted-foreground" />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card className="border-2 border-dashed border-border">
+                <CardContent className="pt-6">
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <div className="w-16 h-16 bg-muted rounded-2xl border border-border flex items-center justify-center mb-5">
+                            <Building className="h-7 w-7 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">Criar Clínica Pessoal</h3>
+                        <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
+                            Toda conta profissional precisa estar vinculada a uma clínica. Crie sua clínica pessoal para iniciar com segurança.
+                        </p>
+                        {!isClinicPlan && (
+                            <p className="text-xs text-muted-foreground mb-6 max-w-md">
+                                Seu plano atual permite uma clínica pessoal (1 profissional). Para convidar equipe, faça upgrade para um plano de clínica.
+                            </p>
+                        )}
+                        {!canCreateClinic && (
+                            <p className="text-xs text-destructive mb-4 max-w-md">
+                                Sua conta já possui uma clínica administrada. Se ela não aparece, atualize a sessão ou contate o suporte.
+                            </p>
+                        )}
+                        <Button onClick={() => setIsCreateClinicDialogOpen(true)} disabled={!canCreateClinic} className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6">
+                            <Building className="h-4 w-4 mr-2" />
+                            Criar Minha Clínica
+                        </Button>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Configure sua Clínica</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
-                        Você possui um plano {currentPlan?.name || 'clínica'}. Configure sua clínica para
-                        começar a convidar outros profissionais.
-                    </p>
-                    <Button onClick={() => setIsCreateClinicDialogOpen(true)} className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6">
-                        <Building className="h-4 w-4 mr-2" />
-                        Criar Minha Clínica
+                </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Entrar por Código de Convite
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Para secretárias e profissionais convidados. Use o código gerado pela clínica (enviado por email ou compartilhado pelo administrador).
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="inviteCode" className="text-foreground">Código do Convite</Label>
+                        <Input
+                            id="inviteCode"
+                            placeholder="Ex: A1B2C3D4E5"
+                            value={inviteCodeInput}
+                            onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
+                            className="border-border focus:border-primary uppercase tracking-wider"
+                            maxLength={10}
+                        />
+                    </div>
+                    <Button
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={() => acceptInviteCodeMutation.mutate(inviteCodeInput)}
+                        disabled={!inviteCodeInput.trim() || acceptInviteCodeMutation.isPending}
+                    >
+                        {acceptInviteCodeMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Entrar na Clínica
                     </Button>
-                </div>
-            </CardContent>
-        </Card>
+                    <p className="text-xs text-muted-foreground">
+                        O código funciona apenas para convites pendentes enviados ao seu email cadastrado.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
     );
 
     const renderClinicContent = () => {
         if (!clinic || !clinicData) return null;
+        const professionalCount = clinicData.members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member').length;
         return (
             <>
                 {/* Clinic header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                             <Building className="h-6 w-6 text-primary-foreground" />
@@ -298,7 +422,7 @@ const MyClinic = () => {
                             <h2 className="text-xl font-bold text-foreground">{clinic.name}</h2>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-sm text-muted-foreground">
-                                    {clinicData.members.length} / {clinic.maxProfessionals} profissionais
+                                    {professionalCount} / {clinic.maxProfessionals} profissionais
                                 </span>
                                 {clinicData.isAdmin && (
                                     <Badge className="bg-primary text-primary-foreground text-[10px] rounded-md">
@@ -308,6 +432,31 @@ const MyClinic = () => {
                             </div>
                         </div>
                     </div>
+                    {accessibleClinics.length > 1 && (
+                        <div className="w-full md:w-[340px]">
+                            <Label className="text-xs text-muted-foreground mb-1.5 block">Clínica ativa</Label>
+                            <Select
+                                value={String(clinic.id)}
+                                onValueChange={(value) => {
+                                    const nextClinicId = Number(value);
+                                    if (!Number.isFinite(nextClinicId) || nextClinicId === clinic.id) return;
+                                    selectClinicMutation.mutate(nextClinicId);
+                                }}
+                                disabled={selectClinicMutation.isPending}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Selecionar clínica" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {accessibleClinics.map((accessibleClinic) => (
+                                        <SelectItem key={accessibleClinic.id} value={String(accessibleClinic.id)}>
+                                            {accessibleClinic.name} ({accessibleClinic.role === 'admin' ? 'Admin' : accessibleClinic.role === 'secretary' ? 'Secretaria' : 'Profissional'})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tabs */}
@@ -332,7 +481,7 @@ const MyClinic = () => {
                             const pendingInvites = clinicData.invitations.filter(i => i.status === 'pending');
 
                             const profLimit = clinic.maxProfessionals;
-                            const secLimit = 1; // Strict limit of 1 secretary
+                            const secLimit = clinic.maxSecretaries;
 
                             return (
                                 <>
@@ -462,7 +611,7 @@ const MyClinic = () => {
                                                 ))}
                                                 {secretaries.length === 0 && (
                                                     <div className="text-center py-6 text-muted-foreground">
-                                                        <p>Nenhum cadastro.</p>
+                                                        <p>{secLimit > 0 ? 'Nenhum cadastro.' : 'Seu plano atual não inclui vagas de secretaria.'}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -482,6 +631,9 @@ const MyClinic = () => {
                                                                 <div>
                                                                     <span className="font-medium text-foreground block">{invite.email}</span>
                                                                     <span className="text-xs text-muted-foreground">{invite.role === 'secretary' ? 'Secretária' : 'Profissional'}</span>
+                                                                    {invite.inviteCode && (
+                                                                        <span className="text-[11px] text-muted-foreground block">Código: {invite.inviteCode}</span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
@@ -645,6 +797,12 @@ const MyClinic = () => {
                                         <span className="font-medium text-foreground">{clinic.maxProfessionals} profissionais</span>
                                     </div>
                                 </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-foreground">Limite de Secretárias</Label>
+                                    <div className="p-3 bg-muted rounded-xl border border-border">
+                                        <span className="font-medium text-foreground">{clinic.maxSecretaries} secretárias</span>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -688,12 +846,7 @@ const MyClinic = () => {
 
     // ─── Main content logic ───
     const renderContent = () => {
-        // Se o usuário já pertence a uma clínica, ele deve ver o conteúdo da clínica,
-        // independentemente do seu plano pessoal (pois é membro/secretário de uma clínica premium).
         if (clinic) return renderClinicContent();
-
-        // Se não tem clínica, verificamos o plano para ver se ele pode criar uma.
-        if (!isClinicPlan) return renderPremiumGate();
         return renderCreateClinic();
     };
 

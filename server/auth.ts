@@ -182,7 +182,19 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { fullName, email, password, consents } = req.body;
+      const {
+        fullName,
+        email,
+        password,
+        consents,
+        registrationIntent,
+        clinicInvitationToken,
+        clinicInvitationCode,
+      } = req.body ?? {};
+
+      const inviteToken = typeof clinicInvitationToken === "string" ? clinicInvitationToken.trim() : "";
+      const inviteCode = typeof clinicInvitationCode === "string" ? clinicInvitationCode.trim().toUpperCase() : "";
+      const isSecretaryInviteRegistration = registrationIntent === "secretary";
 
       // Validate required fields
       if (!fullName || !email || !password) {
@@ -190,6 +202,77 @@ export function setupAuth(app: Express) {
       }
 
       console.log(`[AUTH] Registration attempt for email: ${email}`);
+
+      // If the email has pending secretary invitations, registration must happen via invitation flow.
+      const pendingInvitationsForEmail = await storage.getClinicInvitationsByEmail(String(email));
+      const pendingSecretaryInvitations = pendingInvitationsForEmail.filter((inv) => inv.role === "secretary");
+
+      if (
+        pendingSecretaryInvitations.length > 0 &&
+        !isSecretaryInviteRegistration &&
+        !inviteToken &&
+        !inviteCode
+      ) {
+        return res.status(403).json({
+          message: "Cadastro de secretária é permitido apenas via convite. Use o código recebido da clínica."
+        });
+      }
+
+      let matchedInvitation:
+        | Awaited<ReturnType<typeof storage.getClinicInvitationByToken>>
+        | undefined;
+
+      if (isSecretaryInviteRegistration || inviteToken || inviteCode) {
+        if (inviteToken) {
+          matchedInvitation = await storage.getClinicInvitationByToken(inviteToken);
+        } else {
+          if (!inviteCode) {
+            return res.status(400).json({ message: "Código de convite é obrigatório para cadastro de secretária" });
+          }
+
+          const codeMatches = pendingInvitationsForEmail.filter(
+            (inv) => inv.token.slice(0, 10).toUpperCase() === inviteCode
+          );
+
+          if (codeMatches.length > 1) {
+            return res.status(409).json({
+              message: "Código de convite ambíguo. Use o link do convite enviado por email."
+            });
+          }
+
+          matchedInvitation = codeMatches[0];
+        }
+
+        if (isSecretaryInviteRegistration) {
+          if (!matchedInvitation) {
+            return res.status(404).json({ message: "Convite de secretária não encontrado" });
+          }
+
+          if (matchedInvitation.role !== "secretary") {
+            return res.status(400).json({ message: "Este convite não é para cadastro de secretária" });
+          }
+        }
+
+        if (matchedInvitation) {
+          if (matchedInvitation.status !== "pending") {
+            return res.status(400).json({ message: "Este convite já foi utilizado" });
+          }
+
+          if (new Date() > matchedInvitation.expiresAt) {
+            await storage.updateClinicInvitation(matchedInvitation.id, { status: "expired" });
+            return res.status(400).json({ message: "Este convite expirou" });
+          }
+
+          if (
+            matchedInvitation.email &&
+            String(matchedInvitation.email).toLowerCase() !== String(email).toLowerCase()
+          ) {
+            return res.status(400).json({
+              message: "O email cadastrado deve ser o mesmo email do convite"
+            });
+          }
+        }
+      }
 
       // Check if email already exists
       const existingUser = await storage.getUserByEmail(email);
@@ -212,6 +295,23 @@ export function setupAuth(app: Express) {
       });
 
       console.log(`[AUTH] User created in database - id: ${user.id}, email: ${user.email}`);
+
+      // Invite-first registration: automatically join clinic and set active context.
+      if (matchedInvitation) {
+        const attached = await storage.addClinicMember(matchedInvitation.clinicId, user.id, matchedInvitation.role);
+
+        if (!attached) {
+          await storage.deleteUser(user.id);
+          return res.status(400).json({
+            message: "Não foi possível concluir o cadastro pelo convite. O limite de membros da clínica pode ter sido atingido."
+          });
+        }
+
+        await storage.updateClinicInvitation(matchedInvitation.id, { status: "accepted" });
+
+        user.clinicId = matchedInvitation.clinicId;
+        user.clinicRole = matchedInvitation.role;
+      }
 
       // Create welcome notification
       await storage.createNotification({

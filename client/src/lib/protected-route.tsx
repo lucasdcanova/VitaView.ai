@@ -31,5 +31,17 @@ export function ProtectedRoute({
     );
   }
 
+  const isPlatformAdmin = user.role === "admin";
+  const requiresClinicSetup = !user.clinicId;
+  const isClinicSetupRoute = path === "/minha-clinica";
+
+  if (!isPlatformAdmin && requiresClinicSetup && !isClinicSetupRoute) {
+    return (
+      <Route path={path}>
+        <Redirect to="/minha-clinica" />
+      </Route>
+    );
+  }
+
   return <Route path={path} component={Component} />;
 }

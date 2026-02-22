@@ -35,6 +35,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
   const [inServiceAppointmentId, setInServiceAppointmentId] = useState<number | null>(null);
   const previousUserIdRef = useRef<number | null>(null);
+  const previousClinicIdRef = useRef<number | null>(null);
 
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
   const effectiveProfessionalId = isSecretarySession ? selectedProfessionalId : null;
@@ -57,7 +58,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     error: profilesError,
     refetch: refetchProfiles,
   } = useQuery<Profile[], Error>({
-    queryKey: ["/api/profiles", user?.id ?? null, effectiveProfessionalId],
+    queryKey: ["/api/profiles", user?.id ?? null, user?.clinicId ?? null, effectiveProfessionalId],
     queryFn: async () => {
       if (!user) return [];
 
@@ -248,6 +249,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     previousUserIdRef.current = currentUserId;
   }, [user?.id]);
+
+  // Safety: changing active clinic must reset patient/professional selections to avoid context leakage.
+  useEffect(() => {
+    const currentClinicId = user?.clinicId ?? null;
+    const previousClinicId = previousClinicIdRef.current;
+
+    if (previousClinicId !== null && previousClinicId !== currentClinicId) {
+      clearActiveProfile();
+      setSelectedProfessionalId(null);
+    }
+
+    previousClinicIdRef.current = currentClinicId;
+  }, [user?.clinicId]);
 
   // Safety: never keep a stale professional selection when the session is not a secretary.
   useEffect(() => {
