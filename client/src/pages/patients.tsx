@@ -66,8 +66,11 @@ export default function Patients() {
   const {
     profiles,
     isLoading,
+    isFetchingProfiles,
+    profilesError,
     activeProfile,
     setActiveProfile,
+    refreshProfiles,
     selectedProfessionalId,
     setSelectedProfessionalId
   } = useProfiles();
@@ -378,14 +381,19 @@ export default function Patients() {
               </Sheet>
             </div>
 
-            {/* Stats */}
-            <div className="mb-6 flex items-center gap-4 text-sm text-gray-600">
-              <span className="font-medium">
-                {filteredProfiles.length} paciente{filteredProfiles.length !== 1 ? 's' : ''} encontrado{filteredProfiles.length !== 1 ? 's' : ''}
+          {/* Stats */}
+          <div className="mb-6 flex items-center gap-4 text-sm text-gray-600">
+            <span className="font-medium">
+              {filteredProfiles.length} paciente{filteredProfiles.length !== 1 ? 's' : ''} encontrado{filteredProfiles.length !== 1 ? 's' : ''}
+            </span>
+            {isFetchingProfiles && (
+              <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                Sincronizando lista...
               </span>
-              {(activeFiltersCount > 0 || searchTerm) && (
-                <Button
-                  variant="ghost"
+            )}
+            {(activeFiltersCount > 0 || searchTerm) && (
+              <Button
+                variant="ghost"
                   size="sm"
                   onClick={clearFilters}
                   className="text-gray-500 hover:text-gray-700 h-auto p-0 px-2"
@@ -395,28 +403,64 @@ export default function Patients() {
               )}
             </div>
 
-            {/* Patients List */}
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-charcoal"></div>
-              </div>
-            ) : filteredProfiles.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Nenhum paciente encontrado com esses filtros
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Tente ajustar os termos de busca ou remover os filtros aplicados.
-                </p>
+          {/* Patients List */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-charcoal"></div>
+            </div>
+          ) : profilesError ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-red-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Erro ao carregar pacientes
+              </h3>
+              <p className="text-gray-500 mb-4 max-w-xl mx-auto">
+                A lista de pacientes não foi carregada do servidor. Por segurança, o sistema não exibe "0 pacientes"
+                quando há falha de sincronização.
+              </p>
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={clearFilters}
+                  onClick={() => void refreshProfiles()}
                 >
-                  Limpar Todos os Filtros
+                  Recarregar lista do servidor
                 </Button>
               </div>
-            ) : (
+              <p className="text-xs text-gray-400 mt-3">
+                {profilesError.message}
+              </p>
+            </div>
+          ) : filteredProfiles.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {activeFiltersCount > 0 || searchTerm
+                  ? "Nenhum paciente encontrado com esses filtros"
+                  : "Nenhum paciente carregado para esta conta/profissional"}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {activeFiltersCount > 0 || searchTerm
+                  ? "Tente ajustar os termos de busca ou remover os filtros aplicados."
+                  : "Use a sincronização abaixo para consultar novamente o servidor e confirmar a lista de pacientes."}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                {(activeFiltersCount > 0 || searchTerm) && (
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                  >
+                    Limpar Todos os Filtros
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => void refreshProfiles()}
+                >
+                  Sincronizar lista
+                </Button>
+              </div>
+            </div>
+          ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredProfiles.map((profile: Profile) => {
                   const age = calculateAge(profile.birthDate);

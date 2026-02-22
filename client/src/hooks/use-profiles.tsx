@@ -9,11 +9,14 @@ import { z } from "zod";
 interface ProfileContextType {
   profiles: Profile[];
   isLoading: boolean;
+  isFetchingProfiles: boolean;
+  profilesError: Error | null;
   activeProfile: Profile | null;
   setActiveProfile: (profile: Profile | null) => void;
   createProfile: (data: Omit<Profile, "id" | "userId" | "createdAt">) => void;
   updateProfile: (id: number, data: Partial<Profile>) => void;
   deleteProfile: (id: number) => void;
+  refreshProfiles: () => Promise<void>;
   // Patient in service state
   inServiceAppointmentId: number | null;
   setPatientInService: (profileId: number, appointmentId: number) => void;
@@ -28,11 +31,13 @@ const ProfileContext = createContext<ProfileContextType | null>(null);
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isSecretarySession = user?.clinicRole === "secretary";
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
   const [inServiceAppointmentId, setInServiceAppointmentId] = useState<number | null>(null);
   const previousUserIdRef = useRef<number | null>(null);
 
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+  const effectiveProfessionalId = isSecretarySession ? selectedProfessionalId : null;
 
   const clearActiveProfile = () => {
     setActiveProfileState(null);
@@ -48,26 +53,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const {
     data: profiles = [],
     isLoading,
+    isFetching: isFetchingProfiles,
+    error: profilesError,
     refetch: refetchProfiles,
-  } = useQuery({
-    queryKey: ["/api/profiles", user?.id ?? null, selectedProfessionalId ?? null],
+  } = useQuery<Profile[], Error>({
+    queryKey: ["/api/profiles", user?.id ?? null, effectiveProfessionalId],
     queryFn: async () => {
       if (!user) return [];
 
-      try {
-        const url = selectedProfessionalId
-          ? `/api/profiles?professionalId=${selectedProfessionalId}`
-          : `/api/profiles`;
-        const res = await apiRequest("GET", url);
-        return await res.json();
-      } catch (error) {
-        // Error fetching profiles
-        return [];
+      const url = effectiveProfessionalId
+        ? `/api/profiles?professionalId=${effectiveProfessionalId}`
+        : `/api/profiles`;
+
+      const res = await apiRequest("GET", url);
+      const payload = await res.json();
+
+      if (!Array.isArray(payload)) {
+        throw new Error("Resposta inválida ao carregar pacientes.");
       }
+
+      return payload as Profile[];
     },
     enabled: !!user,
     refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    retry: 2,
   });
+
+  const refreshProfiles = async () => {
+    await refetchProfiles();
+  };
 
   // Create new profile
   const createProfileMutation = useMutation({
@@ -227,10 +243,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     if (previousUserId !== null && previousUserId !== currentUserId) {
       clearActiveProfile();
+      setSelectedProfessionalId(null);
     }
 
     previousUserIdRef.current = currentUserId;
   }, [user?.id]);
+
+  // Safety: never keep a stale professional selection when the session is not a secretary.
+  useEffect(() => {
+    if (!isSecretarySession && selectedProfessionalId !== null) {
+      setSelectedProfessionalId(null);
+    }
+  }, [isSecretarySession, selectedProfessionalId]);
 
   // Defensive cleanup when active profile no longer belongs to the loaded profile list
   useEffect(() => {
@@ -288,11 +312,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       value={{
         profiles,
         isLoading,
+        isFetchingProfiles,
+        profilesError: profilesError ?? null,
         activeProfile,
         setActiveProfile,
         createProfile,
         updateProfile,
         deleteProfile,
+        refreshProfiles,
         inServiceAppointmentId,
         setPatientInService,
         clearPatientInService,

@@ -413,6 +413,11 @@ export function registerPatientRoutes(app: Express) {
     // --- Profiles ---
     app.get("/api/profiles", ensureAuthenticated, async (req, res) => {
         try {
+            // Safety: patient lists must always be fetched fresh.
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+
             const professionalIdParams = req.query.professionalId as string;
             let targetUserId = (req.user as any).id;
             const user = req.user as any;
@@ -432,15 +437,23 @@ export function registerPatientRoutes(app: Express) {
 
                     targetUserId = professionalId;
                 } else {
-                    return res.status(403).json({ message: "Permissão negada para visualizar os pacientes de outro profissional" });
+                    // Defensive fallback: stale professionalId from a previous secretary/admin session
+                    // must not hide the current professional's patients.
+                    logger.warn("[Profiles] Ignoring professionalId for non-secretary/admin session", {
+                        userId: user.id,
+                        clinicRole: user.clinicRole,
+                        professionalId,
+                    });
                 }
             }
 
             const profiles = await storage.getProfilesByUserId(targetUserId);
+            res.setHeader("X-Profile-Count", String(profiles?.length ?? 0));
 
             // LGPD Audit Log
             await storage.createAuditLog({
                 userId: user.id,
+                targetUserId: targetUserId,
                 action: "READ",
                 resourceType: "user_profiles",
                 resourceId: null,
@@ -449,13 +462,17 @@ export function registerPatientRoutes(app: Express) {
                 requestMethod: "GET",
                 requestPath: "/api/profiles",
                 statusCode: 200,
-                accessReason: professionalIdParams ? "secretary_profile_list_view" : "profile_list_view",
+                accessReason: professionalIdParams && targetUserId !== user.id ? "secretary_profile_list_view" : "profile_list_view",
                 severity: "INFO",
                 complianceFlags: { lgpd: true }
             });
 
-            res.json(profiles);
+            res.json(Array.isArray(profiles) ? profiles : []);
         } catch (error) {
+            logger.error("[Profiles] Error loading profiles", {
+                userId: (req.user as any)?.id ?? null,
+                error: error instanceof Error ? error.message : String(error),
+            });
             res.status(500).json({ message: "Erro ao buscar perfis do usuário" });
         }
     });
@@ -465,7 +482,7 @@ export function registerPatientRoutes(app: Express) {
             const profileData = {
                 ...req.body,
                 userId: (req.user as any).id,
-                clinicId: req.tenantId ?? null,
+                clinicId: req.tenantId ?? (req.user as any)?.clinicId ?? null,
                 createdAt: new Date()
             };
 

@@ -82,12 +82,24 @@ export async function apiRequest(
   data?: unknown | undefined,
   maxRetries: number = 2,
 ): Promise<Response> {
+  const normalizedMethod = method.toUpperCase();
+  const isGetRequest = normalizedMethod === "GET";
+  const headers: HeadersInit = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(isGetRequest
+      ? {
+          "Cache-Control": "no-cache, no-store, max-age=0",
+          Pragma: "no-cache",
+        }
+      : {}),
+  };
 
   const requestOptions: RequestInit = {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    method: normalizedMethod,
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include" as RequestCredentials,
+    cache: isGetRequest ? "no-store" : "default",
   };
 
   let lastError: Error | null = null;
@@ -138,6 +150,11 @@ export const getQueryFn: <T>(options: {
       try {
         const res = await fetch(queryKey[0] as string, {
           credentials: "include" as RequestCredentials,
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, max-age=0",
+            Pragma: "no-cache",
+          },
         });
 
 
