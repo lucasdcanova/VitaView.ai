@@ -2,7 +2,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Express, Request, Response, NextFunction } from 'express';
 import { handleCSPViolation, getDynamicCSPDirectives, nonceMiddleware } from './csp-reporter';
-import { dynamicCSPMiddleware, applyCSPHeader } from './dynamic-csp';
+import { dynamicCSPMiddleware, applyCSPHeader, sanitizeReportOnlyCsp } from './dynamic-csp';
 import { enhancedRateLimit } from './enhanced-rate-limit';
 
 export function setupSecurity(app: Express) {
@@ -39,8 +39,10 @@ export function setupSecurity(app: Express) {
       ].join('; ');
 
       // Only report violations in development, don't block
-      res.setHeader('Content-Security-Policy-Report-Only',
-        `${cspPolicy}; report-uri /api/csp-violation-report`);
+      const reportOnlyPolicy = sanitizeReportOnlyCsp(
+        `${cspPolicy}; report-uri /api/csp-violation-report`
+      );
+      res.setHeader('Content-Security-Policy-Report-Only', reportOnlyPolicy);
 
       console.log('[CSP Dev] Using permissive CSP for development');
       next();

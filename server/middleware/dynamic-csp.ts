@@ -5,6 +5,19 @@ const REPORT_ONLY_UNSUPPORTED_DIRECTIVES = new Set([
   'block-all-mixed-content',
 ]);
 
+const getDirectiveName = (segment: string) => {
+  return segment.trim().split(/\s+/)[0]?.toLowerCase() || '';
+};
+
+export function sanitizeReportOnlyCsp(csp: string): string {
+  return csp
+    .split(';')
+    .map(segment => segment.trim())
+    .filter(Boolean)
+    .filter(segment => !REPORT_ONLY_UNSUPPORTED_DIRECTIVES.has(getDirectiveName(segment)))
+    .join('; ');
+}
+
 // Known trusted domains for different services
 const TRUSTED_DOMAINS = {
   stripe: [
@@ -175,10 +188,7 @@ export function applyCSPHeader(req: Request, res: Response, next: NextFunction) 
   }
 
   const cspString = formatCSPHeader(directives);
-  const reportOnlyDirectives = Object.fromEntries(
-    Object.entries(directives).filter(([directive]) => !REPORT_ONLY_UNSUPPORTED_DIRECTIVES.has(directive))
-  );
-  const reportOnlyCspString = formatCSPHeader(reportOnlyDirectives);
+  const reportOnlyCspString = sanitizeReportOnlyCsp(cspString);
 
   if (isDev) {
     // Development: Report-only mode
