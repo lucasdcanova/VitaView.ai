@@ -2,6 +2,7 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import Logo from "@/components/ui/logo";
 import { NotificationBell } from "@/components/notification-bell";
+import ThemeToggleButton from "@/components/layout/theme-toggle-button";
 
 /**
  * VitaView AI Mobile Header Component
@@ -32,7 +33,10 @@ export default function MobileHeader(props: MobileHeaderProps) {
 
       <Logo size="md" showText={true} textSize="md" variant="icon" />
 
-      <NotificationBell />
+      <div className="flex items-center gap-1">
+        <ThemeToggleButton className="h-9 w-9" />
+        <NotificationBell />
+      </div>
     </header>
   );
 }

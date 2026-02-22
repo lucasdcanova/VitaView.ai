@@ -19,6 +19,7 @@ import {
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
 import { NotificationBell } from "@/components/notification-bell";
+import ThemeToggleButton from "@/components/layout/theme-toggle-button";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -176,16 +177,28 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Logo Section */}
-        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4 flex flex-col items-center gap-4" : "p-4 flex items-center justify-between")} data-tour="sidebar-logo">
+        <div
+          className={cn(
+            "border-b border-lightGray transition-all duration-300",
+            isCollapsed ? "p-2 py-4 flex flex-col items-center gap-4" : "p-4 flex items-center justify-between gap-3"
+          )}
+          data-tour="sidebar-logo"
+        >
           {isCollapsed ? (
             <>
               <Logo size="sm" showText={false} variant="icon" />
-              <NotificationBell />
+              <div className="flex flex-col items-center gap-2">
+                <ThemeToggleButton className="h-7 w-7" />
+                <NotificationBell />
+              </div>
             </>
           ) : (
             <>
               <Logo size="md" showText={true} textSize="md" variant="icon" />
-              <NotificationBell />
+              <div className="flex items-center gap-1 shrink-0">
+                <ThemeToggleButton className="h-8 w-8" />
+                <NotificationBell />
+              </div>
             </>
           )}
         </div>
