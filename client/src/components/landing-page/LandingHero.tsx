@@ -34,11 +34,18 @@ export function LandingHero() {
                     className="mb-8"
                 >
                     <Logo
+                        size="lg"
+                        showText={false}
+                        textSize="xl"
+                        variant="full"
+                        className="md:hidden w-[min(88vw,380px)] [&>img]:w-full [&>img]:h-auto"
+                    />
+                    <Logo
                         size="xl"
                         showText={true}
                         textSize="xl"
                         variant="icon"
-                        className="font-bold tracking-tight"
+                        className="hidden md:flex font-bold tracking-tight"
                     />
                 </motion.div>
 
@@ -70,17 +77,17 @@ export function LandingHero() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-20 touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+                    className="relative z-20 touch-manipulation flex flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-[360px] sm:max-w-none"
                 >
                     <motion.div
                         whileHover={{ y: -2, scale: 1.015 }}
                         whileTap={{ scale: 0.97 }}
-                        className="inline-block w-full sm:w-auto"
+                        className="inline-block flex-1 sm:flex-none"
                     >
                         <Link href="/auth">
                             <Button
                                 size="lg"
-                                className="w-full sm:w-auto bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
+                                className="w-full sm:w-auto bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-4 sm:px-10 py-4 sm:py-6 rounded-xl font-heading font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
                             >
                                 Entrar
                                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -91,13 +98,13 @@ export function LandingHero() {
                     <motion.div
                         whileHover={{ y: -2 }}
                         whileTap={{ scale: 0.98 }}
-                        className="inline-block w-full sm:w-auto"
+                        className="inline-block flex-1 sm:flex-none"
                     >
                         <Button
                             asChild
                             size="lg"
                             variant="outline"
-                            className="w-full sm:w-auto border-[#212121] text-[#212121] bg-white/80 hover:bg-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-md hover:shadow-lg transition-all h-auto"
+                            className="w-full sm:w-auto border-[#212121] text-[#212121] bg-white/80 hover:bg-white px-4 sm:px-10 py-4 sm:py-6 rounded-xl font-heading font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all h-auto"
                         >
                             <a href="#como-funciona">Conhecer</a>
                         </Button>
@@ -110,7 +117,7 @@ export function LandingHero() {
                 type="button"
                 onClick={scrollToFirstSection}
                 aria-label="Descer para a próxima seção"
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-[#9E9E9E] hover:text-[#616161] transition-colors touch-manipulation"
+                className="absolute bottom-8 inset-x-0 mx-auto w-fit z-20 flex flex-col items-center gap-1 text-[#9E9E9E] hover:text-[#616161] transition-colors touch-manipulation"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.0, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
