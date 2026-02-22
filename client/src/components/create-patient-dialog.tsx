@@ -1,4 +1,4 @@
-
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useProfiles } from "@/hooks/use-profiles";
+import { Profile } from "@shared/schema";
 
 const profileSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -44,51 +45,87 @@ interface CreatePatientDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
+    profileToEdit?: Profile | null;
 }
 
-export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: CreatePatientDialogProps) {
-    const { createProfile } = useProfiles();
+const EMPTY_FORM_VALUES: ProfileFormData = {
+    name: "",
+    phone: "",
+    birthDate: "",
+    cpf: "",
+    planType: "",
+    gender: "",
+    rg: "",
+    email: "",
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    guardianName: "",
+    emergencyPhone: "",
+    profession: "",
+    maritalStatus: "",
+    insuranceCardNumber: "",
+    insuranceValidity: "",
+    insuranceName: "",
+    referralSource: "",
+    notes: "",
+};
+
+export default function CreatePatientDialog({ open, onOpenChange, onSuccess, profileToEdit = null }: CreatePatientDialogProps) {
+    const { createProfile, updateProfile } = useProfiles();
 
     const createForm = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema),
-        defaultValues: {
-            name: "",
-            phone: "",
-            birthDate: "",
-            cpf: "",
-            planType: "",
-            gender: "",
-            rg: "",
-            email: "",
-            cep: "",
-            street: "",
-            number: "",
-            complement: "",
-            neighborhood: "",
-            city: "",
-            state: "",
-            guardianName: "",
-            emergencyPhone: "",
-            profession: "",
-            maritalStatus: "",
-            insuranceCardNumber: "",
-            insuranceValidity: "",
-            insuranceName: "",
-            referralSource: "",
-            notes: "",
-        },
+        defaultValues: EMPTY_FORM_VALUES,
     });
 
+    useEffect(() => {
+        if (!open) return;
+
+        if (!profileToEdit) {
+            createForm.reset(EMPTY_FORM_VALUES);
+            return;
+        }
+
+        createForm.reset({
+            name: profileToEdit.name || "",
+            phone: profileToEdit.phone || "",
+            birthDate: profileToEdit.birthDate ? String(profileToEdit.birthDate).slice(0, 10) : "",
+            cpf: profileToEdit.cpf || "",
+            planType: profileToEdit.planType || "",
+            gender: profileToEdit.gender || "",
+            rg: profileToEdit.rg || "",
+            email: profileToEdit.email || "",
+            cep: profileToEdit.cep || "",
+            street: profileToEdit.street || "",
+            number: profileToEdit.number || "",
+            complement: profileToEdit.complement || "",
+            neighborhood: profileToEdit.neighborhood || "",
+            city: profileToEdit.city || "",
+            state: profileToEdit.state || "",
+            guardianName: profileToEdit.guardianName || "",
+            emergencyPhone: profileToEdit.emergencyPhone || "",
+            profession: profileToEdit.profession || "",
+            maritalStatus: profileToEdit.maritalStatus || "",
+            insuranceCardNumber: profileToEdit.insuranceCardNumber || "",
+            insuranceValidity: profileToEdit.insuranceValidity ? String(profileToEdit.insuranceValidity).slice(0, 10) : "",
+            insuranceName: profileToEdit.insuranceName || "",
+            referralSource: profileToEdit.referralSource || "",
+            notes: profileToEdit.notes || "",
+        });
+    }, [open, profileToEdit, createForm]);
+
     const onCreateSubmit = (data: ProfileFormData) => {
-        createProfile({
+        const payload = {
             name: data.name,
             gender: data.gender || null,
             birthDate: data.birthDate,
             phone: data.phone,
             planType: data.planType || null,
-            relationship: null,
-            bloodType: null,
-            isDefault: false,
             // Identification
             cpf: data.cpf || null,
             rg: data.rg || null,
@@ -113,9 +150,21 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
             insuranceName: data.insuranceName || null,
             referralSource: data.referralSource || null,
             notes: data.notes || null,
-        });
+        };
+
+        if (profileToEdit) {
+            updateProfile(profileToEdit.id, payload);
+        } else {
+            createProfile({
+                ...payload,
+                relationship: null,
+                bloodType: null,
+                isDefault: false,
+            });
+        }
+
         onOpenChange(false);
-        createForm.reset();
+        createForm.reset(EMPTY_FORM_VALUES);
         if (onSuccess) {
             onSuccess();
         }
@@ -125,7 +174,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Adicionar novo paciente</DialogTitle>
+                    <DialogTitle>{profileToEdit ? "Editar paciente" : "Adicionar novo paciente"}</DialogTitle>
                 </DialogHeader>
                 <Form {...createForm}>
                     <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
@@ -505,7 +554,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess }: C
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancelar
                             </Button>
-                            <Button type="submit">Cadastrar Paciente</Button>
+                            <Button type="submit">{profileToEdit ? "Salvar alterações" : "Cadastrar Paciente"}</Button>
                         </div>
                     </form>
                 </Form>

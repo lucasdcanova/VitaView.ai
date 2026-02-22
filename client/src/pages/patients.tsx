@@ -19,6 +19,7 @@ import {
   UserPlus,
   ChevronRight,
   Users,
+  Edit,
   Filter,
   X,
 } from "lucide-react";
@@ -63,6 +64,7 @@ export default function Patients() {
   const { profiles, isLoading, activeProfile, setActiveProfile } = useProfiles();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
 
   // Filter States
   const [genderFilter, setGenderFilter] = useState<string>("all");
@@ -154,6 +156,16 @@ export default function Patients() {
     setLocation("/atendimento");
   };
 
+  const handleOpenCreatePatient = () => {
+    setProfileToEdit(null);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleOpenEditPatient = (profile: Profile) => {
+    setProfileToEdit(profile);
+    setIsCreateDialogOpen(true);
+  };
+
   const clearFilters = () => {
     setGenderFilter("all");
     setAgeRange([0, 100]);
@@ -181,7 +193,7 @@ export default function Patients() {
           >
             <div className="flex gap-2">
                 <Button
-                  onClick={() => setIsCreateDialogOpen(true)}
+                  onClick={handleOpenCreatePatient}
                   className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -434,7 +446,7 @@ export default function Patients() {
                       </div>
 
                       {/* Actions */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -448,8 +460,20 @@ export default function Patients() {
                           Selecionar
                         </Button>
                         <Button
+                          variant="outline"
                           size="sm"
-                          className="w-full min-w-0 bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
+                          className="w-full min-w-0 border-border text-foreground hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditPatient(profile);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="col-span-2 w-full min-w-0 bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStartService(profile);
@@ -472,7 +496,13 @@ export default function Patients() {
 
       <CreatePatientDialog
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) {
+            setProfileToEdit(null);
+          }
+        }}
+        profileToEdit={profileToEdit}
       />
     </div>
   );

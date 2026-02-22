@@ -28,16 +28,24 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         let mouseX = -1000;
         let mouseY = -1000;
         let animId: number;
+        const particles: Particle[] = [];
 
         function resize() {
             const dpr = window.devicePixelRatio || 1;
-            width = canvas!.parentElement?.clientWidth || window.innerWidth;
-            height = canvas!.parentElement?.clientHeight || window.innerHeight;
-            canvas!.width = width * dpr;
-            canvas!.height = height * dpr;
-            canvas!.style.width = `${width}px`;
-            canvas!.style.height = `${height}px`;
-            ctx!.scale(dpr, dpr);
+            const parentRect = canvas.parentElement?.getBoundingClientRect();
+            const nextWidth = Math.max(1, Math.floor(parentRect?.width ?? window.innerWidth));
+            const nextHeight = Math.max(1, Math.floor(parentRect?.height ?? window.innerHeight));
+
+            width = nextWidth;
+            height = nextHeight;
+
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            // Prevent cumulative scaling after each resize.
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
         class Particle {
@@ -123,21 +131,29 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
             }
         }
 
-        // Initialize particles with grid-based distribution for full coverage
-        const particles: Particle[] = [];
-        const cols = Math.ceil(Math.sqrt(config.particleCount * (width / Math.max(height, 1))));
-        const rows = Math.ceil(config.particleCount / cols);
-        for (let i = 0; i < config.particleCount; i++) {
-            const p = new Particle();
-            // Distribute across a grid with jitter for natural look
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            p.x = (col / cols) * width + (Math.random() - 0.5) * (width / cols);
-            p.y = (row / rows) * height + (Math.random() - 0.5) * (height / rows);
-            // Clamp within canvas bounds
-            p.x = Math.max(0, Math.min(width, p.x));
-            p.y = Math.max(0, Math.min(height, p.y));
-            particles.push(p);
+        function reseedParticles() {
+            particles.length = 0;
+
+            const cols = Math.max(1, Math.ceil(Math.sqrt(config.particleCount * (width / Math.max(height, 1)))));
+            const rows = Math.max(1, Math.ceil(config.particleCount / cols));
+
+            for (let i = 0; i < config.particleCount; i++) {
+                const p = new Particle();
+                // Distribute across a grid with jitter for natural look.
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                p.x = (col / cols) * width + (Math.random() - 0.5) * (width / cols);
+                p.y = (row / rows) * height + (Math.random() - 0.5) * (height / rows);
+                // Clamp within canvas bounds.
+                p.x = Math.max(0, Math.min(width, p.x));
+                p.y = Math.max(0, Math.min(height, p.y));
+                particles.push(p);
+            }
+        }
+
+        function handleResize() {
+            resize();
+            reseedParticles();
         }
 
         function onMouseMove(e: MouseEvent) {
@@ -166,17 +182,17 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
             animId = requestAnimationFrame(animate);
         }
 
-        resize();
+        handleResize();
         animate();
 
-        window.addEventListener("resize", resize);
+        window.addEventListener("resize", handleResize);
         canvas.addEventListener("mousemove", onMouseMove);
         canvas.addEventListener("touchmove", onTouchMove, { passive: true });
         canvas.addEventListener("mouseleave", onMouseLeave);
 
         return () => {
             cancelAnimationFrame(animId);
-            window.removeEventListener("resize", resize);
+            window.removeEventListener("resize", handleResize);
             canvas.removeEventListener("mousemove", onMouseMove);
             canvas.removeEventListener("touchmove", onTouchMove);
             canvas.removeEventListener("mouseleave", onMouseLeave);

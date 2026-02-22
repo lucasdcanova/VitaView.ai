@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import Logo from "@/components/ui/logo";
 import { ChevronRight } from "lucide-react";
 
 export function LandingFooter() {
@@ -49,7 +48,11 @@ export function LandingFooter() {
                         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex items-center mb-4">
-                            <Logo variant="icon" size="sm" showText={false} className="mr-3" />
+                            <img
+                                src="/icon-192x192-dark.png"
+                                alt="VitaView AI"
+                                className="mr-3 h-8 w-8 rounded-md object-contain bg-[#171A20] ring-1 ring-white/10"
+                            />
                             <span className="text-xl font-bold text-white">VitaView AI</span>
                         </div>
                         <p className="max-w-xs">

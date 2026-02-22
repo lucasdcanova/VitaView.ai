@@ -44,9 +44,9 @@ export default function LandingPage() {
           <main>
             <LandingHero />
             <LandingLabView />
-            <LandingPrescription />
-            <LandingAISuggestions />
             <LandingVoiceTranscription />
+            <LandingAISuggestions />
+            <LandingPrescription />
             <LandingAppointmentScheduler />
             <LandingFeatures />
             <LandingForWhom />

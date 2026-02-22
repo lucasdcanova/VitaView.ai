@@ -3,13 +3,26 @@ import { Link } from "wouter";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
-import { AntigravityCanvas } from "./AntigravityCanvas";
 
 export function LandingHero() {
+    const scrollToFirstSection = () => {
+        const firstSection = document.getElementById("como-funciona");
+        if (firstSection) {
+            firstSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+        }
+
+        window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+    };
+
     return (
         <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y">
-            {/* Antigravity particle background */}
-            <AntigravityCanvas className="absolute inset-0 z-0 pointer-events-none" />
+            {/* Clean background atmosphere (without particles) */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#F5F5F5] to-transparent" />
+                <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-[#E0E0E0] opacity-75 blur-3xl" />
+                <div className="absolute -right-24 bottom-14 h-80 w-80 rounded-full bg-[#F2F2F2] opacity-85 blur-3xl" />
+            </div>
 
             <div className="flex-grow flex flex-col justify-center items-center text-center max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-24 md:py-0 relative z-10">
 
@@ -52,37 +65,57 @@ export function LandingHero() {
                     Uma plataforma simples, objetiva e completa.
                 </motion.p>
 
-                {/* Single CTA */}
+                {/* Dual CTA */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-20 touch-manipulation"
+                    className="relative z-20 touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
                 >
                     <motion.div
                         whileHover={{ y: -2, scale: 1.015 }}
                         whileTap={{ scale: 0.97 }}
-                        className="inline-block"
+                        className="inline-block w-full sm:w-auto"
                     >
                         <Link href="/auth">
                             <Button
                                 size="lg"
-                                className="bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
+                                className="w-full sm:w-auto bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
                             >
-                                Começar Teste Grátis
+                                Entrar
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         </Link>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="inline-block w-full sm:w-auto"
+                    >
+                        <Button
+                            asChild
+                            size="lg"
+                            variant="outline"
+                            className="w-full sm:w-auto border-[#212121] text-[#212121] bg-white/80 hover:bg-white px-10 py-6 rounded-xl font-heading font-bold text-base shadow-md hover:shadow-lg transition-all h-auto"
+                        >
+                            <a href="#como-funciona">Conhecer</a>
+                        </Button>
                     </motion.div>
                 </motion.div>
             </div>
 
             {/* Scroll indicator */}
-            <motion.div
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[#9E9E9E]"
+            <motion.button
+                type="button"
+                onClick={scrollToFirstSection}
+                aria-label="Descer para a próxima seção"
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-[#9E9E9E] hover:text-[#616161] transition-colors touch-manipulation"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.0, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: 1 }}
+                whileTap={{ scale: 0.97 }}
             >
                 <span className="text-[10px] font-medium uppercase tracking-widest">Descubra</span>
                 <motion.div
@@ -91,7 +124,7 @@ export function LandingHero() {
                 >
                     <ChevronDown className="w-4 h-4" />
                 </motion.div>
-            </motion.div>
+            </motion.button>
         </section>
     );
 }
