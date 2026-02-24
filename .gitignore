@@ -8,6 +8,11 @@ vite.config.ts.*
 .env.local
 .env.production
 
+# iOS / Xcode
+ios/App/build/
+*.xcarchive
+*.xcresult
+
 # Logs
 logs/
 *.log
