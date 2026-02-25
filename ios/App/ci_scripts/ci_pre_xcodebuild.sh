@@ -12,11 +12,25 @@ fi
 cd "$REPO_ROOT"
 
 ensure_node_tooling() {
+  REQUIRED_NODE_MAJOR=22
+
+  current_node_major() {
+    if ! command -v node >/dev/null 2>&1; then
+      echo 0
+      return 0
+    fi
+    node_v=$(node -v 2>/dev/null || true)
+    node_v=${node_v#v}
+    printf '%s\n' "${node_v%%.*}"
+  }
+
   if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-    return 0
+    if [ "$(current_node_major)" -ge "$REQUIRED_NODE_MAJOR" ]; then
+      return 0
+    fi
   fi
 
-  for candidate in /opt/homebrew/bin /usr/local/bin; do
+  for candidate in /opt/homebrew/opt/node@22/bin /usr/local/opt/node@22/bin /opt/homebrew/bin /usr/local/bin; do
     if [ -d "$candidate" ]; then
       PATH="$candidate:$PATH"
     fi
@@ -27,7 +41,9 @@ ensure_node_tooling() {
   export PATH
 
   if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-    return 0
+    if [ "$(current_node_major)" -ge "$REQUIRED_NODE_MAJOR" ]; then
+      return 0
+    fi
   fi
 
   BREW_BIN=""
@@ -42,10 +58,10 @@ ensure_node_tooling() {
   fi
 
   if [ -n "$BREW_BIN" ]; then
-    echo "[ci_pre_xcodebuild] npm not found; installing Node via Homebrew"
-    "$BREW_BIN" install node@20 || "$BREW_BIN" install node
+    echo "[ci_pre_xcodebuild] Node <${REQUIRED_NODE_MAJOR} or npm missing; installing Node via Homebrew"
+    "$BREW_BIN" install node@22 || "$BREW_BIN" install node
 
-    for candidate in /opt/homebrew/opt/node@20/bin /usr/local/opt/node@20/bin /opt/homebrew/bin /usr/local/bin; do
+    for candidate in /opt/homebrew/opt/node@22/bin /usr/local/opt/node@22/bin /opt/homebrew/bin /usr/local/bin; do
       if [ -d "$candidate" ]; then
         PATH="$candidate:$PATH"
       fi
@@ -55,6 +71,11 @@ ensure_node_tooling() {
 
   if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
     echo "[ci_pre_xcodebuild] node/npm not available after bootstrap" >&2
+    echo "[ci_pre_xcodebuild] PATH=$PATH" >&2
+    exit 1
+  fi
+  if [ "$(current_node_major)" -lt "$REQUIRED_NODE_MAJOR" ]; then
+    echo "[ci_pre_xcodebuild] NodeJS >=${REQUIRED_NODE_MAJOR} is required; found $(node -v)" >&2
     echo "[ci_pre_xcodebuild] PATH=$PATH" >&2
     exit 1
   fi
