@@ -2,4 +2,4 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-exec "$SCRIPT_DIR/../ios/App/ci_scripts/ci_post_clone.sh"
+exec "$SCRIPT_DIR/../ios/App/ci_scripts/ci_pre_xcodebuild.sh"
