@@ -15,6 +15,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
+import { isIOSAppShell, isRestrictedAppShell } from "@/lib/app-shell";
 
 declare global {
   interface Window {
@@ -71,15 +72,6 @@ const AdminAICosts = lazyWithRetry(() => import("@/pages/admin/ai-costs"), "page
 const KnowledgeBaseAdmin = lazyWithRetry(() => import("@/pages/admin/knowledge-base"), "page-admin-knowledge-base");
 const MyClinic = lazyWithRetry(() => import("@/pages/my-clinic"), "page-my-clinic");
 
-const isStandalonePwa = () => {
-  if (typeof window === "undefined") return false;
-  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    navigatorWithStandalone.standalone === true;
-};
-
 // ...
 
 // ============================================
@@ -123,11 +115,11 @@ function LandingRoutes() {
 // AUTH ROUTES - Apenas AuthProvider (leve)
 // ============================================
 function AuthRoutes() {
-  function PwaAuthAutoRedirect() {
+  function ShellAuthAutoRedirect() {
     const { user, isLoading } = useAuth();
     const [location] = useLocation();
 
-    if (!isStandalonePwa() || location !== "/auth" || isLoading || !user) {
+    if (!isRestrictedAppShell() || location !== "/auth" || isLoading || !user) {
       return null;
     }
 
@@ -138,7 +130,7 @@ function AuthRoutes() {
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <PwaAuthAutoRedirect />
+        <ShellAuthAutoRedirect />
         <Suspense fallback={<LandingLoadingFallback />}>
           <Switch>
             <Route path="/auth" component={AuthPage} />
@@ -211,6 +203,8 @@ function AuthenticatedRoutes() {
 // ============================================
 function AppRouter() {
   const [location] = useLocation();
+  const restrictedAppShell = isRestrictedAppShell();
+  const iosAppShell = isIOSAppShell();
 
   // Rotas da landing page (sem nenhum provider)
   const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];
@@ -260,9 +254,20 @@ function AppRouter() {
     });
   }, [shouldForceLightPublicTheme]);
 
-  // No PWA (standalone), nunca abrir landing: ir para auth e deixar auth decidir
-  // se redireciona para /agenda quando já autenticado.
-  if (isStandalonePwa() && isLandingRoute) {
+  // Add iPhone safe-area spacing for native iOS app / iOS PWA shells.
+  useEffect(() => {
+    const root = document.documentElement;
+
+    root.classList.toggle("ios-app-shell", iosAppShell);
+
+    return () => {
+      root.classList.remove("ios-app-shell");
+    };
+  }, [iosAppShell]);
+
+  // Em shells de app (PWA standalone e iOS nativo), nunca abrir landing:
+  // ir para auth e deixar auth decidir se redireciona para /agenda quando já autenticado.
+  if (restrictedAppShell && isLandingRoute) {
     return <Redirect to="/auth" />;
   }
 

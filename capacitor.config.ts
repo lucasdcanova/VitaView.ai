@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const capacitorServerUrl = process.env.CAPACITOR_SERVER_URL || 'https://vitaview.ai';
+const capacitorServerUrl = process.env.CAPACITOR_SERVER_URL || 'https://vitaview.ai/auth';
 
 const config: CapacitorConfig = {
   appId: 'br.com.lucascanova.vitaview',
@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
   },
   server: {
-    // iOS app login depends on same-origin cookies; loading the production web app
+    // iOS app login depends on same-origin cookies; loading the production auth route
     // avoids capacitor://localhost -> /api requests that cannot reach the backend.
     url: capacitorServerUrl,
     cleartext: capacitorServerUrl.startsWith('http://'),

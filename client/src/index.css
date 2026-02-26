@@ -145,6 +145,19 @@
 }
 
 @layer base {
+  html.ios-app-shell,
+  html.ios-app-shell body {
+    min-height: 100%;
+  }
+
+  html.ios-app-shell #root {
+    box-sizing: border-box;
+    min-height: 100dvh;
+    padding-top: calc(env(safe-area-inset-top) + 8px);
+    padding-right: env(safe-area-inset-right);
+    padding-left: env(safe-area-inset-left);
+  }
+
   * {
     @apply border-border;
   }
@@ -840,6 +853,12 @@
     .landing-motion .hover\:scale-110:hover {
       transform: none;
     }
+  }
+}
+
+@supports not (height: 100dvh) {
+  html.ios-app-shell #root {
+    min-height: 100vh;
   }
 }
 

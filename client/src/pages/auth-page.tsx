@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
+import { isRestrictedAppShell } from "@/lib/app-shell";
 
 /**
  * VitaView AI Auth Page
@@ -77,6 +78,7 @@ export default function AuthPage() {
   const [acceptInvitationMatch, acceptInvitationParams] = useRoute("/accept-invitation/:token");
   const { user, loginMutation, registerMutation } = useAuth();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const hideLandingBackButton = isRestrictedAppShell();
 
   // Redirect logic removed to enforce manual login as requested
   // useEffect(() => {
@@ -192,14 +194,16 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex md:flex-row flex-col bg-[#F4F4F4] relative">
-      {/* Botão para voltar para a landing page */}
-      <Button
-        variant="outline"
-        className="absolute top-4 left-4 z-50 rounded-full w-10 h-10 p-0 flex items-center justify-center"
-        onClick={() => navigate("/")}
-      >
-        <ArrowLeft size={18} />
-      </Button>
+      {!hideLandingBackButton && (
+        <Button
+          variant="outline"
+          className="absolute top-4 left-4 z-50 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+          onClick={() => navigate("/")}
+          aria-label="Voltar para a landing page"
+        >
+          <ArrowLeft size={18} />
+        </Button>
+      )}
 
       {/* Main Content - Centered Form */}
       <div className="w-full flex flex-col justify-center items-center p-6 min-h-screen relative z-10">
