@@ -157,19 +157,22 @@ export default function Sidebar(props: SidebarProps) {
       {/* Overlay/Backdrop - apenas no mobile quando sidebar está aberta */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 z-[60] bg-charcoal/45 backdrop-blur-[2px] md:hidden"
           onClick={closeSidebarOnMobile}
         />
       )}
 
       <aside
         className={cn(
-          "bg-pureWhite border-r border-lightGray flex flex-col flex-shrink-0 fixed md:sticky top-0 h-[100dvh] min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] z-50 transition-all duration-300 ease-in-out sidebar-shadow overflow-visible",
+          "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 md:sticky md:top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          isCollapsed ? 'w-20' : 'w-80', // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
+          isCollapsed ? 'w-[min(95vw,24rem)] md:w-20' : 'w-[min(95vw,24rem)] md:w-80',
           props.className
         )}
       >
+        {/* Safe-area gradient cap for iOS status bar transition */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(env(safe-area-inset-top)+2.5rem)] bg-gradient-to-b from-pureWhite via-pureWhite/95 to-pureWhite/0" />
+
         {/* Toggle Button (Desktop Only) */}
         <div className="absolute -right-5 top-14 hidden md:flex z-50">
           <Button
@@ -186,7 +189,7 @@ export default function Sidebar(props: SidebarProps) {
         {/* Logo Section */}
         <div
           className={cn(
-            "border-b border-lightGray transition-all duration-300",
+            "relative z-10 border-b border-lightGray transition-all duration-300",
             isCollapsed ? "p-2 py-4 flex flex-col items-center gap-4" : "p-4 flex items-center justify-between gap-3"
           )}
           data-tour="sidebar-logo"
@@ -211,7 +214,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* User Profile Section */}
-        <div className={cn("border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
+        <div className={cn("relative z-10 border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center flex-col gap-2" : "")}>
             <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
               {(() => {
@@ -272,7 +275,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Patient Selector */}
-        <div className={cn("border-b border-lightGray bg-background/70", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
+        <div className={cn("relative z-10 border-b border-lightGray bg-background/70", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
           {isCollapsed ? (
             <div className="flex justify-center" title={activeProfile?.name || "Nenhum paciente"}>
               <ActivePatientIndicator className="w-full" collapsed={true} />
@@ -283,7 +286,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 min-h-0 overflow-y-auto custom-scrollbar", isCollapsed ? "p-2" : "p-4")}>
+        <nav className={cn("relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-y-contain custom-scrollbar [-webkit-overflow-scrolling:touch]", isCollapsed ? "p-2" : "p-4")}>
           <div className="space-y-1">
           <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
           <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
