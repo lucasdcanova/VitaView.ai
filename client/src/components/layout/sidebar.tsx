@@ -164,7 +164,7 @@ export default function Sidebar(props: SidebarProps) {
 
       <aside
         className={cn(
-          "bg-pureWhite border-r border-lightGray flex flex-col flex-shrink-0 fixed md:sticky top-0 h-[100dvh] min-h-[100dvh] z-50 transition-all duration-300 ease-in-out sidebar-shadow overflow-visible",
+          "bg-pureWhite border-r border-lightGray flex flex-col flex-shrink-0 fixed md:sticky top-0 h-[100dvh] min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] z-50 transition-all duration-300 ease-in-out sidebar-shadow overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-20' : 'w-80', // Alterado de w-64 para w-80 (expandido) e w-20 (colapsado)
           props.className

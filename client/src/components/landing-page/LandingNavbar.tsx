@@ -42,7 +42,7 @@ export function LandingNavbar() {
         <>
             <motion.nav
                 aria-label="Navegação principal"
-                className={`py-3 fixed top-0 left-0 right-0 z-[10001] transition-colors duration-300 ${
+                className={`pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] fixed top-0 left-0 right-0 z-[10001] transition-colors duration-300 ${
                     isScrolled
                         ? "bg-white/95 border-b border-[#E0E0E0] backdrop-blur-md shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]"
                         : "bg-white border-b border-transparent"

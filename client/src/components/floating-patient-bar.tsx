@@ -53,7 +53,7 @@ export default function FloatingPatientBar({ className }: FloatingPatientBarProp
             {/* Floating Bar */}
             <div
                 className={cn(
-                    "sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-lightGray",
+                    "sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-lightGray pt-[env(safe-area-inset-top)]",
                     className
                 )}
             >

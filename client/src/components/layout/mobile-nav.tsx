@@ -5,7 +5,7 @@ export default function MobileNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="bg-pureWhite/95 backdrop-blur-md border-t border-lightGray shadow-[0_-4px_24px_rgba(15,23,42,0.08)] fixed bottom-0 inset-x-0 z-40 h-16 md:hidden">
+    <nav className="bg-pureWhite/95 backdrop-blur-md border-t border-lightGray shadow-[0_-4px_24px_rgba(15,23,42,0.08)] fixed bottom-0 inset-x-0 z-40 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] md:hidden">
       <div className="flex justify-between h-full px-4">
         <Link href="/"
           className={`flex flex-col items-center justify-center flex-1 ${
