@@ -20,7 +20,7 @@ type MobileHeaderProps = {
 export default function MobileHeader(props: MobileHeaderProps) {
   const sidebarContext = useSidebar();
   const toggleSidebar = props.toggleSidebar || sidebarContext.toggleSidebar;
-  const mobileHeaderHeightClass = "h-[calc(env(safe-area-inset-top)+3.75rem)]";
+  const mobileHeaderHeightClass = "h-[calc(env(safe-area-inset-top)+3.5rem)]";
 
   return (
     <>
@@ -35,8 +35,8 @@ export default function MobileHeader(props: MobileHeaderProps) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-b from-pureWhite/0 to-pureWhite/85" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-lightGray/80" />
 
-        <div className="relative h-full pl-[calc(env(safe-area-inset-left)+0.75rem)] pr-[calc(env(safe-area-inset-right)+0.75rem)] pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-2">
-          <div className="flex h-full items-center justify-between">
+        <div className="relative box-border h-full pl-[calc(env(safe-area-inset-left)+0.75rem)] pr-[calc(env(safe-area-inset-right)+0.75rem)] pt-[env(safe-area-inset-top)]">
+          <div className="flex h-14 items-center justify-between">
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-xl text-charcoal hover:bg-lightGray/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring active:scale-95"
@@ -46,7 +46,7 @@ export default function MobileHeader(props: MobileHeaderProps) {
               <Menu className="h-5 w-5" />
             </button>
 
-            <Logo size="md" showText={true} textSize="md" variant="legacy" />
+            <Logo size="md" showText={true} textSize="md" variant="icon" />
 
             <div className="flex items-center gap-1">
               <ThemeToggleButton className="h-9 w-9" />

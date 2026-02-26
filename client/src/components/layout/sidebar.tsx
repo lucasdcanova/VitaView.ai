@@ -196,7 +196,7 @@ export default function Sidebar(props: SidebarProps) {
         >
           {isCollapsed ? (
             <>
-              <Logo size="sm" showText={false} variant="legacy" />
+              <Logo size="sm" showText={false} variant="icon" />
               <div className="flex flex-col items-center gap-2">
                 <ThemeToggleButton className="h-7 w-7" />
                 <NotificationBell />
@@ -204,7 +204,7 @@ export default function Sidebar(props: SidebarProps) {
             </>
           ) : (
             <>
-              <Logo size="md" showText={true} textSize="md" variant="legacy" />
+              <Logo size="md" showText={true} textSize="md" variant="icon" />
               <div className="flex items-center gap-1 shrink-0">
                 <ThemeToggleButton className="h-8 w-8" />
                 <NotificationBell />

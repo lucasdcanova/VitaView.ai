@@ -8,7 +8,7 @@ interface LogoProps {
   onClick?: () => void;
   /**
    * Variante do logo:
-   * - "icon": Usa apenas o ícone/símbolo (LOGO SEM TEXTO.jpg) - ideal para header, sidebar, footer
+   * - "icon": Usa apenas o ícone/símbolo (ícone PWA transparente) - ideal para header, sidebar, footer
    * - "full": Usa o logo completo com texto (LOGO COM TEXTO.PNG) - ideal para hero, login, páginas de destaque
    * - "legacy": Usa o SVG original gerado dinamicamente
    */
@@ -43,7 +43,7 @@ const textSizeClasses = {
  * VitaView AI Logo Component
  * 
  * Design Language:
- * - variant="icon": Usa LOGO SEM TEXTO.jpg para cabeçalhos e áreas compactas
+ * - variant="icon": Usa o mesmo PNG transparente dos ícones PWA
  * - variant="full": Usa LOGO COM TEXTO.PNG para hero, login e destaques
  * - variant="legacy": SVG gerado dinamicamente (compatibilidade)
  */
@@ -73,7 +73,7 @@ export function Logo({
     );
   }
 
-  // Variante apenas com ícone (imagem sem texto)
+  // Variante apenas com ícone (mesmo asset dos ícones PWA)
   if (variant === "icon") {
     return (
       <div
@@ -81,9 +81,10 @@ export function Logo({
         onClick={onClick}
       >
         <img
-          src="/LOGO SEM TEXTO.jpg"
+          src="/icon-192x192.png"
           alt="VitaView AI"
-          className={cn(sizeClasses[size], "object-contain rounded-md mix-blend-multiply dark:invert dark:mix-blend-screen")}
+          className={cn(sizeClasses[size], "shrink-0 object-contain")}
+          draggable={false}
         />
         {showText && (
           <div className={cn("text-center", isColumn ? "mt-2" : "ml-3", isColumn ? "" : "flex items-baseline")}>
