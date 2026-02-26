@@ -128,3 +128,13 @@ do
 done
 
 echo "[ci_pre_xcodebuild] Capacitor iOS assets verified"
+
+cd ios/App
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+if [ ! -d "Pods" ] || [ ! -f "Podfile.lock" ]; then
+  echo "[ci_pre_xcodebuild] Pods missing, running pod install"
+  pod install
+else
+  echo "[ci_pre_xcodebuild] Pods already installed"
+fi

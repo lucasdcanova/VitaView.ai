@@ -106,3 +106,9 @@ do
 done
 
 echo "[ci_post_clone] Capacitor assets generated successfully"
+
+echo "[ci_post_clone] Installing CocoaPods"
+cd ios/App
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+pod install
