@@ -358,29 +358,49 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    console.log(`[AUTH] Login route - user authenticated, setting cookies for user: ${req.user!.id}`);
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: unknown, user: SelectUser | false, info?: { message?: string }) => {
+      if (err) {
+        console.error("[AUTH] Login error:", err);
+        return next(err);
+      }
 
-    // Definir um cookie auxiliar simplificado para autenticação
-    res.cookie('auth_user_id', req.user!.id.toString(), {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
-      httpOnly: false, // Acessível via JavaScript
-      secure: false,
-      sameSite: 'lax',
-      path: '/'
-    });
+      if (!user) {
+        const message = info?.message || "Email ou senha incorretos";
+        console.log(`[AUTH] Login failed: ${message}`);
+        return res.status(401).json({ message });
+      }
 
-    // Manter o cookie original também por compatibilidade
-    res.cookie('auth_token', JSON.stringify({ id: req.user!.id }), {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
-      httpOnly: false, // Acessível via JavaScript
-      secure: false,
-      sameSite: 'lax',
-      path: '/'
-    });
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error("[AUTH] Session creation failed during login:", loginErr);
+          return next(loginErr);
+        }
 
-    res.status(200).json(userWithoutPassword);
+        console.log(`[AUTH] Login route - user authenticated, setting cookies for user: ${user.id}`);
+        const { password, ...userWithoutPassword } = user as SelectUser;
+
+        // Definir um cookie auxiliar simplificado para autenticação
+        res.cookie('auth_user_id', user.id.toString(), {
+          maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+          httpOnly: false, // Acessível via JavaScript
+          secure: false,
+          sameSite: 'lax',
+          path: '/'
+        });
+
+        // Manter o cookie original também por compatibilidade
+        res.cookie('auth_token', JSON.stringify({ id: user.id }), {
+          maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+          httpOnly: false, // Acessível via JavaScript
+          secure: false,
+          sameSite: 'lax',
+          path: '/'
+        });
+
+        return res.status(200).json(userWithoutPassword);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {

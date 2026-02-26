@@ -46,7 +46,7 @@ export default function MobileHeader(props: MobileHeaderProps) {
               <Menu className="h-5 w-5" />
             </button>
 
-            <Logo size="md" showText={true} textSize="md" variant="icon" />
+            <Logo size="md" showText={true} textSize="md" variant="legacy" />
 
             <div className="flex items-center gap-1">
               <ThemeToggleButton className="h-9 w-9" />

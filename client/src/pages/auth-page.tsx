@@ -197,6 +197,7 @@ export default function AuthPage() {
       {!hideLandingBackButton && (
         <Button
           variant="outline"
+          type="button"
           className="absolute top-4 left-4 z-50 rounded-full w-10 h-10 p-0 flex items-center justify-center"
           onClick={() => navigate("/")}
           aria-label="Voltar para a landing page"
@@ -333,6 +334,7 @@ export default function AuthPage() {
                     Não tem uma conta?{" "}
                     <Button
                       variant="link"
+                      type="button"
                       className="p-0 text-[#212121] hover:text-[#424242] font-heading font-bold"
                       onClick={() => setTab("register")}
                     >
@@ -566,6 +568,7 @@ export default function AuthPage() {
                     Já tem uma conta?{" "}
                     <Button
                       variant="link"
+                      type="button"
                       className="p-0 text-[#212121] font-heading font-bold"
                       onClick={() => setTab("login")}
                     >

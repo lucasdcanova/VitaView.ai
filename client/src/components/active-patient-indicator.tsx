@@ -24,12 +24,14 @@ import CreatePatientDialog from "@/components/create-patient-dialog";
 interface ActivePatientIndicatorProps {
     variant?: "compact" | "full";
     collapsed?: boolean;
+    surface?: "solid" | "glass";
     className?: string;
 }
 
 export default function ActivePatientIndicator({
     variant = "full",
     collapsed = false,
+    surface = "solid",
     className,
 }: ActivePatientIndicatorProps) {
     const { activeProfile, profiles, setActiveProfile } = useProfiles();
@@ -128,8 +130,9 @@ export default function ActivePatientIndicator({
                     onClick={() => setIsDialogOpen(true)}
                     className={cn(
                         "group flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200",
-                        "bg-pureWhite border-2 border-dashed border-lightGray",
-                        "hover:border-charcoal hover:bg-backgroundGray",
+                        surface === "glass"
+                            ? "bg-pureWhite/40 border border-dashed border-lightGray/70 backdrop-blur-sm hover:border-charcoal/70 hover:bg-pureWhite/55"
+                            : "bg-pureWhite border-2 border-dashed border-lightGray hover:border-charcoal hover:bg-backgroundGray",
                         className
                     )}
                 >
@@ -191,13 +194,14 @@ export default function ActivePatientIndicator({
             <div
                 className={cn(
                     "group relative overflow-hidden rounded-lg transition-all duration-200",
-                    "bg-pureWhite border border-lightGray",
-                    "hover:border-charcoal hover:shadow-sm",
+                    surface === "glass"
+                        ? "bg-pureWhite/42 backdrop-blur-md border border-lightGray/70 hover:border-charcoal/60 shadow-[0_1px_0_rgba(255,255,255,0.75)_inset]"
+                        : "bg-pureWhite border border-lightGray hover:border-charcoal hover:shadow-sm",
                     className
                 )}
             >
                 {/* Decorative line at top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-charcoal" />
+                <div className={cn("absolute top-0 left-0 right-0 h-1 bg-charcoal", surface === "glass" && "opacity-85")} />
 
                 {/* End Attendance Button (Red X) */}
                 <div
@@ -214,7 +218,10 @@ export default function ActivePatientIndicator({
                 {/* Top Section: Patient Selection */}
                 <div
                     onClick={() => setIsDialogOpen(true)}
-                    className="p-4 pt-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className={cn(
+                        "p-4 pt-5 cursor-pointer transition-colors",
+                        surface === "glass" ? "hover:bg-pureWhite/28" : "hover:bg-gray-50"
+                    )}
                 >
                     {/* Header */}
                     <div className="flex items-center gap-2 mb-3">
@@ -268,7 +275,7 @@ export default function ActivePatientIndicator({
                 </div>
 
                 {/* Divider */}
-                <div className="h-px bg-lightGray w-full" />
+                <div className={cn("h-px w-full", surface === "glass" ? "bg-lightGray/70" : "bg-lightGray")} />
 
                 {/* Bottom Section: Atendimento Action */}
                 <div
@@ -277,7 +284,9 @@ export default function ActivePatientIndicator({
                         "flex items-center justify-between p-3 cursor-pointer transition-colors group/atendimento",
                         location === "/atendimento"
                             ? "bg-[#212121]"
-                            : "bg-gray-50 hover:bg-[#212121]"
+                            : surface === "glass"
+                                ? "bg-pureWhite/18 hover:bg-[#212121]"
+                                : "bg-gray-50 hover:bg-[#212121]"
                     )}
                 >
                     <div className="flex items-center gap-2">

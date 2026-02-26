@@ -196,7 +196,7 @@ export default function Sidebar(props: SidebarProps) {
         >
           {isCollapsed ? (
             <>
-              <Logo size="sm" showText={false} variant="icon" />
+              <Logo size="sm" showText={false} variant="legacy" />
               <div className="flex flex-col items-center gap-2">
                 <ThemeToggleButton className="h-7 w-7" />
                 <NotificationBell />
@@ -204,7 +204,7 @@ export default function Sidebar(props: SidebarProps) {
             </>
           ) : (
             <>
-              <Logo size="md" showText={true} textSize="md" variant="icon" />
+              <Logo size="md" showText={true} textSize="md" variant="legacy" />
               <div className="flex items-center gap-1 shrink-0">
                 <ThemeToggleButton className="h-8 w-8" />
                 <NotificationBell />
@@ -275,13 +275,19 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Patient Selector */}
-        <div className={cn("relative z-10 border-b border-lightGray bg-background/70", isCollapsed ? "p-2" : "p-3")} data-tour="patient-selector">
+        <div
+          className={cn(
+            "relative z-10 border-b border-lightGray/80 bg-gradient-to-b from-pureWhite/45 via-pureWhite/25 to-pureWhite/10 backdrop-blur-sm",
+            isCollapsed ? "p-2" : "p-3"
+          )}
+          data-tour="patient-selector"
+        >
           {isCollapsed ? (
             <div className="flex justify-center" title={activeProfile?.name || "Nenhum paciente"}>
               <ActivePatientIndicator className="w-full" collapsed={true} />
             </div>
           ) : (
-            <ActivePatientIndicator className="w-full" />
+            <ActivePatientIndicator className="w-full" surface="glass" />
           )}
         </div>
 
@@ -332,17 +338,20 @@ export default function Sidebar(props: SidebarProps) {
           </div>
 
           {/* Logout Button */}
-          <div className="pt-6 mt-6 sticky bottom-0 bg-pureWhite">
+          <div className="relative z-10 pt-6 mt-6 sticky bottom-0">
+            <div className="pointer-events-none absolute inset-x-0 -top-4 h-10 bg-gradient-to-b from-pureWhite/0 to-pureWhite/70" />
+            <div className="pointer-events-none absolute inset-0 rounded-t-xl bg-gradient-to-t from-pureWhite/90 via-pureWhite/78 to-pureWhite/35 backdrop-blur-md" />
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleLogout}
                     className={cn(
-                      "w-full flex items-center p-3 rounded-lg text-charcoal hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-all duration-200",
+                      "relative w-full flex items-center p-3 rounded-xl border border-lightGray/70 bg-pureWhite/45 text-charcoal hover:bg-red-50/80 dark:hover:bg-red-950/40 hover:text-red-600 transition-all duration-200 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]",
                       isCollapsed && "justify-center px-2"
                     )}
                     aria-label="Sair da conta"
+                    type="button"
                   >
                     <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
                     {!isCollapsed && <span className="font-body text-sm font-medium">Sair</span>}
