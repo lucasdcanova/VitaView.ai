@@ -154,6 +154,8 @@
     font-family: 'Open Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     overflow-x: hidden;
     background-color: hsl(var(--background));
     background-image: var(--app-background-image);
@@ -313,6 +315,8 @@
   html {
     font-size: 14px;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   @media (min-width: 640px) {

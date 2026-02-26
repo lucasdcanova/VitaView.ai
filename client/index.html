@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no" />
 
   <!-- Primary Meta Tags -->
   <title>VitaView AI — Prontuário Inteligente com IA para Médicos</title>
@@ -148,12 +148,18 @@
   <!-- Critical CSS inline (will be added by build process) -->
   <style>
     /* Critical above-the-fold styles */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       background-color: #f8fafc;
+      overflow-x: hidden;
     }
 
     #root {

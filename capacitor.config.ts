@@ -6,6 +6,12 @@ const config: CapacitorConfig = {
   appId: 'br.com.lucascanova.vitaview',
   appName: 'VitaView',
   webDir: 'dist/public',
+  ios: {
+    // Make WKWebView layout behavior explicit on iPhone to avoid unwanted page scaling/insets.
+    zoomEnabled: false,
+    contentInset: 'never',
+    scrollEnabled: true,
+  },
   server: {
     // iOS app login depends on same-origin cookies; loading the production web app
     // avoids capacitor://localhost -> /api requests that cannot reach the backend.
