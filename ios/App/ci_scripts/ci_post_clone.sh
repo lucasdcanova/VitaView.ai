@@ -107,8 +107,17 @@ done
 
 echo "[ci_post_clone] Capacitor assets generated successfully"
 
-echo "[ci_post_clone] Installing CocoaPods"
+echo "[ci_post_clone] Preparing iOS native dependencies"
 cd ios/App
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
-pod install
+if [ -f "Podfile" ]; then
+  if ! command -v pod >/dev/null 2>&1; then
+    echo "[ci_post_clone] Podfile found but CocoaPods is not installed" >&2
+    exit 1
+  fi
+  echo "[ci_post_clone] Installing CocoaPods dependencies"
+  pod install
+else
+  echo "[ci_post_clone] Podfile not found (Swift Package Manager setup), skipping CocoaPods"
+fi
