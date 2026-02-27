@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -93,6 +94,7 @@ const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
 });
 
 export function AnamnesisCard() {
+    const isMobile = useIsMobile();
     const [anamnesisText, setAnamnesisText] = useState("");
     const [extractedRecord, setExtractedRecord] = useState<ExtractedRecord | null>(null);
     const [isApplyingExtraction, setIsApplyingExtraction] = useState(false);
@@ -534,28 +536,30 @@ export function AnamnesisCard() {
     };
 
     return (
-        <div className="space-y-8">
+        <div className={isMobile ? "space-y-4" : "space-y-8"}>
             <Card className="border border-border shadow-md">
-                <CardHeader className="flex flex-col gap-4">
+                <CardHeader className={`flex flex-col ${isMobile ? 'gap-2 pb-3' : 'gap-4'}`}>
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2">
-                            <CardTitle className="text-2xl text-foreground">Anamnese inteligente</CardTitle>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">Beta</Badge>
+                            <CardTitle className={`text-foreground ${isMobile ? 'text-lg' : 'text-2xl'}`}>Anamnese inteligente</CardTitle>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">Beta</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground text-right max-w-[420px]">
-                            Grave a consulta ou descreva o quadro clínico.<br />A IA identifica diagnósticos, medicamentos e alergias.
-                        </p>
+                        {!isMobile && (
+                            <p className="text-sm text-muted-foreground text-right max-w-[420px]">
+                                Grave a consulta ou descreva o quadro clínico.<br />A IA identifica diagnósticos, medicamentos e alergias.
+                            </p>
+                        )}
                     </div>
 
                     {/* Destaque para gravação de consulta */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35">
-                                <Mic className="h-5 w-5 text-red-600 dark:text-red-200" />
+                    <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25 ${isMobile ? 'p-3' : 'p-4 gap-4'}`}>
+                        <div className="flex items-center gap-2.5">
+                            <div className={`rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35 ${isMobile ? 'p-1.5' : 'p-2'}`}>
+                                <Mic className={`text-red-600 dark:text-red-200 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
                             </div>
                             <div>
-                                <p className="font-semibold text-foreground">Transcrição automática</p>
-                                <p className="text-sm text-red-800/80 dark:text-red-100/80">Grave a consulta e a IA preenche a anamnese automaticamente</p>
+                                <p className={`font-semibold text-foreground ${isMobile ? 'text-sm' : ''}`}>Transcrição automática</p>
+                                {!isMobile && <p className="text-sm text-red-800/80 dark:text-red-100/80">Grave a consulta e a IA preenche a anamnese automaticamente</p>}
                             </div>
                         </div>
                         <FeatureGate feature="ai-recording">
@@ -566,21 +570,20 @@ export function AnamnesisCard() {
                         </FeatureGate>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className={isMobile ? "space-y-3 px-3 pb-3" : "space-y-4"}>
                     <Textarea
                         value={anamnesisText}
                         onChange={(event) => setAnamnesisText(event.target.value)}
-                        placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg, histórico familiar de diabetes, refere alergia a penicilina..."
-                        className="min-h-[140px] resize-vertical"
+                        placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg..."
+                        className={isMobile ? "min-h-[100px] resize-vertical text-sm" : "min-h-[140px] resize-vertical"}
                     />
-                    {anamnesisText && (
+                    {anamnesisText && !isMobile && (
                         <div className="p-3 bg-gray-50 rounded-md border border-gray-100 text-sm">
                             <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 <FileText className="h-3.5 w-3.5" />
                                 Como será visualizado
                             </div>
                             <div className="whitespace-pre-line text-gray-700 leading-relaxed">
-                                {/* Helper para formatar texto com negrito (**texto**) */}
                                 {(() => {
                                     const formatBoldText = (text: string | null | undefined) => {
                                         if (!text) return null;
@@ -601,8 +604,9 @@ export function AnamnesisCard() {
                             </div>
                         </div>
                     )}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-3">
+                    {/* Action buttons */}
+                    <div className={isMobile ? "flex flex-col gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
+                        <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-3"}>
                             <Button
                                 type="button"
                                 onClick={() => {
@@ -625,29 +629,28 @@ export function AnamnesisCard() {
                                     addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
                                 }}
                                 disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
-                                className="gap-2 bg-[#212121] text-white hover:bg-[#424242]"
+                                className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
                             >
                                 {addEvolutionMutation.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                 ) : (
-                                    <Save className="h-4 w-4" />
+                                    <Save className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                 )}
                                 Salvar Consulta
                             </Button>
-
 
                             <FeatureGate feature="ai-enhance">
                                 <Button
                                     disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
                                     variant="outline"
-                                    className="gap-2 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                                    className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                                 >
                                     {enhanceAnamnesisMutation.isPending ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                     ) : (
-                                        <Wand2 className="h-4 w-4" />
+                                        <Wand2 className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                     )}
-                                    Melhorar com IA
+                                    {isMobile ? 'IA Melhorar' : 'Melhorar com IA'}
                                 </Button>
                             </FeatureGate>
                             <FeatureGate feature="ai-analyze">
@@ -655,23 +658,25 @@ export function AnamnesisCard() {
                                     type="button"
                                     onClick={handleAnalyzeAnamnesis}
                                     disabled={analyzeAnamnesisMutation.isPending}
-                                    className="gap-2"
+                                    className={`gap-1.5 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                                 >
                                     {analyzeAnamnesisMutation.isPending ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                     ) : (
-                                        <Sparkles className="h-4 w-4" />
+                                        <Sparkles className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                     )}
-                                    Extrair dados com IA
+                                    {isMobile ? 'Extrair IA' : 'Extrair dados com IA'}
                                 </Button>
                             </FeatureGate>
-                            <Button type="button" variant="ghost" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord}>
-                                Limpar texto
-                            </Button>
                         </div>
-                        <p className="text-sm text-gray-500 text-right max-w-[280px]">
-                            A IA sugere registros prontos para revisão<br />antes de aplicar ao prontuário.
-                        </p>
+                        {!isMobile && (
+                            <p className="text-sm text-gray-500 text-right max-w-[280px]">
+                                A IA sugere registros prontos para revisão<br />antes de aplicar ao prontuário.
+                            </p>
+                        )}
+                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs self-start" : ""}>
+                            Limpar texto
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

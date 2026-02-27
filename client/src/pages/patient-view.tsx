@@ -226,128 +226,207 @@ export default function PatientView() {
                 <Sidebar />
 
                 <main className="flex-1">
-                    <div className={isMobile ? "p-3" : "p-4 md:p-6"}>
+                    <div className={isMobile ? "p-2.5 pt-1" : "p-4 md:p-6"}>
                         {/* Header */}
-                        <header className={isMobile ? "mb-3" : "mb-6"}>
-                            <div className="flex items-center justify-between">
-                                <div className="min-w-0 flex-1">
-                                    <h1 className={`font-bold text-foreground flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                                        {!isMobile && <Users className="h-6 w-6" />}
-                                        Atendimento
-                                    </h1>
-                                    {activeProfile ? (
-                                        <div className={isMobile ? "mt-1" : "mt-2"}>
-                                            <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                                                <p className={`font-semibold text-foreground ${isMobile ? 'text-base' : 'text-lg'}`}>{activeProfile.name}</p>
-                                                {calculateAge(activeProfile.birthDate) !== null && (
-                                                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                        <User className="h-4 w-4 text-muted-foreground" />
-                                                        {calculateAge(activeProfile.birthDate)} anos
-                                                    </span>
-                                                )}
-                                                {activeProfile && (
-                                                    <div className={isMobile ? '' : 'ml-2'}>
-                                                        {activeProfile.deceased ? (
-                                                            <Badge variant="destructive" className="px-2 py-0.5 flex gap-1.5 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100 text-xs">
-                                                                <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse"></span>
-                                                                FALECIDO
-                                                            </Badge>
-                                                        ) : (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 rounded-md transition-colors"
-                                                                onClick={() => setIsDeathDialogOpen(true)}
-                                                            >
-                                                                <HeartCrack className="h-3.5 w-3.5 mr-1" />
-                                                                <span className="text-xs font-medium">{isMobile ? 'Óbito' : 'Registrar Óbito'}</span>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {!isMobile && activeProfile.createdAt && (
-                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
-                                                        <CalendarDays className="h-4 w-4 text-gray-400" />
-                                                        Paciente desde {format(new Date(activeProfile.createdAt), "MMM 'de' yyyy", { locale: ptBR })}
-                                                    </span>
-                                                )}
-                                                {!isMobile && activeProfile.insuranceName && (
-                                                    <span className="flex items-center gap-1 text-sm text-gray-600">
-                                                        <Building2 className="h-4 w-4 text-gray-400" />
-                                                        {activeProfile.insuranceName}
-                                                    </span>
-                                                )}
+                        {isMobile ? (
+                            /* ── Mobile: Premium compact patient strip ── */
+                            <header className="mb-2.5">
+                                {activeProfile ? (
+                                    <div className="rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-black/[0.06] dark:border-white/10 px-3.5 py-2.5 shadow-sm">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-bold text-[15px] text-foreground tracking-tight truncate">{activeProfile.name}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    {calculateAge(activeProfile.birthDate) !== null && (
+                                                        <span className="text-xs text-muted-foreground font-medium">
+                                                            {calculateAge(activeProfile.birthDate)} anos
+                                                        </span>
+                                                    )}
+                                                    {activeProfile.insuranceName && (
+                                                        <>
+                                                            <span className="text-muted-foreground/40">·</span>
+                                                            <span className="text-xs text-muted-foreground truncate">{activeProfile.insuranceName}</span>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
+                                            {activeProfile.deceased ? (
+                                                <Badge variant="destructive" className="px-2 py-0.5 flex gap-1 items-center bg-red-100 text-red-800 border-red-200 text-[10px] shrink-0">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse"></span>
+                                                    FALECIDO
+                                                </Badge>
+                                            ) : (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0 rounded-lg transition-colors shrink-0"
+                                                    onClick={() => setIsDeathDialogOpen(true)}
+                                                    title="Registrar Óbito"
+                                                >
+                                                    <HeartCrack className="h-3.5 w-3.5" />
+                                                </Button>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <p className="text-gray-600 mt-1 text-sm">
-                                            Selecione um paciente para visualizar os dados
-                                        </p>
-                                    )}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 px-3.5 py-3 text-center">
+                                        <p className="text-sm text-muted-foreground">Selecione um paciente na sidebar</p>
+                                    </div>
+                                )}
+                            </header>
+                        ) : (
+                            /* ── Desktop: Full header ── */
+                            <header className="mb-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="min-w-0 flex-1">
+                                        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                                            <Users className="h-6 w-6" />
+                                            Atendimento
+                                        </h1>
+                                        {activeProfile ? (
+                                            <div className="mt-2">
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <p className="text-lg font-semibold text-foreground">{activeProfile.name}</p>
+                                                    {calculateAge(activeProfile.birthDate) !== null && (
+                                                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                            <User className="h-4 w-4 text-muted-foreground" />
+                                                            {calculateAge(activeProfile.birthDate)} anos
+                                                        </span>
+                                                    )}
+                                                    {activeProfile && (
+                                                        <div className="ml-2">
+                                                            {activeProfile.deceased ? (
+                                                                <Badge variant="destructive" className="px-2 py-0.5 flex gap-1.5 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100 text-xs">
+                                                                    <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse"></span>
+                                                                    PACIENTE FALECIDO
+                                                                </Badge>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 rounded-md transition-colors"
+                                                                    onClick={() => setIsDeathDialogOpen(true)}
+                                                                >
+                                                                    <HeartCrack className="h-3.5 w-3.5 mr-1" />
+                                                                    <span className="text-xs font-medium">Registrar Óbito</span>
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {activeProfile.createdAt && (
+                                                        <span className="flex items-center gap-1 text-sm text-gray-600">
+                                                            <CalendarDays className="h-4 w-4 text-gray-400" />
+                                                            Paciente desde {format(new Date(activeProfile.createdAt), "MMM 'de' yyyy", { locale: ptBR })}
+                                                        </span>
+                                                    )}
+                                                    {activeProfile.insuranceName && (
+                                                        <span className="flex items-center gap-1 text-sm text-gray-600">
+                                                            <Building2 className="h-4 w-4 text-gray-400" />
+                                                            {activeProfile.insuranceName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-gray-600 mt-1 text-sm">
+                                                Selecione um paciente para visualizar os dados
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        {user && (
+                                            <div className="hidden md:flex min-w-[200px] bg-card px-4 py-2 rounded-lg border border-border shadow-sm flex-col items-end flex-shrink-0">
+                                                <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-0.5">Médico Prescritor</span>
+                                                <p className="font-semibold text-foreground text-sm">{user?.fullName || user?.username || "Profissional"}</p>
+                                                {user?.crm && <span className="text-xs text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded border border-border">CRM: {user.crm}</span>}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-
-                                {/* Doctor Prescriber Info & Actions - Right side of header */}
-                                <div className="flex items-center gap-4">
-                                    {user && (
-                                        <div className="hidden md:flex min-w-[200px] bg-card px-4 py-2 rounded-lg border border-border shadow-sm flex-col items-end flex-shrink-0">
-                                            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-0.5">Médico Prescritor</span>
-                                            <p className="font-semibold text-foreground text-sm">{user?.fullName || user?.username || "Profissional"}</p>
-                                            {user?.crm && <span className="text-xs text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded border border-border">CRM: {user.crm}</span>}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </header>
+                            </header>
+                        )}
 
                         {/* Tabs Navigation */}
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className={`border-b border-border w-full justify-start rounded-none bg-transparent pb-px ${isMobile ? 'mb-3 overflow-x-auto flex-nowrap gap-0' : 'mb-6'}`}>
-                                <TabsTrigger
-                                    value="dashboard"
-                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs' : 'px-4 py-2'}`}
-                                >
-                                    <LayoutDashboard className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                    {isMobile ? 'Atend.' : 'Atendimento'}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="prescricoes"
-                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
-                                >
-                                    <Pill className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                    {isMobile ? 'Presc.' : 'Prescrição'}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="timeline"
-                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
-                                >
-                                    <Heart className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                    {isMobile ? 'Hist.' : 'Histórico do Paciente'}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="laboratorial"
-                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
-                                >
-                                    <LineChart className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                    Exames
-                                </TabsTrigger>
-                                <FeatureGate>
+                            {isMobile ? (
+                                /* ── Mobile: Premium pill-style tabs ── */
+                                <TabsList className="w-full justify-start rounded-none bg-transparent p-0 mb-2.5 overflow-x-auto flex-nowrap gap-1 border-b-0 scrollbar-hide">
                                     <TabsTrigger
-                                        value="evolution"
-                                        className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
+                                        value="dashboard"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
-                                        <TrendingUp className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                        {isMobile ? 'Evol.' : 'Evolução'}
+                                        <LayoutDashboard className="h-3 w-3 mr-1" />
+                                        Atend.
                                     </TabsTrigger>
-                                </FeatureGate>
-                                <TabsTrigger
-                                    value="atestados"
-                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
-                                >
-                                    <FileSignature className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
-                                    {isMobile ? 'Atest.' : 'Atestados'}
-                                </TabsTrigger>
-
-                            </TabsList>
+                                    <TabsTrigger
+                                        value="prescricoes"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                    >
+                                        <Pill className="h-3 w-3 mr-1" />
+                                        Presc.
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="timeline"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                    >
+                                        <Heart className="h-3 w-3 mr-1" />
+                                        Hist.
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="laboratorial"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                    >
+                                        <LineChart className="h-3 w-3 mr-1" />
+                                        Exames
+                                    </TabsTrigger>
+                                    <FeatureGate>
+                                        <TabsTrigger
+                                            value="evolution"
+                                            className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                        >
+                                            <TrendingUp className="h-3 w-3 mr-1" />
+                                            Evol.
+                                        </TabsTrigger>
+                                    </FeatureGate>
+                                    <TabsTrigger
+                                        value="atestados"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                    >
+                                        <FileSignature className="h-3 w-3 mr-1" />
+                                        Atest.
+                                    </TabsTrigger>
+                                </TabsList>
+                            ) : (
+                                /* ── Desktop: Standard tabs ── */
+                                <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                                    <TabsTrigger value="dashboard" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800">
+                                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                                        Atendimento
+                                    </TabsTrigger>
+                                    <TabsTrigger value="prescricoes" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                        <Pill className="h-4 w-4 mr-2" />
+                                        Prescrição
+                                    </TabsTrigger>
+                                    <TabsTrigger value="timeline" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                        <Heart className="h-4 w-4 mr-2" />
+                                        Histórico do Paciente
+                                    </TabsTrigger>
+                                    <TabsTrigger value="laboratorial" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                        <LineChart className="h-4 w-4 mr-2" />
+                                        Exames
+                                    </TabsTrigger>
+                                    <FeatureGate>
+                                        <TabsTrigger value="evolution" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                            <TrendingUp className="h-4 w-4 mr-2" />
+                                            Evolução
+                                        </TabsTrigger>
+                                    </FeatureGate>
+                                    <TabsTrigger value="atestados" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                        <FileSignature className="h-4 w-4 mr-2" />
+                                        Atestados
+                                    </TabsTrigger>
+                                </TabsList>
+                            )}
 
                             {/* Dashboard Tab */}
                             <TabsContent value="dashboard" className="mt-0">
