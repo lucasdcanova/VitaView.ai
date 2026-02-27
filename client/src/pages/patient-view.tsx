@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -87,6 +88,7 @@ export default function PatientView() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const { user } = useAuth();
+    const isMobile = useIsMobile();
 
     // Dialog States
     const [isDiagnosisDialogOpen, setIsDiagnosisDialogOpen] = useState(false);
@@ -224,19 +226,19 @@ export default function PatientView() {
                 <Sidebar />
 
                 <main className="flex-1">
-                    <div className="p-4 md:p-6">
+                    <div className={isMobile ? "p-3" : "p-4 md:p-6"}>
                         {/* Header */}
-                        <header className="mb-6">
+                        <header className={isMobile ? "mb-3" : "mb-6"}>
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                        <Users className="h-6 w-6" />
+                                <div className="min-w-0 flex-1">
+                                    <h1 className={`font-bold text-foreground flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                                        {!isMobile && <Users className="h-6 w-6" />}
                                         Atendimento
                                     </h1>
                                     {activeProfile ? (
-                                        <div className="mt-2">
-                                            <div className="flex flex-wrap items-center gap-4">
-                                                <p className="text-lg font-semibold text-foreground">{activeProfile.name}</p>
+                                        <div className={isMobile ? "mt-1" : "mt-2"}>
+                                            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                                                <p className={`font-semibold text-foreground ${isMobile ? 'text-base' : 'text-lg'}`}>{activeProfile.name}</p>
                                                 {calculateAge(activeProfile.birthDate) !== null && (
                                                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                                         <User className="h-4 w-4 text-muted-foreground" />
@@ -244,32 +246,32 @@ export default function PatientView() {
                                                     </span>
                                                 )}
                                                 {activeProfile && (
-                                                    <div className="ml-2">
+                                                    <div className={isMobile ? '' : 'ml-2'}>
                                                         {activeProfile.deceased ? (
-                                                            <Badge variant="destructive" className="px-3 py-1 flex gap-2 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                                                                <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-                                                                PACIENTE FALECIDO
+                                                            <Badge variant="destructive" className="px-2 py-0.5 flex gap-1.5 items-center bg-red-100 text-red-800 border-red-200 hover:bg-red-100 text-xs">
+                                                                <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse"></span>
+                                                                FALECIDO
                                                             </Badge>
                                                         ) : (
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 px-2 rounded-md transition-colors"
+                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 rounded-md transition-colors"
                                                                 onClick={() => setIsDeathDialogOpen(true)}
                                                             >
-                                                                <HeartCrack className="h-4 w-4 mr-2" />
-                                                                <span className="text-xs font-medium">Registrar Óbito</span>
+                                                                <HeartCrack className="h-3.5 w-3.5 mr-1" />
+                                                                <span className="text-xs font-medium">{isMobile ? 'Óbito' : 'Registrar Óbito'}</span>
                                                             </Button>
                                                         )}
                                                     </div>
                                                 )}
-                                                {activeProfile.createdAt && (
+                                                {!isMobile && activeProfile.createdAt && (
                                                     <span className="flex items-center gap-1 text-sm text-gray-600">
                                                         <CalendarDays className="h-4 w-4 text-gray-400" />
                                                         Paciente desde {format(new Date(activeProfile.createdAt), "MMM 'de' yyyy", { locale: ptBR })}
                                                     </span>
                                                 )}
-                                                {activeProfile.insuranceName && (
+                                                {!isMobile && activeProfile.insuranceName && (
                                                     <span className="flex items-center gap-1 text-sm text-gray-600">
                                                         <Building2 className="h-4 w-4 text-gray-400" />
                                                         {activeProfile.insuranceName}
@@ -278,7 +280,7 @@ export default function PatientView() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-600 mt-1">
+                                        <p className="text-gray-600 mt-1 text-sm">
                                             Selecione um paciente para visualizar os dados
                                         </p>
                                     )}
@@ -293,58 +295,56 @@ export default function PatientView() {
                                             {user?.crm && <span className="text-xs text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded border border-border">CRM: {user.crm}</span>}
                                         </div>
                                     )}
-
-
                                 </div>
                             </div>
                         </header>
 
                         {/* Tabs Navigation */}
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                            <TabsList className={`border-b border-border w-full justify-start rounded-none bg-transparent pb-px ${isMobile ? 'mb-3 overflow-x-auto flex-nowrap gap-0' : 'mb-6'}`}>
                                 <TabsTrigger
                                     value="dashboard"
-                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-gray-600 hover:text-gray-800"
+                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs' : 'px-4 py-2'}`}
                                 >
-                                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                                    Atendimento
+                                    <LayoutDashboard className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
+                                    {isMobile ? 'Atend.' : 'Atendimento'}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="prescricoes"
-                                    className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
                                 >
-                                    <Pill className="h-4 w-4 mr-2" />
-                                    Prescrição
+                                    <Pill className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
+                                    {isMobile ? 'Presc.' : 'Prescrição'}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="timeline"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
                                 >
-                                    <Heart className="h-4 w-4 mr-2" />
-                                    Histórico do Paciente
+                                    <Heart className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
+                                    {isMobile ? 'Hist.' : 'Histórico do Paciente'}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="laboratorial"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
                                 >
-                                    <LineChart className="h-4 w-4 mr-2" />
+                                    <LineChart className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
                                     Exames
                                 </TabsTrigger>
                                 <FeatureGate>
                                     <TabsTrigger
                                         value="evolution"
-                                        className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                        className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
                                     >
-                                        <TrendingUp className="h-4 w-4 mr-2" />
-                                        Evolução
+                                        <TrendingUp className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
+                                        {isMobile ? 'Evol.' : 'Evolução'}
                                     </TabsTrigger>
                                 </FeatureGate>
                                 <TabsTrigger
                                     value="atestados"
-                                    className="data-[state=active]:border-primary-500 data-[state=active]:text-white data-[state=active]:bg-primary-600 border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800"
+                                    className={`data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent text-gray-600 hover:text-gray-800 shrink-0 ${isMobile ? 'px-2.5 py-1.5 text-xs ml-1' : 'px-4 py-2 ml-4'}`}
                                 >
-                                    <FileSignature className="h-4 w-4 mr-2" />
-                                    Atestados
+                                    <FileSignature className={isMobile ? 'h-3.5 w-3.5 mr-1' : 'h-4 w-4 mr-2'} />
+                                    {isMobile ? 'Atest.' : 'Atestados'}
                                 </TabsTrigger>
 
                             </TabsList>
