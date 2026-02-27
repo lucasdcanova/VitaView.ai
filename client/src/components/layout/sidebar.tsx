@@ -291,77 +291,71 @@ export default function Sidebar(props: SidebarProps) {
           )}
         </div>
 
-        {/* Navigation */}
-        <nav className={cn("relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-y-contain custom-scrollbar [-webkit-overflow-scrolling:touch]", isCollapsed ? "p-2" : "p-4")}>
-          <div className="space-y-1">
-          <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
-          <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
-          <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
-          <NavItem href="/minha-clinica" icon={Building} label="Minha Clínica" tourId="nav-minha-clinica" />
+        {/* Navigation + Bottom Actions */}
+        <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col", isCollapsed ? "p-2" : "p-4")}>
+          <nav className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar [-webkit-overflow-scrolling:touch]">
+            <div className="space-y-1">
+              <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
+              <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
+              <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
+              <NavItem href="/minha-clinica" icon={Building} label="Minha Clínica" tourId="nav-minha-clinica" />
+            </div>
+          </nav>
 
-          {/* Separador */}
-          <div className="py-2">
-            <div className={cn("h-px bg-lightGray", isCollapsed ? "mx-2" : "mx-0")}></div>
+          <div className="mt-4 pt-4 border-t border-lightGray/80 space-y-1">
+            <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
+            <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
+            <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
+
+            {/* Link para o painel administrativo - visível apenas para administradores */}
+            {user?.role === 'admin' && (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/admin-panel"
+                      onClick={handleNavClick}
+                      className={cn(
+                        "w-full flex items-center p-3 rounded-lg transition-all duration-200 mt-3",
+                        location === '/admin-panel' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40',
+                        isCollapsed && "justify-center px-2"
+                      )}
+                    >
+                      <ShieldCheck className={cn("h-5 w-5", location === '/admin-panel' ? 'text-white' : 'text-red-600', !isCollapsed && "mr-3")} />
+                      {!isCollapsed && <span className="font-body font-bold text-sm">Painel Admin</span>}
+                    </Link>
+                  </TooltipTrigger>
+                  {isCollapsed && <TooltipContent side="right" className="ml-2 font-bold bg-red-600 text-white border-0">Painel Admin</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {/* Logout Button */}
+            <div className="relative z-10 pt-4 mt-4">
+              <div className="pointer-events-none absolute inset-x-0 -top-4 h-10 bg-gradient-to-b from-pureWhite/0 to-pureWhite/70" />
+              <div className="pointer-events-none absolute inset-0 rounded-t-xl bg-gradient-to-t from-pureWhite/90 via-pureWhite/78 to-pureWhite/35 backdrop-blur-md" />
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleLogout}
+                      className={cn(
+                        "relative w-full flex items-center p-3 rounded-xl border border-lightGray/70 bg-pureWhite/45 text-charcoal hover:bg-red-50/80 dark:hover:bg-red-950/40 hover:text-red-600 transition-all duration-200 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]",
+                        isCollapsed && "justify-center px-2"
+                      )}
+                      aria-label="Sair da conta"
+                      type="button"
+                    >
+                      <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                      {!isCollapsed && <span className="font-body text-sm font-medium">Sair</span>}
+                    </button>
+                  </TooltipTrigger>
+                  {isCollapsed && <TooltipContent side="right" className="ml-2 bg-red-600 text-white border-0">Sair</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
-
-          {/* Configurações e Assinatura */}
-          <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
-          <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
-          <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
-
-
-
-
-
-          {/* Link para o painel administrativo - visível apenas para administradores */}
-          {user?.role === 'admin' && (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href="/admin-panel"
-                    onClick={handleNavClick}
-                    className={cn(
-                      "w-full flex items-center p-3 rounded-lg transition-all duration-200 mt-6",
-                      location === '/admin-panel' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40',
-                      isCollapsed && "justify-center px-2"
-                    )}
-                  >
-                    <ShieldCheck className={cn("h-5 w-5", location === '/admin-panel' ? 'text-white' : 'text-red-600', !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span className="font-body font-bold text-sm">Painel Admin</span>}
-                  </Link>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right" className="ml-2 font-bold bg-red-600 text-white border-0">Painel Admin</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          </div>
-
-          {/* Logout Button */}
-          <div className="relative z-10 pt-6 mt-6 sticky bottom-0">
-            <div className="pointer-events-none absolute inset-x-0 -top-4 h-10 bg-gradient-to-b from-pureWhite/0 to-pureWhite/70" />
-            <div className="pointer-events-none absolute inset-0 rounded-t-xl bg-gradient-to-t from-pureWhite/90 via-pureWhite/78 to-pureWhite/35 backdrop-blur-md" />
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleLogout}
-                    className={cn(
-                      "relative w-full flex items-center p-3 rounded-xl border border-lightGray/70 bg-pureWhite/45 text-charcoal hover:bg-red-50/80 dark:hover:bg-red-950/40 hover:text-red-600 transition-all duration-200 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]",
-                      isCollapsed && "justify-center px-2"
-                    )}
-                    aria-label="Sair da conta"
-                    type="button"
-                  >
-                    <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span className="font-body text-sm font-medium">Sair</span>}
-                  </button>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right" className="ml-2 bg-red-600 text-white border-0">Sair</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </nav>
+        </div>
       </aside>
     </>
   );

@@ -8,7 +8,7 @@ interface LogoProps {
   onClick?: () => void;
   /**
    * Variante do logo:
-   * - "icon": Usa apenas o ícone/símbolo (ícone PWA transparente) - ideal para header, sidebar, footer
+   * - "icon": Usa apenas o ícone/símbolo (PNG transparente) - ideal para header, sidebar, footer
    * - "full": Usa o logo completo com texto (LOGO COM TEXTO.PNG) - ideal para hero, login, páginas de destaque
    * - "legacy": Usa o SVG original gerado dinamicamente
    */
@@ -43,7 +43,7 @@ const textSizeClasses = {
  * VitaView AI Logo Component
  * 
  * Design Language:
- * - variant="icon": Usa o mesmo PNG transparente dos ícones PWA
+ * - variant="icon": Usa PNG transparente sem fundo para evitar box sólido no iOS
  * - variant="full": Usa LOGO COM TEXTO.PNG para hero, login e destaques
  * - variant="legacy": SVG gerado dinamicamente (compatibilidade)
  */
@@ -73,7 +73,7 @@ export function Logo({
     );
   }
 
-  // Variante apenas com ícone (mesmo asset dos ícones PWA)
+  // Variante apenas com ícone (PNG transparente sem fundo)
   if (variant === "icon") {
     return (
       <div
@@ -81,9 +81,9 @@ export function Logo({
         onClick={onClick}
       >
         <img
-          src="/icon-192x192.png"
+          src="/logo-icon-transparent.png"
           alt="VitaView AI"
-          className={cn(sizeClasses[size], "shrink-0 object-contain")}
+          className={cn(sizeClasses[size], "shrink-0 object-contain dark:invert")}
           draggable={false}
         />
         {showText && (
