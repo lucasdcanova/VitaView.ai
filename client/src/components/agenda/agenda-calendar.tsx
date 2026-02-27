@@ -433,40 +433,42 @@ export function AgendaCalendar({
       fullWidth ? "border-b border-border" : "rounded-2xl shadow-2xl"
     )}>
       {/* Calendar Header */}
-      <div className={cn("agenda-calendar-hero text-charcoal dark:text-white shrink-0", isMobile ? "p-4" : "p-6")}>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 xl:flex-1">
+      <div className={cn("agenda-calendar-hero text-charcoal dark:text-white shrink-0", isMobile ? "p-3" : "p-6")}>
+        <div className="flex flex-col gap-3 md:gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 md:gap-4">
+            {/* Date picker + compact controls */}
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 xl:flex-1">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     className={cn(
-                      "h-auto w-full max-w-full justify-start p-0 min-w-0 rounded-2xl border px-2 py-2 sm:px-2.5 shadow-sm overflow-hidden",
+                      "h-auto justify-start p-0 min-w-0 rounded-2xl border px-2 py-2 sm:px-2.5 shadow-sm overflow-hidden",
                       "bg-white/95 border-black/5 text-charcoal hover:bg-white hover:text-charcoal",
-                      "dark:bg-transparent dark:border-transparent dark:shadow-none dark:!text-white dark:hover:bg-transparent dark:hover:text-white/90"
+                      "dark:bg-transparent dark:border-transparent dark:shadow-none dark:!text-white dark:hover:bg-transparent dark:hover:text-white/90",
+                      isCompactDayExperience ? "flex-1" : "w-full max-w-full"
                     )}
                   >
                     <div className={cn(
                       "rounded-2xl border flex items-center justify-center shrink-0",
                       "border-black/10 bg-background/95 shadow-sm",
                       "dark:border-white/15 dark:bg-white/10 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
-                      isMobile ? "w-12 h-12" : "w-14 h-14"
+                      isCompactDayExperience ? "w-10 h-10" : "w-14 h-14"
                     )}>
-                      <CalendarIcon className={cn("text-charcoal dark:!text-white", isMobile ? "w-6 h-6" : "w-7 h-7")} />
+                      <CalendarIcon className={cn("text-charcoal dark:!text-white", isCompactDayExperience ? "w-5 h-5" : "w-7 h-7")} />
                     </div>
-                    <div className="text-left ml-3 min-w-0 flex-1 overflow-hidden">
+                    <div className="text-left ml-2 sm:ml-3 min-w-0 flex-1 overflow-hidden">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h3 className={cn("font-bold capitalize tracking-tight text-charcoal dark:!text-white truncate min-w-0", isMobile ? "text-lg sm:text-xl" : "text-2xl")}>
+                        <h3 className={cn("font-bold capitalize tracking-tight text-charcoal dark:!text-white truncate min-w-0", isCompactDayExperience ? "text-base" : "text-2xl")}>
                           {format(currentDate, "MMMM yyyy", { locale: ptBR })}
                         </h3>
-                        {isStandalonePwa && (
+                        {isStandalonePwa && !isCompactDayExperience && (
                           <span className="shrink-0 text-[10px] uppercase tracking-[0.16em] rounded-full border border-black/10 bg-white px-2 py-1 text-charcoal/70 dark:border-white/15 dark:bg-black/20 dark:text-white/75">
                             PWA
                           </span>
                         )}
                       </div>
-                      <p className="text-xs sm:text-sm text-charcoal/70 dark:text-white/70 truncate">
+                      <p className={cn("text-charcoal/70 dark:text-white/70 truncate", isCompactDayExperience ? "text-[11px]" : "text-xs sm:text-sm")}>
                         {viewMode === 'day' ? (
                           format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
                         ) : viewMode === 'week' ? (
@@ -487,147 +489,221 @@ export function AgendaCalendar({
                   />
                 </PopoverContent>
               </Popover>
+
+              {/* Mobile: compact action buttons inline with date */}
+              {isCompactDayExperience && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    onClick={onNewAppointment}
+                    size="sm"
+                    className="bg-card text-charcoal hover:bg-muted border-0 shadow-sm h-9 w-9 p-0"
+                    title="Nova Consulta"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal px-2.5",
+                      "border-black/10 shadow-sm",
+                      "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                    )}
+                    onClick={handleGoToday}
+                  >
+                    Hoje
+                  </Button>
+                  <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-lg p-0.5 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
+                    <button
+                      className="p-1.5 hover:bg-black/5 dark:hover:bg-white/20 rounded transition-colors text-charcoal dark:text-white"
+                      onClick={handlePrev}
+                      aria-label="Período anterior"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5 rotate-90" />
+                    </button>
+                    <button
+                      className="p-1.5 hover:bg-black/5 dark:hover:bg-white/20 rounded transition-colors text-charcoal dark:text-white"
+                      onClick={handleNext}
+                      aria-label="Próximo período"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 xl:justify-end">
-              <Button
-                onClick={onNewAppointment}
-                className="bg-card text-charcoal hover:bg-muted border-0 font-semibold shadow-sm"
-                size={isMobile ? "default" : "sm"}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Consulta
-              </Button>
-
-              <Button
-                variant="ghost"
-                size={isMobile ? "default" : "sm"}
-                className={cn(
-                  "border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal",
-                  "border-black/10 shadow-sm",
-                  "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
-                )}
-                onClick={handleGoToday}
-              >
-                Hoje
-              </Button>
-
-              <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-xl p-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
-                <button
-                  className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
-                  onClick={handlePrev}
-                  aria-label="Período anterior"
+            {/* Desktop: full action buttons */}
+            {!isCompactDayExperience && (
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 xl:justify-end">
+                <Button
+                  onClick={onNewAppointment}
+                  className="bg-card text-charcoal hover:bg-muted border-0 font-semibold shadow-sm"
+                  size="sm"
                 >
-                  <ChevronDown className="w-4 h-4 rotate-90" />
-                </button>
-                <button
-                  className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
-                  onClick={handleNext}
-                  aria-label="Próximo período"
-                >
-                  <ChevronDown className="w-4 h-4 -rotate-90" />
-                </button>
-              </div>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Consulta
+                </Button>
 
-              <div className="flex bg-white/80 dark:bg-white/10 rounded-xl p-1 gap-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
-                    viewMode === 'day' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                    "border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal",
+                    "border-black/10 shadow-sm",
+                    "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
                   )}
-                  title="Dia"
-                  onClick={() => setViewMode('day')}
+                  onClick={handleGoToday}
                 >
-                  <List className="w-4 h-4" />
-                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Dia</span>
+                  Hoje
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
-                    isCompactDayExperience && "opacity-80",
-                    viewMode === 'week' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
-                  )}
-                  title="Semana"
-                  onClick={() => setViewMode('week')}
-                >
-                  <CalendarWeek className="w-4 h-4" />
-                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Semana</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
-                    viewMode === 'month' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
-                  )}
-                  title="Mês"
-                  onClick={() => setViewMode('month')}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                  <span className={cn(isCompactDayExperience ? "inline" : "hidden lg:inline")}>Mês</span>
-                </Button>
-              </div>
 
-              <div className="w-full sm:w-auto">
-                <Select
-                  value={String(slotIntervalMinutes)}
-                  onValueChange={(value) => setSlotIntervalMinutes(Number.parseInt(value, 10))}
-                >
-                  <SelectTrigger className="h-10 w-full sm:w-[170px] bg-white/80 border-black/10 text-charcoal shadow-sm dark:bg-white/10 dark:border-white/15 dark:text-white dark:shadow-none">
-                    <SelectValue placeholder="Intervalo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SLOT_INTERVAL_OPTIONS.map((minutes) => (
-                      <SelectItem key={minutes} value={String(minutes)}>
-                        Grade: {minutes} min
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-xl p-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
+                  <button
+                    className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
+                    onClick={handlePrev}
+                    aria-label="Período anterior"
+                  >
+                    <ChevronDown className="w-4 h-4 rotate-90" />
+                  </button>
+                  <button
+                    className="p-2 hover:bg-black/5 dark:hover:bg-white/20 rounded-md transition-colors text-charcoal dark:text-white"
+                    onClick={handleNext}
+                    aria-label="Próximo período"
+                  >
+                    <ChevronDown className="w-4 h-4 -rotate-90" />
+                  </button>
+                </div>
+
+                <div className="flex bg-white/80 dark:bg-white/10 rounded-xl p-1 gap-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                      viewMode === 'day' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                    )}
+                    title="Dia"
+                    onClick={() => setViewMode('day')}
+                  >
+                    <List className="w-4 h-4" />
+                    <span className="hidden lg:inline">Dia</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                      viewMode === 'week' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                    )}
+                    title="Semana"
+                    onClick={() => setViewMode('week')}
+                  >
+                    <CalendarWeek className="w-4 h-4" />
+                    <span className="hidden lg:inline">Semana</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 px-3 text-charcoal hover:bg-black/5 dark:text-white dark:hover:bg-white/20 gap-1.5",
+                      viewMode === 'month' && "bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:bg-white/20 dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                    )}
+                    title="Mês"
+                    onClick={() => setViewMode('month')}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span className="hidden lg:inline">Mês</span>
+                  </Button>
+                </div>
+
+                <div className="w-full sm:w-auto">
+                  <Select
+                    value={String(slotIntervalMinutes)}
+                    onValueChange={(value) => setSlotIntervalMinutes(Number.parseInt(value, 10))}
+                  >
+                    <SelectTrigger className="h-10 w-full sm:w-[170px] bg-white/80 border-black/10 text-charcoal shadow-sm dark:bg-white/10 dark:border-white/15 dark:text-white dark:shadow-none">
+                      <SelectValue placeholder="Intervalo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SLOT_INTERVAL_OPTIONS.map((minutes) => (
+                        <SelectItem key={minutes} value={String(minutes)}>
+                          Grade: {minutes} min
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
+          {/* Stats section */}
           <div className="flex flex-col xl:flex-row gap-3 xl:items-stretch">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
-              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Consultas do dia</p>
-                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayNonBlockedAppointments.length}</p>
+            {/* Mobile: compact inline stats */}
+            {isCompactDayExperience ? (
+              <div className="flex items-center gap-3 rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none text-sm">
+                <span className="text-charcoal dark:text-white">
+                  <span className="font-bold">{currentDayNonBlockedAppointments.length}</span>
+                  <span className="text-charcoal/60 dark:text-white/60 ml-1">consultas</span>
+                </span>
+                <span className="text-charcoal/30 dark:text-white/30">·</span>
+                <span className="text-charcoal dark:text-white">
+                  <span className="font-bold">{currentDayWaitingCount}</span>
+                  <span className="text-charcoal/60 dark:text-white/60 ml-1">espera</span>
+                </span>
+                <span className="text-charcoal/30 dark:text-white/30">·</span>
+                <span className="text-charcoal dark:text-white">
+                  <span className="font-bold">{currentDayInProgressCount}</span>
+                  <span className="text-charcoal/60 dark:text-white/60 ml-1">atend.</span>
+                </span>
+                <span className="text-charcoal/30 dark:text-white/30">·</span>
+                <span className="text-charcoal dark:text-white">
+                  <span className="font-bold">{Math.round(currentDayTotalMinutes / 60)}h</span>
+                </span>
               </div>
-              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Em espera</p>
-                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayWaitingCount}</p>
+            ) : (
+              /* Desktop: full stat cards */
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
+                <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Consultas do dia</p>
+                  <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayNonBlockedAppointments.length}</p>
+                </div>
+                <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Em espera</p>
+                  <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayWaitingCount}</p>
+                </div>
+                <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Atendendo</p>
+                  <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayInProgressCount}</p>
+                </div>
+                <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Carga do dia</p>
+                  <p className="text-lg font-bold text-charcoal dark:text-white">{Math.round(currentDayTotalMinutes / 60)}h</p>
+                </div>
               </div>
-              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Atendendo</p>
-                <p className="text-lg font-bold text-charcoal dark:text-white">{currentDayInProgressCount}</p>
-              </div>
-              <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-charcoal/60 dark:text-white/65">Carga do dia</p>
-                <p className="text-lg font-bold text-charcoal dark:text-white">{Math.round(currentDayTotalMinutes / 60)}h</p>
-              </div>
-            </div>
+            )}
 
-            <div className="xl:w-[320px] rounded-xl border border-black/10 bg-white/70 px-3 py-3 backdrop-blur-sm shadow-sm dark:border-white/10 dark:bg-black/15 dark:shadow-none">
+            {/* Next appointment card */}
+            <div className={cn(
+              "rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm shadow-sm dark:border-white/10 dark:bg-black/15 dark:shadow-none",
+              isCompactDayExperience ? "px-3 py-2" : "xl:w-[320px] px-3 py-3"
+            )}>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70">Próxima consulta</p>
-                <span className="text-[11px] text-charcoal/60 dark:text-white/60">
+                <p className={cn("font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-[10px]" : "text-xs")}> Próxima consulta</p>
+                <span className={cn("text-charcoal/60 dark:text-white/60", isCompactDayExperience ? "text-[10px]" : "text-[11px]")}>
                   {currentDayTelemedicineCount > 0 ? `${currentDayTelemedicineCount} telemed` : `${currentDayCompletedCount} concluídas`}
                 </span>
               </div>
               {nextAppointmentForCurrentDay ? (
-                <div className="mt-2">
-                  <p className="text-base font-bold text-charcoal dark:text-white truncate">{nextAppointmentForCurrentDay.patientName}</p>
-                  <p className="text-sm text-charcoal/70 dark:text-white/70">
+                <div className={cn(isCompactDayExperience ? "mt-1" : "mt-2")}>
+                  <p className={cn("font-bold text-charcoal dark:text-white truncate", isCompactDayExperience ? "text-sm" : "text-base")}>{nextAppointmentForCurrentDay.patientName}</p>
+                  <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-xs" : "text-sm")}>
                     {nextAppointmentForCurrentDay.isAllDay ? "Dia inteiro" : nextAppointmentForCurrentDay.time} • {nextAppointmentForCurrentDay.type}
                   </p>
                 </div>
               ) : (
-                <p className="mt-2 text-sm text-charcoal/70 dark:text-white/70">
+                <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "mt-1 text-xs" : "mt-2 text-sm")}>
                   {isCurrentDateToday ? "Nenhuma consulta pendente para hoje." : "Nenhuma consulta para esta data."}
                 </p>
               )}
