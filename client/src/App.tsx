@@ -236,7 +236,7 @@ function AppRouter() {
 
     const statusBarStyleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (statusBarStyleMeta) {
-      statusBarStyleMeta.setAttribute("content", "default");
+      statusBarStyleMeta.setAttribute("content", "black-translucent");
     }
 
     const manifestLink = document.querySelector<HTMLLinkElement>("#app-manifest") ??

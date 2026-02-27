@@ -65,7 +65,7 @@ const applyPwaChrome = (theme: Theme) => {
 
   const statusBarStyleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
   if (statusBarStyleMeta) {
-    statusBarStyleMeta.setAttribute("content", theme === "dark" ? "black" : "default");
+    statusBarStyleMeta.setAttribute("content", theme === "dark" ? "black" : "black-translucent");
   }
 
   const themeIconPath = theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png";

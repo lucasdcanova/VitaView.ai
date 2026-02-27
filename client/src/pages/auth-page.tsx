@@ -207,16 +207,16 @@ export default function AuthPage() {
       )}
 
       {/* Main Content - Centered Form */}
-      <div className="w-full flex flex-col justify-center items-center p-6 min-h-screen relative z-10">
+      <div className="w-full flex flex-col justify-center items-center p-4 pt-2 min-h-screen relative z-10">
         {/* Cabeçalho com logo VitaView acima do card */}
         <div className="w-full max-w-md mb-0 flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 mb-5"
+            className="flex items-center gap-3 mb-2"
           >
-            <div className="flex justify-center w-full my-4">
+            <div className="flex justify-center w-full my-1">
               <Logo
                 size="xl"
                 showText={false}
