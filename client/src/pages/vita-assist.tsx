@@ -358,7 +358,7 @@ export default function VitaAssistPage() {
                                                         }`}
                                                 >
                                                     {message.role === "assistant" ? (
-                                                        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-a:text-primary">
+                                                        <div className="prose prose-sm max-w-none overflow-hidden dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:overflow-x-auto prose-a:text-primary">
                                                             <ReactMarkdown>{message.content}</ReactMarkdown>
                                                         </div>
                                                     ) : (

@@ -12,6 +12,10 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     scrollEnabled: true,
   },
+  android: {
+    // Ensure consistent background color for Android WebView.
+    backgroundColor: '#FFFFFF',
+  },
   server: {
     // iOS app login depends on same-origin cookies; loading the production auth route
     // avoids capacitor://localhost -> /api requests that cannot reach the backend.

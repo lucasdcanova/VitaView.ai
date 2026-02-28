@@ -19,6 +19,16 @@ export const isNativeIOSApp = () => {
   }
 };
 
+export const isNativeAndroidApp = () => {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+  } catch {
+    return false;
+  }
+};
+
 const isIOSDevice = () => {
   if (typeof window === "undefined") return false;
 
@@ -30,7 +40,7 @@ const isIOSDevice = () => {
     (platform === "MacIntel" && maxTouchPoints > 1);
 };
 
-export const isRestrictedAppShell = () => isStandalonePwa() || isNativeIOSApp();
+export const isRestrictedAppShell = () => isStandalonePwa() || isNativeIOSApp() || isNativeAndroidApp();
 
 export const isIOSAppShell = () =>
   isNativeIOSApp() || (isStandalonePwa() && isIOSDevice());

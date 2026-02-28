@@ -150,19 +150,39 @@
 }
 
 @layer base {
+
   html.ios-app-shell,
   html.ios-app-shell body {
     min-height: 100%;
   }
 
   html.ios-app-shell #root {
-    box-sizing: border-box;
     min-height: 100dvh;
-    padding-right: env(safe-area-inset-right);
-    padding-left: env(safe-area-inset-left);
+  }
+
+  /* ============================
+     Universal viewport containment
+     Prevents horizontal overflow on ALL platforms (iOS, Android, PWA, browser).
+     Components handle their own safe-area insets individually.
+     ============================ */
+  #root {
+    box-sizing: border-box;
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
+  }
+
+  /* Ensure all page containers inside #root respect the viewport width */
+  #root>* {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Classic flex overflow fix: flex items default to min-width:auto which
+     prevents them from shrinking below their content size. Setting min-width:0
+     on flex-1 children allows them to shrink properly within the viewport. */
+  main {
+    min-width: 0;
   }
 
   * {
@@ -181,8 +201,6 @@
     background-image: var(--app-background-image);
     background-attachment: fixed;
     color: hsl(var(--foreground));
-    padding-left: var(--safe-area-left);
-    padding-right: var(--safe-area-right);
     transition: background-color 220ms ease, color 220ms ease;
   }
 
@@ -352,6 +370,7 @@
   /* iOS Safari auto-zooms focused fields when computed font-size is < 16px. */
   @supports (-webkit-touch-callout: none) {
     @media (pointer: coarse) {
+
       input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="hidden"]),
       textarea,
       select,
@@ -865,6 +884,7 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
+
     .landing-motion .hover\:scale-105:hover,
     .landing-motion .hover\:scale-110:hover {
       transform: scale(1.03);
@@ -872,6 +892,7 @@
   }
 
   @media (hover: none) {
+
     .landing-motion .hover\:scale-105:hover,
     .landing-motion .hover\:scale-110:hover {
       transform: none;
