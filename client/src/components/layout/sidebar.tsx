@@ -293,7 +293,7 @@ export default function Sidebar(props: SidebarProps) {
 
         {/* Navigation + Bottom Actions */}
         <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col", isCollapsed ? "p-2" : "p-4")}>
-          <nav className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar [-webkit-overflow-scrolling:touch]">
+          <nav className="shrink-0">
             <div className="space-y-1">
               <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
               <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
