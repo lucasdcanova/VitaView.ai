@@ -423,7 +423,9 @@ export function AgendaCalendar({
   }) || null;
 
   const handleGoToday = () => {
-    setCurrentDate(new Date());
+    const today = new Date();
+    if (isSameDay(currentDate, today) && viewMode === "day") return;
+    setCurrentDate(today);
     setViewMode("day");
   };
 
@@ -505,13 +507,18 @@ export function AgendaCalendar({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "h-9 border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal px-2.5",
-                      "border-black/10 shadow-sm",
-                      "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                      "h-9 border px-2.5 relative",
+                      isCurrentDateToday
+                        ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
+                        : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
                     )}
                     onClick={handleGoToday}
+                    disabled={isCurrentDateToday && viewMode === "day"}
                   >
                     Hoje
+                    {!isCurrentDateToday && (
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                    )}
                   </Button>
                   <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-lg p-0.5 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
                     <button
@@ -549,13 +556,18 @@ export function AgendaCalendar({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "border bg-white/80 text-charcoal hover:bg-white hover:text-charcoal",
-                    "border-black/10 shadow-sm",
-                    "dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                    "border relative",
+                    isCurrentDateToday
+                      ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
+                      : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
                   )}
                   onClick={handleGoToday}
+                  disabled={isCurrentDateToday && viewMode === "day"}
                 >
                   Hoje
+                  {!isCurrentDateToday && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                  )}
                 </Button>
 
                 <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-xl p-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
