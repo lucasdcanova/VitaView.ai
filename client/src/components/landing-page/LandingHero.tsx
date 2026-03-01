@@ -1,10 +1,64 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Link } from "wouter";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 
 export function LandingHero() {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const targetPlaybackRateRef = useRef(1);
+    const lastScrollAtRef = useRef(0);
+    const { scrollY } = useScroll();
+    const prefersReducedMotion = useReducedMotion();
+
+    const heroOpacity = useTransform(
+        scrollY,
+        [0, 110],
+        [1, prefersReducedMotion ? 1 : 0.34]
+    );
+    const heroTranslateY = useTransform(
+        scrollY,
+        [0, 180],
+        [0, prefersReducedMotion ? 0 : -22]
+    );
+    const videoScale = useTransform(
+        scrollY,
+        [0, 220],
+        [1.08, prefersReducedMotion ? 1.08 : 1.14]
+    );
+
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        if (prefersReducedMotion) return;
+        lastScrollAtRef.current = performance.now();
+        const scrollBoost = Math.min(latest / 700, 1);
+        targetPlaybackRateRef.current = latest > 2 ? 1.08 + scrollBoost * 0.12 : 1;
+    });
+
+    useEffect(() => {
+        if (prefersReducedMotion) return;
+
+        let rafId = 0;
+
+        const tick = () => {
+            const video = videoRef.current;
+            if (video) {
+                if (performance.now() - lastScrollAtRef.current > 160) {
+                    targetPlaybackRateRef.current = 1;
+                }
+
+                const currentRate = video.playbackRate || 1;
+                const smoothedRate = currentRate + (targetPlaybackRateRef.current - currentRate) * 0.18;
+                video.playbackRate = Math.min(1.22, Math.max(1, smoothedRate));
+            }
+
+            rafId = window.requestAnimationFrame(tick);
+        };
+
+        rafId = window.requestAnimationFrame(tick);
+        return () => window.cancelAnimationFrame(rafId);
+    }, [prefersReducedMotion]);
+
     const scrollToFirstSection = () => {
         const firstSection = document.getElementById("como-funciona");
         if (firstSection) {
@@ -16,12 +70,27 @@ export function LandingHero() {
     };
 
     return (
-        <section className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y">
-            {/* Clean background atmosphere (without particles) */}
+        <motion.section
+            style={{ opacity: heroOpacity, y: heroTranslateY }}
+            className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y"
+        >
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#F5F5F5] to-transparent" />
-                <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-[#E0E0E0] opacity-75 blur-3xl" />
-                <div className="absolute -right-24 bottom-14 h-80 w-80 rounded-full bg-[#F2F2F2] opacity-85 blur-3xl" />
+                <motion.video
+                    ref={videoRef}
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    src="/hero-lines-loop-cropped.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    aria-hidden="true"
+                    style={{ scale: videoScale }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/58 to-white/88" />
+                <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_42%,rgba(255,255,255,0.02),rgba(255,255,255,0.82))]" />
+                <div className="absolute -left-20 top-24 h-72 w-72 rounded-full bg-[#E0E0E0]/80 blur-3xl" />
+                <div className="absolute -right-24 bottom-14 h-80 w-80 rounded-full bg-[#F2F2F2]/85 blur-3xl" />
             </div>
 
             <div className="flex-grow flex flex-col justify-center items-center text-center max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 py-24 md:py-0 relative z-10">
@@ -132,6 +201,6 @@ export function LandingHero() {
                     <ChevronDown className="w-4 h-4" />
                 </motion.div>
             </motion.button>
-        </section>
+        </motion.section>
     );
 }
