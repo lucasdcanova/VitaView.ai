@@ -44,8 +44,8 @@ export function LandingHero() {
     });
     const discoverScaleRaw = useTransform(
         scrollY,
-        [0, 64, 260],
-        [1, 1, prefersReducedMotion ? 1 : 1.16]
+        [0, 64, 280],
+        [1, 1, prefersReducedMotion ? 1 : 1.34]
     );
     const discoverScale = useSpring(discoverScaleRaw, {
         stiffness: 220,
@@ -54,8 +54,8 @@ export function LandingHero() {
     });
     const discoverOpacity = useTransform(
         scrollY,
-        [0, 64, 280, 520],
-        [0.9, 1, 1, prefersReducedMotion ? 1 : 0.03]
+        [0, 56, 300, 430],
+        [0.94, 1, 1, prefersReducedMotion ? 1 : 0]
     );
     const discoverGlowOpacity = useTransform(
         scrollY,
@@ -65,7 +65,7 @@ export function LandingHero() {
     const discoverTextOpacity = useTransform(
         scrollY,
         [0, 80, 260],
-        [0.82, 0.92, prefersReducedMotion ? 0.92 : 1]
+        [0.92, 1, 1]
     );
 
     useMotionValueEvent(scrollY, "change", (latest) => {
@@ -224,16 +224,16 @@ export function LandingHero() {
             </motion.section>
 
             {/* Scroll indicator */}
-            <div className="fixed inset-x-0 bottom-8 z-30 flex justify-center pointer-events-none">
+            <div className="fixed inset-x-0 bottom-4 md:bottom-6 z-30 flex justify-center pointer-events-none">
                 <motion.button
                     type="button"
                     onClick={scrollToFirstSection}
                     aria-label="Descer para a próxima seção"
-                    className="pointer-events-auto w-fit flex flex-col items-center gap-1 px-2 py-1 text-[#757575] hover:text-[#424242] transition-colors touch-manipulation"
+                    className="pointer-events-auto w-fit flex flex-col items-center gap-1 px-2 py-1 text-[#111111] hover:text-black transition-colors touch-manipulation"
                     style={{ scale: discoverScale, opacity: discoverOpacity }}
                 >
                     <motion.span
-                        className="text-[10px] font-medium uppercase tracking-widest"
+                        className="text-[10px] font-semibold uppercase tracking-widest"
                         style={{ opacity: discoverTextOpacity }}
                     >
                         Descubra
