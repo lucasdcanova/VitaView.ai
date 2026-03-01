@@ -164,7 +164,7 @@ export default function Sidebar(props: SidebarProps) {
 
       <aside
         className={cn(
-          "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 md:sticky md:top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
+          "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-[min(95vw,24rem)] md:w-20' : 'w-[min(95vw,24rem)] md:w-80',
           props.className
@@ -292,7 +292,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Navigation + Bottom Actions */}
-        <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col", isCollapsed ? "p-2" : "p-4")}>
+        <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col", isCollapsed ? "p-2 pb-1" : "p-4 pb-1")}>
           <nav className="shrink-0">
             <div className="space-y-1">
               <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
@@ -302,7 +302,7 @@ export default function Sidebar(props: SidebarProps) {
             </div>
           </nav>
 
-          <div className="mt-4 pt-4 border-t border-lightGray/80 space-y-1">
+          <div className="mt-auto pt-3 border-t border-lightGray/80 space-y-1">
             <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
             <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
             <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />
@@ -331,7 +331,7 @@ export default function Sidebar(props: SidebarProps) {
             )}
 
             {/* Logout Button */}
-            <div className="relative z-10 pt-4 mt-4">
+            <div className="relative z-10 pt-2 mt-2">
               <div className="pointer-events-none absolute inset-x-0 -top-4 h-10 bg-gradient-to-b from-pureWhite/0 to-pureWhite/70" />
               <div className="pointer-events-none absolute inset-0 rounded-t-xl bg-gradient-to-t from-pureWhite/90 via-pureWhite/78 to-pureWhite/35 backdrop-blur-md" />
               <TooltipProvider delayDuration={0}>
@@ -357,6 +357,15 @@ export default function Sidebar(props: SidebarProps) {
           </div>
         </div>
       </aside>
+
+      {/* Desktop spacer keeps content area scrollable while sidebar stays fixed */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "hidden md:block flex-shrink-0 transition-all duration-300",
+          isCollapsed ? "w-20" : "w-80"
+        )}
+      />
     </>
   );
 }
