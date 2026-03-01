@@ -224,34 +224,30 @@ export function LandingHero() {
             </motion.section>
 
             {/* Scroll indicator */}
-            <motion.button
-                type="button"
-                onClick={scrollToFirstSection}
-                aria-label="Descer para a próxima seção"
-                className="fixed bottom-8 left-1/2 -translate-x-1/2 w-fit z-30 flex flex-col items-center gap-1 px-4 py-2 rounded-full border border-[#D2D2D2] bg-white/80 backdrop-blur-md text-[#757575] hover:text-[#424242] transition-colors touch-manipulation shadow-[0_10px_28px_-18px_rgba(0,0,0,0.55)]"
-                style={{ scale: discoverScale, opacity: discoverOpacity }}
-            >
-                <motion.span
-                    className="text-[10px] font-medium uppercase tracking-widest"
-                    style={{ opacity: discoverTextOpacity }}
-                >
-                    Descubra
-                </motion.span>
-                <motion.div
-                    className="relative"
-                    animate={prefersReducedMotion ? undefined : { scale: [1, 1.08, 1] }}
-                    transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
+            <div className="fixed inset-x-0 bottom-8 z-30 flex justify-center pointer-events-none">
+                <motion.button
+                    type="button"
+                    onClick={scrollToFirstSection}
+                    aria-label="Descer para a próxima seção"
+                    className="pointer-events-auto w-fit flex flex-col items-center gap-1 px-2 py-1 text-[#757575] hover:text-[#424242] transition-colors touch-manipulation"
+                    style={{ scale: discoverScale, opacity: discoverOpacity }}
                 >
                     <motion.span
-                        aria-hidden="true"
-                        className="absolute -inset-1 rounded-full border border-[#AFAFAF]"
+                        className="text-[10px] font-medium uppercase tracking-widest"
+                        style={{ opacity: discoverTextOpacity }}
+                    >
+                        Descubra
+                    </motion.span>
+                    <motion.div
+                        className="relative"
                         style={{ opacity: discoverGlowOpacity }}
-                        animate={prefersReducedMotion ? undefined : { scale: [1, 1.12, 1] }}
+                        animate={prefersReducedMotion ? undefined : { scale: [1, 1.08, 1] }}
                         transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <ChevronDown className="w-4 h-4 relative z-10" />
-                </motion.div>
-            </motion.button>
+                    >
+                        <ChevronDown className="w-4 h-4 relative z-10" />
+                    </motion.div>
+                </motion.button>
+            </div>
         </>
     );
 }
