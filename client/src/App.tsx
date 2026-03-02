@@ -82,7 +82,7 @@ const MyClinic = lazyWithRetry(() => import("@/pages/my-clinic"), "page-my-clini
 // Loading mínimo para landing page
 const LandingLoadingFallback = () => (
   <div className="min-h-screen bg-white flex items-center justify-center">
-    <BrandLoader className="w-6 h-6 text-primary-600" />
+    <BrandLoader className="w-14 h-14 text-primary-600" />
   </div>
 );
 
@@ -90,7 +90,7 @@ const LandingLoadingFallback = () => (
 const SystemLoadingFallback = () => (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center">
     <div className="text-center">
-      <BrandLoader className="w-8 h-8 text-blue-600 mx-auto mb-4" />
+      <BrandLoader className="w-16 h-16 text-blue-600 mx-auto mb-4" />
       <p className="text-gray-600 text-sm">Carregando...</p>
     </div>
   </div>

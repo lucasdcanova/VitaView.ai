@@ -13,40 +13,49 @@ export function BrandLoader({ className, label = "Carregando" }: BrandLoaderProp
       role="status"
       aria-live="polite"
       aria-label={label}
-      className={cn("inline-flex items-center justify-center", normalizedClassName)}
+      className={cn("relative inline-flex items-center justify-center isolate", normalizedClassName)}
     >
+      <span className="absolute inset-[7%] rounded-full border border-current/18" />
       <svg
-        viewBox="0 0 48 48"
+        viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-full w-full"
+        className="absolute inset-0 h-full w-full"
       >
         <circle
-          cx="24"
-          cy="24"
-          r="18.5"
+          cx="50"
+          cy="50"
+          r="43"
           stroke="currentColor"
-          strokeWidth="1.1"
-          strokeOpacity="0.2"
+          strokeWidth="1.4"
+          strokeOpacity="0.18"
         />
         <circle
-          cx="24"
-          cy="24"
-          r="18.5"
+          cx="50"
+          cy="50"
+          r="43"
           stroke="currentColor"
-          strokeWidth="1.35"
+          strokeWidth="1.9"
           strokeLinecap="round"
-          strokeDasharray="34 120"
+          strokeDasharray="26 110"
           className="origin-center animate-spin"
-        />
-        <path
-          d="M9 12L15.5 35L24 16L32.5 35L39 12"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          style={{ animationDuration: "2.2s" }}
         />
       </svg>
+      <img
+        src="/logo-icon-transparent.png"
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="relative z-10 h-[68%] w-[68%] object-contain dark:hidden"
+      />
+      <img
+        src="/logo-icon-transparent.png"
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="relative z-10 hidden h-[68%] w-[68%] object-contain dark:block dark:brightness-0 dark:invert"
+      />
       <span className="sr-only">{label}</span>
     </span>
   );
