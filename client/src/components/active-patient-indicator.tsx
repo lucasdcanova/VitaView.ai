@@ -280,14 +280,14 @@ export default function ActivePatientIndicator({
                 <div
                     onClick={() => setLocation("/atendimento")}
                     className={cn(
-                        "relative overflow-hidden flex items-center justify-between px-4 py-3.5 cursor-pointer transition-all duration-300 group/atendimento",
+                        "relative overflow-hidden flex items-center justify-between gap-3 px-4 py-3.5 cursor-pointer transition-all duration-300 group/atendimento",
                         location === "/atendimento"
                             ? "bg-gradient-to-r from-charcoal to-[#101114] text-pureWhite shadow-[0_10px_24px_rgba(0,0,0,0.30)] dark:from-[#f5f5f5] dark:to-[#dcdcdc] dark:text-[#101114]"
                             : "bg-gradient-to-r from-[#1f2631] via-[#242d3a] to-[#11151c] text-white shadow-[0_8px_22px_rgba(10,15,24,0.32)] hover:shadow-[0_12px_32px_rgba(10,15,24,0.42)] dark:from-[#f4f6f8] dark:via-[#e8edf2] dark:to-[#dde3ea] dark:text-[#111827] hover:scale-[1.01] active:scale-[0.995]"
                     )}
                 >
                     <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_12%_50%,rgba(255,255,255,0.26),transparent_58%)] opacity-60 dark:opacity-40" />
-                    <div className="relative flex items-center gap-3 min-w-0">
+                    <div className="relative flex flex-1 items-center gap-3 min-w-0">
                         <div className={cn(
                             "w-9 h-9 rounded-lg flex items-center justify-center border transition-all",
                             location === "/atendimento"
@@ -303,7 +303,7 @@ export default function ActivePatientIndicator({
                         </div>
                         <div className="min-w-0">
                             <span className={cn(
-                                "block font-heading font-extrabold tracking-[0.04em] text-[13px] sm:text-[14px] leading-tight",
+                                "block font-heading font-extrabold tracking-[0.02em] text-[12px] sm:text-[13px] md:text-[14px] leading-snug whitespace-normal break-words",
                                 location === "/atendimento"
                                     ? "text-white dark:text-[#111827]"
                                     : "text-white dark:text-[#111827]"
@@ -311,7 +311,7 @@ export default function ActivePatientIndicator({
                                 IR PARA ATENDIMENTO
                             </span>
                             <span className={cn(
-                                "mt-1 block text-[11px] font-body truncate",
+                                "mt-1 block text-[10px] sm:text-[11px] md:text-[12px] font-body leading-snug whitespace-normal break-words",
                                 location === "/atendimento"
                                     ? "text-white/75 dark:text-[#111827]/70"
                                     : "text-white/80 dark:text-[#111827]/70"
@@ -320,15 +320,7 @@ export default function ActivePatientIndicator({
                             </span>
                         </div>
                     </div>
-                    <div className="relative flex items-center gap-2">
-                        <span className={cn(
-                            "hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-heading font-bold tracking-[0.05em] uppercase border",
-                            location === "/atendimento"
-                                ? "border-white/35 text-white/80 dark:border-black/20 dark:text-[#111827]/75"
-                                : "border-white/35 text-white/85 dark:border-black/20 dark:text-[#111827]/75"
-                        )}>
-                            Agora
-                        </span>
+                    <div className="relative flex items-center">
                         <div className={cn(
                             "w-9 h-9 rounded-full flex items-center justify-center border transition-all group-hover/atendimento:translate-x-0.5",
                             location === "/atendimento"
