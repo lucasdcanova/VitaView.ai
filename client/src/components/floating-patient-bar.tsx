@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import PatientAvatar from "@/components/patient-avatar";
 
 /**
  * VitaView AI Floating Patient Bar Component
@@ -41,12 +42,6 @@ export default function FloatingPatientBar({ className }: FloatingPatientBarProp
     if (!activeProfile) return null;
 
     const age = getAge(activeProfile.birthDate);
-    const initials = activeProfile.name
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
 
     return (
         <>
@@ -66,9 +61,11 @@ export default function FloatingPatientBar({ className }: FloatingPatientBarProp
                         >
                             {/* Avatar */}
                             <div className="relative">
-                                <div className="w-9 h-9 rounded-full bg-charcoal flex items-center justify-center text-pureWhite text-sm font-heading font-bold transition-all duration-200 group-hover:bg-[#424242]">
-                                    {initials}
-                                </div>
+                                <PatientAvatar
+                                    profile={activeProfile}
+                                    className="w-9 h-9 rounded-md border border-lightGray/60 transition-all duration-200 group-hover:border-charcoal/50"
+                                    fallbackClassName="bg-charcoal text-pureWhite text-xs"
+                                />
                                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-charcoal rounded-full border-2 border-pureWhite flex items-center justify-center">
                                     <div className="w-1.5 h-1.5 bg-pureWhite rounded-full" />
                                 </div>
@@ -127,12 +124,6 @@ export default function FloatingPatientBar({ className }: FloatingPatientBarProp
 
                     <div className="space-y-2 max-h-[60vh] overflow-y-auto py-2">
                         {profiles.map((profile) => {
-                            const profileInitials = profile.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase();
                             const profileAge = getAge(profile.birthDate);
                             const isActive = activeProfile?.id === profile.id;
 
@@ -152,16 +143,17 @@ export default function FloatingPatientBar({ className }: FloatingPatientBarProp
                                 >
                                     {/* Avatar */}
                                     <div className="relative flex-shrink-0">
-                                        <div
+                                        <PatientAvatar
+                                            profile={profile}
                                             className={cn(
-                                                "w-11 h-11 rounded-full flex items-center justify-center text-sm font-heading font-bold transition-colors",
-                                                isActive
-                                                    ? "bg-pureWhite text-charcoal"
-                                                    : "bg-lightGray text-charcoal"
+                                                "w-11 h-11 rounded-md border transition-colors",
+                                                isActive ? "border-pureWhite/80" : "border-lightGray/80"
                                             )}
-                                        >
-                                            {profileInitials}
-                                        </div>
+                                            fallbackClassName={cn(
+                                                "text-sm",
+                                                isActive ? "bg-pureWhite text-charcoal" : "bg-lightGray text-charcoal"
+                                            )}
+                                        />
                                         {isActive && (
                                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-pureWhite rounded-full border-2 border-charcoal" />
                                         )}

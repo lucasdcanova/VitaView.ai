@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Profile } from "@shared/schema";
 import CreatePatientDialog from "@/components/create-patient-dialog";
+import PatientAvatar from "@/components/patient-avatar";
 
 /**
  * VitaView AI Active Patient Indicator Component
@@ -64,14 +65,6 @@ export default function ActivePatientIndicator({
         setSearchQuery("");
     };
 
-    const getInitials = (name: string) =>
-        name
-            .split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-
     // Dialog components wrapper to avoid repetition
     const Dialogs = () => (
         <>
@@ -84,7 +77,6 @@ export default function ActivePatientIndicator({
                 setSearchQuery={setSearchQuery}
                 onSelect={handleSelect}
                 getAge={getAge}
-                getInitials={getInitials}
                 totalProfiles={profiles.length}
                 onCreatePatient={handleCreatePatient}
             />
@@ -112,7 +104,11 @@ export default function ActivePatientIndicator({
                     title={activeProfile ? activeProfile.name : "Selecionar Paciente"}
                 >
                     {activeProfile ? (
-                        <span className="text-xs font-heading font-bold">{getInitials(activeProfile.name)}</span>
+                        <PatientAvatar
+                            profile={activeProfile}
+                            className="w-10 h-10 rounded-md border border-lightGray/70"
+                            fallbackClassName="bg-charcoal text-pureWhite text-xs"
+                        />
                     ) : (
                         <User className="w-5 h-5" />
                     )}
@@ -157,7 +153,6 @@ export default function ActivePatientIndicator({
     }
 
     const age = getAge(activeProfile.birthDate);
-    const initials = getInitials(activeProfile.name);
 
     // Compact variant
     if (variant === "compact") {
@@ -173,9 +168,11 @@ export default function ActivePatientIndicator({
                     )}
                 >
                     <div className="relative">
-                        <div className="w-8 h-8 rounded-full bg-pureWhite flex items-center justify-center text-charcoal text-xs font-heading font-bold">
-                            {initials}
-                        </div>
+                        <PatientAvatar
+                            profile={activeProfile}
+                            className="w-8 h-8 rounded-md border border-pureWhite/80"
+                            fallbackClassName="bg-pureWhite text-charcoal text-xs"
+                        />
                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-pureWhite rounded-full border-2 border-charcoal" />
                     </div>
                     <span className="font-heading font-bold text-sm text-pureWhite truncate max-w-[120px]">
@@ -235,9 +232,11 @@ export default function ActivePatientIndicator({
                     <div className="flex items-center gap-3">
                         {/* Avatar */}
                         <div className="relative flex-shrink-0">
-                            <div className="w-12 h-12 rounded-full bg-charcoal flex items-center justify-center text-pureWhite text-base font-heading font-bold">
-                                {initials}
-                            </div>
+                            <PatientAvatar
+                                profile={activeProfile}
+                                className="w-12 h-12 rounded-md border border-lightGray/80"
+                                fallbackClassName="bg-charcoal text-pureWhite text-base"
+                            />
                             {/* Active indicator */}
                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-charcoal rounded-full border-2 border-pureWhite flex items-center justify-center">
                                 <div className="w-1.5 h-1.5 bg-pureWhite rounded-full" />
@@ -281,36 +280,69 @@ export default function ActivePatientIndicator({
                 <div
                     onClick={() => setLocation("/atendimento")}
                     className={cn(
-                        "flex items-center justify-between p-3 cursor-pointer transition-colors group/atendimento",
+                        "relative overflow-hidden flex items-center justify-between px-4 py-3.5 cursor-pointer transition-all duration-300 group/atendimento",
                         location === "/atendimento"
-                            ? "bg-[#212121]"
-                            : surface === "glass"
-                                ? "bg-pureWhite/18 hover:bg-[#212121]"
-                                : "bg-gray-50 hover:bg-[#212121]"
+                            ? "bg-gradient-to-r from-charcoal to-[#101114] text-pureWhite shadow-[0_10px_24px_rgba(0,0,0,0.30)] dark:from-[#f5f5f5] dark:to-[#dcdcdc] dark:text-[#101114]"
+                            : "bg-gradient-to-r from-[#1f2631] via-[#242d3a] to-[#11151c] text-white shadow-[0_8px_22px_rgba(10,15,24,0.32)] hover:shadow-[0_12px_32px_rgba(10,15,24,0.42)] dark:from-[#f4f6f8] dark:via-[#e8edf2] dark:to-[#dde3ea] dark:text-[#111827] hover:scale-[1.01] active:scale-[0.995]"
                     )}
                 >
-                    <div className="flex items-center gap-2">
-                        <Heart className={cn(
-                            "w-4 h-4 transition-colors",
+                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_12%_50%,rgba(255,255,255,0.26),transparent_58%)] opacity-60 dark:opacity-40" />
+                    <div className="relative flex items-center gap-3 min-w-0">
+                        <div className={cn(
+                            "w-9 h-9 rounded-lg flex items-center justify-center border transition-all",
                             location === "/atendimento"
-                                ? "text-white"
-                                : "text-charcoal group-hover/atendimento:text-white"
-                        )} />
-                        <span className={cn(
-                            "text-xs font-heading font-bold transition-colors",
-                            location === "/atendimento"
-                                ? "text-white"
-                                : "text-charcoal group-hover/atendimento:text-white"
+                                ? "bg-white/15 border-white/30 dark:bg-black/8 dark:border-black/20"
+                                : "bg-white/14 border-white/28 dark:bg-black/8 dark:border-black/18"
                         )}>
-                            Ir para Atendimento
-                        </span>
+                            <Heart className={cn(
+                                "w-[18px] h-[18px] transition-colors",
+                                location === "/atendimento"
+                                    ? "text-white dark:text-[#111827]"
+                                    : "text-white dark:text-[#111827]"
+                            )} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className={cn(
+                                "block font-heading font-extrabold tracking-[0.04em] text-[13px] sm:text-[14px] leading-tight",
+                                location === "/atendimento"
+                                    ? "text-white dark:text-[#111827]"
+                                    : "text-white dark:text-[#111827]"
+                            )}>
+                                IR PARA ATENDIMENTO
+                            </span>
+                            <span className={cn(
+                                "mt-1 block text-[11px] font-body truncate",
+                                location === "/atendimento"
+                                    ? "text-white/75 dark:text-[#111827]/70"
+                                    : "text-white/80 dark:text-[#111827]/70"
+                            )}>
+                                Abrir prontuario e iniciar consulta
+                            </span>
+                        </div>
                     </div>
-                    <ChevronRight className={cn(
-                        "w-3.5 h-3.5 transition-colors",
-                        location === "/atendimento"
-                            ? "text-white"
-                            : "text-mediumGray group-hover/atendimento:text-white"
-                    )} />
+                    <div className="relative flex items-center gap-2">
+                        <span className={cn(
+                            "hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-heading font-bold tracking-[0.05em] uppercase border",
+                            location === "/atendimento"
+                                ? "border-white/35 text-white/80 dark:border-black/20 dark:text-[#111827]/75"
+                                : "border-white/35 text-white/85 dark:border-black/20 dark:text-[#111827]/75"
+                        )}>
+                            Agora
+                        </span>
+                        <div className={cn(
+                            "w-9 h-9 rounded-full flex items-center justify-center border transition-all group-hover/atendimento:translate-x-0.5",
+                            location === "/atendimento"
+                                ? "bg-white/16 border-white/35 dark:bg-black/10 dark:border-black/20"
+                                : "bg-white/16 border-white/35 dark:bg-black/10 dark:border-black/20"
+                        )}>
+                            <ChevronRight className={cn(
+                                "w-4 h-4",
+                                location === "/atendimento"
+                                    ? "text-white dark:text-[#111827]"
+                                    : "text-white dark:text-[#111827]"
+                            )} />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -323,7 +355,6 @@ export default function ActivePatientIndicator({
                 setSearchQuery={setSearchQuery}
                 onSelect={handleSelect}
                 getAge={getAge}
-                getInitials={getInitials}
                 totalProfiles={profiles.length}
                 onCreatePatient={handleCreatePatient}
             />
@@ -346,7 +377,6 @@ interface PatientSelectionDialogProps {
     setSearchQuery: (query: string) => void;
     onSelect: (profile: Profile) => void;
     getAge: (birthDate?: string | null) => number | null;
-    getInitials: (name: string) => string;
     totalProfiles: number;
     onCreatePatient: () => void;
 }
@@ -360,7 +390,6 @@ function PatientSelectionDialog({
     setSearchQuery,
     onSelect,
     getAge,
-    getInitials,
     totalProfiles,
     onCreatePatient,
 }: PatientSelectionDialogProps) {
@@ -421,7 +450,6 @@ function PatientSelectionDialog({
                         profiles.map((profile) => {
                             const isActive = activeProfile?.id === profile.id;
                             const profileAge = getAge(profile.birthDate);
-                            const initials = getInitials(profile.name);
 
                             return (
                                 <button
@@ -436,16 +464,17 @@ function PatientSelectionDialog({
                                 >
                                     {/* Avatar */}
                                     <div className="relative flex-shrink-0">
-                                        <div
+                                        <PatientAvatar
+                                            profile={profile}
                                             className={cn(
-                                                "w-11 h-11 rounded-full flex items-center justify-center text-sm font-heading font-bold transition-all",
-                                                isActive
-                                                    ? "bg-pureWhite text-charcoal"
-                                                    : "bg-lightGray text-charcoal"
+                                                "w-11 h-11 rounded-md border transition-all",
+                                                isActive ? "border-pureWhite/80" : "border-lightGray/80"
                                             )}
-                                        >
-                                            {initials}
-                                        </div>
+                                            fallbackClassName={cn(
+                                                "text-sm",
+                                                isActive ? "bg-pureWhite text-charcoal" : "bg-lightGray text-charcoal"
+                                            )}
+                                        />
                                         {isActive && (
                                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-pureWhite rounded-full border-2 border-charcoal" />
                                         )}

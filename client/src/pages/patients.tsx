@@ -53,6 +53,7 @@ import { CID10_DATABASE } from "@/data/cid10-database";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import PatientAvatar from "@/components/patient-avatar";
 
 function calculateAge(birthDate: string | Date | null | undefined): number | null {
   if (!birthDate) return null;
@@ -485,16 +486,18 @@ export default function Patients() {
                         {/* Header */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div
+                            <PatientAvatar
+                              profile={profile}
                               className={cn(
-                                "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 border",
-                                isActive
-                                  ? "bg-primary text-primary-foreground border-primary/40 shadow-sm"
-                                  : "bg-muted text-foreground border-border"
+                                "w-12 h-12 rounded-md shrink-0 border",
+                                isActive ? "border-primary/40 shadow-sm" : "border-border"
                               )}
-                            >
-                              {profile.name?.[0]?.toUpperCase() || "P"}
-                            </div>
+                              fallbackClassName={cn(
+                                isActive
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-foreground"
+                              )}
+                            />
                             <div>
                               <h3 className="font-semibold text-gray-900 group-hover:text-charcoal transition-colors">
                                 {profile.name}
