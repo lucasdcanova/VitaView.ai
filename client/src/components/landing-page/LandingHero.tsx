@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { Link } from "wouter";
 import { ChevronRight, ChevronDown } from "lucide-react";
@@ -9,8 +9,11 @@ export function LandingHero() {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const targetPlaybackRateRef = useRef(1);
     const lastScrollAtRef = useRef(0);
+    const loopTransitionActiveRef = useRef(false);
+    const loopResetTimeoutRef = useRef<number | null>(null);
     const { scrollY } = useScroll();
     const prefersReducedMotion = useReducedMotion();
+    const [videoLoopOpacity, setVideoLoopOpacity] = useState(1);
 
     const heroOpacityRaw = useTransform(
         scrollY,
@@ -99,6 +102,55 @@ export function LandingHero() {
         return () => window.cancelAnimationFrame(rafId);
     }, [prefersReducedMotion]);
 
+    useEffect(() => {
+        return () => {
+            if (loopResetTimeoutRef.current !== null) {
+                window.clearTimeout(loopResetTimeoutRef.current);
+                loopResetTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
+    const handleVideoTimeUpdate = () => {
+        if (prefersReducedMotion || loopTransitionActiveRef.current) return;
+
+        const video = videoRef.current;
+        if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+
+        const remaining = video.duration - video.currentTime;
+        if (remaining > 0 && remaining <= 0.55) {
+            loopTransitionActiveRef.current = true;
+            setVideoLoopOpacity(0.78);
+        }
+    };
+
+    const handleVideoEnded = () => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        video.currentTime = 0;
+        void video.play().catch(() => undefined);
+
+        if (prefersReducedMotion) {
+            setVideoLoopOpacity(1);
+            loopTransitionActiveRef.current = false;
+            return;
+        }
+
+        if (loopResetTimeoutRef.current !== null) {
+            window.clearTimeout(loopResetTimeoutRef.current);
+        }
+
+        window.requestAnimationFrame(() => {
+            setVideoLoopOpacity(1);
+        });
+
+        loopResetTimeoutRef.current = window.setTimeout(() => {
+            loopTransitionActiveRef.current = false;
+            loopResetTimeoutRef.current = null;
+        }, 520);
+    };
+
     const scrollToFirstSection = () => {
         const firstSection = document.getElementById("como-funciona");
         if (firstSection) {
@@ -122,11 +174,12 @@ export function LandingHero() {
                         src="/hero-lines-loop-cropped.mp4"
                         autoPlay
                         muted
-                        loop
                         playsInline
                         preload="auto"
                         aria-hidden="true"
-                        style={{ scale: videoScale }}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                        onEnded={handleVideoEnded}
+                        style={{ scale: videoScale, opacity: videoLoopOpacity, transition: "opacity 420ms ease-in-out" }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/58 to-white/88" />
                     <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_42%,rgba(255,255,255,0.02),rgba(255,255,255,0.82))]" />
