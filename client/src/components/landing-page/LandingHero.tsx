@@ -6,19 +6,24 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 
 export function LandingHero() {
-    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const primaryVideoRef = useRef<HTMLVideoElement | null>(null);
+    const secondaryVideoRef = useRef<HTMLVideoElement | null>(null);
     const targetPlaybackRateRef = useRef(1);
     const lastScrollAtRef = useRef(0);
-    const loopTransitionActiveRef = useRef(false);
-    const loopResetTimeoutRef = useRef<number | null>(null);
+    const isCrossfadingRef = useRef(false);
+    const crossfadeTimeoutRef = useRef<number | null>(null);
     const { scrollY } = useScroll();
     const prefersReducedMotion = useReducedMotion();
-    const [videoLoopOpacity, setVideoLoopOpacity] = useState(1);
+    const reduceMotion = Boolean(prefersReducedMotion);
+    const [activeVideoIndex, setActiveVideoIndex] = useState<0 | 1>(0);
+    const [videoOpacities, setVideoOpacities] = useState<[number, number]>([1, 0]);
+    const loopCrossfadeWindowSeconds = 1.9;
+    const loopCrossfadeDurationMs = 1200;
 
     const heroOpacityRaw = useTransform(
         scrollY,
         [0, 96, 460],
-        [1, 1, prefersReducedMotion ? 1 : 0.08]
+        [1, 1, reduceMotion ? 1 : 0.08]
     );
     const heroOpacity = useSpring(heroOpacityRaw, {
         stiffness: 130,
@@ -28,7 +33,7 @@ export function LandingHero() {
     const heroTranslateYRaw = useTransform(
         scrollY,
         [0, 120, 420],
-        [0, 0, prefersReducedMotion ? 0 : -30]
+        [0, 0, reduceMotion ? 0 : -30]
     );
     const heroTranslateY = useSpring(heroTranslateYRaw, {
         stiffness: 140,
@@ -38,7 +43,7 @@ export function LandingHero() {
     const videoScaleRaw = useTransform(
         scrollY,
         [0, 160, 460],
-        [1.08, 1.1, prefersReducedMotion ? 1.08 : 1.17]
+        [1.08, 1.1, reduceMotion ? 1.08 : 1.17]
     );
     const videoScale = useSpring(videoScaleRaw, {
         stiffness: 150,
@@ -48,7 +53,7 @@ export function LandingHero() {
     const discoverScaleRaw = useTransform(
         scrollY,
         [0, 64, 280],
-        [1, 1, prefersReducedMotion ? 1 : 1.34]
+        [1, 1, reduceMotion ? 1 : 1.34]
     );
     const discoverScale = useSpring(discoverScaleRaw, {
         stiffness: 220,
@@ -58,12 +63,12 @@ export function LandingHero() {
     const discoverOpacity = useTransform(
         scrollY,
         [0, 56, 300, 430],
-        [0.94, 1, 1, prefersReducedMotion ? 1 : 0]
+        [0.94, 1, 1, reduceMotion ? 1 : 0]
     );
     const discoverGlowOpacity = useTransform(
         scrollY,
         [0, 80, 260],
-        [0.14, 0.2, prefersReducedMotion ? 0.2 : 0.56]
+        [0.14, 0.2, reduceMotion ? 0.2 : 0.56]
     );
     const discoverTextOpacity = useTransform(
         scrollY,
@@ -72,27 +77,67 @@ export function LandingHero() {
     );
 
     useMotionValueEvent(scrollY, "change", (latest) => {
-        if (prefersReducedMotion) return;
+        if (reduceMotion) return;
         lastScrollAtRef.current = performance.now();
         const scrollBoost = Math.min(latest / 700, 1);
         targetPlaybackRateRef.current = latest > 2 ? 1.08 + scrollBoost * 0.12 : 1;
     });
 
+    const startLoopCrossfade = () => {
+        if (reduceMotion || isCrossfadingRef.current) return;
+
+        const currentVideo = activeVideoIndex === 0 ? primaryVideoRef.current : secondaryVideoRef.current;
+        const nextVideoIndex: 0 | 1 = activeVideoIndex === 0 ? 1 : 0;
+        const nextVideo = nextVideoIndex === 0 ? primaryVideoRef.current : secondaryVideoRef.current;
+
+        if (!currentVideo || !nextVideo) return;
+
+        isCrossfadingRef.current = true;
+
+        nextVideo.currentTime = 0;
+        nextVideo.playbackRate = currentVideo.playbackRate || 1;
+        void nextVideo.play().catch(() => undefined);
+
+        setVideoOpacities(nextVideoIndex === 0 ? [1, 0.04] : [0.04, 1]);
+
+        if (crossfadeTimeoutRef.current !== null) {
+            window.clearTimeout(crossfadeTimeoutRef.current);
+        }
+
+        crossfadeTimeoutRef.current = window.setTimeout(() => {
+            currentVideo.pause();
+            currentVideo.currentTime = 0;
+            setVideoOpacities(nextVideoIndex === 0 ? [1, 0] : [0, 1]);
+            setActiveVideoIndex(nextVideoIndex);
+            isCrossfadingRef.current = false;
+            crossfadeTimeoutRef.current = null;
+        }, loopCrossfadeDurationMs + 60);
+    };
+
     useEffect(() => {
-        if (prefersReducedMotion) return;
+        if (reduceMotion) return;
 
         let rafId = 0;
 
         const tick = () => {
-            const video = videoRef.current;
-            if (video) {
+            const activeVideo = activeVideoIndex === 0 ? primaryVideoRef.current : secondaryVideoRef.current;
+            if (activeVideo) {
                 if (performance.now() - lastScrollAtRef.current > 160) {
                     targetPlaybackRateRef.current = 1;
                 }
 
-                const currentRate = video.playbackRate || 1;
+                const currentRate = activeVideo.playbackRate || 1;
                 const smoothedRate = currentRate + (targetPlaybackRateRef.current - currentRate) * 0.18;
-                video.playbackRate = Math.min(1.22, Math.max(1, smoothedRate));
+                const clampedRate = Math.min(1.22, Math.max(1, smoothedRate));
+
+                const primaryVideo = primaryVideoRef.current;
+                const secondaryVideo = secondaryVideoRef.current;
+                if (primaryVideo && !primaryVideo.paused) {
+                    primaryVideo.playbackRate = clampedRate;
+                }
+                if (secondaryVideo && !secondaryVideo.paused) {
+                    secondaryVideo.playbackRate = clampedRate;
+                }
             }
 
             rafId = window.requestAnimationFrame(tick);
@@ -100,55 +145,42 @@ export function LandingHero() {
 
         rafId = window.requestAnimationFrame(tick);
         return () => window.cancelAnimationFrame(rafId);
-    }, [prefersReducedMotion]);
+    }, [activeVideoIndex, reduceMotion]);
 
     useEffect(() => {
         return () => {
-            if (loopResetTimeoutRef.current !== null) {
-                window.clearTimeout(loopResetTimeoutRef.current);
-                loopResetTimeoutRef.current = null;
+            if (crossfadeTimeoutRef.current !== null) {
+                window.clearTimeout(crossfadeTimeoutRef.current);
+                crossfadeTimeoutRef.current = null;
             }
         };
     }, []);
 
-    const handleVideoTimeUpdate = () => {
-        if (prefersReducedMotion || loopTransitionActiveRef.current) return;
+    const handleVideoTimeUpdate = (videoIndex: 0 | 1) => () => {
+        if (reduceMotion || isCrossfadingRef.current || videoIndex !== activeVideoIndex) return;
 
-        const video = videoRef.current;
+        const video = videoIndex === 0 ? primaryVideoRef.current : secondaryVideoRef.current;
         if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
 
         const remaining = video.duration - video.currentTime;
-        if (remaining > 0 && remaining <= 0.55) {
-            loopTransitionActiveRef.current = true;
-            setVideoLoopOpacity(0.78);
+        if (remaining > 0 && remaining <= loopCrossfadeWindowSeconds) {
+            startLoopCrossfade();
         }
     };
 
-    const handleVideoEnded = () => {
-        const video = videoRef.current;
+    const handleVideoEnded = (videoIndex: 0 | 1) => () => {
+        const video = videoIndex === 0 ? primaryVideoRef.current : secondaryVideoRef.current;
         if (!video) return;
 
-        video.currentTime = 0;
-        void video.play().catch(() => undefined);
-
-        if (prefersReducedMotion) {
-            setVideoLoopOpacity(1);
-            loopTransitionActiveRef.current = false;
+        if (reduceMotion) {
+            video.currentTime = 0;
+            void video.play().catch(() => undefined);
             return;
         }
 
-        if (loopResetTimeoutRef.current !== null) {
-            window.clearTimeout(loopResetTimeoutRef.current);
+        if (videoIndex === activeVideoIndex) {
+            startLoopCrossfade();
         }
-
-        window.requestAnimationFrame(() => {
-            setVideoLoopOpacity(1);
-        });
-
-        loopResetTimeoutRef.current = window.setTimeout(() => {
-            loopTransitionActiveRef.current = false;
-            loopResetTimeoutRef.current = null;
-        }, 520);
     };
 
     const scrollToFirstSection = () => {
@@ -169,17 +201,39 @@ export function LandingHero() {
             >
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <motion.video
-                        ref={videoRef}
+                        ref={primaryVideoRef}
                         className="absolute inset-0 h-full w-full object-cover object-center"
                         src="/hero-lines-loop-cropped.mp4"
                         autoPlay
                         muted
+                        loop={reduceMotion}
                         playsInline
                         preload="auto"
                         aria-hidden="true"
-                        onTimeUpdate={handleVideoTimeUpdate}
-                        onEnded={handleVideoEnded}
-                        style={{ scale: videoScale, opacity: videoLoopOpacity, transition: "opacity 420ms ease-in-out" }}
+                        onTimeUpdate={handleVideoTimeUpdate(0)}
+                        onEnded={handleVideoEnded(0)}
+                        style={{
+                            scale: videoScale,
+                            opacity: videoOpacities[0],
+                            transition: `opacity ${loopCrossfadeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                        }}
+                    />
+                    <motion.video
+                        ref={secondaryVideoRef}
+                        className="absolute inset-0 h-full w-full object-cover object-center"
+                        src="/hero-lines-loop-cropped.mp4"
+                        muted
+                        loop={reduceMotion}
+                        playsInline
+                        preload="auto"
+                        aria-hidden="true"
+                        onTimeUpdate={handleVideoTimeUpdate(1)}
+                        onEnded={handleVideoEnded(1)}
+                        style={{
+                            scale: videoScale,
+                            opacity: videoOpacities[1],
+                            transition: `opacity ${loopCrossfadeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                        }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/58 to-white/88" />
                     <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_42%,rgba(255,255,255,0.02),rgba(255,255,255,0.82))]" />
@@ -294,7 +348,7 @@ export function LandingHero() {
                     <motion.div
                         className="relative"
                         style={{ opacity: discoverGlowOpacity }}
-                        animate={prefersReducedMotion ? undefined : { scale: [1, 1.08, 1] }}
+                        animate={reduceMotion ? undefined : { scale: [1, 1.08, 1] }}
                         transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
                     >
                         <ChevronDown className="w-4 h-4 relative z-10" />
