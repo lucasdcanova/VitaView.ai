@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -80,6 +80,35 @@ export default function Sidebar(props: SidebarProps) {
   const displayName = isSecretary ? loggedInAs.name : (user?.fullName || user?.username || "Doutor");
   const displayRole = isSecretary ? 'Secretária' : 'Profissional de saúde';
   const selectedClinicName = clinicContext?.clinic?.name || null;
+  const professionalProfile =
+    user?.preferences && typeof user.preferences === "object"
+      ? (user.preferences as Record<string, any>).professionalProfile
+      : null;
+  const fallbackSidebarPhotoUrl =
+    typeof professionalProfile?.professionalPhoto === "string"
+      ? professionalProfile.professionalPhoto
+      : null;
+  const serverSidebarPhotoUrl = (() => {
+    if (!user?.profilePhotoUrl) return null;
+
+    if (
+      user.profilePhotoUrl.startsWith("data:") ||
+      user.profilePhotoUrl.startsWith("http") ||
+      user.profilePhotoUrl.startsWith("/api/users/profile-photo/")
+    ) {
+      return user.profilePhotoUrl;
+    }
+
+    return `/api/users/profile-photo/${user.id}?v=${encodeURIComponent(user.profilePhotoUrl)}`;
+  })();
+  const [hasSidebarPhotoError, setHasSidebarPhotoError] = useState(false);
+  const sidebarPhotoUrl = hasSidebarPhotoError
+    ? fallbackSidebarPhotoUrl || null
+    : serverSidebarPhotoUrl || fallbackSidebarPhotoUrl || null;
+
+  useEffect(() => {
+    setHasSidebarPhotoError(false);
+  }, [serverSidebarPhotoUrl, fallbackSidebarPhotoUrl]);
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 768) {
@@ -217,43 +246,18 @@ export default function Sidebar(props: SidebarProps) {
         <div className={cn("relative z-10 border-b border-lightGray transition-all duration-300", isCollapsed ? "p-2 py-4" : "p-4")}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center flex-col gap-2" : "")}>
             <div className={cn("flex items-center", isCollapsed ? "flex-col justify-center" : "")}>
-              {(() => {
-                // Check for profile photo in multiple locations
-                // First check profilePhotoUrl (can be filename or base64)
-                // Then check professionalProfile.professionalPhoto (always base64)
-                let photoUrl: string | null = null;
-
-                if (user?.profilePhotoUrl) {
-                  if (user.profilePhotoUrl.startsWith('data:') || user.profilePhotoUrl.startsWith('http')) {
-                    // Legacy base64 or external URL - use as is
-                    photoUrl = user.profilePhotoUrl;
-                  } else {
-                    // New file-based format - use API endpoint
-                    photoUrl = `/api/users/profile-photo/${user.id}`;
-                  }
-                } else if (user?.preferences && typeof user.preferences === 'object') {
-                  // Check professionalProfile photo (always base64)
-                  const profPhoto = (user.preferences as any)?.professionalProfile?.professionalPhoto;
-                  if (profPhoto) {
-                    photoUrl = profPhoto;
-                  }
-                }
-
-                if (photoUrl) {
-                  return (
-                    <img
-                      src={photoUrl}
-                      alt={user?.fullName || user?.username || 'Perfil'}
-                      className="w-10 h-10 rounded-full object-cover shadow-sm border border-lightGray"
-                    />
-                  );
-                }
-                return (
-                  <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-lightGray">
-                    {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                );
-              })()}
+              {sidebarPhotoUrl ? (
+                <img
+                  src={sidebarPhotoUrl}
+                  alt={user?.fullName || user?.username || 'Perfil'}
+                  className="w-10 h-10 rounded-full object-cover shadow-sm border border-lightGray"
+                  onError={() => setHasSidebarPhotoError(true)}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-lightGray text-charcoal flex items-center justify-center font-heading font-bold shadow-sm border border-lightGray">
+                  {user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
               {!isCollapsed && (
                 <div className="ml-3 overflow-hidden">
                   <h3 className="font-heading font-bold text-sm text-charcoal truncate max-w-[180px]" title={displayName}>

@@ -2562,6 +2562,19 @@ export async function registerRoutes(app: Express): Promise<void> {
     },
   });
 
+  // Normalize profile photo references (filename, uploads path, or legacy API path)
+  const normalizeProfilePhotoFilename = (value: string): string | null => {
+    const normalized = value.split("?")[0].split("#")[0].trim();
+    if (!normalized) return null;
+
+    // Ignore legacy self-referential API values such as /api/users/profile-photo/:id
+    if (normalized.startsWith("/api/users/profile-photo/")) return null;
+
+    const fileName = path.basename(normalized);
+    if (!fileName || fileName === "." || fileName === "..") return null;
+    return fileName;
+  };
+
   // Serve profile photos
   app.get("/api/users/profile-photo/:userId", async (req, res) => {
     try {
@@ -2571,45 +2584,74 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || !user.profilePhotoUrl) {
+      if (!user) {
         return res.status(404).json({ message: "Foto não encontrada" });
       }
 
-      // Check if it's a file path (new format) or base64 (legacy)
-      if (user.profilePhotoUrl.startsWith('data:')) {
-        // Legacy base64 format - serve directly
-        const matches = user.profilePhotoUrl.match(/^data:(.+);base64,(.+)$/);
-        if (matches) {
-          const mimeType = matches[1];
-          const base64Data = matches[2];
-          const buffer = Buffer.from(base64Data, 'base64');
-          res.setHeader('Content-Type', mimeType);
-          res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
-          return res.send(buffer);
-        }
-        return res.status(400).json({ message: "Formato de imagem inválido" });
+      const preferences = parsePreferences(user.preferences);
+      const fallbackPhoto =
+        typeof preferences?.professionalProfile?.professionalPhoto === "string"
+          ? preferences.professionalProfile.professionalPhoto
+          : null;
+      const primaryPhoto = user.profilePhotoUrl || null;
+      const candidatePhotos = [primaryPhoto, fallbackPhoto].filter((value): value is string => !!value);
+
+      if (candidatePhotos.length === 0) {
+        return res.status(404).json({ message: "Foto não encontrada" });
       }
 
-      // New file-based format - serve from file
-      const filePath = path.join(profilePhotosDir, user.profilePhotoUrl);
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: "Arquivo de foto não encontrado" });
-      }
-
-      // Determine content type from extension
-      const ext = path.extname(user.profilePhotoUrl).toLowerCase();
-      const mimeTypes: Record<string, string> = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp',
+      const sendDataUrlImage = (dataUrl: string): boolean => {
+        const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) return false;
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, "base64");
+        res.setHeader("Content-Type", mimeType);
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.send(buffer);
+        return true;
       };
-      const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
-      res.sendFile(filePath);
+      for (const candidate of candidatePhotos) {
+        // Base64 format
+        if (candidate.startsWith("data:")) {
+          if (sendDataUrlImage(candidate)) return;
+          continue;
+        }
+
+        // External URL format
+        if (/^https?:\/\//i.test(candidate)) {
+          return res.redirect(candidate);
+        }
+
+        // File-based format
+        const fileName = normalizeProfilePhotoFilename(candidate);
+        if (!fileName) {
+          continue;
+        }
+
+        const filePath = path.join(profilePhotosDir, fileName);
+        if (!fs.existsSync(filePath)) {
+          continue;
+        }
+
+        // Determine content type from extension
+        const ext = path.extname(fileName).toLowerCase();
+        const mimeTypes: Record<string, string> = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.webp': 'image/webp',
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.sendFile(filePath);
+      }
+
+      return res.status(404).json({ message: "Arquivo de foto não encontrado" });
     } catch (error) {
       logger.error("[Profile Photo] Error serving photo", {
         userId: req.params.userId,
@@ -2628,10 +2670,18 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Delete old photo if exists
       const currentUser = await storage.getUser(req.user!.id);
-      if (currentUser?.profilePhotoUrl && !currentUser.profilePhotoUrl.startsWith('data:')) {
-        const oldFilePath = path.join(profilePhotosDir, currentUser.profilePhotoUrl);
-        if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath);
+      const currentPreferences = parsePreferences(currentUser?.preferences);
+      if (
+        currentUser?.profilePhotoUrl &&
+        !currentUser.profilePhotoUrl.startsWith('data:') &&
+        !/^https?:\/\//i.test(currentUser.profilePhotoUrl)
+      ) {
+        const oldFileName = normalizeProfilePhotoFilename(currentUser.profilePhotoUrl);
+        if (oldFileName) {
+          const oldFilePath = path.join(profilePhotosDir, oldFileName);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+          }
         }
       }
 
@@ -2643,8 +2693,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Save file to disk
       fs.writeFileSync(filePath, req.file.buffer);
 
-      // Update user's profile photo URL with just the filename
-      await storage.updateUser(req.user!.id, { profilePhotoUrl: filename });
+      // Persist backup copy in preferences to survive missing local files between sessions/deploys
+      const dataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      const mergedPreferences = {
+        ...currentPreferences,
+        professionalProfile: {
+          ...(currentPreferences?.professionalProfile || {}),
+          professionalPhoto: dataUrl,
+        },
+      };
+
+      // Update user's profile photo URL with filename and backup in preferences
+      await storage.updateUser(req.user!.id, {
+        profilePhotoUrl: filename,
+        preferences: mergedPreferences,
+      });
 
       // Generate the full URL for the response
       const photoUrl = `/api/users/profile-photo/${req.user!.id}`;
@@ -2675,14 +2738,33 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       // Get current photo path to delete the file
       const currentUser = await storage.getUser(req.user!.id);
-      if (currentUser?.profilePhotoUrl && !currentUser.profilePhotoUrl.startsWith('data:')) {
-        const filePath = path.join(profilePhotosDir, currentUser.profilePhotoUrl);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
+      const currentPreferences = parsePreferences(currentUser?.preferences);
+      if (
+        currentUser?.profilePhotoUrl &&
+        !currentUser.profilePhotoUrl.startsWith('data:') &&
+        !/^https?:\/\//i.test(currentUser.profilePhotoUrl)
+      ) {
+        const fileName = normalizeProfilePhotoFilename(currentUser.profilePhotoUrl);
+        if (fileName) {
+          const filePath = path.join(profilePhotosDir, fileName);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
         }
       }
 
-      await storage.updateUser(req.user!.id, { profilePhotoUrl: null });
+      const mergedPreferences = {
+        ...currentPreferences,
+        professionalProfile: {
+          ...(currentPreferences?.professionalProfile || {}),
+          professionalPhoto: null,
+        },
+      };
+
+      await storage.updateUser(req.user!.id, {
+        profilePhotoUrl: null,
+        preferences: mergedPreferences,
+      });
 
       logger.info("[Profile Photo] Photo deleted", { userId: req.user!.id });
 

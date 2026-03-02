@@ -157,6 +157,7 @@ export default function Profile() {
   // Image cropping state
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [hasProfilePhotoError, setHasProfilePhotoError] = useState(false);
 
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
@@ -241,9 +242,27 @@ export default function Profile() {
   const clinicName = profileForm.watch("clinicName");
 
   // Profile photo URL from server (separate from the form field)
-  const profilePhotoUrl = user?.profilePhotoUrl
-    ? `/api/users/profile-photo/${user.id}?t=${Date.now()}`
-    : professionalPhoto || null;
+  const serverProfilePhotoUrl = (() => {
+    if (!user?.profilePhotoUrl) return null;
+
+    if (
+      user.profilePhotoUrl.startsWith("data:") ||
+      user.profilePhotoUrl.startsWith("http") ||
+      user.profilePhotoUrl.startsWith("/api/users/profile-photo/")
+    ) {
+      return user.profilePhotoUrl;
+    }
+
+    return `/api/users/profile-photo/${user.id}?v=${encodeURIComponent(user.profilePhotoUrl)}`;
+  })();
+
+  const profilePhotoUrl = hasProfilePhotoError
+    ? professionalPhoto || null
+    : serverProfilePhotoUrl || professionalPhoto || null;
+
+  useEffect(() => {
+    setHasProfilePhotoError(false);
+  }, [serverProfilePhotoUrl, professionalPhoto]);
 
   const uploadPhotoMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -447,6 +466,7 @@ export default function Profile() {
                           src={profilePhotoUrl}
                           alt={user?.fullName || "Foto do profissional"}
                           className="h-full w-full object-cover"
+                          onError={() => setHasProfilePhotoError(true)}
                         />
                       ) : (
                         user?.fullName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || "U"
