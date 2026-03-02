@@ -1573,7 +1573,7 @@ Anamnese:
       ModelRouter.trackUsage(taskName, model, response.usage, userId, clinicId);
     }
 
-    const content = response.choices[0].message.content;
+    const content = response.choices[0].message.content ?? undefined;
     const sanitized = stripMarkdownCodeFence(content);
     const jsonPayload = sanitized ? extractJsonPayload(sanitized as string) : null;
 
@@ -1813,8 +1813,7 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
     const estimatedTokens = Math.ceil(transcription.length / 4);
     ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
       prompt_tokens: 0,
-      completion_tokens: estimatedTokens,
-      total_tokens: estimatedTokens
+      completion_tokens: estimatedTokens
     }, userId, clinicId);
 
     logger.info("[OpenAI Whisper] Transcrição concluída", {

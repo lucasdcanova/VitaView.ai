@@ -99,7 +99,7 @@ export default function HealthMetrics() {
           {displayMetrics?.map((metric) => (
             <div 
               key={metric.id} 
-              className={`p-4 rounded-xl hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${getStatusClass(metric.status)}`}
+              className={`p-4 rounded-xl hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${getStatusClass(metric.status || '')}`}
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -122,10 +122,10 @@ export default function HealthMetrics() {
               
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <div className="flex items-center">
-                  <div className={`flex items-center mr-2 ${getChangeTextColor(metric.change, metric.name)}`}>
-                    {getChangeIcon(metric.change)}
+                  <div className={`flex items-center mr-2 ${getChangeTextColor(metric.change || '', metric.name)}`}>
+                    {getChangeIcon(metric.change || '')}
                     <span className="ml-1 text-xs font-medium">
-                      {metric.change}
+                      {metric.change || '0'}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">desde o último exame</span>

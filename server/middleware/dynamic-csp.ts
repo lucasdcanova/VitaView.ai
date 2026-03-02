@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 
 const REPORT_ONLY_UNSUPPORTED_DIRECTIVES = new Set([

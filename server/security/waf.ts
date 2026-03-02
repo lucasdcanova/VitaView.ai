@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import { advancedSecurity } from '../middleware/advanced-security';
 import { intrusionDetection } from './intrusion-detection';

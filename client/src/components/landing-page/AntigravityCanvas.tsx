@@ -8,11 +8,14 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const canvasEl = canvasRef.current;
+        if (!canvasEl) return;
 
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const ctxEl = canvasEl.getContext("2d");
+        if (!ctxEl) return;
+
+        const canvas = canvasEl;
+        const ctx = ctxEl;
 
         const config = {
             particleCount: 220,
@@ -157,13 +160,13 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         }
 
         function onMouseMove(e: MouseEvent) {
-            const rect = canvas!.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
         }
 
         function onTouchMove(e: TouchEvent) {
-            const rect = canvas!.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             mouseX = e.touches[0].clientX - rect.left;
             mouseY = e.touches[0].clientY - rect.top;
         }
@@ -174,10 +177,10 @@ export function AntigravityCanvas({ className }: AntigravityCanvasProps) {
         }
 
         function animate() {
-            ctx!.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, width, height);
             for (const p of particles) {
                 p.update();
-                p.draw(ctx!);
+                p.draw(ctx);
             }
             animId = requestAnimationFrame(animate);
         }

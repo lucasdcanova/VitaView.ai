@@ -54,7 +54,8 @@ export class CSPManager {
       };
       
       script.onerror = (error) => {
-        options?.onError?.(error);
+        const eventError = error instanceof Event ? error : new Event('error');
+        options?.onError?.(eventError);
         reject(new Error(`Failed to load script: ${src}`));
       };
       

@@ -1,13 +1,14 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { visualizer } from "rollup-plugin-visualizer";
+import { cartographer } from "@replit/vite-plugin-cartographer";
 
 const backendPort = Number(process.env.PORT || process.env.VITE_BACKEND_PORT || 5001);
 
-export default defineConfig({
-  plugins: [
+export default defineConfig(() => {
+  const plugins: PluginOption[] = [
     react({
       // Enable Fast Refresh with automatic JSX runtime
       jsxRuntime: 'automatic',
@@ -23,22 +24,26 @@ export default defineConfig({
       },
     }),
     runtimeErrorOverlay(),
-    // Bundle analyzer (only in build mode with ANALYZE=true)
-    process.env.ANALYZE && visualizer({
-      filename: 'dist/stats.html',
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-    }),
-    ...(process.env.NODE_ENV !== "production" &&
-      process.env.REPL_ID !== undefined
-      ? [
-        await import("@replit/vite-plugin-cartographer").then((m) =>
-          m.cartographer(),
-        ),
-      ]
-      : []),
-  ].filter(Boolean),
+  ];
+
+  // Bundle analyzer (only in build mode with ANALYZE=true)
+  if (process.env.ANALYZE) {
+    plugins.push(
+      visualizer({
+        filename: 'dist/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }) as PluginOption
+    );
+  }
+
+  if (process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined) {
+    plugins.push(cartographer());
+  }
+
+  return {
+    plugins,
 
   resolve: {
     alias: {
@@ -110,14 +115,14 @@ export default defineConfig({
           'motion-vendor': ['framer-motion'],
           'stripe-vendor': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
         },
-        chunkFileNames: (chunkInfo) => {
+        chunkFileNames: (chunkInfo: any) => {
           // Generate consistent chunk names based on content
           if (chunkInfo.name.includes('vendor')) {
             return `assets/vendor/[name]-[hash].js`;
           }
           return `assets/[name]-[hash].js`;
         },
-        assetFileNames: (assetInfo) => {
+        assetFileNames: (assetInfo: any) => {
           // Organize assets by type
           if (assetInfo.name?.endsWith('.css')) {
             return 'assets/css/[name]-[hash][extname]';
@@ -181,7 +186,7 @@ export default defineConfig({
 
   // Experimental features
   experimental: {
-    renderBuiltUrl(filename, { hostType }) {
+    renderBuiltUrl(filename: string, { hostType }: { hostType: string }) {
       if (hostType === 'js') {
         return { js: `/${filename}` };
       } else {
@@ -189,4 +194,5 @@ export default defineConfig({
       }
     },
   },
+  };
 });

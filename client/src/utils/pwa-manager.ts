@@ -7,6 +7,14 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+interface SyncManagerLike {
+  register(tag: string): Promise<void>;
+}
+
+type ServiceWorkerRegistrationWithSync = ServiceWorkerRegistration & {
+  sync?: SyncManagerLike;
+};
+
 class PWAManager {
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
   private isInstalled = false;
@@ -190,9 +198,10 @@ class PWAManager {
 
   // Background sync
   public async requestBackgroundSync(tag: string): Promise<void> {
-    if (this.swRegistration?.sync) {
+    const registrationWithSync = this.swRegistration as ServiceWorkerRegistrationWithSync | null;
+    if (registrationWithSync?.sync) {
       try {
-        await this.swRegistration.sync.register(tag);
+        await registrationWithSync.sync.register(tag);
         console.log(`[PWA] Background sync registered: ${tag}`);
       } catch (error) {
         console.error(`[PWA] Background sync registration failed: ${tag}`, error);

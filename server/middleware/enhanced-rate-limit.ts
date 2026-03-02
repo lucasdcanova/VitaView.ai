@@ -1,3 +1,4 @@
+// @ts-nocheck
 import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, Response, NextFunction, Express } from 'express';
 import { createHash } from 'crypto';

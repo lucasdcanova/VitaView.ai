@@ -36,7 +36,7 @@ const LazyImage = forwardRef<HTMLImageElement, LazyImageProps>(({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Combine refs
@@ -45,7 +45,7 @@ const LazyImage = forwardRef<HTMLImageElement, LazyImageProps>(({
     if (typeof ref === 'function') {
       ref(node);
     } else if (ref) {
-      ref.current = node;
+      (ref as React.MutableRefObject<HTMLImageElement | null>).current = node;
     }
   };
 
@@ -218,7 +218,7 @@ export const LazyComponent: React.FC<LazyComponentProps> = ({
 export const useLazyLoading = (threshold = 0.1, rootMargin = '50px') => {
   const [isInView, setIsInView] = useState(false);
   const [hasBeenInView, setHasBeenInView] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = ref.current;

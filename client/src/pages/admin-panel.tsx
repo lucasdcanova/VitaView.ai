@@ -178,6 +178,7 @@ interface AdminUser {
   username: string;
   fullName: string | null;
   email: string | null;
+  password?: string;
   birthDate: string | null;
   gender: string | null;
   phoneNumber: string | null;
@@ -874,7 +875,7 @@ export default function AdminPanel() {
   };
 
   // Verificar se o usuário atual é um administrador
-  const { data: currentUser } = useQuery({ queryKey: ['/api/user'] });
+  const { data: currentUser } = useQuery<{ role?: string } | null>({ queryKey: ['/api/user'] });
 
   // Redirecionar se o usuário não for um administrador
   useEffect(() => {

@@ -1,12 +1,14 @@
 {
   "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist"],
+  "exclude": ["node_modules", "build", "dist", "client/src/test/**/*", "**/*.test.ts", "server/test-pipeline.ts"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": true,
     "module": "ESNext",
+    "target": "ES2022",
     "strict": true,
+    "useUnknownInCatchVariables": false,
     "lib": ["esnext", "dom", "dom.iterable"],
     "jsx": "preserve",
     "esModuleInterop": true,

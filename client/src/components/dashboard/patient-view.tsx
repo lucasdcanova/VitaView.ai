@@ -78,7 +78,7 @@ export function PatientView({ activeProfile }: PatientViewProps) {
     const latestExamDate = useMemo(() => {
         if (!exams || exams.length === 0) return null;
 
-        const getTimestamp = (value?: string | null) => {
+        const getTimestamp = (value?: string | Date | null) => {
             if (!value) return 0;
             const parsed = new Date(value);
             return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
@@ -91,7 +91,9 @@ export function PatientView({ activeProfile }: PatientViewProps) {
             return examTime > latestTime ? exam : currentLatest;
         }, null);
 
-        return latestExam?.examDate || latestExam?.uploadDate || null;
+        const resolvedDate = latestExam?.examDate || latestExam?.uploadDate || null;
+        if (!resolvedDate) return null;
+        return resolvedDate instanceof Date ? resolvedDate.toISOString() : resolvedDate;
     }, [exams]);
 
     const lastMetricsUpdateLabel = useMemo(() => {
@@ -435,29 +437,18 @@ export function PatientView({ activeProfile }: PatientViewProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <MemoizedHealthScore
                     score={healthStats.averageScore || 0}
-                    trend={healthStats.trend || 'stable'}
-                    isLoading={isLoadingMetrics}
                 />
-                <MemoizedRecentExams
-                    exams={recentExams}
-                    isLoading={isLoadingExams}
-                />
+                <MemoizedRecentExams />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <MemoizedHealthMetrics
-                        metrics={metrics || []}
-                        isLoading={isLoadingMetrics}
-                        activeTab={activeMetricsTab}
-                        onTabChange={setActiveMetricsTab}
+                        key={activeMetricsTab}
                     />
                 </div>
                 <div>
-                    <MemoizedHealthRecommendations
-                        metrics={metrics || []}
-                        isLoading={isLoadingMetrics}
-                    />
+                    <MemoizedHealthRecommendations />
                 </div>
             </div>
         </div>

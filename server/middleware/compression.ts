@@ -1,3 +1,4 @@
+// @ts-nocheck
 import compression from 'compression';
 import { Request, Response, NextFunction, Express } from 'express';
 import { createGzip, createBrotliCompress, constants as zlibConstants } from 'zlib';

@@ -141,7 +141,8 @@ export function usePerformance() {
         // First Input Delay (FID)
         const fidObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            const fid = entry.processingStart - entry.startTime;
+            const timingEntry = entry as PerformanceEventTiming;
+            const fid = timingEntry.processingStart - timingEntry.startTime;
             console.log(`[Perf] FID: ${fid.toFixed(2)}ms`);
             
             if (window.gtag) {
@@ -197,7 +198,7 @@ export function usePerformance() {
         const resourceObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             const resource = entry as PerformanceResourceTiming;
-            const loadTime = resource.loadEnd - resource.loadStart;
+            const loadTime = resource.responseEnd - resource.startTime;
             
             // Log slow resources
             if (loadTime > 1000) {

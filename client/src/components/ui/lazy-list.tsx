@@ -69,22 +69,35 @@ export function LazyList<T>({
     return <div className={className}>{emptyComponent}</div>;
   }
 
-  // Use variable size list if itemHeight is a function
-  const ListComponent = typeof itemHeight === 'function' ? VariableSizeList : List;
-
   return (
     <div className={cn('w-full', className)}>
-      <ListComponent
-        height={containerHeight}
-        itemCount={items.length}
-        itemSize={itemHeight}
-        onItemsRendered={handleItemsRendered}
-        onScroll={onScroll}
-        overscanCount={overscanCount}
-        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-      >
-        {Row}
-      </ListComponent>
+      {typeof itemHeight === 'function' ? (
+        <VariableSizeList
+          height={containerHeight}
+          width="100%"
+          itemCount={items.length}
+          itemSize={itemHeight}
+          onItemsRendered={handleItemsRendered}
+          onScroll={({ scrollOffset }) => onScroll?.(scrollOffset)}
+          overscanCount={overscanCount}
+          className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        >
+          {Row}
+        </VariableSizeList>
+      ) : (
+        <List
+          height={containerHeight}
+          width="100%"
+          itemCount={items.length}
+          itemSize={itemHeight}
+          onItemsRendered={handleItemsRendered}
+          onScroll={({ scrollOffset }) => onScroll?.(scrollOffset)}
+          overscanCount={overscanCount}
+          className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        >
+          {Row}
+        </List>
+      )}
       
       {isLoading && loadingComponent && (
         <div className="flex justify-center py-4">

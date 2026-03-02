@@ -160,6 +160,11 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                 relationship: null,
                 bloodType: null,
                 isDefault: false,
+                clinicId: null,
+                deceased: false,
+                deathDate: null,
+                deathTime: null,
+                deathCause: null,
             });
         }
 
