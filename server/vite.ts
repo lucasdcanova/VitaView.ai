@@ -36,9 +36,21 @@ function shouldServeSpaHtml(req: Request): boolean {
   const url = req.originalUrl || req.url || "/";
   const pathname = stripQuery(url);
   const accept = req.headers.accept || "";
+  const secFetchDest = req.headers["sec-fetch-dest"] || "";
+  const secFetchMode = req.headers["sec-fetch-mode"] || "";
+  const isKnownSpaAuthRoute =
+    pathname === "/auth" ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/accept-invitation/");
 
   if (pathname.startsWith("/api")) return false;
   if (isAssetRequest(url)) return false;
+
+  if (isKnownSpaAuthRoute) return true;
+
+  if (secFetchDest === "document" || secFetchMode === "navigate") {
+    return true;
+  }
 
   // Only serve index.html for real document navigations.
   return accept.includes("text/html");
