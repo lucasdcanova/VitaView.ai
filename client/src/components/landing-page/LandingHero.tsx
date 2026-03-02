@@ -148,7 +148,7 @@ export function LandingHero() {
                             showText={false}
                             textSize="xl"
                             variant="full"
-                            className="md:hidden w-[min(82vw,350px)] [&>img]:w-full [&>img]:h-auto"
+                            className="md:hidden w-[min(76vw,320px)] [&>img]:w-full [&>img]:h-auto"
                         />
                         <Logo
                             size="xl"
