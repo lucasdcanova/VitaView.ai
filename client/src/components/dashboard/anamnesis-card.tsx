@@ -1,10 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation,
+  useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { Input } from "@/components/ui/input";
@@ -12,13 +20,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Save, Sparkles, Mic, PlusCircle, X, FileText, Wand2 } from "lucide-react";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  } from "@/components/ui/select";
+import { Save,
+  Sparkles,
+  Mic,
+  PlusCircle,
+  X,
+  FileText,
+  Wand2,
+} from "lucide-react";
 import { ConsultationRecorder } from "@/components/consultation-recorder";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 type ExtractedDiagnosis = {
     cidCode?: string;
@@ -66,7 +82,7 @@ const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
     summary: payload?.summary || "",
     diagnoses: Array.isArray(payload?.diagnoses)
         ? payload.diagnoses.map((diagnosis: ExtractedDiagnosis & { condition?: string; description?: string }) => {
-            const safeDiagnosis = (diagnosis && typeof diagnosis === "object" ? diagnosis : {}) as ExtractedDiagnosis & {
+            const safeDiagnosis = (diagnosis && typeof diagnosis === "object" ? diagnosis : { }) as ExtractedDiagnosis & {
                 condition?: string;
                 description?: string;
             };
@@ -79,7 +95,7 @@ const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
         : [],
     medications: Array.isArray(payload?.medications)
         ? payload.medications.map((medication: ExtractedMedication & { dose?: string }) => {
-            const safeMedication = (medication && typeof medication === "object" ? medication : {}) as ExtractedMedication & {
+            const safeMedication = (medication && typeof medication === "object" ? medication : { }) as ExtractedMedication & {
                 dose?: string;
             };
             return {
@@ -415,7 +431,7 @@ export function AnamnesisCard() {
 
             // 2. Finalize & Sign (CFM/Digital Signature) automaticaly
             try {
-                await apiRequest("POST", `/api/evolutions/${savedEvo.id}/finalize`, {});
+                await apiRequest("POST", `/api/evolutions/${savedEvo.id}/finalize`, { });
 
                 // Return signed evolution
                 return { ...savedEvo, isSigned: true };
@@ -632,7 +648,7 @@ export function AnamnesisCard() {
                                 className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
                             >
                                 {addEvolutionMutation.isPending ? (
-                                    <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
+                                    <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                 ) : (
                                     <Save className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                 )}
@@ -646,7 +662,7 @@ export function AnamnesisCard() {
                                     className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                                 >
                                     {enhanceAnamnesisMutation.isPending ? (
-                                        <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
+                                        <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                     ) : (
                                         <Wand2 className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                     )}
@@ -661,7 +677,7 @@ export function AnamnesisCard() {
                                     className={`gap-1.5 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                                 >
                                     {analyzeAnamnesisMutation.isPending ? (
-                                        <Loader2 className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
+                                        <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                     ) : (
                                         <Sparkles className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                     )}
@@ -998,7 +1014,7 @@ export function AnamnesisCard() {
                                 className="gap-2"
                             >
                                 {isApplyingExtraction ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <BrandLoader className="h-4 w-4 animate-spin" />
                                 ) : (
                                     <Save className="h-4 w-4" />
                                 )}

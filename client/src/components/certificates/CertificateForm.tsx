@@ -1,10 +1,25 @@
-import { useState } from "react";
+import {
+  useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileSignature, CalendarDays, Printer, Save, Trash2, Loader2, BookTemplate } from "lucide-react";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
+import { FileSignature,
+  CalendarDays,
+  Printer,
+  Save,
+  Trash2,
+  BookTemplate,
+} from "lucide-react";
 import { COMMON_CIDS } from "@/constants/certificates";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FeatureGate } from "@/components/ui/feature-gate";
@@ -13,6 +28,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 import { CertificateTemplate } from "@shared/schema";
 import { generateCertificateText, generateCertificatePDF } from "@/lib/certificate-pdf";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface CertificateFormProps {
     certType: 'afastamento' | 'comparecimento' | 'acompanhamento' | 'aptidao' | 'laudo';
@@ -212,7 +228,7 @@ export function CertificateForm({
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => setIsSaveTemplateOpen(false)}>Cancelar</Button>
                                                 <Button onClick={handleSaveTemplate} disabled={createTemplateMutation.isPending || !templateName.trim() || !customCertText.trim()}>
-                                                    {createTemplateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                    {createTemplateMutation.isPending && <BrandLoader className="mr-2 h-4 w-4 animate-spin" />}
                                                     Salvar Modelo
                                                 </Button>
                                             </DialogFooter>

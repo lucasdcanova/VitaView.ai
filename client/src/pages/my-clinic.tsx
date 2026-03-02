@@ -1,17 +1,40 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useState } from 'react';
+import { useQuery,
+  useMutation,
+  useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger } from "@/components/ui/tabs";
 import {
-    Building, Users, Mail, UserPlus, Trash2, Crown, Loader2,
-    Calendar, Settings, Clock, Shield, Edit2, Save, X, ArrowRight, Sparkles
-} from 'lucide-react';
+    Building,
+  Users,
+  Mail,
+  UserPlus,
+  Trash2,
+  Crown,
+  Calendar,
+  Settings,
+  Clock,
+  Shield,
+  Edit2,
+  Save,
+  X,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface Clinic {
     id: number;
@@ -257,7 +281,7 @@ const MyClinic = () => {
             <div className="flex h-screen">
                 <Sidebar />
                 <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <BrandLoader className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
             </div>
         );
@@ -391,7 +415,7 @@ const MyClinic = () => {
                         onClick={() => acceptInviteCodeMutation.mutate(inviteCodeInput)}
                         disabled={!inviteCodeInput.trim() || acceptInviteCodeMutation.isPending}
                     >
-                        {acceptInviteCodeMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        {acceptInviteCodeMutation.isPending && <BrandLoader className="h-4 w-4 mr-2 animate-spin" />}
                         Entrar na Clínica
                     </Button>
                     <p className="text-xs text-muted-foreground">
@@ -655,7 +679,7 @@ const MyClinic = () => {
                                                                         disabled={cancelInvitationMutation.isPending}
                                                                         title="Cancelar convite"
                                                                     >
-                                                                        {cancelInvitationMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                                                        {cancelInvitationMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
                                                                     </Button>
                                                                 )}
                                                             </div>
@@ -687,7 +711,7 @@ const MyClinic = () => {
                                             <Button size="sm" className="bg-primary hover:bg-primary/90"
                                                 onClick={() => updateClinicMutation.mutate(editedClinicName)}
                                                 disabled={!editedClinicName.trim() || updateClinicMutation.isPending}>
-                                                {updateClinicMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                                {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                             </Button>
                                             <Button size="sm" variant="outline" onClick={() => setIsEditingName(false)} className="border-border">
                                                 <X className="h-4 w-4" />
@@ -803,7 +827,7 @@ const MyClinic = () => {
                                 <Button variant="outline" onClick={() => setIsCreateClinicDialogOpen(false)} className="border-border text-muted-foreground">Cancelar</Button>
                                 <Button onClick={() => createClinicMutation.mutate(clinicName)} disabled={!clinicName.trim() || createClinicMutation.isPending}
                                     className="bg-primary hover:bg-primary/90">
-                                    {createClinicMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                    {createClinicMutation.isPending && <BrandLoader className="h-4 w-4 mr-2 animate-spin" />}
                                     Criar Clínica
                                 </Button>
                             </DialogFooter>
@@ -829,7 +853,7 @@ const MyClinic = () => {
                                 <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)} className="border-border text-muted-foreground">Cancelar</Button>
                                 <Button onClick={() => inviteMemberMutation.mutate(inviteEmail)} disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
                                     className="bg-primary hover:bg-primary/90">
-                                    {inviteMemberMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                    {inviteMemberMutation.isPending && <BrandLoader className="h-4 w-4 mr-2 animate-spin" />}
                                     Enviar Convite
                                 </Button>
                             </DialogFooter>

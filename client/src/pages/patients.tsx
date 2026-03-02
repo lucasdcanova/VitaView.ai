@@ -52,6 +52,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { CID10_DATABASE } from "@/data/cid10-database";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 function calculateAge(birthDate: string | Date | null | undefined): number | null {
   if (!birthDate) return null;
@@ -406,7 +407,7 @@ export default function Patients() {
           {/* Patients List */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-charcoal"></div>
+              <BrandLoader className="h-8 w-8 text-charcoal" />
             </div>
           ) : profilesError ? (
             <div className="text-center py-12">

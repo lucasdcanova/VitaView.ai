@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { BrandLoader } from '@/components/ui/brand-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -136,7 +137,7 @@ export function NotificationBell() {
                 {/* Notifications List */}
                 {isLoading ? (
                     <div className="p-4 text-center text-[#9E9E9E]">
-                        <div className="w-6 h-6 border-2 border-[#E0E0E0] border-t-[#212121] rounded-full animate-spin mx-auto" />
+                        <BrandLoader className="w-6 h-6 text-[#212121] mx-auto" />
                     </div>
                 ) : notifications.length === 0 ? (
                     <div className="p-8 text-center">

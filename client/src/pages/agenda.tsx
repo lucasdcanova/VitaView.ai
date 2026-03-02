@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
-import { useLocation } from "wouter";
+import {
+  useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
@@ -9,10 +10,15 @@ import { WaitingRoom } from "@/components/agenda/waiting-room";
 import { Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation,
+  useQuery } from "@tanstack/react-query";
+import { apiRequest,
+  queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Loader2, Paperclip, X } from "lucide-react";
+import { Sparkles,
+  Paperclip,
+  X,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -33,6 +39,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export default function Agenda() {
     const [, setLocation] = useLocation();
@@ -352,7 +359,7 @@ export default function Agenda() {
                                                 onClick={handleAiCommand}
                                                 disabled={isAiLoading}
                                             >
-                                                {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                                {isAiLoading ? <BrandLoader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                                             </button>
                                         </div>
                                         <input

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FixedSizeList as List, VariableSizeList, ListChildComponentProps } from 'react-window';
 import { cn } from '@/lib/utils';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface LazyListProps<T> {
   items: T[];
@@ -177,7 +178,7 @@ export function LazyGrid<T>({
       {visibleItems.length < items.length && (
         <div ref={sentinelRef} className="flex justify-center py-8">
           {loadingComponent || (
-            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            <BrandLoader className="w-8 h-8 text-blue-600" />
           )}
         </div>
       )}

@@ -1,10 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
+import {
+  useState,
+  useEffect,
+  useMemo } from 'react';
+import { useStripe,
+  useElements,
+  PaymentElement,
+  Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const stripeEnabled = Boolean(stripePublicKey && stripePublicKey.startsWith('pk_'));
@@ -114,7 +120,7 @@ const CheckoutForm = ({ planId, onSuccess, onCancel }: CheckoutFormProps) => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
               Processando...
             </>
           ) : (
@@ -217,7 +223,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[200px] space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BrandLoader className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">Preparando pagamento...</p>
       </div>
     );

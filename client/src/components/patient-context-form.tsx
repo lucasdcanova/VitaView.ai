@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 type PatientContextFormProps = {
   initialData: PatientData;
@@ -71,7 +72,7 @@ export default function PatientContextForm({
           className="relative"
         >
           {isLoading ? (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+            <BrandLoader className="h-4 w-4 text-primary" />
           ) : (
             <Sparkles className="h-4 w-4" />
           )}

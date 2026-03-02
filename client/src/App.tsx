@@ -16,6 +16,7 @@ import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import { isIOSAppShell, isRestrictedAppShell } from "@/lib/app-shell";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 declare global {
   interface Window {
@@ -81,7 +82,7 @@ const MyClinic = lazyWithRetry(() => import("@/pages/my-clinic"), "page-my-clini
 // Loading mínimo para landing page
 const LandingLoadingFallback = () => (
   <div className="min-h-screen bg-white flex items-center justify-center">
-    <div className="w-6 h-6 border-2 border-gray-200 border-t-primary-600 rounded-full animate-spin"></div>
+    <BrandLoader className="w-6 h-6 text-primary-600" />
   </div>
 );
 
@@ -89,7 +90,7 @@ const LandingLoadingFallback = () => (
 const SystemLoadingFallback = () => (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center">
     <div className="text-center">
-      <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+      <BrandLoader className="w-8 h-8 text-blue-600 mx-auto mb-4" />
       <p className="text-gray-600 text-sm">Carregando...</p>
     </div>
   </div>

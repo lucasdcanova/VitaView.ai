@@ -1,4 +1,5 @@
-import { useLocation } from "wouter";
+import {
+  useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import FileUpload from "@/components/ui/file-upload";
@@ -8,12 +9,12 @@ import {
   ShieldCheck,
   ClipboardList,
   Check,
-  Loader2
 } from "lucide-react";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useUploadManager } from "@/hooks/use-upload-manager";
 import { Skeleton } from "@/components/ui/skeleton";
 import PatientHeader from "@/components/patient-header";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export default function UploadExams() {
   const [, navigate] = useLocation();
@@ -79,7 +80,7 @@ export default function UploadExams() {
             {isProcessing && (
               <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 shadow-sm">
                 <div className="bg-blue-100 p-3 rounded-full">
-                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                  <BrandLoader className="w-8 h-8 text-blue-600 animate-spin" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-blue-900">Processando seus exames...</h3>

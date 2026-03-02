@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Shield, Fingerprint, Smartphone, Check, AlertTriangle } from 'lucide-react';
 import { BiometricAuth } from '@/components/auth/BiometricAuth';
 import { TOTPSetup } from '@/components/auth/TOTPSetup';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface SecuritySetupProps {
   userId: string;
@@ -93,7 +94,7 @@ export default function SecuritySetup({ userId, onComplete, onCancel }: Security
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <BrandLoader className="w-12 h-12 text-blue-600 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-800">Verificando Configurações</h2>
             <p className="text-gray-600 text-sm mt-1">Carregando status de segurança...</p>
           </div>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Database, ArrowRight } from "lucide-react";
 import { ExamResult } from "@shared/schema";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 type AnalysisComparisonProps = {
   initialExtraction: ExamResult;
@@ -80,7 +81,7 @@ export default function AnalysisComparison({
             {isAnalysisLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="flex flex-col items-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-r-transparent mb-2"></div>
+                  <BrandLoader className="h-8 w-8 text-primary mb-2" />
                   <p className="text-sm text-gray-500">Analisando com OpenAI...</p>
                 </div>
               </div>

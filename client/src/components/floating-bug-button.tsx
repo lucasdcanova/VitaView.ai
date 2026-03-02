@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bug, Send, X, Loader2 } from 'lucide-react';
+import { Bug, Send, X } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export function FloatingBugButton() {
     const [isOpen, setIsOpen] = useState(false);
@@ -112,7 +113,7 @@ export function FloatingBugButton() {
                         >
                             {submitBugReport.isPending ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    <BrandLoader className="h-4 w-4 mr-2 animate-spin" />
                                     Enviando...
                                 </>
                             ) : (

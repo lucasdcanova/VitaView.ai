@@ -1,11 +1,27 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, DollarSign, Activity, Users, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  useQuery } from "@tanstack/react-query";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
+import { Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow } from "@/components/ui/table";
+import { DollarSign,
+  Activity,
+  Users,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface CostLogEntry {
     userId: number;
@@ -27,7 +43,7 @@ interface UserGroup {
 
 export default function AdminAICosts() {
     const [selectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
-    const [expandedUsers, setExpandedUsers] = useState<Record<number, boolean>>({});
+    const [expandedUsers, setExpandedUsers] = useState<Record<number, boolean>>({ });
 
     const { data: costs, isLoading } = useQuery<CostLogEntry[]>({
         queryKey: ["/api/admin/ai-costs", selectedMonth],
@@ -40,7 +56,7 @@ export default function AdminAICosts() {
 
     const userGroups = useMemo(() => {
         if (!costs) return [];
-        const groups: Record<number, UserGroup> = {};
+        const groups: Record<number, UserGroup> = { };
 
         costs.forEach(log => {
             if (!groups[log.userId]) {
@@ -70,7 +86,7 @@ export default function AdminAICosts() {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin" />
+                <BrandLoader className="h-8 w-8 animate-spin" />
             </div>
         );
     }

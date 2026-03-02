@@ -1,15 +1,27 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  useState } from "react";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pill, PlusCircle, RefreshCw, Trash2, Pencil, Sparkles, Loader2 } from "lucide-react";
+import { Pill,
+  PlusCircle,
+  RefreshCw,
+  Trash2,
+  Pencil,
+  Sparkles,
+} from "lucide-react";
 import { MedicationDialog } from "@/components/dialogs";
 import type { MedicationFormData } from "@/components/dialogs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { FeatureGate } from "@/components/ui/feature-gate";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface ContinuousMedicationsCardProps {
     medications: any[];
@@ -111,7 +123,7 @@ export function ContinuousMedicationsCard({
                             disabled={isCheckingInteractions || medications.length < 2}
                         >
                             {isCheckingInteractions ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <BrandLoader className="h-4 w-4 animate-spin" />
                             ) : (
                                 <Sparkles className="h-4 w-4 text-yellow-500" />
                             )}

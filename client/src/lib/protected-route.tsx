@@ -1,8 +1,9 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import {
+  useAuth } from "@/hooks/use-auth";
 import { Redirect, Route } from "wouter";
 
 import { ComponentType, LazyExoticComponent } from "react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export function ProtectedRoute({
   path,
@@ -17,7 +18,7 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <BrandLoader className="h-8 w-8 animate-spin text-primary" />
         </div>
       </Route>
     );

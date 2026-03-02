@@ -1,28 +1,34 @@
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useState } from "react";
+import { useQuery,
+  useMutation,
+  useQueryClient } from "@tanstack/react-query";
 import {
     Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus,
+  Search,
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 type Article = {
     id: number;
@@ -102,7 +108,7 @@ export default function KnowledgeBaseAdmin() {
                                 <Textarea id="content" name="content" required className="min-h-[200px]" placeholder="# Título..." />
                             </div>
                             <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                                {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {createMutation.isPending ? <BrandLoader className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Salvar Artigo
                             </Button>
                         </form>

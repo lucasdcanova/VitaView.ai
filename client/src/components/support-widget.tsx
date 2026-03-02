@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Loader2, User, Bot, Ticket } from 'lucide-react';
+import { MessageCircle, Send, X, User, Bot, Ticket } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 type Message = {
     role: 'user' | 'bot';
@@ -124,7 +125,7 @@ export function SupportWidget() {
                             {chatMutation.isPending && (
                                 <div className="flex justify-start">
                                     <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
-                                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                        <BrandLoader className="h-4 w-4 animate-spin text-blue-600" />
                                     </div>
                                 </div>
                             )}

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import {
+  useState } from "react";
 import { Link } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -12,9 +13,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+  } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft,
+  Mail,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,6 +27,7 @@ import {
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -145,7 +149,7 @@ export default function ForgotPasswordPage() {
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
                           Enviando...
                         </>
                       ) : (

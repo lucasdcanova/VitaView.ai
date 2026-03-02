@@ -1,18 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { apiRequest,
+  queryClient } from '@/lib/queryClient';
+import { Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert,
+  AlertDescription,
+  AlertTitle } from "@/components/ui/alert";
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
   CheckCircle,
-  Loader2,
   Calendar,
   Users,
   UploadCloud,
@@ -27,8 +39,8 @@ import {
   Trash2,
   Crown,
   ArrowRight,
-  Sparkles
-} from 'lucide-react';
+  Sparkles,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +50,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 // Interfaces
 interface SubscriptionPlan {
@@ -468,7 +481,7 @@ const SubscriptionManagement = () => {
   if (isLoadingSubscription) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 animate-spin" />
+        <BrandLoader className="h-10 w-10 animate-spin" />
       </div>
     );
   }
@@ -729,7 +742,7 @@ const SubscriptionManagement = () => {
                               onClick={handleCancelSubscription}
                               disabled={isProcessing}
                             >
-                              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar cancelamento'}
+                              {isProcessing ? <BrandLoader className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar cancelamento'}
                             </Button>
                           </DialogFooter>
                         </DialogContent>
@@ -1287,7 +1300,7 @@ const SubscriptionManagement = () => {
             />
           ) : (
             <div className="text-center py-6">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
+              <BrandLoader className="h-8 w-8 animate-spin mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Carregando detalhes do plano...</p>
             </div>
           )}

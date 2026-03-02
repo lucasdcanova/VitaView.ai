@@ -45,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PatientHeader from "@/components/patient-header";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export default function ExamResults() {
   const { user } = useAuth();
@@ -142,7 +143,7 @@ export default function ExamResults() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <BrandLoader className="w-12 h-12 text-primary/80 mx-auto mb-4" />
           <p className="text-muted-foreground text-sm">Carregando pacientes...</p>
         </div>
       </div>

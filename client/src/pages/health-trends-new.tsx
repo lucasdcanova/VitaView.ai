@@ -1,13 +1,20 @@
-import { useState, useMemo } from "react";
+import {
+  useState,
+  useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { generateLegalReportPDF, LegalReportItem } from "@/lib/legal-report-pdf";
+import { useQuery,
+  useMutation,
+  useQueryClient } from "@tanstack/react-query";
+import { generateLegalReportPDF,
+  LegalReportItem } from "@/lib/legal-report-pdf";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format,
+  parseISO,
+  isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Dialog,
@@ -15,7 +22,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+  } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -23,14 +30,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+  } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -52,13 +59,12 @@ import {
   Activity,
   FileDown,
   Sparkles,
-  Loader2,
   Users,
   Save,
   AlertTriangle,
   ShieldCheck,
   Pill,
-  Scissors
+  Scissors,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -90,6 +96,7 @@ import {
   type SurgeryFormData,
   type DoctorFormData
 } from "@/components/dialogs";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 const habitSchema = z.object({
   habitType: z.enum(["etilismo", "tabagismo", "drogas_ilicitas"]),
@@ -965,7 +972,7 @@ export default function HealthTrendsNew({
     if (embedded) {
       return (
         <div className="flex items-center justify-center h-64 bg-gray-50">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <BrandLoader className="w-8 h-8 text-primary" />
         </div>
       );
     }
@@ -977,7 +984,7 @@ export default function HealthTrendsNew({
           <main className="flex-1 bg-gray-50">
             <div className="p-4 md:p-6">
               <div className="flex items-center justify-center h-64">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                <BrandLoader className="w-8 h-8 text-primary" />
               </div>
             </div>
           </main>

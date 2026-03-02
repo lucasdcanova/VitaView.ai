@@ -1,13 +1,29 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  useState } from "react";
+import { Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertCircle, Activity, Stethoscope } from "lucide-react";
+import { AlertCircle,
+  Activity,
+  Stethoscope,
+} from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface TriageDialogProps {
     open: boolean;
@@ -421,7 +437,7 @@ export function TriageDialog({ open, onOpenChange, appointmentId, patientName, p
                         Cancelar
                     </Button>
                     <Button onClick={handleSave} disabled={loading}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading && <BrandLoader className="mr-2 h-4 w-4 animate-spin" />}
                         {existingTriage ? "Atualizar" : "Salvar"} Triagem
                     </Button>
                 </div>

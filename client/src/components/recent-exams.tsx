@@ -5,6 +5,7 @@ import { FileText, Image, AlertCircle, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { LazyComponent, useLazyLoading } from "@/components/ui/lazy-image";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
@@ -229,9 +230,7 @@ export default function RecentExams() {
                         disabled
                         className="text-amber-600 border-amber-200 bg-amber-50 flex items-center gap-1"
                       >
-                        <svg className="w-3.5 h-3.5 animate-spin mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
+                        <BrandLoader className="w-3.5 h-3.5 mr-1 text-amber-600" />
                         Analisando...
                       </Button>
                     )}

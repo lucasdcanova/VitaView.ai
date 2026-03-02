@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import {
+  useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,7 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "@/lib/api";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient,
+  apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -20,7 +22,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+  } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -32,9 +34,20 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Stethoscope, Plus, Trash2, Edit, Star, MoreVertical, ImagePlus, HelpCircle } from "lucide-react";
+import { Stethoscope,
+  Plus,
+  Trash2,
+  Edit,
+  Star,
+  MoreVertical,
+  ImagePlus,
+  HelpCircle,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -132,6 +145,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 type SecurityFormValues = z.infer<typeof securitySchema>;
 
 import { ImageCropper } from "@/components/profile/image-cropper";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
@@ -336,7 +350,7 @@ export default function Profile() {
     const basePreferences =
       user?.preferences && typeof user.preferences === "object"
         ? (user.preferences as Record<string, any>)
-        : {};
+        : { };
 
     const nextPreferences = {
       ...basePreferences,
@@ -676,7 +690,7 @@ export default function Profile() {
                             <Button type="submit" disabled={updateProfileMutation.isPending}>
                               {updateProfileMutation.isPending ? (
                                 <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
                                   Salvando...
                                 </>
                               ) : (
@@ -743,7 +757,7 @@ export default function Profile() {
                             >
                               {updatePasswordMutation.isPending ? (
                                 <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
                                   Atualizando...
                                 </>
                               ) : (

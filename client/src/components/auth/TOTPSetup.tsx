@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Key, Copy, Download, AlertCircle, CheckCircle, Smartphone } from 'lucide-react';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface TOTPSetupProps {
   userId: string;
@@ -145,7 +146,7 @@ export function TOTPSetup({ userId, onComplete, onCancel }: TOTPSetupProps) {
       <div className="max-w-lg mx-auto">
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <BrandLoader className="w-12 h-12 text-blue-600 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-800">Configurando Autenticação</h2>
             <p className="text-gray-600 text-sm mt-1">Gerando códigos de segurança...</p>
           </div>

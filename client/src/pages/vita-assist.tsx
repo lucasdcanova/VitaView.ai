@@ -1,8 +1,17 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback } from "react";
+import { useQuery,
+  useMutation,
+  useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,38 +19,38 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
     Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  } from "@/components/ui/select";
 import {
     AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog";
 import {
     MessageSquare,
-    Send,
-    Plus,
-    Trash2,
-    User,
-    Bot,
-    Loader2,
-    Sparkles,
-    UserCircle,
-    History,
+  Send,
+  Plus,
+  Trash2,
+  User,
+  Bot,
+  Sparkles,
+  UserCircle,
+  History,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { apiRequest } from "@/lib/queryClient";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface AIMessage {
     id: number;
@@ -236,7 +245,7 @@ export default function VitaAssistPage() {
                                     <div className="p-2 space-y-1">
                                         {loadingConversations ? (
                                             <div className="flex items-center justify-center py-8">
-                                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                                <BrandLoader className="w-6 h-6 animate-spin text-muted-foreground" />
                                             </div>
                                         ) : conversations.length === 0 ? (
                                             <p className="text-sm text-muted-foreground text-center py-8">
@@ -336,7 +345,7 @@ export default function VitaAssistPage() {
                                     </div>
                                 ) : loadingConversation ? (
                                     <div className="flex items-center justify-center h-full">
-                                        <Loader2 className="w-8 h-8 animate-spin text-[#448C9B]" />
+                                        <BrandLoader className="w-8 h-8 animate-spin text-[#448C9B]" />
                                     </div>
                                 ) : (
                                     // Messages
@@ -385,7 +394,7 @@ export default function VitaAssistPage() {
                                                 </div>
                                                 <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm">
                                                     <div className="flex items-center gap-2">
-                                                        <Loader2 className="w-4 h-4 animate-spin text-[#448C9B]" />
+                                                        <BrandLoader className="w-4 h-4 animate-spin text-[#448C9B]" />
                                                         <span className="text-sm text-muted-foreground">Analisando...</span>
                                                     </div>
                                                 </div>
@@ -414,7 +423,7 @@ export default function VitaAssistPage() {
                                         className="h-[52px] w-[52px] bg-[#1E3A5F] hover:bg-[#2A4F7C]"
                                     >
                                         {sendMessageMutation.isPending ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <BrandLoader className="w-5 h-5 animate-spin" />
                                         ) : (
                                             <Send className="w-5 h-5" />
                                         )}

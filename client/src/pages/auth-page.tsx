@@ -1,5 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation, Link, useRoute } from "wouter";
+import {
+  useState,
+  useEffect,
+  useRef } from "react";
+import { useLocation,
+  Link,
+  useRoute } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,10 +18,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+  } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,6 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { isRestrictedAppShell } from "@/lib/app-shell";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 /**
  * VitaView AI Auth Page
@@ -187,7 +194,7 @@ export default function AuthPage() {
         registrationIntent: "secretary" as const,
         clinicInvitationCode: clinicInvitationCode?.trim() || undefined,
         clinicInvitationToken: clinicInvitationToken?.trim() || undefined,
-      } : {}),
+      } : { }),
     };
     registerMutation.mutate(dataWithTerms);
   };
@@ -319,7 +326,7 @@ export default function AuthPage() {
                     >
                       {loginMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          <BrandLoader className="mr-2 h-5 w-5 animate-spin" />
                           Entrando...
                         </>
                       ) : (
@@ -553,7 +560,7 @@ export default function AuthPage() {
                     >
                       {registerMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
                           Cadastrando...
                         </>
                       ) : (

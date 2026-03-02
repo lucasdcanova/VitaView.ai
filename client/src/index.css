@@ -574,8 +574,7 @@
   }
 
   .mobile-loading-spinner {
-    @apply animate-spin rounded-full h-8 w-8 mb-4;
-    border-bottom: 2px solid var(--charcoal-gray);
+    @apply h-8 w-8 mb-4 text-charcoal;
   }
 
   /* Mobile table improvements */

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Fingerprint, Shield, Smartphone, Key, Eye, EyeOff } from 'lucide-react';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface BiometricAuthProps {
   onSuccess: (credentials: AuthResult) => void;
@@ -269,7 +270,7 @@ export function BiometricAuth({ onSuccess, onError, userId, requireRegistration 
             >
               {isAuthenticating ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <BrandLoader className="w-5 h-5 text-white" />
                   Autenticando...
                 </>
               ) : (
@@ -518,7 +519,7 @@ function BiometricRegistration({ userId, onComplete }: { userId: string; onCompl
 
         {step === 'registering' && (
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            <BrandLoader className="w-16 h-16 text-blue-600 mx-auto" />
             <div>
               <h3 className="font-medium text-gray-800">Registrando biometria...</h3>
               <p className="text-sm text-gray-600 mt-1">Siga as instruções do seu dispositivo</p>

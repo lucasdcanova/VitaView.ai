@@ -1,7 +1,19 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, Square, Loader2, AlertCircle, CheckCircle2, Pause, Play, Info, Sparkles } from "lucide-react";
+import { Mic,
+  Square,
+  AlertCircle,
+  CheckCircle2,
+  Pause,
+  Play,
+  Info,
+  Sparkles,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 
 interface ConsultationRecorderProps {
@@ -436,7 +449,7 @@ export function ConsultationRecorder({
         return (
           <Card className="p-3 border-2 border-border bg-muted/35">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <BrandLoader className="h-5 w-5 animate-spin text-muted-foreground" />
               <div>
                 <p className="font-medium text-foreground">Processando gravação...</p>
                 <p className="text-xs text-muted-foreground">

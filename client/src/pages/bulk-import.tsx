@@ -1,14 +1,35 @@
-import { useState, useCallback } from "react";
+import {
+  useState,
+  useCallback } from "react";
 import { useLocation } from "wouter";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle } from "@/components/ui/card";
+import { Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, Image, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Alert,
+  AlertDescription } from "@/components/ui/alert";
+import { Upload,
+  FileText,
+  Image,
+  FileSpreadsheet,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ArrowLeft,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface ExtractedPatient {
     name: string;
@@ -294,7 +315,7 @@ export default function BulkImportPage() {
                     >
                         {isExtracting ? (
                             <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <BrandLoader className="w-4 h-4 mr-2 animate-spin" />
                                 Processando com IA...
                             </>
                         ) : (
@@ -360,7 +381,7 @@ export default function BulkImportPage() {
                             >
                                 {isImporting ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        <BrandLoader className="w-4 h-4 mr-2 animate-spin" />
                                         Importando...
                                     </>
                                 ) : (

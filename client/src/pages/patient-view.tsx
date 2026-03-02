@@ -1,21 +1,53 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  lazy,
+  Suspense } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger } from "@/components/ui/tabs";
 import { useProfiles } from "@/hooks/use-profiles";
 import { formatMetricDisplayName } from "@shared/exam-normalizer";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Plus, FileText, Activity, Clock, Mic, Upload, FileUp, Sparkles,
-    Users, User, Building2, CalendarDays, LayoutDashboard, Pill,
-    Heart, LineChart, FileSignature, TrendingUp, TrendingDown, Minus,
-    AlertTriangle, ClipboardList, ShieldCheck, Loader2, MoreVertical, HeartCrack
-} from 'lucide-react';
+    Plus,
+  FileText,
+  Activity,
+  Clock,
+  Mic,
+  Upload,
+  FileUp,
+  Sparkles,
+  Users,
+  User,
+  Building2,
+  CalendarDays,
+  LayoutDashboard,
+  Pill,
+  Heart,
+  LineChart,
+  FileSignature,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  ClipboardList,
+  ShieldCheck,
+  MoreVertical,
+  HeartCrack,
+} from "lucide-react";
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -53,6 +85,7 @@ const ExamTimeline = lazy(() => import("./exam-timeline"));
 
 import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 // Loading skeleton for lazy-loaded tabs
 const TabLoadingSkeleton = () => (
@@ -572,7 +605,7 @@ export default function PatientView() {
                                         {isProcessing && (
                                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 shadow-sm">
                                                 <div className="bg-blue-100 p-3 rounded-full">
-                                                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                                                    <BrandLoader className="w-8 h-8 text-blue-600 animate-spin" />
                                                 </div>
                                                 <div>
                                                     <h3 className="text-lg font-semibold text-blue-900">Processando seus exames...</h3>

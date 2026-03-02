@@ -1,19 +1,47 @@
 
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription } from "@/components/ui/card";
+import { Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Loader2, TrendingUp, PieChart as PieChartIcon, Activity, FileText, Users, CalendarIcon } from "lucide-react";
+import { Popover,
+  PopoverContent,
+  PopoverTrigger } from "@/components/ui/popover";
+import { BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell } from "recharts";
+import { TrendingUp,
+  PieChart as PieChartIcon,
+  Activity,
+  FileText,
+  Users,
+  CalendarIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export default function ReportsPage() {
     const [range, setRange] = useState("30d");
@@ -138,7 +166,7 @@ export default function ReportsPage() {
 
                         {isLoading ? (
                             <div className="flex items-center justify-center h-64">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <BrandLoader className="h-8 w-8 animate-spin text-primary" />
                             </div>
                         ) : (
                             <>

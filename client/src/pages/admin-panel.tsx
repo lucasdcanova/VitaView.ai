@@ -65,6 +65,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 // AI Usage Stats Interface
 interface AIUsageStat {
@@ -112,7 +113,7 @@ function AIUsageTab() {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <BrandLoader className="h-8 w-8 text-primary" />
           </div>
         ) : usageStats.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -301,7 +302,7 @@ function BugReportsTab() {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <BrandLoader className="h-8 w-8 text-primary" />
           </div>
         ) : bugReports.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -428,7 +429,7 @@ function FinancialDashboardTab() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <BrandLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -672,7 +673,7 @@ function DeletedUsersTab() {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <BrandLoader className="h-8 w-8 text-primary" />
           </div>
         ) : deletedUsers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -1062,7 +1063,7 @@ export default function AdminPanel() {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <BrandLoader className="h-8 w-8 text-primary" />
           <p className="text-muted-foreground">Verificando permissões...</p>
         </div>
       </div>
@@ -1143,7 +1144,7 @@ export default function AdminPanel() {
             <CardContent>
               {isLoadingUsers ? (
                 <div className="flex justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                  <BrandLoader className="h-8 w-8 text-primary" />
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1285,7 +1286,7 @@ export default function AdminPanel() {
             <CardContent>
               {isLoadingPlans ? (
                 <div className="flex justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                  <BrandLoader className="h-8 w-8 text-primary" />
                 </div>
               ) : subscriptionPlans.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">

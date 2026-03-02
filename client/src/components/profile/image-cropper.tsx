@@ -1,10 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
-import { Button } from '@/components/ui/button';
+import {
+  Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter } from '@/components/ui/dialog';
+import { ZoomIn,
+  ZoomOut,
+  RotateCw,
+} from "lucide-react";
 import { getCroppedImg } from '@/lib/image-utils';
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface ImageCropperProps {
     imageSrc: string | null;
@@ -97,7 +106,7 @@ export function ImageCropper({ imageSrc, isOpen, onClose, onCropComplete, isLoad
                         Cancelar
                     </Button>
                     <Button onClick={handleSave} disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isLoading && <BrandLoader className="mr-2 h-4 w-4 animate-spin" />}
                         Salvar Foto
                     </Button>
                 </DialogFooter>
