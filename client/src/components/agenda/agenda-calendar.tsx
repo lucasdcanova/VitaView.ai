@@ -60,6 +60,7 @@ export function AgendaCalendar({
   });
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
@@ -422,11 +423,16 @@ export function AgendaCalendar({
     return (app.time || "00:00") >= format(new Date(), "HH:mm");
   }) || null;
 
-  const handleGoToday = () => {
+  const handleTodayPopoverChange = (open: boolean) => {
     const today = new Date();
-    if (isSameDay(currentDate, today) && viewMode === "day") return;
-    setCurrentDate(today);
-    setViewMode("day");
+    if (open && !(isSameDay(currentDate, today) && viewMode === "day")) {
+      // Not on today – navigate there instead of opening the picker
+      setCurrentDate(today);
+      setViewMode("day");
+      setTodayPopoverOpen(false);
+      return;
+    }
+    setTodayPopoverOpen(open);
   };
 
   return (
@@ -503,23 +509,39 @@ export function AgendaCalendar({
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-9 border px-2.5 relative",
-                      isCurrentDateToday
-                        ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
-                        : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
-                    )}
-                    onClick={handleGoToday}
-                    disabled={isCurrentDateToday && viewMode === "day"}
-                  >
-                    Hoje
-                    {!isCurrentDateToday && (
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
-                    )}
-                  </Button>
+                  <Popover open={todayPopoverOpen} onOpenChange={handleTodayPopoverChange}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-9 border px-2.5 relative",
+                          isCurrentDateToday
+                            ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
+                            : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                        )}
+                      >
+                        Hoje
+                        {!isCurrentDateToday && (
+                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="center">
+                      <Calendar
+                        mode="single"
+                        selected={currentDate}
+                        onSelect={(date) => {
+                          if (date) {
+                            setCurrentDate(date);
+                            setViewMode("day");
+                          }
+                          setTodayPopoverOpen(false);
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-lg p-0.5 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
                     <button
                       className="p-1.5 hover:bg-black/5 dark:hover:bg-white/20 rounded transition-colors text-charcoal dark:text-white"
@@ -552,23 +574,39 @@ export function AgendaCalendar({
                   Nova Consulta
                 </Button>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "border relative",
-                    isCurrentDateToday
-                      ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
-                      : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
-                  )}
-                  onClick={handleGoToday}
-                  disabled={isCurrentDateToday && viewMode === "day"}
-                >
-                  Hoje
-                  {!isCurrentDateToday && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
-                  )}
-                </Button>
+                <Popover open={todayPopoverOpen} onOpenChange={handleTodayPopoverChange}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "border relative",
+                        isCurrentDateToday
+                          ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
+                          : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                      )}
+                    >
+                      Hoje
+                      {!isCurrentDateToday && (
+                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentDate(date);
+                          setViewMode("day");
+                        }
+                        setTodayPopoverOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
 
                 <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-xl p-1 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
                   <button

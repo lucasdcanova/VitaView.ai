@@ -1,10 +1,13 @@
 import {
   useState,
   useEffect,
-  useRef } from "react";
-import { useLocation,
+  useRef
+} from "react";
+import {
+  useLocation,
   Link,
-  useRoute } from "wouter";
+  useRoute
+} from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,10 +21,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  } from "@/components/ui/form";
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft,
+import {
+  ArrowLeft,
 } from "lucide-react";
 import {
   Card,
@@ -194,7 +198,7 @@ export default function AuthPage() {
         registrationIntent: "secretary" as const,
         clinicInvitationCode: clinicInvitationCode?.trim() || undefined,
         clinicInvitationToken: clinicInvitationToken?.trim() || undefined,
-      } : { }),
+      } : {}),
     };
     registerMutation.mutate(dataWithTerms);
   };
@@ -316,6 +320,20 @@ export default function AuthPage() {
                         Esqueceu a senha?
                       </Link>
                     </div>
+
+                    {loginMutation.isError && (
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-heading font-bold text-red-800">Falha no login</p>
+                          <p className="text-xs text-red-600 font-body mt-0.5">
+                            {loginMutation.error?.message || "Email ou senha incorretos. Verifique seus dados e tente novamente."}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <Button
                       ref={submitButtonRef}

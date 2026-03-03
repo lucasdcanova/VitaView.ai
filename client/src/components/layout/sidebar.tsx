@@ -296,7 +296,7 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         {/* Navigation + Bottom Actions */}
-        <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col", isCollapsed ? "p-2 pb-1" : "p-4 pb-1")}>
+        <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col overflow-y-auto", isCollapsed ? "p-2 pb-1" : "p-4 pb-1")}>
           <nav className="shrink-0">
             <div className="space-y-1">
               <NavItem href="/agenda" icon={Calendar} label="Agenda" tourId="nav-agenda" />
@@ -306,7 +306,7 @@ export default function Sidebar(props: SidebarProps) {
             </div>
           </nav>
 
-          <div className="mt-auto pt-3 border-t border-lightGray/80 space-y-1">
+          <div className="mt-6 md:mt-auto pt-3 border-t border-lightGray/80 space-y-1">
             <NavItem href="/subscription" icon={CreditCard} label="Minha Assinatura" tourId="nav-assinatura" />
             <NavItem href="/reports" icon={BarChart2} label="Relatórios" tourId="nav-relatorios" />
             <NavItem href="/profile" icon={Settings} label="Configurações" tourId="nav-configuracoes" />

@@ -1,17 +1,22 @@
 import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback } from "react";
-import { useQuery,
-  useMutation,
-  useQueryClient } from "@tanstack/react-query";
+    useState,
+    useRef,
+    useEffect,
+    useCallback
+} from "react";
+import {
+    useQuery,
+    useMutation,
+    useQueryClient
+} from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
-import { Card,
-  CardContent,
-  CardHeader,
-  CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,32 +24,32 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
     Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  } from "@/components/ui/select";
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-  } from "@/components/ui/alert-dialog";
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
     MessageSquare,
-  Send,
-  Plus,
-  Trash2,
-  User,
-  Bot,
-  Sparkles,
-  UserCircle,
-  History,
+    Send,
+    Plus,
+    Trash2,
+    User,
+    Bot,
+    Sparkles,
+    UserCircle,
+    History,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -318,11 +323,11 @@ export default function VitaAssistPage() {
                                             <Sparkles className="w-10 h-10 text-white" />
                                         </div>
                                         <h2 className="text-2xl font-bold text-foreground mb-2">Bem-vindo ao Vita Assist</h2>
-                                        <p className="text-muted-foreground max-w-md mb-8">
+                                        <p className="text-muted-foreground max-w-lg px-2 mb-8">
                                             Seu consultor médico de IA. Tire dúvidas sobre diagnósticos, tratamentos e
                                             guidelines médicos com respostas baseadas em evidências.
                                         </p>
-                                        <div className="grid gap-3 w-full max-w-md">
+                                        <div className="grid gap-3 w-full max-w-lg px-2">
                                             {[
                                                 "Quais são as diretrizes atuais para tratamento de hipertensão?",
                                                 "Como investigar anemia ferropriva?",
@@ -331,14 +336,14 @@ export default function VitaAssistPage() {
                                                 <Button
                                                     key={suggestion}
                                                     variant="outline"
-                                                    className="text-left h-auto py-3 px-4 justify-start border-border text-foreground hover:bg-muted hover:border-primary/30"
+                                                    className="text-left h-auto py-3 px-4 justify-start whitespace-normal border-border text-foreground hover:bg-muted hover:border-primary/30"
                                                     onClick={() => {
                                                         setInputMessage(suggestion);
                                                         textareaRef.current?.focus();
                                                     }}
                                                 >
                                                     <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0 text-[#448C9B]" />
-                                                    <span className="text-sm text-foreground">{suggestion}</span>
+                                                    <span className="text-sm text-foreground whitespace-normal text-left leading-snug">{suggestion}</span>
                                                 </Button>
                                             ))}
                                         </div>
