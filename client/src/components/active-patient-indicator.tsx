@@ -123,7 +123,13 @@ export default function ActivePatientIndicator({
         return (
             <>
                 <div
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={() => {
+                        if (window.innerWidth < 768) {
+                            setLocation("/pacientes");
+                        } else {
+                            setIsDialogOpen(true);
+                        }
+                    }}
                     className={cn(
                         "group flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200",
                         surface === "glass"
