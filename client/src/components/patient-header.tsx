@@ -93,7 +93,7 @@ export default function PatientHeader({
 
   return (
     <div className={cn(
-      "sticky top-14 md:top-0 z-30 p-4 md:p-6 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
+      "sticky top-[calc(env(safe-area-inset-top)+3.5rem)] md:top-0 z-30 p-4 md:p-6 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
       fullWidth ? "border-b border-x-0 border-t-0 rounded-none" : "border rounded-2xl mb-6 shadow-sm"
     )}>
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

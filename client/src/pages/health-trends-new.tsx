@@ -981,7 +981,7 @@ export default function HealthTrendsNew({
         <MobileHeader />
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 bg-gray-50">
+          <main className="flex-1 bg-gray-50 overflow-y-auto">
             <div className="p-4 md:p-6">
               <div className="flex items-center justify-center h-64">
                 <BrandLoader className="w-8 h-8 text-primary" />
@@ -1001,12 +1001,12 @@ export default function HealthTrendsNew({
       <div className={`flex flex-1 relative ${embedded ? 'block' : ''}`}>
         {!embedded && <Sidebar />}
 
-        <main className="flex-1 bg-gray-50">
+        <main className={`flex-1 bg-gray-50 ${embedded ? "" : "overflow-y-auto"}`}>
           <div className={embedded ? "" : "p-4 md:p-6"}>
             <div className="max-w-6xl mx-auto space-y-8">
               {/* Header com Nome do Paciente */}
               {!embedded && (
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+                <div className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] md:top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4 md:pb-6 bg-gray-50/95 supports-[backdrop-filter]:backdrop-blur-sm">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
                       Prontuário do Paciente

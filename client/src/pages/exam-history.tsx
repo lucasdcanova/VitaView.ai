@@ -159,7 +159,7 @@ export default function ExamHistory() {
         <MobileHeader />
         <div className="flex flex-1 relative">
           <Sidebar />
-          <main className="flex-1 bg-background px-6 py-8">
+          <main className="flex-1 bg-background px-6 py-8 overflow-y-auto">
             <div className="max-w-6xl mx-auto">
               <PatientHeader
                 title="Histórico de exames"
@@ -562,7 +562,7 @@ export default function ExamHistory() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
           <div className="p-4 md:p-6">
             <PatientHeader
               title="Histórico de exames"

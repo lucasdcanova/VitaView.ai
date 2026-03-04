@@ -258,12 +258,12 @@ export default function PatientView() {
             <div className="flex flex-1 relative">
                 <Sidebar />
 
-                <main className="flex-1">
+                <main className="flex-1 overflow-y-auto bg-background">
                     <div className={isMobile ? "p-2.5 pt-1" : "p-4 md:p-6"}>
                         {/* Header */}
                         {isMobile ? (
                             /* ── Mobile: Premium compact patient strip ── */
-                            <header className="mb-2.5">
+                            <header className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 mb-2.5 bg-background/95 supports-[backdrop-filter]:backdrop-blur-sm py-1">
                                 {activeProfile ? (
                                     <div className="rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-black/[0.06] dark:border-white/10 px-3.5 py-2.5 shadow-sm">
                                         <div className="flex items-center justify-between gap-2">
@@ -309,7 +309,7 @@ export default function PatientView() {
                             </header>
                         ) : (
                             /* ── Desktop: Full header ── */
-                            <header className="mb-6">
+                            <header className="sticky top-0 z-20 mb-6 bg-background/95 supports-[backdrop-filter]:backdrop-blur-sm py-2">
                                 <div className="flex items-center justify-between">
                                     <div className="min-w-0 flex-1">
                                         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">

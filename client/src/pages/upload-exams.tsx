@@ -51,7 +51,7 @@ export default function UploadExams() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
           <div className="p-4 md:p-6">
             <PatientHeader
               title="Envio de exames"

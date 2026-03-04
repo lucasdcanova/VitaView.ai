@@ -21,7 +21,7 @@ export default function Dashboard() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 overflow-y-auto">
           <DoctorView stats={doctorStats} isLoading={isLoadingDoctorStats} />
         </main>
       </div>
