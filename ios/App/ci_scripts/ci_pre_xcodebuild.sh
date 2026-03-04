@@ -11,6 +11,15 @@ fi
 
 cd "$REPO_ROOT"
 
+install_js_dependencies() {
+  if npm ci --include=dev; then
+    return 0
+  fi
+
+  echo "[ci_pre_xcodebuild] npm ci failed; lockfile may be out of sync. Falling back to npm install."
+  npm install --include=dev
+}
+
 ensure_node_tooling() {
   REQUIRED_NODE_MAJOR=22
 
@@ -109,7 +118,7 @@ if [ "$missing" -eq 1 ]; then
 
   if [ ! -d "node_modules" ]; then
     echo "[ci_pre_xcodebuild] node_modules missing, installing dependencies"
-    npm ci --include=dev
+    install_js_dependencies
   fi
 
   npm run build

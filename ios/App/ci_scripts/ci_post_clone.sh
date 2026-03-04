@@ -11,6 +11,15 @@ fi
 
 cd "$REPO_ROOT"
 
+install_js_dependencies() {
+  if npm ci --include=dev; then
+    return 0
+  fi
+
+  echo "[ci_post_clone] npm ci failed; lockfile may be out of sync. Falling back to npm install."
+  npm install --include=dev
+}
+
 ensure_node_tooling() {
   REQUIRED_NODE_MAJOR=22
 
@@ -86,7 +95,7 @@ ensure_node_tooling
 echo "[ci_post_clone] node: $(node -v)"
 echo "[ci_post_clone] npm: $(npm -v)"
 echo "[ci_post_clone] Installing JS dependencies"
-npm ci --include=dev
+install_js_dependencies
 
 echo "[ci_post_clone] Building web app"
 npm run build
