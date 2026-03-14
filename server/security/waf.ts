@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
+import { createHash } from 'crypto';
 import { advancedSecurity } from '../middleware/advanced-security';
 import { intrusionDetection } from './intrusion-detection';
 
@@ -283,14 +284,14 @@ export class WebApplicationFirewall {
             return false;
           }
 
-          const ip = this.getClientIP(req);
+          const rateLimitKey = this.getGeneralRateLimitKey(req);
           const now = Date.now();
           const windowDuration = 60 * 1000; // 1 minuto
-          const maxRequests = 100;
+          const maxRequests = this.getGeneralRateLimitMaxRequests(req);
           
-          const entry = this.rateLimitMap.get(ip);
+          const entry = this.rateLimitMap.get(rateLimitKey);
           if (!entry) {
-            this.rateLimitMap.set(ip, {
+            this.rateLimitMap.set(rateLimitKey, {
               count: 1,
               windowStart: now,
               blocked: false
@@ -381,17 +382,13 @@ export class WebApplicationFirewall {
                 break;
               
               case 'rate_limit':
-                res.setHeader('X-RateLimit-Limit', '100');
+                res.setHeader('X-RateLimit-Limit', this.getGeneralRateLimitMaxRequests(req).toString());
                 res.setHeader('X-RateLimit-Remaining', '0');
                 const retryAfter = Math.ceil((rule.blockDuration ?? 60 * 1000) / 1000);
+                res.setHeader('Retry-After', retryAfter.toString());
                 res.setHeader('X-RateLimit-Reset', (Date.now() + 60000).toString());
                 if (this.config.blockMaliciousRequests) {
-                  return res.status(429).json({
-                    error: 'Too many requests',
-                    code: 'RATE_LIMITED',
-                    message: 'Rate limit excedido',
-                    retryAfter
-                  });
+                  return this.respondWithRateLimit(req, res, retryAfter);
                 }
                 break;
               
@@ -480,6 +477,59 @@ export class WebApplicationFirewall {
     });
   }
 
+  private respondWithRateLimit(req: Request, res: Response, retryAfter: number) {
+    if (this.prefersHtmlResponse(req)) {
+      return res
+        .status(429)
+        .type('html')
+        .send(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Limite de acesso temporario</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0b1220;
+        color: #f8fafc;
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main {
+        width: min(92vw, 32rem);
+        padding: 2rem;
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        border-radius: 1rem;
+        background: rgba(15, 23, 42, 0.92);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      }
+      h1 { margin: 0 0 0.75rem; font-size: 1.35rem; }
+      p { margin: 0 0 0.75rem; color: #cbd5e1; }
+      strong { color: #fff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Muitas requisicoes em pouco tempo</h1>
+      <p>O VitaView bloqueou temporariamente novos acessos para proteger a plataforma.</p>
+      <p>Tente novamente em <strong>${retryAfter} segundos</strong>.</p>
+    </main>
+  </body>
+</html>`);
+    }
+
+    return res.status(429).json({
+      error: 'Too many requests',
+      code: 'RATE_LIMITED',
+      message: 'Rate limit excedido',
+      retryAfter
+    });
+  }
+
   /**
    * Adicionar headers de segurança
    */
@@ -516,6 +566,56 @@ export class WebApplicationFirewall {
     }
 
     return /\.(js|css|png|jpg|jpeg|svg|gif|webp|ico|map|txt|json)$/i.test(path);
+  }
+
+  private prefersHtmlResponse(req: Request): boolean {
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      return false;
+    }
+
+    const acceptHeader = req.headers['accept'];
+    const accept = Array.isArray(acceptHeader) ? acceptHeader.join(',') : (acceptHeader || '');
+    const fetchDestHeader = req.headers['sec-fetch-dest'];
+    const fetchDest = Array.isArray(fetchDestHeader) ? fetchDestHeader[0] : (fetchDestHeader || '');
+
+    return accept.includes('text/html') || fetchDest === 'document' || fetchDest === 'iframe';
+  }
+
+  private getCookieValue(req: Request, name: string): string | null {
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) {
+      return null;
+    }
+
+    const cookies = cookieHeader.split(';');
+    for (const cookie of cookies) {
+      const [rawKey, ...rest] = cookie.trim().split('=');
+      if (rawKey === name) {
+        return rest.join('=') || null;
+      }
+    }
+
+    return null;
+  }
+
+  private getGeneralRateLimitKey(req: Request): string {
+    const ip = this.getClientIP(req);
+    const sessionId = this.getCookieValue(req, 'connect.sid') || 'anon';
+    const userAgentHeader = req.headers['user-agent'];
+    const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader.join('|') : (userAgentHeader || 'unknown');
+    const fingerprint = createHash('sha256')
+      .update(`${sessionId}:${userAgent}`)
+      .digest('hex')
+      .slice(0, 16);
+
+    return `${ip}:${fingerprint}`;
+  }
+
+  private getGeneralRateLimitMaxRequests(req: Request): number {
+    const hasSession = !!this.getCookieValue(req, 'connect.sid');
+    return hasSession
+      ? (req.method === 'GET' ? 300 : 180)
+      : (req.method === 'GET' ? 120 : 80);
   }
 
   /**
