@@ -426,7 +426,7 @@ export function CertificateForm({
                     </Button>
 
                     <Button
-                        className="h-12 flex-[2] text-base shadow-lg shadow-gray-200 bg-gray-800 hover:bg-gray-900"
+                        className="h-12 flex-[2] text-base bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/25 disabled:shadow-none dark:shadow-primary/10"
                         onClick={onSave}
                         disabled={isPending || !isUserLoggedIn}
                     >

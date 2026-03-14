@@ -27,6 +27,17 @@ type AuthContextType = {
 
 type LoginData = { email: string; password: string };
 
+const getSafePostLoginRedirect = () => {
+  if (typeof window === "undefined") return null;
+
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return null;
+  }
+
+  return next;
+};
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
@@ -51,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
-      navigate(user?.clinicId ? "/agenda" : "/minha-clinica");
+      navigate(getSafePostLoginRedirect() || (user?.clinicId ? "/agenda" : "/minha-clinica"));
     },
     onError: (error: Error) => {
       toast({

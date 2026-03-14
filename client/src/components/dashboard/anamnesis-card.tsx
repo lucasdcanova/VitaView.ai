@@ -672,6 +672,8 @@ export function AnamnesisCard() {
 
                             <FeatureGate feature="ai-enhance">
                                 <Button
+                                    type="button"
+                                    onClick={handleEnhanceAnamnesis}
                                     disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
                                     variant="outline"
                                     className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}

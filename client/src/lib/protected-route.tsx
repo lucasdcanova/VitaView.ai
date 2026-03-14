@@ -1,6 +1,6 @@
 import {
   useAuth } from "@/hooks/use-auth";
-import { Redirect, Route } from "wouter";
+import { Redirect, Route, useLocation } from "wouter";
 
 import { ComponentType, LazyExoticComponent } from "react";
 import { BrandLoader } from "@/components/ui/brand-loader";
@@ -13,6 +13,7 @@ export function ProtectedRoute({
   component: ComponentType<any> | LazyExoticComponent<any>;
 }) {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -27,7 +28,7 @@ export function ProtectedRoute({
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <Redirect to={`/auth?next=${encodeURIComponent(location)}`} />
       </Route>
     );
   }

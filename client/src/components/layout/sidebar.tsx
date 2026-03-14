@@ -372,10 +372,10 @@ export default function Sidebar(props: SidebarProps) {
         >
           {isCollapsed ? (
             <div className="flex justify-center" title={activeProfile?.name || "Nenhum paciente"}>
-              <ActivePatientIndicator className="w-full" collapsed={true} />
+              <ActivePatientIndicator className="w-full" collapsed={true} patientClickTarget="/pacientes" />
             </div>
           ) : (
-            <ActivePatientIndicator className="w-full" surface="glass" />
+            <ActivePatientIndicator className="w-full" surface="glass" patientClickTarget="/pacientes" />
           )}
         </div>
 

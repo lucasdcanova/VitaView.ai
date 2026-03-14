@@ -27,6 +27,7 @@ interface ActivePatientIndicatorProps {
     collapsed?: boolean;
     surface?: "solid" | "glass";
     className?: string;
+    patientClickTarget?: string;
 }
 
 export default function ActivePatientIndicator({
@@ -34,6 +35,7 @@ export default function ActivePatientIndicator({
     collapsed = false,
     surface = "solid",
     className,
+    patientClickTarget,
 }: ActivePatientIndicatorProps) {
     const { activeProfile, profiles, setActiveProfile } = useProfiles();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -58,6 +60,15 @@ export default function ActivePatientIndicator({
     const filteredProfiles = profiles.filter((profile) =>
         profile.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handlePatientSelectorClick = () => {
+        if (patientClickTarget) {
+            setLocation(patientClickTarget);
+            return;
+        }
+
+        setIsDialogOpen(true);
+    };
 
     const handleSelect = (profile: Profile) => {
         setActiveProfile(profile);
@@ -93,7 +104,7 @@ export default function ActivePatientIndicator({
         return (
             <>
                 <div
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={handlePatientSelectorClick}
                     className={cn(
                         "group flex justify-center items-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200",
                         activeProfile
@@ -113,7 +124,7 @@ export default function ActivePatientIndicator({
                         <User className="w-5 h-5" />
                     )}
                 </div>
-                <Dialogs />
+                {!patientClickTarget && <Dialogs />}
             </>
         );
     }
@@ -123,13 +134,7 @@ export default function ActivePatientIndicator({
         return (
             <>
                 <div
-                    onClick={() => {
-                        if (window.innerWidth < 768) {
-                            setLocation("/pacientes");
-                        } else {
-                            setIsDialogOpen(true);
-                        }
-                    }}
+                    onClick={handlePatientSelectorClick}
                     className={cn(
                         "group flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200",
                         surface === "glass"
@@ -153,7 +158,7 @@ export default function ActivePatientIndicator({
                     </div>
                     <ChevronRight className="w-4 h-4 text-mediumGray group-hover:text-charcoal transition-colors" />
                 </div>
-                <Dialogs />
+                {!patientClickTarget && <Dialogs />}
             </>
         );
     }
@@ -165,7 +170,7 @@ export default function ActivePatientIndicator({
         return (
             <>
                 <div
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={handlePatientSelectorClick}
                     className={cn(
                         "group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
                         "bg-charcoal border border-charcoal",
@@ -186,7 +191,7 @@ export default function ActivePatientIndicator({
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-pureWhite/70" />
                 </div>
-                <Dialogs />
+                {!patientClickTarget && <Dialogs />}
             </>
         );
     }
@@ -220,7 +225,7 @@ export default function ActivePatientIndicator({
 
                 {/* Top Section: Patient Selection */}
                 <div
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={handlePatientSelectorClick}
                     className={cn(
                         "p-4 pt-5 cursor-pointer transition-colors",
                         surface === "glass" ? "hover:bg-pureWhite/28" : "hover:bg-gray-50"
@@ -344,23 +349,27 @@ export default function ActivePatientIndicator({
                 </div>
             </div>
 
-            <PatientSelectionDialog
-                isOpen={isDialogOpen}
-                onClose={() => setIsDialogOpen(false)}
-                profiles={filteredProfiles}
-                activeProfile={activeProfile}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSelect={handleSelect}
-                getAge={getAge}
-                totalProfiles={profiles.length}
-                onCreatePatient={handleCreatePatient}
-            />
+            {!patientClickTarget && (
+                <>
+                    <PatientSelectionDialog
+                        isOpen={isDialogOpen}
+                        onClose={() => setIsDialogOpen(false)}
+                        profiles={filteredProfiles}
+                        activeProfile={activeProfile}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        onSelect={handleSelect}
+                        getAge={getAge}
+                        totalProfiles={profiles.length}
+                        onCreatePatient={handleCreatePatient}
+                    />
 
-            <CreatePatientDialog
-                open={isCreateDialogOpen}
-                onOpenChange={setIsCreateDialogOpen}
-            />
+                    <CreatePatientDialog
+                        open={isCreateDialogOpen}
+                        onOpenChange={setIsCreateDialogOpen}
+                    />
+                </>
+            )}
         </>
     );
 }

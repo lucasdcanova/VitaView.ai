@@ -402,6 +402,24 @@ export function AgendaCalendar({
     return new Date(date);
   };
 
+  const canStartServiceFromAppointment = (appointment: Appointment) => {
+    const appointmentDate = parseAppointmentDate(appointment.date);
+    const isToday = isSameDay(appointmentDate, new Date());
+    const isBlocked = appointment.type === "blocked";
+    const isActive = appointment.id === inServiceAppointmentId;
+
+    if (!isToday || isBlocked || appointment.status === "completed") {
+      return false;
+    }
+
+    return (
+      !appointment.status ||
+      appointment.status === "scheduled" ||
+      appointment.status === "waiting" ||
+      (appointment.status === "in_progress" && !isActive)
+    );
+  };
+
   const currentDayAppointments = getFilteredAppointmentsForDay(currentDate);
   const currentDayNonBlockedAppointments = currentDayAppointments.filter((app) => app.type !== "blocked");
   const currentDayTelemedicineCount = currentDayNonBlockedAppointments.filter((app) => app.isTelemedicine).length;
@@ -901,11 +919,9 @@ export function AgendaCalendar({
                     {apps.length > 0 ? (
                       apps.map(app => {
                         const styles = getTypeStyles(app.type);
-                        const appointmentDate = parseAppointmentDate(app.date);
-                        const isToday = isSameDay(appointmentDate, new Date());
                         const isActive = app.id === inServiceAppointmentId;
                         const isBlocked = app.type === 'blocked';
-                        const canStartService = isToday && !isBlocked && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
+                        const canStartService = canStartServiceFromAppointment(app);
 
                         return (
                           <div key={app.id} className={cn(
@@ -986,7 +1002,7 @@ export function AgendaCalendar({
                                   disabled={updateStatusMutation.isPending}
                                 >
                                   <Play className="w-4 h-4 mr-2" />
-                                  {app.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
+                                  {app.status === 'in_progress' ? 'Retomar Atendimento' : app.status === 'waiting' ? 'Atender' : 'Iniciar Atendimento'}
                                 </Button>
                               ) : (
                                 <div className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium w-full text-center">
@@ -1127,15 +1143,11 @@ export function AgendaCalendar({
                             <PopoverContent className="w-80">
                               <div className="grid gap-4">
                                 {(() => {
-                                  const appointmentDate = parseAppointmentDate(appointment.date);
-                                  const isToday = isSameDay(appointmentDate, new Date());
-                                  const isBlocked = appointment.type === 'blocked';
-                                  const canStart = isToday && !isBlocked && appointment.status !== 'in_progress' && appointment.status !== 'completed';
                                   return (
                                     <AppointmentPopoverHeader
                                       appointment={appointment}
                                       styles={styles}
-                                      canStartService={canStart}
+                                      canStartService={canStartServiceFromAppointment(appointment)}
                                       onStartService={() => handleStartService(appointment)}
                                       triageData={triageMap[appointment.id]}
                                     />
@@ -1168,45 +1180,44 @@ export function AgendaCalendar({
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                  {/* Status action buttons - Iniciar Atendimento only for today */}
                                   {(() => {
-                                    const appointmentDate = parseAppointmentDate(appointment.date);
-                                    const isToday = isSameDay(appointmentDate, new Date());
-                                    const isActive = appointment.id === inServiceAppointmentId;
-                                    const canStartService = isToday && appointment.status !== 'completed' && (!appointment.status || appointment.status === 'scheduled' || (appointment.status === 'in_progress' && !isActive));
+                                    const canStartService = canStartServiceFromAppointment(appointment);
+                                    const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked');
 
                                     return (
                                       <>
-                                        {canStartService && (
-                                          <Button
-                                            size="sm"
-                                            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
-                                            onClick={() => handleStartService(appointment)}
-                                            disabled={updateStatusMutation.isPending}
-                                          >
-                                            <Play className="w-4 h-4 mr-1" />
-                                            {appointment.status === 'in_progress' ? 'Retomar Atendimento' : 'Iniciar Atendimento'}
-                                          </Button>
+                                        {(canStartService || canCheckIn) && (
+                                          <div className={cn("grid gap-2", canStartService && canCheckIn ? "grid-cols-2" : "grid-cols-1")}>
+                                            {canStartService && (
+                                              <Button
+                                                size="sm"
+                                                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                                                onClick={() => handleStartService(appointment)}
+                                                disabled={updateStatusMutation.isPending}
+                                              >
+                                                <Play className="w-4 h-4 mr-1" />
+                                                {appointment.status === 'in_progress' ? 'Retomar' : 'Atender'}
+                                              </Button>
+                                            )}
+                                            {canCheckIn && (
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-foreground border-border hover:bg-muted w-full"
+                                                onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
+                                                disabled={updateStatusMutation.isPending}
+                                              >
+                                                <UserCheck className="w-4 h-4 mr-1" />
+                                                Recepcionar
+                                              </Button>
+                                            )}
+                                          </div>
                                         )}
-
                                       </>
                                     );
                                   })()}
-
-                                  {(!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked') && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="text-foreground border-border hover:bg-muted w-full"
-                                      onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
-                                      disabled={updateStatusMutation.isPending}
-                                    >
-                                      <UserCheck className="w-4 h-4 mr-1" />
-                                      Recepcionar (Sala de Espera)
-                                    </Button>
-                                  )}
                                   {/* Other action buttons */}
-                                  <div className="flex justify-end gap-2">
+                                  <div className="flex flex-wrap justify-end gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"

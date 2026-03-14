@@ -51,6 +51,7 @@ import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { isIOSAppShell } from "@/lib/app-shell";
 
 // Interfaces
 interface SubscriptionPlan {
@@ -259,6 +260,7 @@ const SubscriptionManagement = () => {
   }));
 
   const allPlans = plansWithFeaturesArray.filter(plan => plan.isActive);
+  const iosAppShell = isIOSAppShell();
 
   const categories = [
     {
@@ -403,7 +405,32 @@ const SubscriptionManagement = () => {
     await cancelSubscriptionMutation.mutateAsync();
   };
 
+  const openWebSubscription = (intent: 'plans' | 'billing' = 'plans') => {
+    if (typeof window === 'undefined') return;
+
+    const subscriptionUrl = new URL('/subscription', window.location.origin).toString();
+    setIsPaymentDialogOpen(false);
+    setSelectedPlanId(null);
+
+    const popup = window.open(subscriptionUrl, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      window.location.assign(subscriptionUrl);
+    }
+
+    toast({
+      title: intent === 'billing' ? 'Cobrança no navegador' : 'Assinatura no navegador',
+      description: intent === 'billing'
+        ? 'Continue no navegador para gerenciar cobrança e pagamento.'
+        : 'Continue no navegador para escolher o plano e concluir o pagamento.',
+    });
+  };
+
   const handleManageBilling = async () => {
+    if (iosAppShell) {
+      openWebSubscription('billing');
+      return;
+    }
+
     const data = await billingPortalMutation.mutateAsync();
     if (data?.url) {
       window.location.href = data.url;
@@ -449,6 +476,11 @@ const SubscriptionManagement = () => {
       } finally {
         setIsProcessing(false);
       }
+      return;
+    }
+
+    if (iosAppShell) {
+      openWebSubscription('plans');
       return;
     }
 
@@ -504,6 +536,26 @@ const SubscriptionManagement = () => {
             icon={<CreditCard className="h-6 w-6" />}
           />
           <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
+            {iosAppShell && (
+              <Alert className="border-border bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <AlertTitle>Assinatura continua no navegador</AlertTitle>
+                <AlertDescription className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    No app iOS, a escolha do plano e a cobrança acontecem na versão web. O navegador pode pedir login novamente.
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => openWebSubscription('plans')}
+                  >
+                    Abrir assinatura
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
 
 
@@ -657,7 +709,7 @@ const SubscriptionManagement = () => {
                             }
                           }}
                         >
-                          Escolher este Plano
+                          {iosAppShell ? 'Continuar no navegador' : 'Escolher este Plano'}
                         </Button>
                         <p className="text-[10px] text-muted-foreground mt-4">
                           Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === '6month' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
@@ -822,7 +874,7 @@ const SubscriptionManagement = () => {
                                     >
                                       <div className="flex flex-col items-center w-full">
                                         <div className="flex items-center justify-center gap-2 w-full">
-                                          <span>Mudar para Anual</span>
+                                          <span>{iosAppShell ? 'Continuar no navegador' : 'Mudar para Anual'}</span>
                                         </div>
                                         <span className="text-[10px] font-normal opacity-90 mt-1">
                                           R$ {(annualMonthlyEquivalent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
@@ -861,7 +913,11 @@ const SubscriptionManagement = () => {
                                       onClick={() => handleStartPayment(nextTierMonthly.id)}
                                     >
                                       <div className="text-left">
-                                        <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                        <div className="font-bold text-sm">
+                                          {iosAppShell
+                                            ? 'Continuar no navegador'
+                                            : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                        </div>
                                         <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                       </div>
                                       <div className="p-1.5 bg-gray-900 rounded-full">
@@ -919,7 +975,7 @@ const SubscriptionManagement = () => {
                                 >
                                   <div className="flex flex-col items-center w-full">
                                     <div className="flex items-center justify-center gap-2 w-full">
-                                      <span>Upgrade para Anual</span>
+                                      <span>{iosAppShell ? 'Continuar no navegador' : 'Upgrade para Anual'}</span>
                                       <span className="flex items-center justify-center bg-green-800 text-white text-[10px] px-2 h-5 rounded-full font-bold">-{savingsAnnual}%</span>
                                     </div>
                                     <span className="text-xs font-normal opacity-90 mt-1">
@@ -946,7 +1002,11 @@ const SubscriptionManagement = () => {
                                     onClick={() => handleStartPayment(nextTierMonthly.id)}
                                   >
                                     <div className="text-left">
-                                      <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                      <div className="font-bold text-sm">
+                                        {iosAppShell
+                                          ? 'Continuar no navegador'
+                                          : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                      </div>
                                       <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
                                     <div className="p-1.5 bg-primary rounded-full">
@@ -974,7 +1034,11 @@ const SubscriptionManagement = () => {
                                 onClick={() => handleStartPayment(nextTierMonthly.id)}
                               >
                                 <div className="text-left">
-                                  <div className="font-bold text-sm">Upgrade para {nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}</div>
+                                  <div className="font-bold text-sm">
+                                    {iosAppShell
+                                      ? 'Continuar no navegador'
+                                      : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                  </div>
                                   <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                 </div>
                                 <div className="p-1.5 bg-primary rounded-full">
@@ -1099,7 +1163,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      Escolher Vita Team
+                      {iosAppShell ? 'Continuar no navegador' : 'Escolher Vita Team'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1160,7 +1224,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      Escolher Vita Business
+                      {iosAppShell ? 'Continuar no navegador' : 'Escolher Vita Business'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1239,7 +1303,11 @@ const SubscriptionManagement = () => {
                         disabled={billingPortalMutation.isPending}
                       >
                         <CreditCard className="h-4 w-4" />
-                        {billingPortalMutation.isPending ? 'Abrindo portal...' : 'Gerenciar meios de pagamento'}
+                        {billingPortalMutation.isPending
+                          ? 'Abrindo portal...'
+                          : iosAppShell
+                            ? 'Abrir cobrança no navegador'
+                            : 'Gerenciar meios de pagamento'}
                       </Button>
                     </div>
                   )}
@@ -1250,62 +1318,63 @@ const SubscriptionManagement = () => {
         </main >
       </div >
 
-      {/* Stripe Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
-        console.log('[Payment Dialog] onOpenChange called with:', open);
-        setIsPaymentDialogOpen(open);
-      }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Finalizar Assinatura</DialogTitle>
-            <DialogDescription>
-              {selectedPlan && (
-                <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-foreground">{selectedPlan.name}</span>
-                    <Badge variant="outline" className="bg-card">
-                      {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
-                    </Badge>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">
-                    {selectedPlan.promoPrice ? `R$ ${(selectedPlan.promoPrice / 100).toFixed(2)}` :
-                      selectedPlan.price === 0 ? 'Grátis' :
-                        selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? '1 Mês Grátis' :
-                          `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
-                    {!selectedPlan.trialPeriodDays && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
-                  </div>
-                  {selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? (
-                    <div className="text-xs text-green-600 font-medium mt-1">
-                      Cancele a qualquer momento antes do fim do período de teste.
+      {!iosAppShell && (
+        <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
+          console.log('[Payment Dialog] onOpenChange called with:', open);
+          setIsPaymentDialogOpen(open);
+        }}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Finalizar Assinatura</DialogTitle>
+              <DialogDescription>
+                {selectedPlan && (
+                  <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-foreground">{selectedPlan.name}</span>
+                      <Badge variant="outline" className="bg-card">
+                        {selectedPlan.interval === 'month' ? 'Mensal' : selectedPlan.interval === '6month' ? 'Semestral' : 'Anual'}
+                      </Badge>
                     </div>
-                  ) : selectedPlan.promoPrice && (
-                    <div className="text-xs text-red-500 font-medium mt-1">
-                      Preço promocional válido para o 1º mês
+                    <div className="text-2xl font-bold text-primary">
+                      {selectedPlan.promoPrice ? `R$ ${(selectedPlan.promoPrice / 100).toFixed(2)}` :
+                        selectedPlan.price === 0 ? 'Grátis' :
+                          selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? '1 Mês Grátis' :
+                            `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
+                      {!selectedPlan.trialPeriodDays && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
                     </div>
-                  )}
-                </div>
-              )}
-            </DialogDescription>
-          </DialogHeader>
+                    {selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? (
+                      <div className="text-xs text-green-600 font-medium mt-1">
+                        Cancele a qualquer momento antes do fim do período de teste.
+                      </div>
+                    ) : selectedPlan.promoPrice && (
+                      <div className="text-xs text-red-500 font-medium mt-1">
+                        Preço promocional válido para o 1º mês
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogDescription>
+            </DialogHeader>
 
-          {selectedPlanId ? (
-            <StripePayment
-              planId={selectedPlanId}
-              onSuccess={handlePaymentSuccess}
-              onCancel={() => {
-                console.log('[StripePayment] onCancel called');
-                setIsPaymentDialogOpen(false);
-                setSelectedPlanId(null);
-              }}
-            />
-          ) : (
-            <div className="text-center py-6">
-              <BrandLoader className="h-8 w-8 animate-spin mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Carregando detalhes do plano...</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            {selectedPlanId ? (
+              <StripePayment
+                planId={selectedPlanId}
+                onSuccess={handlePaymentSuccess}
+                onCancel={() => {
+                  console.log('[StripePayment] onCancel called');
+                  setIsPaymentDialogOpen(false);
+                  setSelectedPlanId(null);
+                }}
+              />
+            ) : (
+              <div className="text-center py-6">
+                <BrandLoader className="h-8 w-8 animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Carregando detalhes do plano...</p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div >
   );
 };
