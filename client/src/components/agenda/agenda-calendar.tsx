@@ -420,6 +420,22 @@ export function AgendaCalendar({
     );
   };
 
+  const canStartServiceFromCalendarCard = (appointment: Appointment) => {
+    const isBlocked = appointment.type === "blocked";
+    const isActive = appointment.id === inServiceAppointmentId;
+
+    if (isBlocked || appointment.status === "completed") {
+      return false;
+    }
+
+    return (
+      !appointment.status ||
+      appointment.status === "scheduled" ||
+      appointment.status === "waiting" ||
+      (appointment.status === "in_progress" && !isActive)
+    );
+  };
+
   const currentDayAppointments = getFilteredAppointmentsForDay(currentDate);
   const currentDayNonBlockedAppointments = currentDayAppointments.filter((app) => app.type !== "blocked");
   const currentDayTelemedicineCount = currentDayNonBlockedAppointments.filter((app) => app.isTelemedicine).length;
@@ -1143,11 +1159,13 @@ export function AgendaCalendar({
                             <PopoverContent className="w-80">
                               <div className="grid gap-4">
                                 {(() => {
+                                  const canStartService = canStartServiceFromCalendarCard(appointment);
+
                                   return (
                                     <AppointmentPopoverHeader
                                       appointment={appointment}
                                       styles={styles}
-                                      canStartService={canStartServiceFromAppointment(appointment)}
+                                      canStartService={canStartService}
                                       onStartService={() => handleStartService(appointment)}
                                       triageData={triageMap[appointment.id]}
                                     />
@@ -1181,7 +1199,7 @@ export function AgendaCalendar({
                                 </div>
                                 <div className="flex flex-col gap-2">
                                   {(() => {
-                                    const canStartService = canStartServiceFromAppointment(appointment);
+                                    const canStartService = canStartServiceFromCalendarCard(appointment);
                                     const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked');
 
                                     return (
