@@ -40,14 +40,32 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
   const effectiveProfessionalId = isSecretarySession ? selectedProfessionalId : null;
 
-  const clearActiveProfile = () => {
-    setActiveProfileState(null);
-    setInServiceAppointmentId(null);
+  const persistActiveProfileCookie = (profileId: number | null) => {
     try {
+      if (profileId) {
+        document.cookie = `active_profile_id=${profileId}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        return;
+      }
+
       document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
     } catch (err) {
       // ignore cookie errors
     }
+  };
+
+  const syncActiveProfileLocally = (profile: Profile | null) => {
+    setActiveProfileState(profile);
+    persistActiveProfileCookie(profile?.id ?? null);
+
+    if (profile) {
+      queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", profile.id] });
+    }
+  };
+
+  const clearActiveProfile = () => {
+    setActiveProfileState(null);
+    setInServiceAppointmentId(null);
+    persistActiveProfileCookie(null);
   };
 
   // Fetch user's profiles
@@ -156,16 +174,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const defaultProfile = remainingProfiles.find((p: Profile) => p.isDefault);
         const nextProfile = defaultProfile || remainingProfiles[0] || null;
 
-        setActiveProfileState(nextProfile || null);
-
-        try {
-          if (nextProfile) {
-            document.cookie = `active_profile_id=${nextProfile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-          } else {
-            document.cookie = `active_profile_id=; path=/; max-age=0; SameSite=Lax`;
-          }
-        } catch (err) {
-          // ignore cookie errors
+        if (nextProfile) {
+          syncActiveProfileLocally(nextProfile);
+        } else {
+          clearActiveProfile();
         }
       }
     },
@@ -187,21 +199,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return profile;
     },
     onSuccess: (profile) => {
-      setActiveProfileState(profile);
-
       toast({
         title: "Paciente selecionado",
         description: `Visualizando histórico de "${profile.name}"`,
       });
-
-      try {
-        document.cookie = `active_profile_id=${profile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      } catch (err) {
-        // Ignore cookie errors no-op
-      }
-
-      // Refresh patient dashboard data for the new profile
-      queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", profile.id] });
     },
     onError: (error) => {
       toast({
@@ -285,6 +286,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       clearActiveProfile();
       return;
     }
+
+    syncActiveProfileLocally(profile);
     setActiveProfileMutation.mutate(profile);
   };
 
@@ -304,15 +307,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const setPatientInService = (profileId: number, appointmentId: number) => {
     const profile = profiles.find((p: Profile) => p.id === profileId);
     if (profile) {
-      setActiveProfileState(profile);
+      syncActiveProfileLocally(profile);
       setInServiceAppointmentId(appointmentId);
-      try {
-        document.cookie = `active_profile_id=${profile.id}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      } catch (err) {
-        // Ignore cookie errors
-      }
-      // Refresh patient dashboard data for the new profile
-      queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", profile.id] });
     }
   };
 

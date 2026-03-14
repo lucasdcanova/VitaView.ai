@@ -72,6 +72,7 @@ export default function Patients() {
     profilesError,
     activeProfile,
     setActiveProfile,
+    clearPatientInService,
     refreshProfiles,
     selectedProfessionalId,
     setSelectedProfessionalId
@@ -186,6 +187,7 @@ export default function Patients() {
   };
 
   const handleStartService = (profile: Profile) => {
+    clearPatientInService();
     setActiveProfile(profile);
     setLocation("/atendimento");
   };

@@ -188,7 +188,7 @@ export default function VitaAssistPage() {
 
                 <main className="flex-1 flex flex-col overflow-hidden bg-background">
                     {/* Page Header */}
-                    <header className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] md:top-0 z-30 flex items-center justify-between p-4 md:p-6 border-b border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm">
+                    <header className="sticky top-0 z-30 flex items-center justify-between p-4 md:p-6 border-b border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center">
                                 <Sparkles className="w-5 h-5 text-white" />

@@ -581,7 +581,10 @@ export function registerPatientRoutes(app: Express) {
                 return res.status(404).json({ message: "Perfil não encontrado" });
             }
 
-            if (profile.userId !== (req.user as any).id) {
+            const currentUserId = (req.user as any).id;
+            const canAccessProfile = profile.userId === currentUserId || profile.clinicId === activeClinicId;
+
+            if (!canAccessProfile) {
                 return res.status(403).json({ message: "Acesso negado: este perfil não pertence ao usuário" });
             }
 
