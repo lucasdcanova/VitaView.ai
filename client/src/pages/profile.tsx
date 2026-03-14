@@ -11,8 +11,6 @@ import { updateUserProfile } from "@/lib/api";
 import { queryClient,
   apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import MobileNav from "@/components/layout/mobile-nav";
 import PatientHeader from "@/components/patient-header";
 import {
@@ -439,13 +437,8 @@ export default function Profile() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <MobileHeader />
-
-      <div className="flex flex-1 relative">
-        <Sidebar />
-
-        <main className="flex-1 overflow-y-auto bg-background">
+    <div className="flex h-full flex-col bg-background">
+      <main className="flex-1 overflow-y-auto bg-background">
           <PatientHeader
             title="Conta profissional"
             description="Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma."
@@ -1087,8 +1080,7 @@ export default function Profile() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+      </main>
       <ImageCropper
         imageSrc={imageSrc}
         isOpen={isCropperOpen}

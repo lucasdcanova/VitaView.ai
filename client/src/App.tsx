@@ -18,6 +18,10 @@ import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import { isIOSAppShell, isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import AuthenticatedShell from "@/components/layout/authenticated-shell";
+import { preloadCoreAuthenticatedRoutes } from "@/lib/route-preload";
+import { apiRequest } from "@/lib/queryClient";
+import { useQueryClient } from "@tanstack/react-query";
 
 declare global {
   interface Window {
@@ -97,6 +101,15 @@ const SystemLoadingFallback = () => (
   </div>
 );
 
+const ShellContentLoadingFallback = () => (
+  <div className="flex h-full items-center justify-center bg-background">
+    <div className="text-center">
+      <BrandLoader className="mx-auto mb-3 h-10 w-10 text-primary" />
+      <p className="text-sm text-muted-foreground">Abrindo pagina...</p>
+    </div>
+  </div>
+);
+
 // ============================================
 // LANDING PAGE - Sem nenhum provider pesado
 // ============================================
@@ -149,6 +162,124 @@ function AuthRoutes() {
 // AUTHENTICATED ROUTES - Com todos os providers
 // ============================================
 function AuthenticatedRoutes() {
+  function AuthenticatedWarmup() {
+    const { user } = useAuth();
+    const reactQueryClient = useQueryClient();
+
+    useEffect(() => {
+      if (!user) return;
+
+      const runWarmup = () => {
+        void preloadCoreAuthenticatedRoutes();
+
+        void reactQueryClient.prefetchQuery({
+          queryKey: ["/api/my-clinic", user.id ?? null, user.clinicId ?? null],
+          queryFn: async () => {
+            const res = await apiRequest("GET", "/api/my-clinic");
+            return res.json();
+          },
+          staleTime: 60_000,
+        });
+
+        void reactQueryClient.prefetchQuery({
+          queryKey: ["/api/profiles", user.id ?? null, user.clinicId ?? null, null],
+          queryFn: async () => {
+            const res = await apiRequest("GET", "/api/profiles");
+            return res.json();
+          },
+          staleTime: 60_000,
+        });
+
+        if (user.clinicRole !== "secretary") {
+          void reactQueryClient.prefetchQuery({
+            queryKey: ["/api/appointments", null],
+            queryFn: async () => {
+              const res = await apiRequest("GET", "/api/appointments");
+              return res.json();
+            },
+            staleTime: 30_000,
+          });
+        }
+      };
+
+      const idleCallback = window.requestIdleCallback
+        ? window.requestIdleCallback(runWarmup, { timeout: 1500 })
+        : window.setTimeout(runWarmup, 250);
+
+      return () => {
+        if (typeof idleCallback === "number") {
+          window.clearTimeout(idleCallback);
+          return;
+        }
+
+        window.cancelIdleCallback?.(idleCallback);
+      };
+    }, [reactQueryClient, user]);
+
+    return null;
+  }
+
+  function AuthenticatedRouteContent() {
+    const [location] = useLocation();
+
+    const persistentShellPaths = [
+      "/agenda",
+      "/pacientes",
+      "/vita-assist",
+      "/minha-clinica",
+      "/atendimento",
+      "/profile",
+      "/subscription",
+    ];
+    const isPersistentShellRoute = persistentShellPaths.some((path) =>
+      location === path || location.startsWith(`${path}/`)
+    );
+
+    if (isPersistentShellRoute) {
+      return (
+        <AuthenticatedShell>
+          <Suspense fallback={<ShellContentLoadingFallback />}>
+            <Switch>
+              <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
+              <ProtectedRoute path="/agenda" component={Agenda} />
+              <ProtectedRoute path="/pacientes" component={Patients} />
+              <ProtectedRoute path="/vita-assist" component={VitaAssist} />
+              <ProtectedRoute path="/minha-clinica" component={MyClinic} />
+              <ProtectedRoute path="/atendimento" component={PatientView} />
+              <ProtectedRoute path="/profile" component={Profile} />
+              <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
+            </Switch>
+          </Suspense>
+        </AuthenticatedShell>
+      );
+    }
+
+    return (
+      <Suspense fallback={<SystemLoadingFallback />}>
+        <Switch>
+          <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
+          <ProtectedRoute path="/upload" component={UploadExams} />
+          <ProtectedRoute path="/upload-exams" component={UploadExams} />
+          <ProtectedRoute path="/history" component={ExamHistory} />
+          <ProtectedRoute path="/exam-history" component={ExamHistory} />
+          <ProtectedRoute path="/report/:id" component={ExamReport} />
+          <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
+          <ProtectedRoute path="/results" component={ExamResults} />
+          <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
+          <ProtectedRoute path="/health-trends" component={HealthTrends} />
+          <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
+          <ProtectedRoute path="/bulk-import" component={BulkImport} />
+          <ProtectedRoute path="/reports" component={ReportsPage} />
+          <ProtectedRoute path="/admin-panel" component={AdminPanel} />
+          <ProtectedRoute path="/admin" component={AdminPanel} />
+          <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
+          <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
+    );
+  }
+
   return (
     <AuthProvider>
       <ProfileProvider>
@@ -159,37 +290,8 @@ function AuthenticatedRoutes() {
                 <TooltipProvider>
                   <Toaster />
                   <AuthenticatedScripts />
-                  <Suspense fallback={<SystemLoadingFallback />}>
-                    <Switch>
-                      {/* Redirect /dashboard to /agenda for legacy URLs */}
-                      <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
-                      <ProtectedRoute path="/agenda" component={Agenda} />
-                      <ProtectedRoute path="/pacientes" component={Patients} />
-                      <ProtectedRoute path="/upload" component={UploadExams} />
-                      <ProtectedRoute path="/upload-exams" component={UploadExams} />
-                      <ProtectedRoute path="/history" component={ExamHistory} />
-                      <ProtectedRoute path="/exam-history" component={ExamHistory} />
-                      <ProtectedRoute path="/report/:id" component={ExamReport} />
-                      <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
-                      <ProtectedRoute path="/results" component={ExamResults} />
-                      <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
-                      <ProtectedRoute path="/health-trends" component={HealthTrends} />
-                      <ProtectedRoute path="/atendimento" component={PatientView} />
-                      <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
-                      <ProtectedRoute path="/profile" component={Profile} />
-                      <ProtectedRoute path="/bulk-import" component={BulkImport} />
-                      <ProtectedRoute path="/reports" component={ReportsPage} />
-                      <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
-                      <ProtectedRoute path="/admin-panel" component={AdminPanel} />
-                      <ProtectedRoute path="/admin" component={AdminPanel} />
-                      <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
-                      <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
-                      <ProtectedRoute path="/vita-assist" component={VitaAssist} />
-                      <ProtectedRoute path="/minha-clinica" component={MyClinic} />
-                      {/* 404 para rotas autenticadas não encontradas */}
-                      <Route component={NotFound} />
-                    </Switch>
-                  </Suspense>
+                  <AuthenticatedWarmup />
+                  <AuthenticatedRouteContent />
                   <CommandPalette />
                   <OnboardingTour />
                 </TooltipProvider>

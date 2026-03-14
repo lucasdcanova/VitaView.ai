@@ -163,7 +163,25 @@ export function serveStatic(app: Express) {
     }
   }
 
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      index: false,
+      maxAge: "1y",
+      immutable: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html")) {
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+          return;
+        }
+
+        if (/\.(js|mjs|css|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|map)$/i.test(filePath)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    }),
+  );
 
   // SPA fallback only for HTML navigation requests.
   app.use("*", (req, res, next) => {

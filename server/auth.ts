@@ -83,7 +83,8 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true, // Cookies de sessão devem ser httpOnly para segurança
-      secure: process.env.NODE_ENV === 'production', // HTTPS em produção
+      // Use secure cookies on HTTPS, but keep local HTTP fallback usable.
+      secure: 'auto',
       sameSite: 'strict',
       path: '/'
     }

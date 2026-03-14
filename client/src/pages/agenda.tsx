@@ -1,8 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import {
   useLocation } from "wouter";
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar";
 import { NewAppointmentModal } from "@/components/agenda/new-appointment-modal";
@@ -299,130 +297,121 @@ export default function Agenda() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <MobileHeader />
-
-            <div className="flex flex-1 relative">
-                <Sidebar />
-
-                <main className="flex-1 bg-background flex flex-col h-full overflow-hidden">
-                    <div className="flex-1 flex flex-col h-full w-full p-0 overflow-hidden">
-                        <PatientHeader
-                            title="Agenda"
-                            description="Gerencie suas consultas e visualize seus compromissos."
-                            patient={undefined}
-                            lastExamDate={null}
-                            showTitleAsMain={true}
-                            fullWidth={true}
-                        >
-                            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-start md:items-center">
-                                {isSecretary && professionals.length > 0 && (
-                                    <div className="w-full md:w-64">
-                                        <Select
-                                            value={selectedProfessionalId?.toString()}
-                                            onValueChange={(value) => setSelectedProfessionalId(Number(value))}
-                                        >
-                                            <SelectTrigger className="w-full bg-white">
-                                                <SelectValue placeholder="Selecione um profissional" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {professionals.map((prof: any) => (
-                                                    <SelectItem key={prof.id} value={prof.id.toString()}>
-                                                        {prof.fullName || prof.username}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                                <div className="relative w-full md:w-[500px]">
-                                    <Input
-                                        placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
-                                        className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-20 shadow-sm w-full"
-                                        value={aiCommand}
-                                        onChange={(e) => setAiCommand(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
-                                        disabled={isAiLoading}
-                                    />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                                        <button
-                                            className="text-muted-foreground hover:text-foreground p-1"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={isAiLoading}
-                                            title="Anexar arquivo (imagem ou PDF)"
-                                        >
-                                            <Paperclip className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            className="text-foreground hover:text-primary p-1"
-                                            onClick={handleAiCommand}
-                                            disabled={isAiLoading}
-                                        >
-                                            {isAiLoading ? <BrandLoader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                        </button>
-                                    </div>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*,.pdf"
-                                        multiple
-                                        className="hidden"
-                                        onChange={handleFileSelect}
-                                    />
-                                </div>
-
-                                {/* File previews */}
-                                {uploadedFiles.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {uploadedFiles.map((file, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-1.5 text-sm"
-                                            >
-                                                <span className="text-muted-foreground">
-                                                    {file.type.startsWith('image/') ? '🖼️' : '📄'}
-                                                </span>
-                                                <span className="text-muted-foreground max-w-[150px] truncate">
-                                                    {file.name}
-                                                </span>
-                                                <span className="text-muted-foreground text-xs">
-                                                    ({(file.size / 1024).toFixed(0)} KB)
-                                                </span>
-                                                <button
-                                                    onClick={() => removeFile(index)}
-                                                    className="text-muted-foreground hover:text-destructive ml-1"
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </div>
+        <div className="flex h-full flex-col overflow-hidden bg-background">
+            <div className="flex flex-1 flex-col overflow-hidden">
+                <PatientHeader
+                    title="Agenda"
+                    description="Gerencie suas consultas e visualize seus compromissos."
+                    patient={undefined}
+                    lastExamDate={null}
+                    showTitleAsMain={true}
+                    fullWidth={true}
+                >
+                    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-start md:items-center">
+                        {isSecretary && professionals.length > 0 && (
+                            <div className="w-full md:w-64">
+                                <Select
+                                    value={selectedProfessionalId?.toString()}
+                                    onValueChange={(value) => setSelectedProfessionalId(Number(value))}
+                                >
+                                    <SelectTrigger className="w-full bg-white">
+                                        <SelectValue placeholder="Selecione um profissional" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {professionals.map((prof: any) => (
+                                            <SelectItem key={prof.id} value={prof.id.toString()}>
+                                                {prof.fullName || prof.username}
+                                            </SelectItem>
                                         ))}
-                                    </div>
-                                )}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </PatientHeader>
-
-                        <div className="mt-4 md:mt-6 flex-1 overflow-auto">
-                            <AgendaCalendar
-                                onNewAppointment={handleNewAppointment}
-                                onEditAppointment={handleEditAppointment}
-                                fullWidth={true}
+                        )}
+                        <div className="relative w-full md:w-[500px]">
+                            <Input
+                                placeholder="✨ Agende com IA: 'Retorno para Maria dia 15 às 14h'"
+                                className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-20 shadow-sm w-full"
+                                value={aiCommand}
+                                onChange={(e) => setAiCommand(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAiCommand()}
+                                disabled={isAiLoading}
                             />
-                            <div className="p-4 md:p-6 pt-4">
-                                <WaitingRoom
-                                    appointments={appointments}
-                                    onStartService={handleStartServiceFromWaitingRoom}
-                                    onRemoveCheckIn={(appointment) => {
-                                        updateAppointmentMutation.mutate({
-                                            id: appointment.id,
-                                            status: 'scheduled',
-                                            checkedInAt: null
-                                        } as any);
-                                    }}
-                                />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                                <button
+                                    className="text-muted-foreground hover:text-foreground p-1"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isAiLoading}
+                                    title="Anexar arquivo (imagem ou PDF)"
+                                >
+                                    <Paperclip className="w-4 h-4" />
+                                </button>
+                                <button
+                                    className="text-foreground hover:text-primary p-1"
+                                    onClick={handleAiCommand}
+                                    disabled={isAiLoading}
+                                >
+                                    {isAiLoading ? <BrandLoader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                </button>
                             </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*,.pdf"
+                                multiple
+                                className="hidden"
+                                onChange={handleFileSelect}
+                            />
                         </div>
+
+                        {uploadedFiles.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {uploadedFiles.map((file, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-1.5 text-sm"
+                                    >
+                                        <span className="text-muted-foreground">
+                                            {file.type.startsWith('image/') ? '🖼️' : '📄'}
+                                        </span>
+                                        <span className="text-muted-foreground max-w-[150px] truncate">
+                                            {file.name}
+                                        </span>
+                                        <span className="text-muted-foreground text-xs">
+                                            ({(file.size / 1024).toFixed(0)} KB)
+                                        </span>
+                                        <button
+                                            onClick={() => removeFile(index)}
+                                            className="text-muted-foreground hover:text-destructive ml-1"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                </main>
+                </PatientHeader>
+
+                <div className="mt-4 md:mt-6 flex-1 overflow-auto">
+                    <AgendaCalendar
+                        onNewAppointment={handleNewAppointment}
+                        onEditAppointment={handleEditAppointment}
+                        fullWidth={true}
+                    />
+                    <div className="p-4 md:p-6 pt-4">
+                        <WaitingRoom
+                            appointments={appointments}
+                            onStartService={handleStartServiceFromWaitingRoom}
+                            onRemoveCheckIn={(appointment) => {
+                                updateAppointmentMutation.mutate({
+                                    id: appointment.id,
+                                    status: 'scheduled',
+                                    checkedInAt: null
+                                } as any);
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
 
             <NewAppointmentModal

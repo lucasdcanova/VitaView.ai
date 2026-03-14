@@ -39,8 +39,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { BrandLoader } from "@/components/ui/brand-loader";
 
@@ -278,11 +276,8 @@ const MyClinic = () => {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen">
-                <Sidebar />
-                <div className="flex-1 flex items-center justify-center">
-                    <BrandLoader className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+            <div className="flex h-full items-center justify-center bg-background">
+                <BrandLoader className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
     }
@@ -795,17 +790,15 @@ const MyClinic = () => {
     };
 
     return (
-        <div className="flex h-screen bg-background">
-            <Sidebar />
+        <div className="flex h-full flex-col overflow-hidden bg-background">
+            <PatientHeader
+                title="Minha Clínica"
+                description="Gerencie sua equipe, agenda e configurações da clínica."
+                showTitleAsMain={true}
+                fullWidth={true}
+                icon={<Building className="h-6 w-6" />}
+            />
             <div className="flex-1 overflow-auto">
-                <MobileHeader />
-                <PatientHeader
-                    title="Minha Clínica"
-                    description="Gerencie sua equipe, agenda e configurações da clínica."
-                    showTitleAsMain={true}
-                    fullWidth={true}
-                    icon={<Building className="h-6 w-6" />}
-                />
                 <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
                     {renderContent()}
 

@@ -35,6 +35,7 @@ import {
   formatRecordingTime,
   useConsultationRecording,
 } from "@/hooks/use-consultation-recording";
+import { preloadRouteByPath } from "@/lib/route-preload";
 
 /**
  * VitaView AI Sidebar Component
@@ -226,6 +227,9 @@ export default function Sidebar(props: SidebarProps) {
 
   const NavItem = ({ href, icon: Icon, label, tourId, highlight }: { href: string, icon: any, label: string, tourId?: string, highlight?: boolean }) => {
     const isActive = location === href;
+    const handleIntent = () => {
+      void preloadRouteByPath(href);
+    };
 
     // Custom styles for highlighted item (Atendimento)
     // When active: Standard active style (dark bg, white text)
@@ -245,6 +249,8 @@ export default function Sidebar(props: SidebarProps) {
             <Link
               href={href}
               onClick={handleNavClick}
+              onMouseEnter={handleIntent}
+              onFocus={handleIntent}
               className={cn(
                 getNavItemClass(href),
                 highlightClasses

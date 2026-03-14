@@ -6,6 +6,13 @@ const REPORT_ONLY_UNSUPPORTED_DIRECTIVES = new Set([
   'block-all-mixed-content',
 ]);
 
+const STORAGE_ORIGIN_ENV_KEYS = [
+  'AWS_S3_PUBLIC_BASE_URL',
+  'AWS_CLOUDFRONT_URL',
+  'AWS_CLOUDFRONT_DOMAIN',
+  'ADDITIONAL_STORAGE_ORIGINS',
+] as const;
+
 const getDirectiveName = (segment: string) => {
   return segment.trim().split(/\s+/)[0]?.toLowerCase() || '';
 };
@@ -18,6 +25,44 @@ export function sanitizeReportOnlyCsp(csp: string): string {
     .filter(segment => !REPORT_ONLY_UNSUPPORTED_DIRECTIVES.has(getDirectiveName(segment)))
     .join('; ');
 }
+
+const normalizeOrigin = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    return null;
+  }
+};
+
+const getConfiguredStorageOrigins = () => {
+  const bucket =
+    process.env.AWS_S3_BUCKET ||
+    process.env.AWS_S3_BUCKET_NAME ||
+    'vitaview-sensitive-data';
+  const region = process.env.AWS_REGION || 'us-east-1';
+  const envOrigins = STORAGE_ORIGIN_ENV_KEYS.flatMap((key) =>
+    (process.env[key] || '')
+      .split(',')
+      .map(normalizeOrigin)
+      .filter((origin): origin is string => Boolean(origin))
+  );
+
+  const exactOrigins = [
+    `https://${bucket}.s3.amazonaws.com`,
+    `https://${bucket}.s3.${region}.amazonaws.com`,
+    `https://${bucket}.s3-${region}.amazonaws.com`,
+    `https://s3.amazonaws.com`,
+    `https://s3.${region}.amazonaws.com`,
+    `https://s3-${region}.amazonaws.com`,
+  ];
+
+  return [...new Set([...exactOrigins, ...envOrigins])];
+};
 
 // Known trusted domains for different services
 const TRUSTED_DOMAINS = {
@@ -48,7 +93,8 @@ const TRUSTED_DOMAINS = {
   apis: [
     'https://api.openai.com',
     'https://generativelanguage.googleapis.com'
-  ]
+  ],
+  storage: getConfiguredStorageOrigins(),
 };
 
 // Get all trusted domains for a specific directive
@@ -126,6 +172,8 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   styleSrc.push(...getTrustedDomains('fonts'));
   connectSrc.push(...getTrustedDomains('apis'));
   connectSrc.push(...getTrustedDomains('fonts')); // Allow SW to fetch fonts
+  connectSrc.push(...getTrustedDomains('storage'));
+  imgSrc.push(...getTrustedDomains('storage'));
 
   // Store CSP directives in res.locals for use by other middleware
   const finalScriptSrc = [...new Set(scriptSrc)];

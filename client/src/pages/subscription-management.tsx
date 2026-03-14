@@ -46,8 +46,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
 import { BrandLoader } from "@/components/ui/brand-loader";
@@ -512,7 +510,7 @@ const SubscriptionManagement = () => {
 
   if (isLoadingSubscription) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex h-full items-center justify-center bg-background">
         <BrandLoader className="h-10 w-10 animate-spin" />
       </div>
     );
@@ -523,10 +521,7 @@ const SubscriptionManagement = () => {
   const subscription = subscriptionData?.subscription;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <MobileHeader />
-      <div className="flex flex-1 relative">
-        <Sidebar />
+    <div className="flex h-full flex-col bg-background">
         <main className="flex-1 bg-background overflow-y-auto">
           <PatientHeader
             title="Assinatura e Planos"
@@ -1316,7 +1311,6 @@ const SubscriptionManagement = () => {
             </section>
           </div >
         </main >
-      </div >
 
       {!iosAppShell && (
         <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {

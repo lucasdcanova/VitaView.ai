@@ -5,8 +5,6 @@ import {
   Suspense } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import { Tabs,
   TabsContent,
   TabsList,
@@ -252,14 +250,9 @@ export default function PatientView() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <MobileHeader />
-
-            <div className="flex flex-1 relative">
-                <Sidebar />
-
-                <main className="flex-1 overflow-y-auto bg-background">
-                    <div className={isMobile ? "p-2.5 pt-1" : "p-4 md:p-6"}>
+        <div className="flex h-full flex-col bg-background">
+            <main className="flex-1 overflow-y-auto bg-background">
+                <div className={isMobile ? "p-2.5 pt-1" : "p-4 md:p-6"}>
                         {/* Header */}
                         {isMobile ? (
                             /* ── Mobile: Premium compact patient strip ── */
@@ -781,9 +774,8 @@ export default function PatientView() {
 
 
                         </Tabs>
-                    </div>
-                </main>
-            </div >
-        </div >
+                </div>
+            </main>
+        </div>
     );
 }

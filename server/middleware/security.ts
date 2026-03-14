@@ -5,6 +5,23 @@ import { handleCSPViolation, getDynamicCSPDirectives, nonceMiddleware } from './
 import { dynamicCSPMiddleware, applyCSPHeader, sanitizeReportOnlyCsp } from './dynamic-csp';
 import { enhancedRateLimit } from './enhanced-rate-limit';
 
+const STATIC_ASSET_PATTERN = /\.(?:js|mjs|css|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|map)$/i;
+
+const isStaticAssetRequest = (req: Request) => {
+  if (!['GET', 'HEAD'].includes(req.method)) return false;
+  if (req.path.startsWith('/api/')) return false;
+
+  return (
+    req.path.startsWith('/assets/') ||
+    req.path === '/logo-icon-transparent.png' ||
+    req.path === '/LOGO COM TEXTO.PNG' ||
+    req.path === '/icon-192x192.png' ||
+    req.path === '/apple-touch-icon.png' ||
+    req.path === '/favicon.ico' ||
+    STATIC_ASSET_PATTERN.test(req.path)
+  );
+};
+
 export function setupSecurity(app: Express) {
   // Trust proxy for proper IP detection behind reverse proxies
   app.set('trust proxy', 1);
@@ -163,9 +180,16 @@ export function setupSecurity(app: Express) {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(self), camera=()');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+
+    if (isStaticAssetRequest(req)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.removeHeader('Pragma');
+      res.removeHeader('Expires');
+    } else {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
 
     // Remove potentially revealing headers
     res.removeHeader('X-Powered-By');

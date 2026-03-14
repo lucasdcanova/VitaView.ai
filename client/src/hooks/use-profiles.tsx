@@ -94,9 +94,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return payload as Profile[];
     },
     enabled: !!user,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
     retry: 2,
   });
 
