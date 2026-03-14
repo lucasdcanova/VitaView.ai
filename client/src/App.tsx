@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SidebarProvider } from "@/hooks/use-sidebar";
 import { ProfileProvider } from "@/hooks/use-profiles";
+import { ConsultationRecordingProvider } from "@/hooks/use-consultation-recording";
 import { UploadManagerProvider } from "@/hooks/use-upload-manager";
 import { ProtectedRoute } from "@/lib/protected-route";
 import ErrorBoundary from "@/components/ui/error-boundary";
@@ -151,49 +152,51 @@ function AuthenticatedRoutes() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <UploadManagerProvider>
-          <SidebarProvider>
-            <ThemeProvider>
-              <TooltipProvider>
-                <Toaster />
-                <AuthenticatedScripts />
-                <Suspense fallback={<SystemLoadingFallback />}>
-                  <Switch>
-                    {/* Redirect /dashboard to /agenda for legacy URLs */}
-                    <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
-                    <ProtectedRoute path="/agenda" component={Agenda} />
-                    <ProtectedRoute path="/pacientes" component={Patients} />
-                    <ProtectedRoute path="/upload" component={UploadExams} />
-                    <ProtectedRoute path="/upload-exams" component={UploadExams} />
-                    <ProtectedRoute path="/history" component={ExamHistory} />
-                    <ProtectedRoute path="/exam-history" component={ExamHistory} />
-                    <ProtectedRoute path="/report/:id" component={ExamReport} />
-                    <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
-                    <ProtectedRoute path="/results" component={ExamResults} />
-                    <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
-                    <ProtectedRoute path="/health-trends" component={HealthTrends} />
-                    <ProtectedRoute path="/atendimento" component={PatientView} />
-                    <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
-                    <ProtectedRoute path="/profile" component={Profile} />
-                    <ProtectedRoute path="/bulk-import" component={BulkImport} />
-                    <ProtectedRoute path="/reports" component={ReportsPage} />
-                    <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
-                    <ProtectedRoute path="/admin-panel" component={AdminPanel} />
-                    <ProtectedRoute path="/admin" component={AdminPanel} />
-                    <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
-                    <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
-                    <ProtectedRoute path="/vita-assist" component={VitaAssist} />
-                    <ProtectedRoute path="/minha-clinica" component={MyClinic} />
-                    {/* 404 para rotas autenticadas não encontradas */}
-                    <Route component={NotFound} />
-                  </Switch>
-                </Suspense>
-                <CommandPalette />
-                <OnboardingTour />
-              </TooltipProvider>
-            </ThemeProvider>
-          </SidebarProvider>
-        </UploadManagerProvider>
+        <ConsultationRecordingProvider>
+          <UploadManagerProvider>
+            <SidebarProvider>
+              <ThemeProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <AuthenticatedScripts />
+                  <Suspense fallback={<SystemLoadingFallback />}>
+                    <Switch>
+                      {/* Redirect /dashboard to /agenda for legacy URLs */}
+                      <Route path="/dashboard">{() => { window.location.replace('/agenda'); return null; }}</Route>
+                      <ProtectedRoute path="/agenda" component={Agenda} />
+                      <ProtectedRoute path="/pacientes" component={Patients} />
+                      <ProtectedRoute path="/upload" component={UploadExams} />
+                      <ProtectedRoute path="/upload-exams" component={UploadExams} />
+                      <ProtectedRoute path="/history" component={ExamHistory} />
+                      <ProtectedRoute path="/exam-history" component={ExamHistory} />
+                      <ProtectedRoute path="/report/:id" component={ExamReport} />
+                      <ProtectedRoute path="/diagnosis/:id" component={DiagnosisPage} />
+                      <ProtectedRoute path="/results" component={ExamResults} />
+                      <ProtectedRoute path="/results/:id" component={ExamResultSingle} />
+                      <ProtectedRoute path="/health-trends" component={HealthTrends} />
+                      <ProtectedRoute path="/atendimento" component={PatientView} />
+                      <ProtectedRoute path="/exam-timeline" component={ExamTimeline} />
+                      <ProtectedRoute path="/profile" component={Profile} />
+                      <ProtectedRoute path="/bulk-import" component={BulkImport} />
+                      <ProtectedRoute path="/reports" component={ReportsPage} />
+                      <ProtectedRoute path="/subscription" component={SubscriptionManagement} />
+                      <ProtectedRoute path="/admin-panel" component={AdminPanel} />
+                      <ProtectedRoute path="/admin" component={AdminPanel} />
+                      <ProtectedRoute path="/admin/knowledge-base" component={KnowledgeBaseAdmin} />
+                      <ProtectedRoute path="/admin/ai-costs" component={AdminAICosts} />
+                      <ProtectedRoute path="/vita-assist" component={VitaAssist} />
+                      <ProtectedRoute path="/minha-clinica" component={MyClinic} />
+                      {/* 404 para rotas autenticadas não encontradas */}
+                      <Route component={NotFound} />
+                    </Switch>
+                  </Suspense>
+                  <CommandPalette />
+                  <OnboardingTour />
+                </TooltipProvider>
+              </ThemeProvider>
+            </SidebarProvider>
+          </UploadManagerProvider>
+        </ConsultationRecordingProvider>
       </ProfileProvider>
     </AuthProvider>
   );

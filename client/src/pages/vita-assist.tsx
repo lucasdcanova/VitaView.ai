@@ -56,6 +56,7 @@ import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { apiRequest } from "@/lib/queryClient";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { useProfiles } from "@/hooks/use-profiles";
 
 interface AIMessage {
     id: number;
@@ -82,6 +83,7 @@ interface Profile {
 
 export default function VitaAssistPage() {
     const queryClient = useQueryClient();
+    const { profiles, activeProfile } = useProfiles();
     const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
     const [inputMessage, setInputMessage] = useState("");
     const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
@@ -106,11 +108,6 @@ export default function VitaAssistPage() {
             return res.json();
         },
         enabled: !!selectedConversationId,
-    });
-
-    // Fetch profiles for context selection
-    const { data: profiles = [] } = useQuery<Profile[]>({
-        queryKey: ["/api/profiles"],
     });
 
     // Send message mutation
@@ -151,6 +148,11 @@ export default function VitaAssistPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [currentConversation?.messages]);
 
+    // Keep Vita Assist aligned with the globally selected patient.
+    useEffect(() => {
+        setSelectedProfileId(activeProfile?.id ?? null);
+    }, [activeProfile?.id]);
+
     const handleSendMessage = useCallback(() => {
         if (!inputMessage.trim() || sendMessageMutation.isPending) return;
         sendMessageMutation.mutate(inputMessage);
@@ -166,11 +168,14 @@ export default function VitaAssistPage() {
     const startNewConversation = () => {
         setSelectedConversationId(null);
         setInputMessage("");
+        setSelectedProfileId(activeProfile?.id ?? null);
         setShowHistory(false);
     };
 
     const selectConversation = (id: number) => {
         setSelectedConversationId(id);
+        const conversation = conversations.find((item) => item.id === id);
+        setSelectedProfileId(conversation?.profileId ?? activeProfile?.id ?? null);
         setShowHistory(false);
     };
 

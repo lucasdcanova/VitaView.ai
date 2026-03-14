@@ -35,6 +35,7 @@ import { Save,
 } from "lucide-react";
 import { ConsultationRecorder } from "@/components/consultation-recorder";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { useConsultationRecording } from "@/hooks/use-consultation-recording";
 
 type ExtractedDiagnosis = {
     cidCode?: string;
@@ -117,6 +118,7 @@ export function AnamnesisCard() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const { activeProfile, inServiceAppointmentId, clearPatientInService } = useProfiles();
+    const { completedResult, clearCompletedResult } = useConsultationRecording();
     const previousProfileIdRef = useRef<number | null>(null);
 
     // Limpar estado quando o paciente mudar
@@ -293,6 +295,18 @@ export function AnamnesisCard() {
             description: "A anamnese e os dados clínicos foram preenchidos. Revise antes de salvar.",
         });
     };
+
+    useEffect(() => {
+        if (!completedResult || !activeProfile?.id) return;
+        if (completedResult.profileId !== activeProfile.id) return;
+
+        handleTranscriptionComplete({
+            transcription: completedResult.transcription,
+            anamnesis: completedResult.anamnesis,
+            extractedData: completedResult.extractedData,
+        });
+        clearCompletedResult();
+    }, [activeProfile?.id, clearCompletedResult, completedResult]);
 
     const handleApplyExtraction = async (recordToApply?: ExtractedRecord) => {
         const record = recordToApply || extractedRecord;
@@ -580,8 +594,9 @@ export function AnamnesisCard() {
                         </div>
                         <FeatureGate feature="ai-recording">
                             <ConsultationRecorder
-                                onTranscriptionComplete={handleTranscriptionComplete}
                                 profileId={activeProfile?.id}
+                                patientName={activeProfile?.name}
+                                returnPath="/atendimento"
                             />
                         </FeatureGate>
                     </div>

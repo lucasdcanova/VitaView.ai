@@ -16,15 +16,25 @@ import {
   ChevronRight,
   Users,
   Sparkles,
+  ArrowUpRight,
+  Mic,
+  PauseCircle,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import ActivePatientIndicator from "@/components/active-patient-indicator";
 import { NotificationBell } from "@/components/notification-bell";
 import ThemeToggleButton from "@/components/layout/theme-toggle-button";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  formatRecordingTime,
+  useConsultationRecording,
+} from "@/hooks/use-consultation-recording";
 
 /**
  * VitaView AI Sidebar Component
@@ -46,9 +56,11 @@ export default function Sidebar(props: SidebarProps) {
   const sidebarContext = useSidebar();
   const isSidebarOpen = props.isSidebarOpen ?? sidebarContext.isSidebarOpen;
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const { activeProfile } = useProfiles();
+  const { profiles, activeProfile, setActiveProfile } = useProfiles();
+  const { recordingState, recordingTime, currentSession, errorMessage } =
+    useConsultationRecording();
   const { data: clinicContext } = useQuery<{ clinic: { name: string } | null }>({
     queryKey: ["/api/my-clinic", user?.id ?? null, user?.clinicId ?? null],
     enabled: !!user && !!user?.clinicId,
@@ -128,6 +140,110 @@ export default function Sidebar(props: SidebarProps) {
       isActive ? 'bg-charcoal text-pureWhite' : 'text-charcoal hover:bg-lightGray',
       isCollapsed && "justify-center px-2"
     );
+  };
+
+  const showRecordingNotice = Boolean(currentSession && recordingState !== "idle");
+
+  const recordingStatusMeta = showRecordingNotice
+    ? (() => {
+        switch (recordingState) {
+          case "recording":
+            return {
+              eyebrow: "Consulta em gravacao",
+              badge: "Ao vivo",
+              subtitle: "O audio continua captando a consulta mesmo fora da tela de atendimento.",
+              actionLabel: "Voltar para gravacao",
+              containerClass:
+                "border-red-200/80 bg-[linear-gradient(135deg,rgba(254,242,242,0.98),rgba(255,255,255,0.98),rgba(255,237,213,0.82))] shadow-[0_18px_45px_-28px_rgba(239,68,68,0.6)]",
+              iconWrapperClass:
+                "border-red-200/80 bg-red-500 text-white shadow-[0_16px_32px_-20px_rgba(239,68,68,0.85)]",
+              badgeClass: "bg-red-600 text-white",
+              timerClass: "border-red-200/80 bg-white/90 text-red-700",
+              icon: (
+                <div className="relative flex items-center justify-center">
+                  <Mic className="h-5 w-5" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-white/95 shadow-[0_0_0_3px_rgba(239,68,68,0.22)]" />
+                </div>
+              ),
+            };
+          case "paused":
+            return {
+              eyebrow: "Consulta pausada",
+              badge: "Pausada",
+              subtitle: "A consulta segue aberta. Retome a gravacao ou volte ao atendimento quando precisar.",
+              actionLabel: "Retomar consulta",
+              containerClass:
+                "border-amber-200/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(255,255,255,0.98),rgba(255,247,237,0.86))] shadow-[0_18px_45px_-28px_rgba(217,119,6,0.45)]",
+              iconWrapperClass:
+                "border-amber-200/80 bg-amber-500/95 text-white shadow-[0_16px_32px_-20px_rgba(217,119,6,0.75)]",
+              badgeClass: "bg-amber-500 text-white",
+              timerClass: "border-amber-200/80 bg-white/90 text-amber-700",
+              icon: <PauseCircle className="h-5 w-5" />,
+            };
+          case "processing":
+            return {
+              eyebrow: "Processando consulta",
+              badge: "IA ativa",
+              subtitle: "A transcricao esta sendo preparada para entrar na anamnese automaticamente.",
+              actionLabel: "Acompanhar processamento",
+              containerClass:
+                "border-slate-200/90 bg-[linear-gradient(135deg,rgba(248,250,252,0.99),rgba(255,255,255,0.99),rgba(241,245,249,0.92))] shadow-[0_18px_45px_-30px_rgba(15,23,42,0.28)]",
+              iconWrapperClass:
+                "border-slate-200/80 bg-slate-900 text-white shadow-[0_16px_32px_-22px_rgba(15,23,42,0.85)]",
+              badgeClass: "bg-slate-900 text-white",
+              timerClass: "border-slate-200/80 bg-white/92 text-slate-700",
+              icon: <BrandLoader className="h-5 w-5 animate-spin text-white" />,
+            };
+          case "success":
+            return {
+              eyebrow: "Anamnese pronta",
+              badge: "Pronta",
+              subtitle: "A IA concluiu a transcricao. Volte para revisar e salvar o atendimento.",
+              actionLabel: "Revisar anamnese",
+              containerClass:
+                "border-emerald-200/80 bg-[linear-gradient(135deg,rgba(236,253,245,0.98),rgba(255,255,255,0.98),rgba(240,253,250,0.86))] shadow-[0_18px_45px_-28px_rgba(16,185,129,0.38)]",
+              iconWrapperClass:
+                "border-emerald-200/80 bg-emerald-500 text-white shadow-[0_16px_32px_-20px_rgba(16,185,129,0.78)]",
+              badgeClass: "bg-emerald-600 text-white",
+              timerClass: "border-emerald-200/80 bg-white/92 text-emerald-700",
+              icon: <CheckCircle2 className="h-5 w-5" />,
+            };
+          case "error":
+            return {
+              eyebrow: "Falha na gravacao",
+              badge: "Atencao",
+              subtitle:
+                errorMessage ||
+                "Encontramos um problema na gravacao. Volte para revisar a consulta.",
+              actionLabel: "Voltar para gravacao",
+              containerClass:
+                "border-rose-200/80 bg-[linear-gradient(135deg,rgba(255,241,242,0.98),rgba(255,255,255,0.98),rgba(255,245,245,0.9))] shadow-[0_18px_45px_-28px_rgba(244,63,94,0.36)]",
+              iconWrapperClass:
+                "border-rose-200/80 bg-rose-500 text-white shadow-[0_16px_32px_-20px_rgba(244,63,94,0.72)]",
+              badgeClass: "bg-rose-600 text-white",
+              timerClass: "border-rose-200/80 bg-white/92 text-rose-700",
+              icon: <AlertTriangle className="h-5 w-5" />,
+            };
+          default:
+            return null;
+        }
+      })()
+    : null;
+
+  const handleReturnToRecording = () => {
+    if (!currentSession) return;
+
+    const recordingProfile =
+      currentSession.profileId !== null
+        ? profiles.find((profile) => profile.id === currentSession.profileId) || null
+        : null;
+
+    if (recordingProfile && activeProfile?.id !== recordingProfile.id) {
+      setActiveProfile(recordingProfile);
+    }
+
+    setLocation(currentSession.returnPath || "/atendimento");
+    handleNavClick();
   };
 
   // Estilo dos ícones
@@ -294,6 +410,123 @@ export default function Sidebar(props: SidebarProps) {
             <ActivePatientIndicator className="w-full" surface="glass" />
           )}
         </div>
+
+        {showRecordingNotice && recordingStatusMeta ? (
+          <div
+            className={cn(
+              "relative z-10 border-b border-lightGray/80 bg-gradient-to-b from-pureWhite/70 via-pureWhite/40 to-pureWhite/10 backdrop-blur-sm",
+              isCollapsed ? "p-2" : "px-3 pb-3 pt-2"
+            )}
+          >
+            {isCollapsed ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={handleReturnToRecording}
+                      className={cn(
+                        "relative flex h-12 w-full items-center justify-center rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+                        recordingStatusMeta.containerClass
+                      )}
+                      aria-label="Voltar para a consulta em gravacao"
+                    >
+                      {recordingStatusMeta.icon}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="ml-2 max-w-[220px] rounded-xl border-0 bg-charcoal text-pureWhite">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pureWhite/70">
+                        {recordingStatusMeta.eyebrow}
+                      </p>
+                      <p className="text-sm font-semibold">
+                        {currentSession?.patientName || "Paciente selecionado"}
+                      </p>
+                      <p className="text-xs text-pureWhite/80">
+                        Tempo: {formatRecordingTime(recordingTime)}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <div
+                className={cn(
+                  "rounded-[22px] border p-3.5 transition-all duration-300",
+                  recordingStatusMeta.containerClass
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border",
+                      recordingStatusMeta.iconWrapperClass
+                    )}
+                  >
+                    {recordingStatusMeta.icon}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-charcoal/65">
+                          {recordingStatusMeta.eyebrow}
+                        </p>
+                        <p
+                          className="mt-1 truncate text-sm font-semibold text-charcoal"
+                          title={currentSession?.patientName || "Paciente selecionado"}
+                        >
+                          {currentSession?.patientName || "Paciente selecionado"}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          recordingStatusMeta.badgeClass
+                        )}
+                      >
+                        {recordingStatusMeta.badge}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-xs leading-5 text-charcoal/75">
+                      {recordingStatusMeta.subtitle}
+                    </p>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <div
+                        className={cn(
+                          "rounded-2xl border px-3 py-2 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset]",
+                          recordingStatusMeta.timerClass
+                        )}
+                      >
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-70">
+                          Tempo
+                        </p>
+                        <p className="font-mono text-lg font-semibold">
+                          {formatRecordingTime(recordingTime)}
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={handleReturnToRecording}
+                        className="h-auto flex-1 rounded-2xl bg-charcoal px-4 py-3 text-left text-pureWhite shadow-[0_14px_28px_-20px_rgba(33,33,33,0.85)] transition-all duration-200 hover:bg-charcoal/92"
+                      >
+                        <span className="flex w-full items-center justify-between gap-3">
+                          <span className="text-sm font-semibold">
+                            {recordingStatusMeta.actionLabel}
+                          </span>
+                          <ArrowUpRight className="h-4 w-4 shrink-0" />
+                        </span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         {/* Navigation + Bottom Actions */}
         <div className={cn("relative z-10 flex-1 min-h-0 flex flex-col overflow-y-auto", isCollapsed ? "p-2 pb-1" : "p-4 pb-1")}>
