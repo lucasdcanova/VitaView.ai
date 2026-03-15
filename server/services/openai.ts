@@ -690,7 +690,7 @@ const fallbackAnamnesisExtraction = (text: string, encounterDate = getTodayIsoDa
       frequency: item.frequency,
       format: item.format,
       startDate: encounterDate,
-      notes: "Detectado automaticamente na anamnese",
+      notes: null,
       isActive: true,
     }));
 
@@ -699,13 +699,13 @@ const fallbackAnamnesisExtraction = (text: string, encounterDate = getTodayIsoDa
     .map((item) => ({
       allergen: item.allergen,
       severity: item.severity,
-      notes: "Detectado automaticamente na anamnese",
+      notes: null,
       allergenType: "medication",
       reaction: null,
     }));
 
   return {
-    summary: "Extração local enriquecida a partir da narrativa clínica.",
+    summary: "",
     diagnoses: inferredDiagnoses,
     medications,
     allergies,
@@ -1933,6 +1933,13 @@ Você é um médico especialista em clínica integrativa.
 Analise a anamnese abaixo e extraia o máximo possível de informações clínicas estruturadas, sem inventar fatos.
 
 REGRAS OBRIGATÓRIAS:
+- Use apenas dados realmente presentes no texto.
+- Escreva o campo "summary" em linguagem clínica natural, breve e objetiva, como um colega resumindo o caso.
+- Nunca use no "summary" ou em qualquer campo "notes" frases metalinguísticas sobre ausência de dados ou sobre o processo de extração.
+- São proibidas expressões como: "não foi dito", "não se pode identificar", "não informado", "não relatado", "não mencionado", "sem dados", "sem informações", "detectado automaticamente", "gerado automaticamente" e "a partir das informações prestadas".
+- Quando uma categoria não aparecer no texto, retorne array vazio para essa categoria.
+- Se um item estiver mencionado, mas algum detalhe daquele item faltar, use null apenas nos campos desconhecidos.
+- Em "notes", registre somente observações clínicas úteis, como hipótese, contexto temporal, controle da doença ou resposta a tratamento. Nunca descreva a extração.
 - Se um diagnóstico estiver escrito de forma explícita, inclua-o em "diagnoses" mesmo que o texto esteja bruto ou telegráfico.
 - Sempre que houver um diagnóstico nominal, tente associar o CID-10 mais adequado.
 - Se qualquer campo de data estiver ausente, preencha com a data atual da consulta (${encounterDate}).
@@ -1971,7 +1978,13 @@ Anamnese:
 
     const response = await openai.chat.completions.create({
       model: model,
-      messages: [{ role: "user", content: instructions }],
+      messages: [
+        {
+          role: "system",
+          content: "Você escreve resumos clínicos naturais, concisos e humanos. Quando faltar informação, apenas omita o que não foi mencionado e nunca explique a ausência de dados."
+        },
+        { role: "user", content: instructions }
+      ],
       temperature: 0.2,
       max_tokens: 1200, // corrected property name from max_output_tokens
     });
@@ -2272,7 +2285,7 @@ export async function processTranscriptionToAnamnesis(transcription: string, pat
 
   const prompt = `
 Você é um médico especialista com vasta experiência em documentação clínica.
-Sua tarefa é transformar a transcrição de uma consulta médica em uma anamnese profissional completa.
+Sua tarefa é transformar a transcrição de uma consulta médica em uma anamnese profissional completa, com redação natural e fluida, como se tivesse sido escrita pelo médico ao final da consulta.
 
 ${patientContext ? `### CONTEXTO DO PACIENTE:\n${patientContext}\n` : ''}
 
@@ -2289,9 +2302,13 @@ ${transcription}
 5. Sempre que um diagnóstico estiver explicitamente citado, associe o CID-10 mais adequado
 6. Se qualquer campo de data estiver ausente, use a data atual da consulta (${encounterDate})
 7. Diferencie hipótese diagnóstica de diagnóstico já estabelecido usando o campo notes
-8. Use terminologia médica apropriada
-9. Mantenha objetividade e clareza
-10. CRÍTICO: Sempre quando nao houver informacoes sobre um topico, OMITA esse topico completamente. Por exemplo, se o paciente nao falou sobre Historico Social, não coloque como "nao informado", apenas omita na evolucao medica. Faça isso com toda e qualquer informação.
+8. Use terminologia médica apropriada, mas mantenha a redação humana, direta e natural
+9. Mantenha objetividade e clareza, evitando listas mecânicas quando a narrativa clínica for mais adequada
+10. Quando não houver informações sobre um tópico, omita o tópico completamente
+11. Nunca use frases metalinguísticas ou justificativas sobre ausência de dados
+12. São proibidas expressões como: "não foi dito", "não se pode identificar", "não informado", "não relatado", "não mencionado", "sem dados", "sem informações", "detectado automaticamente", "gerado automaticamente", "transcrição automática" e "revisão médica recomendada"
+13. Não faça comentários sobre IA, transcrição, extração automática ou necessidade de revisão
+14. No campo notes, escreva apenas observações clínicas relevantes; se não houver observação útil, use null
 
 ### FORMATO DA ANAMNESE:
 A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DADOS:
@@ -2307,6 +2324,13 @@ A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DA
 - **Exame Físico**: APENAS achados mencionados
 - **Impressão Diagnóstica**: Hipóteses diagnósticas
 - **Conduta**: Plano terapêutico e orientações
+
+### REGRAS PARA O JSON:
+- Retorne apenas JSON válido
+- O campo "anamnesis" deve conter somente o texto final da anamnese, pronto para prontuário
+- O campo "summary" deve ser um resumo clínico curto e natural, sem mencionar ausência de informação, extração, IA ou transcrição
+- Inclua nos arrays apenas itens efetivamente mencionados
+- Para detalhes ausentes dentro de um item citado, use null
 
 ### RESPOSTA (JSON):
 {
@@ -2338,6 +2362,10 @@ A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DA
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
+        {
+          role: "system",
+          content: "Você redige documentos clínicos em português do Brasil com linguagem natural, profissional e humana. Se um dado não foi mencionado, apenas omita esse conteúdo sem comentar a ausência."
+        },
         { role: "user", content: prompt }
       ],
       temperature: 0.3,
@@ -2403,19 +2431,10 @@ function generateFallbackAnamnesis(transcription: string): {
   return {
     anamnesis: `**ANAMNESE - ${today}**
 
-**Queixa Principal:**
-Consulta médica transcrita automaticamente.
-
-**História da Doença Atual:**
-${transcription}
-
-**Observação:**
-Esta anamnese foi gerada a partir de transcrição automática e requer revisão médica.
-
----
-*Documento gerado automaticamente pelo VitaView AI*`,
+**História Clínica:**
+${transcription.trim()}`,
     extractedData: {
-      summary: extractedData.summary || "Anamnese gerada a partir de transcrição de consulta. Revisão manual recomendada.",
+      summary: extractedData.summary || "",
       diagnoses: extractedData.diagnoses,
       medications: extractedData.medications,
       allergies: extractedData.allergies,
@@ -2442,7 +2461,7 @@ export async function enhanceAnamnesisText(text: string, userId?: number, clinic
     DIRETRIZES:
     1. Preserve integralmente os fatos, negações, temporalidade e incertezas do texto original.
     2. Corrija ortografia, gramática, pontuação e concordância.
-    3. Enriqueça a redação médica: transforme anotações telegráficas em narrativa clínica clara e coesa.
+    3. Enriqueça a redação médica: transforme anotações telegráficas em narrativa clínica clara, coesa e natural, como um médico escrevendo no prontuário após a consulta.
     4. Estruture o conteúdo como registro de consulta, usando apenas as seções que realmente tenham dados:
        - **Queixa Principal**
        - **História da Doença Atual**
@@ -2453,11 +2472,14 @@ export async function enhanceAnamnesisText(text: string, userId?: number, clinic
        - **Exame Físico**
        - **Avaliação / Impressão Diagnóstica**
        - **Conduta**
-    5. Se o texto não trouxer dados para uma seção, omita a seção.
+    5. Se o texto não trouxer dados para uma seção, omita a seção sem avisar que faltam informações.
     6. Use terminologia médica adequada quando o contexto permitir, sem extrapolar o que não foi dito.
     7. NÃO invente diagnósticos, exames, achados físicos, medicamentos, doses, alergias ou condutas que não estejam no texto original.
     8. Pode reorganizar a ordem das informações para melhorar clareza clínica.
-    9. Retorne APENAS o texto final melhorado, sem introduções ou observações extras.
+    9. Nunca use frases ou variações de: "não foi dito", "não se pode identificar", "não informado", "não relatado", "não mencionado", "sem dados", "sem informações", "gerado automaticamente", "detectado automaticamente" ou "requer revisão médica".
+    10. Não faça qualquer referência a IA, transcrição, extração automática ou ao fato de o texto ter sido gerado.
+    11. Quando algo não estiver presente no texto, simplesmente não mencione esse assunto.
+    12. Retorne APENAS o texto final melhorado, sem introduções ou observações extras.
 
     TEXTO ORIGINAL:
     "${text}"
@@ -2471,7 +2493,10 @@ export async function enhanceAnamnesisText(text: string, userId?: number, clinic
     const response = await openai.chat.completions.create({
       model: model,
       messages: [
-        { role: "system", content: "Você é um assistente médico especializado em documentação clínica." },
+        {
+          role: "system",
+          content: "Você é um assistente médico especializado em documentação clínica. Escreva como um profissional humano, com linguagem natural e direta, e nunca explique a ausência de dados."
+        },
         { role: "user", content: prompt }
       ],
       temperature: 0.3,
