@@ -401,21 +401,21 @@ export default function PatientView() {
                                         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
                                         <LayoutDashboard className="h-3 w-3 mr-1" />
-                                        Atend.
+                                        Atendimento
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="timeline"
                                         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
                                         <Heart className="h-3 w-3 mr-1" />
-                                        Hist.
+                                        Histórico
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="prescricoes"
                                         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
                                         <Pill className="h-3 w-3 mr-1" />
-                                        Presc.
+                                        Prescrição
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="laboratorial"
@@ -430,7 +430,7 @@ export default function PatientView() {
                                             className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                         >
                                             <TrendingUp className="h-3 w-3 mr-1" />
-                                            Evol.
+                                            Evolução
                                         </TabsTrigger>
                                     </FeatureGate>
                                     <TabsTrigger
@@ -438,7 +438,7 @@ export default function PatientView() {
                                         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
                                         <FileSignature className="h-3 w-3 mr-1" />
-                                        Atest.
+                                        Atestados
                                     </TabsTrigger>
                                 </TabsList>
                             ) : (
