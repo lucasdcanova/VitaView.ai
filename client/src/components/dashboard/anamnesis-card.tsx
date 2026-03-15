@@ -812,7 +812,7 @@ export function AnamnesisCard() {
                                 addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
                             }}
                             disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
-                            className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
+                            className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 order-1' : 'gap-2'}`}
                         >
                             {addEvolutionMutation.isPending ? (
                                 <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
@@ -828,7 +828,7 @@ export function AnamnesisCard() {
                                 onClick={handleEnhanceAnamnesis}
                                 disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
                                 variant="outline"
-                                className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
+                                className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9 order-3' : 'gap-2'}`}
                             >
                                 {enhanceAnamnesisMutation.isPending ? (
                                     <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
@@ -843,7 +843,7 @@ export function AnamnesisCard() {
                                 type="button"
                                 onClick={handleAnalyzeAnamnesis}
                                 disabled={analyzeAnamnesisMutation.isPending}
-                                className={`gap-1.5 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
+                                className={`gap-1.5 ${isMobile ? 'text-xs h-9 order-4' : 'gap-2'}`}
                             >
                                 {analyzeAnamnesisMutation.isPending ? (
                                     <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
@@ -853,7 +853,7 @@ export function AnamnesisCard() {
                                 {isMobile ? 'Extrair IA' : 'Extrair dados com IA'}
                             </Button>
                         </FeatureGate>
-                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs col-span-2" : ""}>
+                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs order-2" : ""}>
                             Limpar texto
                         </Button>
                     </div>

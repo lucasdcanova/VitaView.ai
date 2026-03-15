@@ -1105,29 +1105,29 @@ export default function HealthTrendsNew({
                   {/* Linha do Tempo */}
                   <div className="space-y-6 pb-12">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20 shrink-0">
                           <Calendar className="h-5 w-5" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 leading-tight">Linha do Tempo Clínica</h3>
+                        <div className="min-w-0">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 leading-tight truncate">Linha do Tempo</h3>
                           <p className="text-xs text-gray-500 dark:text-slate-400">Histórico cronológico</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1 shrink-0">
                         {embedded && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 h-8 px-2"
+                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 h-8 px-1.5"
                             onClick={handleExportToPDF}
                           >
-                            <FileText className="w-4 h-4 mr-1" /> PDF
+                            <FileText className="w-4 h-4 mr-0.5" /> PDF
                           </Button>
                         )}
                         <Badge
                           variant="outline"
-                          className="border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          className="border-gray-200 bg-white px-2 py-0.5 text-xs text-gray-600 whitespace-nowrap dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         >
                           {filteredTimelineItems.length} {filteredTimelineItems.length === 1 ? "registro" : "registros"}
                         </Badge>
