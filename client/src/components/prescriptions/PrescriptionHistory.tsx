@@ -20,10 +20,10 @@ export function PrescriptionHistory({ prescriptions, onReprint, onEdit }: Prescr
     const formatMedicationNames = (meds: any[]): string => {
         if (!meds || meds.length === 0) return "Receita vazia";
         const names = meds.map(m => m.name.split(" ")[0]);
-        if (names.length <= 3) {
+        if (names.length <= 2) {
             return names.join(", ");
         }
-        return `${names.slice(0, 3).join(", ")} +${names.length - 3}`;
+        return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
     };
 
     return (
