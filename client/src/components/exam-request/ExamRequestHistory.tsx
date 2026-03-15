@@ -25,7 +25,7 @@ function RequestRow({ request, onReprint, onEdit }: { request: ExamRequestRecord
     return (
         <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
             <div className="flex items-start gap-4">
-                <div className="bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border border-gray-200">
+                <div className="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-1 rounded border border-gray-200">
                     {format(new Date(request.issueDate), "dd/MM/yyyy", { locale: ptBR })}
                 </div>
                 <div>
