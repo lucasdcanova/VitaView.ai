@@ -106,10 +106,10 @@ export function ContinuousMedicationsCard({
     return (
         <Card className="border-gray-800 shadow-md h-fit">
             <CardHeader className="bg-white border-b border-gray-200 pb-3">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle className="text-base text-gray-900 flex items-center gap-2">
-                            <Pill className="h-4 w-4 text-gray-600" />
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <CardTitle className="text-base text-gray-900 flex items-center gap-2 whitespace-nowrap">
+                            <Pill className="h-4 w-4 text-gray-600 shrink-0" />
                             Medicamentos de Uso Contínuo
                         </CardTitle>
                         <CardDescription className="text-xs">Selecione para renovar receita.</CardDescription>
@@ -118,14 +118,14 @@ export function ContinuousMedicationsCard({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="gap-2 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                            className="gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 max-w-[130px] whitespace-normal text-center leading-tight h-auto py-1.5 text-xs shrink-0"
                             onClick={handleCheckInteractions}
                             disabled={isCheckingInteractions || medications.length < 2}
                         >
                             {isCheckingInteractions ? (
-                                <BrandLoader className="h-4 w-4 animate-spin" />
+                                <BrandLoader className="h-4 w-4 animate-spin shrink-0" />
                             ) : (
-                                <Sparkles className="h-4 w-4 text-yellow-500" />
+                                <Sparkles className="h-4 w-4 text-yellow-500 shrink-0" />
                             )}
                             Checar Interação com IA
                         </Button>
