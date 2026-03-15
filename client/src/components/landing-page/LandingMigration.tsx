@@ -3,6 +3,7 @@ import { motion, useInView, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   CalendarDays,
+  CheckCircle2,
   Clock3,
   Database,
   FileText,
@@ -15,10 +16,15 @@ import {
 import { useRef } from "react";
 import { Link } from "wouter";
 
-type AssetItem = {
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+type AssetDef = {
   icon: LucideIcon;
   label: string;
-  className: string;
+  pillCls: string;
+  svgPath: string;
+  delay: number;
+  dur: number;
 };
 
 type MigrationStep = {
@@ -26,160 +32,148 @@ type MigrationStep = {
   description: string;
 };
 
-type TransferPath = {
-  id: string;
-  d: string;
-  delay: number;
-  duration: number;
-  endX: number;
-  endY: number;
-};
+// ─── Constants ─────────────────────────────────────────────────────────────
 
-const assets: AssetItem[] = [
+// Hub center in SVG viewBox "0 0 400 210"
+const HX = 200;
+const HY = 152;
+
+const ASSETS: AssetDef[] = [
   {
     icon: Users,
     label: "Pacientes",
-    className: "left-2 top-4 sm:left-4 sm:top-6",
+    // pill left-edge ≈ 18px → center ≈ 63px → SVG x ≈ 63
+    pillCls: "left-[5%] top-[6%]",
+    svgPath: `M68 28 C108 62 156 106 ${HX} ${HY}`,
+    delay: 0,
+    dur: 2.6,
   },
   {
     icon: CalendarDays,
     label: "Consultas",
-    className: "right-2 top-4 sm:right-4 sm:top-6",
+    pillCls: "right-[5%] top-[6%]",
+    svgPath: `M332 28 C292 62 244 106 ${HX} ${HY}`,
+    delay: 0.22,
+    dur: 2.6,
+  },
+  {
+    icon: FileText,
+    label: "Prontuários",
+    pillCls: "left-1/2 -translate-x-1/2 top-[1%]",
+    svgPath: `M200 16 C200 55 200 102 ${HX} ${HY}`,
+    delay: 0.44,
+    dur: 2.4,
   },
   {
     icon: Clock3,
-    label: "Hor\u00e1rios",
-    className: "left-6 top-[6.3rem] sm:left-12 sm:top-[7.5rem]",
+    label: "Horários",
+    pillCls: "left-[10%] top-[38%]",
+    svgPath: `M92 94 C124 114 162 134 ${HX} ${HY}`,
+    delay: 0.66,
+    dur: 2.2,
   },
   {
     icon: Phone,
     label: "Telefones",
-    className: "right-5 top-[6.7rem] sm:right-10 sm:top-[7.7rem]",
-  },
-  {
-    icon: FileText,
-    label: "Prontu\u00e1rios",
-    className: "left-1/2 top-[3.7rem] -translate-x-1/2 sm:top-[4.9rem]",
+    pillCls: "right-[10%] top-[38%]",
+    svgPath: `M308 94 C276 114 238 134 ${HX} ${HY}`,
+    delay: 0.88,
+    dur: 2.2,
   },
 ];
 
-const steps: MigrationStep[] = [
+const STEPS: MigrationStep[] = [
   {
     title: "Mapeamento da base atual",
     description:
-      "Entendemos como seu sistema antigo organiza cadastros, agenda e hist\u00f3rico antes da virada.",
+      "Entendemos como seu sistema antigo organiza cadastros, agenda e histórico antes da virada.",
   },
   {
-    title: "Importa\u00e7\u00e3o feita pela equipe",
+    title: "Importação feita pela equipe",
     description:
-      "Pacientes, consultas, hor\u00e1rios, telefones e informa\u00e7\u00f5es operacionais entram no VitaView sem retrabalho.",
+      "Pacientes, consultas, horários, telefones e informações operacionais entram no VitaView sem retrabalho.",
   },
   {
-    title: "Entrada em opera\u00e7\u00e3o com continuidade",
+    title: "Entrada em operação com continuidade",
     description:
-      "Sua cl\u00ednica segue atendendo enquanto a migra\u00e7\u00e3o acontece nos bastidores, com acompanhamento do in\u00edcio ao fim.",
+      "Sua clínica segue atendendo enquanto a migração acontece nos bastidores, com acompanhamento do início ao fim.",
   },
 ];
 
-const transferPaths: TransferPath[] = [
-  {
-    id: "patients",
-    d: "M82 44 C120 50 146 104 166 170",
-    delay: 0,
-    duration: 2.8,
-    endX: 166,
-    endY: 170,
-  },
-  {
-    id: "records",
-    d: "M210 92 C210 116 210 142 210 170",
-    delay: 0.28,
-    duration: 2.5,
-    endX: 210,
-    endY: 170,
-  },
-  {
-    id: "appointments",
-    d: "M338 44 C300 50 274 104 254 170",
-    delay: 0.56,
-    duration: 2.8,
-    endX: 254,
-    endY: 170,
-  },
-  {
-    id: "availability",
-    d: "M120 122 C150 128 170 148 188 170",
-    delay: 0.84,
-    duration: 2.4,
-    endX: 188,
-    endY: 170,
-  },
-  {
-    id: "phones",
-    d: "M300 122 C270 128 250 148 232 170",
-    delay: 1.12,
-    duration: 2.4,
-    endX: 232,
-    endY: 170,
-  },
+const RESULT_ITEMS = [
+  "Pacientes e contatos",
+  "Agenda e horários",
+  "Histórico clínico",
 ];
 
-function AssetPill({
+// ─── Pill ───────────────────────────────────────────────────────────────────
+
+function Pill({
   icon: Icon,
   label,
-  className,
+  pillCls,
   isInView,
-  prefersReducedMotion,
-}: AssetItem & { isInView: boolean; prefersReducedMotion: boolean }) {
+  reduced,
+  index,
+}: {
+  icon: LucideIcon;
+  label: string;
+  pillCls: string;
+  isInView: boolean;
+  reduced: boolean;
+  index: number;
+}) {
   return (
     <motion.div
-      className={`absolute z-20 ${className} inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-white shadow-[0_16px_30px_-18px_rgba(0,0,0,0.85)] backdrop-blur-md`}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
+      className={`absolute z-20 ${pillCls} inline-flex items-center gap-1.5 rounded-full border border-white/[0.18] bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold text-white/85 shadow-lg backdrop-blur-sm`}
+      initial={reduced ? false : { opacity: 0, y: 10, scale: 0.9 }}
       animate={
         isInView
-          ? prefersReducedMotion
-            ? { opacity: 1 }
-            : {
-                opacity: 1,
-                y: [0, -4, 0],
-                scale: 1,
-              }
-          : { opacity: 0, y: 12, scale: 0.96 }
+          ? {
+              opacity: 1,
+              scale: 1,
+              y: reduced ? 0 : [0, -3.5, 0],
+            }
+          : { opacity: 0, y: 10, scale: 0.9 }
       }
       transition={
-        prefersReducedMotion
+        reduced
           ? { duration: 0 }
           : {
-              opacity: { duration: 0.42 },
-              scale: { duration: 0.42 },
+              opacity: { duration: 0.38, delay: index * 0.08 },
+              scale: { duration: 0.38, delay: index * 0.08 },
               y: {
-                duration: 4.2,
+                duration: 3.6 + index * 0.35,
                 repeat: Infinity,
                 ease: "easeInOut",
+                delay: index * 0.5,
               },
             }
       }
     >
-      <Icon className="h-3.5 w-3.5 text-white/90" />
-      <span className="text-white/90">{label}</span>
+      <Icon className="h-3.5 w-3.5 text-white/60" />
+      {label}
     </motion.div>
   );
 }
 
+// ─── Main Component ─────────────────────────────────────────────────────────
+
 export function LandingMigration() {
-  const visualRef = useRef<HTMLDivElement | null>(null);
-  const isVisualInView = useInView(visualRef, {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const isInView = useInView(cardRef, {
     once: true,
     amount: 0.25,
-    margin: "0px 0px -12% 0px",
+    margin: "0px 0px -10% 0px",
   });
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  const reduced = useReducedMotion() ?? false;
 
   return (
     <section
       id="migracao"
       className="relative overflow-hidden bg-[#F4F2EE] py-14 text-[#212121] md:py-24 scroll-mt-20"
     >
+      {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-16 top-20 h-56 w-56 rounded-full bg-white/70 blur-3xl" />
         <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#D9D4CC]/70 blur-3xl" />
@@ -188,6 +182,8 @@ export function LandingMigration() {
 
       <div className="container relative z-10 mx-auto px-5 sm:px-6 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-[0.96fr_1.04fr] lg:gap-16">
+
+          {/* ── LEFT: Text column ── */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -196,27 +192,27 @@ export function LandingMigration() {
           >
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#D4CEC4] bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#424242] backdrop-blur-md">
               <Sparkles className="h-3.5 w-3.5 text-[#212121]" />
-              {"Migra\u00e7\u00e3o assistida de outro sistema"}
+              {"Migração assistida de outro sistema"}
             </div>
 
             <h2 className="max-w-2xl text-3xl font-heading font-bold leading-[1.06] tracking-tight text-[#212121] sm:text-4xl md:text-5xl">
               {"Troque de sistema"}
-              <span className="block text-[#8A8A8A]">{"sem come\u00e7ar do zero."}</span>
+              <span className="block text-[#8A8A8A]">{"sem começar do zero."}</span>
             </h2>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-[#555555] md:text-lg">
-              {"Se hoje seus dados est\u00e3o em outro prontu\u00e1rio, a mudan\u00e7a n\u00e3o cai no colo da sua equipe. "}
-              {"O time do VitaView cuida da migra\u00e7\u00e3o completa para voc\u00ea."}
+              {"Se hoje seus dados estão em outro prontuário, a mudança não cai no colo da sua equipe. "}
+              {"O time do VitaView cuida da migração completa para você."}
             </p>
 
             <p className="mt-4 max-w-xl text-sm leading-7 text-[#6A6A6A] md:text-base">
-              {"Pacientes, consultas, hor\u00e1rios, telefones, prontu\u00e1rios e informa\u00e7\u00f5es do sistema antigo "}
-              {"entram organizados no VitaView, para sua cl\u00ednica continuar operando com continuidade, "}
-              {"n\u00e3o com retrabalho."}
+              {"Pacientes, consultas, horários, telefones, prontuários e informações do sistema antigo "}
+              {"entram organizados no VitaView, para sua clínica continuar operando com continuidade, "}
+              {"não com retrabalho."}
             </p>
 
             <div className="mt-8 space-y-4">
-              {steps.map((step, index) => (
+              {STEPS.map((step, index) => (
                 <motion.div
                   key={step.title}
                   className="flex gap-4 rounded-2xl border border-[#DDD7CE] bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(33,33,33,0.55)] backdrop-blur-sm"
@@ -248,319 +244,263 @@ export function LandingMigration() {
                 </Button>
               </Link>
               <p className="text-sm text-[#666666]">
-                {"Sem planilha, sem copiar e colar, sem parar a rotina do consult\u00f3rio."}
+                {"Sem planilha, sem copiar e colar, sem parar a rotina do consultório."}
               </p>
             </div>
           </motion.div>
 
+          {/* ── RIGHT: Animation card ── */}
           <motion.div
-            ref={visualRef}
-            className="relative"
-            initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.98, y: 18 }}
+            ref={cardRef}
+            initial={reduced ? false : { opacity: 0, scale: 0.98, y: 18 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: true, amount: 0.28 }}
             transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="relative overflow-hidden rounded-[30px] border border-black/10 bg-[#101010] p-5 shadow-[0_36px_90px_-44px_rgba(0,0,0,0.72)] sm:p-7">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_38%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.08),transparent_30%)]" />
+            <div className="relative overflow-hidden rounded-[28px] border border-black/[0.08] bg-[#101010] p-5 shadow-[0_36px_90px_-44px_rgba(0,0,0,0.72)] sm:p-6">
+              {/* Radial inner highlight */}
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,rgba(255,255,255,0.08),transparent_45%)]" />
 
-              <div className="relative z-20 grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-white/90 backdrop-blur-md">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                      <Database className="h-5 w-5 text-white" />
+              {/* ① Header: two compact info cards */}
+              <div className="relative z-10 grid grid-cols-2 gap-2.5">
+                {[
+                  { icon: Database, label: "Sistema atual", sub: "Extraímos sem travar" },
+                  { icon: ShieldCheck, label: "Time VitaView", sub: "Migração por nós" },
+                ].map(({ icon: Icon, label, sub }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.05] p-3.5"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                      <Icon className="h-[15px] w-[15px] text-white/55" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
-                        {"Sistema atual"}
+                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/30">
+                        {label}
                       </p>
-                      <h3 className="mt-1 text-sm font-bold text-white sm:text-base">
-                        {"Extra\u00edmos a base sem travar a opera\u00e7\u00e3o"}
-                      </h3>
+                      <p className="mt-0.5 text-[11px] font-semibold leading-tight text-white/75">
+                        {sub}
+                      </p>
                     </div>
                   </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-white/90 backdrop-blur-md">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                      <ShieldCheck className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
-                        Time VitaView
-                      </p>
-                      <h3 className="mt-1 text-sm font-bold text-white sm:text-base">
-                        {"Nossa equipe faz a migra\u00e7\u00e3o por voc\u00ea"}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              <div className="relative mt-5 h-[23rem] sm:h-[25rem]">
-                {assets.map((asset) => (
-                  <AssetPill
-                    key={asset.label}
-                    {...asset}
-                    isInView={isVisualInView}
-                    prefersReducedMotion={prefersReducedMotion}
+              {/* ② Animation zone — dedicated, nothing overlaps it */}
+              <div className="relative mt-4 h-[210px] overflow-hidden rounded-2xl bg-white/[0.02]">
+                {/* Subtle depth gradient */}
+                <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_72%,rgba(255,255,255,0.05),transparent_55%)]" />
+
+                {/* Floating data pills */}
+                {ASSETS.map((a, i) => (
+                  <Pill
+                    key={a.label}
+                    icon={a.icon}
+                    label={a.label}
+                    pillCls={a.pillCls}
+                    isInView={isInView}
+                    reduced={reduced}
+                    index={i}
                   />
                 ))}
 
+                {/* SVG: paths + hub — fills full zone */}
                 <motion.svg
-                  viewBox="0 0 420 320"
+                  viewBox="0 0 400 210"
                   className="absolute inset-0 z-10 h-full w-full"
                   initial={false}
-                  animate={isVisualInView ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{ duration: 0.25 }}
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <defs>
-                    <linearGradient id="migration-line" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
-                      <stop offset="48%" stopColor="rgba(255,255,255,0.52)" />
-                      <stop offset="100%" stopColor="rgba(255,255,255,0.08)" />
+                    <linearGradient id="migLine" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.03)" />
+                      <stop offset="50%" stopColor="rgba(255,255,255,0.48)" />
+                      <stop offset="100%" stopColor="rgba(255,255,255,0.03)" />
                     </linearGradient>
-                    <linearGradient id="migration-rail" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
-                      <stop offset="50%" stopColor="rgba(255,255,255,0.72)" />
-                      <stop offset="100%" stopColor="rgba(255,255,255,0.10)" />
-                    </linearGradient>
+                    <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
+                      <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                    </radialGradient>
                   </defs>
 
-                  {transferPaths.map((path) => (
+                  {/* Transfer paths */}
+                  {ASSETS.map((a, i) => (
                     <motion.path
-                      key={path.id}
-                      d={path.d}
+                      key={a.label}
+                      d={a.svgPath}
                       fill="none"
-                      stroke="url(#migration-line)"
-                      strokeWidth="1.35"
+                      stroke="url(#migLine)"
+                      strokeWidth="1.2"
                       strokeLinecap="round"
-                      strokeDasharray="4 8"
-                      initial={prefersReducedMotion ? false : { pathLength: 0, opacity: 0.2 }}
+                      strokeDasharray="3 8"
+                      initial={reduced ? false : { pathLength: 0, opacity: 0.1 }}
                       animate={
-                        isVisualInView
-                          ? prefersReducedMotion
-                            ? { pathLength: 1, opacity: 0.78 }
-                            : { pathLength: 1, opacity: 0.9 }
-                          : { pathLength: 0, opacity: 0.2 }
+                        isInView
+                          ? { pathLength: 1, opacity: 0.88 }
+                          : { pathLength: 0, opacity: 0.1 }
                       }
                       transition={{
-                        duration: prefersReducedMotion ? 0 : 0.82,
-                        delay: path.delay * 0.14,
+                        duration: reduced ? 0 : 0.7,
+                        delay: reduced ? 0 : i * 0.08,
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     />
                   ))}
 
-                  <motion.rect
-                    x="180"
-                    y="156"
-                    width="60"
-                    height="28"
-                    rx="14"
-                    fill="rgba(255,255,255,0.05)"
-                    stroke="rgba(255,255,255,0.14)"
-                    strokeWidth="1"
-                    initial={prefersReducedMotion ? false : { opacity: 0.35, scale: 0.96 }}
+                  {/* Hub: outer glow */}
+                  <motion.circle
+                    cx={HX}
+                    cy={HY}
+                    r="40"
+                    fill="url(#hubGlow)"
+                    initial={reduced ? false : { opacity: 0 }}
                     animate={
-                      isVisualInView
-                        ? prefersReducedMotion
-                          ? { opacity: 0.9, scale: 1 }
-                          : { opacity: [0.4, 0.95, 0.4], scale: [0.98, 1.02, 0.98] }
-                        : { opacity: 0.35, scale: 0.96 }
+                      isInView
+                        ? reduced
+                          ? { opacity: 1 }
+                          : { opacity: [0.3, 0.8, 0.3] }
+                        : { opacity: 0 }
                     }
                     transition={{
-                      duration: prefersReducedMotion ? 0 : 2.8,
-                      repeat: prefersReducedMotion ? 0 : Infinity,
+                      duration: 2.6,
+                      repeat: reduced ? 0 : Infinity,
                       ease: "easeInOut",
+                      delay: 0.5,
                     }}
                   />
 
-                  <motion.path
-                    d="M166 170 H254"
+                  {/* Hub: outer ring */}
+                  <motion.circle
+                    cx={HX}
+                    cy={HY}
+                    r="25"
                     fill="none"
-                    stroke="url(#migration-rail)"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    initial={prefersReducedMotion ? false : { pathLength: 0, opacity: 0.24 }}
+                    stroke="rgba(255,255,255,0.09)"
+                    strokeWidth="1"
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.55 }}
+                  />
+
+                  {/* Hub: main circle — pulses */}
+                  <motion.circle
+                    cx={HX}
+                    cy={HY}
+                    r="17"
+                    fill="rgba(255,255,255,0.07)"
+                    stroke="rgba(255,255,255,0.22)"
+                    strokeWidth="1.2"
+                    initial={reduced ? false : { opacity: 0 }}
                     animate={
-                      isVisualInView
-                        ? prefersReducedMotion
-                          ? { pathLength: 1, opacity: 0.72 }
-                          : { pathLength: 1, opacity: 0.94 }
-                        : { pathLength: 0, opacity: 0.24 }
+                      isInView
+                        ? reduced
+                          ? { opacity: 1 }
+                          : { opacity: [0.6, 1, 0.6] }
+                        : { opacity: 0 }
                     }
                     transition={{
-                      duration: prefersReducedMotion ? 0 : 0.68,
-                      delay: 0.45,
-                      ease: [0.22, 1, 0.36, 1],
+                      duration: 2.4,
+                      repeat: reduced ? 0 : Infinity,
+                      ease: "easeInOut",
+                      delay: 0.6,
                     }}
                   />
 
-                  <motion.path
-                    d="M210 184 C210 194 210 202 210 208"
-                    fill="none"
-                    stroke="url(#migration-line)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeDasharray="4 8"
-                    initial={prefersReducedMotion ? false : { pathLength: 0, opacity: 0.22 }}
-                    animate={
-                      isVisualInView
-                        ? prefersReducedMotion
-                          ? { pathLength: 1, opacity: 0.74 }
-                          : { pathLength: 1, opacity: 0.88 }
-                        : { pathLength: 0, opacity: 0.22 }
-                    }
-                    transition={{
-                      duration: prefersReducedMotion ? 0 : 0.55,
-                      delay: 0.88,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
+                  {/* Hub: inner dot */}
+                  <motion.circle
+                    cx={HX}
+                    cy={HY}
+                    r="7"
+                    fill="rgba(255,255,255,0.2)"
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.7 }}
                   />
 
-                  {transferPaths.map((path) => (
-                    <motion.circle
-                      key={`${path.id}-node`}
-                      cx={path.endX}
-                      cy={path.endY}
-                      r="4.2"
-                      fill="rgba(255,255,255,0.92)"
-                      initial={prefersReducedMotion ? false : { opacity: 0.22, scale: 0.92 }}
-                      animate={
-                        isVisualInView
-                          ? prefersReducedMotion
-                            ? { opacity: 0.92, scale: 1 }
-                            : { opacity: [0.28, 0.96, 0.28], scale: [0.94, 1.08, 0.94] }
-                          : { opacity: 0.22, scale: 0.92 }
-                      }
-                      transition={{
-                        duration: prefersReducedMotion ? 0 : 2.5,
-                        delay: path.delay * 0.18,
-                        repeat: prefersReducedMotion ? 0 : Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  ))}
+                  {/* Hub: "V" monogram */}
+                  <motion.g
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.85 }}
+                  >
+                    <text
+                      x={HX}
+                      y={HY + 4}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="800"
+                      fill="rgba(255,255,255,0.88)"
+                      fontFamily="system-ui, -apple-system, sans-serif"
+                    >
+                      V
+                    </text>
+                  </motion.g>
 
-                  {!prefersReducedMotion &&
-                    transferPaths.map((path) => (
-                      <circle key={`${path.id}-dot`} r="3.5" fill="#FFFFFF" opacity="0">
-                        {isVisualInView && (
+                  {/* Traveling dots — animate along each path */}
+                  {!reduced &&
+                    ASSETS.map((a) => (
+                      <circle key={`dot-${a.label}`} r="2.8" fill="white" opacity="0">
+                        {isInView && (
                           <>
                             <animateMotion
-                              dur={`${path.duration}s`}
-                              begin={`${path.delay}s`}
+                              dur={`${a.dur}s`}
+                              begin={`${a.delay}s`}
                               repeatCount="indefinite"
-                              path={path.d}
+                              path={a.svgPath}
                             />
                             <animate
                               attributeName="opacity"
-                              values="0;1;1;0"
-                              dur={`${path.duration}s`}
-                              begin={`${path.delay}s`}
+                              values="0;0;0.92;0.92;0"
+                              keyTimes="0;0.06;0.18;0.86;1"
+                              dur={`${a.dur}s`}
+                              begin={`${a.delay}s`}
                               repeatCount="indefinite"
                             />
                           </>
                         )}
                       </circle>
                     ))}
-
-                  {!prefersReducedMotion && (
-                    <>
-                      <circle r="3.5" fill="#FFFFFF" opacity="0">
-                        {isVisualInView && (
-                          <>
-                            <animateMotion
-                              dur="1.4s"
-                              begin="1.18s"
-                              repeatCount="indefinite"
-                              path="M166 170 H254"
-                            />
-                            <animate
-                              attributeName="opacity"
-                              values="0;1;1;0"
-                              dur="1.4s"
-                              begin="1.18s"
-                              repeatCount="indefinite"
-                            />
-                          </>
-                        )}
-                      </circle>
-                      <circle r="3.5" fill="#FFFFFF" opacity="0">
-                        {isVisualInView && (
-                          <>
-                            <animateMotion
-                              dur="1.05s"
-                              begin="1.95s"
-                              repeatCount="indefinite"
-                              path="M210 184 C210 194 210 202 210 208"
-                            />
-                            <animate
-                              attributeName="opacity"
-                              values="0;1;1;0"
-                              dur="1.05s"
-                              begin="1.95s"
-                              repeatCount="indefinite"
-                            />
-                          </>
-                        )}
-                      </circle>
-                    </>
-                  )}
                 </motion.svg>
+              </div>
 
-                <motion.div
-                  className="absolute bottom-2 left-0 right-0 z-30 rounded-[26px] border border-white/20 bg-white/[0.05] p-5 text-white shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)] backdrop-blur-md"
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-                  animate={
-                    isVisualInView
-                      ? { opacity: 1, y: 0 }
-                      : prefersReducedMotion
-                        ? { opacity: 1, y: 0 }
-                        : { opacity: 0, y: 18 }
-                  }
-                  transition={{
-                    duration: prefersReducedMotion ? 0 : 0.52,
-                    delay: 0.24,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-                        VitaView pronto
-                      </p>
-                      <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">
-                        {"Sua base chega organizada para a equipe entrar e atender."}
-                      </h3>
-                    </div>
-                    <div className="hidden rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold text-white/80 sm:block">
-                      {"Virada acompanhada"}
-                    </div>
-                  </div>
+              {/* ③ Divider */}
+              <div className="my-4 border-t border-white/[0.06]" />
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    {[
-                      "Pacientes e contatos importados",
-                      "Agenda e hor\u00e1rios preservados",
-                      "Hist\u00f3rico cl\u00ednico pronto para consulta",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/80"
-                      >
-                        <div className="mb-2 h-2 w-2 rounded-full bg-white" />
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+              {/* ④ Result strip — compact, below animation */}
+              <div className="relative z-10">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+                    VitaView pronto
+                  </p>
+                  <span className="rounded-full border border-white/[0.12] bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold text-white/55">
+                    Virada acompanhada
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {RESULT_ITEMS.map((item, i) => (
+                    <motion.div
+                      key={item}
+                      className="flex flex-col gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.04] px-3 py-3"
+                      initial={reduced ? false : { opacity: 0, y: 8 }}
+                      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                      transition={{
+                        duration: 0.38,
+                        delay: 0.28 + i * 0.07,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-white/45" />
+                      <p className="text-[11px] leading-snug text-white/60">{item}</p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
+
         </div>
       </div>
     </section>
