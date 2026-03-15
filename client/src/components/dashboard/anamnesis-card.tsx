@@ -719,12 +719,12 @@ export function AnamnesisCard() {
                     </div>
 
                     {/* Destaque para gravação de consulta */}
-                    <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25 ${isMobile ? 'p-3' : 'p-4 gap-4'}`}>
-                        <div className="flex items-center gap-2.5">
-                            <div className={`rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35 ${isMobile ? 'p-1.5' : 'p-2'}`}>
+                    <div className={`flex items-center justify-between rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25 ${isMobile ? 'p-2.5 gap-2' : 'p-4 gap-4'}`}>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`shrink-0 rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35 ${isMobile ? 'p-1.5' : 'p-2'}`}>
                                 <Mic className={`text-red-600 dark:text-red-200 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className={`font-semibold text-foreground ${isMobile ? 'text-sm' : ''}`}>Transcrição automática</p>
                                 {!isMobile && <p className="text-sm text-red-800/80 dark:text-red-100/80">Grave a consulta e a IA preenche a anamnese automaticamente</p>}
                             </div>
@@ -789,73 +789,71 @@ export function AnamnesisCard() {
                         </div>
                     </div>
                     {/* Action buttons */}
-                    <div className={isMobile ? "flex flex-col gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
-                        <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-3"}>
+                    <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                if (!anamnesisPlainText) {
+                                    toast({
+                                        title: "Texto vazio",
+                                        description: "Escreva algo para salvar.",
+                                        variant: "destructive"
+                                    });
+                                    return;
+                                }
+                                if (!activeProfile?.id) {
+                                    toast({
+                                        title: "Nenhum paciente selecionado",
+                                        description: "Selecione um paciente antes de salvar a evolução.",
+                                        variant: "destructive"
+                                    });
+                                    return;
+                                }
+                                addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
+                            }}
+                            disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
+                            className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
+                        >
+                            {addEvolutionMutation.isPending ? (
+                                <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
+                            ) : (
+                                <Save className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                            )}
+                            Salvar Consulta
+                        </Button>
+
+                        <FeatureGate feature="ai-enhance">
                             <Button
                                 type="button"
-                                onClick={() => {
-                                    if (!anamnesisPlainText) {
-                                        toast({
-                                            title: "Texto vazio",
-                                            description: "Escreva algo para salvar.",
-                                            variant: "destructive"
-                                        });
-                                        return;
-                                    }
-                                    if (!activeProfile?.id) {
-                                        toast({
-                                            title: "Nenhum paciente selecionado",
-                                            description: "Selecione um paciente antes de salvar a evolução.",
-                                            variant: "destructive"
-                                        });
-                                        return;
-                                    }
-                                    addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
-                                }}
-                                disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
-                                className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
+                                onClick={handleEnhanceAnamnesis}
+                                disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
+                                variant="outline"
+                                className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                             >
-                                {addEvolutionMutation.isPending ? (
+                                {enhanceAnamnesisMutation.isPending ? (
                                     <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
                                 ) : (
-                                    <Save className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                                    <Wand2 className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                                 )}
-                                Salvar Consulta
+                                {isMobile ? 'IA Melhorar' : 'Melhorar com IA'}
                             </Button>
-
-                            <FeatureGate feature="ai-enhance">
-                                <Button
-                                    type="button"
-                                    onClick={handleEnhanceAnamnesis}
-                                    disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
-                                    variant="outline"
-                                    className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
-                                >
-                                    {enhanceAnamnesisMutation.isPending ? (
-                                        <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
-                                    ) : (
-                                        <Wand2 className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                                    )}
-                                    {isMobile ? 'IA Melhorar' : 'Melhorar com IA'}
-                                </Button>
-                            </FeatureGate>
-                            <FeatureGate feature="ai-analyze">
-                                <Button
-                                    type="button"
-                                    onClick={handleAnalyzeAnamnesis}
-                                    disabled={analyzeAnamnesisMutation.isPending}
-                                    className={`gap-1.5 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
-                                >
-                                    {analyzeAnamnesisMutation.isPending ? (
-                                        <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
-                                    ) : (
-                                        <Sparkles className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                                    )}
-                                    {isMobile ? 'Extrair IA' : 'Extrair dados com IA'}
-                                </Button>
-                            </FeatureGate>
-                        </div>
-                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs self-start" : ""}>
+                        </FeatureGate>
+                        <FeatureGate feature="ai-analyze">
+                            <Button
+                                type="button"
+                                onClick={handleAnalyzeAnamnesis}
+                                disabled={analyzeAnamnesisMutation.isPending}
+                                className={`gap-1.5 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
+                            >
+                                {analyzeAnamnesisMutation.isPending ? (
+                                    <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
+                                ) : (
+                                    <Sparkles className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                                )}
+                                {isMobile ? 'Extrair IA' : 'Extrair dados com IA'}
+                            </Button>
+                        </FeatureGate>
+                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs col-span-2" : ""}>
                             Limpar texto
                         </Button>
                     </div>
