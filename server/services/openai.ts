@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { ExamResult, User, Exam } from "@shared/schema";
 import type { HealthMetric } from "@shared/schema";
+import { CID10_DATABASE } from "@shared/data/cid10-database";
 import type { IStorage } from "../storage";
 
 import logger from "../logger";
@@ -245,47 +246,435 @@ const formatPatientContext = (patientData?: any) => {
   `;
 };
 
-const normalizeExtractedRecord = (payload: any) => {
-  return {
-    summary: payload?.summary || "",
-    diagnoses: Array.isArray(payload?.diagnoses) ? payload.diagnoses : [],
-    medications: Array.isArray(payload?.medications) ? payload.medications : [],
-    allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
-    comorbidities: Array.isArray(payload?.comorbidities) ? payload.comorbidities : [],
-    surgeries: Array.isArray(payload?.surgeries) ? payload.surgeries : [],
-  };
-};
+const DIAGNOSIS_STATUSES = new Set(["ativo", "em_tratamento", "resolvido", "cronico"]);
+const CID_SEARCH_STOPWORDS = new Set([
+  "com",
+  "sem",
+  "para",
+  "por",
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
+  "na",
+  "no",
+  "nas",
+  "nos",
+  "em",
+  "paciente",
+  "refere",
+  "quadro",
+  "clinico",
+  "clinica",
+  "consulta",
+  "suspeita",
+  "hipotese",
+  "diagnostico",
+  "diagnostica",
+  "historico",
+  "historia",
+  "antecedente",
+  "antecedentes",
+  "cid",
+]);
 
-const fallbackDiagnosisKeywords = [
-  { term: /hipertens/i, cidCode: "I10", label: "Hipertensão arterial essencial" },
-  { term: /diabet/i, cidCode: "E11", label: "Diabetes mellitus tipo 2" },
-  { term: /asma/i, cidCode: "J45", label: "Asma" },
-  { term: /dislipidem/i, cidCode: "E78", label: "Dislipidemia" },
+const diagnosisCidHints = [
+  { pattern: /\bfaringit/i, code: "J02.9" },
+  { pattern: /\bamigdalit/i, code: "J03.9" },
+  { pattern: /\bsinusit/i, code: "J01.9" },
+  { pattern: /\botite\b/i, code: "H66.9" },
+  { pattern: /\brinite alerg/i, code: "J30.4" },
+  { pattern: /\bgastroenterit|\bdiarreia aguda|\bdiarreia infecc/i, code: "A09" },
+  { pattern: /\bcefale/i, code: "R51" },
+  { pattern: /\benxaqu/i, code: "G43.9" },
+  { pattern: /\bansiedad/i, code: "F41.1" },
+  { pattern: /\bdepress/i, code: "F32.9" },
+  { pattern: /\blombalg|\bdor lombar/i, code: "M54.5" },
+  { pattern: /\bhipertens/i, code: "I10" },
+  { pattern: /\bdiabet/i, code: "E11" },
+  { pattern: /\basma\b/i, code: "J45" },
+  { pattern: /\bdislipidem/i, code: "E78" },
 ];
 
 const fallbackMedicationKeywords = [
-  { term: /losartan/i, name: "Losartana", dosage: "50mg", frequency: "1x ao dia", format: "comprimido" },
-  { term: /metformin/i, name: "Metformina", dosage: "850mg", frequency: "2x ao dia", format: "comprimido" },
-  { term: /sinvastatin|simvastatin/i, name: "Sinvastatina", dosage: "20mg", frequency: "1x ao dia", format: "comprimido" },
+  { term: /losartan|losartana/i, name: "Losartana", dosage: "50mg", frequency: "1x ao dia", format: "comprimido" },
+  { term: /metformin|metformina/i, name: "Metformina", dosage: "850mg", frequency: "2x ao dia", format: "comprimido" },
+  { term: /sinvastatin|simvastatin|sinvastatina/i, name: "Sinvastatina", dosage: "20mg", frequency: "1x ao dia", format: "comprimido" },
+  { term: /amoxicilin|amoxicilina/i, name: "Amoxicilina", dosage: "", frequency: "", format: "comprimido" },
+  { term: /dipirona/i, name: "Dipirona", dosage: "", frequency: "", format: "comprimido" },
+  { term: /paracetamol/i, name: "Paracetamol", dosage: "", frequency: "", format: "comprimido" },
+  { term: /ibuprofeno/i, name: "Ibuprofeno", dosage: "", frequency: "", format: "comprimido" },
 ];
 
 const fallbackAllergyKeywords = [
   { term: /penicilin/i, allergen: "Penicilina", severity: "grave" },
   { term: /dipirona/i, allergen: "Dipirona", severity: "moderada" },
+  { term: /amoxicilin/i, allergen: "Amoxicilina", severity: "moderada" },
 ];
 
-const fallbackAnamnesisExtraction = (text: string) => {
-  const normalizedText = text.toLowerCase();
-  const today = new Date().toISOString().split("T")[0];
+const getTodayIsoDate = () => new Date().toISOString().split("T")[0];
 
-  const diagnoses = fallbackDiagnosisKeywords
-    .filter((item) => item.term.test(normalizedText))
-    .map((item) => ({
-      cidCode: item.cidCode,
-      status: "cronico",
-      notes: `Detectado automaticamente: ${item.label}`,
-      diagnosisDate: today,
-    }));
+const normalizeSearchText = (value?: string | null) => {
+  if (!value) return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9./\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const ensureText = (value: unknown) => {
+  if (typeof value !== "string") return "";
+  return value.trim();
+};
+
+const uniqueStrings = (values: Array<string | null | undefined>) => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const cleaned = ensureText(value);
+    if (!cleaned) continue;
+    const normalized = normalizeSearchText(cleaned);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(cleaned);
+  }
+
+  return result;
+};
+
+const isLikelyCidCode = (value?: string | null) => /^[A-Z]\d{2}(?:\.\d+)?$/i.test(ensureText(value));
+
+const findCidEntryByCode = (value?: string | null) => {
+  const code = ensureText(value).toUpperCase();
+  if (!code) return null;
+  return CID10_DATABASE.find((entry) => entry.code.toUpperCase() === code) || null;
+};
+
+const normalizeDateValue = (value: unknown): string | null => {
+  if (!value) return null;
+
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString().split("T")[0];
+  }
+
+  const raw = ensureText(value);
+  if (!raw) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const parsed = new Date(`${raw}T00:00:00`);
+    return isNaN(parsed.getTime()) ? null : raw;
+  }
+
+  const brFormat = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (brFormat) {
+    const [, dayRaw, monthRaw, yearRaw] = brFormat;
+    const day = dayRaw.padStart(2, "0");
+    const month = monthRaw.padStart(2, "0");
+    const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw;
+    const candidate = `${year}-${month}-${day}`;
+    const parsed = new Date(`${candidate}T00:00:00`);
+    return isNaN(parsed.getTime()) ? null : candidate;
+  }
+
+  const isoLike = raw.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
+  if (isoLike) {
+    const [, year, monthRaw, dayRaw] = isoLike;
+    const month = monthRaw.padStart(2, "0");
+    const day = dayRaw.padStart(2, "0");
+    const candidate = `${year}-${month}-${day}`;
+    const parsed = new Date(`${candidate}T00:00:00`);
+    return isNaN(parsed.getTime()) ? null : candidate;
+  }
+
+  return null;
+};
+
+const normalizeDiagnosisStatus = (value?: string | null) => {
+  const normalized = normalizeSearchText(value);
+  if (!normalized) return "ativo";
+  if (DIAGNOSIS_STATUSES.has(normalized)) return normalized;
+  if (normalized.includes("cron")) return "cronico";
+  if (normalized.includes("trat")) return "em_tratamento";
+  if (normalized.includes("resolv") || normalized.includes("curad") || normalized.includes("remiss")) return "resolvido";
+  return "ativo";
+};
+
+const findBestCidMatch = (query?: string | null) => {
+  const rawQuery = ensureText(query);
+  if (!rawQuery) return null;
+
+  const exactCodeMatch = findCidEntryByCode(rawQuery);
+  if (exactCodeMatch) {
+    return exactCodeMatch;
+  }
+
+  const normalizedQuery = normalizeSearchText(rawQuery);
+  if (!normalizedQuery) return null;
+
+  const hintedMatch = diagnosisCidHints.find((hint) => hint.pattern.test(normalizedQuery));
+  if (hintedMatch) {
+    const hintedEntry = findCidEntryByCode(hintedMatch.code);
+    if (hintedEntry) {
+      return hintedEntry;
+    }
+  }
+
+  const queryTokens = normalizedQuery
+    .split(" ")
+    .filter((token) => token.length > 2 && !CID_SEARCH_STOPWORDS.has(token));
+
+  let bestMatch: (typeof CID10_DATABASE)[number] | null = null;
+  let bestScore = 0;
+
+  for (const entry of CID10_DATABASE) {
+    const normalizedDescription = normalizeSearchText(entry.description);
+    if (!normalizedDescription) continue;
+
+    let score = 0;
+
+    if (normalizedDescription === normalizedQuery) score += 140;
+    if (normalizedDescription.startsWith(normalizedQuery)) score += 100;
+    if (normalizedDescription.includes(normalizedQuery)) score += 70;
+    if (normalizedQuery.includes(normalizedDescription) && normalizedDescription.length > 5) score += 55;
+
+    const matchedTokens = queryTokens.filter((token) => normalizedDescription.includes(token));
+    score += matchedTokens.reduce((total, token) => total + (token.length >= 6 ? 14 : 8), 0);
+
+    if (queryTokens.length > 0 && matchedTokens.length === queryTokens.length) {
+      score += 25;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = entry;
+      continue;
+    }
+
+    if (score === bestScore && bestMatch && score > 0) {
+      if (entry.description.length < bestMatch.description.length) {
+        bestMatch = entry;
+      }
+    }
+  }
+
+  return bestScore >= 18 ? bestMatch : null;
+};
+
+const buildDiagnosisNotes = (label?: string | null, details?: string | null, fallbackDescription?: string | null) => {
+  const parts = uniqueStrings([label, details, fallbackDescription]);
+  return parts.length > 0 ? parts.join(" | ") : null;
+};
+
+const dedupeDiagnoses = (diagnoses: any[]) => {
+  const seen = new Set<string>();
+  const result: any[] = [];
+
+  for (const diagnosis of diagnoses) {
+    if (!diagnosis) continue;
+    const key = normalizeSearchText(diagnosis.cidCode || diagnosis.notes || "");
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(diagnosis);
+  }
+
+  return result;
+};
+
+const dedupeByKey = (items: any[], selector: (item: any) => string) => {
+  const seen = new Set<string>();
+  const result: any[] = [];
+
+  for (const item of items) {
+    if (!item) continue;
+    const key = normalizeSearchText(selector(item));
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+  }
+
+  return result;
+};
+
+const normalizeDiagnosisEntry = (entry: any, encounterDate: string) => {
+  const rawDiagnosis = typeof entry === "string" ? { notes: entry } : (entry || {});
+  const label =
+    ensureText(rawDiagnosis.condition) ||
+    ensureText(rawDiagnosis.diagnosis) ||
+    ensureText(rawDiagnosis.name) ||
+    ensureText(rawDiagnosis.label);
+  const detailText =
+    ensureText(rawDiagnosis.notes) ||
+    ensureText(rawDiagnosis.description) ||
+    ensureText(rawDiagnosis.observation);
+  const cidMatch =
+    findBestCidMatch(rawDiagnosis.cidCode) ||
+    findBestCidMatch(label) ||
+    findBestCidMatch(detailText);
+  const cidCode = cidMatch?.code || (isLikelyCidCode(rawDiagnosis.cidCode) ? ensureText(rawDiagnosis.cidCode).toUpperCase() : "");
+  const diagnosisDate =
+    normalizeDateValue(rawDiagnosis.diagnosisDate) ||
+    normalizeDateValue(rawDiagnosis.diagnosis_date) ||
+    encounterDate;
+
+  return {
+    cidCode,
+    status: normalizeDiagnosisStatus(rawDiagnosis.status || label || detailText),
+    diagnosisDate,
+    notes: buildDiagnosisNotes(label, detailText, cidMatch?.description || null),
+  };
+};
+
+const normalizeMedicationEntry = (entry: any) => {
+  const rawMedication = typeof entry === "string" ? { name: entry } : (entry || {});
+  const name = ensureText(rawMedication.name) || ensureText(rawMedication.medication);
+  if (!name) return null;
+
+  return {
+    name,
+    dosage: ensureText(rawMedication.dosage) || ensureText(rawMedication.dose) || "",
+    frequency: ensureText(rawMedication.frequency) || "",
+    format: ensureText(rawMedication.format) || "",
+    startDate: normalizeDateValue(rawMedication.startDate) || normalizeDateValue(rawMedication.start_date),
+    notes: ensureText(rawMedication.notes) || ensureText(rawMedication.description) || null,
+    isActive: rawMedication.isActive !== false,
+  };
+};
+
+const normalizeAllergyEntry = (entry: any) => {
+  const rawAllergy = typeof entry === "string" ? { allergen: entry } : (entry || {});
+  const allergen = ensureText(rawAllergy.allergen) || ensureText(rawAllergy.name);
+  if (!allergen) return null;
+
+  return {
+    allergen,
+    allergenType: ensureText(rawAllergy.allergenType) || ensureText(rawAllergy.type) || "medication",
+    reaction: ensureText(rawAllergy.reaction) || null,
+    severity: ensureText(rawAllergy.severity) || null,
+    notes: ensureText(rawAllergy.notes) || null,
+  };
+};
+
+const normalizeSurgeryEntry = (entry: any) => {
+  const rawSurgery = typeof entry === "string" ? { procedureName: entry } : (entry || {});
+  const procedureName = ensureText(rawSurgery.procedureName) || ensureText(rawSurgery.name);
+  if (!procedureName) return null;
+
+  return {
+    procedureName,
+    surgeryDate: normalizeDateValue(rawSurgery.surgeryDate) || normalizeDateValue(rawSurgery.surgery_date),
+    hospitalName: ensureText(rawSurgery.hospitalName) || null,
+    surgeonName: ensureText(rawSurgery.surgeonName) || null,
+    notes: ensureText(rawSurgery.notes) || null,
+  };
+};
+
+const inferDiagnosesFromText = (text: string, encounterDate: string) => {
+  const segments = text
+    .split(/\n|[.;]+/)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length >= 4 && segment.length <= 160);
+  const diagnoses: any[] = [];
+
+  for (const segment of segments) {
+    const normalizedSegment = normalizeSearchText(segment);
+    if (!normalizedSegment) continue;
+
+    for (const hint of diagnosisCidHints) {
+      if (!hint.pattern.test(normalizedSegment)) continue;
+      const resolvedCid = findBestCidMatch(segment) || findCidEntryByCode(hint.code);
+      diagnoses.push({
+        cidCode: resolvedCid?.code || hint.code,
+        status: normalizeDiagnosisStatus(segment),
+        diagnosisDate: encounterDate,
+        notes: buildDiagnosisNotes(segment, null, resolvedCid?.description || null),
+      });
+    }
+
+    if (/(diagnost|hipotese|impressao|avaliacao|antecedent|historico|historia de|comorbidade)/i.test(normalizedSegment)) {
+      const cleanedSegment = segment
+        .replace(/.*?(diagn[oó]stic[oa]?|hip[oó]tese diagn[oó]stica|impress[aã]o diagn[oó]stica|avalia[cç][aã]o|antecedentes?|hist[oó]rico(?: de)?|historia de|comorbidade)\s*(de|:|-)?\s*/i, "")
+        .trim();
+      const resolvedCid = findBestCidMatch(cleanedSegment);
+      if (resolvedCid) {
+        diagnoses.push({
+          cidCode: resolvedCid.code,
+          status: normalizeDiagnosisStatus(cleanedSegment),
+          diagnosisDate: encounterDate,
+          notes: buildDiagnosisNotes(cleanedSegment, null, resolvedCid.description),
+        });
+      }
+    }
+  }
+
+  return dedupeDiagnoses(diagnoses);
+};
+
+const normalizeExtractedRecord = (payload: any, sourceText = "", encounterDate = getTodayIsoDate()) => {
+  const normalizedDiagnoses = Array.isArray(payload?.diagnoses)
+    ? payload.diagnoses
+        .map((entry: any) => normalizeDiagnosisEntry(entry, encounterDate))
+        .filter((entry: any) => entry && (entry.cidCode || entry.notes))
+    : [];
+  const inferredDiagnoses = sourceText ? inferDiagnosesFromText(sourceText, encounterDate) : [];
+  const diagnoses = dedupeDiagnoses([...normalizedDiagnoses, ...inferredDiagnoses]);
+
+  const medications = dedupeByKey(
+    Array.isArray(payload?.medications)
+      ? payload.medications.map((entry: any) => normalizeMedicationEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => entry.name
+  );
+
+  const allergies = dedupeByKey(
+    Array.isArray(payload?.allergies)
+      ? payload.allergies.map((entry: any) => normalizeAllergyEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => entry.allergen
+  );
+
+  const surgeries = dedupeByKey(
+    Array.isArray(payload?.surgeries)
+      ? payload.surgeries.map((entry: any) => normalizeSurgeryEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => entry.procedureName
+  );
+
+  const comorbidityValues = Array.isArray(payload?.comorbidities)
+    ? payload.comorbidities
+        .map((entry: any) => {
+          const rawValue = ensureText(entry);
+          if (!rawValue) return null;
+          const cidMatch = findBestCidMatch(rawValue);
+          if (cidMatch) return cidMatch.code;
+          if (isLikelyCidCode(rawValue)) return rawValue.toUpperCase();
+          return rawValue;
+        })
+        .filter(Boolean)
+    : [];
+
+  return {
+    summary: ensureText(payload?.summary),
+    diagnoses,
+    medications,
+    allergies,
+    comorbidities: uniqueStrings([
+      ...comorbidityValues,
+      ...diagnoses
+        .filter((diagnosis) => diagnosis.status === "cronico")
+        .map((diagnosis) => diagnosis.cidCode),
+    ]),
+    surgeries,
+  };
+};
+
+const fallbackAnamnesisExtraction = (text: string, encounterDate = getTodayIsoDate()) => {
+  const normalizedText = text.toLowerCase();
+  const inferredDiagnoses = inferDiagnosesFromText(text, encounterDate);
 
   const medications = fallbackMedicationKeywords
     .filter((item) => item.term.test(normalizedText))
@@ -294,7 +683,7 @@ const fallbackAnamnesisExtraction = (text: string) => {
       dosage: item.dosage,
       frequency: item.frequency,
       format: item.format,
-      startDate: today,
+      startDate: null,
       notes: "Detectado automaticamente na anamnese",
       isActive: true,
     }));
@@ -306,14 +695,18 @@ const fallbackAnamnesisExtraction = (text: string) => {
       severity: item.severity,
       notes: "Detectado automaticamente na anamnese",
       allergenType: "medication",
+      reaction: null,
     }));
 
   return {
-    summary: "Extração simplificada baseada em regras locais.",
-    diagnoses,
+    summary: "Extração local enriquecida a partir da narrativa clínica.",
+    diagnoses: inferredDiagnoses,
     medications,
     allergies,
-    comorbidities: diagnoses.map((item) => item.cidCode),
+    comorbidities: inferredDiagnoses
+      .filter((diagnosis) => diagnosis.status === "cronico")
+      .map((diagnosis) => diagnosis.cidCode)
+      .filter(Boolean),
     surgeries: [],
   };
 };
@@ -1523,15 +1916,23 @@ export async function extractRecordFromAnamnesis(text: string, userId?: number, 
     throw new Error("Texto da anamnese é obrigatório");
   }
 
+  const encounterDate = getTodayIsoDate();
+
   if (!process.env.OPENAI_API_KEY || !openai) {
-    return fallbackAnamnesisExtraction(text);
+    return fallbackAnamnesisExtraction(text, encounterDate);
   }
 
   const instructions = `
 Você é um médico especialista em clínica integrativa.
-Analise a anamnese abaixo e extraia apenas informações estruturadas.
+Analise a anamnese abaixo e extraia o máximo possível de informações clínicas estruturadas, sem inventar fatos.
 
-Para cada categoria, preencha os campos conhecidos e use null quando não tiver certeza.
+REGRAS OBRIGATÓRIAS:
+- Se um diagnóstico estiver escrito de forma explícita, inclua-o em "diagnoses" mesmo que o texto esteja bruto ou telegráfico.
+- Sempre que houver um diagnóstico nominal, tente associar o CID-10 mais adequado.
+- Se a data do diagnóstico não estiver explícita, mas o problema fizer parte da consulta atual, use a data da consulta atual (${encounterDate}).
+- Não invente sintomas, exames, medicamentos, alergias, cirurgias ou datas históricas.
+- Se algo estiver mencionado como hipótese, suspeita ou impressão diagnóstica, registre em notes.
+- Para cada categoria, preencha os campos conhecidos e use null quando não tiver certeza.
 Datas devem estar no formato YYYY-MM-DD.
 Status aceitos: "ativo", "em_tratamento", "resolvido", "cronico".
 
@@ -1539,7 +1940,7 @@ Responda apenas em JSON no formato:
 {
   "summary": "Resumo em 2 frases",
   "diagnoses": [
-    {"cidCode": "I10", "status": "cronico", "diagnosisDate": "2024-01-10", "notes": "Hipertensão controlada"}
+    {"cidCode": "I10", "status": "cronico", "diagnosisDate": "2024-01-10", "condition": "Hipertensão arterial sistêmica", "notes": "Hipertensão controlada"}
   ],
   "medications": [
     {"name": "Losartana", "dosage": "50mg", "frequency": "1x ao dia", "format": "comprimido", "startDate": "2023-11-01", "notes": "Uso contínuo"}
@@ -1582,12 +1983,22 @@ Anamnese:
     }
 
     const parsed = JSON.parse(jsonPayload);
-    return normalizeExtractedRecord(parsed);
+    const normalized = normalizeExtractedRecord(parsed, text, encounterDate);
+    const fallback = fallbackAnamnesisExtraction(text, encounterDate);
+
+    return {
+      summary: normalized.summary || fallback.summary,
+      diagnoses: dedupeDiagnoses([...normalized.diagnoses, ...fallback.diagnoses]),
+      medications: dedupeByKey([...normalized.medications, ...fallback.medications], (item) => item.name),
+      allergies: dedupeByKey([...normalized.allergies, ...fallback.allergies], (item) => item.allergen),
+      comorbidities: uniqueStrings([...normalized.comorbidities, ...fallback.comorbidities]),
+      surgeries: dedupeByKey([...normalized.surgeries, ...fallback.surgeries], (item) => item.procedureName),
+    };
   } catch (error) {
     logger.error("[OpenAI] Falha na extração automática da anamnese", {
       message: error instanceof Error ? error.message : String(error),
     });
-    return fallbackAnamnesisExtraction(text);
+    return fallbackAnamnesisExtraction(text, encounterDate);
   }
 }
 
@@ -1850,6 +2261,7 @@ export async function processTranscriptionToAnamnesis(transcription: string, pat
     throw new Error("OpenAI client not initialized. API key may be missing.");
   }
 
+  const encounterDate = getTodayIsoDate();
   const patientContext = patientData ? formatPatientContext(patientData) : "";
 
   const prompt = `
@@ -1867,10 +2279,13 @@ ${transcription}
 1. Analise cuidadosamente toda a transcrição da consulta
 2. Extraia todas as informações clinicamente relevantes
 3. Organize as informações no formato de anamnese médica profissional
-4. Identifique diagnósticos (com CID-10 quando possível), medicamentos, alergias, comorbidades e cirurgias prévias mencionados
-5. Use terminologia médica apropriada
-6. Mantenha objetividade e clareza
-7. CRÍTICO: Sempre quando nao houver informacoes sobre um topico, OMITA esse topico completamente. Por exemplo, se o paciente nao falou sobre Historico Social, não coloque como "nao informado", apenas omita na evolucao medica. Faça isso com toda e qualquer informação.
+4. Identifique diagnósticos, medicamentos, alergias, comorbidades e cirurgias prévias mencionados
+5. Sempre que um diagnóstico estiver explicitamente citado, associe o CID-10 mais adequado
+6. Se não houver data explícita do diagnóstico atual, use a data da consulta atual (${encounterDate})
+7. Diferencie hipótese diagnóstica de diagnóstico já estabelecido usando o campo notes
+8. Use terminologia médica apropriada
+9. Mantenha objetividade e clareza
+10. CRÍTICO: Sempre quando nao houver informacoes sobre um topico, OMITA esse topico completamente. Por exemplo, se o paciente nao falou sobre Historico Social, não coloque como "nao informado", apenas omita na evolucao medica. Faça isso com toda e qualquer informação.
 
 ### FORMATO DA ANAMNESE:
 A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DADOS:
@@ -1893,7 +2308,7 @@ A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DA
   "extractedData": {
     "summary": "Resumo em 2-3 frases do caso clínico",
     "diagnoses": [
-      {"cidCode": "Código CID-10", "status": "ativo|cronico|em_tratamento|resolvido", "diagnosisDate": "YYYY-MM-DD ou null", "notes": "Observações"}
+      {"cidCode": "Código CID-10", "status": "ativo|cronico|em_tratamento|resolvido", "diagnosisDate": "YYYY-MM-DD ou null", "condition": "Nome do diagnóstico", "notes": "Observações"}
     ],
     "medications": [
       {"name": "Nome do medicamento", "dosage": "Dosagem", "frequency": "Frequência", "format": "Forma farmacêutica", "startDate": "YYYY-MM-DD ou null", "notes": "Observações", "isActive": true}
@@ -1933,23 +2348,25 @@ A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DA
     }
 
     const parsed = JSON.parse(jsonPayload);
+    const normalizedExtractedData = normalizeExtractedRecord(parsed.extractedData, transcription, encounterDate);
+    const fallbackExtractedData = fallbackAnamnesisExtraction(transcription, encounterDate);
 
     logger.info("[OpenAI] Anamnese gerada com sucesso", {
       anamnesisLength: parsed.anamnesis?.length || 0,
-      diagnosesCount: parsed.extractedData?.diagnoses?.length || 0,
-      medicationsCount: parsed.extractedData?.medications?.length || 0,
-      surgeriesCount: parsed.extractedData?.surgeries?.length || 0
+      diagnosesCount: normalizedExtractedData.diagnoses.length,
+      medicationsCount: normalizedExtractedData.medications.length,
+      surgeriesCount: normalizedExtractedData.surgeries.length
     });
 
     return {
       anamnesis: parsed.anamnesis || "",
       extractedData: {
-        summary: parsed.extractedData?.summary || "",
-        diagnoses: Array.isArray(parsed.extractedData?.diagnoses) ? parsed.extractedData.diagnoses : [],
-        medications: Array.isArray(parsed.extractedData?.medications) ? parsed.extractedData.medications : [],
-        allergies: Array.isArray(parsed.extractedData?.allergies) ? parsed.extractedData.allergies : [],
-        comorbidities: Array.isArray(parsed.extractedData?.comorbidities) ? parsed.extractedData.comorbidities : [],
-        surgeries: Array.isArray(parsed.extractedData?.surgeries) ? parsed.extractedData.surgeries : []
+        summary: normalizedExtractedData.summary || fallbackExtractedData.summary,
+        diagnoses: dedupeDiagnoses([...normalizedExtractedData.diagnoses, ...fallbackExtractedData.diagnoses]),
+        medications: dedupeByKey([...normalizedExtractedData.medications, ...fallbackExtractedData.medications], (item) => item.name),
+        allergies: dedupeByKey([...normalizedExtractedData.allergies, ...fallbackExtractedData.allergies], (item) => item.allergen),
+        comorbidities: uniqueStrings([...normalizedExtractedData.comorbidities, ...fallbackExtractedData.comorbidities]),
+        surgeries: dedupeByKey([...normalizedExtractedData.surgeries, ...fallbackExtractedData.surgeries], (item) => item.procedureName)
       }
     };
   } catch (error) {
@@ -1975,6 +2392,7 @@ function generateFallbackAnamnesis(transcription: string): {
   };
 } {
   const today = new Date().toLocaleDateString('pt-BR');
+  const extractedData = fallbackAnamnesisExtraction(transcription, getTodayIsoDate());
 
   return {
     anamnesis: `**ANAMNESE - ${today}**
@@ -1991,12 +2409,12 @@ Esta anamnese foi gerada a partir de transcrição automática e requer revisão
 ---
 *Documento gerado automaticamente pelo VitaView AI*`,
     extractedData: {
-      summary: "Anamnese gerada a partir de transcrição de consulta. Revisão manual recomendada.",
-      diagnoses: [],
-      medications: [],
-      allergies: [],
-      comorbidities: [],
-      surgeries: []
+      summary: extractedData.summary || "Anamnese gerada a partir de transcrição de consulta. Revisão manual recomendada.",
+      diagnoses: extractedData.diagnoses,
+      medications: extractedData.medications,
+      allergies: extractedData.allergies,
+      comorbidities: extractedData.comorbidities,
+      surgeries: extractedData.surgeries
     }
   };
 }
@@ -2008,22 +2426,32 @@ Esta anamnese foi gerada a partir de transcrição automática e requer revisão
  */
 export async function enhanceAnamnesisText(text: string, userId?: number, clinicId?: number): Promise<string> {
   if (!openai) {
-    throw new Error("OpenAI client not initialized");
+    return text.trim();
   }
 
   const prompt = `
-    Você é um médico assistente experiente.
-    Melhore o seguinte texto de anamnese médica.
+    Você é um médico assistente experiente em documentação clínica.
+    Reescreva o texto abaixo para transformá-lo em uma evolução/anamnese de consulta mais rica, organizada e profissional, sem inventar nenhum dado novo.
     
     DIRETRIZES:
-    1. Mantenha todas as informações clínicas factuais intactas.
-    2. Corrija erros de ortografia, gramática e pontuação.
-    3. Utilize terminologia médica técnica adequada (ex: trocar "dor de barriga" por "dor abdominal", se o contexto permitir).
-    4. Mantenha o tom profissional, objetivo e formal.
-    5. Melhore a estrutura e fluidez do texto.
-    6. Destaque em negrito (**texto**) os sintomas, diagnósticos, achados físicos importantes e medicamentos citados.
-    7. NÃO adicione informações que não estejam no texto original.
-    8. Retorne APENAS o texto melhorado, sem introduções ou observações.
+    1. Preserve integralmente os fatos, negações, temporalidade e incertezas do texto original.
+    2. Corrija ortografia, gramática, pontuação e concordância.
+    3. Enriqueça a redação médica: transforme anotações telegráficas em narrativa clínica clara e coesa.
+    4. Estruture o conteúdo como registro de consulta, usando apenas as seções que realmente tenham dados:
+       - **Queixa Principal**
+       - **História da Doença Atual**
+       - **Interrogatório Sintomatológico**
+       - **História Patológica Pregressa**
+       - **Medicamentos em Uso**
+       - **Alergias**
+       - **Exame Físico**
+       - **Avaliação / Impressão Diagnóstica**
+       - **Conduta**
+    5. Se o texto não trouxer dados para uma seção, omita a seção.
+    6. Use terminologia médica adequada quando o contexto permitir, sem extrapolar o que não foi dito.
+    7. NÃO invente diagnósticos, exames, achados físicos, medicamentos, doses, alergias ou condutas que não estejam no texto original.
+    8. Pode reorganizar a ordem das informações para melhorar clareza clínica.
+    9. Retorne APENAS o texto final melhorado, sem introduções ou observações extras.
 
     TEXTO ORIGINAL:
     "${text}"
@@ -2031,7 +2459,7 @@ export async function enhanceAnamnesisText(text: string, userId?: number, clinic
 
   try {
     const taskName = "enhanceAnamnesisText";
-    const complexity: TaskComplexity = "simple"; // Tarefa de formatação é simples
+    const complexity: TaskComplexity = "medium";
     const model = ModelRouter.getModel(taskName, complexity);
 
     const response = await openai.chat.completions.create({
@@ -2045,14 +2473,14 @@ export async function enhanceAnamnesisText(text: string, userId?: number, clinic
     });
 
     if (response.usage) {
-      ModelRouter.trackUsage(taskName, model, response.usage);
+      ModelRouter.trackUsage(taskName, model, response.usage, userId, clinicId);
     }
 
     const content = response.choices[0].message.content;
     return content?.trim() || text;
   } catch (error) {
     logger.error("[OpenAI] Erro ao melhorar texto da anamnese", { error });
-    throw new Error("Falha ao melhorar o texto com IA");
+    return text.trim();
   }
 }
 
