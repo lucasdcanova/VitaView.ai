@@ -60,8 +60,13 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         }).catch(() => {
-          // If fetch fails and we have a cached response, use it
-          return cachedResponse;
+          // If fetch fails, use cached response or fallback to index.html for navigation
+          if (cachedResponse) return cachedResponse;
+          // For navigation requests, try to serve index.html from cache
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return new Response('Network error', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         });
         return cachedResponse || fetchPromise;
       })

@@ -1014,7 +1014,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Rota para upload de múltiplos arquivos
   app.post("/api/exams/upload-multiple", ensureAuthenticated, rbacSystem.requirePermission('exam', 'write'), async (req, res) => {
     try {
-      const { files, userId, profileId } = req.body;
+      const userId = req.user!.id;
+      const { files, profileId } = req.body;
 
       if (!profileId || Number.isNaN(profileId)) {
         return res.status(400).json({ message: "Selecione um paciente." });
