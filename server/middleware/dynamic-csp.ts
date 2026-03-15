@@ -124,12 +124,8 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   const userAgent = req.get('user-agent') || '';
   const referer = req.get('referer') || '';
 
-  // Detect which services are being used
-  const needsStripe = req.path.includes('payment') ||
-    req.path.includes('subscription') ||
-    req.path.includes('stripe') ||
-    referer.includes('stripe') ||
-    isDev; // Always include Stripe in development
+  // Stripe vendor bundle is loaded on all pages, so always allow it
+  const needsStripe = true;
 
   const needsReplit = isReplit ||
     req.hostname.includes('replit') ||

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { LandingNavbar } from "@/components/landing-page/LandingNavbar";
 import { LandingHero } from "@/components/landing-page/LandingHero";
 import { LandingLabView } from "@/components/landing-page/LandingLabView";
+import { LandingMigration } from "@/components/landing-page/LandingMigration";
 import { LandingAppointmentScheduler } from "@/components/landing-page/LandingAppointmentScheduler";
 import { LandingFeatures } from "@/components/landing-page/LandingFeatures";
 import { LandingForWhom } from "@/components/landing-page/LandingForWhom";
@@ -44,6 +45,7 @@ export default function LandingPage() {
           <main>
             <LandingHero />
             <LandingLabView />
+            <LandingMigration />
             <LandingVoiceTranscription />
             <LandingAISuggestions />
             <LandingPrescription />

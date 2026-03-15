@@ -222,6 +222,14 @@ export class WebApplicationFirewall {
         category: 'medical_data_protection',
         severity: 'medium',
         customCheck: (req: Request) => {
+          if (!this.config.rateLimitEnabled || this.shouldBypassRateLimit(req)) {
+            return false;
+          }
+
+          if (!this.isSensitiveMedicalApiRequest(req)) {
+            return false;
+          }
+
           const ip = this.getClientIP(req);
           const now = Date.now();
           const rateLimitKey = `medical_${ip}`;
@@ -244,7 +252,7 @@ export class WebApplicationFirewall {
           }
           
           entry.count++;
-          return entry.count > 50; // Mais de 50 requests por minuto
+          return entry.count > 180; // Apenas para acesso anômalo a APIs médicas sensíveis
         },
         action: 'rate_limit'
       },
@@ -280,6 +288,10 @@ export class WebApplicationFirewall {
         category: 'rate_limiting',
         severity: 'medium',
         customCheck: (req: Request) => {
+          if (!this.config.rateLimitEnabled || this.shouldBypassRateLimit(req)) {
+            return false;
+          }
+
           if (!req.path.startsWith('/api')) {
             return false;
           }
@@ -579,6 +591,34 @@ export class WebApplicationFirewall {
     const fetchDest = Array.isArray(fetchDestHeader) ? fetchDestHeader[0] : (fetchDestHeader || '');
 
     return accept.includes('text/html') || fetchDest === 'document' || fetchDest === 'iframe';
+  }
+
+  private isAuthenticatedRequest(req: Request): boolean {
+    if (typeof req.isAuthenticated === 'function') {
+      try {
+        return req.isAuthenticated();
+      } catch {
+        return Boolean(req.user);
+      }
+    }
+
+    return Boolean(req.user);
+  }
+
+  private shouldBypassRateLimit(req: Request): boolean {
+    if (this.isAuthenticatedRequest(req)) {
+      return true;
+    }
+
+    return this.prefersHtmlResponse(req);
+  }
+
+  private isSensitiveMedicalApiRequest(req: Request): boolean {
+    if (!req.path.startsWith('/api/')) {
+      return false;
+    }
+
+    return /\/api\/(exams|health-metrics|diagnoses|medications|patient-dashboard|reports\/chronological)/.test(req.path);
   }
 
   private getCookieValue(req: Request, name: string): string | null {
