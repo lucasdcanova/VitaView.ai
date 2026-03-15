@@ -280,20 +280,15 @@ export default function PatientView() {
                                     <div className="rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-black/[0.06] dark:border-white/10 px-3.5 py-2.5 shadow-sm">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-[15px] text-foreground tracking-tight truncate">{activeProfile.name}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
+                                                <p className="font-bold text-[15px] text-foreground tracking-tight truncate">
+                                                    {activeProfile.name}
                                                     {calculateAge(activeProfile.birthDate) !== null && (
-                                                        <span className="text-xs text-muted-foreground font-medium">
-                                                            {calculateAge(activeProfile.birthDate)} anos
-                                                        </span>
+                                                        <span className="font-medium text-muted-foreground text-xs ml-1.5">· {calculateAge(activeProfile.birthDate)} anos</span>
                                                     )}
-                                                    {activeProfile.insuranceName && (
-                                                        <>
-                                                            <span className="text-muted-foreground/40">·</span>
-                                                            <span className="text-xs text-muted-foreground truncate">{activeProfile.insuranceName}</span>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                </p>
+                                                {activeProfile.insuranceName && (
+                                                    <p className="text-xs text-muted-foreground truncate mt-0.5">{activeProfile.insuranceName}</p>
+                                                )}
                                             </div>
                                             {activeProfile.deceased ? (
                                                 <Badge variant="destructive" className="px-2 py-0.5 flex gap-1 items-center bg-red-100 text-red-800 border-red-200 text-[10px] shrink-0">
