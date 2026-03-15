@@ -141,7 +141,7 @@ export function CertificateForm({
                     <FileSignature className="h-5 w-5 text-gray-700" />
                     Emissão de Atestado
                 </CardTitle>
-                <CardDescription>Geração automática de atestados. Use modelos para agilizar.</CardDescription>
+                <CardDescription>Use modelos para agilizar a emissão.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
 

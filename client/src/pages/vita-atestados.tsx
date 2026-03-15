@@ -26,13 +26,6 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Atestados</h1>
-                    <p className="text-gray-500">Emissão de atestados médicos para <span className="font-semibold text-primary">{patient.name}</span>.</p>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                 {/* --- COLUNA ESQUERDA: NOVO ATESTADO --- */}
