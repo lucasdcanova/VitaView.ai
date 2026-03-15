@@ -36,6 +36,7 @@ import { Save,
 import { ConsultationRecorder } from "@/components/consultation-recorder";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useConsultationRecording } from "@/hooks/use-consultation-recording";
+import { useAuth } from "@/hooks/use-auth";
 
 type ExtractedDiagnosis = {
     cidCode?: string;
@@ -79,6 +80,51 @@ type ExtractedRecord = {
     surgeries: ExtractedSurgery[];
 };
 
+type AnamnesisDraft = {
+    text: string;
+    extractedRecord: ExtractedRecord | null;
+};
+
+const getAnamnesisDraftStorageKey = (profileId: number, userId?: number | null) =>
+    `anamnese-rascunho-${userId ?? "anon"}-${profileId}`;
+
+const readAnamnesisDraft = (profileId: number, userId?: number | null): AnamnesisDraft | null => {
+    if (typeof window === "undefined") return null;
+
+    try {
+        const raw = window.localStorage.getItem(getAnamnesisDraftStorageKey(profileId, userId));
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw);
+        return {
+            text: typeof parsed?.text === "string" ? parsed.text : "",
+            extractedRecord: parsed?.extractedRecord ? normalizeExtractedRecord(parsed.extractedRecord) : null,
+        };
+    } catch {
+        return null;
+    }
+};
+
+const writeAnamnesisDraft = (profileId: number, draft: AnamnesisDraft, userId?: number | null) => {
+    if (typeof window === "undefined") return;
+
+    const hasText = Boolean(draft.text.trim());
+    const hasExtractedRecord = Boolean(draft.extractedRecord);
+    const storageKey = getAnamnesisDraftStorageKey(profileId, userId);
+
+    if (!hasText && !hasExtractedRecord) {
+        window.localStorage.removeItem(storageKey);
+        return;
+    }
+
+    window.localStorage.setItem(storageKey, JSON.stringify(draft));
+};
+
+const clearAnamnesisDraft = (profileId: number, userId?: number | null) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(getAnamnesisDraftStorageKey(profileId, userId));
+};
+
 const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
     summary: payload?.summary || "",
     diagnoses: Array.isArray(payload?.diagnoses)
@@ -119,18 +165,58 @@ export function AnamnesisCard() {
     const queryClient = useQueryClient();
     const { activeProfile, inServiceAppointmentId, clearPatientInService } = useProfiles();
     const { completedResult, clearCompletedResult } = useConsultationRecording();
-    const previousProfileIdRef = useRef<number | null>(null);
+    const { user } = useAuth();
+    const previousDraftKeyRef = useRef<string | null>(null);
+    const hydratedDraftKeyRef = useRef<string | null>(null);
 
-    // Limpar estado quando o paciente mudar
+    // Restaurar rascunho quando o paciente mudar ou quando o componente montar novamente
     useEffect(() => {
-        if (activeProfile?.id !== previousProfileIdRef.current) {
-            // Paciente mudou - limpar todo o estado da anamnese
+        const profileId = activeProfile?.id ?? null;
+        const draftKey = profileId ? getAnamnesisDraftStorageKey(profileId, user?.id) : null;
+
+        if (draftKey === previousDraftKeyRef.current) return;
+
+        previousDraftKeyRef.current = draftKey;
+        hydratedDraftKeyRef.current = draftKey;
+        setIsApplyingExtraction(false);
+
+        if (!profileId) {
             setAnamnesisText("");
             setExtractedRecord(null);
-            setIsApplyingExtraction(false);
-            previousProfileIdRef.current = activeProfile?.id ?? null;
+            return;
         }
-    }, [activeProfile?.id]);
+
+        let draft = readAnamnesisDraft(profileId, user?.id);
+
+        // Migra rascunho salvo antes da autenticação terminar de carregar.
+        if (!draft && user?.id) {
+            draft = readAnamnesisDraft(profileId, null);
+            if (draft) {
+                writeAnamnesisDraft(profileId, draft, user.id);
+                clearAnamnesisDraft(profileId, null);
+            }
+        }
+
+        setAnamnesisText(draft?.text ?? "");
+        setExtractedRecord(draft?.extractedRecord ?? null);
+    }, [activeProfile?.id, user?.id]);
+
+    // Persistir rascunho para sobreviver à troca de abas e páginas
+    useEffect(() => {
+        const profileId = activeProfile?.id;
+        const draftKey = profileId ? getAnamnesisDraftStorageKey(profileId, user?.id) : null;
+        if (!profileId) return;
+        if (hydratedDraftKeyRef.current !== draftKey) return;
+
+        writeAnamnesisDraft(
+            profileId,
+            {
+                text: anamnesisText,
+                extractedRecord,
+            },
+            user?.id
+        );
+    }, [activeProfile?.id, anamnesisText, extractedRecord, user?.id]);
 
     const updateDiagnosis = (index: number, updates: Partial<ExtractedDiagnosis>) => {
         setExtractedRecord((prev) => {
@@ -482,7 +568,11 @@ export function AnamnesisCard() {
                     description: "Histórico salvo e assinado com sucesso!",
                 });
             }
+            if (activeProfile?.id) {
+                clearAnamnesisDraft(activeProfile.id, user?.id);
+            }
             setAnamnesisText("");
+            setExtractedRecord(null);
         },
         onError: (error: any) => {
             toast({
@@ -561,6 +651,9 @@ export function AnamnesisCard() {
     };
 
     const handleResetAnamnesis = () => {
+        if (activeProfile?.id) {
+            clearAnamnesisDraft(activeProfile.id, user?.id);
+        }
         setAnamnesisText("");
         setExtractedRecord(null);
     };

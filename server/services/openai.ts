@@ -529,7 +529,7 @@ const normalizeDiagnosisEntry = (entry: any, encounterDate: string) => {
   };
 };
 
-const normalizeMedicationEntry = (entry: any) => {
+const normalizeMedicationEntry = (entry: any, encounterDate: string) => {
   const rawMedication = typeof entry === "string" ? { name: entry } : (entry || {});
   const name = ensureText(rawMedication.name) || ensureText(rawMedication.medication);
   if (!name) return null;
@@ -539,7 +539,10 @@ const normalizeMedicationEntry = (entry: any) => {
     dosage: ensureText(rawMedication.dosage) || ensureText(rawMedication.dose) || "",
     frequency: ensureText(rawMedication.frequency) || "",
     format: ensureText(rawMedication.format) || "",
-    startDate: normalizeDateValue(rawMedication.startDate) || normalizeDateValue(rawMedication.start_date),
+    startDate:
+      normalizeDateValue(rawMedication.startDate) ||
+      normalizeDateValue(rawMedication.start_date) ||
+      encounterDate,
     notes: ensureText(rawMedication.notes) || ensureText(rawMedication.description) || null,
     isActive: rawMedication.isActive !== false,
   };
@@ -559,14 +562,17 @@ const normalizeAllergyEntry = (entry: any) => {
   };
 };
 
-const normalizeSurgeryEntry = (entry: any) => {
+const normalizeSurgeryEntry = (entry: any, encounterDate: string) => {
   const rawSurgery = typeof entry === "string" ? { procedureName: entry } : (entry || {});
   const procedureName = ensureText(rawSurgery.procedureName) || ensureText(rawSurgery.name);
   if (!procedureName) return null;
 
   return {
     procedureName,
-    surgeryDate: normalizeDateValue(rawSurgery.surgeryDate) || normalizeDateValue(rawSurgery.surgery_date),
+    surgeryDate:
+      normalizeDateValue(rawSurgery.surgeryDate) ||
+      normalizeDateValue(rawSurgery.surgery_date) ||
+      encounterDate,
     hospitalName: ensureText(rawSurgery.hospitalName) || null,
     surgeonName: ensureText(rawSurgery.surgeonName) || null,
     notes: ensureText(rawSurgery.notes) || null,
@@ -625,7 +631,7 @@ const normalizeExtractedRecord = (payload: any, sourceText = "", encounterDate =
 
   const medications = dedupeByKey(
     Array.isArray(payload?.medications)
-      ? payload.medications.map((entry: any) => normalizeMedicationEntry(entry)).filter(Boolean)
+      ? payload.medications.map((entry: any) => normalizeMedicationEntry(entry, encounterDate)).filter(Boolean)
       : [],
     (entry) => entry.name
   );
@@ -639,7 +645,7 @@ const normalizeExtractedRecord = (payload: any, sourceText = "", encounterDate =
 
   const surgeries = dedupeByKey(
     Array.isArray(payload?.surgeries)
-      ? payload.surgeries.map((entry: any) => normalizeSurgeryEntry(entry)).filter(Boolean)
+      ? payload.surgeries.map((entry: any) => normalizeSurgeryEntry(entry, encounterDate)).filter(Boolean)
       : [],
     (entry) => entry.procedureName
   );
@@ -683,7 +689,7 @@ const fallbackAnamnesisExtraction = (text: string, encounterDate = getTodayIsoDa
       dosage: item.dosage,
       frequency: item.frequency,
       format: item.format,
-      startDate: null,
+      startDate: encounterDate,
       notes: "Detectado automaticamente na anamnese",
       isActive: true,
     }));
@@ -1929,7 +1935,7 @@ Analise a anamnese abaixo e extraia o máximo possível de informações clínic
 REGRAS OBRIGATÓRIAS:
 - Se um diagnóstico estiver escrito de forma explícita, inclua-o em "diagnoses" mesmo que o texto esteja bruto ou telegráfico.
 - Sempre que houver um diagnóstico nominal, tente associar o CID-10 mais adequado.
-- Se a data do diagnóstico não estiver explícita, mas o problema fizer parte da consulta atual, use a data da consulta atual (${encounterDate}).
+- Se qualquer campo de data estiver ausente, preencha com a data atual da consulta (${encounterDate}).
 - Não invente sintomas, exames, medicamentos, alergias, cirurgias ou datas históricas.
 - Se algo estiver mencionado como hipótese, suspeita ou impressão diagnóstica, registre em notes.
 - Para cada categoria, preencha os campos conhecidos e use null quando não tiver certeza.
@@ -2281,7 +2287,7 @@ ${transcription}
 3. Organize as informações no formato de anamnese médica profissional
 4. Identifique diagnósticos, medicamentos, alergias, comorbidades e cirurgias prévias mencionados
 5. Sempre que um diagnóstico estiver explicitamente citado, associe o CID-10 mais adequado
-6. Se não houver data explícita do diagnóstico atual, use a data da consulta atual (${encounterDate})
+6. Se qualquer campo de data estiver ausente, use a data atual da consulta (${encounterDate})
 7. Diferencie hipótese diagnóstica de diagnóstico já estabelecido usando o campo notes
 8. Use terminologia médica apropriada
 9. Mantenha objetividade e clareza
