@@ -1,5 +1,6 @@
 import { IStorage } from "../storage";
 import logger from "../logger";
+import { stripClinicalHtml } from "@shared/clinical-rich-text";
 
 // Limite maior para permitir que o Vita Assist veja o histórico clínico inteiro
 // em formato condensado, sem estourar desnecessariamente o contexto do modelo.
@@ -69,7 +70,7 @@ export class ContextManager {
 
     private normalizeText(value: unknown): string {
         if (value === null || value === undefined) return "";
-        if (typeof value === "string") return value.replace(/\s+/g, " ").trim();
+        if (typeof value === "string") return stripClinicalHtml(value).replace(/\s+/g, " ").trim();
         return String(value).replace(/\s+/g, " ").trim();
     }
 

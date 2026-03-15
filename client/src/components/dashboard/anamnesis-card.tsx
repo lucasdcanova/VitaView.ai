@@ -1,7 +1,8 @@
 import {
   useState,
   useEffect,
-  useRef } from "react";
+  useRef,
+  type ClipboardEvent } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMutation,
   useQueryClient } from "@tanstack/react-query";
@@ -16,8 +17,6 @@ import { Card,
 import { Button } from "@/components/ui/button";
 import { FeatureGate } from '@/components/ui/feature-gate';
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
     Select,
   SelectContent,
@@ -30,13 +29,21 @@ import { Save,
   Mic,
   PlusCircle,
   X,
-  FileText,
   Wand2,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  RemoveFormatting,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { ConsultationRecorder } from "@/components/consultation-recorder";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useConsultationRecording } from "@/hooks/use-consultation-recording";
 import { useAuth } from "@/hooks/use-auth";
+import { normalizeClinicalContent, stripClinicalHtml } from "@shared/clinical-rich-text";
 
 type ExtractedDiagnosis = {
     cidCode?: string;
@@ -108,7 +115,7 @@ const readAnamnesisDraft = (profileId: number, userId?: number | null): Anamnesi
 const writeAnamnesisDraft = (profileId: number, draft: AnamnesisDraft, userId?: number | null) => {
     if (typeof window === "undefined") return;
 
-    const hasText = Boolean(draft.text.trim());
+    const hasText = Boolean(stripClinicalHtml(draft.text).trim());
     const hasExtractedRecord = Boolean(draft.extractedRecord);
     const storageKey = getAnamnesisDraftStorageKey(profileId, userId);
 
@@ -168,6 +175,9 @@ export function AnamnesisCard() {
     const { user } = useAuth();
     const previousDraftKeyRef = useRef<string | null>(null);
     const hydratedDraftKeyRef = useRef<string | null>(null);
+    const editorRef = useRef<HTMLDivElement | null>(null);
+    const isUpdatingFromEditorRef = useRef(false);
+    const anamnesisPlainText = stripClinicalHtml(anamnesisText).trim();
 
     // Restaurar rascunho quando o paciente mudar ou quando o componente montar novamente
     useEffect(() => {
@@ -197,7 +207,7 @@ export function AnamnesisCard() {
             }
         }
 
-        setAnamnesisText(draft?.text ?? "");
+        setAnamnesisText(normalizeClinicalContent(draft?.text ?? ""));
         setExtractedRecord(draft?.extractedRecord ?? null);
     }, [activeProfile?.id, user?.id]);
 
@@ -217,6 +227,18 @@ export function AnamnesisCard() {
             user?.id
         );
     }, [activeProfile?.id, anamnesisText, extractedRecord, user?.id]);
+
+    useEffect(() => {
+        if (isUpdatingFromEditorRef.current) {
+            isUpdatingFromEditorRef.current = false;
+            return;
+        }
+        if (!editorRef.current) return;
+        const normalized = normalizeClinicalContent(anamnesisText);
+        if (editorRef.current.innerHTML !== normalized) {
+            editorRef.current.innerHTML = normalized;
+        }
+    }, [anamnesisText]);
 
     const updateDiagnosis = (index: number, updates: Partial<ExtractedDiagnosis>) => {
         setExtractedRecord((prev) => {
@@ -370,8 +392,7 @@ export function AnamnesisCard() {
             surgeries: ExtractedSurgery[];
         };
     }) => {
-        // Preencher o textarea com a anamnese formatada
-        setAnamnesisText(result.anamnesis);
+        setAnamnesisText(normalizeClinicalContent(result.anamnesis));
 
         // Definir os dados extraídos para exibição
         setExtractedRecord(normalizeExtractedRecord(result.extractedData));
@@ -611,7 +632,7 @@ export function AnamnesisCard() {
             return await res.json();
         },
         onSuccess: (data) => {
-            setAnamnesisText(data.text);
+            setAnamnesisText(normalizeClinicalContent(data.text));
             toast({
                 title: "Anamnese melhorada",
                 description: "O texto foi reescrito e formatado pela IA.",
@@ -627,7 +648,7 @@ export function AnamnesisCard() {
     });
 
     const handleEnhanceAnamnesis = () => {
-        if (!anamnesisText.trim()) {
+        if (!anamnesisPlainText) {
             toast({
                 title: "Texto vazio",
                 description: "Escreva algo para a IA melhorar.",
@@ -635,11 +656,11 @@ export function AnamnesisCard() {
             });
             return;
         }
-        enhanceAnamnesisMutation.mutate({ text: anamnesisText });
+        enhanceAnamnesisMutation.mutate({ text: anamnesisPlainText });
     };
 
     const handleAnalyzeAnamnesis = () => {
-        if (!anamnesisText.trim()) {
+        if (!anamnesisPlainText) {
             toast({
                 title: "Anamnese vazia",
                 description: "Descreva o quadro clínico antes de solicitar a análise.",
@@ -647,7 +668,38 @@ export function AnamnesisCard() {
             });
             return;
         }
-        analyzeAnamnesisMutation.mutate({ text: anamnesisText.trim() });
+        analyzeAnamnesisMutation.mutate({ text: anamnesisPlainText });
+    };
+
+    const syncEditorContent = () => {
+        if (!editorRef.current) return;
+        const normalized = normalizeClinicalContent(editorRef.current.innerHTML);
+        isUpdatingFromEditorRef.current = true;
+        setAnamnesisText(normalized);
+    };
+
+    const applyEditorCommand = (command: string, value?: string) => {
+        editorRef.current?.focus();
+        document.execCommand(command, false, value);
+        syncEditorContent();
+    };
+
+    const handleEditorInput = () => {
+        syncEditorContent();
+    };
+
+    const handleEditorPaste = (event: ClipboardEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const text = event.clipboardData.getData("text/plain");
+        document.execCommand("insertText", false, text);
+        syncEditorContent();
+    };
+
+    const handleEditorBlur = () => {
+        if (!editorRef.current) return;
+        const normalized = normalizeClinicalContent(editorRef.current.innerHTML);
+        editorRef.current.innerHTML = normalized;
+        setAnamnesisText(normalized);
     };
 
     const handleResetAnamnesis = () => {
@@ -662,16 +714,8 @@ export function AnamnesisCard() {
         <div className={isMobile ? "space-y-4" : "space-y-8"}>
             <Card className="border border-border shadow-md">
                 <CardHeader className={`flex flex-col ${isMobile ? 'gap-2 pb-3' : 'gap-4'}`}>
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div className="flex items-center gap-2">
-                            <CardTitle className={`text-foreground ${isMobile ? 'text-lg' : 'text-2xl'}`}>Anamnese inteligente</CardTitle>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">Beta</Badge>
-                        </div>
-                        {!isMobile && (
-                            <p className="text-sm text-muted-foreground text-right max-w-[420px]">
-                                Grave a consulta ou descreva o quadro clínico.<br />A IA identifica diagnósticos, medicamentos e alergias.
-                            </p>
-                        )}
+                    <div>
+                        <CardTitle className={`text-foreground ${isMobile ? 'text-lg' : 'text-2xl'}`}>Anamnese inteligente</CardTitle>
                     </div>
 
                     {/* Destaque para gravação de consulta */}
@@ -695,46 +739,62 @@ export function AnamnesisCard() {
                     </div>
                 </CardHeader>
                 <CardContent className={isMobile ? "space-y-3 px-3 pb-3" : "space-y-4"}>
-                    <Textarea
-                        value={anamnesisText}
-                        onChange={(event) => setAnamnesisText(event.target.value)}
-                        placeholder="Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg..."
-                        className={isMobile ? "min-h-[100px] resize-vertical text-sm" : "min-h-[140px] resize-vertical"}
-                    />
-                    {anamnesisText && !isMobile && (
-                        <div className="p-3 bg-gray-50 rounded-md border border-gray-100 text-sm">
-                            <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                <FileText className="h-3.5 w-3.5" />
-                                Como será visualizado
-                            </div>
-                            <div className="whitespace-pre-line text-gray-700 leading-relaxed">
-                                {(() => {
-                                    const formatBoldText = (text: string | null | undefined) => {
-                                        if (!text) return null;
-                                        const parts = text.split(/(\*\*.*?\*\*)/g);
-                                        return (
-                                            <span>
-                                                {parts.map((part, index) => {
-                                                    if (part.startsWith('**') && part.endsWith('**')) {
-                                                        return <strong key={index} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
-                                                    }
-                                                    return part;
-                                                })}
-                                            </span>
-                                        );
-                                    };
-                                    return formatBoldText(anamnesisText);
-                                })()}
-                            </div>
+                    <div className="overflow-hidden rounded-xl border border-border bg-background">
+                        <div className="flex flex-wrap items-center gap-1 border-b border-border bg-muted/40 p-2">
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("bold")} title="Negrito">
+                                <Bold className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("italic")} title="Itálico">
+                                <Italic className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("underline")} title="Sublinhado">
+                                <Underline className="h-4 w-4" />
+                            </Button>
+                            <div className="mx-1 h-5 w-px bg-border" />
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("insertUnorderedList")} title="Lista com tópicos">
+                                <List className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("insertOrderedList")} title="Lista numerada">
+                                <ListOrdered className="h-4 w-4" />
+                            </Button>
+                            <div className="mx-1 h-5 w-px bg-border" />
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("undo")} title="Desfazer">
+                                <Undo2 className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("redo")} title="Refazer">
+                                <Redo2 className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => applyEditorCommand("removeFormat")} title="Limpar formatação">
+                                <RemoveFormatting className="h-4 w-4" />
+                            </Button>
                         </div>
-                    )}
+
+                        <div className="relative">
+                            {!anamnesisPlainText && (
+                                <div className="pointer-events-none absolute left-4 top-3 text-sm text-muted-foreground">
+                                    Ex.: Paciente em acompanhamento por hipertensão controlada com losartana 50mg...
+                                </div>
+                            )}
+                            <div
+                                ref={editorRef}
+                                contentEditable
+                                suppressContentEditableWarning
+                                role="textbox"
+                                aria-multiline="true"
+                                onInput={handleEditorInput}
+                                onPaste={handleEditorPaste}
+                                onBlur={handleEditorBlur}
+                                className={`prose prose-sm max-w-none px-4 py-3 outline-none dark:prose-invert prose-p:my-1 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 ${isMobile ? "min-h-[120px] text-sm" : "min-h-[180px]"}`}
+                            />
+                        </div>
+                    </div>
                     {/* Action buttons */}
                     <div className={isMobile ? "flex flex-col gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
                         <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-3"}>
                             <Button
                                 type="button"
                                 onClick={() => {
-                                    if (!anamnesisText.trim()) {
+                                    if (!anamnesisPlainText) {
                                         toast({
                                             title: "Texto vazio",
                                             description: "Escreva algo para salvar.",
@@ -752,7 +812,7 @@ export function AnamnesisCard() {
                                     }
                                     addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
                                 }}
-                                disabled={addEvolutionMutation.isPending || !anamnesisText.trim() || !activeProfile?.id}
+                                disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
                                 className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 col-span-2' : 'gap-2'}`}
                             >
                                 {addEvolutionMutation.isPending ? (
@@ -767,7 +827,7 @@ export function AnamnesisCard() {
                                 <Button
                                     type="button"
                                     onClick={handleEnhanceAnamnesis}
-                                    disabled={enhanceAnamnesisMutation.isPending || !anamnesisText.trim()}
+                                    disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
                                     variant="outline"
                                     className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9' : 'gap-2'}`}
                                 >
@@ -795,11 +855,6 @@ export function AnamnesisCard() {
                                 </Button>
                             </FeatureGate>
                         </div>
-                        {!isMobile && (
-                            <p className="text-sm text-gray-500 text-right max-w-[280px]">
-                                A IA sugere registros prontos para revisão<br />antes de aplicar ao prontuário.
-                            </p>
-                        )}
                         <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs self-start" : ""}>
                             Limpar texto
                         </Button>

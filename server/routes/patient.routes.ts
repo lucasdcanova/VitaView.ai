@@ -5,6 +5,7 @@ import { ensureAuthenticated } from "../middleware/auth.middleware";
 import { generateChronologicalReport, callOpenAIApi } from "../services/openai";
 import logger from "../logger";
 import { createHash } from "crypto";
+import { normalizeClinicalContent } from "@shared/clinical-rich-text";
 
 export function registerPatientRoutes(app: Express) {
 
@@ -215,7 +216,7 @@ export function registerPatientRoutes(app: Express) {
             const evolutionData = {
                 userId: loggedInUser.id,
                 profileId: profileId,
-                text: text,
+                text: normalizeClinicalContent(typeof text === "string" ? text : ""),
                 professionalName: professionalName,
                 date: date ? new Date(date) : new Date(),
             };

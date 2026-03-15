@@ -97,6 +97,8 @@ import {
   type DoctorFormData
 } from "@/components/dialogs";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { ClinicalRichText } from "@/components/ui/clinical-rich-text";
+import { stripClinicalHtml } from "@shared/clinical-rich-text";
 
 const habitSchema = z.object({
   habitType: z.enum(["etilismo", "tabagismo", "drogas_ilicitas"]),
@@ -119,22 +121,6 @@ type DoctorForm = DoctorFormData;
 const getCIDDescription = (cidCode: string): string => {
   const cidEntry = CID10_DATABASE.find(item => item.code === cidCode);
   return cidEntry ? `${cidCode} - ${cidEntry.description}` : cidCode;
-};
-
-// Helper para formatar texto com negrito (**texto**)
-const formatBoldText = (text: string | null | undefined) => {
-  if (!text) return null;
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={index} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
-        }
-        return part;
-      })}
-    </>
-  );
 };
 
 interface TimelineItem {
@@ -971,9 +957,7 @@ export default function HealthTrendsNew({
           date: new Date(item.date),
           type: typeName,
           description: item.title,
-          details: item.description
-            ? item.description.replace(/<[^>]*>?/gm, "") // Strip HTML if any
-            : ""
+          details: item.description ? stripClinicalHtml(item.description) : ""
         };
       });
 
@@ -1056,7 +1040,7 @@ export default function HealthTrendsNew({
 
         <main className={`flex-1 bg-gray-50 ${embedded ? "" : "overflow-y-auto"}`}>
           <div className={embedded ? "" : "p-4 md:p-6"}>
-            <div className="max-w-6xl mx-auto space-y-8">
+            <div className={embedded ? "w-full space-y-8" : "mx-auto max-w-6xl space-y-8"}>
               {/* Header com Nome do Paciente */}
               {!embedded && (
                 <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4 md:pb-6 bg-gray-50/95 supports-[backdrop-filter]:backdrop-blur-sm">
@@ -1114,11 +1098,7 @@ export default function HealthTrendsNew({
                 </div>
               )}
 
-
-
-
-
-              <div className="grid gap-8 md:grid-cols-[1fr,360px]">
+              <div className={embedded ? "space-y-8" : "grid gap-8 md:grid-cols-[minmax(0,1fr)_360px]"}>
                 {/* Coluna Principal */}
                 <div className="space-y-8">
 
@@ -1229,13 +1209,13 @@ export default function HealthTrendsNew({
                                     {item.type === 'triage' && item.details ? (
                                       <div className="text-sm mt-3 space-y-3">
                                         {item.description && (
-                                          <div className="text-gray-700 font-medium">{formatBoldText(item.description)}</div>
+                                          <ClinicalRichText content={item.description} className="font-medium text-gray-700 dark:text-slate-100 prose-p:text-gray-700 dark:prose-p:text-slate-100" />
                                         )}
 
                                         {item.details.history && (
                                           <div className="bg-blue-50/50 p-3 rounded-md border border-blue-100">
                                             <span className="font-semibold text-blue-800 block mb-1 text-xs uppercase tracking-wider">História da Doença Atual</span>
-                                            <div className="text-gray-700 whitespace-pre-line leading-relaxed">{formatBoldText(item.details.history)}</div>
+                                            <ClinicalRichText content={item.details.history} className="leading-relaxed text-gray-700 dark:text-slate-100 prose-p:text-gray-700 dark:prose-p:text-slate-100" />
                                           </div>
                                         )}
 
@@ -1255,13 +1235,14 @@ export default function HealthTrendsNew({
 
                                         {item.details.notes && (
                                           <div className="text-gray-600 text-xs italic border-t border-gray-100 pt-2 mt-2">
-                                            Obs: {formatBoldText(item.details.notes)}
+                                            <span className="mr-1">Obs:</span>
+                                            <ClinicalRichText content={item.details.notes} className="inline-block align-top text-gray-600 dark:text-slate-300 prose-p:my-0 prose-p:text-gray-600 dark:prose-p:text-slate-300" />
                                           </div>
                                         )}
                                       </div>
                                     ) : (
-                                      <div className="text-gray-600 mt-1 whitespace-pre-line">
-                                        {formatBoldText(item.description)}
+                                      <div className="mt-1 text-gray-600 dark:text-slate-300">
+                                        <ClinicalRichText content={item.description} className="text-gray-600 dark:text-slate-300 prose-p:text-gray-600 dark:prose-p:text-slate-300" />
                                         {/* Show professional name for evolutions */}
                                         {item.type === 'evolution' && item.originalData?.professionalName && (
                                           <div className="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-400 italic text-right">
@@ -1313,13 +1294,10 @@ export default function HealthTrendsNew({
                   </div>
                 </div > {/* End Left Column */}
 
-                {/* Right Column (Sidebar) */}
-                <div className="space-y-6">
-
-
-
-
-                </div>
+                {!embedded && (
+                  <div className="space-y-6">
+                  </div>
+                )}
               </div >
             </div >
           </div >
