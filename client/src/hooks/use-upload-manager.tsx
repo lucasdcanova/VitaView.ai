@@ -39,9 +39,33 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                 if (!upload.examId) continue;
 
                 try {
-                    const response = await fetch(`/api/exams/${upload.examId}`);
+                    const response = await fetch(`/api/exams/${upload.examId}`, {
+                        credentials: 'include',
+                        cache: 'no-store',
+                    });
+
+                    if (response.status === 404) {
+                        const index = updatedUploads.findIndex(u => u.id === upload.id);
+                        if (index !== -1 && updatedUploads[index].status !== 'failed') {
+                            updatedUploads[index] = {
+                                ...updatedUploads[index],
+                                status: 'failed',
+                                error: 'Exame não encontrado ou indisponível para consulta.',
+                            };
+                            hasChanges = true;
+
+                            toast({
+                                title: "Erro no processamento",
+                                description: `Não foi possível acompanhar o status de ${upload.name}.`,
+                                variant: "destructive"
+                            });
+                        }
+                        continue;
+                    }
+
                     if (response.ok) {
-                        const exam = await response.json();
+                        const payload = await response.json();
+                        const exam = payload?.exam ?? payload;
                         const index = updatedUploads.findIndex(u => u.id === upload.id);
 
                         if (index !== -1) {
@@ -59,7 +83,7 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                                 updatedUploads[index] = {
                                     ...updatedUploads[index],
                                     status: newStatus,
-                                    error: exam.processingError
+                                    error: payload?.processingError ?? exam.processingError
                                 };
                                 hasChanges = true;
 
@@ -69,6 +93,7 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                                         description: `O exame ${upload.name} foi processado com sucesso.`
                                     });
                                     queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+                                    queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard"] });
                                     queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
                                 } else if (newStatus === 'failed') {
                                     toast({

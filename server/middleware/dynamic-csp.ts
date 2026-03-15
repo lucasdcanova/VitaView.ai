@@ -169,6 +169,8 @@ export function dynamicCSPMiddleware(req: Request, res: Response, next: NextFunc
   connectSrc.push(...getTrustedDomains('apis'));
   connectSrc.push(...getTrustedDomains('fonts')); // Allow SW to fetch fonts
   connectSrc.push(...getTrustedDomains('storage'));
+  // Signed exam documents and remote patient avatars can come from environment-specific HTTPS hosts.
+  imgSrc.push("https:");
   imgSrc.push(...getTrustedDomains('storage'));
 
   // Store CSP directives in res.locals for use by other middleware

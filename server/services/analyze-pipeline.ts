@@ -223,6 +223,7 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
         await storage.createHealthMetric({
           userId: exam.userId,
           profileId: exam.profileId,
+          clinicId: exam.clinicId ?? null,
           examId: exam.id,
           name: metric.name || "desconhecido",
           value: String(metric.value || "0"),

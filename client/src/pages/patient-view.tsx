@@ -22,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import {
     Plus,
   FileText,
-  Activity,
   Clock,
   Mic,
   Upload,
@@ -242,11 +241,31 @@ export default function PatientView() {
     const alertMetrics = healthMetrics.filter((m: any) => m.status === 'alto' || m.status === 'atenção');
 
     const getTrendIcon = (change: string | null) => {
-        if (!change) return <Minus className="h-4 w-4 text-gray-400" />;
+        if (!change) return <Minus className="h-4 w-4 text-muted-foreground" />;
         const value = parseFloat(change);
-        if (value > 0) return <TrendingUp className="h-4 w-4 text-red-500" />;
-        if (value < 0) return <TrendingDown className="h-4 w-4 text-green-500" />;
-        return <Minus className="h-4 w-4 text-gray-400" />;
+        if (value > 0) return <TrendingUp className="h-4 w-4 text-red-500 dark:text-red-400" />;
+        if (value < 0) return <TrendingDown className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+        return <Minus className="h-4 w-4 text-muted-foreground" />;
+    };
+
+    const getAlertMetricCardClassName = (status: string | null | undefined) => {
+        const normalizedStatus = status?.toLowerCase() || '';
+
+        if (normalizedStatus === 'atenção' || normalizedStatus === 'atencao') {
+            return 'border-amber-200/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/15';
+        }
+
+        return 'border-red-200/80 bg-white/90 dark:border-red-900/60 dark:bg-red-950/15';
+    };
+
+    const getAlertMetricBadgeClassName = (status: string | null | undefined) => {
+        const normalizedStatus = status?.toLowerCase() || '';
+
+        if (normalizedStatus === 'atenção' || normalizedStatus === 'atencao') {
+            return 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/50 dark:text-amber-200';
+        }
+
+        return 'border-red-200 bg-red-100 text-red-800 dark:border-red-900/70 dark:bg-red-950/60 dark:text-red-200';
     };
 
     return (
@@ -717,24 +736,34 @@ export default function PatientView() {
                                             </div>
 
                                             {alertMetrics.length > 0 && (
-                                                <Card className="border-red-200 bg-red-50 shadow-sm">
-                                                    <CardHeader className="pb-3">
-                                                        <CardTitle className="text-red-700 flex items-center gap-2 text-base">
-                                                            <Activity className="h-5 w-5" />
-                                                            Alertas de Sinais Vitais
+                                                <Card className="overflow-hidden border-red-200/80 bg-gradient-to-br from-red-50 via-white to-red-50/70 shadow-sm dark:border-red-900/60 dark:from-red-950/40 dark:via-slate-950 dark:to-zinc-950">
+                                                    <CardHeader className="pb-3 border-b border-red-100/80 dark:border-red-900/40">
+                                                        <CardTitle className="text-red-800 dark:text-red-100 flex items-center gap-3 text-base">
+                                                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950/70 dark:text-red-200">
+                                                                <AlertTriangle className="h-4.5 w-4.5" />
+                                                            </span>
+                                                            Alerta de alterações relevantes
                                                         </CardTitle>
                                                     </CardHeader>
-                                                    <CardContent>
+                                                    <CardContent className="pt-4">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                                             {alertMetrics.map((metric: any) => (
-                                                                <div key={metric.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-red-200 shadow-sm">
-                                                                    <div>
-                                                                        <p className="font-medium text-gray-800 text-sm">{formatMetricDisplayName(metric.name)}</p>
-                                                                        <p className="text-xs text-gray-600">{metric.value} {metric.unit}</p>
+                                                                <div
+                                                                    key={metric.id}
+                                                                    className={`flex items-center justify-between gap-3 rounded-xl border p-3 shadow-sm ${getAlertMetricCardClassName(metric.status)}`}
+                                                                >
+                                                                    <div className="min-w-0">
+                                                                        <p className="font-medium text-foreground text-sm">{formatMetricDisplayName(metric.name)}</p>
+                                                                        <p className="text-xs text-muted-foreground">{metric.value} {metric.unit}</p>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-2 shrink-0">
                                                                         {getTrendIcon(metric.change)}
-                                                                        <Badge variant="destructive" className="text-[10px] h-5">{metric.status}</Badge>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={`text-[10px] h-5 capitalize ${getAlertMetricBadgeClassName(metric.status)}`}
+                                                                        >
+                                                                            {metric.status}
+                                                                        </Badge>
                                                                     </div>
                                                                 </div>
                                                             ))}

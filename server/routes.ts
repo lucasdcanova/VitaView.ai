@@ -1058,7 +1058,8 @@ export async function registerRoutes(app: Express): Promise<void> {
             status: "queued",
             laboratoryName,
             examDate,
-            filePath: s3Result.key
+            filePath: s3Result.key,
+            clinicId: (req.user as any).clinicId ?? null
           });
 
           // Iniciar processamento
@@ -1823,7 +1824,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
       let userId = req.user.id;
 
-      const exam = await storage.getExam(examId, req.tenantId);
+      let exam = await storage.getExam(examId, req.tenantId);
+
+      if (!exam) {
+        const ownerExam = await storage.getExam(examId);
+        if (ownerExam && ownerExam.userId === userId) {
+          exam = ownerExam;
+        }
+      }
 
       if (!exam) {
         return res.status(404).json({ message: "Exame não encontrado" });
@@ -1848,7 +1856,12 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       const examResult = await storage.getExamResultByExamId(examId);
 
-      res.json({ exam, result: examResult });
+      res.json({
+        exam,
+        result: examResult,
+        status: exam.status,
+        processingError: (exam as any).processingError ?? null,
+      });
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar exame" });
     }

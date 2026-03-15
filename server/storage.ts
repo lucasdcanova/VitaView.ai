@@ -2521,7 +2521,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (clinicId) {
-      whereClause = and(whereClause, eq(exams.clinicId, clinicId))!;
+      // Accept legacy records without clinicId so historical exams stay visible after clinic rollout.
+      whereClause = and(
+        whereClause,
+        or(eq(exams.clinicId, clinicId), sql`${exams.clinicId} IS NULL`)
+      )!;
     }
 
     return await db.select().from(exams).where(whereClause);
@@ -2597,7 +2601,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (clinicId) {
-      whereClause = and(whereClause, eq(healthMetrics.clinicId, clinicId))!;
+      // Accept legacy metrics without clinicId so evolution charts still render for older uploads.
+      whereClause = and(
+        whereClause,
+        or(eq(healthMetrics.clinicId, clinicId), sql`${healthMetrics.clinicId} IS NULL`)
+      )!;
     }
 
     return await db.select().from(healthMetrics).where(whereClause);
