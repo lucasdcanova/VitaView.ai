@@ -27,7 +27,7 @@ export default function VitaCertificates({ patient }: VitaCertificatesProps) {
     return (
         <div className="space-y-6 pb-20">
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* --- COLUNA ESQUERDA: NOVO ATESTADO --- */}
                 <div className="space-y-6">
                     <CertificateForm

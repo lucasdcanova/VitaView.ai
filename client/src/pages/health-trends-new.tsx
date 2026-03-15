@@ -1088,15 +1088,7 @@ export default function HealthTrendsNew({
                   </div>
                 </div>
               )}
-              {embedded && allergies.length > 0 && (
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-red-600 font-medium text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-full">
-                      Alérgico a {allergies.map((a: any) => a.allergen).join(", ")}
-                    </span>
-                  </div>
-                </div>
-              )}
+
 
               <div className={embedded ? "space-y-8" : "grid gap-8 md:grid-cols-[minmax(0,1fr)_360px]"}>
                 {/* Coluna Principal */}

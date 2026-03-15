@@ -382,7 +382,7 @@ export function CertificateForm({
                             </div>
 
                             <Textarea
-                                className="min-h-[150px] text-sm font-mono bg-white border-gray-300"
+                                className="min-h-[150px] text-sm bg-white border-gray-300"
                                 placeholder="Preencha os dados acima e clique em 'Gerar Texto do Atestado' ou escreva manualmente..."
                                 value={customCertText}
                                 onChange={e => setCustomCertText(e.target.value)}

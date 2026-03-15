@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { FeatureGate } from "@/components/ui/feature-gate";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContinuousMedicationsCardProps {
     medications: any[];
@@ -44,6 +45,7 @@ export function ContinuousMedicationsCard({
     onDeleteMedication,
     onRenewPrescription
 }: ContinuousMedicationsCardProps) {
+    const isMobile = useIsMobile();
     const allSelected = medications.length > 0 && selectedMedications.size === medications.length;
     const { toast } = useToast();
     const [isCheckingInteractions, setIsCheckingInteractions] = useState(false);
@@ -110,7 +112,7 @@ export function ContinuousMedicationsCard({
                     <div className="min-w-0">
                         <CardTitle className="text-base text-gray-900 flex items-center gap-2 whitespace-nowrap">
                             <Pill className="h-4 w-4 text-gray-600 shrink-0" />
-                            Medicamentos de Uso Contínuo
+                            {isMobile ? 'Uso Contínuo' : 'Medicamentos de Uso Contínuo'}
                         </CardTitle>
                         <CardDescription className="text-xs">Selecione para renovar receita.</CardDescription>
                     </div>
@@ -127,7 +129,7 @@ export function ContinuousMedicationsCard({
                             ) : (
                                 <Sparkles className="h-4 w-4 text-yellow-500 shrink-0" />
                             )}
-                            Checar Interação com IA
+                            Checar Interação<br />com IA
                         </Button>
                     </FeatureGate>
                 </div>

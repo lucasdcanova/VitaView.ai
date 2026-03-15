@@ -538,13 +538,7 @@ export default function PatientView() {
                                                 mode="create"
                                             />
 
-                                            {activeProfile && (
-                                                <RegisterDeathDialog
-                                                    open={isDeathDialogOpen}
-                                                    onOpenChange={setIsDeathDialogOpen}
-                                                    patient={activeProfile}
-                                                />
-                                            )}
+
                                         </div>
 
                                         {/* Recent Exams */}
@@ -811,6 +805,14 @@ export default function PatientView() {
                                 )}
                             </TabsContent>
 
+
+                            {activeProfile && (
+                                <RegisterDeathDialog
+                                    open={isDeathDialogOpen}
+                                    onOpenChange={setIsDeathDialogOpen}
+                                    patient={activeProfile}
+                                />
+                            )}
 
                         </Tabs>
                 </div>
