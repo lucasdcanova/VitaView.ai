@@ -627,96 +627,111 @@ export default function PatientView() {
                                         )}
 
                                         {/* Grid: Solicitação de Exames | Upload + Lista */}
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            {/* Left Column: Solicitação de Exames */}
-                                            <div>
-                                                <Suspense fallback={<TabLoadingSkeleton />}>
-                                                    <VitaSolicitacaoExames patient={activeProfile} />
-                                                </Suspense>
-                                            </div>
-
-                                            {/* Right Column: Upload + Lista de Resultados */}
-                                            <div className="space-y-6">
-                                                {/* Upload Area */}
-                                                <Card className="h-fit">
-                                                    <CardHeader className="pb-3">
-                                                        <CardTitle className="text-base flex items-center gap-2">
-                                                            <Upload className="h-5 w-5 text-primary-600" />
-                                                            Enviar Resultados
-                                                        </CardTitle>
-                                                        <CardDescription>
-                                                            Envie os resultados de exames já realizados
-                                                        </CardDescription>
-                                                    </CardHeader>
-                                                    <CardContent className="space-y-4">
-                                                        <FileUpload onUploadComplete={handleUploadComplete} />
-                                                        <p className="text-xs text-gray-500 text-center">
-                                                            PDF, JPG, PNG • Máx 10MB
-                                                        </p>
-
-                                                        {/* Tips integrado */}
-                                                        <div className="bg-muted/50 rounded-lg p-4 space-y-3 border border-border">
-                                                            <div className="flex items-start gap-2">
-                                                                <ShieldCheck className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                <p className="text-xs text-muted-foreground">Seus exames são tratados com segurança e confidencialidade.</p>
-                                                            </div>
-                                                            <div className="flex items-start gap-2">
-                                                                <ClipboardList className="text-yellow-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                <p className="text-xs text-muted-foreground">Envie imagens com boa resolução para melhor análise.</p>
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-
-                                                {/* Exams List */}
-                                                <Card className="h-fit">
-                                                    <CardHeader className="pb-3">
-                                                        <div className="flex items-center justify-between">
+                                        {(() => {
+                                            const uploadAndExamsCards = (
+                                                <>
+                                                    {/* Upload Area */}
+                                                    <Card className="h-fit">
+                                                        <CardHeader className="pb-3">
                                                             <CardTitle className="text-base flex items-center gap-2">
-                                                                <FileText className="h-5 w-5 text-primary-600" />
-                                                                Resultados de Exames
+                                                                <Upload className="h-5 w-5 text-primary-600" />
+                                                                Enviar Resultados
                                                             </CardTitle>
-                                                            <Badge variant="outline">{exams.length} exames</Badge>
-                                                        </div>
-                                                    </CardHeader>
-                                                    <CardContent>
-                                                        {exams.length === 0 ? (
-                                                            <div className="text-center py-8">
-                                                                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                                                <h3 className="text-base font-semibold text-gray-800 mb-1">Nenhum resultado enviado</h3>
-                                                                <p className="text-sm text-gray-600">Envie os resultados dos exames usando o painel acima.</p>
+                                                            <CardDescription>
+                                                                Envie os resultados de exames já realizados
+                                                            </CardDescription>
+                                                        </CardHeader>
+                                                        <CardContent className="space-y-4">
+                                                            <FileUpload onUploadComplete={handleUploadComplete} />
+                                                            <p className="text-xs text-gray-500 text-center">
+                                                                PDF, JPG, PNG • Máx 10MB
+                                                            </p>
+
+                                                            {/* Tips integrado */}
+                                                            <div className="bg-muted/50 rounded-lg p-4 space-y-3 border border-border">
+                                                                <div className="flex items-start gap-2">
+                                                                    <ShieldCheck className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
+                                                                    <p className="text-xs text-muted-foreground">Seus exames são tratados com segurança e confidencialidade.</p>
+                                                                </div>
+                                                                <div className="flex items-start gap-2">
+                                                                    <ClipboardList className="text-yellow-500 flex-shrink-0 mt-0.5" size={16} />
+                                                                    <p className="text-xs text-muted-foreground">Envie imagens com boa resolução para melhor análise.</p>
+                                                                </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                                                {exams.map((exam: any) => (
-                                                                    <div
-                                                                        key={exam.id}
-                                                                        className="flex items-center p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent transition-all cursor-pointer"
-                                                                        onClick={() => setLocation(`/report/${exam.id}`)}
-                                                                    >
-                                                                        <div className="bg-primary/20 p-2 rounded-lg mr-3">
-                                                                            <FileText className="h-5 w-5 text-primary" />
-                                                                        </div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="font-medium text-foreground truncate text-sm">{exam.name || 'Exame sem título'}</p>
-                                                                            <p className="text-xs text-muted-foreground">
-                                                                                {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
-                                                                            </p>
-                                                                        </div>
-                                                                        <Badge
-                                                                            variant={exam.status === 'analyzed' ? 'default' : 'secondary'}
-                                                                            className="ml-3 text-xs"
+                                                        </CardContent>
+                                                    </Card>
+
+                                                    {/* Exams List */}
+                                                    <Card className="h-fit">
+                                                        <CardHeader className="pb-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <CardTitle className="text-base flex items-center gap-2">
+                                                                    <FileText className="h-5 w-5 text-primary-600" />
+                                                                    Resultados de Exames
+                                                                </CardTitle>
+                                                                <Badge variant="outline">{exams.length} exames</Badge>
+                                                            </div>
+                                                        </CardHeader>
+                                                        <CardContent>
+                                                            {exams.length === 0 ? (
+                                                                <div className="text-center py-8">
+                                                                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                                                    <h3 className="text-base font-semibold text-gray-800 mb-1">Nenhum resultado enviado</h3>
+                                                                    <p className="text-sm text-gray-600">Envie os resultados dos exames usando o painel acima.</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                                                                    {exams.map((exam: any) => (
+                                                                        <div
+                                                                            key={exam.id}
+                                                                            className="flex items-center p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent transition-all cursor-pointer"
+                                                                            onClick={() => setLocation(`/report/${exam.id}`)}
                                                                         >
-                                                                            {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
-                                                                        </Badge>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </CardContent>
-                                                </Card>
-                                            </div>
-                                        </div>
+                                                                            <div className="bg-primary/20 p-2 rounded-lg mr-3">
+                                                                                <FileText className="h-5 w-5 text-primary" />
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="font-medium text-foreground truncate text-sm">{exam.name || 'Exame sem título'}</p>
+                                                                                <p className="text-xs text-muted-foreground">
+                                                                                    {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
+                                                                                </p>
+                                                                            </div>
+                                                                            <Badge
+                                                                                variant={exam.status === 'analyzed' ? 'default' : 'secondary'}
+                                                                                className="ml-3 text-xs"
+                                                                            >
+                                                                                {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
+                                                                            </Badge>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </CardContent>
+                                                    </Card>
+                                                </>
+                                            );
+
+                                            return isMobile ? (
+                                                /* Mobile: single column, upload injected between Nova Solicitação and Histórico */
+                                                <div className="space-y-6">
+                                                    <Suspense fallback={<TabLoadingSkeleton />}>
+                                                        <VitaSolicitacaoExames patient={activeProfile} middleSlot={uploadAndExamsCards} />
+                                                    </Suspense>
+                                                </div>
+                                            ) : (
+                                                /* Desktop: two columns side by side */
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <Suspense fallback={<TabLoadingSkeleton />}>
+                                                            <VitaSolicitacaoExames patient={activeProfile} />
+                                                        </Suspense>
+                                                    </div>
+                                                    <div className="space-y-6">
+                                                        {uploadAndExamsCards}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </TabsContent>

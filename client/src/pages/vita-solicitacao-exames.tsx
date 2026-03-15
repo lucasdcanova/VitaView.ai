@@ -20,9 +20,10 @@ interface VitaSolicitacaoExamesProps {
         planType?: string | null;
         insuranceCardNumber?: string | null;
     };
+    middleSlot?: React.ReactNode;
 }
 
-export default function VitaSolicitacaoExames({ patient }: VitaSolicitacaoExamesProps) {
+export default function VitaSolicitacaoExames({ patient, middleSlot }: VitaSolicitacaoExamesProps) {
 
     // Hooks
     const requestLogic = useExamRequestLogic(patient);
@@ -64,6 +65,9 @@ export default function VitaSolicitacaoExames({ patient }: VitaSolicitacaoExames
                         setNewProtocolSearch: protocolLogic.setNewProtocolSearch
                     }}
                 />
+
+                {/* Optional middle slot (e.g. Upload area on mobile) */}
+                {middleSlot}
 
                 {/* 2. Request History */}
                 <ExamRequestHistory
