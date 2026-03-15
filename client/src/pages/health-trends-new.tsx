@@ -1105,36 +1105,36 @@ export default function HealthTrendsNew({
                   {/* Linha do Tempo */}
                   <div className="space-y-6 pb-12">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5">
                         <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
-                          <Calendar className="h-6 w-6" />
+                          <Calendar className="h-5 w-5" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Linha do Tempo Clínica</h3>
-                          <p className="text-sm text-gray-500 dark:text-slate-400">Histórico cronológico de eventos</p>
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 leading-tight">Linha do Tempo Clínica</h3>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">Histórico cronológico</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {embedded && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 h-8 px-2"
                             onClick={handleExportToPDF}
                           >
-                            <FileText className="w-4 h-4 mr-2" /> PDF
+                            <FileText className="w-4 h-4 mr-1" /> PDF
                           </Button>
                         )}
                         <Badge
                           variant="outline"
-                          className="border-gray-200 bg-white px-3 py-1 text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          className="border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         >
                           {filteredTimelineItems.length} {filteredTimelineItems.length === 1 ? "registro" : "registros"}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20">
+                    <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-gray-200 bg-white/90 p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20">
                       {timelineFilterOptions.map((option) => {
                         const Icon = option.icon;
                         const isActive = timelineFilter === option.value;
@@ -1146,16 +1146,16 @@ export default function HealthTrendsNew({
                             variant="ghost"
                             size="sm"
                             onClick={() => setTimelineFilter(option.value)}
-                            className={`h-auto rounded-xl px-3 py-2 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-300 dark:focus-visible:ring-offset-slate-950 ${
+                            className={`h-auto rounded-xl px-2.5 py-2 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-300 dark:focus-visible:ring-offset-slate-950 justify-start ${
                               isActive
                                 ? "bg-gray-900 text-white shadow-sm hover:bg-gray-900 hover:text-white dark:bg-indigo-500/20 dark:text-slate-50 dark:ring-1 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/30 dark:hover:text-white"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                             }`}
                           >
-                            <Icon className="mr-2 h-3.5 w-3.5" />
-                            <span>{embedded ? option.shortLabel : option.label}</span>
+                            <Icon className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{option.label}</span>
                             <span
-                              className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0 ${
                                 isActive
                                   ? "bg-white/15 text-white dark:bg-white/10 dark:text-slate-50"
                                   : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-200"
