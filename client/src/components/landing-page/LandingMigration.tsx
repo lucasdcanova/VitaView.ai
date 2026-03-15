@@ -13,7 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ type AssetDef = {
   icon: LucideIcon;
   label: string;
   pillCls: string;
-  svgPath: string;
+  fallbackPoint: { x: number; y: number };
   delay: number;
   dur: number;
 };
@@ -34,17 +34,24 @@ type MigrationStep = {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-// Hub center in SVG viewBox "0 0 400 210"
-const HX = 200;
-const HY = 152;
+type Point = {
+  x: number;
+  y: number;
+};
+
+const FALLBACK_ZONE = {
+  width: 400,
+  height: 210,
+};
+
+const HUB_Y_RATIO = 0.72;
 
 const ASSETS: AssetDef[] = [
   {
     icon: Users,
     label: "Pacientes",
-    // pill left-edge ≈ 18px → center ≈ 63px → SVG x ≈ 63
     pillCls: "left-[5%] top-[6%]",
-    svgPath: `M68 28 C108 62 156 106 ${HX} ${HY}`,
+    fallbackPoint: { x: 86, y: 42 },
     delay: 0,
     dur: 2.6,
   },
@@ -52,7 +59,7 @@ const ASSETS: AssetDef[] = [
     icon: CalendarDays,
     label: "Consultas",
     pillCls: "right-[5%] top-[6%]",
-    svgPath: `M332 28 C292 62 244 106 ${HX} ${HY}`,
+    fallbackPoint: { x: 314, y: 42 },
     delay: 0.22,
     dur: 2.6,
   },
@@ -60,7 +67,7 @@ const ASSETS: AssetDef[] = [
     icon: FileText,
     label: "Prontuários",
     pillCls: "left-1/2 -translate-x-1/2 top-[1%]",
-    svgPath: `M200 16 C200 55 200 102 ${HX} ${HY}`,
+    fallbackPoint: { x: 200, y: 30 },
     delay: 0.44,
     dur: 2.4,
   },
@@ -68,7 +75,7 @@ const ASSETS: AssetDef[] = [
     icon: Clock3,
     label: "Horários",
     pillCls: "left-[10%] top-[38%]",
-    svgPath: `M92 94 C124 114 162 134 ${HX} ${HY}`,
+    fallbackPoint: { x: 104, y: 106 },
     delay: 0.66,
     dur: 2.2,
   },
@@ -76,7 +83,7 @@ const ASSETS: AssetDef[] = [
     icon: Phone,
     label: "Telefones",
     pillCls: "right-[10%] top-[38%]",
-    svgPath: `M308 94 C276 114 238 134 ${HX} ${HY}`,
+    fallbackPoint: { x: 296, y: 106 },
     delay: 0.88,
     dur: 2.2,
   },
@@ -106,6 +113,50 @@ const RESULT_ITEMS = [
   "Histórico clínico",
 ];
 
+function getHubPoint(zone: { width: number; height: number }): Point {
+  return {
+    x: zone.width / 2,
+    y: zone.height * HUB_Y_RATIO,
+  };
+}
+
+function getAnchorPoint(
+  pillRect: DOMRect,
+  zoneRect: DOMRect,
+  hub: Point,
+): Point {
+  const centerX = pillRect.left - zoneRect.left + pillRect.width / 2;
+  const centerY = pillRect.top - zoneRect.top + pillRect.height / 2;
+  const dx = hub.x - centerX;
+  const dy = hub.y - centerY;
+  const halfW = pillRect.width / 2;
+  const halfH = pillRect.height / 2;
+  const scale =
+    1 / Math.max(Math.abs(dx) / Math.max(halfW, 1), Math.abs(dy) / Math.max(halfH, 1), 1);
+
+  return {
+    x: centerX + dx * scale,
+    y: centerY + dy * scale,
+  };
+}
+
+function buildMigrationPath(start: Point, hub: Point) {
+  const dx = hub.x - start.x;
+  const dy = hub.y - start.y;
+  const spread = Math.abs(dx);
+  const arcLift = Math.max(28, Math.min(74, spread * 0.18 + Math.abs(dy) * 0.16));
+  const control1 = {
+    x: start.x + dx * 0.2,
+    y: start.y + dy * 0.14,
+  };
+  const control2 = {
+    x: start.x + dx * 0.78,
+    y: hub.y - arcLift,
+  };
+
+  return `M ${start.x} ${start.y} C ${control1.x} ${control1.y} ${control2.x} ${control2.y} ${hub.x} ${hub.y}`;
+}
+
 // ─── Pill ───────────────────────────────────────────────────────────────────
 
 function Pill({
@@ -115,6 +166,7 @@ function Pill({
   isInView,
   reduced,
   index,
+  pillRef,
 }: {
   icon: LucideIcon;
   label: string;
@@ -122,38 +174,41 @@ function Pill({
   isInView: boolean;
   reduced: boolean;
   index: number;
+  pillRef?: (node: HTMLDivElement | null) => void;
 }) {
   return (
-    <motion.div
-      className={`absolute z-20 ${pillCls} inline-flex items-center gap-1.5 rounded-full border border-white/[0.18] bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold text-white/85 shadow-lg backdrop-blur-sm`}
-      initial={reduced ? false : { opacity: 0, y: 10, scale: 0.9 }}
-      animate={
-        isInView
-          ? {
-              opacity: 1,
-              scale: 1,
-              y: reduced ? 0 : [0, -3.5, 0],
-            }
-          : { opacity: 0, y: 10, scale: 0.9 }
-      }
-      transition={
-        reduced
-          ? { duration: 0 }
-          : {
-              opacity: { duration: 0.38, delay: index * 0.08 },
-              scale: { duration: 0.38, delay: index * 0.08 },
-              y: {
-                duration: 3.6 + index * 0.35,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: index * 0.5,
-              },
-            }
-      }
-    >
-      <Icon className="h-3.5 w-3.5 text-white/60" />
-      {label}
-    </motion.div>
+    <div ref={pillRef} className={`absolute z-20 ${pillCls}`}>
+      <motion.div
+        className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.18] bg-white/[0.08] px-3 py-1.5 text-[11px] font-semibold text-white/85 shadow-lg backdrop-blur-sm"
+        initial={reduced ? false : { opacity: 0, y: 10, scale: 0.9 }}
+        animate={
+          isInView
+            ? {
+                opacity: 1,
+                scale: 1,
+                y: reduced ? 0 : [0, -3.5, 0],
+              }
+            : { opacity: 0, y: 10, scale: 0.9 }
+        }
+        transition={
+          reduced
+            ? { duration: 0 }
+            : {
+                opacity: { duration: 0.38, delay: index * 0.08 },
+                scale: { duration: 0.38, delay: index * 0.08 },
+                y: {
+                  duration: 3.6 + index * 0.35,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: index * 0.5,
+                },
+              }
+        }
+      >
+        <Icon className="h-3.5 w-3.5 text-white/60" />
+        {label}
+      </motion.div>
+    </div>
   );
 }
 
@@ -161,12 +216,75 @@ function Pill({
 
 export function LandingMigration() {
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const zoneRef = useRef<HTMLDivElement | null>(null);
+  const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [zoneSize, setZoneSize] = useState(FALLBACK_ZONE);
+  const [anchors, setAnchors] = useState<Point[]>(() => ASSETS.map((asset) => asset.fallbackPoint));
   const isInView = useInView(cardRef, {
     once: true,
     amount: 0.25,
     margin: "0px 0px -10% 0px",
   });
   const reduced = useReducedMotion() ?? false;
+  const hub = useMemo(() => getHubPoint(zoneSize), [zoneSize]);
+  const animatedAssets = useMemo(
+    () =>
+      ASSETS.map((asset, index) => {
+        const anchor = anchors[index] ?? asset.fallbackPoint;
+        return {
+          ...asset,
+          anchor,
+          svgPath: buildMigrationPath(anchor, hub),
+        };
+      }),
+    [anchors, hub],
+  );
+
+  useEffect(() => {
+    const zone = zoneRef.current;
+    if (!zone) {
+      return;
+    }
+
+    const measure = () => {
+      const zoneRect = zone.getBoundingClientRect();
+      if (!zoneRect.width || !zoneRect.height) {
+        return;
+      }
+
+      const nextZone = {
+        width: zoneRect.width,
+        height: zoneRect.height,
+      };
+      const nextHub = getHubPoint(nextZone);
+      const nextAnchors = ASSETS.map((asset, index) => {
+        const pillNode = pillRefs.current[index];
+        if (!pillNode) {
+          return asset.fallbackPoint;
+        }
+        return getAnchorPoint(pillNode.getBoundingClientRect(), zoneRect, nextHub);
+      });
+
+      setZoneSize(nextZone);
+      setAnchors(nextAnchors);
+    };
+
+    const frame = window.requestAnimationFrame(measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(zone);
+    pillRefs.current.forEach((pill) => {
+      if (pill) {
+        observer.observe(pill);
+      }
+    });
+    window.addEventListener("resize", measure);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   return (
     <section
@@ -287,12 +405,15 @@ export function LandingMigration() {
               </div>
 
               {/* ② Animation zone — dedicated, nothing overlaps it */}
-              <div className="relative mt-4 h-[210px] overflow-hidden rounded-2xl bg-white/[0.02]">
+              <div
+                ref={zoneRef}
+                className="relative mt-4 h-[210px] overflow-hidden rounded-2xl bg-white/[0.02]"
+              >
                 {/* Subtle depth gradient */}
                 <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_72%,rgba(255,255,255,0.05),transparent_55%)]" />
 
                 {/* Floating data pills */}
-                {ASSETS.map((a, i) => (
+                {animatedAssets.map((a, i) => (
                   <Pill
                     key={a.label}
                     icon={a.icon}
@@ -301,12 +422,15 @@ export function LandingMigration() {
                     isInView={isInView}
                     reduced={reduced}
                     index={i}
+                    pillRef={(node) => {
+                      pillRefs.current[i] = node;
+                    }}
                   />
                 ))}
 
                 {/* SVG: paths + hub — fills full zone */}
                 <motion.svg
-                  viewBox="0 0 400 210"
+                  viewBox={`0 0 ${zoneSize.width} ${zoneSize.height}`}
                   className="absolute inset-0 z-10 h-full w-full"
                   initial={false}
                   animate={isInView ? { opacity: 1 } : { opacity: 0 }}
@@ -326,33 +450,43 @@ export function LandingMigration() {
                   </defs>
 
                   {/* Transfer paths */}
-                  {ASSETS.map((a, i) => (
-                    <motion.path
-                      key={a.label}
-                      d={a.svgPath}
-                      fill="none"
-                      stroke="url(#migLine)"
-                      strokeWidth="1.2"
-                      strokeLinecap="round"
-                      strokeDasharray="3 8"
-                      initial={reduced ? false : { pathLength: 0, opacity: 0.1 }}
-                      animate={
-                        isInView
-                          ? { pathLength: 1, opacity: 0.88 }
-                          : { pathLength: 0, opacity: 0.1 }
-                      }
-                      transition={{
-                        duration: reduced ? 0 : 0.7,
-                        delay: reduced ? 0 : i * 0.08,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                    />
+                  {animatedAssets.map((a, i) => (
+                    <g key={a.label}>
+                      <motion.path
+                        d={a.svgPath}
+                        fill="none"
+                        stroke="url(#migLine)"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeDasharray="3 8"
+                        initial={reduced ? false : { pathLength: 0, opacity: 0.1 }}
+                        animate={
+                          isInView
+                            ? { pathLength: 1, opacity: 0.88 }
+                            : { pathLength: 0, opacity: 0.1 }
+                        }
+                        transition={{
+                          duration: reduced ? 0 : 0.7,
+                          delay: reduced ? 0 : i * 0.08,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      />
+                      <motion.circle
+                        cx={a.anchor.x}
+                        cy={a.anchor.y}
+                        r="2.6"
+                        fill="rgba(255,255,255,0.9)"
+                        initial={reduced ? false : { opacity: 0, scale: 0.6 }}
+                        animate={isInView ? { opacity: 0.96, scale: 1 } : { opacity: 0, scale: 0.6 }}
+                        transition={{ duration: 0.28, delay: reduced ? 0 : i * 0.06 }}
+                      />
+                    </g>
                   ))}
 
                   {/* Hub: outer glow */}
                   <motion.circle
-                    cx={HX}
-                    cy={HY}
+                    cx={hub.x}
+                    cy={hub.y}
                     r="40"
                     fill="url(#hubGlow)"
                     initial={reduced ? false : { opacity: 0 }}
@@ -373,8 +507,8 @@ export function LandingMigration() {
 
                   {/* Hub: outer ring */}
                   <motion.circle
-                    cx={HX}
-                    cy={HY}
+                    cx={hub.x}
+                    cy={hub.y}
                     r="25"
                     fill="none"
                     stroke="rgba(255,255,255,0.09)"
@@ -386,9 +520,9 @@ export function LandingMigration() {
 
                   {/* Hub: main circle — pulses */}
                   <motion.circle
-                    cx={HX}
-                    cy={HY}
-                    r="17"
+                    cx={hub.x}
+                    cy={hub.y}
+                    r="18"
                     fill="rgba(255,255,255,0.07)"
                     stroke="rgba(255,255,255,0.22)"
                     strokeWidth="1.2"
@@ -410,37 +544,18 @@ export function LandingMigration() {
 
                   {/* Hub: inner dot */}
                   <motion.circle
-                    cx={HX}
-                    cy={HY}
-                    r="7"
-                    fill="rgba(255,255,255,0.2)"
+                    cx={hub.x}
+                    cy={hub.y}
+                    r="8.5"
+                    fill="rgba(255,255,255,0.18)"
                     initial={reduced ? false : { opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ duration: 0.4, delay: 0.7 }}
                   />
 
-                  {/* Hub: "V" monogram */}
-                  <motion.g
-                    initial={reduced ? false : { opacity: 0 }}
-                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ duration: 0.4, delay: 0.85 }}
-                  >
-                    <text
-                      x={HX}
-                      y={HY + 4}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fontWeight="800"
-                      fill="rgba(255,255,255,0.88)"
-                      fontFamily="system-ui, -apple-system, sans-serif"
-                    >
-                      V
-                    </text>
-                  </motion.g>
-
                   {/* Traveling dots — animate along each path */}
                   {!reduced &&
-                    ASSETS.map((a) => (
+                    animatedAssets.map((a) => (
                       <circle key={`dot-${a.label}`} r="2.8" fill="white" opacity="0">
                         {isInView && (
                           <>
@@ -463,6 +578,24 @@ export function LandingMigration() {
                       </circle>
                     ))}
                 </motion.svg>
+
+                <motion.div
+                  className="pointer-events-none absolute z-20 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-[#171717]/90 shadow-[0_0_32px_rgba(255,255,255,0.12)] backdrop-blur-md"
+                  style={{
+                    left: hub.x,
+                    top: hub.y,
+                  }}
+                  initial={reduced ? false : { opacity: 0, scale: 0.86 }}
+                  animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
+                  transition={{ duration: 0.38, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <img
+                    src="/logo-icon-transparent.png"
+                    alt="VitaView"
+                    className="h-5 w-5 object-contain opacity-95"
+                    draggable={false}
+                  />
+                </motion.div>
               </div>
 
               {/* ③ Divider */}
