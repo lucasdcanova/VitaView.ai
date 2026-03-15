@@ -392,7 +392,7 @@ export default function Agenda() {
                     </div>
                 </PatientHeader>
 
-                <div className="mt-4 md:mt-6 flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto">
                     <AgendaCalendar
                         onNewAppointment={handleNewAppointment}
                         onEditAppointment={handleEditAppointment}
