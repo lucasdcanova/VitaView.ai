@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { isIOSAppShell } from "@/lib/app-shell";
 
 export type ConsultationRecordingState =
   | "idle"
@@ -49,6 +50,115 @@ interface ConsultationRecordingSession {
   patientName: string | null;
   returnPath: string;
 }
+
+interface RecordingFormat {
+  extension: string;
+  recorderMimeType?: string;
+  uploadMimeType: string;
+}
+
+type LegacyNavigator = Navigator & {
+  getUserMedia?: (
+    constraints: MediaStreamConstraints,
+    onSuccess: (stream: MediaStream) => void,
+    onError: (error: DOMException) => void
+  ) => void;
+  webkitGetUserMedia?: LegacyNavigator["getUserMedia"];
+  mozGetUserMedia?: LegacyNavigator["getUserMedia"];
+  msGetUserMedia?: LegacyNavigator["getUserMedia"];
+};
+
+const getPreferredRecordingFormats = (): RecordingFormat[] => {
+  const webmFormats: RecordingFormat[] = [
+    {
+      recorderMimeType: "audio/webm;codecs=opus",
+      uploadMimeType: "audio/webm",
+      extension: "webm",
+    },
+    {
+      recorderMimeType: "audio/webm",
+      uploadMimeType: "audio/webm",
+      extension: "webm",
+    },
+  ];
+
+  const iosFormats: RecordingFormat[] = [
+    {
+      recorderMimeType: "audio/mp4;codecs=mp4a.40.2",
+      uploadMimeType: "audio/mp4",
+      extension: "mp4",
+    },
+    {
+      recorderMimeType: "audio/mp4",
+      uploadMimeType: "audio/mp4",
+      extension: "mp4",
+    },
+    {
+      recorderMimeType: "audio/x-m4a",
+      uploadMimeType: "audio/x-m4a",
+      extension: "m4a",
+    },
+    {
+      recorderMimeType: "audio/m4a",
+      uploadMimeType: "audio/m4a",
+      extension: "m4a",
+    },
+  ];
+
+  return isIOSAppShell()
+    ? [...iosFormats, ...webmFormats]
+    : [...webmFormats, ...iosFormats];
+};
+
+const getSupportedRecordingFormat = (): RecordingFormat => {
+  const fallback = isIOSAppShell()
+    ? { uploadMimeType: "audio/mp4", extension: "mp4" }
+    : { uploadMimeType: "audio/webm", extension: "webm" };
+
+  if (typeof window === "undefined" || typeof MediaRecorder === "undefined") {
+    return fallback;
+  }
+
+  for (const format of getPreferredRecordingFormats()) {
+    if (!format.recorderMimeType || MediaRecorder.isTypeSupported(format.recorderMimeType)) {
+      return format;
+    }
+  }
+
+  return fallback;
+};
+
+const normalizeUploadMimeType = (mimeType: string | undefined, fallbackMimeType: string) => {
+  if (!mimeType) return fallbackMimeType;
+
+  if (mimeType.startsWith("audio/webm")) return "audio/webm";
+  if (mimeType.startsWith("audio/mp4")) return "audio/mp4";
+  if (mimeType.startsWith("audio/x-m4a")) return "audio/x-m4a";
+  if (mimeType.startsWith("audio/m4a")) return "audio/m4a";
+
+  return fallbackMimeType;
+};
+
+const getAudioStream = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+  if (navigator.mediaDevices?.getUserMedia) {
+    return navigator.mediaDevices.getUserMedia(constraints);
+  }
+
+  const legacyNavigator = navigator as LegacyNavigator;
+  const legacyGetUserMedia =
+    legacyNavigator.getUserMedia ||
+    legacyNavigator.webkitGetUserMedia ||
+    legacyNavigator.mozGetUserMedia ||
+    legacyNavigator.msGetUserMedia;
+
+  if (!legacyGetUserMedia) {
+    throw new Error("API_NOT_AVAILABLE");
+  }
+
+  return new Promise((resolve, reject) => {
+    legacyGetUserMedia.call(legacyNavigator, constraints, resolve, reject);
+  });
+};
 
 interface ConsultationRecordingContextType {
   recordingState: ConsultationRecordingState;
@@ -100,6 +210,10 @@ export function ConsultationRecordingProvider({
   const timerRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const sessionRef = useRef<ConsultationRecordingSession | null>(null);
+  const recordingFormatRef = useRef<RecordingFormat>({
+    uploadMimeType: "audio/webm",
+    extension: "webm",
+  });
 
   const setSession = useCallback((session: ConsultationRecordingSession | null) => {
     sessionRef.current = session;
@@ -135,10 +249,16 @@ export function ConsultationRecordingProvider({
   const processAudio = useCallback(async () => {
     try {
       const session = sessionRef.current;
-      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: recordingFormatRef.current.uploadMimeType,
+      });
       const formData = new FormData();
 
-      formData.append("audio", audioBlob, "consultation.webm");
+      formData.append(
+        "audio",
+        audioBlob,
+        `consultation.${recordingFormatRef.current.extension}`
+      );
       if (session?.profileId) {
         formData.append("profileId", session.profileId.toString());
       }
@@ -210,7 +330,13 @@ export function ConsultationRecordingProvider({
           returnPath: options?.returnPath || "/atendimento",
         });
 
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (
+          !navigator.mediaDevices?.getUserMedia &&
+          !(navigator as LegacyNavigator).getUserMedia &&
+          !(navigator as LegacyNavigator).webkitGetUserMedia &&
+          !(navigator as LegacyNavigator).mozGetUserMedia &&
+          !(navigator as LegacyNavigator).msGetUserMedia
+        ) {
           if (
             window.location.protocol === "http:" &&
             window.location.hostname !== "localhost"
@@ -219,6 +345,10 @@ export function ConsultationRecordingProvider({
           }
 
           throw new Error("API_NOT_AVAILABLE");
+        }
+
+        if (typeof MediaRecorder === "undefined") {
+          throw new Error("RECORDER_NOT_AVAILABLE");
         }
 
         if (navigator.permissions && navigator.permissions.query) {
@@ -238,7 +368,7 @@ export function ConsultationRecordingProvider({
           }
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getAudioStream({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -248,11 +378,23 @@ export function ConsultationRecordingProvider({
 
         streamRef.current = stream;
 
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-            ? "audio/webm;codecs=opus"
-            : "audio/webm",
-        });
+        const recordingFormat = getSupportedRecordingFormat();
+        recordingFormatRef.current = recordingFormat;
+
+        const mediaRecorder = recordingFormat.recorderMimeType
+          ? new MediaRecorder(stream, {
+              mimeType: recordingFormat.recorderMimeType,
+            })
+          : new MediaRecorder(stream);
+
+        recordingFormatRef.current = {
+          extension: recordingFormat.extension,
+          recorderMimeType: mediaRecorder.mimeType || recordingFormat.recorderMimeType,
+          uploadMimeType: normalizeUploadMimeType(
+            mediaRecorder.mimeType,
+            recordingFormat.uploadMimeType
+          ),
+        };
 
         mediaRecorderRef.current = mediaRecorder;
 
@@ -288,9 +430,12 @@ export function ConsultationRecordingProvider({
           if (error.message === "INSECURE_CONTEXT") {
             message =
               "O acesso ao microfone requer conexao segura (HTTPS). Entre em contato com o suporte.";
-          } else if (error.message === "API_NOT_AVAILABLE") {
+          } else if (
+            error.message === "API_NOT_AVAILABLE" ||
+            error.message === "RECORDER_NOT_AVAILABLE"
+          ) {
             message =
-              "Seu navegador nao suporta gravacao de audio. Tente usar Chrome, Firefox ou Edge.";
+              "Este dispositivo nao expôs a gravacao de audio para o app. No iPhone/iPad, atualize o iOS e permita o microfone nas Configuracoes do app VitaView.";
           } else if (
             error.message === "PERMISSION_DENIED" ||
             error.name === "NotAllowedError"

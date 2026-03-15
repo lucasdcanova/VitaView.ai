@@ -404,18 +404,18 @@ export default function PatientView() {
                                         Atend.
                                     </TabsTrigger>
                                     <TabsTrigger
-                                        value="prescricoes"
-                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
-                                    >
-                                        <Pill className="h-3 w-3 mr-1" />
-                                        Presc.
-                                    </TabsTrigger>
-                                    <TabsTrigger
                                         value="timeline"
                                         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
                                     >
                                         <Heart className="h-3 w-3 mr-1" />
                                         Hist.
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="prescricoes"
+                                        className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-full border border-transparent text-muted-foreground bg-transparent transition-all data-[state=active]:bg-[#212121] data-[state=active]:text-white data-[state=active]:border-[#212121] data-[state=active]:shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900 dark:data-[state=active]:border-white"
+                                    >
+                                        <Pill className="h-3 w-3 mr-1" />
+                                        Presc.
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="laboratorial"
@@ -448,13 +448,13 @@ export default function PatientView() {
                                         <LayoutDashboard className="h-4 w-4 mr-2" />
                                         Atendimento
                                     </TabsTrigger>
-                                    <TabsTrigger value="prescricoes" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
-                                        <Pill className="h-4 w-4 mr-2" />
-                                        Prescrição
-                                    </TabsTrigger>
                                     <TabsTrigger value="timeline" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
                                         <Heart className="h-4 w-4 mr-2" />
                                         Histórico do Paciente
+                                    </TabsTrigger>
+                                    <TabsTrigger value="prescricoes" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
+                                        <Pill className="h-4 w-4 mr-2" />
+                                        Prescrição
                                     </TabsTrigger>
                                     <TabsTrigger value="laboratorial" className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-gray-600 hover:text-gray-800">
                                         <LineChart className="h-4 w-4 mr-2" />

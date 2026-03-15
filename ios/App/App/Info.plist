@@ -24,6 +24,8 @@
 	<string>54</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O VitaView usa o microfone para gravar consultas e transcrever a anamnese com IA.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -152,6 +152,8 @@ interface TimelineItem {
   details?: any;
 }
 
+type TimelineFilter = "all" | "evolution" | "diagnosis" | "exam";
+
 interface HealthTrendsNewProps {
   embedded?: boolean;
   // Optional pre-fetched data to avoid duplicate API calls
@@ -197,6 +199,7 @@ export default function HealthTrendsNew({
   const [isDoctorFormDialogOpen, setIsDoctorFormDialogOpen] = useState(false);
   const [isEditDoctorDialogOpen, setIsEditDoctorDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<any>(null);
+  const [timelineFilter, setTimelineFilter] = useState<TimelineFilter>("all");
 
   const form = useForm<DiagnosisForm>({
     resolver: zodResolver(diagnosisSchema),
@@ -757,6 +760,56 @@ export default function HealthTrendsNew({
 
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [exams, diagnoses, surgeries, evolutions]);
 
+  const filteredTimelineItems = useMemo(() => {
+    if (timelineFilter === "all") return timelineItems;
+    return timelineItems.filter((item) => item.type === timelineFilter);
+  }, [timelineFilter, timelineItems]);
+
+  const timelineFilterOptions: Array<{
+    value: TimelineFilter;
+    label: string;
+    shortLabel: string;
+    icon: typeof FileText;
+    count: number;
+  }> = [
+    {
+      value: "all",
+      label: "Todos",
+      shortLabel: "Todos",
+      icon: Calendar,
+      count: timelineItems.length,
+    },
+    {
+      value: "evolution",
+      label: "Evoluções",
+      shortLabel: "Evol.",
+      icon: FileText,
+      count: timelineItems.filter((item) => item.type === "evolution").length,
+    },
+    {
+      value: "diagnosis",
+      label: "Diagnósticos",
+      shortLabel: "Diag.",
+      icon: ShieldCheck,
+      count: timelineItems.filter((item) => item.type === "diagnosis").length,
+    },
+    {
+      value: "exam",
+      label: "Exames",
+      shortLabel: "Exames",
+      icon: Activity,
+      count: timelineItems.filter((item) => item.type === "exam").length,
+    },
+  ];
+
+  const hasActiveTimelineFilter = timelineFilter !== "all";
+  const timelineEmptyTitle = hasActiveTimelineFilter
+    ? `Nenhum registro de ${timelineFilterOptions.find((option) => option.value === timelineFilter)?.label.toLowerCase()}`
+    : "Nenhum registro na linha do tempo";
+  const timelineEmptyDescription = hasActiveTimelineFilter
+    ? "Ajuste o filtro ou registre novos eventos para visualizar este recorte do histórico."
+    : "Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.";
+
   const onSubmit = (data: DiagnosisForm) => {
     addDiagnosisMutation.mutate(data);
   };
@@ -902,7 +955,7 @@ export default function HealthTrendsNew({
     try {
       toast({ title: "Gerando PDF...", description: "Aguarde enquanto preparamos o relatório jurídico." });
 
-      const reportItems: LegalReportItem[] = timelineItems.map(item => {
+      const reportItems: LegalReportItem[] = filteredTimelineItems.map(item => {
         // Map types to user friendly names
         let typeName = 'Evento';
         switch (item.type) {
@@ -1073,28 +1126,70 @@ export default function HealthTrendsNew({
                   <div className="space-y-6 pb-12">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                        <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
                           <Calendar className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Linha do Tempo Clínica</h3>
-                          <p className="text-sm text-gray-500">Histórico cronológico de eventos</p>
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Linha do Tempo Clínica</h3>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">Histórico cronológico de eventos</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {embedded && (
-                          <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleExportToPDF}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                            onClick={handleExportToPDF}
+                          >
                             <FileText className="w-4 h-4 mr-2" /> PDF
                           </Button>
                         )}
-                        <Badge variant="outline" className="text-gray-600 bg-white border-gray-200 px-3 py-1">
-                          {timelineItems.length} registros
+                        <Badge
+                          variant="outline"
+                          className="border-gray-200 bg-white px-3 py-1 text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                          {filteredTimelineItems.length} {filteredTimelineItems.length === 1 ? "registro" : "registros"}
                         </Badge>
                       </div>
                     </div>
 
+                    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20">
+                      {timelineFilterOptions.map((option) => {
+                        const Icon = option.icon;
+                        const isActive = timelineFilter === option.value;
+
+                        return (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTimelineFilter(option.value)}
+                            className={`h-auto rounded-xl px-3 py-2 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-300 dark:focus-visible:ring-offset-slate-950 ${
+                              isActive
+                                ? "bg-gray-900 text-white shadow-sm hover:bg-gray-900 hover:text-white dark:bg-indigo-500/20 dark:text-slate-50 dark:ring-1 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/30 dark:hover:text-white"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                            }`}
+                          >
+                            <Icon className="mr-2 h-3.5 w-3.5" />
+                            <span>{embedded ? option.shortLabel : option.label}</span>
+                            <span
+                              className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                isActive
+                                  ? "bg-white/15 text-white dark:bg-white/10 dark:text-slate-50"
+                                  : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-200"
+                              }`}
+                            >
+                              {option.count}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+
                     <div className="relative border-l-2 border-indigo-100 ml-4 space-y-8 pb-4">
-                      {timelineItems.length > 0 ? timelineItems.map((item, index) => (
+                      {filteredTimelineItems.length > 0 ? filteredTimelineItems.map((item, index) => (
                         <div key={`${item.type}-${item.id}-${index}`} className="relative pl-8 group">
                           {/* Dot on the line */}
                           <div className={`absolute -left-[9px] top-1.5 h-5 w-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110 ${item.type === 'exam' ? 'bg-gray-500' :
@@ -1207,9 +1302,9 @@ export default function HealthTrendsNew({
                           <div className="pl-8 py-8">
                             <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                               <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                              <h3 className="text-lg font-medium text-gray-900">Nenhum registro na linha do tempo</h3>
+                              <h3 className="text-lg font-medium text-gray-900">{timelineEmptyTitle}</h3>
                               <p className="text-gray-500 mt-1">
-                                Adicione diagnósticos ou exames para visualizar o histórico clínico aqui.
+                                {timelineEmptyDescription}
                               </p>
                             </div>
                           </div>

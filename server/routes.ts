@@ -5214,9 +5214,47 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!user) return res.sendStatus(401);
 
       const { message, conversationId, profileId } = req.body;
+      const hasProfileIdInPayload = Object.prototype.hasOwnProperty.call(req.body ?? {}, "profileId");
+
+      let normalizedProfileId: number | null | undefined = undefined;
+      if (hasProfileIdInPayload) {
+        if (profileId === null || profileId === "" || profileId === "none") {
+          normalizedProfileId = null;
+        } else {
+          const parsedProfileId = typeof profileId === "number" ? profileId : parseInt(profileId, 10);
+          if (!Number.isInteger(parsedProfileId) || parsedProfileId <= 0) {
+            return res.status(400).json({ message: "profileId inválido" });
+          }
+          normalizedProfileId = parsedProfileId;
+        }
+      }
 
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ message: "Mensagem é obrigatória" });
+      }
+
+      if (normalizedProfileId) {
+        const profile = await storage.getProfile(normalizedProfileId);
+        if (!profile) {
+          return res.status(404).json({ message: "Paciente não encontrado" });
+        }
+
+        const requesterClinicId = (req.user as any)?.clinicId as number | null | undefined;
+        const profileBelongsToUser = profile.userId === user.id;
+
+        let profileBelongsToTenant = false;
+        if (requesterClinicId) {
+          if (profile.clinicId && profile.clinicId === requesterClinicId) {
+            profileBelongsToTenant = true;
+          } else {
+            const profileOwner = await storage.getUser(profile.userId);
+            profileBelongsToTenant = !!profileOwner?.clinicId && profileOwner.clinicId === requesterClinicId;
+          }
+        }
+
+        if (!profileBelongsToUser && !profileBelongsToTenant) {
+          return res.status(403).json({ message: "Acesso negado ao paciente selecionado" });
+        }
       }
 
       let conversation;
@@ -5234,7 +5272,13 @@ export async function registerRoutes(app: Express): Promise<void> {
       } else {
         // Create new conversation
         const title = await generateConversationTitle(message);
-        conversation = await storage.createAIConversation(user.id, profileId || undefined, title);
+        conversation = await storage.createAIConversation(user.id, normalizedProfileId ?? undefined, title);
+      }
+
+      if (normalizedProfileId !== undefined && conversation.profileId !== normalizedProfileId) {
+        conversation = await storage.updateAIConversation(conversation.id, {
+          profileId: normalizedProfileId,
+        }) ?? conversation;
       }
 
       // Add user message to history
@@ -5245,10 +5289,14 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Get patient context if profileId provided
       let patientContext: string | undefined = undefined;
-      if (profileId || conversation.profileId) {
-        const pId = profileId || conversation.profileId;
-        // Use Lean RAG Context
-        patientContext = await contextManager.getLeanContext(user.id, pId, message);
+      const effectiveProfileId = normalizedProfileId !== undefined ? normalizedProfileId : conversation.profileId;
+      if (effectiveProfileId) {
+        patientContext = await contextManager.getLeanContext(
+          user.id,
+          effectiveProfileId,
+          message,
+          (req as any).tenantId
+        );
       }
 
       // Get AI response
