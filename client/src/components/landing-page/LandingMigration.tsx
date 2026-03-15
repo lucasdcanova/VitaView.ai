@@ -553,6 +553,38 @@ export function LandingMigration() {
                     transition={{ duration: 0.4, delay: 0.7 }}
                   />
 
+                  <motion.g
+                    initial={reduced ? false : { opacity: 0, scale: 0.86 }}
+                    animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
+                    transition={{ duration: 0.38, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
+                    style={{
+                      transformBox: "fill-box",
+                      transformOrigin: "center",
+                    }}
+                  >
+                    <circle
+                      cx={hub.x}
+                      cy={hub.y}
+                      r="11.5"
+                      fill="rgba(255,255,255,0.04)"
+                      stroke="rgba(255,255,255,0.12)"
+                      strokeWidth="0.9"
+                    />
+                    <image
+                      href="/logo-icon-transparent.png"
+                      x={hub.x - 7.5}
+                      y={hub.y - 7.5}
+                      width="15"
+                      height="15"
+                      preserveAspectRatio="xMidYMid meet"
+                      opacity="0.96"
+                      style={{
+                        filter:
+                          "brightness(0) invert(0.98) drop-shadow(0 0 10px rgba(255,255,255,0.22))",
+                      }}
+                    />
+                  </motion.g>
+
                   {/* Traveling dots — animate along each path */}
                   {!reduced &&
                     animatedAssets.map((a) => (
@@ -578,24 +610,6 @@ export function LandingMigration() {
                       </circle>
                     ))}
                 </motion.svg>
-
-                <motion.div
-                  className="pointer-events-none absolute z-20 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.14] bg-[#171717]/90 shadow-[0_0_32px_rgba(255,255,255,0.12)] backdrop-blur-md"
-                  style={{
-                    left: hub.x,
-                    top: hub.y,
-                  }}
-                  initial={reduced ? false : { opacity: 0, scale: 0.86 }}
-                  animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
-                  transition={{ duration: 0.38, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <img
-                    src="/logo-icon-transparent.png"
-                    alt="VitaView"
-                    className="h-5 w-5 object-contain opacity-95"
-                    draggable={false}
-                  />
-                </motion.div>
               </div>
 
               {/* ③ Divider */}
