@@ -25,7 +25,7 @@ export default function PatientAvatar({
     setHasError(false);
   }, [src]);
 
-  if (hasError) {
+  if (!src || hasError) {
     return (
       <div
         className={cn(

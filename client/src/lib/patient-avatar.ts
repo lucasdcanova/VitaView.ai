@@ -19,12 +19,10 @@ export function getPatientInitials(name?: string | null): string {
 
 export function getPatientAvatarUrl(
   profile: Pick<Profile, "id" | "name" | "email" | "notes">
-): string {
+): string | null {
   const notes = typeof profile.notes === "string" ? profile.notes : "";
   const customFromNotes = notes.match(AVATAR_NOTE_REGEX)?.[1];
   if (customFromNotes) return customFromNotes;
 
-  const seedRaw = `${profile.id ?? "x"}-${profile.email ?? profile.name ?? "patient"}`;
-  const seed = encodeURIComponent(seedRaw.toLowerCase().replace(/\s+/g, "-"));
-  return `https://picsum.photos/seed/vitaview-${seed}/320/320`;
+  return null;
 }
