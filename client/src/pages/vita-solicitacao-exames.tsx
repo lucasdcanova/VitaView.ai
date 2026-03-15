@@ -36,8 +36,6 @@ export default function VitaSolicitacaoExames({ patient, middleSlot }: VitaSolic
                 {/* 1. Active Request List (Nova Solicitação) - Now includes exam search and protocols */}
                 <ActiveRequestList
                     selectedExams={requestLogic.selectedExams}
-                    clinicalIndication={requestLogic.clinicalIndication}
-                    setClinicalIndication={requestLogic.setClinicalIndication}
                     observations={requestLogic.observations}
                     setObservations={requestLogic.setObservations}
                     onRemoveExam={requestLogic.removeExam}

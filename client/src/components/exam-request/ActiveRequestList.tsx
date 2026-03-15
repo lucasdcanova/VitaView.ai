@@ -28,8 +28,6 @@ interface SelectedExam {
 
 interface ActiveRequestListProps {
     selectedExams: SelectedExam[];
-    clinicalIndication: string;
-    setClinicalIndication: (val: string) => void;
     observations: string;
     setObservations: (val: string) => void;
     onRemoveExam: (id: string) => void;
@@ -60,8 +58,6 @@ interface ActiveRequestListProps {
 
 export function ActiveRequestList({
     selectedExams,
-    clinicalIndication,
-    setClinicalIndication,
     observations,
     setObservations,
     onRemoveExam,
@@ -452,17 +448,6 @@ export function ActiveRequestList({
                     </div>
                 </div>
 
-                {/* Clinical Indication */}
-                <div className="p-3 border-b border-gray-100 bg-white">
-                    <Label htmlFor="clinical-indication" className="text-xs text-gray-600 mb-1.5 block">Indicação Clínica (opcional)</Label>
-                    <Input
-                        id="clinical-indication"
-                        value={clinicalIndication}
-                        onChange={(e) => setClinicalIndication(e.target.value)}
-                        placeholder="Ex: Check-up anual, Investigação de anemia..."
-                        className="bg-gray-50/50 h-9"
-                    />
-                </div>
 
                 {/* Selected Exam List */}
                 <div className="border-b border-gray-100">
