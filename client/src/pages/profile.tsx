@@ -444,6 +444,7 @@ export default function Profile() {
             description="Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma."
             showTitleAsMain={true}
             fullWidth={true}
+            compact={true}
             icon={<Stethoscope className="h-6 w-6" />}
           />
           <div className="p-4 md:p-6">
@@ -451,9 +452,9 @@ export default function Profile() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* User Information */}
               <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-2 border border-border">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6">
-                  <div className="relative w-24 h-24 mb-4 sm:mb-0 sm:mr-6 group">
-                    <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-4xl font-semibold overflow-hidden">
+                <div className="flex flex-col items-center sm:items-start sm:flex-row mb-6">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 mb-3 sm:mb-0 sm:mr-6 group">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-3xl sm:text-4xl font-semibold overflow-hidden">
                       {profilePhotoUrl ? (
                         <img
                           src={profilePhotoUrl}
@@ -479,13 +480,13 @@ export default function Profile() {
                       onChange={onFileChange}
                     />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">{user?.fullName || user?.username}</h2>
-                    <p className="text-muted-foreground">{user?.email}</p>
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-lg sm:text-xl font-semibold text-foreground">{user?.fullName || user?.username}</h2>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                     {clinicName && (
-                      <p className="text-sm text-muted-foreground">{clinicName}</p>
+                      <p className="text-xs text-muted-foreground">{clinicName}</p>
                     )}
-                    <div className="mt-2 flex items-center">
+                    <div className="mt-2 flex items-center justify-center sm:justify-start">
                       <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                         <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
                           <circle cx="4" cy="4" r="3" />
@@ -498,22 +499,22 @@ export default function Profile() {
                 </div>
 
                 <Tabs defaultValue="personal">
-                  <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
+                  <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6 overflow-x-auto flex-nowrap">
                     <TabsTrigger
                       value="personal"
-                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 text-muted-foreground hover:text-foreground"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-3 py-1.5 text-xs sm:text-sm sm:px-4 sm:py-2 text-muted-foreground hover:text-foreground whitespace-nowrap"
                     >
-                      Dados Profissionais
+                      Dados<span className="hidden sm:inline"> Profissionais</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="security"
-                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-3 py-1.5 text-xs sm:text-sm sm:px-4 sm:py-2 ml-2 sm:ml-4 text-muted-foreground hover:text-foreground whitespace-nowrap"
                     >
                       Segurança
                     </TabsTrigger>
                     <TabsTrigger
                       value="privacy"
-                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-4 py-2 ml-4 text-muted-foreground hover:text-foreground"
+                      className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-3 py-1.5 text-xs sm:text-sm sm:px-4 sm:py-2 ml-2 sm:ml-4 text-muted-foreground hover:text-foreground whitespace-nowrap"
                     >
                       Privacidade (LGPD)
                     </TabsTrigger>
@@ -522,7 +523,7 @@ export default function Profile() {
                   <TabsContent value="personal">
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-medium text-foreground mb-3">Informações Pessoais</h3>
+                        <h3 className="text-base sm:text-lg font-medium text-foreground mb-3">Informações Pessoais</h3>
                         <Form {...profileForm}>
                           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -571,7 +572,7 @@ export default function Profile() {
                               <>
                                 <Separator className="my-6" />
 
-                                <h3 className="text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
+                                <h3 className="text-base sm:text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                     control={profileForm.control}

@@ -85,6 +85,7 @@ export default function ReportsPage() {
                         description="Controle financeiro e fluxo de pacientes."
                         showTitleAsMain={true}
                         fullWidth={true}
+                        compact={true}
                         icon={<FileText className="h-6 w-6" />}
                     >
                         <div className="flex flex-wrap items-center gap-2">
