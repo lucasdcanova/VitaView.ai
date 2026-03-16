@@ -291,59 +291,27 @@ export default function ActivePatientIndicator({
                 <div
                     onClick={() => setLocation("/atendimento")}
                     className={cn(
-                        "relative overflow-hidden flex items-center justify-between gap-3 px-4 py-3.5 cursor-pointer transition-all duration-300 group/atendimento",
+                        "group/atendimento relative flex cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-[18px] border px-4 py-3 transition-all duration-300",
                         location === "/atendimento"
-                            ? "bg-gradient-to-r from-charcoal to-[#101114] text-pureWhite shadow-[0_10px_24px_rgba(0,0,0,0.30)] dark:from-[#f5f5f5] dark:to-[#dcdcdc] dark:text-[#101114]"
-                            : "bg-gradient-to-r from-[#1f2631] via-[#242d3a] to-[#11151c] text-white shadow-[0_8px_22px_rgba(10,15,24,0.32)] hover:shadow-[0_12px_32px_rgba(10,15,24,0.42)] dark:from-[#f4f6f8] dark:via-[#e8edf2] dark:to-[#dde3ea] dark:text-[#111827] hover:scale-[1.01] active:scale-[0.995]"
+                            ? "border-white/70 bg-[#f7f7f6] text-[#111827] shadow-[0_12px_28px_rgba(0,0,0,0.16)]"
+                            : "border-white/75 bg-[#f8f8f7] text-[#111827] shadow-[0_14px_34px_rgba(0,0,0,0.24)] hover:-translate-y-[1px] hover:shadow-[0_18px_40px_rgba(0,0,0,0.28)] active:translate-y-0"
                     )}
                 >
-                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_12%_50%,rgba(255,255,255,0.26),transparent_58%)] opacity-60 dark:opacity-40" />
-                    <div className="relative flex flex-1 items-center gap-3 min-w-0">
-                        <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center border transition-all",
-                            location === "/atendimento"
-                                ? "bg-white/15 border-white/30 dark:bg-black/8 dark:border-black/20"
-                                : "bg-white/14 border-white/28 dark:bg-black/8 dark:border-black/18"
-                        )}>
-                            <Heart className={cn(
-                                "w-[18px] h-[18px] transition-colors",
-                                location === "/atendimento"
-                                    ? "text-white dark:text-[#111827]"
-                                    : "text-white dark:text-[#111827]"
-                            )} />
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left_center,rgba(255,255,255,0.92),transparent_46%)] opacity-35" />
+                    <div className="absolute inset-y-3 left-0 w-[3px] rounded-r-full bg-[#111827]/80" />
+                    <div className="relative flex min-w-0 flex-1 items-center gap-3 pl-1.5">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]">
+                            <Heart className="h-[17px] w-[17px]" />
                         </div>
                         <div className="min-w-0">
-                            <span className={cn(
-                                "block font-heading font-extrabold tracking-[0.02em] text-[12px] sm:text-[13px] md:text-[14px] leading-snug whitespace-normal break-words",
-                                location === "/atendimento"
-                                    ? "text-white dark:text-[#111827]"
-                                    : "text-white dark:text-[#111827]"
-                            )}>
-                                IR PARA ATENDIMENTO
-                            </span>
-                            <span className={cn(
-                                "mt-1 block text-[10px] sm:text-[11px] md:text-[12px] font-body leading-snug whitespace-normal break-words",
-                                location === "/atendimento"
-                                    ? "text-white/75 dark:text-[#111827]/70"
-                                    : "text-white/80 dark:text-[#111827]/70"
-                            )}>
-                                Abrir prontuario e iniciar consulta
+                            <span className="block whitespace-normal break-words font-heading text-[13px] font-extrabold leading-none tracking-[0.01em] text-[#111827] sm:text-[14px] md:text-[15px]">
+                                Ir para atendimento
                             </span>
                         </div>
                     </div>
                     <div className="relative flex items-center">
-                        <div className={cn(
-                            "w-9 h-9 rounded-full flex items-center justify-center border transition-all group-hover/atendimento:translate-x-0.5",
-                            location === "/atendimento"
-                                ? "bg-white/16 border-white/35 dark:bg-black/10 dark:border-black/20"
-                                : "bg-white/16 border-white/35 dark:bg-black/10 dark:border-black/20"
-                        )}>
-                            <ChevronRight className={cn(
-                                "w-4 h-4",
-                                location === "/atendimento"
-                                    ? "text-white dark:text-[#111827]"
-                                    : "text-white dark:text-[#111827]"
-                            )} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#111827]/12 bg-white/80 text-[#111827] shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-transform duration-300 group-hover/atendimento:translate-x-0.5">
+                            <ChevronRight className="h-4 w-4" />
                         </div>
                     </div>
                 </div>
