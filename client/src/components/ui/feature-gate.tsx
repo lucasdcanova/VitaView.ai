@@ -59,7 +59,7 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
                     <div
                         ref={ref}
                         {...props}
-                        className="relative inline-block cursor-not-allowed opacity-70 grayscale-[0.3]"
+                        className="relative block cursor-not-allowed opacity-70 grayscale-[0.3]"
                     >
                         {/* Transparent overlay to capture and block clicks */}
                         <div

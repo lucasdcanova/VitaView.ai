@@ -298,7 +298,7 @@ export default function Agenda() {
 
     return (
         <div className="flex h-full flex-col overflow-hidden bg-background">
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden gap-0">
                 <PatientHeader
                     title="Agenda"
                     description="Gerencie suas consultas e visualize seus compromissos."
@@ -306,6 +306,7 @@ export default function Agenda() {
                     lastExamDate={null}
                     showTitleAsMain={true}
                     fullWidth={true}
+                    compact={true}
                 >
                     <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-start md:items-center">
                         {isSecretary && professionals.length > 0 && (

@@ -308,12 +308,12 @@ export function CertificateForm({
 
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">RG/CPF do Paciente (Opcional)</label>
-                            <Input placeholder="Para identificação no documento" value={patientDoc} onChange={e => setPatientDoc(e.target.value)} />
+                            <Input className="text-sm" placeholder="Para identificação no documento" value={patientDoc} onChange={e => setPatientDoc(e.target.value)} />
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">Local</label>
-                            <Input placeholder="Ex: São Paulo" value={certCity} onChange={e => setCertCity(e.target.value)} />
+                            <Input className="text-sm" placeholder="Ex: São Paulo" value={certCity} onChange={e => setCertCity(e.target.value)} />
                         </div>
 
                         <div className="space-y-1">

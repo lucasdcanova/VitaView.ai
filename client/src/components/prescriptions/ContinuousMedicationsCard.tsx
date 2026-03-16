@@ -120,7 +120,7 @@ export function ContinuousMedicationsCard({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 max-w-[130px] whitespace-normal text-center leading-tight h-auto py-1.5 text-xs shrink-0"
+                            className="gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 max-w-[160px] whitespace-normal text-center leading-tight h-auto py-1.5 text-xs shrink-0"
                             onClick={handleCheckInteractions}
                             disabled={isCheckingInteractions || medications.length < 2}
                         >

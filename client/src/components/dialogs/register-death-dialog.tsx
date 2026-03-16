@@ -93,7 +93,10 @@ export function RegisterDeathDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent
+                className="sm:max-w-[425px] max-w-[calc(100vw-2rem)] mx-auto"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-red-600">
                         <HeartCrack className="h-5 w-5" />
@@ -145,6 +148,7 @@ export function RegisterDeathDialog({
                                     <FormControl>
                                         <Textarea
                                             placeholder="Descreva a causa principal do óbito..."
+                                            rows={3}
                                             {...field}
                                         />
                                     </FormControl>

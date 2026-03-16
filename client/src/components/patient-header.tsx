@@ -21,6 +21,7 @@ interface PatientHeaderProps {
   lastExamDate?: string | null;
   showTitleAsMain?: boolean;
   fullWidth?: boolean;
+  compact?: boolean;
   icon?: React.ReactNode;
   children?: React.ReactNode;
 }
@@ -32,6 +33,7 @@ export default function PatientHeader({
   lastExamDate,
   showTitleAsMain = false,
   fullWidth = false,
+  compact = false,
   icon,
   children,
 }: PatientHeaderProps) {
@@ -93,10 +95,14 @@ export default function PatientHeader({
 
   return (
     <div className={cn(
-      "sticky top-0 z-30 p-4 md:p-6 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
+      "sticky top-0 z-30 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
+      compact ? "px-4 pt-4 pb-2 md:px-6 md:pt-6 md:pb-3" : "p-4 md:p-6",
       fullWidth ? "border-b border-x-0 border-t-0 rounded-none" : "border rounded-2xl mb-6 shadow-sm"
     )}>
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div className={cn(
+        "flex flex-col md:flex-row md:items-center md:justify-between",
+        compact ? "gap-3" : "gap-6"
+      )}>
         <div className="space-y-1">
           {showTitleAsMain ? (
             <>
