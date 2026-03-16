@@ -1939,10 +1939,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         )
       ]);
 
-      // Filter diagnoses for this specific profile
-      // We also include diagnoses with null profileId to support legacy data visibility
-      // (though ideally legacy data should be migrated)
-      const diagnoses = allDiagnoses.filter(d => d.profileId === profileId || d.profileId === null);
+      // Filter diagnoses strictly for this patient profile.
+      const diagnoses = allDiagnoses.filter(d => d.profileId === profileId);
 
       // Transform medications to camelCase
       const medications = medicationsResult.rows.map(m => ({

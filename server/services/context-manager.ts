@@ -168,7 +168,7 @@ export class ContextManager {
             ]);
 
             const diagnoses = allDiagnoses
-                .filter((diagnosis: any) => diagnosis.profileId === profileId || diagnosis.profileId === null)
+                .filter((diagnosis: any) => diagnosis.profileId === profileId)
                 .sort((a: any, b: any) =>
                     new Date(b.diagnosisDate || b.createdAt || 0).getTime() -
                     new Date(a.diagnosisDate || a.createdAt || 0).getTime()

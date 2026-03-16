@@ -13,7 +13,11 @@ export function registerPatientRoutes(app: Express) {
     app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
         try {
             const userId = (req.user as any).id;
-            const diagnoses = await storage.getDiagnosesByUserId(userId);
+            const requestedProfileId = Number.parseInt(String(req.query.profileId ?? ""), 10);
+            const allDiagnoses = await storage.getDiagnosesByUserId(userId);
+            const diagnoses = Number.isFinite(requestedProfileId)
+                ? allDiagnoses.filter((diagnosis: any) => diagnosis.profileId === requestedProfileId)
+                : allDiagnoses;
 
             // LGPD Audit Log
             await storage.createAuditLog({
@@ -39,9 +43,14 @@ export function registerPatientRoutes(app: Express) {
 
     app.post("/api/diagnoses", ensureAuthenticated, async (req, res) => {
         try {
+            const profileId = Number.parseInt(String(req.body.profileId ?? ""), 10);
+            if (!Number.isFinite(profileId)) {
+                return res.status(400).json({ message: "Paciente é obrigatório para registrar um diagnóstico" });
+            }
+
             const diagnosisData = {
                 userId: (req.user as any).id,
-                profileId: req.body.profileId || null,
+                profileId,
                 cidCode: req.body.cidCode,
                 diagnosisDate: req.body.diagnosisDate,
                 status: req.body.status,
@@ -68,7 +77,16 @@ export function registerPatientRoutes(app: Express) {
                 return res.status(403).json({ message: "Acesso negado" });
             }
 
-            const updatedDiagnosis = await storage.updateDiagnosis(diagnosisId, req.body);
+            const updatePayload = { ...req.body };
+            if ("profileId" in updatePayload) {
+                const profileId = Number.parseInt(String(updatePayload.profileId ?? ""), 10);
+                if (!Number.isFinite(profileId)) {
+                    return res.status(400).json({ message: "Paciente inválido para este diagnóstico" });
+                }
+                updatePayload.profileId = profileId;
+            }
+
+            const updatedDiagnosis = await storage.updateDiagnosis(diagnosisId, updatePayload);
             res.json(updatedDiagnosis);
         } catch (error) {
             res.status(500).json({ message: "Erro ao atualizar diagnóstico" });
