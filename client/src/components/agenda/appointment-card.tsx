@@ -35,11 +35,18 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string;
         badge: "text-white",
         badgeBg: "bg-muted-foreground"
     },
+    cancelled: {
+        bg: "bg-rose-50 dark:bg-rose-950/30",
+        border: "border-rose-200 dark:border-rose-900/60",
+        badge: "text-rose-700 dark:text-rose-200",
+        badgeBg: "bg-rose-100 dark:bg-rose-900/60"
+    },
 };
 
 export function AppointmentCard({ appointment, styles, isInService = false, triageData }: AppointmentCardProps) {
     const isInProgress = appointment.status === 'in_progress';
     const isCompleted = appointment.status === 'completed';
+    const isCancelled = appointment.status === 'cancelled';
     // Only show "active" visual cues if the appointment is in progress AND it is the one currently in service in the global context
     const showActiveIndicator = isInProgress && isInService;
 
@@ -47,8 +54,11 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
     // Use status-specific styles for in_progress (only if active) or completed, otherwise use type styles
     // If in_progress but not active, fallback to standard styles (or maybe a paused style, but standard is cleaner for "not attending right now")
-    const cardBg = (showActiveIndicator ? statusStyle?.bg : null) || (isCompleted ? statusStyle?.bg : null) || styles.bg;
-    const cardBorder = (showActiveIndicator ? statusStyle?.border : null) || (isCompleted ? statusStyle?.border : null) || styles.border;
+    const cardBg = (showActiveIndicator ? statusStyle?.bg : null) || ((isCompleted || isCancelled) ? statusStyle?.bg : null) || styles.bg;
+    const cardBorder = (showActiveIndicator ? statusStyle?.border : null) || ((isCompleted || isCancelled) ? statusStyle?.border : null) || styles.border;
+    const timeClassName = showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : isCancelled ? 'text-rose-700 dark:text-rose-200' : styles.text;
+    const patientClassName = showActiveIndicator ? 'text-foreground' : isCompleted ? 'text-muted-foreground' : isCancelled ? 'text-rose-800 dark:text-rose-100' : styles.subtext;
+    const typeClassName = showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : isCancelled ? 'text-rose-600 dark:text-rose-300' : styles.label;
 
     return (
         <motion.div
@@ -67,9 +77,14 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
                     Finalizado
                 </div>
             )}
+            {isCancelled && (
+                <div className="absolute -top-1 -right-1 bg-rose-100 text-rose-700 dark:bg-rose-900/70 dark:text-rose-100 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                    Cancelada
+                </div>
+            )}
 
-            <div className={`text-xs font-semibold ${showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : styles.text}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
-            <div className={`text-xs font-medium mt-1 truncate ${showActiveIndicator ? 'text-foreground' : isCompleted ? 'text-muted-foreground' : styles.subtext}`}>
+            <div className={`text-xs font-semibold ${timeClassName}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
+            <div className={`text-xs font-medium mt-1 truncate ${patientClassName}`}>
                 <div className="flex items-center gap-1">
                     {appointment.isTelemedicine && (
                         <Video className="w-3 h-3 text-muted-foreground" />
@@ -77,10 +92,10 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
                     {appointment.patientName}
                 </div>
             </div>
-            <div className={`text-xs capitalize ${showActiveIndicator ? 'text-charcoal' : isCompleted ? 'text-muted-foreground' : styles.label}`}>{appointment.type}</div>
+            <div className={`text-xs capitalize ${typeClassName}`}>{appointment.type}</div>
 
             {/* Manchester Priority Indicator */}
-            {triageData?.manchesterPriority && !showActiveIndicator && (
+            {triageData?.manchesterPriority && !showActiveIndicator && !isCancelled && (
                 <div
                     className={`absolute top-1 right-1 w-3 h-3 rounded-full ${PRIORITY_COLORS[triageData.manchesterPriority]
                         } ring-2 ring-background`}

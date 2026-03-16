@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video, UserCheck } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video, UserCheck, Ban, Trash2 } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -122,11 +122,16 @@ export function AgendaCalendar({
       const res = await apiRequest("PATCH", `/api/appointments/${id}`, data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables.status === "cancelled" && variables.id === inServiceAppointmentId) {
+        clearPatientInService();
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
-        title: "Status atualizado",
-        description: "O status do agendamento foi atualizado.",
+        title: variables.status === "cancelled" ? "Consulta cancelada" : "Status atualizado",
+        description: variables.status === "cancelled"
+          ? "A consulta foi marcada como cancelada e permanece na grade."
+          : "O status do agendamento foi atualizado.",
       });
     },
     onError: () => {
@@ -144,7 +149,10 @@ export function AgendaCalendar({
       const res = await apiRequest("DELETE", `/api/appointments/${id}`);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      if (id === inServiceAppointmentId) {
+        clearPatientInService();
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
         title: "Agendamento apagado",
@@ -408,7 +416,7 @@ export function AgendaCalendar({
     const isBlocked = appointment.type === "blocked";
     const isActive = appointment.id === inServiceAppointmentId;
 
-    if (!isToday || isBlocked || appointment.status === "completed") {
+    if (!isToday || isBlocked || appointment.status === "completed" || appointment.status === "cancelled") {
       return false;
     }
 
@@ -424,7 +432,7 @@ export function AgendaCalendar({
     const isBlocked = appointment.type === "blocked";
     const isActive = appointment.id === inServiceAppointmentId;
 
-    if (isBlocked || appointment.status === "completed") {
+    if (isBlocked || appointment.status === "completed" || appointment.status === "cancelled") {
       return false;
     }
 
@@ -438,14 +446,15 @@ export function AgendaCalendar({
 
   const currentDayAppointments = getFilteredAppointmentsForDay(currentDate);
   const currentDayNonBlockedAppointments = currentDayAppointments.filter((app) => app.type !== "blocked");
-  const currentDayTelemedicineCount = currentDayNonBlockedAppointments.filter((app) => app.isTelemedicine).length;
-  const currentDayWaitingCount = currentDayNonBlockedAppointments.filter((app) => app.status === "waiting").length;
-  const currentDayInProgressCount = currentDayNonBlockedAppointments.filter((app) => app.status === "in_progress").length;
-  const currentDayCompletedCount = currentDayNonBlockedAppointments.filter((app) => app.status === "completed").length;
-  const currentDayTotalMinutes = currentDayNonBlockedAppointments.reduce((acc, app) => acc + (Number(app.duration) || 0), 0);
+  const currentDaySchedulableAppointments = currentDayNonBlockedAppointments.filter((app) => app.status !== "cancelled");
+  const currentDayTelemedicineCount = currentDaySchedulableAppointments.filter((app) => app.isTelemedicine).length;
+  const currentDayWaitingCount = currentDaySchedulableAppointments.filter((app) => app.status === "waiting").length;
+  const currentDayInProgressCount = currentDaySchedulableAppointments.filter((app) => app.status === "in_progress").length;
+  const currentDayCompletedCount = currentDaySchedulableAppointments.filter((app) => app.status === "completed").length;
+  const currentDayTotalMinutes = currentDaySchedulableAppointments.reduce((acc, app) => acc + (Number(app.duration) || 0), 0);
   const isCurrentDateToday = isSameDay(currentDate, new Date());
   const isCompactDayExperience = isMobile || isStandalonePwa;
-  const sortedCurrentDayAppointments = [...currentDayNonBlockedAppointments].sort((a, b) => {
+  const sortedCurrentDayAppointments = [...currentDaySchedulableAppointments].sort((a, b) => {
     const timeA = a.isAllDay ? "00:00" : (a.time || "00:00");
     const timeB = b.isAllDay ? "00:00" : (b.time || "00:00");
     return timeA.localeCompare(timeB);
@@ -816,13 +825,15 @@ export function AgendaCalendar({
                       const isToday = isSameDay(appointmentDate, new Date());
                       const isActive = app.id === inServiceAppointmentId;
                       const isBlocked = app.type === 'blocked';
+                      const isCancelled = app.status === 'cancelled';
                       const canStartService = isToday && !isBlocked && app.status !== 'completed' && (!app.status || app.status === 'scheduled' || (app.status === 'in_progress' && !isActive));
 
                       return (
                         <div key={app.id} className={cn(
                           "flex flex-col md:flex-row gap-4 rounded-xl border transition-all hover:shadow-md bg-card",
                           isCompactDayExperience ? "p-3" : "p-4",
-                          styles.border
+                          styles.border,
+                          isCancelled && "border-rose-200 bg-rose-50/60 dark:border-rose-900/60 dark:bg-rose-950/20"
                         )}>
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
@@ -833,6 +844,11 @@ export function AgendaCalendar({
                                 <Clock className="w-3.5 h-3.5" />
                                 Dia Inteiro
                               </span>
+                              {isCancelled && (
+                                <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-900/70 dark:text-rose-100">
+                                  Cancelada
+                                </span>
+                              )}
                             </div>
                             <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
                               <span className="text-foreground flex items-center gap-2">
@@ -847,11 +863,16 @@ export function AgendaCalendar({
                             )}
                           </div>
                           <div className={cn("flex flex-col items-end justify-center gap-2", isCompactDayExperience ? "min-w-0" : "min-w-[180px]")}>
-                            <div className="flex gap-2 w-full">
+                            {isCancelled && (
+                              <div className="w-full rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-center text-sm font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100">
+                                Cancelada
+                              </div>
+                            )}
+                            <div className="flex gap-2 w-full flex-wrap">
                               <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                 Editar
                               </Button>
-                              {!isBlocked && app.status === 'scheduled' && (
+                              {!isBlocked && !isCancelled && app.status === 'scheduled' && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -862,12 +883,27 @@ export function AgendaCalendar({
                                   Recepcionar
                                 </Button>
                               )}
+                            </div>
+                            <div className={cn("grid w-full gap-2", isBlocked ? "grid-cols-1" : "grid-cols-2")}>
+                              {!isBlocked && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                                  onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'cancelled', checkedInAt: null })}
+                                  disabled={updateStatusMutation.isPending || isCancelled}
+                                >
+                                  <Ban className="mr-1 h-4 w-4" />
+                                  {isCancelled ? "Cancelada" : "Cancelar"}
+                                </Button>
+                              )}
                               <Button
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => deleteAppointmentMutation.mutate(app.id)}
                                 disabled={deleteAppointmentMutation.isPending}
                               >
+                                <Trash2 className="mr-1 h-4 w-4" />
                                 Apagar
                               </Button>
                             </div>
@@ -937,13 +973,15 @@ export function AgendaCalendar({
                         const styles = getTypeStyles(app.type);
                         const isActive = app.id === inServiceAppointmentId;
                         const isBlocked = app.type === 'blocked';
+                        const isCancelled = app.status === 'cancelled';
                         const canStartService = canStartServiceFromAppointment(app);
 
                         return (
                           <div key={app.id} className={cn(
                             "flex flex-col md:flex-row gap-4 rounded-xl border transition-all hover:shadow-md bg-card",
                             isCompactDayExperience ? "p-3" : "p-4",
-                            styles.border
+                            styles.border,
+                            isCancelled && "border-rose-200 bg-rose-50/60 dark:border-rose-900/60 dark:bg-rose-950/20"
                           )}>
                             {/* Left Info */}
                             <div
@@ -972,6 +1010,11 @@ export function AgendaCalendar({
                                 <span className="text-sm font-semibold text-muted-foreground">
                                   {app.duration} min
                                 </span>
+                                {isCancelled && (
+                                  <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-900/70 dark:text-rose-100">
+                                    Cancelada
+                                  </span>
+                                )}
                               </div>
 
                               <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
@@ -1021,16 +1064,27 @@ export function AgendaCalendar({
                                   {app.status === 'in_progress' ? 'Retomar Atendimento' : app.status === 'waiting' ? 'Atender' : 'Iniciar Atendimento'}
                                 </Button>
                               ) : (
-                                <div className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium w-full text-center">
-                                  {app.status === 'completed' ? 'Concluído' : isActive ? 'Em Atendimento' : 'Agendado'}
+                                <div className={cn(
+                                  "w-full rounded-lg px-3 py-1.5 text-center text-sm font-medium",
+                                  app.status === 'cancelled'
+                                    ? "border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100"
+                                    : "bg-muted text-muted-foreground"
+                                )}>
+                                  {app.status === 'completed'
+                                    ? 'Concluído'
+                                    : app.status === 'cancelled'
+                                      ? 'Cancelada'
+                                      : isActive
+                                        ? 'Em Atendimento'
+                                        : 'Agendado'}
                                 </div>
                               )}
 
-                              <div className="flex gap-2 w-full">
+                              <div className="flex gap-2 w-full flex-wrap">
                                 <Button variant="outline" size="sm" className="flex-1" onClick={() => onEditAppointment?.(app)}>
                                   Editar
                                 </Button>
-                                {!isBlocked && (!app.status || app.status === 'scheduled') && (
+                                {!isBlocked && !isCancelled && (!app.status || app.status === 'scheduled') && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -1041,7 +1095,7 @@ export function AgendaCalendar({
                                     Check-in
                                   </Button>
                                 )}
-                                {!isBlocked && app.status === 'in_progress' && (
+                                {!isBlocked && !isCancelled && app.status === 'in_progress' && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -1056,7 +1110,7 @@ export function AgendaCalendar({
                                     Recepção
                                   </Button>
                                 )}
-                                {!isBlocked && (
+                                {!isBlocked && !isCancelled && (
                                   <Button variant="outline" size="sm" className="flex-1" onClick={() => {
                                     setSelectedAppointment(app);
                                     setTriageDialogOpen(true);
@@ -1064,6 +1118,29 @@ export function AgendaCalendar({
                                     Triagem
                                   </Button>
                                 )}
+                              </div>
+                              <div className={cn("grid w-full gap-2", isBlocked ? "grid-cols-1" : "grid-cols-2")}>
+                                {!isBlocked && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                                    onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'cancelled', checkedInAt: null })}
+                                    disabled={updateStatusMutation.isPending || isCancelled}
+                                  >
+                                    <Ban className="mr-1 h-4 w-4" />
+                                    {isCancelled ? "Cancelada" : "Cancelar"}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => deleteAppointmentMutation.mutate(app.id)}
+                                  disabled={deleteAppointmentMutation.isPending}
+                                >
+                                  <Trash2 className="mr-1 h-4 w-4" />
+                                  Apagar
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -1144,6 +1221,7 @@ export function AgendaCalendar({
                       .filter(app => !app.isAllDay)
                       .map((appointment, idx) => {
                         const styles = getTypeStyles(appointment.type);
+                        const isCancelled = appointment.status === 'cancelled';
                         return (
                           <Popover key={appointment.id || idx}>
                             <PopoverTrigger asChild>
@@ -1200,7 +1278,7 @@ export function AgendaCalendar({
                                 <div className="flex flex-col gap-2">
                                   {(() => {
                                     const canStartService = canStartServiceFromCalendarCard(appointment);
-                                    const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked');
+                                    const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked') && !isCancelled;
 
                                     return (
                                       <>
@@ -1235,35 +1313,54 @@ export function AgendaCalendar({
                                     );
                                   })()}
                                   {/* Other action buttons */}
-                                  <div className="flex flex-wrap justify-end gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-card hover:bg-muted"
-                                      onClick={() => {
-                                        setSelectedAppointment(appointment);
-                                        setTriageDialogOpen(true);
-                                      }}
-                                    >
-                                      <Stethoscope className="w-4 h-4 mr-1" />
-                                      Triagem
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-card hover:bg-muted"
-                                      onClick={() => onEditAppointment?.(appointment)}
-                                    >
-                                      Editar
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                                      disabled={deleteAppointmentMutation.isPending}
-                                    >
-                                      Apagar
-                                    </Button>
+                                  <div className="grid gap-2">
+                                    <div className={cn("grid gap-2", !appointment.type.includes('blocked') && !isCancelled ? "grid-cols-2" : "grid-cols-1")}>
+                                      {!appointment.type.includes('blocked') && !isCancelled && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-card hover:bg-muted"
+                                          onClick={() => {
+                                            setSelectedAppointment(appointment);
+                                            setTriageDialogOpen(true);
+                                          }}
+                                        >
+                                          <Stethoscope className="w-4 h-4 mr-1" />
+                                          Triagem
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-card hover:bg-muted"
+                                        onClick={() => onEditAppointment?.(appointment)}
+                                      >
+                                        Editar
+                                      </Button>
+                                    </div>
+                                    <div className={cn("grid gap-2", appointment.type.includes('blocked') ? "grid-cols-1" : "grid-cols-2")}>
+                                      {!appointment.type.includes('blocked') && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                                          onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'cancelled', checkedInAt: null })}
+                                          disabled={updateStatusMutation.isPending || isCancelled}
+                                        >
+                                          <Ban className="w-4 h-4 mr-1" />
+                                          {isCancelled ? "Cancelada" : "Cancelar"}
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                                        disabled={deleteAppointmentMutation.isPending}
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Apagar
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
