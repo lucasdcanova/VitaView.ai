@@ -87,6 +87,21 @@ type ExtractedRecord = {
     surgeries: ExtractedSurgery[];
 };
 
+type ApplyExtractionCounters = {
+    diagnoses: number;
+    medications: number;
+    allergies: number;
+    surgeries: number;
+    comorbidities: number;
+};
+
+type ApplyExtractionResult = {
+    created: ApplyExtractionCounters;
+    skipped: ApplyExtractionCounters;
+    failed: ApplyExtractionCounters;
+    remainingRecord: ExtractedRecord;
+};
+
 type AnamnesisDraft = {
     text: string;
     extractedRecord: ExtractedRecord | null;
@@ -162,6 +177,38 @@ const normalizeExtractedRecord = (payload: any): ExtractedRecord => ({
     comorbidities: Array.isArray(payload?.comorbidities) ? payload.comorbidities : [],
     surgeries: Array.isArray(payload?.surgeries) ? payload.surgeries : [],
 });
+
+const createApplyExtractionCounters = (): ApplyExtractionCounters => ({
+    diagnoses: 0,
+    medications: 0,
+    allergies: 0,
+    surgeries: 0,
+    comorbidities: 0,
+});
+
+const countAppliedItems = (counters: ApplyExtractionCounters) =>
+    Object.values(counters).reduce((total, value) => total + value, 0);
+
+const formatApplyExtractionDetails = (counters: ApplyExtractionCounters) =>
+    [
+        counters.diagnoses ? `${counters.diagnoses} diagnóstico(s)` : null,
+        counters.comorbidities ? `${counters.comorbidities} comorbidade(s)` : null,
+        counters.medications ? `${counters.medications} medicamento(s)` : null,
+        counters.allergies ? `${counters.allergies} alergia(s)` : null,
+        counters.surgeries ? `${counters.surgeries} cirurgia(s)` : null,
+    ].filter(Boolean);
+
+const hasPendingExtractedItems = (record: ExtractedRecord | null | undefined) =>
+    Boolean(
+        record &&
+        (
+            record.diagnoses.length > 0 ||
+            record.medications.length > 0 ||
+            record.allergies.length > 0 ||
+            record.comorbidities.length > 0 ||
+            record.surgeries.length > 0
+        )
+    );
 
 export function AnamnesisCard() {
     const isMobile = useIsMobile();
@@ -415,44 +462,72 @@ export function AnamnesisCard() {
         clearCompletedResult();
     }, [activeProfile?.id, clearCompletedResult, completedResult]);
 
-    const handleApplyExtraction = async (recordToApply?: ExtractedRecord) => {
-        const record = recordToApply || extractedRecord;
-        if (!record) return;
-        setIsApplyingExtraction(true);
+    const applyExtractedRecord = async (
+        recordToApply: ExtractedRecord,
+        options?: { showToast?: boolean }
+    ): Promise<ApplyExtractionResult> => {
+        if (!activeProfile?.id) {
+            throw new Error("Selecione um paciente antes de aplicar os dados extraídos.");
+        }
+
+        const profileId = activeProfile.id;
         const today = new Date().toISOString().split("T")[0];
-        const created = { diagnoses: 0, medications: 0, allergies: 0, surgeries: 0, comorbidities: 0 };
-        const skipped = { diagnoses: 0, medications: 0, allergies: 0, surgeries: 0, comorbidities: 0 };
+        const created = createApplyExtractionCounters();
+        const skipped = createApplyExtractionCounters();
+        const failed = createApplyExtractionCounters();
+        const remainingRecord: ExtractedRecord = {
+            summary: recordToApply.summary || "",
+            diagnoses: [],
+            medications: [],
+            allergies: [],
+            comorbidities: [],
+            surgeries: [],
+        };
 
         const diagnosisCodes = new Set(
-            (record.diagnoses || [])
+            (recordToApply.diagnoses || [])
                 .map((diagnosis) => diagnosis?.cidCode?.trim())
                 .filter((code): code is string => Boolean(code))
         );
 
-        try {
-            for (const diagnosis of record.diagnoses || []) {
-                const cidCode = diagnosis?.cidCode?.trim();
-                if (!cidCode) {
-                    skipped.diagnoses += 1;
-                    continue;
-                }
+        for (const diagnosis of recordToApply.diagnoses || []) {
+            const cidCode = diagnosis?.cidCode?.trim();
+            if (!cidCode) {
+                skipped.diagnoses += 1;
+                remainingRecord.diagnoses.push(diagnosis);
+                continue;
+            }
+
+            try {
                 await apiRequest("POST", "/api/diagnoses", {
+                    profileId,
                     cidCode,
                     diagnosisDate: diagnosis.diagnosisDate || today,
                     status: diagnosis.status || "ativo",
                     notes: diagnosis.notes || null,
                 });
                 created.diagnoses += 1;
+            } catch {
+                failed.diagnoses += 1;
+                remainingRecord.diagnoses.push(diagnosis);
+            }
+        }
+
+        for (const comorbidity of recordToApply.comorbidities || []) {
+            const comorbidityValue = comorbidity?.trim();
+            if (!comorbidityValue) {
+                skipped.comorbidities += 1;
+                continue;
             }
 
-            for (const comorbidity of record.comorbidities || []) {
-                const comorbidityValue = comorbidity?.trim();
-                if (!comorbidityValue) {
-                    skipped.comorbidities += 1;
-                    continue;
-                }
-                if (diagnosisCodes.has(comorbidityValue)) continue;
+            if (diagnosisCodes.has(comorbidityValue)) {
+                skipped.comorbidities += 1;
+                continue;
+            }
+
+            try {
                 await apiRequest("POST", "/api/diagnoses", {
+                    profileId,
                     cidCode: comorbidityValue,
                     diagnosisDate: today,
                     status: "cronico",
@@ -460,14 +535,21 @@ export function AnamnesisCard() {
                 });
                 created.comorbidities += 1;
                 diagnosisCodes.add(comorbidityValue);
+            } catch {
+                failed.comorbidities += 1;
+                remainingRecord.comorbidities.push(comorbidityValue);
+            }
+        }
+
+        for (const medication of recordToApply.medications || []) {
+            const name = medication?.name?.trim();
+            if (!name) {
+                skipped.medications += 1;
+                remainingRecord.medications.push(medication);
+                continue;
             }
 
-            for (const medication of record.medications || []) {
-                const name = medication?.name?.trim();
-                if (!name) {
-                    skipped.medications += 1;
-                    continue;
-                }
+            try {
                 await apiRequest("POST", "/api/medications", {
                     name,
                     format: medication.format || "comprimido",
@@ -478,15 +560,23 @@ export function AnamnesisCard() {
                     isActive: medication.isActive !== false,
                 });
                 created.medications += 1;
+            } catch {
+                failed.medications += 1;
+                remainingRecord.medications.push(medication);
+            }
+        }
+
+        for (const allergy of recordToApply.allergies || []) {
+            const allergen = allergy?.allergen?.trim();
+            if (!allergen) {
+                skipped.allergies += 1;
+                remainingRecord.allergies.push(allergy);
+                continue;
             }
 
-            for (const allergy of record.allergies || []) {
-                const allergen = allergy?.allergen?.trim();
-                if (!allergen) {
-                    skipped.allergies += 1;
-                    continue;
-                }
+            try {
                 await apiRequest("POST", "/api/allergies", {
+                    profileId,
                     allergen,
                     allergenType: allergy.allergenType || "medication",
                     reaction: allergy.reaction || null,
@@ -494,15 +584,22 @@ export function AnamnesisCard() {
                     notes: allergy.notes || null,
                 });
                 created.allergies += 1;
+            } catch {
+                failed.allergies += 1;
+                remainingRecord.allergies.push(allergy);
+            }
+        }
+
+        for (const surgery of recordToApply.surgeries || []) {
+            const procedureName = surgery?.procedureName?.trim();
+            const surgeryDate = surgery?.surgeryDate?.trim();
+            if (!procedureName || !surgeryDate) {
+                skipped.surgeries += 1;
+                remainingRecord.surgeries.push(surgery);
+                continue;
             }
 
-            for (const surgery of record.surgeries || []) {
-                const procedureName = surgery?.procedureName?.trim();
-                const surgeryDate = surgery?.surgeryDate?.trim();
-                if (!procedureName || !surgeryDate) {
-                    skipped.surgeries += 1;
-                    continue;
-                }
+            try {
                 await apiRequest("POST", "/api/surgeries", {
                     procedureName,
                     surgeryDate,
@@ -511,28 +608,63 @@ export function AnamnesisCard() {
                     notes: surgery.notes || null,
                 });
                 created.surgeries += 1;
+            } catch {
+                failed.surgeries += 1;
+                remainingRecord.surgeries.push(surgery);
             }
+        }
 
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] }),
-                queryClient.invalidateQueries({ queryKey: ["/api/medications"] }),
-                queryClient.invalidateQueries({ queryKey: ["/api/allergies"] }),
-                queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] }),
-            ]);
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] }),
+            queryClient.invalidateQueries({ queryKey: ["/api/medications"] }),
+            queryClient.invalidateQueries({ queryKey: ["/api/allergies"] }),
+            queryClient.invalidateQueries({ queryKey: [`/api/allergies/patient/${profileId}`] }),
+            queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] }),
+        ]);
 
-            const skippedDetails = [
-                skipped.diagnoses ? `${skipped.diagnoses} diagnóstico(s)` : null,
-                skipped.comorbidities ? `${skipped.comorbidities} comorbidade(s)` : null,
-                skipped.medications ? `${skipped.medications} medicamento(s)` : null,
-                skipped.allergies ? `${skipped.allergies} alergia(s)` : null,
-                skipped.surgeries ? `${skipped.surgeries} cirurgia(s)` : null,
-            ].filter(Boolean);
+        if (options?.showToast !== false) {
+            const createdTotal = countAppliedItems(created);
+            const skippedDetails = formatApplyExtractionDetails(skipped);
+            const failedDetails = formatApplyExtractionDetails(failed);
 
-            toast({
-                title: "Prontuário atualizado",
-                description: `Dados aplicados: ${created.diagnoses} diagnósticos, ${created.comorbidities} comorbidades, ${created.medications} medicamentos, ${created.allergies} alergias, ${created.surgeries} cirurgias.${skippedDetails.length ? ` Itens incompletos não aplicados: ${skippedDetails.join(", ")}.` : ""}`,
-            });
-            setExtractedRecord(null);
+            if (createdTotal > 0 && failedDetails.length === 0) {
+                toast({
+                    title: "Prontuário atualizado",
+                    description: `Dados aplicados: ${formatApplyExtractionDetails(created).join(", ")}.${skippedDetails.length ? ` Itens incompletos mantidos para revisão: ${skippedDetails.join(", ")}.` : ""}`,
+                });
+            } else if (createdTotal > 0) {
+                toast({
+                    title: "Prontuário atualizado parcialmente",
+                    description: `Dados aplicados: ${formatApplyExtractionDetails(created).join(", ")}.${failedDetails.length ? ` Falharam ao salvar: ${failedDetails.join(", ")}.` : ""}${skippedDetails.length ? ` Itens incompletos mantidos para revisão: ${skippedDetails.join(", ")}.` : ""}`,
+                });
+            } else {
+                toast({
+                    title: "Falha ao salvar dados",
+                    description: failedDetails.length
+                        ? `Nenhum item foi aplicado. Falharam ao salvar: ${failedDetails.join(", ")}.${skippedDetails.length ? ` Itens incompletos: ${skippedDetails.join(", ")}.` : ""}`
+                        : `Nenhum item foi aplicado porque os dados extraídos estão incompletos.${skippedDetails.length ? ` Pendentes: ${skippedDetails.join(", ")}.` : ""}`,
+                    variant: "destructive",
+                });
+            }
+        }
+
+        return {
+            created,
+            skipped,
+            failed,
+            remainingRecord,
+        };
+    };
+
+    const handleApplyExtraction = async (recordToApply?: ExtractedRecord) => {
+        const record = recordToApply || extractedRecord;
+        if (!record) return;
+
+        setIsApplyingExtraction(true);
+
+        try {
+            const result = await applyExtractedRecord(record);
+            setExtractedRecord(hasPendingExtractedItems(result.remainingRecord) ? result.remainingRecord : null);
         } catch (error: any) {
             toast({
                 title: "Falha ao salvar dados",
@@ -545,9 +677,10 @@ export function AnamnesisCard() {
     };
 
     const addEvolutionMutation = useMutation({
-        mutationFn: async (data: { text: string; date?: string; profileId: number }) => {
+        mutationFn: async (data: { text: string; date?: string; profileId: number; recordToApply?: ExtractedRecord | null }) => {
             // 1. Create Evolution
-            const res = await apiRequest("POST", "/api/evolutions", data);
+            const { recordToApply: _recordToApply, ...evolutionPayload } = data;
+            const res = await apiRequest("POST", "/api/evolutions", evolutionPayload);
             const savedEvo = await res.json();
 
             // 2. Finalize & Sign (CFM/Digital Signature) automaticaly
@@ -562,7 +695,32 @@ export function AnamnesisCard() {
                 throw new Error("Evolução salva, mas falha ao assinar digitalmente.");
             }
         },
-        onSuccess: async () => {
+        onSuccess: async (_savedEvolution, variables) => {
+            let applyResult: ApplyExtractionResult | null = null;
+
+            if (variables.recordToApply) {
+                try {
+                    applyResult = await applyExtractedRecord(variables.recordToApply, { showToast: false });
+                } catch (error) {
+                    console.error("Erro ao aplicar dados extraídos:", error);
+                }
+            }
+
+            const createdDetails = applyResult ? formatApplyExtractionDetails(applyResult.created) : [];
+            const skippedDetails = applyResult ? formatApplyExtractionDetails(applyResult.skipped) : [];
+            const failedDetails = applyResult ? formatApplyExtractionDetails(applyResult.failed) : [];
+            const hasPendingItems = hasPendingExtractedItems(applyResult?.remainingRecord);
+            const shouldPreserveExtractedRecord = Boolean(variables.recordToApply && (!applyResult || hasPendingItems));
+            const savedExtractionText = createdDetails.length
+                ? ` Dados da IA aplicados: ${createdDetails.join(", ")}.`
+                : "";
+            const pendingExtractionText = skippedDetails.length
+                ? ` Itens pendentes para revisão: ${skippedDetails.join(", ")}.`
+                : "";
+            const failedExtractionText = failedDetails.length
+                ? ` Falharam ao salvar: ${failedDetails.join(", ")}. Revise e tente novamente.`
+                : "";
+
             // Invalidar queries de evoluções para o perfil ativo
             queryClient.invalidateQueries({ queryKey: [`/api/evolutions?profileId=${activeProfile?.id}`] });
 
@@ -574,26 +732,26 @@ export function AnamnesisCard() {
                     clearPatientInService();
                     toast({
                         title: "Consulta finalizada",
-                        description: "Atendimento concluído, salvo e assinado digitalmente!",
+                        description: `Atendimento concluído, salvo e assinado digitalmente!${savedExtractionText}${pendingExtractionText}${failedExtractionText}`,
                     });
                 } catch (err) {
                     console.error("Erro ao atualizar status do agendamento:", err);
                     toast({
                         title: "Consulta registrada",
-                        description: "Histórico salvo e assinado, mas houve erro ao atualizar a agenda.",
+                        description: `Histórico salvo e assinado, mas houve erro ao atualizar a agenda.${savedExtractionText}${pendingExtractionText}${failedExtractionText}`,
                     });
                 }
             } else {
                 toast({
                     title: "Consulta registrada",
-                    description: "Histórico salvo e assinado com sucesso!",
+                    description: `Histórico salvo e assinado com sucesso!${savedExtractionText}${pendingExtractionText}${failedExtractionText}`,
                 });
             }
-            if (activeProfile?.id) {
+            if (activeProfile?.id && !shouldPreserveExtractedRecord) {
                 clearAnamnesisDraft(activeProfile.id, user?.id);
             }
             setAnamnesisText("");
-            setExtractedRecord(null);
+            setExtractedRecord(shouldPreserveExtractedRecord ? (applyResult?.remainingRecord || variables.recordToApply || null) : null);
         },
         onError: (error: any) => {
             toast({
@@ -809,7 +967,11 @@ export function AnamnesisCard() {
                                     });
                                     return;
                                 }
-                                addEvolutionMutation.mutate({ text: anamnesisText, profileId: activeProfile.id });
+                                addEvolutionMutation.mutate({
+                                    text: anamnesisText,
+                                    profileId: activeProfile.id,
+                                    recordToApply: extractedRecord,
+                                });
                             }}
                             disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
                             className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 order-1 w-full' : 'gap-2'}`}
