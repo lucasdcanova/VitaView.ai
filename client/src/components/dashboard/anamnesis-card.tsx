@@ -43,6 +43,7 @@ import { ConsultationRecorder } from "@/components/consultation-recorder";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useConsultationRecording } from "@/hooks/use-consultation-recording";
 import { useAuth } from "@/hooks/use-auth";
+import { ExamUploadLauncher } from "@/components/exams/exam-upload-launcher";
 import { normalizeClinicalContent, stripClinicalHtml } from "@shared/clinical-rich-text";
 
 type ExtractedDiagnosis = {
@@ -946,6 +947,12 @@ export function AnamnesisCard() {
                             />
                         </div>
                     </div>
+                    <ExamUploadLauncher
+                        compact={isMobile}
+                        title="Exames no contexto da consulta"
+                        description="Envie resultados laboratoriais, imagem, biópsias, endoscopias, ecocardiogramas e outros laudos diretamente durante o atendimento."
+                        buttonLabel="Enviar exames"
+                    />
                     {/* Action buttons */}
                     <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
                         <Button

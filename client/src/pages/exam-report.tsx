@@ -92,6 +92,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  buildDiagnosisDescription,
+  buildFindingDescription,
+  buildImpressionDescription,
+  formatStructuredDate,
+  parseStructuredExamAnalysis,
+  splitRecommendations,
+} from "@/lib/exam-analysis";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -142,7 +150,7 @@ export default function ExamReport() {
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
-  const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
+  const { data, isLoading } = useQuery<{ exam: Exam, result?: ExamResult | null }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
     enabled: !!examId,
@@ -355,6 +363,7 @@ export default function ExamReport() {
           indicatorClass = 'bg-red-500';
           break;
         case 'atenção':
+        case 'atencao':
           position = '65%';
           indicatorClass = 'bg-amber-500';
           break;
@@ -396,6 +405,23 @@ export default function ExamReport() {
 
   // Extract sample health metrics from the exam result
   const healthMetrics = data?.result?.healthMetrics as any[] || [];
+  const structuredAnalysis = parseStructuredExamAnalysis(data?.result?.detailedAnalysis);
+  const structuredMetadata = structuredAnalysis?.examMetadata || {};
+  const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
+  const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
+  const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
+  const abnormalMetrics = healthMetrics.filter((metric) => {
+    const status = metric?.status?.toLowerCase?.() || "";
+    return status && status !== "normal";
+  });
+  const structuredRecommendations = splitRecommendations(
+    insights?.recommendations && insights.recommendations.length > 0
+      ? insights.recommendations
+      : data?.result?.recommendations || structuredAnalysis?.recommendations || []
+  );
+  const narrativeAnalysis =
+    structuredAnalysis?.detailedAnalysis ||
+    (typeof data?.result?.detailedAnalysis === "string" ? data.result.detailedAnalysis : "");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -551,17 +577,17 @@ export default function ExamReport() {
                     </span>
                   </div>
 
-                  {data.exam.laboratoryName && (
+                  {(data.exam.laboratoryName || structuredMetadata.institutionName || structuredMetadata.laboratoryName) && (
                     <div className="flex items-center text-sm text-muted-foreground mr-6">
                       <Building className="mr-2 h-4 w-4 text-primary-500" />
-                      <span className="font-medium">{data.exam.laboratoryName}</span>
+                      <span className="font-medium">{data.exam.laboratoryName || structuredMetadata.institutionName || structuredMetadata.laboratoryName}</span>
                     </div>
                   )}
 
-                  {data.exam.requestingPhysician && (
+                  {(data.exam.requestingPhysician || structuredMetadata.requestingPhysician) && (
                     <div className="flex items-center text-sm text-muted-foreground">
                       <UserRound className="mr-2 h-4 w-4 text-primary-500" />
-                      <span className="font-medium">Dr. {data.exam.requestingPhysician}</span>
+                      <span className="font-medium">Dr. {data.exam.requestingPhysician || structuredMetadata.requestingPhysician}</span>
                     </div>
                   )}
                 </>
@@ -651,8 +677,26 @@ export default function ExamReport() {
                           <div className="flex">
                             <CheckCircle2 className="text-green-600 dark:text-green-500 mr-3 flex-shrink-0" size={20} />
                             <div>
-                              <h4 className="font-medium text-green-800 dark:text-green-300">Resultado geral positivo</h4>
-                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">Seus resultados estão majoritariamente dentro dos intervalos de referência, indicando boa saúde geral.</p>
+                              <h4 className="font-medium text-green-800 dark:text-green-300">
+                                {suggestedDiagnoses.length > 0
+                                  ? "Hipóteses clínicas derivadas do exame"
+                                  : diagnosticImpression.length > 0
+                                    ? "Conclusão principal do laudo"
+                                    : healthMetrics.length > 0 && abnormalMetrics.length === 0
+                                      ? "Resultado predominantemente estável"
+                                      : "Resumo clínico do exame"}
+                              </h4>
+                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                                {suggestedDiagnoses.length > 0
+                                  ? buildDiagnosisDescription(suggestedDiagnoses[0])
+                                  : diagnosticImpression.length > 0
+                                    ? buildImpressionDescription(diagnosticImpression[0])
+                                    : healthMetrics.length > 0 && abnormalMetrics.length === 0
+                                      ? "Os parâmetros estruturados ficaram majoritariamente em faixa estável."
+                                      : clinicalFindings.length > 0
+                                        ? buildFindingDescription(clinicalFindings[0])
+                                        : narrativeAnalysis || "O exame foi processado e estruturado no prontuário do paciente."}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -663,228 +707,333 @@ export default function ExamReport() {
                             <div>
                               <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Pontos de atenção</h4>
                               <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                                {healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo' || m.status === 'alto')
-                                  ? `${healthMetrics.find(m => m.status === 'atenção' || m.status === 'baixo')?.name || 'Alguns parâmetros'} em nível de atenção.`
-                                  : 'Alguns parâmetros merecem atenção e acompanhamento.'}
+                                {abnormalMetrics.length > 0
+                                  ? `${abnormalMetrics[0]?.name || "Alguns parâmetros"} merecem acompanhamento clínico.`
+                                  : suggestedDiagnoses.length > 0
+                                    ? buildDiagnosisDescription(suggestedDiagnoses[0])
+                                    : diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente."}
                               </p>
                             </div>
                           </div>
                         </div>
 
-                        <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais parâmetros</h3>
+                        {healthMetrics.length > 0 ? (
+                          <>
+                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais parâmetros</h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {healthMetrics.slice(0, 4).map((metric, index) => (
-                            <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
-                              metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
-                                metric.status === 'atenção' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
-                              }`}>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm font-medium text-foreground flex items-center">
-                                  {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
-                                  {metric.status !== 'normal' && (
-                                    <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
-                                      metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
-                                        'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
-                                      }`}>
-                                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
-                                    </Badge>
-                                  )}
-                                </span>
-                                <div className="flex items-center">
-                                  <span className="text-sm text-foreground font-medium">{metric.value} {metric.unit}</span>
-                                  {metric.change && (
-                                    <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                                      metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                                        'bg-muted text-muted-foreground'
-                                      }`}>
-                                      {metric.change}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {healthMetrics.slice(0, 4).map((metric, index) => (
+                                <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
+                                  metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
+                                    metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
+                                  }`}>
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-sm font-medium text-foreground flex items-center">
+                                      {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
+                                      {metric.status !== 'normal' && (
+                                        <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
+                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
+                                            'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
+                                          }`}>
+                                          {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                                        </Badge>
+                                      )}
                                     </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="w-full bg-muted rounded-full h-2.5 mt-2 mb-1 relative">
-                                {/* Área de referência "normal" */}
-                                {(metric.referenceMin && metric.referenceMax) ? (
-                                  <div className="absolute h-full bg-green-500/30 dark:bg-green-500/20 rounded-full"
-                                    style={{
-                                      left: '30%',
-                                      width: '40%'
-                                    }}>
-                                  </div>
-                                ) : (
-                                  <div className="absolute h-full bg-muted rounded-full opacity-40"
-                                    style={{
-                                      left: '25%',
-                                      width: '50%'
-                                    }}>
-                                  </div>
-                                )}
-
-                                {/* Marcadores de limite para valores de referência */}
-                                {(metric.referenceMin && metric.referenceMax) && (
-                                  <>
-                                    <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
-                                      style={{ left: '30%' }}
-                                      title={`Valor mínimo de referência: ${metric.referenceMin}`}>
-                                    </div>
-                                    <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
-                                      style={{ left: '70%' }}
-                                      title={`Valor máximo de referência: ${metric.referenceMax}`}>
-                                    </div>
-                                  </>
-                                )}
-
-                                {/* Indicador de valor com posição calculada pelos valores reais */}
-                                {(() => {
-                                  const status = getMetricStatusForUI(
-                                    metric.status,
-                                    metric.value,
-                                    metric.referenceMin,
-                                    metric.referenceMax
-                                  );
-
-                                  return (
-                                    <div
-                                      className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
-                                      style={{
-                                        left: status.position,
-                                        marginLeft: '-4px',
-                                        transition: 'left 0.3s ease-in-out'
-                                      }}
-                                      title={`Valor: ${metric.value} ${metric.unit}`}>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-
-                              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                <div className="flex items-center">
-                                  <span>
-                                    Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
-                                  </span>
-
-                                  {metric.change && (
-                                    <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700 dark:text-red-400' :
-                                      metric.change.startsWith('-') ? 'text-green-700 dark:text-green-400' :
-                                        'text-muted-foreground'
-                                      }`}>
-                                      {getChangeIcon(metric.change)}
-                                      <span className="ml-0.5">{metric.change}</span>
-                                    </span>
-                                  )}
-                                </div>
-
-                                {metric.clinical_significance && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="text-primary cursor-help flex items-center">
-                                          <Info className="h-3 w-3 mr-1" />
-                                          <span className="text-xs">Significado clínico</span>
+                                    <div className="flex items-center">
+                                      <span className="text-sm text-foreground font-medium">{metric.value} {metric.unit}</span>
+                                      {metric.change && (
+                                        <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                          metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                                            'bg-muted text-muted-foreground'
+                                          }`}>
+                                          {metric.change}
                                         </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs p-3">
-                                        <p>{metric.clinical_significance}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="w-full bg-muted rounded-full h-2.5 mt-2 mb-1 relative">
+                                    {(metric.referenceMin && metric.referenceMax) ? (
+                                      <div className="absolute h-full bg-green-500/30 dark:bg-green-500/20 rounded-full"
+                                        style={{
+                                          left: '30%',
+                                          width: '40%'
+                                        }}>
+                                      </div>
+                                    ) : (
+                                      <div className="absolute h-full bg-muted rounded-full opacity-40"
+                                        style={{
+                                          left: '25%',
+                                          width: '50%'
+                                        }}>
+                                      </div>
+                                    )}
+
+                                    {(metric.referenceMin && metric.referenceMax) && (
+                                      <>
+                                        <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
+                                          style={{ left: '30%' }}
+                                          title={`Valor mínimo de referência: ${metric.referenceMin}`}>
+                                        </div>
+                                        <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
+                                          style={{ left: '70%' }}
+                                          title={`Valor máximo de referência: ${metric.referenceMax}`}>
+                                        </div>
+                                      </>
+                                    )}
+
+                                    {(() => {
+                                      const status = getMetricStatusForUI(
+                                        metric.status,
+                                        metric.value,
+                                        metric.referenceMin,
+                                        metric.referenceMax
+                                      );
+
+                                      return (
+                                        <div
+                                          className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
+                                          style={{
+                                            left: status.position,
+                                            marginLeft: '-4px',
+                                            transition: 'left 0.3s ease-in-out'
+                                          }}
+                                          title={`Valor: ${metric.value} ${metric.unit}`}>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                    <div className="flex items-center">
+                                      <span>
+                                        Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
+                                      </span>
+
+                                      {metric.change && (
+                                        <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700 dark:text-red-400' :
+                                          metric.change.startsWith('-') ? 'text-green-700 dark:text-green-400' :
+                                            'text-muted-foreground'
+                                          }`}>
+                                          {getChangeIcon(metric.change)}
+                                          <span className="ml-0.5">{metric.change}</span>
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {metric.clinical_significance && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="text-primary cursor-help flex items-center">
+                                              <Info className="h-3 w-3 mr-1" />
+                                              <span className="text-xs">Significado clínico</span>
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent className="max-w-xs p-3">
+                                            <p>{metric.clinical_significance}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais achados do laudo</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {clinicalFindings.slice(0, 4).map((finding, index) => (
+                                <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
+                                  <p className="font-medium text-foreground">{finding.title}</p>
+                                  <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
+                                </div>
+                              ))}
+                              {clinicalFindings.length === 0 && diagnosticImpression.slice(0, 2).map((item, index) => (
+                                <div key={`${buildImpressionDescription(item)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
+                                  <p className="font-medium text-foreground">Conclusão</p>
+                                  <p className="mt-2 text-sm text-muted-foreground">{buildImpressionDescription(item)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {(structuredMetadata.examModality || structuredMetadata.bodyRegion || structuredMetadata.technique || structuredMetadata.collectionDate || structuredMetadata.reportDate) && (
+                          <>
+                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Metadados clínicos</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {structuredMetadata.examModality && (
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Modalidade</p>
+                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.examModality}</p>
+                                </div>
+                              )}
+                              {structuredMetadata.bodyRegion && (
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Região ou material</p>
+                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.bodyRegion}</p>
+                                </div>
+                              )}
+                              {structuredMetadata.technique && (
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Técnica</p>
+                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.technique}</p>
+                                </div>
+                              )}
+                              {(structuredMetadata.collectionDate || structuredMetadata.reportDate) && (
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Datas relevantes</p>
+                                  <p className="mt-1 font-medium text-foreground">
+                                    {[
+                                      structuredMetadata.collectionDate ? `Coleta: ${formatStructuredDate(structuredMetadata.collectionDate)}` : "",
+                                      structuredMetadata.reportDate ? `Laudo: ${formatStructuredDate(structuredMetadata.reportDate)}` : "",
+                                    ].filter(Boolean).join(" | ")}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </TabsContent>
 
                       {/* Detailed Analysis Tab */}
                       <TabsContent value="detailed">
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-border">
-                            <thead>
-                              <tr>
-                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Parâmetro</th>
-                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</th>
-                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Referência</th>
-                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Significado Clínico</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-card divide-y divide-border">
-                              {healthMetrics.map((metric, index) => (
-                                <tr key={index} className={index % 2 === 0 ? '' : 'bg-muted/30'}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                                    {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                    <span className="font-medium">{metric.value}</span> {metric.unit}
-                                    {metric.change && (
-                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                                        metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                                          'bg-muted text-muted-foreground'
-                                        }`}>
-                                        {getChangeIcon(metric.change)}
-                                        <span className="ml-0.5">{metric.change}</span>
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                    {metric.referenceMin && metric.referenceMax ?
-                                      <span className="bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-green-700 dark:text-green-400">
-                                        {metric.referenceMin}-{metric.referenceMax} {metric.unit}
-                                      </span> :
-                                      (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
-                                      (metric.name === 'glicemia' && '70-99 mg/dL') ||
-                                      (metric.name === 'colesterol' && '150-199 mg/dL') ||
-                                      (metric.name === 'vitamina_d' && '30-100 ng/mL') ||
-                                      'Não disponível'
-                                    }
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <Badge variant={
-                                      metric.status === 'normal' ? 'default' :
-                                        metric.status === 'atenção' ? 'outline' :
-                                          metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
-                                    } className={
-                                      metric.status === 'normal' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900' :
-                                        metric.status === 'atenção' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900' :
-                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' : ''
-                                    }>
-                                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
-                                    </Badge>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs">
-                                    {metric.clinical_significance ? (
-                                      <div className="truncate">
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <p className="cursor-help truncate">
-                                                {metric.clinical_significance}
-                                              </p>
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-md p-3">
-                                              <p>{metric.clinical_significance}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      </div>
-                                    ) : 'Sem informações adicionais'}
-                                  </td>
+                        {healthMetrics.length > 0 && (
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border">
+                              <thead>
+                                <tr>
+                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Parâmetro</th>
+                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</th>
+                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Referência</th>
+                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Significado Clínico</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div className="mt-6">
-                          <h3 className="font-medium text-lg text-foreground mb-3">Interpretação detalhada</h3>
-                          <div className="space-y-3">
-                            <p className="text-muted-foreground">
-                              {data?.result?.detailedAnalysis}
-                            </p>
+                              </thead>
+                              <tbody className="bg-card divide-y divide-border">
+                                {healthMetrics.map((metric, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? '' : 'bg-muted/30'}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                                      {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                      <span className="font-medium">{metric.value}</span> {metric.unit}
+                                      {metric.change && (
+                                        <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                          metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                                            'bg-muted text-muted-foreground'
+                                          }`}>
+                                          {getChangeIcon(metric.change)}
+                                          <span className="ml-0.5">{metric.change}</span>
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                      {metric.referenceMin && metric.referenceMax ?
+                                        <span className="bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-green-700 dark:text-green-400">
+                                          {metric.referenceMin}-{metric.referenceMax} {metric.unit}
+                                        </span> :
+                                        (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
+                                        (metric.name === 'glicemia' && '70-99 mg/dL') ||
+                                        (metric.name === 'colesterol' && '150-199 mg/dL') ||
+                                        (metric.name === 'vitamina_d' && '30-100 ng/mL') ||
+                                        'Não disponível'
+                                      }
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                      <Badge variant={
+                                        metric.status === 'normal' ? 'default' :
+                                          metric.status === 'atenção' || metric.status === 'atencao' ? 'outline' :
+                                            metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
+                                      } className={
+                                        metric.status === 'normal' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900' :
+                                          metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900' :
+                                            metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' : ''
+                                      }>
+                                        {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                                      </Badge>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs">
+                                      {metric.clinical_significance ? (
+                                        <div className="truncate">
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <p className="cursor-help truncate">
+                                                  {metric.clinical_significance}
+                                                </p>
+                                              </TooltipTrigger>
+                                              <TooltipContent className="max-w-md p-3">
+                                                <p>{metric.clinical_significance}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        </div>
+                                      ) : 'Sem informações adicionais'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        </div>
+                        )}
+
+                        {(clinicalFindings.length > 0 || diagnosticImpression.length > 0 || suggestedDiagnoses.length > 0 || narrativeAnalysis) && (
+                          <div className="mt-6 space-y-6">
+                            {clinicalFindings.length > 0 && (
+                              <div>
+                                <h3 className="font-medium text-lg text-foreground mb-3">Achados estruturados</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {clinicalFindings.map((finding, index) => (
+                                    <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
+                                      <p className="font-medium text-foreground">{finding.title}</p>
+                                      <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {diagnosticImpression.length > 0 && (
+                              <div>
+                                <h3 className="font-medium text-lg text-foreground mb-3">Impressão diagnóstica</h3>
+                                <div className="space-y-3">
+                                  {diagnosticImpression.map((item, index) => (
+                                    <div key={`${buildImpressionDescription(item)}-${index}`} className="rounded-lg border border-border bg-card p-4">
+                                      <p className="text-muted-foreground">{buildImpressionDescription(item)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {suggestedDiagnoses.length > 0 && (
+                              <div>
+                                <h3 className="font-medium text-lg text-foreground mb-3">Diagnósticos sugeridos</h3>
+                                <div className="space-y-3">
+                                  {suggestedDiagnoses.map((diagnosis, index) => (
+                                    <div key={`${buildDiagnosisDescription(diagnosis)}-${index}`} className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/10 p-4">
+                                      <p className="font-medium text-emerald-900 dark:text-emerald-300">{diagnosis.condition || "Condição sugerida"}</p>
+                                      <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-400">{buildDiagnosisDescription(diagnosis)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {narrativeAnalysis && (
+                              <div>
+                                <h3 className="font-medium text-lg text-foreground mb-3">Interpretação detalhada</h3>
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                  <p className="text-muted-foreground whitespace-pre-line">{narrativeAnalysis}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </TabsContent>
 
                       {/* Recommendations Tab */}
@@ -909,7 +1058,7 @@ export default function ExamReport() {
                                 </div>
                               ))
                             ) : (
-                              filterRecommendations(insights?.recommendations || []).map((recommendation, index) => (
+                              filterRecommendations(structuredRecommendations).map((recommendation, index) => (
                                 <div key={index} className="bg-primary/10 p-4 rounded-lg">
                                   <div className="flex">
                                     <div className="flex-shrink-0">

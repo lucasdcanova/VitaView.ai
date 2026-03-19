@@ -136,11 +136,16 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                 const reader = new FileReader();
                 reader.onload = () => {
                     const base64 = (reader.result as string).split(',')[1];
+                    const normalizedFileType = file.type.includes('pdf')
+                        ? 'pdf'
+                        : file.type.includes('png')
+                            ? 'png'
+                            : 'jpeg';
                     resolve({
                         name: file.name,
-                        fileType: file.type.includes('pdf') ? 'pdf' : 'jpeg',
+                        fileType: normalizedFileType,
                         fileContent: base64,
-                        laboratoryName: "Upload Múltiplo",
+                        laboratoryName: null,
                         examDate: new Date().toISOString().split('T')[0]
                     });
                 };

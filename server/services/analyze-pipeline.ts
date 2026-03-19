@@ -11,8 +11,8 @@
  * - Mecanismo de fallback entre providers
  */
 
-import { analyzeDocumentWithOpenAI, analyzeExtractedExam } from './openai';
-import { buildPatientRecordContext } from './patient-record';
+import type { Exam } from '@shared/schema';
+import { analyzeDocumentWithOpenAI } from './openai';
 import { storage } from '../storage';
 import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
@@ -59,10 +59,11 @@ const buildExamDisplayName = (
   const primaryCandidate = [
     metadata.documentTitle,
     extractionResult?.examType,
+    metadata.examModality,
     metadata.examPurpose,
     metricBasedName,
     cleanedUpload,
-    'Exame laboratorial'
+    'Exame médico'
   ].find(value => typeof value === 'string' && value.trim().length > 0) as string;
 
   const uniqueParts: string[] = [];
@@ -94,6 +95,177 @@ const buildExamDisplayName = (
   }
 
   return uniqueParts.join(" • ");
+};
+
+const safeText = (value: unknown) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return "";
+};
+
+const uniqueStrings = (values: Array<string | null | undefined>) => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const cleaned = safeText(value);
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(cleaned);
+  }
+
+  return result;
+};
+
+const formatExamRecommendations = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(value.map((item) => safeText(item))).join("\n") || null;
+  }
+
+  const text = safeText(value);
+  return text || null;
+};
+
+const normalizeRecommendationArray = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(value.map((item) => safeText(item)));
+  }
+
+  const text = safeText(value);
+  if (!text) return [];
+
+  return uniqueStrings(
+    text
+      .split(/\n|[•*-]\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
+};
+
+const buildStructuredExamPayload = (extractionResult: any) => ({
+  summary: extractionResult?.summary || null,
+  detailedAnalysis: extractionResult?.detailedAnalysis || null,
+  recommendations: normalizeRecommendationArray(extractionResult?.recommendations),
+  healthMetrics: Array.isArray(extractionResult?.healthMetrics) ? extractionResult.healthMetrics : [],
+  clinicalFindings: Array.isArray(extractionResult?.clinicalFindings) ? extractionResult.clinicalFindings : [],
+  diagnosticImpression: Array.isArray(extractionResult?.diagnosticImpression) ? extractionResult.diagnosticImpression : [],
+  suggestedDiagnoses: Array.isArray(extractionResult?.suggestedDiagnoses) ? extractionResult.suggestedDiagnoses : [],
+  examMetadata: extractionResult?.examMetadata && typeof extractionResult.examMetadata === "object"
+    ? extractionResult.examMetadata
+    : {},
+  aiProvider: extractionResult?.aiProvider || "openai:extraction"
+});
+
+const buildExtractionSummary = (examName: string, extractionResult: any, normalizedMetrics: any[]) => {
+  const explicitSummary = safeText(extractionResult?.summary);
+  if (explicitSummary) return explicitSummary;
+
+  const diagnoses = Array.isArray(extractionResult?.suggestedDiagnoses) ? extractionResult.suggestedDiagnoses : [];
+  const impressions = Array.isArray(extractionResult?.diagnosticImpression) ? extractionResult.diagnosticImpression : [];
+  const findings = Array.isArray(extractionResult?.clinicalFindings) ? extractionResult.clinicalFindings : [];
+  const metadata = extractionResult?.examMetadata || {};
+
+  if (diagnoses.length > 0) {
+    return `O exame ${examName} sugere ${diagnoses.slice(0, 2).map((item: any) => safeText(item.condition)).filter(Boolean).join(" e ")}.`;
+  }
+
+  if (impressions.length > 0) {
+    return safeText(impressions[0]?.description) || `O exame ${examName} foi analisado com sucesso.`;
+  }
+
+  if (findings.length > 0) {
+    const firstFinding = findings[0];
+    const bodySite = safeText(firstFinding?.bodySite);
+    return `O exame ${examName} identificou ${safeText(firstFinding?.title)}${bodySite ? ` em ${bodySite}` : ""}.`;
+  }
+
+  if (normalizedMetrics.length > 0) {
+    const abnormalCount = normalizedMetrics.filter((metric: any) => {
+      const status = safeText(metric?.status).toLowerCase();
+      return status && status !== "normal";
+    }).length;
+
+    if (abnormalCount > 0) {
+      return `O exame ${examName} apresentou ${abnormalCount} parâmetro(s) que merecem atenção clínica.`;
+    }
+
+    return `O exame ${examName} foi processado com ${normalizedMetrics.length} parâmetro(s) estruturados.`;
+  }
+
+  const examType = safeText(metadata?.examType || metadata?.examModality);
+  if (examType) {
+    return `Laudo de ${examType.toLowerCase()} analisado e registrado no histórico do paciente.`;
+  }
+
+  return `O exame ${examName} foi analisado e registrado no histórico do paciente.`;
+};
+
+const buildDiagnosisNotesFromExam = (examName: string, diagnosis: any) => {
+  return uniqueStrings([
+    `Derivado do exame "${examName}"`,
+    safeText(diagnosis?.condition),
+    safeText(diagnosis?.basis),
+    safeText(diagnosis?.notes)
+  ]).join(" | ") || null;
+};
+
+const persistSuggestedDiagnoses = async (
+  exam: Exam,
+  examName: string,
+  examDate: string,
+  extractionResult: any
+) => {
+  if (!exam.profileId) return 0;
+
+  const diagnoses = Array.isArray(extractionResult?.suggestedDiagnoses)
+    ? extractionResult.suggestedDiagnoses
+    : [];
+
+  if (diagnoses.length === 0) return 0;
+
+  const existingDiagnoses = await storage.getDiagnosesByUserId(exam.userId);
+  const existingKeys = new Set(
+    existingDiagnoses
+      .filter((item: any) => item?.profileId === exam.profileId && safeText(item?.cidCode))
+      .map((item: any) => `${item.profileId}:${safeText(item.cidCode).toUpperCase()}`)
+  );
+
+  let createdCount = 0;
+
+  for (const diagnosis of diagnoses) {
+    const cidCode = safeText(diagnosis?.cidCode).toUpperCase();
+    if (!cidCode) continue;
+
+    const key = `${exam.profileId}:${cidCode}`;
+    if (existingKeys.has(key)) continue;
+
+    try {
+      await storage.createDiagnosis({
+        userId: exam.userId,
+        profileId: exam.profileId,
+        cidCode,
+        diagnosisDate: examDate,
+        status: safeText(diagnosis?.status) || "ativo",
+        notes: buildDiagnosisNotesFromExam(examName, diagnosis)
+      });
+
+      existingKeys.add(key);
+      createdCount += 1;
+    } catch (error) {
+      logger.error("[Pipeline] Falha ao registrar diagnóstico derivado do exame", {
+        examId: exam.id,
+        userId: exam.userId,
+        profileId: exam.profileId,
+        cidCode,
+        error
+      });
+    }
+  }
+
+  return createdCount;
 };
 
 export interface AnalysisResult {
@@ -148,9 +320,21 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
     const extractionResult = await analyzeDocumentWithOpenAI(fileContent, exam.fileType);
 
     // ARMAZENAR METADADOS
-    const extractedExamDate = extractionResult.examDate || exam.examDate || new Date().toISOString().split('T')[0];
-    const extractedLabName = extractionResult.laboratoryName || exam.laboratoryName || "Laboratório não identificado";
-    let requestingPhysician = extractionResult.requestingPhysician || null;
+    const extractedMetadata = extractionResult.examMetadata || {};
+    const extractedExamDate =
+      extractionResult.examDate ||
+      extractedMetadata.examDate ||
+      extractedMetadata.collectionDate ||
+      extractedMetadata.reportDate ||
+      exam.examDate ||
+      new Date().toISOString().split('T')[0];
+    const extractedLabName =
+      extractionResult.laboratoryName ||
+      extractedMetadata.laboratoryName ||
+      extractedMetadata.institutionName ||
+      exam.laboratoryName ||
+      null;
+    let requestingPhysician = extractionResult.requestingPhysician || extractedMetadata.requestingPhysician || null;
 
     // Sanitizar nome do médico
     if (requestingPhysician) {
@@ -179,11 +363,18 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
 
     // SALVAR RESULTADO DA EXTRAÇÃO COM MÉTRICAS NORMALIZADAS
     // [Pipeline] ETAPA 3: Salvando métricas extraídas (normalizadas)
+    const structuredExamPayload = buildStructuredExamPayload({
+      ...extractionResult,
+      healthMetrics: normalizedMetrics
+    });
+    const summarizedExtraction = buildExtractionSummary(examName, extractionResult, normalizedMetrics);
+    const recommendationText = formatExamRecommendations(extractionResult.recommendations);
+
     const examResult = await storage.createExamResult({
       examId: exam.id,
-      summary: `Exame extraído com ${normalizedMetrics.length} parâmetros`,
-      detailedAnalysis: null, // Será preenchido pela OpenAI posteriormente
-      recommendations: null, // Será preenchido pela OpenAI posteriormente
+      summary: summarizedExtraction,
+      detailedAnalysis: JSON.stringify(structuredExamPayload),
+      recommendations: recommendationText,
       healthMetrics: normalizedMetrics,
       aiProvider: extractionResult.aiProvider || "openai:extraction"
     });
@@ -277,15 +468,24 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
     });
 
     // Se a extração já trouxe análise, usamos ela. Caso contrário, geramos um fallback simples.
-    const finalDetailedAnalysis = extractionResult.detailedAnalysis || "Análise processada com sucesso.";
+    const diagnosesCreated = await persistSuggestedDiagnoses(exam, examName, extractedExamDate, extractionResult);
 
     // Atualizar o resultado do exame que foi criado na etapa 3 com a análise final (que agora vem da etapa 1)
     await storage.updateExamResult(examResult.id, {
-      summary: extractionResult.summary || `Exame processado: ${examName}`,
-      detailedAnalysis: typeof finalDetailedAnalysis === 'string' ? finalDetailedAnalysis : JSON.stringify(finalDetailedAnalysis),
-      recommendations: Array.isArray(extractionResult.recommendations) ? extractionResult.recommendations.join("\n") : extractionResult.recommendations,
+      summary: summarizedExtraction,
+      detailedAnalysis: JSON.stringify(structuredExamPayload),
+      recommendations: recommendationText,
       aiProvider: extractionResult.aiProvider || "openai:fast-extraction"
     });
+
+    if (diagnosesCreated > 0) {
+      logger.info("[Pipeline] Diagnósticos derivados do exame foram registrados", {
+        examId: exam.id,
+        userId: exam.userId,
+        profileId: exam.profileId,
+        diagnosesCreated
+      });
+    }
 
     return {
       exam,

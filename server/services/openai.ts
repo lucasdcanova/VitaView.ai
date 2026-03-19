@@ -19,6 +19,226 @@ const sanitizePhysicianName = (value?: string | null) => {
   return cleaned || null;
 };
 
+const toNullableText = (value: unknown) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const cleaned = value.trim();
+    return cleaned || null;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return null;
+};
+
+const normalizeRecommendationList = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(value.map((item) => toNullableText(item)));
+  }
+
+  const text = toNullableText(value);
+  if (!text) return [];
+
+  return uniqueStrings(
+    text
+      .split(/\n|[•*-]\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
+};
+
+const normalizeStructuredConfidence = (value?: string | null) => {
+  const normalized = normalizeSearchText(value);
+  if (!normalized) return null;
+  if (normalized.includes("alta") || normalized.includes("high")) return "high";
+  if (normalized.includes("media") || normalized.includes("média") || normalized.includes("moder")) return "medium";
+  if (normalized.includes("baixa") || normalized.includes("low")) return "low";
+  return value?.trim() || null;
+};
+
+const normalizeExamMetricStatus = (value?: string | null, context?: string | null) => {
+  const normalized = normalizeSearchText([value, context].filter(Boolean).join(" "));
+  if (!normalized) return null;
+
+  if (
+    normalized.includes("normal") ||
+    normalized.includes("negativo") ||
+    normalized.includes("ausente") ||
+    normalized.includes("sem alter") ||
+    normalized.includes("preservad")
+  ) {
+    return "normal";
+  }
+
+  if (
+    normalized.includes("alto") ||
+    normalized.includes("elev") ||
+    normalized.includes("aument") ||
+    normalized.includes("acima")
+  ) {
+    return "alto";
+  }
+
+  if (
+    normalized.includes("baixo") ||
+    normalized.includes("reduz") ||
+    normalized.includes("diminu") ||
+    normalized.includes("abaixo")
+  ) {
+    return "baixo";
+  }
+
+  if (
+    normalized.includes("alter") ||
+    normalized.includes("anormal") ||
+    normalized.includes("positivo") ||
+    normalized.includes("presente") ||
+    normalized.includes("suspeit") ||
+    normalized.includes("achado") ||
+    normalized.includes("compativel") ||
+    normalized.includes("compatível")
+  ) {
+    return "atencao";
+  }
+
+  return null;
+};
+
+const normalizeExamMetricEntry = (entry: any) => {
+  const rawMetric = typeof entry === "string" ? { name: entry, value: entry } : (entry || {});
+  const name =
+    toNullableText(rawMetric.name) ||
+    toNullableText(rawMetric.parameter) ||
+    toNullableText(rawMetric.title);
+  const value =
+    toNullableText(rawMetric.value) ||
+    toNullableText(rawMetric.result) ||
+    toNullableText(rawMetric.qualitativeResult) ||
+    toNullableText(rawMetric.interpretation);
+
+  if (!name || !value) return null;
+
+  return {
+    name,
+    value,
+    unit: toNullableText(rawMetric.unit) || "",
+    status: normalizeExamMetricStatus(rawMetric.status, value) || "normal",
+    change: toNullableText(rawMetric.change) || "",
+    referenceRange: toNullableText(rawMetric.referenceRange),
+    referenceMin: toNullableText(rawMetric.referenceMin),
+    referenceMax: toNullableText(rawMetric.referenceMax),
+    category: toNullableText(rawMetric.category),
+    evidenceLevel: toNullableText(rawMetric.evidenceLevel),
+    clinicalSignificance:
+      toNullableText(rawMetric.clinicalSignificance) ||
+      toNullableText(rawMetric.significance) ||
+      toNullableText(rawMetric.notes),
+    sourceType: toNullableText(rawMetric.sourceType) || "measurement",
+  };
+};
+
+const normalizeExamFindingEntry = (entry: any) => {
+  const rawFinding = typeof entry === "string" ? { title: entry } : (entry || {});
+  const title =
+    toNullableText(rawFinding.title) ||
+    toNullableText(rawFinding.name) ||
+    toNullableText(rawFinding.finding);
+  if (!title) return null;
+
+  return {
+    title,
+    category: toNullableText(rawFinding.category),
+    bodySite: toNullableText(rawFinding.bodySite) || toNullableText(rawFinding.anatomicalSite),
+    value: toNullableText(rawFinding.value),
+    unit: toNullableText(rawFinding.unit),
+    qualitativeResult: toNullableText(rawFinding.qualitativeResult) || toNullableText(rawFinding.result),
+    status:
+      normalizeExamMetricStatus(
+        toNullableText(rawFinding.status),
+        [rawFinding.qualitativeResult, rawFinding.interpretation].filter(Boolean).join(" ")
+      ) || "atencao",
+    referenceRange: toNullableText(rawFinding.referenceRange),
+    interpretation: toNullableText(rawFinding.interpretation),
+    significance: toNullableText(rawFinding.significance) || toNullableText(rawFinding.clinicalSignificance),
+    notes: toNullableText(rawFinding.notes),
+  };
+};
+
+const normalizeDiagnosticImpressionEntry = (entry: any) => {
+  const rawImpression = typeof entry === "string" ? { description: entry } : (entry || {});
+  const description =
+    toNullableText(rawImpression.description) ||
+    toNullableText(rawImpression.impression) ||
+    toNullableText(rawImpression.conclusion);
+  if (!description) return null;
+
+  return {
+    description,
+    severity: toNullableText(rawImpression.severity),
+    chronicity: toNullableText(rawImpression.chronicity),
+    laterality: toNullableText(rawImpression.laterality),
+    status: toNullableText(rawImpression.status),
+    notes: toNullableText(rawImpression.notes),
+  };
+};
+
+const normalizeExamDiagnosisEntry = (entry: any) => {
+  const rawDiagnosis = typeof entry === "string" ? { condition: entry } : (entry || {});
+  const condition =
+    toNullableText(rawDiagnosis.condition) ||
+    toNullableText(rawDiagnosis.diagnosis) ||
+    toNullableText(rawDiagnosis.label) ||
+    toNullableText(rawDiagnosis.description);
+  const basis =
+    toNullableText(rawDiagnosis.basis) ||
+    toNullableText(rawDiagnosis.justification) ||
+    toNullableText(rawDiagnosis.notes);
+  const resolvedCid =
+    findBestCidMatch(rawDiagnosis.cidCode) ||
+    findBestCidMatch(condition) ||
+    findBestCidMatch(basis);
+  const cidCode = resolvedCid?.code || (isLikelyCidCode(rawDiagnosis.cidCode) ? String(rawDiagnosis.cidCode).toUpperCase().trim() : null);
+
+  if (!condition && !cidCode) return null;
+
+  return {
+    condition: condition || resolvedCid?.description || cidCode,
+    cidCode,
+    confidence: normalizeStructuredConfidence(rawDiagnosis.confidence || rawDiagnosis.probability),
+    basis,
+    status: normalizeDiagnosisStatus(rawDiagnosis.status || condition || basis),
+    notes: toNullableText(rawDiagnosis.notes),
+  };
+};
+
+const parseStoredStructuredExamAnalysis = (value: unknown) => {
+  if (!value) return null;
+  if (typeof value === "object") return value as any;
+
+  const raw = stripMarkdownCodeFence(typeof value === "string" ? value : String(value));
+  if (!raw) return null;
+
+  const jsonPayload = extractJsonPayload(raw);
+  if (!jsonPayload) return null;
+
+  try {
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
+const hasMeaningfulExamAnalysis = (analysisData: any) => {
+  return Boolean(
+    toNullableText(analysisData?.summary) ||
+    toNullableText(analysisData?.detailedAnalysis) ||
+    (Array.isArray(analysisData?.healthMetrics) && analysisData.healthMetrics.length > 0) ||
+    (Array.isArray(analysisData?.clinicalFindings) && analysisData.clinicalFindings.length > 0) ||
+    (Array.isArray(analysisData?.diagnosticImpression) && analysisData.diagnosticImpression.length > 0) ||
+    (Array.isArray(analysisData?.suggestedDiagnoses) && analysisData.suggestedDiagnoses.length > 0)
+  );
+};
+
 const normalizeAnalysisPayload = (analysisData: any, defaultProvider: string) => {
   const legacyMetadata = (analysisData?.metadata && typeof analysisData.metadata === 'object')
     ? analysisData.metadata
@@ -46,19 +266,79 @@ const normalizeAnalysisPayload = (analysisData: any, defaultProvider: string) =>
     normalizedExamType ||
     null;
 
+  const normalizedHealthMetrics = dedupeByKey(
+    Array.isArray(analysisData?.healthMetrics)
+      ? analysisData.healthMetrics.map((entry: any) => normalizeExamMetricEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => `${entry.name}|${entry.value}|${entry.unit || ""}`
+  );
+
+  const clinicalFindings = dedupeByKey(
+    Array.isArray(analysisData?.clinicalFindings)
+      ? analysisData.clinicalFindings.map((entry: any) => normalizeExamFindingEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => `${entry.title}|${entry.bodySite || ""}|${entry.value || entry.qualitativeResult || ""}`
+  );
+
+  const diagnosticImpression = dedupeByKey(
+    Array.isArray(analysisData?.diagnosticImpression)
+      ? analysisData.diagnosticImpression.map((entry: any) => normalizeDiagnosticImpressionEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => entry.description
+  );
+
+  const suggestedDiagnoses = dedupeByKey(
+    Array.isArray(analysisData?.suggestedDiagnoses)
+      ? analysisData.suggestedDiagnoses.map((entry: any) => normalizeExamDiagnosisEntry(entry)).filter(Boolean)
+      : [],
+    (entry) => `${entry.cidCode || ""}|${entry.condition || ""}`
+  );
+
+  const normalizedRecommendations = normalizeRecommendationList(analysisData?.recommendations);
+  const normalizedDetailedAnalysis =
+    toNullableText(analysisData?.detailedAnalysis) ||
+    toNullableText(analysisData?.analysis) ||
+    toNullableText(analysisData?.contextualAnalysis) ||
+    uniqueStrings(diagnosticImpression.map((item) => item.description)).join("\n") ||
+    null;
+  const normalizedSummary =
+    toNullableText(analysisData?.summary) ||
+    toNullableText(analysisData?.headline) ||
+    diagnosticImpression[0]?.description ||
+    clinicalFindings[0]?.title ||
+    normalizedDocumentTitle ||
+    null;
+
   const normalizedMetadata = {
     ...metadata,
     documentTitle: normalizedDocumentTitle || null,
     examType: normalizedExamType || null,
     examPurpose: normalizedPurpose || null,
     examCategory: normalizedCategory || null,
+    examModality: toNullableText(analysisData?.examModality || metadata?.examModality),
+    bodyRegion: toNullableText(analysisData?.bodyRegion || metadata?.bodyRegion),
+    technique: toNullableText(analysisData?.technique || metadata?.technique),
+    contrastUsed: toNullableText(analysisData?.contrastUsed || metadata?.contrastUsed),
+    specimenType: toNullableText(analysisData?.specimenType || metadata?.specimenType),
     requestingPhysician: normalizedDoctor,
+    performingPhysician: sanitizePhysicianName(analysisData?.performingPhysician || metadata?.performingPhysician),
     laboratoryName: normalizedLab || null,
+    institutionName: toNullableText(analysisData?.institutionName || metadata?.institutionName),
+    patientName: toNullableText(analysisData?.patientName || metadata?.patientName),
+    collectionDate: toNullableText(analysisData?.collectionDate || metadata?.collectionDate),
+    reportDate: toNullableText(analysisData?.reportDate || metadata?.reportDate),
     examDate: normalizedExamDate || null
   };
 
   return {
     ...analysisData,
+    summary: normalizedSummary,
+    detailedAnalysis: normalizedDetailedAnalysis,
+    recommendations: normalizedRecommendations,
+    healthMetrics: normalizedHealthMetrics,
+    clinicalFindings,
+    diagnosticImpression,
+    suggestedDiagnoses,
     examMetadata: normalizedMetadata,
     requestingPhysician: normalizedDoctor,
     examType: normalizedExamType,
@@ -1356,23 +1636,30 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
       throw new Error("Resultado da extração não encontrado");
     }
 
-    // 3. Obter métricas diretamente do resultado da extração, não de health_metrics
+    // 3. Obter dados estruturados da extração, aceitando exames laboratoriais e laudos qualitativos
     const examDateStr = exam?.examDate ? new Date(exam.examDate).toISOString().split('T')[0] :
       exam?.uploadDate ? new Date(exam.uploadDate).toISOString().split('T')[0] : null;
+    const structuredExtraction = parseStoredStructuredExamAnalysis(extractionResult.detailedAnalysis) || {};
+    const extractedMetadata = structuredExtraction?.examMetadata || {};
 
-    // Usar as métricas que já foram extraídas e armazenadas em examResults
-    // em vez de tentar buscar da tabela health_metrics que está incompleta
     let metricsFromThisExam = [];
-
     if (extractionResult.healthMetrics && Array.isArray(extractionResult.healthMetrics)) {
       metricsFromThisExam = extractionResult.healthMetrics;
-    } else {
-      // Nenhuma métrica encontrada no resultado da extração. Usando array vazio.
     }
+
+    const findingsFromThisExam = Array.isArray(structuredExtraction?.clinicalFindings)
+      ? structuredExtraction.clinicalFindings
+      : [];
+    const impressionsFromThisExam = Array.isArray(structuredExtraction?.diagnosticImpression)
+      ? structuredExtraction.diagnosticImpression
+      : [];
+    const diagnosesFromThisExam = Array.isArray(structuredExtraction?.suggestedDiagnoses)
+      ? structuredExtraction.suggestedDiagnoses
+      : [];
 
     // 4. Organizar métricas por categoria para uma análise mais estruturada
     const metricsByCategory = new Map();
-    metricsFromThisExam.forEach(metric => {
+    metricsFromThisExam.forEach((metric: any) => {
       const category = metric.category || "Geral";
       if (!metricsByCategory.has(category)) {
         metricsByCategory.set(category, []);
@@ -1382,55 +1669,92 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
 
     const patientContext = formatPatientContext(patientData);
 
-    // Criar prompt mais estruturado para a OpenAI com base nas categorias de exames
     let metricsDescriptionByCategory = "";
     metricsByCategory.forEach((metrics, category) => {
-      metricsDescriptionByCategory += `\n### ${category.toUpperCase()} (${metrics.length} parâmetros):\n`;
+      metricsDescriptionByCategory += `\n### ${String(category).toUpperCase()} (${metrics.length} parâmetro(s)):\n`;
       metrics.forEach((metric: any) => {
-        const status = metric.status ? ` (${metric.status.toUpperCase()})` : '';
-        const reference = (metric.referenceMin && metric.referenceMax)
-          ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ''}]`
-          : '';
-        metricsDescriptionByCategory += `- ${metric.name}: ${metric.value} ${metric.unit || ''}${status}${reference}\n`;
-        if (metric.clinical_significance) {
-          metricsDescriptionByCategory += `  Significado clínico: ${metric.clinical_significance}\n`;
+        const status = metric.status ? ` (${String(metric.status).toUpperCase()})` : "";
+        const reference = metric.referenceMin && metric.referenceMax
+          ? ` [Referência: ${metric.referenceMin}-${metric.referenceMax} ${metric.unit || ""}]`
+          : metric.referenceRange
+            ? ` [Referência: ${metric.referenceRange}]`
+            : "";
+        metricsDescriptionByCategory += `- ${metric.name}: ${metric.value} ${metric.unit || ""}${status}${reference}\n`;
+        if (metric.clinicalSignificance || metric.clinical_significance) {
+          metricsDescriptionByCategory += `  Significado clínico: ${metric.clinicalSignificance || metric.clinical_significance}\n`;
         }
       });
     });
 
-    // 5. Criar prompt para OpenAI com análise holística e categorizada
+    const findingsDescription = findingsFromThisExam.length > 0
+      ? findingsFromThisExam.map((finding: any) => {
+          const bodySite = finding.bodySite ? ` em ${finding.bodySite}` : "";
+          const value = finding.value ? `: ${finding.value}${finding.unit ? ` ${finding.unit}` : ""}` : "";
+          const qualitative = !finding.value && finding.qualitativeResult ? `: ${finding.qualitativeResult}` : "";
+          const interpretation = finding.interpretation ? ` | Interpretação: ${finding.interpretation}` : "";
+          const significance = finding.significance ? ` | Relevância: ${finding.significance}` : "";
+          return `- ${finding.title}${bodySite}${value}${qualitative}${interpretation}${significance}`;
+        }).join("\n")
+      : "Nenhum achado qualitativo estruturado disponível.";
+
+    const impressionsDescription = impressionsFromThisExam.length > 0
+      ? impressionsFromThisExam.map((item: any) => {
+          const extras = [item.severity, item.chronicity, item.laterality, item.status].filter(Boolean).join(" | ");
+          return `- ${item.description}${extras ? ` (${extras})` : ""}`;
+        }).join("\n")
+      : "Nenhuma impressão diagnóstica estruturada disponível.";
+
+    const diagnosesDescription = diagnosesFromThisExam.length > 0
+      ? diagnosesFromThisExam.map((item: any) => {
+          const cid = item.cidCode ? `CID ${item.cidCode}` : "CID não definido";
+          const confidence = item.confidence ? ` | confiança: ${item.confidence}` : "";
+          const basis = item.basis ? ` | base: ${item.basis}` : "";
+          return `- ${item.condition || "Condição não especificada"} (${cid}${confidence}${basis})`;
+        }).join("\n")
+      : "Nenhum diagnóstico estruturado disponível.";
+
+    // 5. Criar prompt para OpenAI com análise holística e genérica para qualquer exame
     const prompt = `
-      Você é um especialista médico altamente qualificado em medicina laboratorial e diagnóstico clínico.
-      Agora você vai realizar uma ANÁLISE GLOBAL E HOLÍSTICA dos resultados de exames que já foram processados e extraídos previamente.
+      Você é um especialista médico altamente qualificado em interpretação clínica de exames laboratoriais, laudos de imagem, cardiologia funcional, endoscopia, manometria, anatomopatologia, biópsia e outros documentos diagnósticos.
+      Agora você vai realizar uma ANÁLISE GLOBAL E HOLÍSTICA de um exame já extraído e estruturado previamente.
       
       ### TAREFA PRINCIPAL:
-      Analise detalhadamente os seguintes resultados de exames médicos e forneça uma avaliação médica integrativa,
-      correlacionando os diferentes parâmetros entre si e com o contexto do paciente quando disponível.
+      Analise os dados do exame abaixo e forneça uma avaliação clínica integrativa, correlacionando parâmetros quantitativos, achados qualitativos, impressão diagnóstica do laudo e contexto do paciente.
       
       ### DADOS DO PACIENTE:
       ${patientContext}
       
       ### DADOS DO EXAME:
       - Nome: ${exam?.name || 'Não informado'}
-      - Tipo de documento: ${exam?.fileType || 'Não informado'}
-      - Data do exame: ${examDateStr || 'Não informada'}
-      - Laboratório: ${exam?.laboratoryName || 'Não informado'}
-      - Médico solicitante: ${exam?.requestingPhysician ? `Dr. ${exam.requestingPhysician}` : 'Não informado'}
+      - Tipo do documento: ${exam?.fileType || 'Não informado'}
+      - Tipo/Modalidade: ${extractedMetadata?.examType || exam?.name || 'Não informado'}
+      - Categoria: ${extractedMetadata?.examCategory || 'Não informada'}
+      - Data do exame: ${extractedMetadata?.examDate || examDateStr || 'Não informada'}
+      - Laboratório/Instituição: ${extractedMetadata?.laboratoryName || extractedMetadata?.institutionName || exam?.laboratoryName || 'Não informado'}
+      - Médico solicitante: ${extractedMetadata?.requestingPhysician || exam?.requestingPhysician || 'Não informado'}
+      - Região/Material: ${extractedMetadata?.bodyRegion || extractedMetadata?.specimenType || 'Não informado'}
       
-      ### MÉTRICAS DE SAÚDE ORGANIZADAS POR CATEGORIA:
-      ${metricsDescriptionByCategory}
+      ### MÉTRICAS/PARÂMETROS QUANTITATIVOS:
+      ${metricsDescriptionByCategory || "Nenhum parâmetro quantitativo estruturado disponível."}
+      
+      ### ACHADOS QUALITATIVOS DO LAUDO:
+      ${findingsDescription}
+      
+      ### IMPRESSÃO / CONCLUSÃO EXTRAÍDA:
+      ${impressionsDescription}
+      
+      ### DIAGNÓSTICOS SUGERIDOS A PARTIR DO EXAME:
+      ${diagnosesDescription}
       
       ### INSTRUÇÕES ESPECÍFICAS:
-      1. INTEGRE todos os resultados em uma análise clínica compreensiva.
-      2. Identifique CORRELAÇÕES e PADRÕES entre diferentes marcadores de diferentes categorias.
-      3. Destaque ALTERAÇÕES SIGNIFICATIVAS e explique sua importância clínica.
-      4. Considere o CONTEXTO COMPLETO, incluindo exames de diferentes categorias.
-      5. Sugira possíveis diagnósticos com diferentes níveis de probabilidade.
-      6. Forneça recomendações específicas e personalizadas.
-      7. Identifique especialidades médicas relevantes para acompanhamento.
-      8. Inclua sugestões de estilo de vida baseadas nos resultados.
-      9. Avalie fatores de risco evidenciados pelos exames.
-      10. Calcule um "health score" estimado (0-100) baseado nos resultados.
+      1. Integre os dados numéricos e descritivos em uma análise clínica coerente.
+      2. Se o exame for de imagem, endoscopia, biópsia ou anatomopatologia, trate os achados do laudo como base principal da análise.
+      3. Explique a relevância dos achados e sua possível correlação com o contexto do paciente.
+      4. Sugira possíveis diagnósticos com níveis de probabilidade apenas quando houver suporte no exame.
+      5. Identifique especialidades médicas pertinentes para seguimento.
+      6. Forneça recomendações clínicas prudentes e objetivas, sem inventar condutas que não estejam sustentadas pelo exame.
+      7. Avalie fatores de risco e áreas críticas com base no laudo.
+      8. Calcule um health score estimado (0-100) considerando o conjunto do exame, mesmo que ele seja predominantemente qualitativo.
       
       ### FORMATO DA RESPOSTA (responda EXATAMENTE neste formato JSON):
       {
@@ -1558,68 +1882,101 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       fileType === "png" ? "image/png" :
         "application/pdf";
 
-  const prompt = `Você é um médico especialista em análise de exames laboratoriais e diagnóstico clínico.
-                Sua análise é baseada em diretrizes médicas atualizadas (2024) e evidências científicas.
-                
-                ⚠️ ALERTA LEGAL OBRIGATÓRIO (MINISTÉRIO DA SAÚDE):
-                🚫 É CRIME mencionar: vitamina D, B12, C, zinco, magnésio, ferro, cálcio, ômega 3, QUALQUER nutriente específico
-                ✅ APENAS use estas frases LITERAIS:
-                - "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde"
-                - "Pratique atividade física regular conforme orientações do Ministério da Saúde"
-                - "Consulte um médico para orientações específicas"
-                🚫 TOTALMENTE PROIBIDO: suplementos, vitaminas, minerais, exposição solar específica
-                📋 SIGA APENAS diretrizes do SUS
-                
-                Analise este exame ${fileType.toUpperCase()} e forneça um relatório detalhado e baseado em evidências,
-                incluindo achados clínicos relevantes, interpretação precisa dos valores, 
-                correlações entre parâmetros, diretrizes clínicas aplicáveis.
-                
-                Analise a imagem ou PDF do exame cuidadosamente e extraia todas as informações relevantes.
-                Estabeleça parâmetros de saúde baseados em evidências científicas recentes.
-                Inclua citações de estudos ou diretrizes quando pertinente.
-                
-                Formate sua resposta como um JSON com a seguinte estrutura:
+  const prompt = `Você é um médico especialista em interpretação clínica de exames laboratoriais, laudos de imagem, endoscopia, cardiologia funcional, anatomopatologia, biópsias, ecocardiografia, manometria e demais documentos diagnósticos.
+                Sua tarefa é analisar este documento ${fileType.toUpperCase()} e extrair um resumo clínico estruturado, fiel ao conteúdo do exame, sem inventar dados.
+
+                O documento pode ser qualquer tipo de exame: sangue, urina, fezes, tomografia, ressonância, radiografia, ultrassonografia, endoscopia, colonoscopia, ecocardiograma, mapa/holter, espirometria, manometria, anatomopatológico, biópsia, citologia, medicina nuclear ou outro laudo médico.
+
+                ⚠️ ALERTA LEGAL OBRIGATÓRIO:
+                - Não prescreva medicamentos, vitaminas ou suplementos.
+                - As recomendações devem ser gerais e prudentes.
+                - Use orientações do tipo: "Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde", "Pratique atividade física regular conforme orientações do Ministério da Saúde" e "Consulte um médico para orientações específicas", quando fizer sentido.
+
+                Responda APENAS em JSON válido com esta estrutura:
                 {
-                  "summary": "resumo geral dos resultados, em uma frase",
-                  "detailedAnalysis": "análise detalhada e fundamentada dos resultados encontrados",
-                  "recommendations": ["APENAS orientações conforme Ministério da Saúde: alimentação equilibrada, atividade física 150min/semana, consulte médico para orientações específicas"],
+                  "summary": "resumo clínico objetivo do exame em 1-2 frases",
+                  "detailedAnalysis": "interpretação clínica em linguagem natural, com foco no que o exame mostra",
+                  "recommendations": ["orientação 1", "orientação 2"],
                   "healthMetrics": [
                     {
-                      "name": "nome do parâmetro, ex: hemoglobina",
-                      "value": "valor numérico, ex: 14.2",
-                      "unit": "unidade, ex: g/dL",
-                      "status": "normal, atenção, alto ou baixo",
-                      "change": "+0.1 ou -0.2 comparado com o valor anterior",
-                      "referenceRange": "intervalo de referência considerado normal",
-                      "evidenceLevel": "nível de evidência científica (forte, moderada, preliminar)",
-                      "clinicalSignificance": "significado clínico deste parâmetro"
+                      "name": "nome do parâmetro",
+                      "value": "resultado",
+                      "unit": "unidade ou vazio",
+                      "status": "normal|alto|baixo|atencao",
+                      "change": "",
+                      "referenceRange": "faixa de referência ou null",
+                      "referenceMin": "limite mínimo ou null",
+                      "referenceMax": "limite máximo ou null",
+                      "category": "categoria clínica",
+                      "evidenceLevel": "forte|moderada|preliminar ou null",
+                      "clinicalSignificance": "significado clínico"
                     }
                   ],
-                  "healthStatus": {
-                    "overallScore": "pontuação global de saúde (0-100)",
-                    "criticalParameters": ["parâmetros que exigem atenção imediata"],
-                    "stableParameters": ["parâmetros que estão em níveis aceitáveis"],
-                    "clinicalGuidelines": ["diretrizes clínicas relevantes para os resultados"],
-                    "differentialAnalysis": "análise diferencial considerando os resultados",
-                    "confidenceLevel": "nível de confiança na análise (alto, médio, baixo)"
-                  },
+                  "clinicalFindings": [
+                    {
+                      "title": "achado principal",
+                      "category": "imagem|endoscopia|biopsia|cardiologia|outro",
+                      "bodySite": "órgão, região ou material",
+                      "value": "medida objetiva quando existir",
+                      "unit": "unidade ou null",
+                      "qualitativeResult": "descrição qualitativa do achado",
+                      "status": "normal|alto|baixo|atencao",
+                      "referenceRange": "referência se existir",
+                      "interpretation": "interpretação objetiva do achado",
+                      "significance": "relevância clínica",
+                      "notes": "detalhes úteis"
+                    }
+                  ],
+                  "diagnosticImpression": [
+                    {
+                      "description": "conclusão, impressão diagnóstica ou síntese do laudo",
+                      "severity": "leve|moderada|grave ou null",
+                      "chronicity": "agudo|cronico|indeterminado ou null",
+                      "laterality": "direita|esquerda|bilateral ou null",
+                      "status": "ativo|resolvido|suspeito ou null",
+                      "notes": "detalhes adicionais"
+                    }
+                  ],
+                  "suggestedDiagnoses": [
+                    {
+                      "condition": "condição sugerida pelo exame",
+                      "cidCode": "CID-10 mais provável ou null",
+                      "confidence": "high|medium|low",
+                      "basis": "trecho resumido do exame que sustenta o diagnóstico",
+                      "status": "ativo|em_tratamento|resolvido|cronico",
+                      "notes": "observações clínicas"
+                    }
+                  ],
                   "examMetadata": {
-                    "documentTitle": "título amigável do exame (ex: Controle de glicemia - Março/2025)",
-                    "examType": "categoria curta (ex: Controle de glicemia, Pré-operatório, Check-up cardiovascular)",
-                    "examCategory": "especialidade (ex: Endocrinologia, Cardiologia, Pré-operatório)",
-                    "examPurpose": "motivo do exame (ex: acompanhamento, pré-operatório, check-up)",
-                    "requestingPhysician": "nome do médico solicitante sem prefixos Dr./Dra.",
-                    "laboratoryName": "nome do laboratório ou hospital",
-                    "examDate": "data no formato YYYY-MM-DD",
-                    "patientName": "nome identificado no documento, se houver"
+                    "documentTitle": "título clínico amigável",
+                    "examType": "tipo curto do exame",
+                    "examCategory": "especialidade ou grupo clínico",
+                    "examPurpose": "motivo provável do exame",
+                    "examModality": "modalidade do exame",
+                    "bodyRegion": "região anatômica ou sistema avaliado",
+                    "technique": "técnica descrita no documento",
+                    "contrastUsed": "tipo de contraste ou null",
+                    "specimenType": "material analisado, quando houver",
+                    "requestingPhysician": "nome do médico solicitante sem Dr./Dra. ou null",
+                    "performingPhysician": "nome do médico executante/assinante sem Dr./Dra. ou null",
+                    "laboratoryName": "laboratório ou serviço responsável",
+                    "institutionName": "hospital, clínica ou instituto",
+                    "patientName": "nome do paciente se constar no documento",
+                    "collectionDate": "YYYY-MM-DD ou null",
+                    "reportDate": "YYYY-MM-DD ou null",
+                    "examDate": "YYYY-MM-DD ou null"
                   }
                 }
-                
-                Regras adicionais:
-                - Se o documento não citar médico solicitante, defina "requestingPhysician" como null.
-                - Remova prefixos como Dr./Dra. ao preencher "requestingPhysician".
-                - Sempre crie um "documentTitle" descritivo mesmo quando o arquivo possuir um nome genérico (ex: transformar "scan123.pdf" em "Controle de glicemia - Abril/2025").
-                - "examType" deve ser curto e contextual (ex: "Pré-operatório", "Painel lipídico", "Controle de glicemia").`;
+
+                Regras obrigatórias:
+                - Não invente campos ausentes. Use null, string vazia ou array vazio conforme a estrutura.
+                - Use "healthMetrics" apenas para parâmetros objetivos, valores medidos ou resultados qualitativos pontuais.
+                - Use "clinicalFindings" para achados descritivos de imagem, endoscopia, biópsia, anatomopatologia, ecografia, laudos funcionais e outros achados qualitativos.
+                - Use "diagnosticImpression" para conclusões e sínteses do laudo.
+                - Preencha "suggestedDiagnoses" apenas quando o exame sustentar essa inferência de forma razoável; associe CID-10 quando possível.
+                - Remova prefixos Dr./Dra. dos nomes dos médicos.
+                - Datas devem estar em YYYY-MM-DD.
+                - "documentTitle" e "examType" devem ser clínicos e específicos ao conteúdo do exame, nunca genéricos como "scan" ou "arquivo".`;
 
   logger.info("[OpenAI] analyzeDocumentWithOpenAI start", {
     fileType,
@@ -1698,17 +2055,20 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       });
       throw parseError;
     }
-    if (!analysisData.healthMetrics || !Array.isArray(analysisData.healthMetrics) || analysisData.healthMetrics.length === 0) {
-      throw new Error("Invalid health metrics in GPT-5 response");
+    const normalizedAnalysis = normalizeAnalysisPayload(analysisData, "openai:gpt5");
+    if (!hasMeaningfulExamAnalysis(normalizedAnalysis)) {
+      throw new Error("GPT-5 response did not include meaningful exam data");
     }
 
     logger.info("[OpenAI] análise concluída (responses API)", {
       fileType,
-      healthMetricsCount: analysisData.healthMetrics.length,
-      hasSummary: Boolean(analysisData.summary)
+      healthMetricsCount: normalizedAnalysis.healthMetrics.length,
+      findingsCount: normalizedAnalysis.clinicalFindings.length,
+      diagnosesCount: normalizedAnalysis.suggestedDiagnoses.length,
+      hasSummary: Boolean(normalizedAnalysis.summary)
     });
 
-    return normalizeAnalysisPayload(analysisData, "openai:gpt5");
+    return normalizedAnalysis;
   } catch (primaryError) {
     logger.warn("[OpenAI] falha na Responses API, tentando fallback", {
       fileType,
@@ -1763,8 +2123,9 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
       });
       throw primaryError instanceof Error ? primaryError : new Error("Falha ao analisar documento");
     }
-    if (!fallbackData.healthMetrics || !Array.isArray(fallbackData.healthMetrics) || fallbackData.healthMetrics.length === 0) {
-      logger.error("[OpenAI] Fallback retornou métricas inválidas", {
+    const normalizedFallback = normalizeAnalysisPayload(fallbackData, "openai:gpt5:fallback");
+    if (!hasMeaningfulExamAnalysis(normalizedFallback)) {
+      logger.error("[OpenAI] Fallback retornou conteúdo sem dados clínicos estruturados", {
         fileType,
         originalError: primaryError instanceof Error ? primaryError.message : primaryError
       });
@@ -1772,11 +2133,13 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
     }
     logger.info("[OpenAI] análise concluída (fallback chat completions)", {
       fileType,
-      healthMetricsCount: fallbackData.healthMetrics.length,
-      hasSummary: Boolean(fallbackData.summary)
+      healthMetricsCount: normalizedFallback.healthMetrics.length,
+      findingsCount: normalizedFallback.clinicalFindings.length,
+      diagnosesCount: normalizedFallback.suggestedDiagnoses.length,
+      hasSummary: Boolean(normalizedFallback.summary)
     });
 
-    return normalizeAnalysisPayload(fallbackData, "openai:gpt5:fallback");
+    return normalizedFallback;
   } finally {
     if (uploadedFileId) {
       try {

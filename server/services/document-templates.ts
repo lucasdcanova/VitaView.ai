@@ -486,6 +486,96 @@ export function generatePrescriptionHTML({ doctorName, doctorCrm, doctorSpecialt
 
 // Função para gerar HTML do relatório de saúde
 export function generateExamReportHTML({ user, exam, metrics }: any) {
+    const escapeHtml = (value: unknown) => {
+        const text = value === null || value === undefined ? '' : String(value);
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    const parseStructuredExamAnalysis = (value: unknown) => {
+        if (!value) return null;
+        if (typeof value === 'object') return value as any;
+
+        const raw = String(value).trim().replace(/^```[\w-]*\s*/i, '').replace(/```$/i, '').trim();
+        const firstBrace = raw.indexOf('{');
+        if (firstBrace === -1) return null;
+
+        let depth = 0;
+        let inString = false;
+        let previous = '';
+
+        for (let index = firstBrace; index < raw.length; index += 1) {
+            const character = raw[index];
+
+            if (character === '"' && previous !== '\\') {
+                inString = !inString;
+            }
+
+            if (!inString) {
+                if (character === '{') depth += 1;
+                if (character === '}') {
+                    depth -= 1;
+                    if (depth === 0) {
+                        try {
+                            return JSON.parse(raw.slice(firstBrace, index + 1));
+                        } catch {
+                            return null;
+                        }
+                    }
+                }
+            }
+
+            previous = character;
+        }
+
+        return null;
+    };
+
+    const splitRecommendations = (value: unknown) => {
+        if (Array.isArray(value)) {
+            return value.map((item) => String(item).trim()).filter(Boolean);
+        }
+
+        const text = value === null || value === undefined ? '' : String(value).trim();
+        if (!text) return [];
+
+        return text
+            .split(/\n|[•*-]\s+/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+    };
+
+    const buildFindingDescription = (finding: any) => {
+        const parts = [finding?.title].filter(Boolean);
+        if (finding?.bodySite) parts.push(`em ${finding.bodySite}`);
+        if (finding?.value) parts.push(`(${finding.value}${finding?.unit ? ` ${finding.unit}` : ''})`);
+        else if (finding?.qualitativeResult) parts.push(`(${finding.qualitativeResult})`);
+        if (finding?.interpretation) parts.push(`- ${finding.interpretation}`);
+        if (finding?.significance) parts.push(`- ${finding.significance}`);
+        return parts.join(' ');
+    };
+
+    const buildImpressionDescription = (item: any) => {
+        const extras = [item?.severity, item?.chronicity, item?.laterality, item?.status].filter(Boolean);
+        return extras.length > 0 ? `${item?.description} (${extras.join(' | ')})` : item?.description;
+    };
+
+    const buildDiagnosisDescription = (diagnosis: any) => {
+        const extras = [
+            diagnosis?.cidCode ? `CID ${diagnosis.cidCode}` : '',
+            diagnosis?.confidence ? `confiança ${diagnosis.confidence}` : '',
+            diagnosis?.basis || ''
+        ].filter(Boolean);
+
+        return extras.length > 0
+            ? `${diagnosis?.condition || 'Condição sugerida'} (${extras.join(' | ')})`
+            : (diagnosis?.condition || 'Condição sugerida');
+    };
+
     const formatDate = (dateString: string) => {
         return dateString ? new Date(dateString).toLocaleDateString('pt-BR') : 'Não informado';
     };
@@ -498,6 +588,16 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
             default: return '#6b7280';
         }
     };
+
+    const structured = parseStructuredExamAnalysis(exam.detailed_analysis);
+    const metadata = structured?.examMetadata || {};
+    const narrativeAnalysis = structured?.detailedAnalysis || (structured ? '' : exam.detailed_analysis);
+    const recommendations = structured?.recommendations?.length > 0
+        ? structured.recommendations
+        : splitRecommendations(exam.recommendations);
+    const findings = Array.isArray(structured?.clinicalFindings) ? structured.clinicalFindings : [];
+    const impressions = Array.isArray(structured?.diagnosticImpression) ? structured.diagnosticImpression : [];
+    const diagnoses = Array.isArray(structured?.suggestedDiagnoses) ? structured.suggestedDiagnoses : [];
 
     return `
     <!DOCTYPE html>
@@ -528,6 +628,8 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
         .metric-value { font-size: 13px; font-weight: 700; margin: 2px 0; }
         .metric-unit { font-size: 10px; color: #6b7280; }
         .metric-status { display: inline-block; padding: 2px 6px; border-radius: 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; color: white; margin-top: 4px; }
+        .structured-list { margin: 0; padding-left: 18px; }
+        .structured-list li { margin-bottom: 8px; }
         .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 10px; color: #6b7280; }
         .disclaimer { background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin: 16px 0; font-size: 11px; }
       </style>
@@ -551,29 +653,52 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
             <div class="info-item">
               <span class="info-label">Data do Exame:</span> <span class="info-value">${formatDate(exam.exam_date)}</span>
             </div>
+            ${metadata.examType ? `
+            <div class="info-item">
+              <span class="info-label">Categoria clínica:</span> <span class="info-value">${escapeHtml(metadata.examType)}</span>
+            </div>
+            ` : ''}
+            ${metadata.examModality ? `
+            <div class="info-item">
+              <span class="info-label">Modalidade:</span> <span class="info-value">${escapeHtml(metadata.examModality)}</span>
+            </div>
+            ` : ''}
           </div>
           <div>
             <div class="info-item">
-              <span class="info-label">Laboratório:</span> <span class="info-value">${exam.laboratory_name || 'Não informado'}</span>
+              <span class="info-label">Laboratório/Instituição:</span> <span class="info-value">${escapeHtml(exam.laboratory_name || metadata.institutionName || metadata.laboratoryName || 'Não informado')}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Médico Solicitante:</span> <span class="info-value">${exam.requesting_physician || 'Não informado'}</span>
+              <span class="info-label">Médico Solicitante:</span> <span class="info-value">${escapeHtml(exam.requesting_physician || metadata.requestingPhysician || 'Não informado')}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Data da Análise:</span> <span class="info-value">${formatDate(exam.analysis_date)}</span>
             </div>
+            ${metadata.bodyRegion ? `
+            <div class="info-item">
+              <span class="info-label">Região/material:</span> <span class="info-value">${escapeHtml(metadata.bodyRegion)}</span>
+            </div>
+            ` : ''}
           </div>
         </div>
         <div style="margin-top: 12px;">
           <span class="info-label">Relatório gerado em:</span> <span class="info-value">${formatDate(new Date().toISOString())}</span>
         </div>
+        ${(metadata.collectionDate || metadata.reportDate || metadata.technique || metadata.specimenType) ? `
+        <div style="margin-top: 12px;">
+          ${metadata.collectionDate ? `<div class="info-item"><span class="info-label">Coleta:</span> <span class="info-value">${formatDate(metadata.collectionDate)}</span></div>` : ''}
+          ${metadata.reportDate ? `<div class="info-item"><span class="info-label">Laudo:</span> <span class="info-value">${formatDate(metadata.reportDate)}</span></div>` : ''}
+          ${metadata.technique ? `<div class="info-item"><span class="info-label">Técnica:</span> <span class="info-value">${escapeHtml(metadata.technique)}</span></div>` : ''}
+          ${metadata.specimenType ? `<div class="info-item"><span class="info-label">Material:</span> <span class="info-value">${escapeHtml(metadata.specimenType)}</span></div>` : ''}
+        </div>
+        ` : ''}
       </div>
 
       ${exam.summary ? `
       <div class="section">
         <div class="section-title">📋 Resumo Executivo</div>
         <div class="summary-box">
-          ${exam.summary}
+          ${escapeHtml(exam.summary)}
         </div>
       </div>
       ` : ''}
@@ -584,29 +709,64 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
         <div class="metrics-grid">
           ${metrics.map((metric: any) => `
             <div class="metric-item">
-              <div class="metric-name">${metric.name}</div>
-              <div class="metric-value" style="color: ${getStatusColor(metric.status)}">${metric.value} ${metric.unit || ''}</div>
-              <div class="metric-status" style="background-color: ${getStatusColor(metric.status)}">${metric.status || 'N/A'}</div>
+              <div class="metric-name">${escapeHtml(metric.name)}</div>
+              <div class="metric-value" style="color: ${getStatusColor(metric.status)}">${escapeHtml(metric.value)} ${escapeHtml(metric.unit || '')}</div>
+              <div class="metric-status" style="background-color: ${getStatusColor(metric.status)}">${escapeHtml(metric.status || 'N/A')}</div>
             </div>
           `).join('')}
         </div>
       </div>
       ` : ''}
 
-      ${exam.detailed_analysis ? `
+      ${findings.length > 0 ? `
       <div class="section">
-        <div class="section-title">🔬 Análise Detalhada</div>
+        <div class="section-title">🧾 Achados Estruturados</div>
         <div class="analysis-box">
-          ${exam.detailed_analysis}
+          <ul class="structured-list">
+            ${findings.map((finding: any) => `<li>${escapeHtml(buildFindingDescription(finding))}</li>`).join('')}
+          </ul>
         </div>
       </div>
       ` : ''}
 
-      ${exam.recommendations ? `
+      ${impressions.length > 0 ? `
+      <div class="section">
+        <div class="section-title">🔎 Impressão Diagnóstica</div>
+        <div class="analysis-box">
+          <ul class="structured-list">
+            ${impressions.map((item: any) => `<li>${escapeHtml(buildImpressionDescription(item))}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      ` : ''}
+
+      ${diagnoses.length > 0 ? `
+      <div class="section">
+        <div class="section-title">🩺 Diagnósticos Sugeridos</div>
+        <div class="analysis-box">
+          <ul class="structured-list">
+            ${diagnoses.map((diagnosis: any) => `<li>${escapeHtml(buildDiagnosisDescription(diagnosis))}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      ` : ''}
+
+      ${narrativeAnalysis ? `
+      <div class="section">
+        <div class="section-title">🔬 Análise Detalhada</div>
+        <div class="analysis-box">
+          ${escapeHtml(narrativeAnalysis).replace(/\n/g, '<br>')}
+        </div>
+      </div>
+      ` : ''}
+
+      ${recommendations.length > 0 ? `
       <div class="section">
         <div class="section-title">💡 Recomendações</div>
         <div class="recommendations-box">
-          ${exam.recommendations}
+          <ul class="structured-list">
+            ${recommendations.map((item: string) => `<li>${escapeHtml(item)}</li>`).join('')}
+          </ul>
         </div>
       </div>
       ` : ''}

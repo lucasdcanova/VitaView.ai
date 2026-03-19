@@ -56,6 +56,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
         <input {...getInputProps()} />
         <div className="mt-4 space-y-1">
           <p className="text-xs text-gray-500">PDF, JPEG, PNG (máx. 50MB)</p>
+          <p className="text-xs text-gray-500">Compatível com exames laboratoriais, laudos de imagem, endoscopia, anatomopatológico, ecocardiograma e outros documentos clínicos.</p>
           <div className="flex items-center justify-center gap-2 text-[10px] text-amber-600 bg-amber-50 py-1 px-2 rounded-full inline-block">
             <AlertCircle className="w-3 h-3" />
             <span>Processamento por IA: Auxílio à organização, não substitui avaliação médica.</span>

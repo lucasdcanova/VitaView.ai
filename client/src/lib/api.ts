@@ -28,7 +28,7 @@ export const uploadExam = async (examData: FormData) => {
   return res.json();
 };
 
-export const getExamDetails = async (examId: number): Promise<{ exam: Exam, result: ExamResult }> => {
+export const getExamDetails = async (examId: number): Promise<{ exam: Exam, result?: ExamResult | null }> => {
   const res = await fetch(`/api/exams/${examId}`, {
     credentials: "include"
   });

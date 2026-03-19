@@ -20,12 +20,9 @@ import { Card,
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Plus,
+  Plus,
   FileText,
-  Clock,
   Mic,
-  Upload,
-  FileUp,
   Sparkles,
   Users,
   User,
@@ -40,8 +37,6 @@ import {
   TrendingDown,
   Minus,
   AlertTriangle,
-  ClipboardList,
-  ShieldCheck,
   MoreVertical,
   HeartCrack,
 } from "lucide-react";
@@ -72,6 +67,7 @@ import { AllergiesCard } from "@/components/dashboard/allergies-card";
 import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/components/dialogs/diagnosis-dialog";
 import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
 import { RegisterDeathDialog } from "@/components/dialogs/register-death-dialog";
+import { ExamUploadLauncher } from "@/components/exams/exam-upload-launcher";
 
 // Lazy load heavy tab components for better initial page load
 const HealthTrendsNew = lazy(() => import("./health-trends-new"));
@@ -80,7 +76,6 @@ const VitaCertificates = lazy(() => import("./vita-atestados"));
 const VitaSolicitacaoExames = lazy(() => import("./vita-solicitacao-exames"));
 const ExamTimeline = lazy(() => import("./exam-timeline"));
 
-import FileUpload from "@/components/ui/file-upload";
 import { useUploadManager } from "@/hooks/use-upload-manager";
 import { BrandLoader } from "@/components/ui/brand-loader";
 
@@ -110,7 +105,6 @@ const calculateAge = (birthDate: string | null | undefined): number | null => {
 
 export default function PatientView() {
     const [activeTab, setActiveTab] = useState("dashboard");
-    const [showUpload, setShowUpload] = useState(false);
     const [, setLocation] = useLocation();
     const { activeProfile, inServiceAppointmentId, setActiveProfile } = useProfiles();
     const { uploads } = useUploadManager();
@@ -180,15 +174,6 @@ export default function PatientView() {
 
     const onAddSurgery = (data: SurgeryFormData) => {
         createSurgeryMutation.mutate(data);
-    };
-
-    const handleUploadComplete = (result: any) => {
-        // If we have a result with an exam ID, navigate to the report page
-        if (result && result.exam && result.exam.id) {
-            setTimeout(() => {
-                setLocation(`/report/${result.exam.id}`);
-            }, 1000);
-        }
     };
 
     // Fetch all patient data in a single consolidated query for performance
@@ -619,36 +604,12 @@ export default function PatientView() {
                                         {(() => {
                                             const uploadAndExamsCards = (
                                                 <>
-                                                    {/* Upload Area */}
-                                                    <Card className="h-fit">
-                                                        <CardHeader className="pb-3">
-                                                            <CardTitle className="text-base flex items-center gap-2">
-                                                                <Upload className="h-5 w-5 text-primary-600" />
-                                                                Enviar Resultados
-                                                            </CardTitle>
-                                                            <CardDescription>
-                                                                Envie os resultados de exames já realizados
-                                                            </CardDescription>
-                                                        </CardHeader>
-                                                        <CardContent className="space-y-4">
-                                                            <FileUpload onUploadComplete={handleUploadComplete} />
-                                                            <p className="text-xs text-gray-500 text-center">
-                                                                PDF, JPG, PNG • Máx 10MB
-                                                            </p>
-
-                                                            {/* Tips integrado */}
-                                                            <div className="bg-muted/50 rounded-lg p-4 space-y-3 border border-border">
-                                                                <div className="flex items-start gap-2">
-                                                                    <ShieldCheck className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                    <p className="text-xs text-muted-foreground">Seus exames são tratados com segurança e confidencialidade.</p>
-                                                                </div>
-                                                                <div className="flex items-start gap-2">
-                                                                    <ClipboardList className="text-yellow-500 flex-shrink-0 mt-0.5" size={16} />
-                                                                    <p className="text-xs text-muted-foreground">Envie imagens com boa resolução para melhor análise.</p>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
+                                                    <ExamUploadLauncher
+                                                        exams={exams}
+                                                        title="Enviar resultados"
+                                                        description="Abra a central de exames para enviar laudos laboratoriais, imagem, biópsias, endoscopias e demais documentos clínicos deste paciente."
+                                                        buttonLabel="Abrir central"
+                                                    />
 
                                                     {/* Exams List */}
                                                     <Card className="h-fit">

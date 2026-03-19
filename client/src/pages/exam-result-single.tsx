@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
 import { Link, useRoute, useLocation } from "wouter";
 
 import Sidebar from "@/components/layout/sidebar";
@@ -35,10 +34,16 @@ import {
 } from "@/components/ui/dialog";
 import { getExamDetails, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import {
+  buildDiagnosisDescription,
+  buildFindingDescription,
+  buildImpressionDescription,
+  formatStructuredDate,
+  parseStructuredExamAnalysis,
+  splitRecommendations,
+} from "@/lib/exam-analysis";
 
 export default function ExamResultSingle() {
-  const { user } = useAuth();
-
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -49,7 +54,7 @@ export default function ExamResultSingle() {
   const examId = match && params ? parseInt(params.id) : null;
 
   // Se temos um ID de exame, buscamos os detalhes do exame específico
-  const { data: examData, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
+  const { data: examData, isLoading } = useQuery<{ exam: Exam, result?: ExamResult | null }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId!),
     enabled: !!examId,
@@ -109,12 +114,26 @@ export default function ExamResultSingle() {
       case 'low':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'atenção':
+      case 'atencao':
       case 'attention':
         return 'bg-amber-100 text-amber-800 border-amber-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  const structuredAnalysis = parseStructuredExamAnalysis(examData?.result?.detailedAnalysis);
+  const structuredMetadata = structuredAnalysis?.examMetadata || {};
+  const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
+  const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
+  const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
+  const recommendations = splitRecommendations(
+    examData?.result?.recommendations || structuredAnalysis?.recommendations || []
+  );
+  const narrativeAnalysis =
+    structuredAnalysis?.detailedAnalysis ||
+    (typeof examData?.result?.detailedAnalysis === "string" ? examData.result.detailedAnalysis : "");
+  const healthMetrics = (examData?.result?.healthMetrics as any[]) || [];
 
   if (!examId) {
     setLocation("/results");
@@ -215,12 +234,54 @@ export default function ExamResultSingle() {
 
                           <dt className="font-medium text-gray-500">Tipo:</dt>
                           <dd className="capitalize">{examData.exam.fileType}</dd>
+
+                          {structuredMetadata.examType && (
+                            <>
+                              <dt className="font-medium text-gray-500">Categoria clínica:</dt>
+                              <dd>{structuredMetadata.examType}</dd>
+                            </>
+                          )}
+
+                          {structuredMetadata.examModality && (
+                            <>
+                              <dt className="font-medium text-gray-500">Modalidade:</dt>
+                              <dd>{structuredMetadata.examModality}</dd>
+                            </>
+                          )}
+
+                          {structuredMetadata.bodyRegion && (
+                            <>
+                              <dt className="font-medium text-gray-500">Região/material:</dt>
+                              <dd>{structuredMetadata.bodyRegion}</dd>
+                            </>
+                          )}
+
+                          {structuredMetadata.technique && (
+                            <>
+                              <dt className="font-medium text-gray-500">Técnica:</dt>
+                              <dd>{structuredMetadata.technique}</dd>
+                            </>
+                          )}
+
+                          {structuredMetadata.collectionDate && (
+                            <>
+                              <dt className="font-medium text-gray-500">Coleta:</dt>
+                              <dd>{formatStructuredDate(structuredMetadata.collectionDate)}</dd>
+                            </>
+                          )}
+
+                          {structuredMetadata.reportDate && (
+                            <>
+                              <dt className="font-medium text-gray-500">Laudo:</dt>
+                              <dd>{formatStructuredDate(structuredMetadata.reportDate)}</dd>
+                            </>
+                          )}
                         </dl>
                       </div>
 
                       <div>
                         <h3 className="text-lg font-medium mb-4">Resumo da Análise</h3>
-                        <p className="text-sm text-gray-700 mb-4">{examData.result.summary}</p>
+                        <p className="text-sm text-gray-700 mb-4">{examData.result?.summary || "A análise detalhada ainda está sendo preparada."}</p>
 
                         <h4 className="font-medium text-gray-700 mb-2">Recomendações</h4>
                         <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-sm">
@@ -231,8 +292,8 @@ export default function ExamResultSingle() {
                             <div>
                               <p className="font-medium mb-2 text-amber-800">Com base nos resultados, recomendamos:</p>
                               <ul className="space-y-1.5 list-disc pl-5 text-amber-800">
-                                {examData.result.recommendations ?
-                                  examData.result.recommendations.split('\n').filter(line => line.trim()).map((line, i) => (
+                                {recommendations.length > 0 ?
+                                  recommendations.map((line, i) => (
                                     <li key={i}>{line}</li>
                                   ))
                                   : <li>Nenhuma recomendação específica disponível.</li>
@@ -247,9 +308,9 @@ export default function ExamResultSingle() {
                 </Card>
 
                 <h2 className="text-xl font-bold mt-8 mb-4">Métricas de Saúde Encontradas</h2>
-                {examData.result.healthMetrics && (examData.result.healthMetrics as any[]).length > 0 ? (
+                {healthMetrics.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                    {(examData.result.healthMetrics as any[]).map((metric: any, index: number) => (
+                    {healthMetrics.map((metric: any, index: number) => (
                       <Card key={index} className="overflow-hidden group hover:shadow-md transition-shadow duration-300">
                         <CardHeader className={cn("pb-3", metric.status && metric.status.toLowerCase() === 'normal' ? 'border-l-4 border-green-400' : metric.status && (metric.status.toLowerCase().includes('alt') || metric.status.toLowerCase().includes('high')) ? 'border-l-4 border-red-400' : metric.status && (metric.status.toLowerCase().includes('baix') || metric.status.toLowerCase().includes('low')) ? 'border-l-4 border-blue-400' : '')}>
                           <div className="flex justify-between items-start">
@@ -339,6 +400,68 @@ export default function ExamResultSingle() {
                       <p className="text-gray-500">Não foram identificadas métricas de saúde específicas neste exame.</p>
                     </CardContent>
                   </Card>
+                )}
+
+                {(clinicalFindings.length > 0 || diagnosticImpression.length > 0 || suggestedDiagnoses.length > 0 || narrativeAnalysis) && (
+                  <>
+                    <h2 className="text-xl font-bold mt-8 mb-4">Achados Estruturados do Laudo</h2>
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Achados</CardTitle>
+                          <CardDescription>Informações clínicas extraídas do laudo</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                          {clinicalFindings.length > 0 ? clinicalFindings.map((finding, index) => (
+                            <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="font-medium text-slate-900">{finding.title}</p>
+                              <p className="mt-1 text-slate-600">{buildFindingDescription(finding)}</p>
+                            </div>
+                          )) : (
+                            <p className="text-slate-500">Este exame não trouxe achados descritivos adicionais.</p>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Impressão Diagnóstica</CardTitle>
+                          <CardDescription>Síntese clínica do laudo</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                          {diagnosticImpression.length > 0 ? diagnosticImpression.map((item, index) => (
+                            <div key={`${buildImpressionDescription(item)}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3">
+                              <p className="text-slate-700">{buildImpressionDescription(item)}</p>
+                            </div>
+                          )) : narrativeAnalysis ? (
+                            <p className="text-slate-700 leading-6">{narrativeAnalysis}</p>
+                          ) : (
+                            <p className="text-slate-500">Nenhuma conclusão estruturada foi identificada.</p>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Diagnósticos Sugeridos</CardTitle>
+                          <CardDescription>Hipóteses sustentadas pelo exame</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                          {suggestedDiagnoses.length > 0 ? suggestedDiagnoses.map((diagnosis, index) => (
+                            <div key={`${buildDiagnosisDescription(diagnosis)}-${index}`} className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+                              <p className="font-medium text-emerald-900">{diagnosis.condition || "Condição sugerida"}</p>
+                              <p className="mt-1 text-emerald-800">{buildDiagnosisDescription(diagnosis)}</p>
+                              {diagnosis.notes && (
+                                <p className="mt-2 text-emerald-700">{diagnosis.notes}</p>
+                              )}
+                            </div>
+                          )) : (
+                            <p className="text-slate-500">Não houve diagnóstico sugerido automaticamente para este exame.</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
                 )}
 
                 {/* Botão de Exclusão */}
