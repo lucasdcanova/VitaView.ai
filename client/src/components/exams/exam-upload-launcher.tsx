@@ -21,11 +21,11 @@ import FileUpload from "@/components/ui/file-upload";
 import {
   Activity,
   ArrowRight,
-  BrainCircuit,
   Clock3,
   FileText,
   FlaskConical,
   Microscope,
+  Plus,
   ScanLine,
   ShieldCheck,
   Upload,
@@ -108,41 +108,48 @@ export function ExamUploadLauncher({
     <>
       <Card
         className={cn(
-          "border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-100/80 shadow-sm",
+          "overflow-hidden border border-border/70 bg-gradient-to-br from-background via-background to-muted/35 shadow-sm transition-colors",
           compact ? "overflow-hidden" : "",
           className
         )}
       >
         <CardContent className={compact ? "p-4" : "p-5"}>
-          <div className={cn("flex gap-4", compact ? "flex-col" : "flex-col xl:flex-row xl:items-center xl:justify-between")}>
-            <div className="flex items-start gap-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                <BrainCircuit className="h-5 w-5 text-slate-700" />
+          <div className={cn("flex gap-4", compact ? "flex-col" : "items-center justify-between")}>
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="rounded-2xl border border-border/70 bg-muted/55 p-3 text-muted-foreground">
+                <Upload className="h-4 w-4" />
               </div>
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">{title}</p>
-                  <p className="text-sm text-slate-600">{description}</p>
+                  <p className="text-sm font-semibold tracking-tight text-foreground">{title}</p>
+                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {supportedExamTypes.map((item) => (
-                    <Badge key={item} variant="outline" className="bg-white text-slate-700">
-                      {item}
-                    </Badge>
-                  ))}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1">
+                    {activeUploads.length > 0 ? `${activeUploads.length} em processamento` : `${examList.length} no histórico`}
+                  </span>
+                  <span className="hidden text-muted-foreground/80 sm:inline">
+                    PDF, JPG e PNG
+                  </span>
+                  <span className="hidden text-muted-foreground/80 lg:inline">
+                    {supportedExamTypes.slice(0, 3).join(" • ")}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className={cn("flex gap-3", compact ? "flex-col" : "flex-col sm:flex-row sm:items-center")}>
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Clock3 className="h-4 w-4 text-slate-500" />
-                  <span>{activeUploads.length > 0 ? `${activeUploads.length} envio(s) em processamento` : `${examList.length} exame(s) no histórico`}</span>
-                </div>
+            <div className={cn("flex gap-3", compact ? "flex-col" : "items-center")}>
+              <div className="hidden rounded-full border border-border/70 bg-background/80 px-3 py-2 text-sm text-muted-foreground md:flex md:items-center md:gap-2">
+                <Clock3 className="h-4 w-4" />
+                <span>{activeUploads.length > 0 ? "Análise em andamento" : "Central pronta para envio"}</span>
               </div>
-              <Button type="button" onClick={() => setOpen(true)} className="gap-2">
-                <Upload className="h-4 w-4" />
+              <Button
+                type="button"
+                onClick={() => setOpen(true)}
+                variant="outline"
+                className="gap-2 border-border/80 bg-background/90 hover:bg-muted/60"
+              >
+                <Plus className="h-4 w-4" />
                 {buttonLabel}
               </Button>
             </div>
@@ -151,11 +158,11 @@ export function ExamUploadLauncher({
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-5xl">
+        <DialogContent className="max-h-[90vh] overflow-hidden border-border/80 bg-background p-0 sm:max-w-5xl">
           <div className="flex h-full flex-col">
-            <DialogHeader className="border-b border-slate-200 px-6 py-5 text-left">
-              <DialogTitle className="text-xl text-slate-900">Central de exames do atendimento</DialogTitle>
-              <DialogDescription className="text-sm text-slate-600">
+            <DialogHeader className="border-b border-border/70 bg-muted/25 px-6 py-5 text-left">
+              <DialogTitle className="text-xl text-foreground">Central de exames do atendimento</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
                 Envie laudos laboratoriais, tomografias, ressonâncias, ecografias, biópsias, endoscopias, ecocardiogramas, manometrias e outros exames para análise automática e vínculo imediato ao prontuário.
               </DialogDescription>
             </DialogHeader>
@@ -164,28 +171,28 @@ export function ExamUploadLauncher({
               <div className="min-h-0 overflow-y-auto px-6 py-5">
                 <div className="space-y-5">
                   <div className="grid gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <FlaskConical className="mb-3 h-5 w-5 text-emerald-600" />
-                      <p className="text-sm font-semibold text-slate-900">Laboratoriais</p>
-                      <p className="mt-1 text-xs text-slate-600">Hemograma, bioquímica, hormônios, marcadores inflamatórios e outros painéis.</p>
+                    <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+                      <FlaskConical className="mb-3 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      <p className="text-sm font-semibold text-foreground">Laboratoriais</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Hemograma, bioquímica, hormônios, marcadores inflamatórios e outros painéis.</p>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <ScanLine className="mb-3 h-5 w-5 text-blue-600" />
-                      <p className="text-sm font-semibold text-slate-900">Imagem e função</p>
-                      <p className="mt-1 text-xs text-slate-600">Tomografia, ressonância, ecografia, ecocardiograma, endoscopia, manometria e laudos correlatos.</p>
+                    <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+                      <ScanLine className="mb-3 h-5 w-5 text-sky-600 dark:text-sky-400" />
+                      <p className="text-sm font-semibold text-foreground">Imagem e função</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Tomografia, ressonância, ecografia, ecocardiograma, endoscopia, manometria e laudos correlatos.</p>
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <Microscope className="mb-3 h-5 w-5 text-violet-600" />
-                      <p className="text-sm font-semibold text-slate-900">Patologia</p>
-                      <p className="mt-1 text-xs text-slate-600">Biópsias, anatomopatológico, citologia e demais exames com descrição histológica.</p>
+                    <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+                      <Microscope className="mb-3 h-5 w-5 text-violet-600 dark:text-violet-400" />
+                      <p className="text-sm font-semibold text-foreground">Patologia</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Biópsias, anatomopatológico, citologia e demais exames com descrição histológica.</p>
                     </div>
                   </div>
 
                   <FileUpload />
 
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
+                  <div className="rounded-2xl border border-amber-300/60 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                     <div className="flex items-start gap-3">
-                      <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                      <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-300" />
                       <div className="space-y-1">
                         <p className="font-medium">Fluxo clínico do exame</p>
                         <p>
@@ -196,24 +203,23 @@ export function ExamUploadLauncher({
                   </div>
                 </div>
               </div>
-
-              <div className="min-h-0 overflow-y-auto border-t border-slate-200 bg-slate-50/80 px-6 py-5 lg:border-l lg:border-t-0">
+              <div className="min-h-0 overflow-y-auto border-t border-border/70 bg-muted/25 px-6 py-5 lg:border-l lg:border-t-0">
                 <div className="space-y-5">
-                  <Card className="border-slate-200 bg-white shadow-sm">
+                  <Card className="border-border/70 bg-card shadow-sm">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base text-slate-900">Fila de processamento</CardTitle>
+                      <CardTitle className="text-base text-foreground">Fila de processamento</CardTitle>
                       <CardDescription>
                         Acompanhe os exames que ainda estão sendo analisados.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {activeUploads.length === 0 ? (
-                        <p className="text-sm text-slate-500">Nenhum exame em processamento no momento.</p>
+                        <p className="text-sm text-muted-foreground">Nenhum exame em processamento no momento.</p>
                       ) : (
                         activeUploads.map((upload) => (
-                          <div key={upload.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <p className="text-sm font-medium text-slate-900">{upload.name}</p>
-                            <p className="mt-1 text-xs text-slate-600">
+                          <div key={upload.id} className="rounded-xl border border-border/70 bg-muted/35 p-3">
+                            <p className="text-sm font-medium text-foreground">{upload.name}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {upload.status === "queued" && "Na fila para análise"}
                               {upload.status === "uploading" && "Enviando arquivo"}
                               {upload.status === "processing" && "Extraindo e estruturando o laudo"}
@@ -224,16 +230,16 @@ export function ExamUploadLauncher({
                     </CardContent>
                   </Card>
 
-                  <Card className="border-slate-200 bg-white shadow-sm">
+                  <Card className="border-border/70 bg-card shadow-sm">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base text-slate-900">Exames recentes</CardTitle>
+                      <CardTitle className="text-base text-foreground">Exames recentes</CardTitle>
                       <CardDescription>
                         Histórico mais recente do paciente em atendimento.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {latestExams.length === 0 ? (
-                        <p className="text-sm text-slate-500">Nenhum exame vinculado a este paciente ainda.</p>
+                        <p className="text-sm text-muted-foreground">Nenhum exame vinculado a este paciente ainda.</p>
                       ) : (
                         latestExams.map((exam) => (
                           <button
@@ -243,20 +249,20 @@ export function ExamUploadLauncher({
                               setOpen(false);
                               setLocation(`/report/${exam.id}`);
                             }}
-                            className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:border-slate-300 hover:bg-white"
+                            className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-muted/35 p-3 text-left transition hover:border-border hover:bg-muted/55"
                           >
-                            <div className="rounded-xl bg-white p-2 shadow-sm">
-                              <FileText className="h-4 w-4 text-slate-700" />
+                            <div className="rounded-xl bg-background p-2 shadow-sm ring-1 ring-border/60">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-900">{exam.name || "Exame sem título"}</p>
-                              <p className="mt-1 text-xs text-slate-600">{formatExamDate(exam.examDate || exam.uploadDate)}</p>
+                              <p className="truncate text-sm font-medium text-foreground">{exam.name || "Exame sem título"}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{formatExamDate(exam.examDate || exam.uploadDate)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={exam.status === "analyzed" ? "default" : "secondary"}>
                                 {exam.status === "analyzed" ? "Analisado" : "Processando"}
                               </Badge>
-                              <ArrowRight className="h-4 w-4 text-slate-400" />
+                              <ArrowRight className="h-4 w-4 text-muted-foreground/70" />
                             </div>
                           </button>
                         ))
@@ -264,11 +270,11 @@ export function ExamUploadLauncher({
                     </CardContent>
                   </Card>
 
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <Activity className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-700" />
-                      <div className="space-y-1 text-sm text-slate-600">
-                        <p className="font-medium text-slate-900">O que vai para o histórico</p>
+                      <Activity className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p className="font-medium text-foreground">O que vai para o histórico</p>
                         <p>Data do exame, médico solicitante, tipo de exame, achados relevantes, impressão/conclusão e diagnósticos relacionados quando houver suporte no laudo.</p>
                       </div>
                     </div>

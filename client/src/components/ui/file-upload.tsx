@@ -43,21 +43,24 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   return (
     <div className="space-y-6">
       <div
-        className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors ${isDragActive ? 'bg-primary-50 border-primary-500' : 'bg-gray-50 hover:bg-gray-100'
+        className={`rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+          isDragActive
+            ? 'border-primary bg-primary/8'
+            : 'border-border bg-muted/25 hover:bg-muted/45'
           }`}
         {...getRootProps()}
       >
-        <Upload className={`mx-auto h-12 w-12 mb-3 ${isDragActive ? 'text-primary-500' : 'text-gray-400'}`} />
-        <h3 className="text-lg font-medium text-gray-700 mb-1">
+        <Upload className={`mx-auto mb-3 h-12 w-12 ${isDragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        <h3 className="mb-1 text-lg font-medium text-foreground">
           {isDragActive ? "Solte os arquivos aqui" : "Arraste seus arquivos aqui"}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">ou</p>
-        <Button variant="outline" type="button">Selecionar arquivos</Button>
+        <p className="mb-4 text-sm text-muted-foreground">ou</p>
+        <Button variant="outline" type="button" className="border-border bg-background hover:bg-muted/60">Selecionar arquivos</Button>
         <input {...getInputProps()} />
         <div className="mt-4 space-y-1">
-          <p className="text-xs text-gray-500">PDF, JPEG, PNG (máx. 50MB)</p>
-          <p className="text-xs text-gray-500">Compatível com exames laboratoriais, laudos de imagem, endoscopia, anatomopatológico, ecocardiograma e outros documentos clínicos.</p>
-          <div className="flex items-center justify-center gap-2 text-[10px] text-amber-600 bg-amber-50 py-1 px-2 rounded-full inline-block">
+          <p className="text-xs text-muted-foreground">PDF, JPEG, PNG (máx. 50MB)</p>
+          <p className="text-xs text-muted-foreground">Compatível com exames laboratoriais, laudos de imagem, endoscopia, anatomopatológico, ecocardiograma e outros documentos clínicos.</p>
+          <div className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/80 px-2 py-1 text-[10px] text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
             <AlertCircle className="w-3 h-3" />
             <span>Processamento por IA: Auxílio à organização, não substitui avaliação médica.</span>
           </div>
@@ -68,22 +71,22 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       {uploads.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-700">Status dos Envios</h4>
-            <span className="text-xs text-gray-500">{uploads.length} arquivos</span>
+            <h4 className="font-medium text-foreground">Status dos Envios</h4>
+            <span className="text-xs text-muted-foreground">{uploads.length} arquivos</span>
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {uploads.map((upload) => (
-              <div key={upload.id} className="bg-white p-3 rounded-lg border flex items-center justify-between shadow-sm">
+              <div key={upload.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm">
                 <div className="flex items-center space-x-3 overflow-hidden">
                   <div className="flex-shrink-0">
                     {upload.status === 'analyzed' ? <CheckCircle2 className="text-green-500 h-5 w-5" /> :
                       upload.status === 'failed' ? <AlertCircle className="text-red-500 h-5 w-5" /> :
-                        <BrainCircuit className="text-primary-500 animate-pulse h-5 w-5" />}
+                        <BrainCircuit className="text-primary animate-pulse h-5 w-5" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{upload.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="truncate text-sm font-medium text-foreground">{upload.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {upload.status === 'queued' && 'Na fila...'}
                       {upload.status === 'uploading' && 'Enviando...'}
                       {upload.status === 'processing' && 'Processando com IA...'}
@@ -96,7 +99,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-primary-600 hover:text-primary-700 hover:bg-primary-50"
+                    className="text-primary hover:bg-primary/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       window.location.href = `/report/${upload.examId}`;
