@@ -54,6 +54,7 @@ import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { apiRequest } from "@/lib/queryClient";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import PatientHeader from "@/components/patient-header";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -96,6 +97,7 @@ export default function VitaAssistPage() {
     const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
     const [showHistory, setShowHistory] = useState(false);
     const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -174,7 +176,13 @@ export default function VitaAssistPage() {
 
     // Scroll to bottom when messages change
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth",
+        });
     }, [currentConversation?.messages, optimisticMessages]);
 
     // Keep Vita Assist aligned with the globally selected patient.
@@ -338,71 +346,55 @@ export default function VitaAssistPage() {
     );
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background">
-            <header className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 py-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:py-5">
-                <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                        <div className="min-w-0 space-y-1">
-                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">
-                                Assistente clínico
-                            </p>
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
-                                    <Sparkles className="h-5 w-5 text-white" />
-                                </div>
-                                <div className="min-w-0">
-                                    <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground">
-                                        Vita Assist
-                                    </h1>
-                                    <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                                        IA para raciocinio clinico, conduta e interpretacao de contexto do atendimento.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 self-start md:self-auto">
-                            <Button
-                                variant={showHistory ? "secondary" : "outline"}
-                                size="sm"
-                                onClick={() => setShowHistory(!showHistory)}
-                                className="gap-2 rounded-xl border-border/80 bg-background/80 hover:bg-muted/60"
-                            >
-                                {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
-                                <span>{isMobile ? "Conversas" : "Historico"}</span>
-                            </Button>
-
-                            <Button
-                                onClick={startNewConversation}
-                                size="sm"
-                                className="gap-2 rounded-xl bg-[#1E3A5F] text-white shadow-sm hover:bg-[#2A4F7C]"
-                            >
-                                <Plus className="h-4 w-4" />
-                                <span>Nova conversa</span>
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                        <Select
-                            value={selectedProfileId?.toString() || "none"}
-                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
+        <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background">
+            <PatientHeader
+                title="Vita Assist"
+                description="IA para raciocínio clínico, conduta e interpretação de contexto do atendimento."
+                showTitleAsMain={true}
+                fullWidth={true}
+                compact={true}
+                icon={<Sparkles className="h-6 w-6" />}
+            >
+                <div className="flex w-full flex-col gap-3 md:w-auto md:min-w-[420px] md:items-end">
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                        <Button
+                            variant={showHistory ? "secondary" : "outline"}
+                            size="sm"
+                            onClick={() => setShowHistory(!showHistory)}
+                            className="h-10 gap-2 rounded-xl border-border/80 bg-background/80 justify-center hover:bg-muted/60 sm:w-auto"
                         >
-                            <SelectTrigger className="h-10 w-full rounded-xl border-border/70 bg-background sm:w-[260px]">
-                                <SelectValue placeholder="Selecionar paciente" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Sem contexto</SelectItem>
-                                {profiles.map((profile) => (
-                                    <SelectItem key={profile.id} value={profile.id.toString()}>
-                                        {profile.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
+                            <span>{isMobile ? "Conversas" : "Histórico"}</span>
+                        </Button>
+
+                        <Button
+                            onClick={startNewConversation}
+                            size="sm"
+                            className="h-10 gap-2 rounded-xl bg-[#1E3A5F] text-white shadow-sm hover:bg-[#2A4F7C]"
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span>Nova conversa</span>
+                        </Button>
                     </div>
+
+                    <Select
+                        value={selectedProfileId?.toString() || "none"}
+                        onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
+                    >
+                        <SelectTrigger className="h-10 w-full rounded-xl border-border/70 bg-background sm:max-w-[320px]">
+                            <SelectValue placeholder="Selecionar paciente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Sem contexto</SelectItem>
+                            {profiles.map((profile) => (
+                                <SelectItem key={profile.id} value={profile.id.toString()}>
+                                    {profile.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
-            </header>
+            </PatientHeader>
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
                 {!isMobile && showHistory && (
@@ -424,7 +416,10 @@ export default function VitaAssistPage() {
                 )}
 
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                    <ScrollArea className="flex-1">
+                    <div
+                        ref={messagesContainerRef}
+                        className="flex-1 overflow-y-auto overscroll-contain"
+                    >
                         {!selectedConversationId && displayedMessages.length === 0 ? (
                             <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-10 text-center">
                                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15">
@@ -533,7 +528,7 @@ export default function VitaAssistPage() {
                                 <div ref={messagesEndRef} />
                             </div>
                         )}
-                    </ScrollArea>
+                    </div>
 
                     <div className="flex-shrink-0 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:pb-4">
                         <div className="mx-auto max-w-5xl">
