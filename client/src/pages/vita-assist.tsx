@@ -9,17 +9,10 @@ import {
     useMutation,
     useQueryClient
 } from "@tanstack/react-query";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
     Select,
     SelectContent,
@@ -39,8 +32,14 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import {
     MessageSquare,
-    Send,
     Plus,
     Trash2,
     User,
@@ -48,6 +47,10 @@ import {
     Sparkles,
     UserCircle,
     History,
+    Command,
+    PanelLeft,
+    Stethoscope,
+    ArrowUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -55,6 +58,9 @@ import ReactMarkdown from "react-markdown";
 import { apiRequest } from "@/lib/queryClient";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface AIMessage {
     id: number;
@@ -74,18 +80,25 @@ interface AIConversation {
     messages?: AIMessage[];
 }
 
-interface Profile {
-    id: number;
-    name: string;
+interface OptimisticMessage {
+    id: string;
+    role: "user";
+    content: string;
+    createdAt: string;
+    conversationId: number | null;
+    pending: true;
 }
 
 export default function VitaAssistPage() {
     const queryClient = useQueryClient();
     const { profiles, activeProfile } = useProfiles();
+    const { toast } = useToast();
+    const isMobile = useIsMobile();
     const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
     const [inputMessage, setInputMessage] = useState("");
     const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
     const [showHistory, setShowHistory] = useState(false);
+    const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -95,7 +108,7 @@ export default function VitaAssistPage() {
     });
 
     // Fetch current conversation with messages
-    const { data: currentConversation, isLoading: loadingConversation } = useQuery<AIConversation>({
+    const { data: currentConversation, isLoading: loadingConversation } = useQuery<AIConversation | null>({
         queryKey: ["/api/vita-assist/conversations", selectedConversationId],
         queryFn: async () => {
             if (!selectedConversationId) return null;
@@ -110,21 +123,42 @@ export default function VitaAssistPage() {
 
     // Send message mutation
     const sendMessageMutation = useMutation({
-        mutationFn: async (message: string) => {
+        mutationFn: async ({
+            message,
+            conversationId,
+            profileId,
+        }: {
+            message: string;
+            conversationId: number | null;
+            profileId: number | null;
+            optimisticId: string;
+        }) => {
             const res = await apiRequest("POST", "/api/vita-assist/chat", {
                 message,
-                conversationId: selectedConversationId,
-                profileId: selectedProfileId,
+                conversationId,
+                profileId,
             });
             return res.json();
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
+            setOptimisticMessages((current) => current.filter((message) => message.id !== variables.optimisticId));
             if (!selectedConversationId && data.conversationId) {
                 setSelectedConversationId(data.conversationId);
             }
             queryClient.invalidateQueries({ queryKey: ["/api/vita-assist/conversations"] });
             queryClient.invalidateQueries({ queryKey: ["/api/vita-assist/conversations", selectedConversationId || data.conversationId] });
-            setInputMessage("");
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
+        },
+        onError: (_error, variables) => {
+            setOptimisticMessages((current) => current.filter((message) => message.id !== variables.optimisticId));
+            setInputMessage(variables.message);
+            toast({
+                title: "Falha ao enviar mensagem",
+                description: "Tente novamente em instantes.",
+                variant: "destructive",
+            });
         },
     });
 
@@ -144,17 +178,51 @@ export default function VitaAssistPage() {
     // Scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [currentConversation?.messages]);
+    }, [currentConversation?.messages, optimisticMessages]);
 
     // Keep Vita Assist aligned with the globally selected patient.
     useEffect(() => {
         setSelectedProfileId(activeProfile?.id ?? null);
     }, [activeProfile?.id]);
 
+    const resizeTextarea = useCallback(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        textarea.style.height = "0px";
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
+    }, []);
+
+    useEffect(() => {
+        resizeTextarea();
+    }, [inputMessage, resizeTextarea]);
+
     const handleSendMessage = useCallback(() => {
-        if (!inputMessage.trim() || sendMessageMutation.isPending) return;
-        sendMessageMutation.mutate(inputMessage);
-    }, [inputMessage, sendMessageMutation]);
+        const trimmedMessage = inputMessage.trim();
+        if (!trimmedMessage || sendMessageMutation.isPending) return;
+
+        const optimisticId = `optimistic-${Date.now()}`;
+        const nextConversationId = selectedConversationId;
+
+        setOptimisticMessages((current) => [
+            ...current,
+            {
+                id: optimisticId,
+                role: "user",
+                content: trimmedMessage,
+                createdAt: new Date().toISOString(),
+                conversationId: nextConversationId,
+                pending: true,
+            },
+        ]);
+        setInputMessage("");
+        sendMessageMutation.mutate({
+            message: trimmedMessage,
+            conversationId: nextConversationId,
+            profileId: selectedProfileId,
+            optimisticId,
+        });
+    }, [inputMessage, selectedConversationId, selectedProfileId, sendMessageMutation]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -167,6 +235,7 @@ export default function VitaAssistPage() {
         setSelectedConversationId(null);
         setInputMessage("");
         setSelectedProfileId(activeProfile?.id ?? null);
+        setOptimisticMessages([]);
         setShowHistory(false);
     };
 
@@ -177,147 +246,241 @@ export default function VitaAssistPage() {
         setShowHistory(false);
     };
 
-    return (
-        <div className="flex h-full flex-col overflow-hidden bg-background">
-            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/95 p-4 md:p-6 supports-[backdrop-filter]:backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1E3A5F]">
-                        <Sparkles className="h-5 w-5 text-white" />
+    const visibleOptimisticMessages = optimisticMessages.filter(
+        (message) => message.conversationId === selectedConversationId
+    );
+
+    const displayedMessages = [
+        ...(currentConversation?.messages ?? []),
+        ...visibleOptimisticMessages,
+    ];
+
+    const selectedProfileName =
+        profiles.find((profile) => profile.id === selectedProfileId)?.name ??
+        activeProfile?.name ??
+        "Sem contexto de paciente";
+
+    const HistoryList = (
+        <div className="flex h-full flex-col">
+            <div className="border-b border-border px-4 py-4">
+                <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted text-foreground">
+                        <History className="h-4 w-4" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Vita Assist</h1>
-                        <p className="text-xs text-muted-foreground">Consultor Médico de IA</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                            Conversas
+                        </p>
+                        <h3 className="font-heading text-base font-bold text-foreground">Histórico clínico</h3>
                     </div>
                 </div>
+            </div>
+            <ScrollArea className="flex-1">
+                <div className="space-y-2 p-3">
+                    {loadingConversations ? (
+                        <div className="flex items-center justify-center py-8">
+                            <BrandLoader className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : conversations.length === 0 ? (
+                        <p className="py-8 text-center text-sm text-muted-foreground">
+                            Nenhuma conversa ainda
+                        </p>
+                    ) : (
+                        conversations.map((conv) => (
+                            <div
+                                key={conv.id}
+                                className={cn(
+                                    "group flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-all duration-200",
+                                    selectedConversationId === conv.id
+                                        ? "border-primary/25 bg-primary/8 shadow-sm"
+                                        : "border-transparent bg-background hover:border-border hover:bg-muted/45"
+                                )}
+                                onClick={() => selectConversation(conv.id)}
+                            >
+                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                                    <MessageSquare className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-foreground">
+                                        {conv.title || "Nova conversa"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {format(new Date(conv.updatedAt), "dd MMM", { locale: ptBR })}
+                                    </p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Excluir conversa?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Esta ação não pode ser desfeita. Todas as mensagens serão perdidas.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => deleteConversationMutation.mutate(conv.id)}
+                                                className="bg-red-600 text-white hover:bg-red-700"
+                                            >
+                                                Excluir
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </ScrollArea>
+        </div>
+    );
 
-                <div className="flex items-center gap-3">
-                    <div className="hidden items-center gap-2 sm:flex">
-                        <UserCircle className="h-4 w-4 text-muted-foreground" />
-                        <Select
-                            value={selectedProfileId?.toString() || "none"}
-                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
-                        >
-                            <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Contexto do paciente" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Sem contexto</SelectItem>
-                                {profiles.map((profile) => (
-                                    <SelectItem key={profile.id} value={profile.id.toString()}>
-                                        {profile.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+    return (
+        <div className="flex h-full flex-col overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background">
+            <header className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 py-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:py-5">
+                <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                        <div className="min-w-0 space-y-2">
+                            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">
+                                Assistente clínico com contexto
+                            </p>
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
+                                    <Sparkles className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground">
+                                        Vita Assist
+                                    </h1>
+                                    <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                                        Converse com a IA, mantenha o contexto clínico ativo e navegue pelo histórico sem quebrar o fluxo do atendimento.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start md:self-auto">
+                            <Button
+                                variant={showHistory ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => setShowHistory(!showHistory)}
+                                className="gap-2 rounded-xl border-border/80 bg-background/80 hover:bg-muted/60"
+                            >
+                                {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
+                                <span>{isMobile ? "Conversas" : "Histórico"}</span>
+                            </Button>
+
+                            <Button
+                                onClick={startNewConversation}
+                                size="sm"
+                                className="gap-2 rounded-xl bg-[#1E3A5F] text-white shadow-sm hover:bg-[#2A4F7C]"
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span>Nova conversa</span>
+                            </Button>
+                        </div>
                     </div>
 
-                    <Button
-                        variant={showHistory ? "secondary" : "outline"}
-                        size="sm"
-                        onClick={() => setShowHistory(!showHistory)}
-                        className="gap-2"
-                    >
-                        <History className="h-4 w-4" />
-                        <span className="hidden sm:inline">Histórico</span>
-                    </Button>
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                        <div className="rounded-2xl border border-border/70 bg-background/80 p-3 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                                    <UserCircle className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                        Contexto do atendimento
+                                    </p>
+                                    <div className="mt-2">
+                                        <Select
+                                            value={selectedProfileId?.toString() || "none"}
+                                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
+                                        >
+                                            <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-background">
+                                                <SelectValue placeholder="Selecione o paciente do contexto" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Sem contexto</SelectItem>
+                                                {profiles.map((profile) => (
+                                                    <SelectItem key={profile.id} value={profile.id.toString()}>
+                                                        {profile.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <Button
-                        onClick={startNewConversation}
-                        size="sm"
-                        className="gap-2 bg-[#1E3A5F] text-white hover:bg-[#2A4F7C]"
-                    >
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">Nova Conversa</span>
-                    </Button>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[340px]">
+                            <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Stethoscope className="h-4 w-4" />
+                                    <span className="text-[11px] uppercase tracking-[0.16em]">Paciente ativo</span>
+                                </div>
+                                <p className="mt-2 truncate text-sm font-heading font-bold text-foreground">
+                                    {selectedProfileName}
+                                </p>
+                            </div>
+                            <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Command className="h-4 w-4" />
+                                    <span className="text-[11px] uppercase tracking-[0.16em]">Atalho</span>
+                                </div>
+                                <p className="mt-2 text-sm font-heading font-bold text-foreground">
+                                    Enter envia, Shift + Enter quebra linha
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
-                {showHistory && (
-                    <aside className="flex w-72 flex-col border-r border-border bg-card">
-                        <div className="border-b border-border p-3">
-                            <h3 className="text-sm font-semibold text-muted-foreground">Conversas Anteriores</h3>
-                        </div>
-                        <ScrollArea className="flex-1">
-                            <div className="space-y-1 p-2">
-                                {loadingConversations ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <BrandLoader className="h-6 w-6 animate-spin text-muted-foreground" />
-                                    </div>
-                                ) : conversations.length === 0 ? (
-                                    <p className="py-8 text-center text-sm text-muted-foreground">
-                                        Nenhuma conversa ainda
-                                    </p>
-                                ) : (
-                                    conversations.map((conv) => (
-                                        <div
-                                            key={conv.id}
-                                            className={`group flex cursor-pointer items-center gap-2 rounded-lg p-3 transition-colors ${
-                                                selectedConversationId === conv.id
-                                                    ? "border border-primary/20 bg-primary/10"
-                                                    : "hover:bg-muted"
-                                            }`}
-                                            onClick={() => selectConversation(conv.id)}
-                                        >
-                                            <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium text-foreground">
-                                                    {conv.title || "Nova conversa"}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {format(new Date(conv.updatedAt), "dd MMM", { locale: ptBR })}
-                                                </p>
-                                            </div>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Excluir conversa?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esta ação não pode ser desfeita. Todas as mensagens serão perdidas.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() => deleteConversationMutation.mutate(conv.id)}
-                                                            className="bg-red-600 text-white hover:bg-red-700"
-                                                        >
-                                                            Excluir
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </ScrollArea>
+                {!isMobile && showHistory && (
+                    <aside className="flex w-80 flex-col border-r border-border bg-card/80 backdrop-blur-sm">
+                        {HistoryList}
                     </aside>
                 )}
 
+                {isMobile && (
+                    <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                        <SheetContent side="left" className="w-[88vw] max-w-none border-border bg-background p-0">
+                            <SheetHeader className="sr-only">
+                                <SheetTitle>Histórico de conversas</SheetTitle>
+                                <SheetDescription>Selecione uma conversa anterior do Vita Assist.</SheetDescription>
+                            </SheetHeader>
+                            {HistoryList}
+                        </SheetContent>
+                    </Sheet>
+                )}
+
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                    <ScrollArea className="flex-1 p-4">
-                        {!selectedConversationId && !currentConversation?.messages?.length ? (
-                            <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1E3A5F]">
+                    <ScrollArea className="flex-1">
+                        {!selectedConversationId && displayedMessages.length === 0 ? (
+                            <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-10 text-center">
+                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15">
                                     <Sparkles className="h-10 w-10 text-white" />
                                 </div>
-                                <h2 className="mb-2 text-2xl font-bold text-foreground">Bem-vindo ao Vita Assist</h2>
-                                <p className="mb-8 max-w-lg px-2 text-muted-foreground">
+                                <h2 className="mb-2 text-3xl font-heading font-bold tracking-tight text-foreground">
+                                    Bem-vindo ao Vita Assist
+                                </h2>
+                                <p className="mb-8 max-w-2xl px-2 text-sm leading-7 text-muted-foreground">
                                     Seu consultor médico de IA. Tire dúvidas sobre diagnósticos, tratamentos e
                                     guidelines médicos com respostas baseadas em evidências.
                                 </p>
-                                <div className="grid w-full max-w-lg gap-3 px-2">
+                                <div className="grid w-full max-w-3xl gap-3 px-2 md:grid-cols-3">
                                     {[
                                         "Quais são as diretrizes atuais para tratamento de hipertensão?",
                                         "Como investigar anemia ferropriva?",
@@ -326,14 +489,14 @@ export default function VitaAssistPage() {
                                         <Button
                                             key={suggestion}
                                             variant="outline"
-                                            className="h-auto justify-start whitespace-normal border-border px-4 py-3 text-left text-foreground hover:border-primary/30 hover:bg-muted"
+                                            className="h-auto min-h-[108px] justify-start whitespace-normal rounded-2xl border-border/70 bg-background px-4 py-4 text-left text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-muted/40 hover:shadow-md"
                                             onClick={() => {
                                                 setInputMessage(suggestion);
                                                 textareaRef.current?.focus();
                                             }}
                                         >
                                             <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0 text-[#448C9B]" />
-                                            <span className="text-left text-sm leading-snug text-foreground">
+                                            <span className="text-left text-sm leading-6 text-foreground">
                                                 {suggestion}
                                             </span>
                                         </Button>
@@ -345,23 +508,27 @@ export default function VitaAssistPage() {
                                 <BrandLoader className="h-8 w-8 animate-spin text-[#448C9B]" />
                             </div>
                         ) : (
-                            <div className="mx-auto max-w-5xl space-y-4 pb-4">
-                                {currentConversation?.messages?.map((message) => (
+                            <div className="mx-auto max-w-5xl space-y-4 px-4 py-6 md:px-6">
+                                {displayedMessages.map((message) => (
                                     <div
                                         key={message.id}
-                                        className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                                        className={cn(
+                                            "flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200",
+                                            message.role === "user" ? "justify-end" : "justify-start"
+                                        )}
                                     >
                                         {message.role === "assistant" && (
-                                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#1E3A5F]">
+                                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
                                                 <Bot className="h-4 w-4 text-white" />
                                             </div>
                                         )}
                                         <div
-                                            className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                                            className={cn(
+                                                "max-w-[88%] rounded-[24px] px-4 py-3 shadow-sm md:max-w-[80%]",
                                                 message.role === "user"
                                                     ? "bg-[#1E3A5F] text-white"
-                                                    : "border border-border bg-card text-foreground shadow-sm"
-                                            }`}
+                                                    : "border border-border/70 bg-card text-foreground"
+                                            )}
                                         >
                                             {message.role === "assistant" ? (
                                                 <div className="prose prose-sm max-w-none overflow-hidden prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-code:text-foreground prose-pre:overflow-x-auto prose-pre:bg-muted prose-a:text-primary dark:prose-invert">
@@ -370,30 +537,38 @@ export default function VitaAssistPage() {
                                             ) : (
                                                 <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                                             )}
-                                            <p
-                                                className={`mt-2 text-xs ${
-                                                    message.role === "user" ? "text-white/70" : "text-muted-foreground"
-                                                }`}
-                                            >
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <p
+                                                    className={cn(
+                                                        "text-xs",
+                                                        message.role === "user" ? "text-white/70" : "text-muted-foreground"
+                                                    )}
+                                                >
                                                 {format(new Date(message.createdAt), "HH:mm", { locale: ptBR })}
-                                            </p>
+                                                </p>
+                                                {"pending" in message && message.pending && (
+                                                    <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">
+                                                        Enviando
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
                                         {message.role === "user" && (
-                                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-muted">
                                                 <User className="h-4 w-4 text-muted-foreground" />
                                             </div>
                                         )}
                                     </div>
                                 ))}
                                 {sendMessageMutation.isPending && (
-                                    <div className="flex justify-start gap-3">
-                                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#1E3A5F]">
+                                    <div className="flex justify-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F]">
                                             <Bot className="h-4 w-4 text-white" />
                                         </div>
-                                        <div className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+                                        <div className="rounded-[24px] border border-border/70 bg-card px-4 py-3 shadow-sm">
                                             <div className="flex items-center gap-2">
                                                 <BrandLoader className="h-4 w-4 animate-spin text-[#448C9B]" />
-                                                <span className="text-sm text-muted-foreground">Analisando...</span>
+                                                <span className="text-sm text-muted-foreground">Construindo resposta clínica...</span>
                                             </div>
                                         </div>
                                     </div>
@@ -403,30 +578,45 @@ export default function VitaAssistPage() {
                         )}
                     </ScrollArea>
 
-                    <div className="flex-shrink-0 border-t border-border bg-card p-4">
-                        <div className="mx-auto flex max-w-5xl gap-2">
-                            <Textarea
-                                ref={textareaRef}
-                                value={inputMessage}
-                                onChange={(e) => setInputMessage(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Faça uma pergunta médica..."
-                                className="max-h-32 min-h-[52px] resize-none"
-                                disabled={sendMessageMutation.isPending}
-                            />
-                            <Button
-                                onClick={handleSendMessage}
-                                disabled={!inputMessage.trim() || sendMessageMutation.isPending}
-                                className="h-[52px] w-[52px] bg-[#1E3A5F] hover:bg-[#2A4F7C]"
-                            >
-                                {sendMessageMutation.isPending ? (
-                                    <BrandLoader className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <Send className="h-5 w-5" />
-                                )}
-                            </Button>
+                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-4 py-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6">
+                        <div className="mx-auto max-w-5xl">
+                            <div className="rounded-[28px] border border-border/70 bg-background p-3 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)]">
+                                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                    <Badge variant="outline" className="rounded-full border-border/70 bg-muted/35">
+                                        {selectedProfileName}
+                                    </Badge>
+                                    <span>Contexto aplicado ao atendimento atual</span>
+                                </div>
+
+                                <div className="flex items-end gap-2">
+                                    <Textarea
+                                        ref={textareaRef}
+                                        value={inputMessage}
+                                        onChange={(e) => setInputMessage(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="Pergunte sobre hipótese diagnóstica, conduta, investigação ou interpretação clínica..."
+                                        className="min-h-[56px] resize-none border-0 bg-transparent px-2 py-3 text-base shadow-none focus-visible:ring-0"
+                                        disabled={sendMessageMutation.isPending}
+                                    />
+                                    <Button
+                                        onClick={handleSendMessage}
+                                        disabled={!inputMessage.trim() || sendMessageMutation.isPending}
+                                        className="h-12 rounded-2xl bg-[#1E3A5F] px-4 hover:bg-[#2A4F7C]"
+                                    >
+                                        {sendMessageMutation.isPending ? (
+                                            <BrandLoader className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <ArrowUp className="h-4 w-4" />
+                                                <span className="hidden sm:inline">Enviar</span>
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        <p className="mt-2 text-center text-xs text-muted-foreground">
+
+                        <p className="mt-3 text-center text-xs text-muted-foreground">
                             Vita Assist é uma ferramenta de apoio. Decisões clínicas são responsabilidade do profissional.
                         </p>
                     </div>
