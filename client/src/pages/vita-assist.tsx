@@ -45,11 +45,8 @@ import {
     User,
     Bot,
     Sparkles,
-    UserCircle,
     History,
-    Command,
     PanelLeft,
-    Stethoscope,
     ArrowUp,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -255,11 +252,6 @@ export default function VitaAssistPage() {
         ...visibleOptimisticMessages,
     ];
 
-    const selectedProfileName =
-        profiles.find((profile) => profile.id === selectedProfileId)?.name ??
-        activeProfile?.name ??
-        "Sem contexto de paciente";
-
     const HistoryList = (
         <div className="flex h-full flex-col">
             <div className="border-b border-border px-4 py-4">
@@ -350,12 +342,12 @@ export default function VitaAssistPage() {
             <header className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 py-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:py-5">
                 <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                        <div className="min-w-0 space-y-2">
+                        <div className="min-w-0 space-y-1">
                             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">
-                                Assistente clínico com contexto
+                                Assistente clínico
                             </p>
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
                                     <Sparkles className="h-5 w-5 text-white" />
                                 </div>
                                 <div className="min-w-0">
@@ -363,7 +355,7 @@ export default function VitaAssistPage() {
                                         Vita Assist
                                     </h1>
                                     <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                                        Converse com a IA, mantenha o contexto clínico ativo e navegue pelo histórico sem quebrar o fluxo do atendimento.
+                                        IA para raciocinio clinico, conduta e interpretacao de contexto do atendimento.
                                     </p>
                                 </div>
                             </div>
@@ -377,7 +369,7 @@ export default function VitaAssistPage() {
                                 className="gap-2 rounded-xl border-border/80 bg-background/80 hover:bg-muted/60"
                             >
                                 {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
-                                <span>{isMobile ? "Conversas" : "Histórico"}</span>
+                                <span>{isMobile ? "Conversas" : "Historico"}</span>
                             </Button>
 
                             <Button
@@ -391,58 +383,23 @@ export default function VitaAssistPage() {
                         </div>
                     </div>
 
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-3 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                                    <UserCircle className="h-4 w-4" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                                        Contexto do atendimento
-                                    </p>
-                                    <div className="mt-2">
-                                        <Select
-                                            value={selectedProfileId?.toString() || "none"}
-                                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
-                                        >
-                                            <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-background">
-                                                <SelectValue placeholder="Selecione o paciente do contexto" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Sem contexto</SelectItem>
-                                                {profiles.map((profile) => (
-                                                    <SelectItem key={profile.id} value={profile.id.toString()}>
-                                                        {profile.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[340px]">
-                            <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Stethoscope className="h-4 w-4" />
-                                    <span className="text-[11px] uppercase tracking-[0.16em]">Paciente ativo</span>
-                                </div>
-                                <p className="mt-2 truncate text-sm font-heading font-bold text-foreground">
-                                    {selectedProfileName}
-                                </p>
-                            </div>
-                            <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Command className="h-4 w-4" />
-                                    <span className="text-[11px] uppercase tracking-[0.16em]">Atalho</span>
-                                </div>
-                                <p className="mt-2 text-sm font-heading font-bold text-foreground">
-                                    Enter envia, Shift + Enter quebra linha
-                                </p>
-                            </div>
-                        </div>
+                    <div className="flex justify-end">
+                        <Select
+                            value={selectedProfileId?.toString() || "none"}
+                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
+                        >
+                            <SelectTrigger className="h-10 w-full rounded-xl border-border/70 bg-background sm:w-[260px]">
+                                <SelectValue placeholder="Selecionar paciente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Sem contexto</SelectItem>
+                                {profiles.map((profile) => (
+                                    <SelectItem key={profile.id} value={profile.id.toString()}>
+                                        {profile.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </header>
@@ -578,16 +535,9 @@ export default function VitaAssistPage() {
                         )}
                     </ScrollArea>
 
-                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-4 py-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6">
+                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:pb-4">
                         <div className="mx-auto max-w-5xl">
                             <div className="rounded-[28px] border border-border/70 bg-background p-3 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)]">
-                                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                    <Badge variant="outline" className="rounded-full border-border/70 bg-muted/35">
-                                        {selectedProfileName}
-                                    </Badge>
-                                    <span>Contexto aplicado ao atendimento atual</span>
-                                </div>
-
                                 <div className="flex items-end gap-2">
                                     <Textarea
                                         ref={textareaRef}
@@ -601,7 +551,7 @@ export default function VitaAssistPage() {
                                     <Button
                                         onClick={handleSendMessage}
                                         disabled={!inputMessage.trim() || sendMessageMutation.isPending}
-                                        className="h-12 rounded-2xl bg-[#1E3A5F] px-4 hover:bg-[#2A4F7C]"
+                                        className="mb-1 h-12 rounded-2xl bg-[#1E3A5F] px-4 hover:bg-[#2A4F7C]"
                                     >
                                         {sendMessageMutation.isPending ? (
                                             <BrandLoader className="h-5 w-5 animate-spin" />

@@ -21,13 +21,13 @@ import FileUpload from "@/components/ui/file-upload";
 import {
   Activity,
   ArrowRight,
-  Clock3,
   FileText,
   FlaskConical,
   Microscope,
   Plus,
   ScanLine,
   ShieldCheck,
+  Sparkles,
   Upload,
 } from "lucide-react";
 
@@ -95,20 +95,11 @@ export function ExamUploadLauncher({
       .slice(0, 6);
   }, [examList]);
 
-  const supportedExamTypes = [
-    "Laboratoriais",
-    "Tomografia",
-    "Ressonância",
-    "Biópsia",
-    "Endoscopia",
-    "Ecocardiograma",
-  ];
-
   return (
     <>
       <Card
         className={cn(
-          "overflow-hidden border border-border/70 bg-gradient-to-br from-background via-background to-muted/35 shadow-sm transition-colors",
+          "overflow-hidden border border-border/70 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm transition-all duration-200 hover:border-border hover:shadow-md",
           compact ? "overflow-hidden" : "",
           className
         )}
@@ -124,30 +115,21 @@ export function ExamUploadLauncher({
                   <p className="text-sm font-semibold tracking-tight text-foreground">{title}</p>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1">
-                    {activeUploads.length > 0 ? `${activeUploads.length} em processamento` : `${examList.length} no histórico`}
-                  </span>
-                  <span className="hidden text-muted-foreground/80 sm:inline">
-                    PDF, JPG e PNG
-                  </span>
-                  <span className="hidden text-muted-foreground/80 lg:inline">
-                    {supportedExamTypes.slice(0, 3).join(" • ")}
-                  </span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-muted-foreground/80" />
+                  <p className="leading-5 text-muted-foreground/90">
+                    Voce tambem pode arrastar o exame direto para a area de upload.
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className={cn("flex gap-3", compact ? "flex-col" : "items-center")}>
-              <div className="hidden rounded-full border border-border/70 bg-background/80 px-3 py-2 text-sm text-muted-foreground md:flex md:items-center md:gap-2">
-                <Clock3 className="h-4 w-4" />
-                <span>{activeUploads.length > 0 ? "Análise em andamento" : "Central pronta para envio"}</span>
-              </div>
               <Button
                 type="button"
                 onClick={() => setOpen(true)}
                 variant="outline"
-                className="gap-2 border-border/80 bg-background/90 hover:bg-muted/60"
+                className="gap-2 border-border/80 bg-background/90 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/60"
               >
                 <Plus className="h-4 w-4" />
                 {buttonLabel}
