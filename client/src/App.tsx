@@ -143,17 +143,19 @@ function AuthRoutes() {
 
   return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <ShellAuthAutoRedirect />
-        <Suspense fallback={<LandingLoadingFallback />}>
-          <Switch>
-            <Route path="/auth" component={AuthPage} />
-            <Route path="/accept-invitation/:token" component={AuthPage} />
-            <Route path="/forgot-password" component={ForgotPasswordPage} />
-          </Switch>
-        </Suspense>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <ShellAuthAutoRedirect />
+          <Suspense fallback={<LandingLoadingFallback />}>
+            <Switch>
+              <Route path="/auth" component={AuthPage} />
+              <Route path="/accept-invitation/:token" component={AuthPage} />
+              <Route path="/forgot-password" component={ForgotPasswordPage} />
+            </Switch>
+          </Suspense>
+        </TooltipProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
@@ -320,7 +322,7 @@ function AppRouter() {
   const authPaths = ['/auth', '/forgot-password'];
   const isAcceptInvitationRoute = location.startsWith('/accept-invitation/');
   const isAuthRoute = authPaths.some(path => location === path) || isAcceptInvitationRoute;
-  const shouldForceLightPublicTheme = isLandingRoute || location === "/auth";
+  const shouldForceLightPublicTheme = isLandingRoute || location === "/forgot-password";
 
   // Public routes must always stay in light mode regardless of saved theme.
   useEffect(() => {
