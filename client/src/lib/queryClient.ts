@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { getAppShellRequestHeaders } from "@/lib/app-shell";
 
 class ApiError extends Error {
   status: number;
@@ -92,6 +93,7 @@ export async function apiRequest(
           Pragma: "no-cache",
         }
       : {}),
+    ...getAppShellRequestHeaders(),
   };
 
   const requestOptions: RequestInit = {
@@ -154,6 +156,7 @@ export const getQueryFn: <T>(options: {
           headers: {
             "Cache-Control": "no-cache, no-store, max-age=0",
             Pragma: "no-cache",
+            ...getAppShellRequestHeaders(),
           },
         });
 

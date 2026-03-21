@@ -121,6 +121,199 @@ const getPlanChargeAmount = (plan: { price: number; promoPrice?: number | null }
   return plan.price;
 };
 
+const IOS_APP_SHELL_REQUEST_HEADER = "x-vitaview-app-shell";
+
+const isIOSAppShellRequest = (req: Request) =>
+  req.get(IOS_APP_SHELL_REQUEST_HEADER)?.toLowerCase() === "ios";
+
+const rejectIOSAppShellBilling = (req: Request, res: Response) => {
+  if (!isIOSAppShellRequest(req)) {
+    return false;
+  }
+
+  res.status(403).json({
+    message: "Assinaturas, upgrades e cobrança estão indisponíveis no app iOS neste momento.",
+  });
+  return true;
+};
+
+const REUSABLE_STRIPE_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
+  "trialing",
+  "active",
+  "past_due",
+  "unpaid",
+  "incomplete",
+]);
+
+const subscriptionHasPrice = (subscription: Stripe.Subscription, priceId: string) =>
+  subscription.items.data.some((item) => item.price?.id === priceId);
+
+const findReusableStripeSubscription = async ({
+  customerId,
+  priceId,
+  userId,
+}: {
+  customerId: string;
+  priceId: string;
+  userId?: number;
+}) => {
+  if (!stripe) {
+    throw new Error("Stripe não configurado");
+  }
+
+  const stripeSubscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+
+  return stripeSubscriptions.data.find((subscription) => {
+    if (!REUSABLE_STRIPE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
+      return false;
+    }
+
+    if (!subscriptionHasPrice(subscription, priceId)) {
+      return false;
+    }
+
+    if (userId && subscription.metadata?.userId && subscription.metadata.userId !== userId.toString()) {
+      return false;
+    }
+
+    return true;
+  });
+};
+
+const ensureStripeSubscriptionForPlan = async ({
+  customerId,
+  plan,
+  userId,
+  defaultPaymentMethodId,
+}: {
+  customerId: string;
+  plan: {
+    stripePriceId: string | null;
+    trialPeriodDays?: number | null;
+  };
+  userId: number;
+  defaultPaymentMethodId?: string | null;
+}) => {
+  if (!stripe) {
+    throw new Error("Stripe não configurado");
+  }
+
+  if (!plan.stripePriceId) {
+    throw new Error("Plano sem stripePriceId configurado");
+  }
+
+  const reusableSubscription = await findReusableStripeSubscription({
+    customerId,
+    priceId: plan.stripePriceId,
+    userId,
+  });
+
+  if (reusableSubscription) {
+    return reusableSubscription;
+  }
+
+  const createParams: Stripe.SubscriptionCreateParams = {
+    customer: customerId,
+    items: [{ price: plan.stripePriceId }],
+    metadata: {
+      userId: userId.toString(),
+    },
+  };
+
+  if (defaultPaymentMethodId) {
+    createParams.default_payment_method = defaultPaymentMethodId;
+  }
+
+  if (typeof plan.trialPeriodDays === "number" && plan.trialPeriodDays > 0) {
+    createParams.trial_period_days = plan.trialPeriodDays;
+  }
+
+  return await stripe.subscriptions.create(createParams);
+};
+
+const syncUserSubscriptionState = async ({
+  userId,
+  planId,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  currentPeriodStart,
+  currentPeriodEnd,
+}: {
+  userId: number;
+  planId: number;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+}) => {
+  const existingSubscription = await storage.getUserSubscription(userId);
+
+  if (
+    existingSubscription &&
+    existingSubscription.planId === planId &&
+    existingSubscription.stripeSubscriptionId === stripeSubscriptionId
+  ) {
+    return await storage.updateUserSubscription(existingSubscription.id, {
+      status: "active",
+      canceledAt: null,
+      stripeCustomerId,
+      stripeSubscriptionId,
+      currentPeriodStart,
+      currentPeriodEnd,
+    });
+  }
+
+  if (existingSubscription) {
+    await storage.cancelUserSubscription(existingSubscription.id);
+  }
+
+  return await storage.createUserSubscription({
+    userId,
+    planId,
+    status: "active",
+    stripeCustomerId,
+    stripeSubscriptionId,
+    currentPeriodStart,
+    currentPeriodEnd,
+  });
+};
+
+const cancelPreviousStripeSubscriptionIfNeeded = async ({
+  userId,
+  nextStripeSubscriptionId,
+}: {
+  userId: number;
+  nextStripeSubscriptionId: string | null;
+}) => {
+  if (!stripe || !nextStripeSubscriptionId) {
+    return;
+  }
+
+  const existingSubscription = await storage.getUserSubscription(userId);
+  if (!existingSubscription?.stripeSubscriptionId) {
+    return;
+  }
+
+  if (existingSubscription.stripeSubscriptionId === nextStripeSubscriptionId) {
+    return;
+  }
+
+  try {
+    await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+  } catch (error) {
+    logger.warn("[Stripe] Failed to cancel previous subscription during plan change", {
+      userId,
+      previousStripeSubscriptionId: existingSubscription.stripeSubscriptionId,
+      nextStripeSubscriptionId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
 const getBillingReturnUrl = (req: Request) => {
   if (process.env.APP_URL) {
     return `${process.env.APP_URL.replace(/\/$/, "")}/subscription`;
@@ -3075,6 +3268,10 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Plano gratuito não requer pagamento" });
       }
 
+      if (rejectIOSAppShellBilling(req, res)) {
+        return;
+      }
+
       const amountToCharge = getPlanChargeAmount(plan);
       if (!Number.isInteger(amountToCharge) || amountToCharge <= 0) {
         return res.status(400).json({ message: "Valor do plano inválido para cobrança" });
@@ -3121,13 +3318,20 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(503).json({ message: "Stripe não configurado" });
       }
 
+      if (rejectIOSAppShellBilling(req, res)) {
+        return;
+      }
+
       const user = req.user!;
-      if (!user.stripeCustomerId) {
+      const subscription = await storage.getUserSubscription(user.id);
+      const stripeCustomerId = user.stripeCustomerId || subscription?.stripeCustomerId || null;
+
+      if (!stripeCustomerId) {
         return res.status(400).json({ message: "Cliente Stripe não encontrado para este usuário" });
       }
 
       const session = await stripe.billingPortal.sessions.create({
-        customer: user.stripeCustomerId,
+        customer: stripeCustomerId,
         return_url: getBillingReturnUrl(req),
       });
 
@@ -3140,8 +3344,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Stripe subscription route
   app.post("/api/create-subscription", ensureAuthenticated, async (req, res) => {
     try {
-      const { planId } = req.body;
-      if (!planId) {
+      const { planId } = req.body as { planId?: number | string };
+      const parsedPlanId = Number(planId);
+
+      if (!Number.isInteger(parsedPlanId)) {
         return res.status(400).json({ message: "ID do plano é obrigatório" });
       }
 
@@ -3153,31 +3359,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       const userId = req.user!.id;
       const user = req.user!;
 
-      // Se o usuário já tem assinatura ativa, cancelar a anterior para trocar de plano
-      const existingSubscription = await storage.getUserSubscription(userId);
-      if (existingSubscription && existingSubscription.status === "active") {
-        // Cancelar assinatura anterior no Stripe se existir
-        if (existingSubscription.stripeSubscriptionId && stripe) {
-          try {
-            await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
-          } catch (err: any) {
-            // Ignorar erro se assinatura já foi cancelada no Stripe
-          }
-        }
-        await storage.cancelUserSubscription(existingSubscription.id);
-      }
-
       // Buscar detalhes do plano
-      const plan = await storage.getSubscriptionPlan(planId);
+      const plan = await storage.getSubscriptionPlan(parsedPlanId);
       if (!plan) {
         return res.status(404).json({ message: "Plano não encontrado" });
+      }
+
+      if (plan.price > 0 && rejectIOSAppShellBilling(req, res)) {
+        return;
       }
 
       // Se é o plano gratuito, criar assinatura diretamente sem pagamento
       if (plan.price === 0) {
         const subscription = await storage.createUserSubscription({
           userId,
-          planId,
+          planId: parsedPlanId,
           status: "active",
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
@@ -3209,13 +3405,50 @@ export async function registerRoutes(app: Express): Promise<void> {
         await storage.updateUser(userId, { stripeCustomerId });
       }
 
-      // Criar SetupIntent para planos pagos (para configurar método de pagamento)
+      if (!plan.stripePriceId) {
+        if (typeof plan.trialPeriodDays === "number" && plan.trialPeriodDays > 0) {
+          return res.status(503).json({
+            message: "Este plano exige stripePriceId configurado para aplicar período de teste.",
+          });
+        }
+
+        const amountToCharge = getPlanChargeAmount(plan);
+        if (!Number.isInteger(amountToCharge) || amountToCharge <= 0) {
+          return res.status(400).json({ message: "Valor do plano inválido para cobrança" });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountToCharge,
+          currency: "brl",
+          customer: stripeCustomerId,
+          receipt_email: user.email || undefined,
+          metadata: {
+            userId: userId.toString(),
+            planId: parsedPlanId.toString(),
+            planName: plan.name,
+            amount: amountToCharge.toString(),
+          },
+          payment_method_types: ["card"],
+        });
+
+        return res.json({
+          clientSecret: paymentIntent.client_secret,
+          paymentIntentId: paymentIntent.id,
+          customerId: stripeCustomerId,
+          plan,
+          type: "paid",
+          intentType: "payment",
+          recurring: false,
+        });
+      }
+
+      // Criar SetupIntent para assinatura recorrente (coletar método de pagamento)
       const setupIntent = await stripe.setupIntents.create({
         customer: stripeCustomerId,
         payment_method_types: ['card'],
         metadata: {
           userId: userId.toString(),
-          planId: planId.toString()
+          planId: parsedPlanId.toString()
         }
       });
 
@@ -3224,7 +3457,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         setupIntentId: setupIntent.id,
         customerId: stripeCustomerId,
         plan,
-        type: "paid"
+        type: "paid",
+        intentType: "setup",
+        recurring: true,
       });
     } catch (error: any) {
       res.status(500).json({ message: "Erro ao configurar assinatura: " + error.message });
@@ -3288,15 +3523,10 @@ export async function registerRoutes(app: Express): Promise<void> {
             break;
           }
 
-          if (existingSubscription) {
-            await storage.cancelUserSubscription(existingSubscription.id);
-          }
-
           const now = new Date();
-          await storage.createUserSubscription({
+          await syncUserSubscriptionState({
             userId,
             planId,
-            status: "active",
             stripeCustomerId: typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
             stripeSubscriptionId: null,
             currentPeriodStart: now,
@@ -3327,27 +3557,34 @@ export async function registerRoutes(app: Express): Promise<void> {
             break;
           }
 
-          const stripeSubscription = await stripe.subscriptions.create({
-            customer: setupIntent.customer,
-            items: [{ price: plan.stripePriceId }],
-            default_payment_method: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : undefined,
-            metadata: setupIntent.metadata ?? {},
-          }) as any;
+          const stripeSubscription = await ensureStripeSubscriptionForPlan({
+            customerId: setupIntent.customer,
+            plan,
+            userId,
+            defaultPaymentMethodId: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : null,
+          });
 
-          const existingSubscription = await storage.getUserSubscription(userId);
-          if (existingSubscription) {
-            await storage.cancelUserSubscription(existingSubscription.id);
-          }
+          await cancelPreviousStripeSubscriptionIfNeeded({
+            userId,
+            nextStripeSubscriptionId: stripeSubscription.id,
+          });
 
-          await storage.createUserSubscription({
+          await syncUserSubscriptionState({
             userId,
             planId,
-            status: "active",
             stripeCustomerId: setupIntent.customer,
             stripeSubscriptionId: stripeSubscription.id,
             currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
             currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
           });
+
+          const user = await storage.getUser(userId);
+          if (user && (!user.stripeCustomerId || user.stripeSubscriptionId !== stripeSubscription.id)) {
+            await storage.updateUser(userId, {
+              stripeCustomerId: setupIntent.customer,
+              stripeSubscriptionId: stripeSubscription.id,
+            });
+          }
 
           break;
         }
@@ -3397,7 +3634,11 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/activate-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { planId, paymentIntentId } = req.body as { planId?: number | string; paymentIntentId?: string };
+      const { planId, paymentIntentId, setupIntentId } = req.body as {
+        planId?: number | string;
+        paymentIntentId?: string;
+        setupIntentId?: string;
+      };
       const parsedPlanId = Number(planId);
 
       if (!Number.isInteger(parsedPlanId)) {
@@ -3409,11 +3650,81 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
 
+      if (plan.price > 0 && rejectIOSAppShellBilling(req, res)) {
+        return;
+      }
+
       const expectedAmount = getPlanChargeAmount(plan);
       let stripeCustomerId = req.user!.stripeCustomerId || null;
+      let stripeSubscriptionId: string | null = null;
+      let currentPeriodStart: Date | null = null;
+      let currentPeriodEnd: Date | null = null;
+      const existingSubscription = await storage.getUserSubscription(userId);
+
+      if (
+        setupIntentId &&
+        existingSubscription &&
+        existingSubscription.status === "active" &&
+        existingSubscription.planId === parsedPlanId &&
+        existingSubscription.stripeSubscriptionId
+      ) {
+        return res.json({
+          success: true,
+          subscription: existingSubscription,
+          plan,
+          idempotent: true
+        });
+      }
+
+      if (setupIntentId) {
+        if (!stripe) {
+          return res.status(503).json({ message: "Stripe não configurado para ativar assinatura recorrente" });
+        }
+
+        if (!plan.stripePriceId) {
+          return res.status(503).json({ message: "Plano sem stripePriceId configurado para assinatura recorrente" });
+        }
+
+        const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+        if (setupIntent.status !== "succeeded") {
+          return res.status(400).json({ message: "O método de pagamento ainda não foi confirmado" });
+        }
+
+        if (setupIntent.metadata.userId !== userId.toString()) {
+          return res.status(403).json({ message: "Método de pagamento não pertence a este usuário" });
+        }
+
+        if (setupIntent.metadata.planId !== parsedPlanId.toString()) {
+          return res.status(400).json({ message: "Método de pagamento não corresponde ao plano selecionado" });
+        }
+
+        if (typeof setupIntent.customer !== "string") {
+          return res.status(400).json({ message: "Cliente Stripe inválido para este pagamento" });
+        }
+
+        stripeCustomerId = setupIntent.customer;
+
+        const stripeSubscription = await ensureStripeSubscriptionForPlan({
+          customerId: setupIntent.customer,
+          plan,
+          userId,
+          defaultPaymentMethodId: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : null,
+        });
+
+        stripeSubscriptionId = stripeSubscription.id;
+        currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
+        currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+
+        if (!req.user!.stripeCustomerId || req.user!.stripeSubscriptionId !== stripeSubscription.id) {
+          await storage.updateUser(userId, {
+            stripeCustomerId: setupIntent.customer,
+            stripeSubscriptionId: stripeSubscription.id,
+          });
+        }
+      }
 
       // Para planos pagos, verificar o pagamento no Stripe
-      if (plan.price > 0) {
+      if (plan.price > 0 && !setupIntentId) {
         if (!stripe || !paymentIntentId) {
           return res.status(400).json({ message: "ID do pagamento é obrigatório para planos pagos" });
         }
@@ -3451,7 +3762,6 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // Idempotência: se já está no mesmo plano ativo, apenas retorna sucesso
-      const existingSubscription = await storage.getUserSubscription(userId);
       if (existingSubscription && existingSubscription.status === "active" && existingSubscription.planId === parsedPlanId) {
         return res.json({
           success: true,
@@ -3465,7 +3775,9 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (existingSubscription && existingSubscription.status === "active") {
         if (existingSubscription.stripeSubscriptionId && stripe) {
           try {
-            await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+            if (existingSubscription.stripeSubscriptionId !== stripeSubscriptionId) {
+              await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+            }
           } catch (err: any) {
             // Ignorar se já cancelada
           }
@@ -3475,7 +3787,8 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Calcular período baseado no intervalo do plano
       const now = new Date();
-      const periodEnd = calculatePeriodEnd(now, plan.interval);
+      const periodStart = currentPeriodStart ?? now;
+      const periodEnd = currentPeriodEnd ?? calculatePeriodEnd(periodStart, plan.interval);
 
       // Criar assinatura no banco
       const subscription = await storage.createUserSubscription({
@@ -3483,7 +3796,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         planId: parsedPlanId,
         status: "active",
         stripeCustomerId,
-        currentPeriodStart: now,
+        stripeSubscriptionId,
+        currentPeriodStart: periodStart,
         currentPeriodEnd: periodEnd
       });
 

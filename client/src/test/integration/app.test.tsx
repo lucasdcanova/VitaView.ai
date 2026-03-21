@@ -64,6 +64,48 @@ describe("App integration", () => {
     expect(await screen.findByRole("tab", { name: /entrar/i })).toBeInTheDocument();
   });
 
+  it("submits login with DOM-restored values on the auth page", async () => {
+    const user = userEvent.setup();
+    let receivedBody: { email: string; password: string } | null = null;
+
+    server.use(
+      http.post("/api/login", async ({ request }) => {
+        receivedBody = await request.json() as { email: string; password: string };
+        return HttpResponse.json({ ...testUser, clinicId: 1 });
+      }),
+    );
+
+    window.history.replaceState(null, "", "/auth");
+    render(<App />);
+
+    await waitFor(() => {
+      expect(document.getElementById("login-email")).toBeTruthy();
+      expect(document.getElementById("login-password")).toBeTruthy();
+    });
+
+    const emailInput = document.getElementById("login-email") as HTMLInputElement;
+    const passwordInput = document.getElementById("login-password") as HTMLInputElement;
+    const nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+
+    expect(nativeValueSetter).toBeTypeOf("function");
+    nativeValueSetter?.call(emailInput, "Doctor@example.com");
+    nativeValueSetter?.call(passwordInput, "supersecret");
+
+    const submitButton = screen
+      .getAllByRole("button", { name: /entrar/i })
+      .find((button) => button.getAttribute("type") === "submit");
+
+    expect(submitButton).toBeTruthy();
+    await user.click(submitButton!);
+
+    await waitFor(() => {
+      expect(receivedBody).toEqual({
+        email: "doctor@example.com",
+        password: "supersecret",
+      });
+    });
+  });
+
   it("shows dashboard for authenticated users", async () => {
     server.use(
       http.get("/api/user", () => HttpResponse.json(testUser)),

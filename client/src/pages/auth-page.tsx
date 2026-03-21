@@ -1,7 +1,8 @@
 import {
   useState,
   useEffect,
-  useRef
+  useRef,
+  useCallback
 } from "react";
 import {
   useLocation,
@@ -51,13 +52,13 @@ import { BrandLoader } from "@/components/ui/brand-loader";
  */
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Digite um email válido" }),
+  email: z.string().trim().email({ message: "Digite um email válido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
 });
 
 const registerSchema = z.object({
   fullName: z.string().min(3, { message: "Nome completo deve ter pelo menos 3 caracteres" }),
-  email: z.string().email({ message: "Digite um email válido" }),
+  email: z.string().trim().email({ message: "Digite um email válido" }),
   password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
   confirmPassword: z.string(),
   isSecretaryInviteRegistration: z.boolean().default(false),
@@ -87,8 +88,9 @@ export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [location, navigate] = useLocation();
   const [acceptInvitationMatch, acceptInvitationParams] = useRoute("/accept-invitation/:token");
-  const { user, loginMutation, registerMutation } = useAuth();
-  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const { loginMutation, registerMutation } = useAuth();
+  const loginEmailInputRef = useRef<HTMLInputElement | null>(null);
+  const loginPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const hideLandingBackButton = isRestrictedAppShell();
 
   // Redirect logic removed to enforce manual login as requested
@@ -125,6 +127,28 @@ export default function AuthPage() {
   const prefilledInvitationToken = registerForm.watch("clinicInvitationToken");
   const invitationTokenFromPath = ((acceptInvitationParams as { token?: string } | null)?.token ?? "").trim();
 
+  const syncLoginFieldFromDom = useCallback((fieldName: keyof LoginFormValues, input: HTMLInputElement | null) => {
+    if (!input) {
+      return;
+    }
+
+    const nextValue = input.value ?? "";
+    if (nextValue === loginForm.getValues(fieldName)) {
+      return;
+    }
+
+    loginForm.setValue(fieldName, nextValue, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+  }, [loginForm]);
+
+  const syncLoginFormFromDom = useCallback(() => {
+    syncLoginFieldFromDom("email", loginEmailInputRef.current);
+    syncLoginFieldFromDom("password", loginPasswordInputRef.current);
+  }, [syncLoginFieldFromDom]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -158,9 +182,65 @@ export default function AuthPage() {
     }
   }, [acceptInvitationMatch, invitationTokenFromPath, location, registerForm]);
 
-  const onLoginSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values);
-  };
+  useEffect(() => {
+    if (tab !== "login" || typeof window === "undefined") {
+      return;
+    }
+
+    const syncSoon = () => {
+      if (typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(() => {
+          syncLoginFormFromDom();
+        });
+        return;
+      }
+
+      window.setTimeout(() => {
+        syncLoginFormFromDom();
+      }, 0);
+    };
+
+    const timeoutIds = [0, 250, 800].map((delay) => window.setTimeout(syncSoon, delay));
+    const handlePageShow = () => syncSoon();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncSoon();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [syncLoginFormFromDom, tab]);
+
+  const onLoginSubmit = useCallback((values: LoginFormValues) => {
+    loginMutation.mutate({
+      email: values.email.trim().toLowerCase(),
+      password: values.password,
+    });
+  }, [loginMutation]);
+
+  const handleLoginSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    syncLoginFormFromDom();
+
+    const isValid = await loginForm.trigger(["email", "password"], { shouldFocus: true });
+    if (!isValid) {
+      if (loginForm.getFieldState("email").error) {
+        loginEmailInputRef.current?.focus();
+      } else if (loginForm.getFieldState("password").error) {
+        loginPasswordInputRef.current?.focus();
+      }
+      return;
+    }
+
+    onLoginSubmit(loginForm.getValues());
+  }, [loginForm, onLoginSubmit, syncLoginFormFromDom]);
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const {
@@ -274,7 +354,7 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
+                  <form onSubmit={handleLoginSubmit} autoComplete="on" noValidate className="space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="email"
@@ -283,10 +363,32 @@ export default function AuthPage() {
                           <FormLabel className="font-heading font-bold text-[#212121]">Email</FormLabel>
                           <FormControl>
                             <Input
+                              id="login-email"
                               type="email"
                               placeholder="Digite seu email"
-                              {...field}
-                              autoComplete="email"
+                              value={field.value ?? ""}
+                              onChange={(event) => {
+                                field.onChange(event);
+                                syncLoginFieldFromDom("email", event.currentTarget);
+                              }}
+                              onInput={(event) => {
+                                syncLoginFieldFromDom("email", event.currentTarget);
+                              }}
+                              onBlur={(event) => {
+                                field.onBlur();
+                                syncLoginFieldFromDom("email", event.currentTarget);
+                              }}
+                              name={field.name}
+                              ref={(node) => {
+                                field.ref(node);
+                                loginEmailInputRef.current = node;
+                              }}
+                              autoComplete="username"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck={false}
+                              inputMode="email"
+                              enterKeyHint="next"
                               className="h-11"
                             />
                           </FormControl>
@@ -303,10 +405,31 @@ export default function AuthPage() {
                           <FormLabel className="font-heading font-bold text-[#212121]">Senha</FormLabel>
                           <FormControl>
                             <Input
+                              id="login-password"
                               type="password"
                               placeholder="Digite sua senha"
-                              {...field}
+                              value={field.value ?? ""}
+                              onChange={(event) => {
+                                field.onChange(event);
+                                syncLoginFieldFromDom("password", event.currentTarget);
+                              }}
+                              onInput={(event) => {
+                                syncLoginFieldFromDom("password", event.currentTarget);
+                              }}
+                              onBlur={(event) => {
+                                field.onBlur();
+                                syncLoginFieldFromDom("password", event.currentTarget);
+                              }}
+                              name={field.name}
+                              ref={(node) => {
+                                field.ref(node);
+                                loginPasswordInputRef.current = node;
+                              }}
                               autoComplete="current-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck={false}
+                              enterKeyHint="go"
                               className="h-11"
                             />
                           </FormControl>
@@ -336,7 +459,6 @@ export default function AuthPage() {
                     )}
 
                     <Button
-                      ref={submitButtonRef}
                       type="submit"
                       size="lg"
                       className="w-full h-12 bg-[#212121] hover:bg-[#424242] font-heading font-bold text-lg text-white rounded-lg transition-all duration-200"

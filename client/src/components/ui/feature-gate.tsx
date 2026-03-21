@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Slot } from "@radix-ui/react-slot";
-import { useAuth } from "@/hooks/use-auth";
+import { isAppStoreRestrictedIOSAppShell } from "@/lib/app-shell";
 
 interface FeatureGateProps {
     children: React.ReactNode;
@@ -34,7 +34,7 @@ interface UserSubscription {
 export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
     ({ children, ...props }, ref) => {
         const [, setLocation] = useLocation();
-        const { user } = useAuth();
+        const iosBillingRestricted = isAppStoreRestrictedIOSAppShell();
         const { data: subscriptionData, isLoading } = useQuery<UserSubscription>({
             queryKey: ['/api/user-subscription'],
             staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -83,14 +83,20 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
                         <p className="text-sm text-gray-300">
                             Esta funcionalidade está disponível exclusivamente nos planos <strong>Vita</strong>.
                         </p>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="w-full mt-2 bg-white text-[#212121] hover:bg-gray-200"
-                            onClick={() => setLocation('/subscription')}
-                        >
-                            Fazer Upgrade Agora
-                        </Button>
+                        {iosBillingRestricted ? (
+                            <p className="mt-1 text-xs text-gray-400">
+                                Upgrades estão indisponíveis no app iOS neste momento.
+                            </p>
+                        ) : (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                className="w-full mt-2 bg-white text-[#212121] hover:bg-gray-200"
+                                onClick={() => setLocation('/subscription')}
+                            >
+                                Fazer Upgrade Agora
+                            </Button>
+                        )}
                     </div>
                 </HoverCardContent>
             </HoverCard>

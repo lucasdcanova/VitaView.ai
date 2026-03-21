@@ -41,6 +41,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PatientHeader from "@/components/patient-header";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { isAppStoreRestrictedIOSAppShell } from '@/lib/app-shell';
 
 interface Clinic {
     id: number;
@@ -125,6 +126,7 @@ const MyClinic = () => {
     const { user } = useAuth();
     const [, navigate] = useLocation();
     const queryClient = useQueryClient();
+    const iosBillingRestricted = isAppStoreRestrictedIOSAppShell();
 
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
     const [isCreateClinicDialogOpen, setIsCreateClinicDialogOpen] = useState(false);
@@ -302,14 +304,20 @@ const MyClinic = () => {
                         <p className="text-sm text-muted-foreground mb-8">
                             Disponível nos planos <span className="font-semibold text-foreground">Vita Team</span>, <span className="font-semibold text-foreground">Vita Business</span> e <span className="font-semibold text-foreground">Hospitais</span>.
                         </p>
-                        <Button
-                            onClick={() => navigate('/subscription')}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 h-12 text-base rounded-xl"
-                            size="lg"
-                        >
-                            Ver Planos
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
+                        {iosBillingRestricted ? (
+                            <p className="rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+                                Planos de clínica e upgrades estão indisponíveis no app iOS neste momento.
+                            </p>
+                        ) : (
+                            <Button
+                                onClick={() => navigate('/subscription')}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 h-12 text-base rounded-xl"
+                                size="lg"
+                            >
+                                Ver Planos
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>

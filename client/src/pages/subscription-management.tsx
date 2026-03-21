@@ -49,7 +49,7 @@ import { ptBR } from 'date-fns/locale';
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
 import { BrandLoader } from "@/components/ui/brand-loader";
-import { isIOSAppShell } from "@/lib/app-shell";
+import { isAppStoreRestrictedIOSAppShell } from "@/lib/app-shell";
 
 // Interfaces
 interface SubscriptionPlan {
@@ -154,6 +154,7 @@ const SubscriptionManagement = () => {
   const [selectedIntervals, setSelectedIntervals] = useState<Record<string, string>>({});
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
+  const stripeRedirectHandledRef = useRef(false);
 
   // Clinic management states
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -258,7 +259,7 @@ const SubscriptionManagement = () => {
   }));
 
   const allPlans = plansWithFeaturesArray.filter(plan => plan.isActive);
-  const iosAppShell = isIOSAppShell();
+  const iosAppShell = isAppStoreRestrictedIOSAppShell();
 
   const categories = [
     {
@@ -385,6 +386,75 @@ const SubscriptionManagement = () => {
     }
   }, [user, isLoadingSubscription, navigate]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || iosAppShell || stripeRedirectHandledRef.current) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const planIdParam = params.get('planId');
+    const setupIntentId = params.get('setup_intent');
+    const paymentIntentId = params.get('payment_intent');
+    const redirectStatus = params.get('redirect_status');
+
+    if (!planIdParam || (!setupIntentId && !paymentIntentId)) {
+      return;
+    }
+
+    const parsedPlanId = Number(planIdParam);
+    if (!Number.isInteger(parsedPlanId)) {
+      return;
+    }
+
+    stripeRedirectHandledRef.current = true;
+
+    const finalizeRedirectPurchase = async () => {
+      if (redirectStatus === 'failed') {
+        toast({
+          title: 'Pagamento não concluído',
+          description: 'A autenticação do pagamento falhou ou foi cancelada.',
+          variant: 'destructive',
+        });
+        window.history.replaceState({}, document.title, '/subscription');
+        return;
+      }
+
+      setIsProcessing(true);
+      try {
+        const payload: Record<string, string | number> = { planId: parsedPlanId };
+        if (setupIntentId) {
+          payload.setupIntentId = setupIntentId;
+        }
+        if (paymentIntentId) {
+          payload.paymentIntentId = paymentIntentId;
+        }
+
+        await apiRequest('POST', '/api/activate-subscription', payload);
+
+        toast({
+          title: 'Assinatura realizada!',
+          description: 'Seu plano foi atualizado com sucesso.',
+        });
+
+        setIsPaymentDialogOpen(false);
+        setSelectedPlanId(null);
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription/limits'] });
+      } catch (error: any) {
+        toast({
+          title: 'Erro ao concluir assinatura',
+          description: error?.message || 'O pagamento foi confirmado, mas o plano não pôde ser ativado automaticamente.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsProcessing(false);
+        window.history.replaceState({}, document.title, '/subscription');
+      }
+    };
+
+    void finalizeRedirectPurchase();
+  }, [iosAppShell, refetch, toast]);
+
   // Scroll to plans when category selected
   useEffect(() => {
     if (selectedCategory && plansRef.current) {
@@ -403,29 +473,22 @@ const SubscriptionManagement = () => {
     await cancelSubscriptionMutation.mutateAsync();
   };
 
-  const openWebSubscription = (intent: 'plans' | 'billing' = 'plans') => {
-    if (typeof window === 'undefined') return;
-
-    const subscriptionUrl = new URL('/subscription', window.location.origin).toString();
+  const showIOSBillingBlockedToast = (intent: 'plans' | 'billing') => {
     setIsPaymentDialogOpen(false);
     setSelectedPlanId(null);
 
-    const popup = window.open(subscriptionUrl, '_blank', 'noopener,noreferrer');
-    if (!popup) {
-      window.location.assign(subscriptionUrl);
-    }
-
     toast({
-      title: intent === 'billing' ? 'Cobrança no navegador' : 'Assinatura no navegador',
+      title: intent === 'billing' ? 'Cobrança indisponível no app iOS' : 'Assinatura indisponível no app iOS',
       description: intent === 'billing'
-        ? 'Continue no navegador para gerenciar cobrança e pagamento.'
-        : 'Continue no navegador para escolher o plano e concluir o pagamento.',
+        ? 'O gerenciamento de cobrança foi desativado no app iOS neste momento.'
+        : 'Contratação e upgrades foram desativados no app iOS neste momento.',
+      variant: 'destructive',
     });
   };
 
   const handleManageBilling = async () => {
     if (iosAppShell) {
-      openWebSubscription('billing');
+      showIOSBillingBlockedToast('billing');
       return;
     }
 
@@ -478,7 +541,7 @@ const SubscriptionManagement = () => {
     }
 
     if (iosAppShell) {
-      openWebSubscription('plans');
+      showIOSBillingBlockedToast('plans');
       return;
     }
 
@@ -534,20 +597,9 @@ const SubscriptionManagement = () => {
             {iosAppShell && (
               <Alert className="border-border bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70">
                 <ArrowRight className="h-4 w-4 text-primary" />
-                <AlertTitle>Assinatura continua no navegador</AlertTitle>
-                <AlertDescription className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    No app iOS, a escolha do plano e a cobrança acontecem na versão web. O navegador pode pedir login novamente.
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => openWebSubscription('plans')}
-                  >
-                    Abrir assinatura
-                  </Button>
+                <AlertTitle>Assinaturas e upgrades indisponíveis no app iOS</AlertTitle>
+                <AlertDescription className="mt-3 text-sm text-muted-foreground">
+                  A contratação de planos, upgrades e o gerenciamento de cobrança foram desativados no app iOS neste momento. Seu plano atual e o restante do sistema continuam funcionando normalmente.
                 </AlertDescription>
               </Alert>
             )}
@@ -686,6 +738,7 @@ const SubscriptionManagement = () => {
                         <Button
                           size="lg"
                           className="w-full max-w-xs bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
+                          disabled={iosAppShell}
                           onClick={() => {
                             console.log('[Escolher Plano Button] Clicked, selectedInterval:', selectedInterval);
                             // Find the selected plan ID based on interval
@@ -704,7 +757,7 @@ const SubscriptionManagement = () => {
                             }
                           }}
                         >
-                          {iosAppShell ? 'Continuar no navegador' : 'Escolher este Plano'}
+                          {iosAppShell ? 'Indisponível no app iOS' : 'Escolher este Plano'}
                         </Button>
                         <p className="text-[10px] text-muted-foreground mt-4">
                           Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === '6month' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
@@ -865,11 +918,12 @@ const SubscriptionManagement = () => {
                                     <Button
                                       size="lg"
                                       className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-auto py-3 shadow-md transition-all hover:scale-[1.01]"
+                                      disabled={iosAppShell}
                                       onClick={() => handleStartPayment(annualPlan.id)}
                                     >
                                       <div className="flex flex-col items-center w-full">
                                         <div className="flex items-center justify-center gap-2 w-full">
-                                          <span>{iosAppShell ? 'Continuar no navegador' : 'Mudar para Anual'}</span>
+                                          <span>{iosAppShell ? 'Indisponível no app iOS' : 'Mudar para Anual'}</span>
                                         </div>
                                         <span className="text-[10px] font-normal opacity-90 mt-1">
                                           R$ {(annualMonthlyEquivalent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
@@ -884,6 +938,7 @@ const SubscriptionManagement = () => {
                                   <Button
                                     variant="outline"
                                     className="w-full justify-between h-auto py-3 border-border hover:bg-muted"
+                                    disabled={iosAppShell}
                                     onClick={() => handleStartPayment(semiannualPlan.id)}
                                   >
                                     <div className="text-left">
@@ -905,12 +960,13 @@ const SubscriptionManagement = () => {
                                     <Button
                                       size="lg"
                                       className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                      disabled={iosAppShell}
                                       onClick={() => handleStartPayment(nextTierMonthly.id)}
                                     >
                                       <div className="text-left">
                                         <div className="font-bold text-sm">
                                           {iosAppShell
-                                            ? 'Continuar no navegador'
+                                            ? 'Indisponível no app iOS'
                                             : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                         </div>
                                         <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -966,11 +1022,12 @@ const SubscriptionManagement = () => {
                                 <Button
                                   size="lg"
                                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-6 shadow-md transition-all hover:scale-[1.02]"
+                                  disabled={iosAppShell}
                                   onClick={() => handleStartPayment(annualPlan.id)}
                                 >
                                   <div className="flex flex-col items-center w-full">
                                     <div className="flex items-center justify-center gap-2 w-full">
-                                      <span>{iosAppShell ? 'Continuar no navegador' : 'Upgrade para Anual'}</span>
+                                      <span>{iosAppShell ? 'Indisponível no app iOS' : 'Upgrade para Anual'}</span>
                                       <span className="flex items-center justify-center bg-green-800 text-white text-[10px] px-2 h-5 rounded-full font-bold">-{savingsAnnual}%</span>
                                     </div>
                                     <span className="text-xs font-normal opacity-90 mt-1">
@@ -994,12 +1051,13 @@ const SubscriptionManagement = () => {
                                   <Button
                                     size="lg"
                                     className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                    disabled={iosAppShell}
                                     onClick={() => handleStartPayment(nextTierMonthly.id)}
                                   >
                                     <div className="text-left">
                                       <div className="font-bold text-sm">
                                         {iosAppShell
-                                          ? 'Continuar no navegador'
+                                          ? 'Indisponível no app iOS'
                                           : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                       </div>
                                       <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -1026,12 +1084,13 @@ const SubscriptionManagement = () => {
                               <Button
                                 size="lg"
                                 className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
+                                disabled={iosAppShell}
                                 onClick={() => handleStartPayment(nextTierMonthly.id)}
                               >
                                 <div className="text-left">
                                   <div className="font-bold text-sm">
                                     {iosAppShell
-                                      ? 'Continuar no navegador'
+                                      ? 'Indisponível no app iOS'
                                       : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                   </div>
                                   <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -1143,6 +1202,7 @@ const SubscriptionManagement = () => {
                   <CardFooter>
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
+                      disabled={iosAppShell}
                       onClick={() => {
                         console.log('[Vita Team Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'month');
@@ -1158,7 +1218,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      {iosAppShell ? 'Continuar no navegador' : 'Escolher Vita Team'}
+                      {iosAppShell ? 'Indisponível no app iOS' : 'Escolher Vita Team'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1204,6 +1264,7 @@ const SubscriptionManagement = () => {
                   <CardFooter>
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
+                      disabled={iosAppShell}
                       onClick={() => {
                         console.log('[Vita Business Button] Clicked');
                         const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'month');
@@ -1219,7 +1280,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      {iosAppShell ? 'Continuar no navegador' : 'Escolher Vita Business'}
+                      {iosAppShell ? 'Indisponível no app iOS' : 'Escolher Vita Business'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1250,8 +1311,8 @@ const SubscriptionManagement = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
-                      Falar com Consultor
+                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={iosAppShell}>
+                      {iosAppShell ? 'Indisponível no app iOS' : 'Falar com Consultor'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1290,20 +1351,24 @@ const SubscriptionManagement = () => {
                   </div>
                   {hasActiveSubscription && (
                     <div className="mt-4 flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={handleManageBilling}
-                        disabled={billingPortalMutation.isPending}
-                      >
-                        <CreditCard className="h-4 w-4" />
-                        {billingPortalMutation.isPending
-                          ? 'Abrindo portal...'
-                          : iosAppShell
-                            ? 'Abrir cobrança no navegador'
+                      {iosAppShell ? (
+                        <p className="text-xs text-muted-foreground">
+                          O gerenciamento de cobrança está indisponível no app iOS.
+                        </p>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 text-xs"
+                          onClick={handleManageBilling}
+                          disabled={billingPortalMutation.isPending}
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          {billingPortalMutation.isPending
+                            ? 'Abrindo portal...'
                             : 'Gerenciar meios de pagamento'}
-                      </Button>
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>

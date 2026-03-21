@@ -1,5 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 
+export const APP_SHELL_REQUEST_HEADER = "X-VitaView-App-Shell";
+
 export const isStandalonePwa = () => {
   if (typeof window === "undefined") return false;
   const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
@@ -45,3 +47,14 @@ export const isRestrictedAppShell = () => isStandalonePwa() || isNativeIOSApp() 
 export const isIOSAppShell = () =>
   isNativeIOSApp() || (isStandalonePwa() && isIOSDevice());
 
+export const isAppStoreRestrictedIOSAppShell = () => isNativeIOSApp();
+
+export const getAppShellRequestHeaders = () => {
+  if (!isAppStoreRestrictedIOSAppShell()) {
+    return {};
+  }
+
+  return {
+    [APP_SHELL_REQUEST_HEADER]: "ios",
+  };
+};
