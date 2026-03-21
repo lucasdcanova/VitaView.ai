@@ -373,7 +373,7 @@ export class MemStorage implements IStorage {
     await this.createSubscriptionPlan({
       name: "Gratuito",
       description: "Ideal para começar e organizar sua rotina",
-      maxProfiles: 20,
+      maxProfiles: 5,
       maxUploadsPerProfile: 10,
       price: 0,
       interval: "month",
@@ -382,7 +382,7 @@ export class MemStorage implements IStorage {
         "Prescrição Digital Limitada (10/mês)",
         "Protocolos Clínicos Padrão",
         "Agenda Básica",
-        "Gerenciamento de Pacientes Limitado (20)",
+        "Gerenciamento de Pacientes Limitado (5)",
         "Upload de Exames Limitado (10/mês)",
         "Relatórios Básicos"
       ],
@@ -2122,7 +2122,7 @@ export class DatabaseStorage implements IStorage {
         {
           name: "Gratuito",
           description: "Ideal para começar e organizar sua rotina",
-          maxProfiles: 20,
+          maxProfiles: 5,
           maxUploadsPerProfile: 10,
           price: 0,
           interval: "month",
@@ -2132,7 +2132,7 @@ export class DatabaseStorage implements IStorage {
             "Protocolos Clínicos **Básicos**",
             "Envio de **10 uploads** de exames por mês",
             "Agenda para **organização simples**",
-            "Gestão de até **20 pacientes**"
+            "Gestão de até **5 pacientes**"
           ],
           promoPrice: null,
           promoDescription: null,

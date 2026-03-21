@@ -586,7 +586,7 @@ const SubscriptionManagement = () => {
                             <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Prescrição Digital Limitada (10/mês)</span></li>
                             <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Protocolos Clínicos Padrão</span></li>
                             <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Agenda Básica</span></li>
-                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Gerenciamento de Pacientes Limitado (20)</span></li>
+                            <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Gerenciamento de Pacientes Limitado (5)</span></li>
                             <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Upload de Exames Limitado (10/mês)</span></li>
                             <li className="flex items-start"><CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400" /> <span className="text-muted-foreground">Relatórios Básicos</span></li>
                           </>
