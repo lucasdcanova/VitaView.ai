@@ -17,11 +17,12 @@ const stripeEnabled = Boolean(stripePublicKey && stripePublicKey.startsWith('pk_
 
 interface CheckoutFormProps {
   planId: number;
+  intentType: 'setup' | 'payment';
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-const CheckoutForm = ({ planId, onSuccess, onCancel }: CheckoutFormProps) => {
+const CheckoutForm = ({ planId, intentType, onSuccess, onCancel }: CheckoutFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -37,10 +38,70 @@ const CheckoutForm = ({ planId, onSuccess, onCancel }: CheckoutFormProps) => {
     setIsLoading(true);
 
     try {
+      const returnUrl = new URL('/subscription', window.location.origin);
+      returnUrl.searchParams.set('planId', String(planId));
+      returnUrl.searchParams.set('stripe_flow', intentType);
+
+      if (intentType === 'setup') {
+        const { error, setupIntent } = await stripe.confirmSetup({
+          elements,
+          confirmParams: {
+            return_url: returnUrl.toString(),
+          },
+          redirect: 'if_required',
+        });
+
+        if (error) {
+          toast({
+            title: "Erro no pagamento",
+            description: error.message || "Ocorreu um erro ao configurar a assinatura.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        if (!setupIntent) {
+          toast({
+            title: "Assinatura em processamento",
+            description: "A validação do método de pagamento está em andamento.",
+          });
+          return;
+        }
+
+        if (setupIntent.status !== 'succeeded') {
+          toast({
+            title: "Assinatura em processamento",
+            description: "A confirmação do método de pagamento ainda está em andamento.",
+          });
+          return;
+        }
+
+        try {
+          await apiRequest('POST', '/api/activate-subscription', {
+            planId,
+            setupIntentId: setupIntent.id,
+          });
+
+          toast({
+            title: "Assinatura ativada!",
+            description: "Seu plano foi atualizado com sucesso.",
+          });
+          onSuccess?.();
+        } catch (_activateError) {
+          toast({
+            title: "Pagamento confirmado",
+            description: "O método de pagamento foi salvo, mas houve um erro ao ativar o plano.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: window.location.origin + '/subscription',
+          return_url: returnUrl.toString(),
         },
         redirect: 'if_required',
       });
@@ -138,8 +199,15 @@ interface StripePaymentProps {
   onCancel?: () => void;
 }
 
+interface StripeIntentResponse {
+  clientSecret?: string;
+  intentType?: 'setup' | 'payment';
+  message?: string;
+}
+
 export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProps) => {
   const [clientSecret, setClientSecret] = useState("");
+  const [intentType, setIntentType] = useState<'setup' | 'payment'>('payment');
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -170,8 +238,8 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
           setIsLoading(true);
         }
 
-        const response = await apiRequest('POST', '/api/create-payment-intent', { planId });
-        const data = await response.json();
+        const response = await apiRequest('POST', '/api/create-subscription', { planId });
+        const data = await response.json() as StripeIntentResponse;
 
         if (!data.clientSecret) {
           throw new Error(data.message || 'Não foi possível obter o token de pagamento');
@@ -179,6 +247,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
 
         if (mounted) {
           setClientSecret(data.clientSecret);
+          setIntentType(data.intentType === 'setup' ? 'setup' : 'payment');
           setError(null);
         }
       } catch (error) {
@@ -256,6 +325,7 @@ export const StripePayment = ({ planId, onSuccess, onCancel }: StripePaymentProp
       <Elements stripe={stripePromise} options={elementOptions}>
         <CheckoutForm
           planId={planId}
+          intentType={intentType}
           onSuccess={onSuccess}
           onCancel={onCancel}
         />

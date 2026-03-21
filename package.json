@@ -14,6 +14,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "stripe:validate": "ts-node --transpile-only scripts/validate-stripe.ts",
+    "stripe:sync": "tsx scripts/sync-stripe-config.ts",
     "seed:appstore-showcase": "node scripts/seed-appstore-showcase.cjs"
   },
   "dependencies": {
