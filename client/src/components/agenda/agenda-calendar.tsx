@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video, UserCheck, Ban, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronRight, Filter, Clock, User, Plus, Maximize2, Minimize2, CalendarDays, Calendar as CalendarWeek, DollarSign, Play, CheckCircle, List, Lock, Video, UserCheck, Ban, Trash2, Paperclip, X } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, getHours, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -12,6 +12,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -27,11 +33,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import type { Appointment } from "@shared/schema";
 import { TriageDialog } from "@/components/triage/triage-dialog";
 import { Stethoscope } from "lucide-react";
 import { AppointmentCard } from "./appointment-card";
 import { AppointmentPopoverHeader } from "./appointment-popover-header";
+import { WaitingRoom } from "./waiting-room";
 
 interface AgendaCalendarProps {
   appointments?: Record<number, Appointment[]>;
@@ -39,6 +47,17 @@ interface AgendaCalendarProps {
   onNewAppointment?: () => void;
   onEditAppointment?: (appointment: Appointment) => void;
   fullWidth?: boolean;
+  onAiSchedule?: () => void;
+  aiCommand?: string;
+  onAiCommandChange?: (value: string) => void;
+  isAiLoading?: boolean;
+  uploadedFiles?: File[];
+  onFileSelect?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveFile?: (index: number) => void;
+  fileInputRef?: React.RefObject<HTMLInputElement>;
+  waitingRoomAppointments?: Appointment[];
+  onStartService?: (appointment: Appointment) => void;
+  onRemoveCheckIn?: (appointment: Appointment) => void;
 }
 
 export function AgendaCalendar({
@@ -46,7 +65,18 @@ export function AgendaCalendar({
   weekStart = new Date(),
   onNewAppointment,
   onEditAppointment,
-  fullWidth = false
+  fullWidth = false,
+  onAiSchedule,
+  aiCommand = "",
+  onAiCommandChange,
+  isAiLoading = false,
+  uploadedFiles = [],
+  onFileSelect,
+  onRemoveFile,
+  fileInputRef,
+  waitingRoomAppointments = [],
+  onStartService,
+  onRemoveCheckIn,
 }: AgendaCalendarProps) {
   const SLOT_INTERVAL_OPTIONS = [10, 15, 20, 30, 60] as const;
   const [currentDate, setCurrentDate] = useState(weekStart);
@@ -61,6 +91,8 @@ export function AgendaCalendar({
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
+  const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
+  const [waitingRoomDialogOpen, setWaitingRoomDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
@@ -552,37 +584,86 @@ export function AgendaCalendar({
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
-                  <Popover open={todayPopoverOpen} onOpenChange={handleTodayPopoverChange}>
+                  <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
                         className={cn(
-                          "h-9 border px-2.5 relative",
-                          isCurrentDateToday
-                            ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
-                            : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                          "h-9 border px-2.5 gap-1",
+                          "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
                         )}
+                        disabled={isAiLoading}
                       >
-                        Hoje
-                        {!isCurrentDateToday && (
-                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                        {isAiLoading ? (
+                          <BrandLoader className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <span className="text-base leading-none" style={{ color: '#F5A623' }}>✨</span>
                         )}
+                        <span className="font-semibold text-xs">IA</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="center">
-                      <Calendar
-                        mode="single"
-                        selected={currentDate}
-                        onSelect={(date) => {
-                          if (date) {
-                            setCurrentDate(date);
-                            setViewMode("day");
-                          }
-                          setTodayPopoverOpen(false);
-                        }}
-                        initialFocus
-                      />
+                    <PopoverContent className="w-80 p-3" align="end">
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-muted-foreground">Agende com IA</p>
+                        <div className="relative">
+                          <Input
+                            placeholder="Ex: 'Retorno para Maria dia 15 às 14h'"
+                            className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-16 shadow-sm w-full text-sm"
+                            value={aiCommand}
+                            onChange={(e) => onAiCommandChange?.(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                onAiSchedule?.();
+                                setAiPopoverOpen(false);
+                              }
+                            }}
+                            disabled={isAiLoading}
+                            autoFocus
+                          />
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                            <button
+                              className="text-muted-foreground hover:text-foreground p-1"
+                              onClick={() => fileInputRef?.current?.click()}
+                              disabled={isAiLoading}
+                              title="Anexar arquivo"
+                            >
+                              <Paperclip className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              className="text-foreground hover:text-primary p-1"
+                              onClick={() => {
+                                onAiSchedule?.();
+                                setAiPopoverOpen(false);
+                              }}
+                              disabled={isAiLoading}
+                            >
+                              <span className="text-sm" style={{ color: '#F5A623' }}>✨</span>
+                            </button>
+                          </div>
+                        </div>
+                        {uploadedFiles.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {uploadedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center gap-1.5 bg-muted border border-border rounded-md px-2 py-1 text-xs">
+                                <span className="text-muted-foreground">{file.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                                <span className="text-muted-foreground max-w-[100px] truncate">{file.name}</span>
+                                <button onClick={() => onRemoveFile?.(index)} className="text-muted-foreground hover:text-destructive">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          ref={fileInputRef as any}
+                          type="file"
+                          accept="image/*,.pdf"
+                          multiple
+                          className="hidden"
+                          onChange={onFileSelect}
+                        />
+                      </div>
                     </PopoverContent>
                   </Popover>
                   <div className="flex items-center bg-white/80 dark:bg-white/10 rounded-lg p-0.5 border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none">
@@ -617,37 +698,86 @@ export function AgendaCalendar({
                   Nova Consulta
                 </Button>
 
-                <Popover open={todayPopoverOpen} onOpenChange={handleTodayPopoverChange}>
+                <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        "border relative",
-                        isCurrentDateToday
-                          ? "bg-charcoal text-white border-charcoal shadow-sm dark:bg-white dark:text-charcoal dark:border-white"
-                          : "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
+                        "border gap-1.5",
+                        "bg-white/80 text-charcoal hover:bg-white hover:text-charcoal border-black/10 shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:text-white dark:shadow-none"
                       )}
+                      disabled={isAiLoading}
                     >
-                      Hoje
-                      {!isCurrentDateToday && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-900" />
+                      {isAiLoading ? (
+                        <BrandLoader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <span className="text-base leading-none" style={{ color: '#F5A623' }}>✨</span>
                       )}
+                      <span className="font-semibold">IA</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="center">
-                    <Calendar
-                      mode="single"
-                      selected={currentDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setCurrentDate(date);
-                          setViewMode("day");
-                        }
-                        setTodayPopoverOpen(false);
-                      }}
-                      initialFocus
-                    />
+                  <PopoverContent className="w-96 p-4" align="center">
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm font-medium text-muted-foreground">Agende com IA</p>
+                      <div className="relative">
+                        <Input
+                          placeholder="Ex: 'Retorno para Maria dia 15 às 14h'"
+                          className="bg-card border-border focus:border-primary text-foreground placeholder:text-muted-foreground pr-16 shadow-sm w-full"
+                          value={aiCommand}
+                          onChange={(e) => onAiCommandChange?.(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              onAiSchedule?.();
+                              setAiPopoverOpen(false);
+                            }
+                          }}
+                          disabled={isAiLoading}
+                          autoFocus
+                        />
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                          <button
+                            className="text-muted-foreground hover:text-foreground p-1"
+                            onClick={() => fileInputRef?.current?.click()}
+                            disabled={isAiLoading}
+                            title="Anexar arquivo"
+                          >
+                            <Paperclip className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="text-foreground hover:text-primary p-1"
+                            onClick={() => {
+                              onAiSchedule?.();
+                              setAiPopoverOpen(false);
+                            }}
+                            disabled={isAiLoading}
+                          >
+                            <span style={{ color: '#F5A623' }}>✨</span>
+                          </button>
+                        </div>
+                      </div>
+                      {uploadedFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-1.5 text-sm">
+                              <span className="text-muted-foreground">{file.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                              <span className="text-muted-foreground max-w-[120px] truncate">{file.name}</span>
+                              <button onClick={() => onRemoveFile?.(index)} className="text-muted-foreground hover:text-destructive">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <input
+                        ref={fileInputRef as any}
+                        type="file"
+                        accept="image/*,.pdf"
+                        multiple
+                        className="hidden"
+                        onChange={onFileSelect}
+                      />
+                    </div>
                   </PopoverContent>
                 </Popover>
 
@@ -801,6 +931,55 @@ export function AgendaCalendar({
                 </p>
               )}
             </div>
+
+            {/* Compact Waiting Room card */}
+            {(() => {
+              const waitingPatients = waitingRoomAppointments.filter(apt => apt.status === 'waiting');
+              return (
+                <button
+                  type="button"
+                  onClick={() => setWaitingRoomDialogOpen(true)}
+                  className={cn(
+                    "rounded-xl border bg-white/70 backdrop-blur-sm shadow-sm text-left transition-colors w-full",
+                    "dark:bg-black/15 dark:shadow-none",
+                    waitingPatients.length > 0
+                      ? "border-amber-300/60 hover:border-amber-400/80 dark:border-amber-600/40 dark:hover:border-amber-500/60"
+                      : "border-black/10 hover:border-black/20 dark:border-white/10 dark:hover:border-white/20",
+                    isCompactDayExperience ? "px-3 py-2" : "xl:w-[320px] px-3 py-3"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className={cn("font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-[10px]" : "text-xs")}>
+                      Sala de espera
+                    </p>
+                    <span className={cn(
+                      "font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center",
+                      isCompactDayExperience ? "text-[10px]" : "text-[11px]",
+                      waitingPatients.length > 0
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                        : "bg-black/5 text-charcoal/50 dark:bg-white/10 dark:text-white/50"
+                    )}>
+                      {waitingPatients.length}
+                    </span>
+                  </div>
+                  {waitingPatients.length > 0 ? (
+                    <div className={cn(isCompactDayExperience ? "mt-1" : "mt-2")}>
+                      <p className={cn("font-bold text-charcoal dark:text-white truncate", isCompactDayExperience ? "text-sm" : "text-base")}>
+                        {waitingPatients.map(p => p.patientName).slice(0, 3).join(', ')}
+                        {waitingPatients.length > 3 && ` +${waitingPatients.length - 3}`}
+                      </p>
+                      <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-xs" : "text-sm")}>
+                        Toque para ver detalhes
+                      </p>
+                    </div>
+                  ) : (
+                    <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "mt-1 text-xs" : "mt-2 text-sm")}>
+                      Nenhum paciente aguardando
+                    </p>
+                  )}
+                </button>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -1479,6 +1658,28 @@ export function AgendaCalendar({
           />
         )
       }
+
+      {/* Waiting Room Dialog */}
+      <Dialog open={waitingRoomDialogOpen} onOpenChange={setWaitingRoomDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-muted-foreground" />
+              Sala de Espera
+            </DialogTitle>
+          </DialogHeader>
+          {onStartService && onRemoveCheckIn && (
+            <WaitingRoom
+              appointments={waitingRoomAppointments}
+              onStartService={(apt) => {
+                onStartService(apt);
+                setWaitingRoomDialogOpen(false);
+              }}
+              onRemoveCheckIn={onRemoveCheckIn}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

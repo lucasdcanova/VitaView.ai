@@ -541,16 +541,16 @@ export default function Patients() {
                         {/* Actions */}
                         <div className="grid grid-cols-2 gap-2">
                           <Button
-                            variant="outline"
                             size="sm"
-                            className="w-full min-w-0 border-border text-foreground hover:bg-muted"
+                            className="w-full min-w-0 bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleSelectPatient(profile);
+                              handleStartService(profile);
                             }}
                           >
-                            <User className="h-4 w-4 mr-1" />
-                            Selecionar
+                            <Heart className="h-4 w-4 mr-1" />
+                            Atender
+                            <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
                           <Button
                             variant="outline"
@@ -563,18 +563,6 @@ export default function Patients() {
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Editar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="col-span-2 w-full min-w-0 bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartService(profile);
-                            }}
-                          >
-                            <Heart className="h-4 w-4 mr-1" />
-                            Atender
-                            <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
                         </div>
                       </CardContent>

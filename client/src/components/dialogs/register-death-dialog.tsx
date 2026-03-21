@@ -157,12 +157,13 @@ export function RegisterDeathDialog({
                             )}
                         />
 
-                        <DialogFooter className="pt-4">
+                        <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => onOpenChange(false)}
                                 disabled={mutation.isPending}
+                                className="w-full sm:w-auto"
                             >
                                 Cancelar
                             </Button>
@@ -170,6 +171,7 @@ export function RegisterDeathDialog({
                                 type="submit"
                                 variant="destructive"
                                 disabled={mutation.isPending}
+                                className="w-full sm:w-auto"
                             >
                                 {mutation.isPending ? "Salvando..." : "Confirmar Óbito"}
                             </Button>

@@ -787,13 +787,6 @@ export default function HealthTrendsNew({
     count: number;
   }> = [
     {
-      value: "all",
-      label: "Todos",
-      shortLabel: "Todos",
-      icon: Calendar,
-      count: timelineItems.length,
-    },
-    {
       value: "evolution",
       label: "Evoluções",
       shortLabel: "Evol.",
@@ -1134,22 +1127,22 @@ export default function HealthTrendsNew({
 
                   {/* Linha do Tempo */}
                   <div className="space-y-6 pb-12">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
-                          <Calendar className="h-6 w-6" />
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div className="shrink-0 rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
+                          <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Linha do Tempo Clínica</h3>
-                          <p className="text-sm text-gray-500 dark:text-slate-400">Histórico cronológico de eventos</p>
+                        <div className="min-w-0">
+                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100 truncate">Linha do Tempo</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 truncate">Cronologia dos eventos</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         {embedded && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                            className="hidden sm:inline-flex text-gray-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             onClick={handleExportToPDF}
                           >
                             <FileText className="w-4 h-4 mr-2" /> PDF
@@ -1157,14 +1150,14 @@ export default function HealthTrendsNew({
                         )}
                         <Badge
                           variant="outline"
-                          className="border-gray-200 bg-white px-3 py-1 text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          className="shrink-0 border-gray-200 bg-white px-2 sm:px-3 py-1 text-[11px] sm:text-sm text-gray-600 whitespace-nowrap min-w-fit dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         >
                           {filteredTimelineItems.length} {filteredTimelineItems.length === 1 ? "registro" : "registros"}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20">
+                    <div className="flex flex-nowrap overflow-x-auto items-center gap-2 rounded-2xl border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                       {timelineFilterOptions.map((option) => {
                         const Icon = option.icon;
                         const isActive = timelineFilter === option.value;
@@ -1175,8 +1168,8 @@ export default function HealthTrendsNew({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => setTimelineFilter(option.value)}
-                            className={`h-auto rounded-xl px-3 py-2 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-300 dark:focus-visible:ring-offset-slate-950 ${
+                            onClick={() => setTimelineFilter(isActive ? "all" : option.value as TimelineFilter)}
+                            className={`shrink-0 h-auto rounded-xl px-3 py-2 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-300 dark:focus-visible:ring-offset-slate-950 ${
                               isActive
                                 ? "bg-gray-900 text-white shadow-sm hover:bg-gray-900 hover:text-white dark:bg-indigo-500/20 dark:text-slate-50 dark:ring-1 dark:ring-indigo-400/30 dark:hover:bg-indigo-500/30 dark:hover:text-white"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"

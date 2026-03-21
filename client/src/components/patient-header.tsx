@@ -127,7 +127,7 @@ export default function PatientHeader({
           )}
         </div>
         {children && (
-          <div className="w-full md:w-auto flex-shrink-0 mt-4 md:mt-0">
+          <div className="w-full md:w-auto flex-shrink-0 mt-2 md:mt-0">
             {children}
           </div>
         )}

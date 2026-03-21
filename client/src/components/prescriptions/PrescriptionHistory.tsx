@@ -45,7 +45,7 @@ export function PrescriptionHistory({ prescriptions, onReprint, onEdit }: Prescr
                                 <div className="flex items-center justify-between w-full text-left pr-4">
                                     <div className="flex items-center gap-4">
                                         <div className="flex flex-col">
-                                            <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                                                 <Calendar className="h-4 w-4 text-gray-400" />
                                                 {format(new Date(prescription.issueDate), "dd/MM/yyyy")}
                                             </span>

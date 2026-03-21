@@ -1,5 +1,4 @@
 export const COMMON_CIDS = [
-    { code: "Z00.0", description: "Exame médico geral" },
     { code: "J06.9", description: "Infecção das vias aéreas superiores" },
     { code: "A09", description: "Gastroenterite infecciosa" },
     { code: "R51", description: "Cefaleia (dor de cabeça)" },

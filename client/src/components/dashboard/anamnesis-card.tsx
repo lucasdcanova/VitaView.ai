@@ -950,7 +950,7 @@ export function AnamnesisCard() {
                     <ExamUploadLauncher
                         compact={isMobile}
                         title="Exames no contexto da consulta"
-                        description="Envie resultados laboratoriais, imagem, biópsias, endoscopias, ecocardiogramas e outros laudos diretamente durante o atendimento."
+                        description="Envie exames e laudos durante o atendimento."
                         buttonLabel="Enviar exames"
                     />
                     {/* Action buttons */}

@@ -4,6 +4,7 @@ import { useProfiles } from "@/hooks/use-profiles";
 import { User, ChevronRight, Calendar, Activity, Users, Search, X, UserPlus, Heart } from "lucide-react";
 import { differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,13 @@ export default function ActivePatientIndicator({
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useLocation();
+    const { closeSidebar } = useSidebar();
+
+    const closeSidebarOnMobile = () => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            closeSidebar();
+        }
+    };
 
     const handleCreatePatient = () => {
         setIsDialogOpen(false);
@@ -64,6 +72,7 @@ export default function ActivePatientIndicator({
     const handlePatientSelectorClick = () => {
         if (patientClickTarget) {
             setLocation(patientClickTarget);
+            closeSidebarOnMobile();
             return;
         }
 
@@ -289,7 +298,10 @@ export default function ActivePatientIndicator({
 
                 {/* Bottom Section: Atendimento Action */}
                 <div
-                    onClick={() => setLocation("/atendimento")}
+                    onClick={() => {
+                        setLocation("/atendimento");
+                        closeSidebarOnMobile();
+                    }}
                     className={cn(
                         "group/atendimento relative flex cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-[18px] border px-4 py-3 transition-all duration-300",
                         location === "/atendimento"

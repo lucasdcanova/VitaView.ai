@@ -53,7 +53,7 @@ const formatExamDate = (value?: string | Date | null) => {
 
 export function ExamUploadLauncher({
   title = "Analisar exames com IA",
-  description = "Envie resultados laboratoriais, exames de imagem, biópsias, endoscopias, ecocardiogramas e outros laudos sem sair do prontuário.",
+  description = "Envie exames e laudos sem sair do prontuário.",
   buttonLabel = "Enviar exames",
   exams,
   className,
