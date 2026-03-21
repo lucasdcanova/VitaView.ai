@@ -262,7 +262,7 @@ export default function VitaAssistPage() {
 
     const HistoryList = (
         <div className="flex h-full flex-col">
-            <div className="border-b border-border px-4 py-4">
+            <div className="border-b border-border px-4 py-4 md:px-5">
                 <div className="flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted text-foreground">
                         <History className="h-4 w-4" />
@@ -276,7 +276,7 @@ export default function VitaAssistPage() {
                 </div>
             </div>
             <ScrollArea className="flex-1">
-                <div className="space-y-2 p-3">
+                <div className="space-y-2 p-3 md:p-4">
                     {loadingConversations ? (
                         <div className="flex items-center justify-center py-8">
                             <BrandLoader className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -353,27 +353,28 @@ export default function VitaAssistPage() {
                 showTitleAsMain={true}
                 fullWidth={true}
                 compact={true}
+                safeAreaTop={true}
                 icon={<Sparkles className="h-6 w-6" />}
             >
-                <div className="flex w-full flex-col gap-3 md:w-auto md:min-w-[420px] md:items-end">
-                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                <div className="flex w-full flex-col gap-2.5 md:w-auto md:min-w-[340px] md:items-stretch lg:min-w-[420px] lg:items-end">
+                    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center md:justify-start lg:justify-end">
                         <Button
                             variant={showHistory ? "secondary" : "outline"}
                             size="sm"
                             onClick={() => setShowHistory(!showHistory)}
-                            className="h-10 gap-2 rounded-xl border-border/80 bg-background/80 justify-center hover:bg-muted/60 sm:w-auto"
+                            className="h-11 w-full justify-center gap-2 rounded-2xl border-border/80 bg-background/80 px-3 text-sm hover:bg-muted/60 sm:w-auto"
                         >
                             {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
-                            <span>{isMobile ? "Conversas" : "Histórico"}</span>
+                            <span>Histórico</span>
                         </Button>
 
                         <Button
                             onClick={startNewConversation}
                             size="sm"
-                            className="h-10 gap-2 rounded-xl bg-[#1E3A5F] text-white shadow-sm hover:bg-[#2A4F7C]"
+                            className="h-11 w-full justify-center gap-2 rounded-2xl bg-[#1E3A5F] px-3 text-sm text-white shadow-sm hover:bg-[#2A4F7C] sm:w-auto"
                         >
                             <Plus className="h-4 w-4" />
-                            <span>Nova conversa</span>
+                            <span>Nova consulta</span>
                         </Button>
                     </div>
 
@@ -381,7 +382,7 @@ export default function VitaAssistPage() {
                         value={selectedProfileId?.toString() || "none"}
                         onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
                     >
-                        <SelectTrigger className="h-10 w-full rounded-xl border-border/70 bg-background sm:max-w-[320px]">
+                        <SelectTrigger className="h-11 w-full rounded-2xl border-border/70 bg-background text-sm shadow-sm sm:max-w-[320px]">
                             <SelectValue placeholder="Selecionar paciente" />
                         </SelectTrigger>
                         <SelectContent>
@@ -398,14 +399,14 @@ export default function VitaAssistPage() {
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
                 {!isMobile && showHistory && (
-                    <aside className="flex w-80 flex-col border-r border-border bg-card/80 backdrop-blur-sm">
+                    <aside className="flex w-72 flex-col border-r border-border bg-card/80 backdrop-blur-sm xl:w-80">
                         {HistoryList}
                     </aside>
                 )}
 
                 {isMobile && (
                     <Sheet open={showHistory} onOpenChange={setShowHistory}>
-                        <SheetContent side="left" className="w-[88vw] max-w-none border-border bg-background p-0">
+                        <SheetContent side="left" className="w-[88vw] max-w-[360px] border-border bg-background p-0">
                             <SheetHeader className="sr-only">
                                 <SheetTitle>Histórico de conversas</SheetTitle>
                                 <SheetDescription>Selecione uma conversa anterior do Vita Assist.</SheetDescription>
@@ -421,18 +422,18 @@ export default function VitaAssistPage() {
                         className="flex-1 overflow-y-auto overscroll-contain"
                     >
                         {!selectedConversationId && displayedMessages.length === 0 ? (
-                            <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-10 text-center">
-                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15">
-                                    <Sparkles className="h-10 w-10 text-white" />
+                            <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-8 text-center sm:py-10 md:px-6">
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15 sm:h-20 sm:w-20 sm:rounded-[28px]">
+                                    <Sparkles className="h-8 w-8 text-white sm:h-10 sm:w-10" />
                                 </div>
-                                <h2 className="mb-2 text-3xl font-heading font-bold tracking-tight text-foreground">
+                                <h2 className="mb-2 text-2xl font-heading font-bold tracking-tight text-foreground sm:text-3xl">
                                     Bem-vindo ao Vita Assist
                                 </h2>
-                                <p className="mb-8 max-w-2xl px-2 text-sm leading-7 text-muted-foreground">
+                                <p className="mb-6 max-w-2xl px-2 text-sm leading-6 text-muted-foreground sm:mb-8 sm:leading-7">
                                     Seu consultor médico de IA. Tire dúvidas sobre diagnósticos, tratamentos e
                                     guidelines médicos com respostas baseadas em evidências.
                                 </p>
-                                <div className="grid w-full max-w-3xl gap-3 px-2 md:grid-cols-3">
+                                <div className="grid w-full max-w-3xl gap-3 px-1 sm:px-2 md:grid-cols-2 xl:grid-cols-3">
                                     {[
                                         "Quais são as diretrizes atuais para tratamento de hipertensão?",
                                         "Como investigar anemia ferropriva?",
@@ -441,14 +442,14 @@ export default function VitaAssistPage() {
                                         <Button
                                             key={suggestion}
                                             variant="outline"
-                                            className="h-auto min-h-[108px] justify-start whitespace-normal rounded-2xl border-border/70 bg-background px-4 py-4 text-left text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-muted/40 hover:shadow-md"
+                                            className="h-auto min-h-[88px] justify-start whitespace-normal rounded-2xl border-border/70 bg-background px-4 py-4 text-left text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-muted/40 hover:shadow-md sm:min-h-[96px]"
                                             onClick={() => {
                                                 setInputMessage(suggestion);
                                                 textareaRef.current?.focus();
                                             }}
                                         >
-                                            <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0 text-[#448C9B]" />
-                                            <span className="text-left text-sm leading-6 text-foreground">
+                                            <MessageSquare className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-[#448C9B]" />
+                                            <span className="text-left text-[13px] leading-5 text-foreground sm:text-sm sm:leading-6">
                                                 {suggestion}
                                             </span>
                                         </Button>
@@ -460,23 +461,23 @@ export default function VitaAssistPage() {
                                 <BrandLoader className="h-8 w-8 animate-spin text-[#448C9B]" />
                             </div>
                         ) : (
-                            <div className="mx-auto max-w-5xl space-y-4 px-4 py-6 md:px-6">
+                            <div className="mx-auto max-w-5xl space-y-3 px-3 py-4 sm:space-y-4 sm:px-4 sm:py-6 md:px-6">
                                 {displayedMessages.map((message) => (
                                     <div
                                         key={message.id}
                                         className={cn(
-                                            "flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200",
+                                            "flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200 sm:gap-3",
                                             message.role === "user" ? "justify-end" : "justify-start"
                                         )}
                                     >
                                         {message.role === "assistant" && (
-                                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm">
+                                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-sm sm:h-9 sm:w-9">
                                                 <Bot className="h-4 w-4 text-white" />
                                             </div>
                                         )}
                                         <div
                                             className={cn(
-                                                "max-w-[88%] rounded-[24px] px-4 py-3 shadow-sm md:max-w-[80%]",
+                                                "max-w-[90%] rounded-[22px] px-3.5 py-3 shadow-sm sm:max-w-[84%] sm:rounded-[24px] sm:px-4 md:max-w-[80%]",
                                                 message.role === "user"
                                                     ? "bg-[#1E3A5F] text-white"
                                                     : "border border-border/70 bg-card text-foreground"
@@ -487,7 +488,7 @@ export default function VitaAssistPage() {
                                                     <ReactMarkdown>{message.content}</ReactMarkdown>
                                                 </div>
                                             ) : (
-                                                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                                                <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
                                             )}
                                             <div className="mt-2 flex items-center gap-2">
                                                 <p
@@ -506,15 +507,15 @@ export default function VitaAssistPage() {
                                             </div>
                                         </div>
                                         {message.role === "user" && (
-                                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-muted">
+                                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-2xl bg-muted sm:h-9 sm:w-9">
                                                 <User className="h-4 w-4 text-muted-foreground" />
                                             </div>
                                         )}
                                     </div>
                                 ))}
                                 {sendMessageMutation.isPending && (
-                                    <div className="flex justify-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F]">
+                                    <div className="flex justify-start gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200 sm:gap-3">
+                                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-2xl bg-[#1E3A5F] sm:h-9 sm:w-9">
                                             <Bot className="h-4 w-4 text-white" />
                                         </div>
                                         <div className="rounded-[24px] border border-border/70 bg-card px-4 py-3 shadow-sm">
@@ -530,9 +531,9 @@ export default function VitaAssistPage() {
                         )}
                     </div>
 
-                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 supports-[backdrop-filter]:backdrop-blur-xl md:px-6 md:pb-4">
+                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-3 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3 supports-[backdrop-filter]:backdrop-blur-xl sm:px-4 sm:pt-4 md:px-6 md:pb-4">
                         <div className="mx-auto max-w-5xl">
-                            <div className="rounded-[28px] border border-border/70 bg-background p-3 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)]">
+                            <div className="rounded-[24px] border border-border/70 bg-background p-2.5 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)] sm:rounded-[28px] sm:p-3">
                                 <div className="flex items-end gap-2">
                                     <Textarea
                                         ref={textareaRef}
@@ -540,13 +541,13 @@ export default function VitaAssistPage() {
                                         onChange={(e) => setInputMessage(e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         placeholder="Pergunte sobre hipótese diagnóstica, conduta, investigação ou interpretação clínica..."
-                                        className="min-h-[56px] resize-none border-0 bg-transparent px-2 py-3 text-base shadow-none focus-visible:ring-0"
+                                        className="min-h-[48px] resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] shadow-none focus-visible:ring-0 sm:min-h-[56px] sm:py-3 sm:text-base"
                                         disabled={sendMessageMutation.isPending}
                                     />
                                     <Button
                                         onClick={handleSendMessage}
                                         disabled={!inputMessage.trim() || sendMessageMutation.isPending}
-                                        className="mb-1 h-12 rounded-2xl bg-[#1E3A5F] px-4 hover:bg-[#2A4F7C]"
+                                        className="mb-1 h-11 rounded-2xl bg-[#1E3A5F] px-3.5 hover:bg-[#2A4F7C] sm:h-12 sm:px-4"
                                     >
                                         {sendMessageMutation.isPending ? (
                                             <BrandLoader className="h-5 w-5 animate-spin" />

@@ -22,6 +22,7 @@ interface PatientHeaderProps {
   showTitleAsMain?: boolean;
   fullWidth?: boolean;
   compact?: boolean;
+  safeAreaTop?: boolean;
   icon?: React.ReactNode;
   children?: React.ReactNode;
 }
@@ -34,6 +35,7 @@ export default function PatientHeader({
   showTitleAsMain = false,
   fullWidth = false,
   compact = false,
+  safeAreaTop = false,
   icon,
   children,
 }: PatientHeaderProps) {
@@ -65,6 +67,7 @@ export default function PatientHeader({
   const age = getAge(patient?.birthDate);
   const formattedBirthDate = formatDate(patient?.birthDate);
   const formattedExamDate = formatDate(lastExamDate);
+  const shouldRespectSafeAreaTop = safeAreaTop && compact && fullWidth;
 
   const highlightItems = [
     {
@@ -96,7 +99,11 @@ export default function PatientHeader({
   return (
     <div className={cn(
       "sticky top-0 z-30 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
-      compact ? "px-4 pt-4 pb-2 md:px-6 md:pt-6 md:pb-3" : "p-4 md:p-6",
+      shouldRespectSafeAreaTop
+        ? "px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] md:px-6 md:pt-6 md:pb-3"
+        : compact
+            ? "px-4 pt-4 pb-2 md:px-6 md:pt-6 md:pb-3"
+            : "p-4 md:p-6",
       fullWidth ? "border-b border-x-0 border-t-0 rounded-none" : "border rounded-2xl mb-6 shadow-sm"
     )}>
       <div className={cn(
@@ -111,7 +118,10 @@ export default function PatientHeader({
                   PACIENTE: {patientName}
                 </p>
               )}
-              <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
+              <h1 className={cn(
+                "font-heading font-bold tracking-tight text-foreground flex items-center gap-2",
+                compact ? "text-xl sm:text-2xl md:text-3xl" : "text-2xl md:text-3xl"
+              )}>
                 {icon && <span className="text-muted-foreground">{icon}</span>}
                 {title}
               </h1>
@@ -119,7 +129,12 @@ export default function PatientHeader({
           ) : (
             <>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body">{title}</p>
-              <h1 className="text-2xl md:text-3xl font-heading font-bold tracking-tight text-foreground">{patientName}</h1>
+              <h1 className={cn(
+                "font-heading font-bold tracking-tight text-foreground",
+                compact ? "text-xl sm:text-2xl md:text-3xl" : "text-2xl md:text-3xl"
+              )}>
+                {patientName}
+              </h1>
             </>
           )}
           {description && (
@@ -127,7 +142,7 @@ export default function PatientHeader({
           )}
         </div>
         {children && (
-          <div className="w-full md:w-auto flex-shrink-0 mt-2 md:mt-0">
+          <div className={cn("w-full md:w-auto flex-shrink-0", compact ? "mt-1 md:mt-0" : "mt-2 md:mt-0")}>
             {children}
           </div>
         )}
