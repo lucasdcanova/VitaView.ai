@@ -30,6 +30,28 @@ const initialState: ThemeProviderState = {
 
 const isTheme = (value: string | null): value is Theme => value === "light" || value === "dark";
 
+const readThemeCookie = (cookieName: string): Theme | null => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const rawCookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(`${cookieName}=`))
+    ?.split("=")[1];
+
+  const cookieTheme = rawCookie ? decodeURIComponent(rawCookie) : null;
+  return isTheme(cookieTheme) ? cookieTheme : null;
+};
+
+const persistThemeCookie = (cookieName: string, theme: Theme) => {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.cookie = `${cookieName}=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+};
+
 const resolveInitialTheme = (storageKey: string, defaultTheme: Theme): Theme => {
   if (typeof window === "undefined") {
     return defaultTheme;
@@ -37,6 +59,9 @@ const resolveInitialTheme = (storageKey: string, defaultTheme: Theme): Theme => 
 
   const directTheme = localStorage.getItem(storageKey);
   if (isTheme(directTheme)) return directTheme;
+
+  const cookieTheme = readThemeCookie(storageKey);
+  if (cookieTheme) return cookieTheme;
 
   const legacyKeys = ["theme", "vite-ui-theme"];
   for (const key of legacyKeys) {
@@ -111,6 +136,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     localStorage.setItem(storageKey, theme);
+    persistThemeCookie(storageKey, theme);
   }, [storageKey, theme]);
 
   useEffect(() => {

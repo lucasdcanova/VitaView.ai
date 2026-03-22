@@ -1,13 +1,20 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver {
 
     var window: UIWindow?
+    private weak var observedCookieStore: WKHTTPCookieStore?
+    private let themeCookieKeys = ["vitaview-theme", "theme", "vite-ui-theme"]
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        DispatchQueue.main.async { [weak self] in
+            self?.ensureThemeObservation()
+            self?.applyWindowAppearance(theme: .light)
+        }
+
         return true
     }
 
@@ -26,7 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        ensureThemeObservation()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -46,4 +53,137 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+    func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        synchronizeWindowAppearance(using: cookieStore)
+    }
+
+    private func ensureThemeObservation(attempt: Int = 0) {
+        guard let webView = findPrimaryWebView() else {
+            if attempt < 12 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                    self?.ensureThemeObservation(attempt: attempt + 1)
+                }
+            } else {
+                synchronizeWindowAppearance()
+            }
+            return
+        }
+
+        let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
+        if observedCookieStore !== cookieStore {
+            observedCookieStore?.remove(self)
+            cookieStore.add(self)
+            observedCookieStore = cookieStore
+        }
+
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+
+        synchronizeWindowAppearance(using: cookieStore)
+    }
+
+    private func synchronizeWindowAppearance(using cookieStore: WKHTTPCookieStore? = nil) {
+        guard let targetCookieStore = cookieStore ?? observedCookieStore else {
+            applyWindowAppearance(theme: .light)
+            return
+        }
+
+        targetCookieStore.getAllCookies { [weak self] cookies in
+            let theme = self?.resolveTheme(from: cookies) ?? .light
+            DispatchQueue.main.async {
+                self?.applyWindowAppearance(theme: theme)
+            }
+        }
+    }
+
+    private func resolveTheme(from cookies: [HTTPCookie]) -> UIUserInterfaceStyle {
+        for key in themeCookieKeys {
+            if let value = cookies.first(where: { $0.name == key })?.value {
+                if value == "dark" {
+                    return .dark
+                }
+
+                if value == "light" {
+                    return .light
+                }
+            }
+        }
+
+        return .light
+    }
+
+    private func applyWindowAppearance(theme: UIUserInterfaceStyle) {
+        let backgroundColor = themeBackgroundColor(for: theme)
+
+        activeWindows().forEach { window in
+            window.overrideUserInterfaceStyle = theme
+            window.backgroundColor = backgroundColor
+            window.rootViewController?.view.backgroundColor = backgroundColor
+            configureMacTitlebar(for: window)
+        }
+    }
+
+    private func themeBackgroundColor(for theme: UIUserInterfaceStyle) -> UIColor {
+        switch theme {
+        case .dark:
+            return UIColor(red: 15.0 / 255.0, green: 17.0 / 255.0, blue: 21.0 / 255.0, alpha: 1.0)
+        default:
+            return UIColor(red: 244.0 / 255.0, green: 244.0 / 255.0, blue: 244.0 / 255.0, alpha: 1.0)
+        }
+    }
+
+    private func activeWindows() -> [UIWindow] {
+        let sceneWindows = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+
+        if !sceneWindows.isEmpty {
+            return sceneWindows
+        }
+
+        if let window {
+            return [window]
+        }
+
+        return []
+    }
+
+    private func findPrimaryWebView() -> WKWebView? {
+        for window in activeWindows() {
+            if let webView = findWebView(in: window.rootViewController?.view) {
+                return webView
+            }
+        }
+
+        return nil
+    }
+
+    private func findWebView(in view: UIView?) -> WKWebView? {
+        guard let view else {
+            return nil
+        }
+
+        if let webView = view as? WKWebView {
+            return webView
+        }
+
+        for subview in view.subviews {
+            if let webView = findWebView(in: subview) {
+                return webView
+            }
+        }
+
+        return nil
+    }
+
+    private func configureMacTitlebar(for window: UIWindow) {
+        #if targetEnvironment(macCatalyst)
+        if let titlebar = window.windowScene?.titlebar {
+            if #available(iOS 15.0, *) {
+                titlebar.toolbarStyle = .unifiedCompact
+            }
+        }
+        #endif
+    }
 }
