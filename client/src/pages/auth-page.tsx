@@ -42,7 +42,6 @@ import { motion } from "framer-motion";
 import { isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useTheme } from "@/hooks/use-theme";
-import { Switch } from "@/components/ui/switch";
 
 /**
  * VitaView AI Auth Page
@@ -309,26 +308,26 @@ export default function AuthPage() {
       )}
 
       <div className="absolute right-4 top-4 z-50">
-        <div className="flex items-center gap-3 rounded-full border border-border/70 bg-background/85 px-3 py-2 shadow-sm backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </span>
-            <div className="hidden text-left sm:block">
-              <p className="font-heading text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Aparência
-              </p>
-              <p className="font-body text-sm text-foreground">
-                {isDarkMode ? "Modo escuro" : "Modo claro"}
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={isDarkMode}
-            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-            aria-label={isDarkMode ? "Desativar modo escuro" : "Ativar modo escuro"}
-          />
-        </div>
+        <Button
+          variant="ghost"
+          type="button"
+          size="icon"
+          className="h-9 w-9 rounded-full border border-transparent bg-background/30 p-0 text-muted-foreground opacity-75 shadow-none backdrop-blur-[2px] hover:border-border/50 hover:bg-background/55 hover:text-foreground hover:opacity-100"
+          onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+          aria-label={isDarkMode ? "Ativar modo claro" : "Ativar modo escuro"}
+          aria-pressed={isDarkMode}
+          title={isDarkMode ? "Ativar modo claro" : "Ativar modo escuro"}
+        >
+          <motion.span
+            key={theme}
+            initial={{ opacity: 0, rotate: -12, scale: 0.9 }}
+            animate={{ opacity: 1, rotate: 0, scale: 1 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="flex items-center justify-center"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </motion.span>
+        </Button>
       </div>
 
       {/* Main Content - Centered Form */}
