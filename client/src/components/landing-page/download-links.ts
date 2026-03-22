@@ -1,6 +1,9 @@
 const WINDOWS_DEFAULT_DOWNLOAD_URL =
   "https://github.com/lucasdcanova/VitaView.ai/releases/latest/download/VitaView-Setup.exe";
 
+const MAC_DEFAULT_DOWNLOAD_URL =
+  "https://github.com/lucasdcanova/VitaView.ai/releases/latest/download/VitaView-mac.dmg";
+
 const APPLE_STORE_SEARCH_URL =
   "https://apps.apple.com/br/search?term=VitaView";
 
@@ -15,8 +18,8 @@ export const platformDownloadLinks = {
     isDirect: true,
   },
   mac: {
-    href: import.meta.env.VITE_MAC_APP_STORE_URL || APPLE_STORE_SEARCH_URL,
-    isDirect: Boolean(import.meta.env.VITE_MAC_APP_STORE_URL),
+    href: import.meta.env.VITE_MAC_DOWNLOAD_URL || MAC_DEFAULT_DOWNLOAD_URL,
+    isDirect: true,
   },
   ios: {
     href: import.meta.env.VITE_IOS_APP_STORE_URL || APPLE_STORE_SEARCH_URL,

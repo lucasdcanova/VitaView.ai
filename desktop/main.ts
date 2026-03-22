@@ -182,13 +182,16 @@ async function createMainWindow() {
 }
 
 function setupAutoUpdates() {
-  if (!app.isPackaged || process.platform !== "win32") {
+  if (!app.isPackaged || !["win32", "darwin"].includes(process.platform)) {
     return;
   }
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.disableWebInstaller = false;
+
+  if (process.platform === "win32") {
+    autoUpdater.disableWebInstaller = false;
+  }
 
   autoUpdater.on("error", (error) => {
     console.error("Auto-update failed:", error);

@@ -13,6 +13,8 @@
     "desktop:dev": "npm --prefix desktop run dev",
     "desktop:dist:win": "npm --prefix desktop run dist:win",
     "desktop:publish:win": "npm --prefix desktop run publish:win",
+    "desktop:dist:mac": "npm --prefix desktop run dist:mac",
+    "desktop:publish:mac": "npm --prefix desktop run publish:mac",
     "db:push": "drizzle-kit push",
     "test": "vitest",
     "test:ui": "vitest --ui",

@@ -1,7 +1,7 @@
 {
   "name": "vitaview-desktop",
   "version": "1.0.0",
-  "description": "VitaView Windows desktop shell with auto-update support",
+  "description": "VitaView desktop shell with Windows and macOS auto-update support",
   "main": "dist/main.js",
   "author": "Lucas Canova",
   "license": "MIT",
@@ -15,12 +15,13 @@
     "build": "npm run clean && tsc -p tsconfig.json",
     "dev": "npm run build && cross-env VITAVIEW_DESKTOP_START_URL=http://localhost:3000/auth electron ./dist/main.js",
     "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
-    "publish:win": "npm run build && electron-builder --win nsis --x64 --publish always"
+    "publish:win": "npm run build && electron-builder --win nsis --x64 --publish always",
+    "dist:mac": "npm run build && electron-builder --mac dmg zip --universal --publish never",
+    "publish:mac": "npm run build && electron-builder --mac dmg zip --universal --publish always"
   },
   "build": {
     "appId": "br.com.lucascanova.vitaview.desktop",
     "productName": "VitaView",
-    "artifactName": "VitaView-Setup.${ext}",
     "asar": true,
     "directories": {
       "output": "release",
@@ -40,6 +41,7 @@
     ],
     "electronUpdaterCompatibility": ">=2.16",
     "win": {
+      "artifactName": "VitaView-Setup.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -49,6 +51,26 @@
         }
       ],
       "icon": "build/icon.png"
+    },
+    "mac": {
+      "artifactName": "VitaView-mac.${ext}",
+      "category": "public.app-category.medical",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "hardenedRuntime": true
     },
     "nsis": {
       "oneClick": false,

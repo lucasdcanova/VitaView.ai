@@ -14,7 +14,7 @@ const platforms = [
   {
     key: "mac",
     title: "macOS",
-    label: platformDownloadLinks.mac.isDirect ? "App Store" : "Buscar",
+    label: platformDownloadLinks.mac.isDirect ? "Baixar .dmg" : "Buscar",
     href: platformDownloadLinks.mac.href,
     icon: Laptop,
   },
