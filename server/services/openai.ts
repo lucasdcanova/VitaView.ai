@@ -1023,6 +1023,16 @@ export class AIServiceUnavailableError extends Error {
   }
 }
 
+export class AIQuotaExceededError extends Error {
+  statusCode: number;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "AIQuotaExceededError";
+    this.statusCode = 429;
+  }
+}
+
 // Update signature to accept context
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any, userId?: number, clinicId?: number) {
   try {
@@ -2971,6 +2981,10 @@ export async function vitaAssistChat(
   } catch (error) {
     if (error instanceof AIServiceUnavailableError) {
       throw error;
+    }
+
+    if ((error as any)?.status === 429 && ((error as any)?.code === "insufficient_quota" || (error as any)?.type === "insufficient_quota")) {
+      throw new AIQuotaExceededError("A conta OpenAI configurada para o Vita Assist está sem cota disponível. Verifique billing e limites da API.");
     }
 
     logger.error("[OpenAI] Erro no Vita Assist chat", { error });

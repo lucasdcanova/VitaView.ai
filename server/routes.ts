@@ -5513,7 +5513,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // ============================================
 
   // Import Vita Assist functions dynamically to avoid circular dependencies
-  const { vitaAssistChat, generateConversationTitle, AIServiceUnavailableError } = await import("./services/openai");
+  const { vitaAssistChat, generateConversationTitle, AIServiceUnavailableError, AIQuotaExceededError } = await import("./services/openai");
 
   // Import ContextManager
   const { ContextManager } = await import("./services/context-manager");
@@ -5625,6 +5625,12 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
     } catch (error: any) {
       console.error("Vita Assist chat error:", error);
+      if (error instanceof AIQuotaExceededError || error?.statusCode === 429) {
+        return res.status(429).json({
+          message: error.message || "A conta OpenAI configurada para o Vita Assist está sem cota disponível."
+        });
+      }
+
       if (error instanceof AIServiceUnavailableError || error?.statusCode === 503) {
         return res.status(503).json({
           message: error.message || "Serviço do Vita Assist temporariamente indisponível."

@@ -88,6 +88,15 @@ interface OptimisticMessage {
     pending: true;
 }
 
+interface LocalAssistantMessage {
+    id: string;
+    role: "assistant";
+    content: string;
+    createdAt: string;
+    conversationId: number | null;
+    local: true;
+}
+
 export default function VitaAssistPage() {
     const queryClient = useQueryClient();
     const { profiles, activeProfile } = useProfiles();
@@ -99,6 +108,7 @@ export default function VitaAssistPage() {
     const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
     const [showHistory, setShowHistory] = useState(false);
     const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
+    const [localAssistantMessages, setLocalAssistantMessages] = useState<LocalAssistantMessage[]>([]);
     const authRedirectedRef = useRef(false);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -130,6 +140,15 @@ export default function VitaAssistPage() {
                 toast({
                     title: "Vita Assist indisponível",
                     description: error.message || "O serviço de IA está temporariamente indisponível.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            if (error.status === 429) {
+                toast({
+                    title: "Cota da IA esgotada",
+                    description: error.message || "A conta OpenAI configurada para o Vita Assist está sem cota disponível.",
                     variant: "destructive",
                 });
                 return;
@@ -189,6 +208,9 @@ export default function VitaAssistPage() {
         },
         onSuccess: (data, variables) => {
             setOptimisticMessages((current) => current.filter((message) => message.id !== variables.optimisticId));
+            setLocalAssistantMessages((current) =>
+                current.filter((message) => message.conversationId !== (selectedConversationId || data.conversationId))
+            );
             if (!selectedConversationId && data.conversationId) {
                 setSelectedConversationId(data.conversationId);
             }
@@ -201,6 +223,26 @@ export default function VitaAssistPage() {
         onError: (error, variables) => {
             setOptimisticMessages((current) => current.filter((message) => message.id !== variables.optimisticId));
             setInputMessage(variables.message);
+            const fallbackMessage =
+                error instanceof ApiError && error.status === 429
+                    ? "A conta OpenAI configurada para o Vita Assist está sem cota disponível no momento. Verifique billing e limites da API para voltar a gerar respostas clínicas."
+                    : error instanceof ApiError
+                      ? error.message || "Não foi possível gerar a resposta clínica agora. Tente novamente em instantes."
+                      : error instanceof Error
+                        ? error.message
+                        : "Não foi possível gerar a resposta clínica agora. Tente novamente em instantes.";
+
+            setLocalAssistantMessages((current) => [
+                ...current.filter((message) => message.conversationId !== variables.conversationId),
+                {
+                    id: `local-assistant-${Date.now()}`,
+                    role: "assistant",
+                    content: fallbackMessage,
+                    createdAt: new Date().toISOString(),
+                    conversationId: variables.conversationId,
+                    local: true,
+                },
+            ]);
             handleVitaAssistError(error, {
                 title: "Falha ao enviar mensagem",
                 fallbackDescription: "Tente novamente em instantes.",
@@ -306,6 +348,7 @@ export default function VitaAssistPage() {
         setInputMessage("");
         setSelectedProfileId(activeProfile?.id ?? null);
         setOptimisticMessages([]);
+        setLocalAssistantMessages([]);
         setShowHistory(false);
     };
 
@@ -320,9 +363,14 @@ export default function VitaAssistPage() {
         (message) => message.conversationId === selectedConversationId
     );
 
+    const visibleLocalAssistantMessages = localAssistantMessages.filter(
+        (message) => message.conversationId === selectedConversationId
+    );
+
     const displayedMessages = [
         ...(currentConversation?.messages ?? []),
         ...visibleOptimisticMessages,
+        ...visibleLocalAssistantMessages,
     ];
 
     const HistoryList = (
