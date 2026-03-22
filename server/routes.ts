@@ -5513,7 +5513,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // ============================================
 
   // Import Vita Assist functions dynamically to avoid circular dependencies
-  const { vitaAssistChat, generateConversationTitle } = await import("./services/openai");
+  const { vitaAssistChat, generateConversationTitle, AIServiceUnavailableError } = await import("./services/openai");
 
   // Import ContextManager
   const { ContextManager } = await import("./services/context-manager");
@@ -5543,6 +5543,10 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ message: "Mensagem é obrigatória" });
+      }
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({ message: "Serviço do Vita Assist indisponível. Configure a chave da OpenAI." });
       }
 
       if (normalizedProfileId) {
@@ -5581,27 +5585,14 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Load existing messages
         const existingMessages = await storage.getAIMessagesByConversationId(conversationId);
         messages = existingMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-      } else {
-        // Create new conversation
-        const title = await generateConversationTitle(message);
-        conversation = await storage.createAIConversation(user.id, normalizedProfileId ?? undefined, title);
       }
 
-      if (normalizedProfileId !== undefined && conversation.profileId !== normalizedProfileId) {
-        conversation = await storage.updateAIConversation(conversation.id, {
-          profileId: normalizedProfileId,
-        }) ?? conversation;
-      }
-
-      // Add user message to history
+      // Keep the latest message only in memory until the AI responds successfully.
       messages.push({ role: 'user', content: message });
-
-      // Save user message
-      await storage.addAIMessage(conversation.id, 'user', message);
 
       // Get patient context if profileId provided
       let patientContext: string | undefined = undefined;
-      const effectiveProfileId = normalizedProfileId !== undefined ? normalizedProfileId : conversation.profileId;
+      const effectiveProfileId = normalizedProfileId !== undefined ? normalizedProfileId : conversation?.profileId;
       if (effectiveProfileId) {
         patientContext = await contextManager.getLeanContext(
           user.id,
@@ -5614,6 +5605,17 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Get AI response
       const aiResponse = await vitaAssistChat(messages, patientContext, user.id, (req as any).tenantId);
 
+      if (!conversation) {
+        const title = await generateConversationTitle(message);
+        conversation = await storage.createAIConversation(user.id, normalizedProfileId ?? undefined, title);
+      } else if (normalizedProfileId !== undefined && conversation.profileId !== normalizedProfileId) {
+        conversation = await storage.updateAIConversation(conversation.id, {
+          profileId: normalizedProfileId,
+        }) ?? conversation;
+      }
+
+      await storage.addAIMessage(conversation.id, 'user', message);
+
       // Save AI response
       await storage.addAIMessage(conversation.id, 'assistant', aiResponse);
 
@@ -5623,7 +5625,13 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
     } catch (error: any) {
       console.error("Vita Assist chat error:", error);
-      res.status(500).json({ message: error.message || "Erro ao processar consulta" });
+      if (error instanceof AIServiceUnavailableError || error?.statusCode === 503) {
+        return res.status(503).json({
+          message: error.message || "Serviço do Vita Assist temporariamente indisponível."
+        });
+      }
+
+      res.status(500).json({ message: "Erro ao processar consulta" });
     }
   });
 

@@ -1013,6 +1013,16 @@ if (process.env.OPENAI_API_KEY) {
   // OpenAI API key not found. OpenAI features will use fallback responses.
 }
 
+export class AIServiceUnavailableError extends Error {
+  statusCode: number;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "AIServiceUnavailableError";
+    this.statusCode = 503;
+  }
+}
+
 // Update signature to accept context
 export async function generateHealthInsights(examResult: ExamResult, patientData?: any, userId?: number, clinicId?: number) {
   try {
@@ -2925,7 +2935,7 @@ export async function vitaAssistChat(
   clinicId?: number
 ): Promise<string> {
   if (!openai) {
-    throw new Error("OpenAI API não configurada");
+    throw new AIServiceUnavailableError("Serviço do Vita Assist indisponível. Configure a chave da OpenAI.");
   }
 
   let systemPrompt = VITA_ASSIST_SYSTEM_PROMPT;
@@ -2959,8 +2969,12 @@ export async function vitaAssistChat(
     const content = response.choices[0].message.content;
     return content?.trim() || "Desculpe, não consegui processar sua pergunta. Por favor, tente reformulá-la.";
   } catch (error) {
+    if (error instanceof AIServiceUnavailableError) {
+      throw error;
+    }
+
     logger.error("[OpenAI] Erro no Vita Assist chat", { error });
-    throw new Error("Falha ao processar consulta médica");
+    throw new AIServiceUnavailableError("Serviço do Vita Assist temporariamente indisponível. Tente novamente em instantes.");
   }
 }
 

@@ -52,7 +52,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
-import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import { ApiError, apiRequest } from "@/lib/queryClient";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import PatientHeader from "@/components/patient-header";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -91,33 +92,80 @@ export default function VitaAssistPage() {
     const queryClient = useQueryClient();
     const { profiles, activeProfile } = useProfiles();
     const { toast } = useToast();
+    const [, navigate] = useLocation();
     const isMobile = useIsMobile();
     const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
     const [inputMessage, setInputMessage] = useState("");
     const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
     const [showHistory, setShowHistory] = useState(false);
     const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
+    const authRedirectedRef = useRef(false);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const handleVitaAssistError = useCallback((error: unknown, options?: {
+        title?: string;
+        fallbackDescription?: string;
+    }) => {
+        const title = options?.title || "Falha no Vita Assist";
+        const fallbackDescription = options?.fallbackDescription || "Tente novamente em instantes.";
+
+        if (error instanceof ApiError) {
+            if (error.status === 401) {
+                toast({
+                    title: "Sessão expirada",
+                    description: "Faça login novamente para continuar usando o Vita Assist.",
+                    variant: "destructive",
+                });
+
+                if (!authRedirectedRef.current) {
+                    authRedirectedRef.current = true;
+                    navigate(`/auth?next=${encodeURIComponent("/vita-assist")}`);
+                }
+                return;
+            }
+
+            if (error.status === 503) {
+                toast({
+                    title: "Vita Assist indisponível",
+                    description: error.message || "O serviço de IA está temporariamente indisponível.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            toast({
+                title,
+                description: error.message || fallbackDescription,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        toast({
+            title,
+            description: error instanceof Error ? error.message : fallbackDescription,
+            variant: "destructive",
+        });
+    }, [navigate, toast]);
+
     // Fetch conversations
-    const { data: conversations = [], isLoading: loadingConversations } = useQuery<AIConversation[]>({
+    const { data: conversations = [], isLoading: loadingConversations, error: conversationsError } = useQuery<AIConversation[], Error>({
         queryKey: ["/api/vita-assist/conversations"],
+        retry: false,
     });
 
     // Fetch current conversation with messages
-    const { data: currentConversation, isLoading: loadingConversation } = useQuery<AIConversation | null>({
+    const { data: currentConversation, isLoading: loadingConversation, error: currentConversationError } = useQuery<AIConversation | null, Error>({
         queryKey: ["/api/vita-assist/conversations", selectedConversationId],
         queryFn: async () => {
             if (!selectedConversationId) return null;
-            const res = await fetch(`/api/vita-assist/conversations/${selectedConversationId}`, {
-                credentials: "include",
-            });
-            if (!res.ok) throw new Error("Erro ao carregar conversa");
+            const res = await apiRequest("GET", `/api/vita-assist/conversations/${selectedConversationId}`, undefined, 0);
             return res.json();
         },
         enabled: !!selectedConversationId,
+        retry: false,
     });
 
     // Send message mutation
@@ -136,7 +184,7 @@ export default function VitaAssistPage() {
                 message,
                 conversationId,
                 profileId,
-            });
+            }, 0);
             return res.json();
         },
         onSuccess: (data, variables) => {
@@ -150,13 +198,12 @@ export default function VitaAssistPage() {
                 textareaRef.current?.focus();
             });
         },
-        onError: (_error, variables) => {
+        onError: (error, variables) => {
             setOptimisticMessages((current) => current.filter((message) => message.id !== variables.optimisticId));
             setInputMessage(variables.message);
-            toast({
+            handleVitaAssistError(error, {
                 title: "Falha ao enviar mensagem",
-                description: "Tente novamente em instantes.",
-                variant: "destructive",
+                fallbackDescription: "Tente novamente em instantes.",
             });
         },
     });
@@ -201,6 +248,24 @@ export default function VitaAssistPage() {
     useEffect(() => {
         resizeTextarea();
     }, [inputMessage, resizeTextarea]);
+
+    useEffect(() => {
+        if (!conversationsError) return;
+
+        handleVitaAssistError(conversationsError, {
+            title: "Falha ao carregar histórico",
+            fallbackDescription: "Não foi possível carregar as conversas do Vita Assist.",
+        });
+    }, [conversationsError, handleVitaAssistError]);
+
+    useEffect(() => {
+        if (!currentConversationError) return;
+
+        handleVitaAssistError(currentConversationError, {
+            title: "Falha ao carregar conversa",
+            fallbackDescription: "Não foi possível abrir esta conversa.",
+        });
+    }, [currentConversationError, handleVitaAssistError]);
 
     const handleSendMessage = useCallback(() => {
         const trimmedMessage = inputMessage.trim();
