@@ -1,0 +1,22 @@
+{
+  "appId": "br.com.lucascanova.vitaview",
+  "appName": "VitaView",
+  "webDir": "dist/public",
+  "server": {
+    "url": "https://vitaview.ai/auth",
+    "cleartext": false,
+    "allowNavigation": [
+      "vitaview.ai",
+      "*.vitaview.ai"
+    ]
+  },
+  "ios": {
+    "zoomEnabled": false,
+    "contentInset": "never",
+    "scrollEnabled": true
+  },
+  "android": {
+    "backgroundColor": "#FFFFFF"
+  },
+  "packageClassList": []
+}

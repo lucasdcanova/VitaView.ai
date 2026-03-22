@@ -9,7 +9,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver
     private weak var observedCookieStore: WKHTTPCookieStore?
     private let themeCookieKeys = ["vitaview-theme", "theme", "vite-ui-theme"]
 
+    private var shouldSyncWindowAppearance: Bool {
+        if #available(iOS 14.0, *), ProcessInfo.processInfo.isiOSAppOnMac {
+            return false
+        }
+
+        return true
+    }
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        guard shouldSyncWindowAppearance else {
+            return true
+        }
+
         DispatchQueue.main.async { [weak self] in
             self?.ensureThemeObservation()
             self?.applyWindowAppearance(theme: .light)
@@ -33,6 +45,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        guard shouldSyncWindowAppearance else {
+            return
+        }
+
         ensureThemeObservation()
     }
 
@@ -54,10 +70,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver
     }
 
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        guard shouldSyncWindowAppearance else {
+            return
+        }
+
         synchronizeWindowAppearance(using: cookieStore)
     }
 
     private func ensureThemeObservation(attempt: Int = 0) {
+        guard shouldSyncWindowAppearance else {
+            return
+        }
+
         guard let webView = findPrimaryWebView() else {
             if attempt < 12 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
@@ -76,14 +100,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver
             observedCookieStore = cookieStore
         }
 
-        webView.isOpaque = false
-        webView.backgroundColor = .clear
-        webView.scrollView.backgroundColor = .clear
-
         synchronizeWindowAppearance(using: cookieStore)
     }
 
     private func synchronizeWindowAppearance(using cookieStore: WKHTTPCookieStore? = nil) {
+        guard shouldSyncWindowAppearance else {
+            return
+        }
+
         guard let targetCookieStore = cookieStore ?? observedCookieStore else {
             applyWindowAppearance(theme: .light)
             return
@@ -114,6 +138,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKHTTPCookieStoreObserver
     }
 
     private func applyWindowAppearance(theme: UIUserInterfaceStyle) {
+        guard shouldSyncWindowAppearance else {
+            return
+        }
+
         let backgroundColor = themeBackgroundColor(for: theme)
 
         activeWindows().forEach { window in
