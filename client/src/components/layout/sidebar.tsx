@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -30,7 +30,9 @@ import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { apiRequest } from "@/lib/queryClient";
 import {
   formatRecordingTime,
   useConsultationRecording,
@@ -57,15 +59,49 @@ export default function Sidebar(props: SidebarProps) {
   const sidebarContext = useSidebar();
   const isSidebarOpen = props.isSidebarOpen ?? sidebarContext.isSidebarOpen;
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [switchingClinicId, setSwitchingClinicId] = useState<number | null>(null);
   const [location, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const { user, logoutMutation } = useAuth();
   const { profiles, activeProfile, setActiveProfile } = useProfiles();
   const { recordingState, recordingTime, currentSession } =
     useConsultationRecording();
-  const { data: clinicContext } = useQuery<{ clinic: { name: string } | null }>({
+  const { data: clinicContext } = useQuery<{
+    clinic: { id: number; name: string } | null;
+    clinics?: Array<{ id: number; name: string; role: string; isActive: boolean }>;
+    canCreateClinic?: boolean;
+    activeClinicId?: number | null;
+  }>({
     queryKey: ["/api/my-clinic", user?.id ?? null, user?.clinicId ?? null],
-    enabled: !!user && !!user?.clinicId,
+    enabled: !!user,
     retry: false,
+  });
+
+  const selectClinicMutation = useMutation({
+    mutationFn: async (clinicId: number) => {
+      const res = await apiRequest("POST", "/api/my-clinic/select", { clinicId });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Erro ao selecionar clínica");
+      }
+      return res.json();
+    },
+    onSuccess: async (data) => {
+      queryClient.setQueryData(["/api/user"], (currentUser: any) => currentUser ? {
+        ...currentUser,
+        clinicId: data?.clinicId ?? currentUser.clinicId,
+        clinicRole: data?.role ?? currentUser.clinicRole,
+      } : currentUser);
+
+      await queryClient.invalidateQueries();
+      closeSidebarOnMobile();
+    },
+    onMutate: (clinicId) => {
+      setSwitchingClinicId(clinicId);
+    },
+    onSettled: () => {
+      setSwitchingClinicId(null);
+    },
   });
 
   const handleLogout = () => {
@@ -93,6 +129,15 @@ export default function Sidebar(props: SidebarProps) {
   const displayName = isSecretary ? loggedInAs.name : (user?.fullName || user?.username || "Doutor");
   const displayRole = isSecretary ? 'Secretária' : 'Profissional de saúde';
   const selectedClinicName = clinicContext?.clinic?.name || null;
+  const accessibleClinics = clinicContext?.clinics ?? [];
+  const sortedClinics = [...accessibleClinics].sort((a, b) => {
+    if (a.isActive) return -1;
+    if (b.isActive) return 1;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+  const activeClinicQuickItem = sortedClinics.find((clinic) => clinic.isActive) ?? null;
+  const otherClinicQuickItems = sortedClinics.filter((clinic) => !clinic.isActive);
+  const showClinicQuickSwitch = sortedClinics.length > 1;
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
       ? (user.preferences as Record<string, any>).professionalProfile
@@ -131,6 +176,65 @@ export default function Sidebar(props: SidebarProps) {
         sidebarContext.closeSidebar();
       }
     }
+  };
+
+  const roleLabel = (role?: string | null) =>
+    role === "admin" ? "Admin" : role === "secretary" ? "Secretaria" : "Profissional";
+
+  const handleClinicSwitch = (clinicId: number, isActive?: boolean) => {
+    if (isActive || selectClinicMutation.isPending) return;
+    selectClinicMutation.mutate(clinicId);
+  };
+
+  const handleOpenClinicPage = () => {
+    setLocation("/minha-clinica");
+    handleNavClick();
+  };
+
+  const getClinicInitials = (name?: string | null) => {
+    if (!name) return "CL";
+    const parts = name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+  };
+
+  const getClinicBadgeStyle = (name?: string | null, active?: boolean) => {
+    const palette = [
+      { bg: "#E7EEF6", border: "#C7D4E4", text: "#28415E" },
+      { bg: "#EDEBE7", border: "#D8D2C8", text: "#4E463B" },
+      { bg: "#E7F0EC", border: "#C6D8CF", text: "#2F5245" },
+      { bg: "#F1ECE8", border: "#DDCFC6", text: "#5B4639" },
+      { bg: "#ECECF4", border: "#D3D5E3", text: "#404A68" },
+    ];
+
+    const source = name || "clinica";
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = source.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const selected = palette[Math.abs(hash) % palette.length];
+
+    if (active) {
+      return {
+        backgroundColor: "#FFFFFF1A",
+        borderColor: "#FFFFFF26",
+        color: "#FFFFFF",
+      };
+    }
+
+    return {
+      backgroundColor: selected.bg,
+      borderColor: selected.border,
+      color: selected.text,
+    };
   };
 
   // Estilo dos itens de navegação
@@ -498,6 +602,176 @@ export default function Sidebar(props: SidebarProps) {
               <NavItem href="/pacientes" icon={Users} label="Pacientes" tourId="nav-pacientes" />
               <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
               <NavItem href="/minha-clinica" icon={Building} label="Minha Clínica" tourId="nav-minha-clinica" />
+              {isCollapsed && showClinicQuickSwitch && (
+                <div className="mt-2 space-y-2">
+                  {sortedClinics.map((accessibleClinic) => (
+                    <TooltipProvider key={accessibleClinic.id} delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleClinicSwitch(accessibleClinic.id, accessibleClinic.isActive);
+                            }}
+                            disabled={accessibleClinic.isActive || selectClinicMutation.isPending}
+                            className={cn(
+                              "relative flex w-full items-center justify-center rounded-2xl border p-2.5 transition-all",
+                              accessibleClinic.isActive
+                                ? "border-charcoal bg-charcoal text-pureWhite shadow-sm"
+                                : "border-lightGray bg-white/80 text-charcoal hover:border-charcoal/25 hover:bg-lightGray/35",
+                              selectClinicMutation.isPending && "opacity-70"
+                            )}
+                            aria-label={`Selecionar clínica ${accessibleClinic.name}`}
+                          >
+                            {switchingClinicId === accessibleClinic.id ? (
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/5 bg-white/75">
+                                <BrandLoader className="h-4 w-4 animate-spin text-charcoal" />
+                              </div>
+                            ) : (
+                              <div
+                                className={cn(
+                                  "flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]",
+                                  accessibleClinic.isActive ? "border border-white/15 text-pureWhite" : "border border-black/5 text-charcoal"
+                                )}
+                                style={getClinicBadgeStyle(accessibleClinic.name, accessibleClinic.isActive)}
+                              >
+                                {getClinicInitials(accessibleClinic.name)}
+                              </div>
+                            )}
+                            {accessibleClinic.isActive && (
+                              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400" />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="ml-2 rounded-xl border border-lightGray bg-pureWhite text-charcoal shadow-lg">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold">{accessibleClinic.name}</p>
+                            <p className="text-xs text-mediumGray">{roleLabel(accessibleClinic.role)}</p>
+                            <p className="text-[11px] text-mediumGray">
+                              {accessibleClinic.isActive ? "Clínica ativa" : "Trocar para esta clínica"}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+              )}
+              {!isCollapsed && showClinicQuickSwitch && (
+                <div className="mt-3 rounded-2xl border border-lightGray/80 bg-gradient-to-b from-white to-lightGray/20 p-3 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset]">
+                  <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-mediumGray">
+                        Troca rápida
+                      </p>
+                      <p className="mt-1 text-xs text-charcoal/70">
+                        Alterne de ambiente sem sair da rotina.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-charcoal px-2.5 py-1 text-[10px] font-semibold text-pureWhite">
+                        {sortedClinics.length} clínicas
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleOpenClinicPage}
+                        className="rounded-full border border-lightGray bg-white px-2.5 py-1 text-[10px] font-semibold text-charcoal transition-colors hover:border-charcoal/20 hover:bg-lightGray/25"
+                      >
+                        Gerenciar
+                      </button>
+                    </div>
+                  </div>
+
+                  {activeClinicQuickItem && (
+                    <div className="mb-3 rounded-2xl border border-charcoal bg-charcoal px-3 py-3 text-pureWhite shadow-sm">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-pureWhite/65">
+                        Atendendo agora
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 text-sm font-bold text-pureWhite shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                          style={getClinicBadgeStyle(activeClinicQuickItem.name, true)}
+                        >
+                          {getClinicInitials(activeClinicQuickItem.name)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{activeClinicQuickItem.name}</p>
+                          <p className="truncate text-[11px] text-pureWhite/72">
+                            {roleLabel(activeClinicQuickItem.role)}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-pureWhite/12 px-2 py-0.5 text-[10px] font-semibold text-pureWhite">
+                          Ativa
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleOpenClinicPage}
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-left text-[11px] font-medium text-pureWhite/82 transition-colors hover:bg-white/10"
+                      >
+                        Abrir gestão da clínica
+                      </button>
+                    </div>
+                  )}
+
+                  {otherClinicQuickItems.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-mediumGray">
+                        Outras clínicas
+                      </p>
+                      <ScrollArea className="max-h-[min(34vh,18rem)] pr-2">
+                        <div className="space-y-2">
+                          {otherClinicQuickItems.map((accessibleClinic) => (
+                            <button
+                              key={accessibleClinic.id}
+                              type="button"
+                              onClick={() => {
+                                handleClinicSwitch(accessibleClinic.id, accessibleClinic.isActive);
+                              }}
+                              disabled={selectClinicMutation.isPending}
+                              className={cn(
+                                "w-full rounded-2xl border border-lightGray bg-white/80 px-3 py-2.5 text-left transition-all hover:-translate-y-[1px] hover:border-charcoal/25 hover:bg-white hover:shadow-sm",
+                                selectClinicMutation.isPending && "opacity-70"
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                {switchingClinicId === accessibleClinic.id ? (
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/5 bg-white/75">
+                                    <BrandLoader className="h-4 w-4 animate-spin text-charcoal" />
+                                  </div>
+                                ) : (
+                                  <div
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
+                                    style={getClinicBadgeStyle(accessibleClinic.name, false)}
+                                  >
+                                    {getClinicInitials(accessibleClinic.name)}
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-semibold text-charcoal">{accessibleClinic.name}</p>
+                                  <p className="truncate text-[11px] text-mediumGray">
+                                    {roleLabel(accessibleClinic.role)}
+                                  </p>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-lightGray px-2 py-0.5 text-[10px] font-semibold text-charcoal">
+                                  {switchingClinicId === accessibleClinic.id ? "Abrindo" : "Entrar"}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleOpenClinicPage}
+                    className="mt-3 w-full rounded-xl border border-lightGray bg-white/65 px-3 py-2 text-left text-[11px] font-medium text-charcoal/78 transition-colors hover:border-charcoal/20 hover:bg-white"
+                  >
+                    Gerenciar clínicas em Minha Clínica
+                  </button>
+                </div>
+              )}
             </div>
           </nav>
 

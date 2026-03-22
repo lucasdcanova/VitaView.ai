@@ -31,6 +31,7 @@ import {
   Shield,
   Edit2,
   Save,
+  Star,
   X,
   ArrowRight,
   Sparkles,
@@ -136,6 +137,7 @@ const MyClinic = () => {
     const [clinicName, setClinicName] = useState('');
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedClinicName, setEditedClinicName] = useState('');
+    const [editingClinicId, setEditingClinicId] = useState<number | null>(null);
 
     const { data: clinicData, isLoading, refetch: refetchClinic } = useQuery<ClinicData>({
         queryKey: ['/api/my-clinic', user?.id ?? null, user?.clinicId ?? null],
@@ -153,14 +155,20 @@ const MyClinic = () => {
             if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao criar clínica'); }
             return res.json();
         },
-        onSuccess: () => {
-            toast({ title: 'Clínica criada!', description: 'Sua clínica foi configurada com sucesso.' });
+        onSuccess: async (data) => {
+            queryClient.setQueryData(['/api/user'], (currentUser: any) => currentUser ? {
+                ...currentUser,
+                clinicId: data?.clinic?.id ?? currentUser.clinicId,
+                clinicRole: 'admin',
+            } : currentUser);
+
             setIsCreateClinicDialogOpen(false);
             setClinicName('');
-            queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/profiles'] });
-            refetchClinic();
+            await Promise.all([
+                queryClient.invalidateQueries(),
+                refetchClinic(),
+            ]);
+            toast({ title: 'Clínica criada!', description: 'A nova clínica já foi definida como ambiente ativo.' });
         },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
@@ -191,16 +199,21 @@ const MyClinic = () => {
             }
             return res.json();
         },
-        onSuccess: async () => {
+        onSuccess: async (data) => {
+            queryClient.setQueryData(['/api/user'], (currentUser: any) => currentUser ? {
+                ...currentUser,
+                clinicId: data?.clinicId ?? currentUser.clinicId,
+                clinicRole: data?.role ?? currentUser.clinicRole,
+            } : currentUser);
+
             await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
-                queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
-                queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
+                queryClient.invalidateQueries(),
+                refetchClinic(),
             ]);
 
             toast({
                 title: 'Clínica selecionada',
-                description: 'O contexto de pacientes da clínica ativa foi atualizado.',
+                description: 'O contexto ativo foi atualizado em todo o app.',
             });
         },
         onError: (error: Error) => {
@@ -259,15 +272,47 @@ const MyClinic = () => {
     });
 
     const updateClinicMutation = useMutation({
-        mutationFn: async (name: string) => {
-            const clinicId = clinicData?.clinic?.id;
-            if (!clinicId) throw new Error('Clínica não encontrada');
+        mutationFn: async ({ clinicId, name }: { clinicId: number; name: string }) => {
             const res = await apiRequest('PUT', `/api/clinics/${clinicId}`, { name });
             if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao atualizar clínica'); }
             return res.json();
         },
-        onSuccess: () => { toast({ title: 'Clínica atualizada!' }); setIsEditingName(false); refetchClinic(); },
+        onSuccess: async (data, variables) => {
+            const updatedClinicName = data?.clinic?.name ?? variables.name;
+            setIsEditingName(false);
+            setEditingClinicId(null);
+            setEditedClinicName(updatedClinicName);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
+                refetchClinic(),
+            ]);
+            toast({ title: 'Clínica atualizada!', description: 'O nome do ambiente foi salvo com sucesso.' });
+        },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
+    });
+
+    const setDefaultClinicMutation = useMutation({
+        mutationFn: async (clinicId: number) => {
+            const res = await apiRequest('PATCH', '/api/user/preferences', {
+                preferences: { defaultClinicId: clinicId },
+            });
+            if (!res.ok) {
+                const e = await res.json();
+                throw new Error(e.message || 'Erro ao definir clínica padrão');
+            }
+            return res.json();
+        },
+        onSuccess: (updatedUser, clinicId) => {
+            queryClient.setQueryData(['/api/user'], updatedUser);
+            queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+            toast({
+                title: 'Clínica padrão atualizada',
+                description: 'Esse será o ambiente aberto automaticamente ao entrar no app.',
+            });
+        },
+        onError: (error: Error) => {
+            toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+        }
     });
 
     const currentPlan = subscriptionData?.plan;
@@ -275,6 +320,14 @@ const MyClinic = () => {
     const clinic = clinicData?.clinic;
     const accessibleClinics = clinicData?.clinics ?? [];
     const canCreateClinic = clinicData?.canCreateClinic !== false;
+    const preferences =
+        user?.preferences && typeof user.preferences === 'object'
+            ? (user.preferences as Record<string, any>)
+            : {};
+    const defaultClinicId =
+        typeof preferences.defaultClinicId === 'number' && Number.isFinite(preferences.defaultClinicId)
+            ? preferences.defaultClinicId
+            : null;
 
     if (isLoading) {
         return (
@@ -380,7 +433,7 @@ const MyClinic = () => {
                         )}
                         {!canCreateClinic && (
                             <p className="text-xs text-destructive mb-4 max-w-md">
-                                Sua conta já possui uma clínica administrada. Se ela não aparece, atualize a sessão ou contate o suporte.
+                                Perfis de secretaria não podem criar novas clínicas. Use um convite ou troque para uma conta profissional administradora.
                             </p>
                         )}
                         <Button onClick={() => setIsCreateClinicDialogOpen(true)} disabled={!canCreateClinic} className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6">
@@ -432,6 +485,16 @@ const MyClinic = () => {
     const renderClinicContent = () => {
         if (!clinic || !clinicData) return null;
         const professionalCount = clinicData.members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member').length;
+        const showClinicSwitcher = accessibleClinics.length > 1;
+        const roleLabel = (role: string) => role === 'admin' ? 'Admin' : role === 'secretary' ? 'Secretaria' : 'Profissional';
+        const sortedClinics = [...accessibleClinics].sort((a, b) => {
+            const score = (entry: UserClinicAccess) => {
+                if (entry.id === clinic.id) return 0;
+                if (entry.id === defaultClinicId) return 1;
+                return 2;
+            };
+            return score(a) - score(b);
+        });
         return (
             <>
                 {/* Clinic header */}
@@ -454,32 +517,208 @@ const MyClinic = () => {
                             </div>
                         </div>
                     </div>
-                    {accessibleClinics.length > 1 && (
-                        <div className="w-full md:w-[340px]">
-                            <Label className="text-xs text-muted-foreground mb-1.5 block">Clínica ativa</Label>
-                            <Select
-                                value={String(clinic.id)}
-                                onValueChange={(value) => {
-                                    const nextClinicId = Number(value);
-                                    if (!Number.isFinite(nextClinicId) || nextClinicId === clinic.id) return;
-                                    selectClinicMutation.mutate(nextClinicId);
-                                }}
-                                disabled={selectClinicMutation.isPending}
+                    <div className="flex w-full flex-col gap-3 md:w-[360px]">
+                        {showClinicSwitcher && (
+                            <div className="w-full">
+                                <Label className="text-xs text-muted-foreground mb-1.5 block">Clínica ativa</Label>
+                                <Select
+                                    value={String(clinic.id)}
+                                    onValueChange={(value) => {
+                                        const nextClinicId = Number(value);
+                                        if (!Number.isFinite(nextClinicId) || nextClinicId === clinic.id) return;
+                                        selectClinicMutation.mutate(nextClinicId);
+                                    }}
+                                    disabled={selectClinicMutation.isPending}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Selecionar clínica" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {sortedClinics.map((accessibleClinic) => (
+                                            <SelectItem key={accessibleClinic.id} value={String(accessibleClinic.id)}>
+                                                {accessibleClinic.name} ({roleLabel(accessibleClinic.role)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {canCreateClinic && (
+                            <Button
+                                variant="outline"
+                                className="w-full justify-center rounded-xl border-border"
+                                onClick={() => setIsCreateClinicDialogOpen(true)}
                             >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Selecionar clínica" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {accessibleClinics.map((accessibleClinic) => (
-                                        <SelectItem key={accessibleClinic.id} value={String(accessibleClinic.id)}>
-                                            {accessibleClinic.name} ({accessibleClinic.role === 'admin' ? 'Admin' : accessibleClinic.role === 'secretary' ? 'Secretaria' : 'Profissional'})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
+                                <Building className="h-4 w-4 mr-2" />
+                                Nova Clínica
+                            </Button>
+                        )}
+                    </div>
                 </div>
+
+                {(showClinicSwitcher || canCreateClinic) && (
+                    <Card className="border border-border shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-foreground">Ambientes de Clínica</CardTitle>
+                            <CardDescription className="text-muted-foreground">
+                                Selecione em qual clínica você vai atender agora e crie novas estruturas quando necessário.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {showClinicSwitcher ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {sortedClinics.map((accessibleClinic) => {
+                                        const isActiveClinic = accessibleClinic.id === clinic.id;
+                                        const isDefaultClinic = accessibleClinic.id === defaultClinicId;
+                                        const isEditingThisClinic = editingClinicId === accessibleClinic.id;
+                                        const canRenameClinic = accessibleClinic.role === 'admin';
+                                        return (
+                                            <div
+                                                key={accessibleClinic.id}
+                                                className={`rounded-2xl border p-4 text-left transition-all ${
+                                                    isActiveClinic
+                                                        ? "border-primary bg-primary/5"
+                                                        : "border-border bg-card hover:border-primary/40"
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="font-semibold text-foreground">{accessibleClinic.name}</p>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {roleLabel(accessibleClinic.role)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center justify-end gap-2">
+                                                        {isDefaultClinic && (
+                                                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
+                                                                <Star className="h-3.5 w-3.5 mr-1" />
+                                                                Padrão
+                                                            </Badge>
+                                                        )}
+                                                        <Badge
+                                                            variant={isActiveClinic ? "default" : "outline"}
+                                                            className={isActiveClinic ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
+                                                        >
+                                                            {isActiveClinic ? "Ativa" : "Disponível"}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        className="rounded-xl bg-primary hover:bg-primary/90"
+                                                        onClick={() => {
+                                                            if (isActiveClinic || selectClinicMutation.isPending) return;
+                                                            selectClinicMutation.mutate(accessibleClinic.id);
+                                                        }}
+                                                        disabled={isActiveClinic || selectClinicMutation.isPending}
+                                                    >
+                                                        {isActiveClinic ? 'Em uso agora' : 'Usar nesta sessão'}
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="rounded-xl"
+                                                        onClick={() => setDefaultClinicMutation.mutate(accessibleClinic.id)}
+                                                        disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
+                                                    >
+                                                        <Star className="h-4 w-4 mr-2" />
+                                                        {isDefaultClinic ? 'Clínica padrão' : 'Definir como padrão'}
+                                                    </Button>
+                                                    {canRenameClinic && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="rounded-xl text-muted-foreground hover:text-foreground"
+                                                            onClick={() => {
+                                                                setEditingClinicId(accessibleClinic.id);
+                                                                setEditedClinicName(accessibleClinic.name);
+                                                            }}
+                                                        >
+                                                            <Edit2 className="h-4 w-4 mr-2" />
+                                                            Renomear
+                                                        </Button>
+                                                    )}
+                                                </div>
+
+                                                {isEditingThisClinic && (
+                                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                                        <Input
+                                                            value={editedClinicName}
+                                                            onChange={(e) => setEditedClinicName(e.target.value)}
+                                                            placeholder="Nome da clínica"
+                                                            className="flex-1 border-border focus:border-primary"
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-primary hover:bg-primary/90"
+                                                                onClick={() => updateClinicMutation.mutate({ clinicId: accessibleClinic.id, name: editedClinicName })}
+                                                                disabled={!editedClinicName.trim() || updateClinicMutation.isPending}
+                                                            >
+                                                                {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    setEditingClinicId(null);
+                                                                    setEditedClinicName(clinic.name);
+                                                                }}
+                                                                className="border-border"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="rounded-2xl border border-border bg-muted/35 p-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="font-medium text-foreground">{clinic.name}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Você está atendendo em uma única clínica no momento.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="rounded-xl"
+                                            onClick={() => setDefaultClinicMutation.mutate(clinic.id)}
+                                            disabled={clinic.id === defaultClinicId || setDefaultClinicMutation.isPending}
+                                        >
+                                            <Star className="h-4 w-4 mr-2" />
+                                            {clinic.id === defaultClinicId ? 'Clínica padrão' : 'Definir como padrão'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {canCreateClinic && (
+                                <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-4">
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                        <div>
+                                            <p className="font-medium text-foreground">Precisa de outra clínica?</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Crie uma nova clínica, mantenha equipes separadas e depois alterne o contexto de atendimento quando quiser.
+                                            </p>
+                                        </div>
+                                        <Button onClick={() => setIsCreateClinicDialogOpen(true)} className="bg-primary hover:bg-primary/90 rounded-xl">
+                                            <Building className="h-4 w-4 mr-2" />
+                                            Criar Nova Clínica
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
@@ -712,7 +951,7 @@ const MyClinic = () => {
                                             <Input value={editedClinicName} onChange={(e) => setEditedClinicName(e.target.value)}
                                                 placeholder="Nome da clínica" className="flex-1 border-border focus:border-primary" />
                                             <Button size="sm" className="bg-primary hover:bg-primary/90"
-                                                onClick={() => updateClinicMutation.mutate(editedClinicName)}
+                                                onClick={() => updateClinicMutation.mutate({ clinicId: clinic.id, name: editedClinicName })}
                                                 disabled={!editedClinicName.trim() || updateClinicMutation.isPending}>
                                                 {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                             </Button>

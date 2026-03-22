@@ -74,7 +74,7 @@ export default function Agenda() {
     }, [isSecretary, professionals, selectedProfessionalId, setSelectedProfessionalId]);
 
     const { data: appointments = [] } = useQuery<Appointment[]>({
-        queryKey: ["/api/appointments", selectedProfessionalId],
+        queryKey: ["/api/appointments", user?.clinicId ?? null, selectedProfessionalId ?? null],
         queryFn: async () => {
             const url = selectedProfessionalId
                 ? `/api/appointments?professionalId=${selectedProfessionalId}`
@@ -100,7 +100,7 @@ export default function Agenda() {
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
             toast({
                 title: "Algendamento realizado",
                 description: "Operação realizada com sucesso.",
@@ -126,7 +126,7 @@ export default function Agenda() {
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
             toast({
                 title: "Agendamento atualizado",
                 description: "Os dados do agendamento foram atualizados.",
@@ -150,7 +150,7 @@ export default function Agenda() {
             return res.json();
         },
         onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
             toast({
                 title: "Agenda desbloqueada",
                 description: `${data.count} bloqueios foram removidos.`,

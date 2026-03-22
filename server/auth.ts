@@ -360,7 +360,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: unknown, user: SelectUser | false, info?: { message?: string }) => {
+    passport.authenticate("local", async (err: unknown, user: SelectUser | false, info?: { message?: string }) => {
       if (err) {
         console.error("[AUTH] Login error:", err);
         return next(err);
@@ -370,6 +370,24 @@ export function setupAuth(app: Express) {
         const message = info?.message || "Email ou senha incorretos";
         console.log(`[AUTH] Login failed: ${message}`);
         return res.status(401).json({ message });
+      }
+
+      try {
+        const preferences = parsePreferences(user.preferences);
+        const defaultClinicId = Number(preferences?.defaultClinicId);
+
+        if (Number.isInteger(defaultClinicId) && defaultClinicId > 0 && user.clinicId !== defaultClinicId) {
+          const preferredRole = await storage.getClinicMemberRole(defaultClinicId, user.id);
+          if (preferredRole) {
+            const switched = await storage.setActiveClinicForUser(user.id, defaultClinicId);
+            if (switched) {
+              user.clinicId = defaultClinicId;
+              user.clinicRole = preferredRole;
+            }
+          }
+        }
+      } catch (clinicPreferenceError) {
+        console.error("[AUTH] Failed to restore default clinic during login:", clinicPreferenceError);
       }
 
       req.login(user, (loginErr) => {

@@ -85,6 +85,11 @@ type HealthInsights = {
   };
 };
 
+type ExamDetailsResponse = {
+  exam: Exam;
+  result?: ExamResult | null;
+};
+
 export default function DiagnosisPage() {
   const [activeTab, setActiveTab] = useState("analysis");
   const [match, params] = useRoute<{ id: string }>("/diagnosis/:id");
@@ -100,9 +105,7 @@ export default function DiagnosisPage() {
     allergies: []
   });
 
-
-
-  const { data, isLoading } = useQuery<{ exam: Exam, result: ExamResult }>({
+  const { data, isLoading } = useQuery<ExamDetailsResponse, Error>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
     enabled: !!examId,

@@ -466,7 +466,6 @@ export default function VitaAssistPage() {
                 showTitleAsMain={true}
                 fullWidth={true}
                 compact={true}
-                safeAreaTop={true}
                 icon={<Sparkles className="h-6 w-6" />}
             >
                 <div className="flex w-full flex-col gap-2.5 md:w-auto md:min-w-[340px] md:items-stretch lg:min-w-[420px] lg:items-end">

@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CID10_DATABASE } from "@/data/cid10-database";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -63,6 +64,7 @@ function calculateAge(birthDate: string | Date | null | undefined): number | nul
 export default function Patients() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const {
     profiles,
     isLoading,
@@ -106,7 +108,7 @@ export default function Patients() {
 
   // Fetch diagnoses for filtering
   const { data: diagnoses = [] } = useQuery<any[]>({
-    queryKey: ["/api/diagnoses"],
+    queryKey: ["/api/diagnoses", user?.clinicId ?? null],
   });
 
   // Extract unique comorbidities present in the patients
@@ -214,23 +216,41 @@ export default function Patients() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       <main className="flex-1 overflow-y-auto bg-background">
-        <PatientHeader
-          title="Pacientes"
-          description="Busque e selecione um paciente para iniciar o atendimento."
-          showTitleAsMain={true}
-          fullWidth={true}
-          icon={<Users className="h-6 w-6" />}
-        >
-          <div className="flex gap-2">
-            <Button
-              onClick={handleOpenCreatePatient}
-              className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Novo Paciente
-            </Button>
+        {isMobile ? (
+          <div className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] supports-[backdrop-filter]:backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-3">
+              <Button
+                onClick={handleOpenCreatePatient}
+                className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Novo Paciente
+              </Button>
+              <p className="text-right text-sm font-medium text-muted-foreground">
+                <span className="font-bold text-foreground">{profiles.length}</span>{" "}
+                {profiles.length === 1 ? "paciente registrado" : "pacientes registrados"}
+              </p>
+            </div>
           </div>
-        </PatientHeader>
+        ) : (
+          <PatientHeader
+            title="Pacientes"
+            description="Busque e selecione um paciente para iniciar o atendimento."
+            showTitleAsMain={true}
+            fullWidth={true}
+            icon={<Users className="h-6 w-6" />}
+          >
+            <div className="flex gap-2">
+              <Button
+                onClick={handleOpenCreatePatient}
+                className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Novo Paciente
+              </Button>
+            </div>
+          </PatientHeader>
+        )}
 
         <div className="p-4 md:p-6 lg:p-8">
 
@@ -380,7 +400,7 @@ export default function Patients() {
             </div>
 
           {/* Stats */}
-          <div className="mb-6 flex items-center gap-4 text-sm text-gray-600">
+          <div className={cn("mb-6 flex items-center gap-4 text-sm text-gray-600", isMobile && "hidden")}>
             <span className="font-medium">
               {filteredProfiles.length} paciente{filteredProfiles.length !== 1 ? 's' : ''} encontrado{filteredProfiles.length !== 1 ? 's' : ''}
             </span>

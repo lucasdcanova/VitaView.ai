@@ -129,7 +129,7 @@ export function AgendaCalendar({
   const doctorName = user?.fullName || user?.username || "Médico";
 
   const { data: appointmentsList = [] } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments"],
+    queryKey: ["/api/appointments", user?.clinicId ?? null],
   });
 
   // Batch fetch all triages for appointments (performance optimization)
@@ -150,7 +150,7 @@ export function AgendaCalendar({
 
   // Status update mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; status?: string; checkedInAt?: Date }) => {
+    mutationFn: async ({ id, ...data }: { id: number; status?: string; checkedInAt?: Date | null }) => {
       const res = await apiRequest("PATCH", `/api/appointments/${id}`, data);
       return res.json();
     },
@@ -158,7 +158,7 @@ export function AgendaCalendar({
       if (variables.status === "cancelled" && variables.id === inServiceAppointmentId) {
         clearPatientInService();
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
       toast({
         title: variables.status === "cancelled" ? "Consulta cancelada" : "Status atualizado",
         description: variables.status === "cancelled"
@@ -185,7 +185,7 @@ export function AgendaCalendar({
       if (id === inServiceAppointmentId) {
         clearPatientInService();
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
       toast({
         title: "Agendamento apagado",
         description: "O agendamento foi removido com sucesso.",
@@ -863,29 +863,7 @@ export function AgendaCalendar({
 
           {/* Stats section */}
           <div className="flex flex-col xl:flex-row gap-3 xl:items-stretch">
-            {/* Mobile: compact inline stats */}
-            {isCompactDayExperience ? (
-              <div className="flex items-center gap-3 rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none text-sm">
-                <span className="text-charcoal dark:text-white">
-                  <span className="font-bold">{currentDayNonBlockedAppointments.length}</span>
-                  <span className="text-charcoal/60 dark:text-white/60 ml-1">consultas</span>
-                </span>
-                <span className="text-charcoal/30 dark:text-white/30">·</span>
-                <span className="text-charcoal dark:text-white">
-                  <span className="font-bold">{currentDayWaitingCount}</span>
-                  <span className="text-charcoal/60 dark:text-white/60 ml-1">espera</span>
-                </span>
-                <span className="text-charcoal/30 dark:text-white/30">·</span>
-                <span className="text-charcoal dark:text-white">
-                  <span className="font-bold">{currentDayInProgressCount}</span>
-                  <span className="text-charcoal/60 dark:text-white/60 ml-1">atend.</span>
-                </span>
-                <span className="text-charcoal/30 dark:text-white/30">·</span>
-                <span className="text-charcoal dark:text-white">
-                  <span className="font-bold">{Math.round(currentDayTotalMinutes / 60)}h</span>
-                </span>
-              </div>
-            ) : (
+            {!isCompactDayExperience && (
               /* Desktop: full stat cards */
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
                 <div className="rounded-xl border border-black/10 bg-white/75 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-none">

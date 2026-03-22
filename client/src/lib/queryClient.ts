@@ -60,6 +60,13 @@ function checkAIWarning(res: Response) {
 // Helper function to delay execution
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const buildRequestHeaders = (
+  headers: Record<string, string | undefined>
+): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(headers).filter((entry): entry is [string, string] => typeof entry[1] === "string")
+  );
+
 const normalizeNetworkError = (error: unknown): Error => {
   if (error instanceof Error) {
     const message = error.message || "";
@@ -85,7 +92,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const normalizedMethod = method.toUpperCase();
   const isGetRequest = normalizedMethod === "GET";
-  const headers: HeadersInit = {
+  const headers = buildRequestHeaders({
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(isGetRequest
       ? {
@@ -94,7 +101,7 @@ export async function apiRequest(
         }
       : {}),
     ...getAppShellRequestHeaders(),
-  };
+  });
 
   const requestOptions: RequestInit = {
     method: normalizedMethod,
@@ -153,11 +160,11 @@ export const getQueryFn: <T>(options: {
         const res = await fetch(queryKey[0] as string, {
           credentials: "include" as RequestCredentials,
           cache: "no-store",
-          headers: {
+          headers: buildRequestHeaders({
             "Cache-Control": "no-cache, no-store, max-age=0",
             Pragma: "no-cache",
             ...getAppShellRequestHeaders(),
-          },
+          }),
         });
 
 

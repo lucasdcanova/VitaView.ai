@@ -3569,13 +3569,18 @@ export async function registerRoutes(app: Express): Promise<void> {
             nextStripeSubscriptionId: stripeSubscription.id,
           });
 
+          const stripeSubscriptionPeriod = stripeSubscription as Stripe.Subscription & {
+            current_period_start: number;
+            current_period_end: number;
+          };
+
           await syncUserSubscriptionState({
             userId,
             planId,
             stripeCustomerId: setupIntent.customer,
             stripeSubscriptionId: stripeSubscription.id,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+            currentPeriodStart: new Date(stripeSubscriptionPeriod.current_period_start * 1000),
+            currentPeriodEnd: new Date(stripeSubscriptionPeriod.current_period_end * 1000),
           });
 
           const user = await storage.getUser(userId);
@@ -3596,7 +3601,10 @@ export async function registerRoutes(app: Express): Promise<void> {
             break;
           }
 
-          const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId) as any;
+          const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId) as unknown as Stripe.Subscription & {
+            current_period_start: number;
+            current_period_end: number;
+          };
           const relatedSubscriptions = await storage.getAllSubscriptionsByStripeId(stripeSubscriptionId);
 
           for (const subscription of relatedSubscriptions) {
@@ -3686,15 +3694,16 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
 
         const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+        const setupIntentMetadata = setupIntent.metadata ?? {};
         if (setupIntent.status !== "succeeded") {
           return res.status(400).json({ message: "O método de pagamento ainda não foi confirmado" });
         }
 
-        if (setupIntent.metadata.userId !== userId.toString()) {
+        if (setupIntentMetadata.userId !== userId.toString()) {
           return res.status(403).json({ message: "Método de pagamento não pertence a este usuário" });
         }
 
-        if (setupIntent.metadata.planId !== parsedPlanId.toString()) {
+        if (setupIntentMetadata.planId !== parsedPlanId.toString()) {
           return res.status(400).json({ message: "Método de pagamento não corresponde ao plano selecionado" });
         }
 
@@ -3711,9 +3720,14 @@ export async function registerRoutes(app: Express): Promise<void> {
           defaultPaymentMethodId: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : null,
         });
 
+        const stripeSubscriptionPeriod = stripeSubscription as Stripe.Subscription & {
+          current_period_start: number;
+          current_period_end: number;
+        };
+
         stripeSubscriptionId = stripeSubscription.id;
-        currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
-        currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+        currentPeriodStart = new Date(stripeSubscriptionPeriod.current_period_start * 1000);
+        currentPeriodEnd = new Date(stripeSubscriptionPeriod.current_period_end * 1000);
 
         if (!req.user!.stripeCustomerId || req.user!.stripeSubscriptionId !== stripeSubscription.id) {
           await storage.updateUser(userId, {
@@ -3980,7 +3994,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const userId = req.user!.id;
       const user = req.user!;
       const accessibleClinics = await storage.getClinicsForUser(userId);
-      const ownedClinic = await storage.getClinicByAdminId(userId);
+      const canCreateClinic = user.clinicRole !== "secretary";
 
       let activeMembership = accessibleClinics.find((entry) => entry.clinic.id === user.clinicId);
 
@@ -4010,7 +4024,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           invitations: [],
           isAdmin: false,
           requiresClinicSetup: true,
-          canCreateClinic: !ownedClinic,
+          canCreateClinic,
         });
       }
 
@@ -4071,10 +4085,10 @@ export async function registerRoutes(app: Express): Promise<void> {
           .map((inv) => ({
             ...inv,
             inviteCode: inv.token.slice(0, 10).toUpperCase(),
-          })),
+        })),
         isAdmin: activeMembership.role === 'admin',
         requiresClinicSetup: false,
-        canCreateClinic: !ownedClinic,
+        canCreateClinic,
       });
     } catch (error) {
       logger.error("Error fetching user clinic:", error);
@@ -4137,10 +4151,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Nome da clínica deve ter ao menos 3 caracteres." });
       }
 
-      // Check if user already has a clinic
-      const existingClinic = await storage.getClinicByAdminId(userId);
-      if (existingClinic) {
-        return res.status(400).json({ message: "Usuário já possui uma clínica" });
+      if (req.user?.clinicRole === "secretary") {
+        return res.status(403).json({ message: "Perfis de secretaria não podem criar novas clínicas" });
       }
 
       const subscription = await storage.getUserSubscription(userId);
@@ -4168,10 +4180,17 @@ export async function registerRoutes(app: Express): Promise<void> {
       req.user!.clinicId = clinic.id;
       req.user!.clinicRole = 'admin';
 
-      res.status(201).json({
-        success: true,
-        clinic,
-        clinicType: clinicLimits ? "team" : "personal"
+      req.login(req.user!, (err) => {
+        if (err) {
+          logger.error("Error saving session after clinic creation:", err);
+          return res.status(500).json({ message: "Erro ao salvar a clínica ativa na sessão" });
+        }
+
+        res.status(201).json({
+          success: true,
+          clinic,
+          clinicType: clinicLimits ? "team" : "personal"
+        });
       });
     } catch (error) {
       logger.error("Error creating clinic:", error);
