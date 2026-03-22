@@ -84,7 +84,7 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           hover: { rotate: -4, y: -2 },
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative h-32 w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5"
+        className="relative h-24 w-full rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-4 md:h-28"
         style={glowStyle}
       >
         <motion.div
@@ -117,11 +117,11 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           hover: { y: -2, rotate: 1.5 },
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative h-32 w-full overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))] p-4"
+        className="relative h-24 w-full overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))] p-3.5 md:h-28"
         style={glowStyle}
       >
-        <div className="rounded-[20px] border border-white/12 bg-black/22 p-3">
-          <div className="mb-3 flex items-center gap-2">
+        <div className="rounded-[18px] border border-white/12 bg-black/22 p-2.5">
+          <div className="mb-2 flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[#28C840]" />
@@ -131,7 +131,7 @@ function PlatformPreview({ platform }: { platform: Platform }) {
               rest: { scaleX: 0.72, opacity: 0.68 },
               hover: { scaleX: 1, opacity: 1 },
             }}
-            className="h-12 rounded-[14px] border border-white/10 bg-white/8"
+            className="h-9 rounded-[12px] border border-white/10 bg-white/8 md:h-10"
           />
         </div>
         <motion.div
@@ -139,7 +139,7 @@ function PlatformPreview({ platform }: { platform: Platform }) {
             rest: { y: 0, opacity: 0.5 },
             hover: { y: -3, opacity: 0.88 },
           }}
-          className="absolute bottom-3 left-1/2 h-1.5 w-24 -translate-x-1/2 rounded-full bg-white/28"
+          className="absolute bottom-2.5 left-1/2 h-1.5 w-20 -translate-x-1/2 rounded-full bg-white/28"
         />
       </motion.div>
     );
@@ -153,17 +153,17 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           hover: { y: -3, rotate: -3 },
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mx-auto h-32 w-[6.4rem] rounded-[28px] border border-white/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] p-2.5"
+        className="relative mx-auto h-24 w-[5.5rem] rounded-[24px] border border-white/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] p-2 md:h-28 md:w-[5.9rem]"
         style={glowStyle}
       >
-        <div className="relative h-full rounded-[22px] border border-white/10 bg-black/30">
-          <div className="absolute left-1/2 top-2.5 h-1.5 w-12 -translate-x-1/2 rounded-full bg-white/24" />
+        <div className="relative h-full rounded-[18px] border border-white/10 bg-black/30">
+          <div className="absolute left-1/2 top-2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-white/24" />
           <motion.div
             variants={{
               rest: { y: 0, opacity: 0.75 },
               hover: { y: 3, opacity: 1 },
             }}
-            className="absolute inset-x-3 bottom-3 top-8 rounded-[16px] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]"
+            className="absolute inset-x-2.5 bottom-2.5 top-7 rounded-[14px] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]"
           />
         </div>
       </motion.div>
@@ -178,17 +178,17 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           hover: { y: -2, rotate: 2 },
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative h-32 w-full rounded-[28px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-2.5"
+        className="relative h-24 w-full rounded-[24px] border border-white/14 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-2 md:h-28"
         style={glowStyle}
       >
-        <div className="relative h-full rounded-[22px] border border-white/10 bg-black/26 p-3">
-          <span className="absolute left-1/2 top-2.5 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/28" />
+        <div className="relative h-full rounded-[18px] border border-white/10 bg-black/26 p-2.5">
+          <span className="absolute left-1/2 top-2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/28" />
           <motion.div
             variants={{
               rest: { scale: 0.96, opacity: 0.74 },
               hover: { scale: 1, opacity: 1 },
             }}
-            className="grid h-full grid-cols-[1.15fr_0.85fr] gap-2 pt-2"
+            className="grid h-full grid-cols-[1.15fr_0.85fr] gap-1.5 pt-1.5"
           >
             <span className="rounded-[14px] bg-white/10" />
             <span className="rounded-[14px] bg-white/5" />
@@ -206,35 +206,35 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           hover: { y: -3, rotate: -2 },
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mx-auto h-32 w-28"
+        className="relative mx-auto h-24 w-24 md:h-28 md:w-[6.5rem]"
       >
         <motion.span
           variants={{
             rest: { rotate: -20, y: 0 },
             hover: { rotate: -12, y: -2 },
           }}
-          className="absolute left-[1.15rem] top-[0.9rem] h-6 w-[2px] origin-bottom rounded-full bg-[#8CE07A]"
+          className="absolute left-[0.95rem] top-[0.7rem] h-5 w-[2px] origin-bottom rounded-full bg-[#8CE07A]"
         />
         <motion.span
           variants={{
             rest: { rotate: 20, y: 0 },
             hover: { rotate: 12, y: -2 },
           }}
-          className="absolute right-[1.15rem] top-[0.9rem] h-6 w-[2px] origin-bottom rounded-full bg-[#8CE07A]"
+          className="absolute right-[0.95rem] top-[0.7rem] h-5 w-[2px] origin-bottom rounded-full bg-[#8CE07A]"
         />
         <div
-          className="absolute inset-x-4 top-5 h-12 rounded-t-[24px] border border-white/10 bg-[#8CE07A]/20"
+          className="absolute inset-x-3.5 top-4 h-10 rounded-t-[20px] border border-white/10 bg-[#8CE07A]/20"
           style={glowStyle}
         >
-          <div className="absolute left-5 top-4 h-2.5 w-2.5 rounded-full bg-[#8CE07A]" />
-          <div className="absolute right-5 top-4 h-2.5 w-2.5 rounded-full bg-[#8CE07A]" />
+          <div className="absolute left-[1.125rem] top-3 h-2 w-2 rounded-full bg-[#8CE07A]" />
+          <div className="absolute right-[1.125rem] top-3 h-2 w-2 rounded-full bg-[#8CE07A]" />
         </div>
         <motion.div
           variants={{
             rest: { y: 0, opacity: 0.86 },
             hover: { y: -2, opacity: 1 },
           }}
-          className="absolute inset-x-3 bottom-2 top-[4.3rem] rounded-[22px] border border-white/10 bg-white/6"
+          className="absolute inset-x-2.5 bottom-2 top-[3.4rem] rounded-[18px] border border-white/10 bg-white/6 md:top-[4rem]"
         />
       </motion.div>
     );
@@ -247,10 +247,10 @@ function PlatformPreview({ platform }: { platform: Platform }) {
         hover: { y: -2, rotate: 1.5 },
       }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative h-32 w-full overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-4"
+      className="relative h-24 w-full overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-3.5 md:h-28"
       style={glowStyle}
     >
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-2 flex items-center gap-1.5">
         <span className="h-2.5 w-2.5 rounded-full bg-[#FF7B72]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#E7C88D]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#7EE787]" />
@@ -260,7 +260,7 @@ function PlatformPreview({ platform }: { platform: Platform }) {
           rest: { opacity: 0.7, y: 0 },
           hover: { opacity: 1, y: -1 },
         }}
-        className="grid h-[4.7rem] grid-cols-[1.1fr_0.9fr] gap-2"
+        className="grid h-[3.7rem] grid-cols-[1.1fr_0.9fr] gap-1.5 md:h-[4.1rem]"
       >
         <span className="rounded-[14px] bg-white/10" />
         <div className="grid gap-2">
@@ -276,7 +276,7 @@ export function LandingDownloads() {
   return (
     <section
       id="downloads"
-      className="relative overflow-hidden bg-[#090909] py-18 text-white md:py-24"
+      className="relative flex flex-col justify-center overflow-hidden bg-[#090909] py-10 text-white md:py-12 xl:py-14"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.06),transparent_30%)]" />
@@ -291,20 +291,21 @@ export function LandingDownloads() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 0.45 }}
-          className="mx-auto mb-12 max-w-3xl text-center md:mb-16"
+          className="mx-auto mb-10 max-w-4xl text-center md:mb-12"
         >
-          <span className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/65">
-            Downloads
+          <span className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/50">
+            Multi-Plataforma
           </span>
-          <h2 className="mt-5 text-3xl font-heading font-bold tracking-tight text-white md:text-5xl">
-            O mesmo fluxo clinico, com leitura nativa em cada sistema.
+          <h2 className="mt-4 text-3xl font-heading font-bold tracking-tight text-white leading-[1.05] md:text-5xl lg:text-6xl">
+            O mesmo fluxo clínico. <br />
+            <span className="text-2xl font-medium text-white/30 md:text-4xl lg:text-5xl">Em qualquer ecossistema.</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-sm leading-6 text-white/58 md:text-base">
-            Uma grade mais clara, com marcadores visuais de cada ecossistema e interacoes suaves ao passar o cursor.
+          <p className="mx-auto mt-4 max-w-xl font-body text-sm leading-relaxed text-white/50 md:text-base">
+            Experiência nativa otimizada para cada sistema, garantindo performance e fluidez total na sua rotina.
           </p>
         </motion.div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {platforms.map((platform, index) => (
             <motion.a
               key={platform.key}
@@ -317,7 +318,7 @@ export function LandingDownloads() {
               animate="rest"
               viewport={{ once: true, amount: 0.15 }}
               transition={{ duration: 0.45, delay: index * 0.05 }}
-              className="group relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.045] p-5 backdrop-blur-[8px] transition-[border-color,background-color] duration-500 hover:border-white/16 hover:bg-white/[0.075] md:p-6"
+              className="group relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-[8px] transition-[border-color,background-color] duration-500 hover:border-white/16 hover:bg-white/[0.075] md:p-[1.125rem]"
             >
               <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                 <div
@@ -326,12 +327,12 @@ export function LandingDownloads() {
                 />
               </div>
 
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/42">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/42">
                     {platform.eyebrow}
                   </span>
-                  <h3 className="mt-2 text-2xl font-heading font-bold tracking-tight text-white">
+                  <h3 className="mt-1.5 text-xl font-heading font-bold tracking-tight text-white md:text-[1.35rem]">
                     {platform.title}
                   </h3>
                 </div>
@@ -341,18 +342,18 @@ export function LandingDownloads() {
                     hover: { x: 4, y: -4, opacity: 1 },
                   }}
                   transition={{ duration: 0.35 }}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] md:h-9 md:w-9"
                 >
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </motion.div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-4">
                 <PlatformPreview platform={platform} />
               </div>
 
-              <div className="mt-6 flex items-end justify-between gap-4">
-                <p className="max-w-[18rem] font-body text-sm leading-6 text-white/58">
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <p className="max-w-[16rem] font-body text-xs leading-5 text-white/58 md:text-[13px]">
                   {platform.detail}
                 </p>
                 <motion.span
@@ -361,7 +362,7 @@ export function LandingDownloads() {
                     hover: { x: 6, opacity: 1 },
                   }}
                   transition={{ duration: 0.35 }}
-                  className="shrink-0 text-xs font-semibold uppercase tracking-[0.22em] text-white/75"
+                  className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75"
                 >
                   {platform.label}
                 </motion.span>

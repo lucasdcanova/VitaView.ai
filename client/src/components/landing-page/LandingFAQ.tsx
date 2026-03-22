@@ -37,7 +37,7 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-12 md:py-20 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden">
+        <section id="faq" className="py-16 md:py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
             {/* Elementos decorativos */}
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
@@ -50,12 +50,12 @@ export function LandingFAQ() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
-                    className="text-center mb-10 md:mb-16"
+                    className="text-center mb-16 md:mb-20"
                 >
-                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">
-                        Perguntas <span className="text-[#9E9E9E]">Frequentes</span>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white mb-6 leading-[1.1] tracking-tight">
+                        Perguntas <span className="text-[#9E9E9E]">Frequentes.</span>
                     </h2>
-                    <p className="text-base md:text-xl text-white text-opacity-90 max-w-2xl mx-auto px-2">
+                    <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto px-2">
                         Tire suas dúvidas sobre as ferramentas do VitaView AI e como elas podem transformar sua rotina clínica.
                     </p>
                 </motion.div>

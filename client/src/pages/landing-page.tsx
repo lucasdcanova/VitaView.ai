@@ -46,17 +46,17 @@ export default function LandingPage() {
           <main>
             <LandingHero />
             <LandingLabView />
-            <LandingMigration />
             <LandingVoiceTranscription />
             <LandingAISuggestions />
             <LandingPrescription />
             <LandingAppointmentScheduler />
             <LandingFeatures />
+            <LandingMigration />
             <LandingForWhom />
             <LandingSecurity />
+            <LandingTestimonials />
             <LandingPricing />
             <LandingDownloads />
-            <LandingTestimonials />
             <LandingFAQ />
           </main>
 

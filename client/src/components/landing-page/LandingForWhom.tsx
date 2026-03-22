@@ -3,7 +3,7 @@ import { Users, Stethoscope, CheckCircle2, Building, Star, Clock, ShieldCheck } 
 
 export function LandingForWhom() {
     return (
-        <section id="para-quem" className="py-12 md:py-20 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16">
+        <section id="para-quem" className="py-16 md:py-24 bg-gradient-to-r from-[#424242] to-[#212121] text-white relative overflow-hidden scroll-mt-16 min-h-[100dvh] flex flex-col justify-center">
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute -left-20 bottom-0 w-96 h-96 bg-[#F4F4F4] rounded-full opacity-30 blur-3xl"></div>
@@ -152,53 +152,53 @@ export function LandingForWhom() {
                 </div>
 
                 {/* Estatísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
                     {/* Estatística 1 */}
                     <motion.div
-                        className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
+                        className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 text-center"
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4 }}
-                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
+                        whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.08)" }}
                     >
-                        <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Star className="w-6 h-6 text-[#212121]" />
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Star className="w-8 h-8 text-white" />
                         </div>
-                        <h3 className="text-3xl font-bold text-[#212121] mb-2">+40%</h3>
-                        <p className="text-[#212121] font-medium">Aumento na produtividade clínica</p>
+                        <h3 className="text-4xl font-bold text-white mb-2">+40%</h3>
+                        <p className="text-white/60 font-medium text-sm">Aumento na produtividade clínica</p>
                     </motion.div>
 
                     {/* Estatística 2 */}
                     <motion.div
-                        className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
+                        className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 text-center"
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4, delay: 0.1 }}
-                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
+                        whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.08)" }}
                     >
-                        <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Clock className="w-6 h-6 text-[#212121]" />
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Clock className="w-8 h-8 text-white" />
                         </div>
-                        <h3 className="text-3xl font-bold text-[#212121] mb-2">30%</h3>
-                        <p className="text-[#212121] font-medium">Redução no tempo de consulta</p>
+                        <h3 className="text-4xl font-bold text-white mb-2">30%</h3>
+                        <p className="text-white/60 font-medium text-sm">Redução no tempo de consulta</p>
                     </motion.div>
 
                     {/* Estatística 3 */}
                     <motion.div
-                        className="bg-white rounded-xl p-6 shadow-md border border-[#E0E0E0] text-center"
+                        className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 text-center"
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.4, delay: 0.2 }}
-                        whileHover={{ y: -2, scale: 1.01, boxShadow: "0 16px 26px -16px rgba(0,0,0,0.12)" }}
+                        whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.08)" }}
                     >
-                        <div className="w-14 h-14 bg-[#F4F4F4] rounded-full flex items-center justify-center mx-auto mb-4">
-                            <ShieldCheck className="w-6 h-6 text-[#212121]" />
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <ShieldCheck className="w-8 h-8 text-white" />
                         </div>
-                        <h3 className="text-3xl font-bold text-[#212121] mb-2">100%</h3>
-                        <p className="text-[#212121] font-medium">Seguro e em conformidade com a LGPD</p>
+                        <h3 className="text-4xl font-bold text-white mb-2">100%</h3>
+                        <p className="text-white/60 font-medium text-sm">Segurança e Conformidade LGPD</p>
                     </motion.div>
                 </div>
             </div>

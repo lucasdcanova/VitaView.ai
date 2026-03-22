@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function LandingPrescription() {
     return (
-        <section className="py-12 md:py-20 bg-[#FAFAFA] relative overflow-hidden">
+        <section id="prescricao-digital" className="py-12 md:py-20 bg-[#FAFAFA] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
@@ -126,22 +126,39 @@ export function LandingPrescription() {
                                     </button>
                                 </div>
 
-                                {/* Interactive Notification */}
-                                <motion.div
-                                    className="hidden lg:block absolute -right-4 top-1/2 transform -translate-y-1/2 bg-[#212121] text-white p-4 rounded-xl shadow-xl max-w-[200px]"
+                                 {/* Interactive Notification */}
+                                 <motion.div
+                                    className="hidden lg:block absolute -right-6 top-1/2 transform -translate-y-1/2 bg-[#212121] text-white p-5 rounded-xl shadow-2xl max-w-[220px] border border-white/10"
                                     initial={{ opacity: 0, x: 20 }}
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.8, type: "spring" }}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="bg-white/20 p-1.5 rounded-full">
-                                            <Check className="w-3 h-3 text-white" />
+                                        <div className="bg-green-500/20 p-1.5 rounded-full shrink-0">
+                                            <Check className="w-3.5 h-3.5 text-green-400" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-medium leading-tight mb-1">Interação verificada</p>
-                                            <p className="text-[10px] text-white/70">Seguro para prescrição</p>
+                                            <p className="text-xs font-bold leading-tight mb-1">Interação verificada</p>
+                                            <p className="text-[10px] text-white/70 leading-relaxed">Cruzamento automático com histórico e alergias do paciente.</p>
                                         </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Signature Badge Mockup */}
+                                <motion.div
+                                    className="hidden lg:flex absolute -left-8 -bottom-4 bg-white border border-[#E0E0E0] p-3 rounded-lg shadow-xl items-center gap-3 z-20"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 1, duration: 0.5 }}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                                        <Shield className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[#212121] uppercase tracking-wider">Assinatura Digital</p>
+                                        <p className="text-[9px] text-[#9E9E9E]">Certificado ICP-Brasil</p>
                                     </div>
                                 </motion.div>
                             </div>

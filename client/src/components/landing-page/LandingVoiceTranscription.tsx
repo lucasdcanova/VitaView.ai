@@ -3,7 +3,7 @@ import { Mic, Sparkles, Lock, Wand2, RefreshCcw, FileSearch } from "lucide-react
 
 export function LandingVoiceTranscription() {
     return (
-        <section className="py-12 md:py-20 bg-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="anamnese-ia" className="py-12 md:py-20 bg-[#F5F5F5] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16 lg:gap-24">
 

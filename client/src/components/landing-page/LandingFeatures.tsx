@@ -8,7 +8,7 @@ export function LandingFeatures() {
             id: "anamnese",
             title: "Anamnese Objetiva",
             description: "Esqueça formulários infinitos. Registre o essencial em uma interface limpa e focada.",
-            icon: <Stethoscope className="w-6 h-6 text-white" />,
+            icon: <Stethoscope className="w-6 h-6 text-[#212121]" />,
             color: "bg-[#212121]", // Black
             lightColor: "bg-[#F5F5F5]",
             items: ["Histórico unificado", "Modelos ágeis", "Navegação rápida"]
@@ -26,7 +26,7 @@ export function LandingFeatures() {
             id: "vita-assist",
             title: "Vita Assist AI",
             description: "Seu copiloto clínico. Resumos, dúvidas de protocolos e rascunhos no chat.",
-            icon: <Brain className="w-6 h-6 text-white" />,
+            icon: <Brain className="w-6 h-6 text-[#212121]" />,
             color: "bg-[#424242]", // Dark Grey
             lightColor: "bg-[#FAFAFA]",
             items: ["Resumo de caso", "Segunda opinião", "Busca inteligente"]
@@ -43,48 +43,47 @@ export function LandingFeatures() {
     ];
 
     return (
-        <section id="recursos" className="py-16 md:py-20 bg-[#0A0A0A] relative">
+        <section id="recursos" className="py-16 md:py-24 bg-[#0A0A0A] relative min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
-                <div className="text-center max-w-3xl mx-auto mb-12">
-                    <span className="text-xs font-bold tracking-widest text-white/60 uppercase mb-2 block">
-                        Por que VitaView?
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <span className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase mb-4 block">
+                        Diferencial Estratégico
                     </span>
-                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-4 leading-tight">
-                        Quatro pilares. <span className="text-white/60">Tudo o que precisa.</span>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white mb-6 leading-[1.1] tracking-tight">
+                        Quatro pilares. <br />
+                        <span className="text-white/40 font-medium">Tudo o que você precisa.</span>
                     </h2>
-                    <p className="text-base text-white/80 leading-relaxed max-w-2xl mx-auto">
-                        Removemos o excesso para focar na essência. Ferramentas desenhadas para economizar seu tempo.
+                    <p className="text-lg md:text-xl text-white/60 leading-relaxed max-w-2xl mx-auto">
+                        Removemos o excesso para focar na essência. Ferramentas desenhadas sob medida para economizar o recurso mais precioso do médico: o tempo.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                     {features.map((feature, index) => (
                         <motion.div
                             key={feature.id}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-50px" }}
-                            transition={{ duration: 0.4, delay: index * 0.1 }}
-                            className={`group relative rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-500 cursor-default flex flex-col bg-white/5 backdrop-blur-sm`}
+                            viewport={{ once: true, margin: "-100px" }}
+                            transition={{ duration: 0.5, delay: index * 0.15 }}
+                            className={`group relative rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-default flex flex-col bg-white/[0.03] backdrop-blur-md`}
                         >
-                            <div className={`p-6 flex-1 flex flex-col`}>
-                                <div className={`w-12 h-12 rounded-xl bg-white text-[#212121] flex items-center justify-center mb-5 shadow-sm group-hover:scale-105 transition-transform duration-300`}>
-                                    <div className="text-black">
-                                        {feature.icon.props.className.includes("text-white") ? <feature.icon.type {...feature.icon.props} className="w-6 h-6 text-[#212121]" /> : feature.icon}
-                                    </div>
+                            <div className={`p-8 flex-1 flex flex-col`}>
+                                <div className={`w-14 h-14 rounded-2xl bg-white text-black flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500`}>
+                                    {feature.icon}
                                 </div>
 
-                                <h3 className="text-lg font-bold text-white mb-2 group-hover:translate-x-1 transition-transform">{feature.title}</h3>
+                                <h3 className="text-xl font-bold text-white mb-3 group-hover:translate-x-1 transition-transform">{feature.title}</h3>
 
-                                <p className="text-white/70 mb-6 leading-snug text-sm">
+                                <p className="text-white/50 mb-8 leading-relaxed text-sm lg:text-[15px]">
                                     {feature.description}
                                 </p>
 
-                                <ul className="mt-auto space-y-2">
+                                <ul className="mt-auto space-y-3">
                                     {feature.items.map((item, i) => (
-                                        <li key={i} className="flex items-center text-white/80 text-xs font-medium">
-                                            <div className="mr-2 p-0.5 rounded-full bg-white/10 text-white">
-                                                <Check className="w-2.5 h-2.5" />
+                                        <li key={i} className="flex items-center text-white/70 text-xs sm:text-sm font-medium">
+                                            <div className="mr-3 p-1 rounded-full bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white transition-all">
+                                                <Check className="w-3 h-3" />
                                             </div>
                                             {item}
                                         </li>

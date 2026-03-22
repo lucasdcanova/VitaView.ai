@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function LandingAISuggestions() {
     return (
-        <section className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white">
+        <section id="dose-inteligente" className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white min-h-[100dvh] flex flex-col justify-center">
             {/* Background Effects - Subtle Monochrome */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
@@ -13,21 +13,21 @@ export function LandingAISuggestions() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-24">
+                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
 
                     {/* Visual Mockup - Prescription Input with AI Suggestion */}
-                    <div className="lg:w-1/2 relative">
+                    <div className="lg:w-1/2 flex flex-col gap-8 relative">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="relative"
+                            className="relative z-20"
                         >
                             {/* Glow behind the mockup */}
-                            <div className="absolute -inset-1 bg-white/10 rounded-xl blur-xl opacity-50"></div>
+                            <div className="absolute -inset-1 bg-white/10 rounded-xl blur-xl opacity-30"></div>
 
-                            <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-8 relative overflow-hidden">
+                            <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
                                 <div className="space-y-6">
                                     {/* Mock Label */}
                                     <div className="flex justify-between items-center">
@@ -68,22 +68,53 @@ export function LandingAISuggestions() {
                                                             Tomar 1 comprimido (500mg) a cada 6 horas se necessário.
                                                         </p>
                                                         <div className="mt-2 flex gap-2">
-                                                            <span className="text-[10px] border border-white/20 rounded px-1.5 py-0.5 text-white/50">Baseado no histórico</span>
-                                                            <span className="text-[10px] border border-white/20 rounded px-1.5 py-0.5 text-white/50">Peso: 70kg</span>
+                                                            <span className="text-[10px] border border-white/20 rounded px-1.5 py-0.5 text-white/50 whitespace-nowrap">Baseado no histórico</span>
+                                                            <span className="text-[10px] border border-white/20 rounded px-1.5 py-0.5 text-white/50 whitespace-nowrap">Peso: 70kg</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </motion.div>
                                     </div>
-
-                                    {/* Context info to fill space */}
-                                    <div className="pt-16 opacity-50 blur-[1px]">
-                                        <div className="h-4 bg-white/10 rounded w-1/3 mb-3"></div>
-                                        <div className="h-10 bg-[#1A1A1A] border border-white/10 rounded-lg w-full"></div>
-                                    </div>
-
+                                    
+                                    {/* Spacing for dropdown */}
+                                    <div className="h-20 lg:h-24"></div>
                                 </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Second Mockup: Context Analysis */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                            className="relative lg:ml-12 z-10"
+                        >
+                            <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-5 relative overflow-hidden">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+                                        <Brain className="w-4 h-4 text-white/60" />
+                                    </div>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-white/40">Análise de Contexto Clínico</span>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between text-[11px] text-white/60 bg-white/5 p-2 rounded">
+                                        <span>Idade: 42 anos</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[11px] text-white/60 bg-white/5 p-2 rounded border-l-2 border-yellow-500/50">
+                                        <span>Alergia: AAS / AINEs</span>
+                                        <span className="text-[10px] font-bold text-yellow-500">ALERTA</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[11px] text-white/60 bg-white/5 p-2 rounded">
+                                        <span>Peso: 70kg</span>
+                                        <span className="bg-white/10 px-1 rounded">Normal</span>
+                                    </div>
+                                </div>
+                                <p className="mt-4 text-[11px] text-white/40 italic text-center">
+                                    "IA ajustando dosagem via algoritmos de farmacologia integrada."
+                                </p>
                             </div>
                         </motion.div>
                     </div>

@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Calendar, ChevronDown, ChevronRight, Brain, MessageSquare, Zap } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Brain, MessageSquare, Zap, Check } from "lucide-react";
+import { Link } from "wouter";
 
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className="py-12 md:py-16 bg-white text-[#212121] relative overflow-hidden scroll-mt-16">
+        <section id="agenda" className="py-12 md:py-20 bg-white text-[#212121] relative overflow-hidden scroll-mt-16 min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -216,20 +217,22 @@ export function LandingAppointmentScheduler() {
                     </div>
 
                     {/* Calendar Footer */}
-                    <div className="bg-[#F4F4F4] px-6 py-4 border-t border-[#E0E0E0] flex justify-between items-center">
+                    <div className="bg-[#F4F4F4] px-6 py-5 border-t border-[#E0E0E0] flex justify-between items-center">
                         <div className="text-sm text-[#9E9E9E]">
-                            <span className="font-semibold">10 consultas</span> agendadas esta semana
+                            <span className="font-bold text-[#212121]">10 consultas</span> agendadas esta semana
                         </div>
-                        <button className="px-4 py-2 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                            <span>Nova Consulta</span>
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
+                        <Link href="/auth">
+                            <button className="px-6 py-3 bg-[#212121] hover:bg-[#424242] text-white rounded-lg text-sm font-bold shadow-lg transition-all flex items-center gap-2">
+                                <span>Nova Consulta</span>
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </Link>
                     </div>
                 </motion.div>
 
-                {/* AI Scheduling Features */}
+                {/* AI Scheduling Features Grid */}
                 <motion.div
-                    className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto"
+                    className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 max-w-7xl mx-auto"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true }}
@@ -238,84 +241,73 @@ export function LandingAppointmentScheduler() {
                         visible: {
                             opacity: 1,
                             transition: {
-                                staggerChildren: 0.15,
-                                delayChildren: 0.2
+                                staggerChildren: 0.1,
+                                delayChildren: 0.3
                             }
                         }
                     }}
                 >
                     <motion.div
-                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
+                        className="bg-[#F8F9FA] rounded-2xl p-6 border border-[#E0E0E0] flex flex-col h-full"
                         variants={{
-                            hidden: { opacity: 0, y: 30 },
+                            hidden: { opacity: 0, y: 20 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
-                        whileHover={{
-                            scale: 1.03,
-                            backgroundColor: "#FFFFFF",
-                            borderColor: "#212121"
-                        }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <motion.div
-                            className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.04, rotate: 2 }}
-                        >
+                        <div className="p-3 bg-white rounded-xl w-fit mb-4 shadow-sm border border-[#E0E0E0]">
                             <Brain className="w-6 h-6 text-[#212121]" />
-                        </motion.div>
-                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Assistente IA de Agendamento</h4>
-                        <p className="text-[#616161] text-sm">
-                            Envie fotos da sua agenda atual e a IA organiza automaticamente seus compromissos, evitando conflitos de horários.
+                        </div>
+                        <h4 className="text-base font-bold text-[#212121] mb-2">Assistente de IA</h4>
+                        <p className="text-[#616161] text-sm leading-relaxed">
+                            A IA organiza seus compromissos via foto ou texto, evitando conflitos de horários em segundos.
                         </p>
                     </motion.div>
 
                     <motion.div
-                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
+                        className="bg-[#F8F9FA] rounded-2xl p-6 border border-[#E0E0E0] flex flex-col h-full"
                         variants={{
-                            hidden: { opacity: 0, y: 30 },
+                            hidden: { opacity: 0, y: 20 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
-                        whileHover={{
-                            scale: 1.03,
-                            backgroundColor: "#FFFFFF",
-                            borderColor: "#212121"
-                        }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <motion.div
-                            className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.04, rotate: -2 }}
-                        >
+                        <div className="p-3 bg-white rounded-xl w-fit mb-4 shadow-sm border border-[#E0E0E0]">
                             <MessageSquare className="w-6 h-6 text-[#212121]" />
-                        </motion.div>
-                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Comandos por Texto</h4>
-                        <p className="text-[#616161] text-sm">
-                            Digite comandos como "agende retorno do João para próxima terça às 10h" e a IA cria o agendamento para você.
+                        </div>
+                        <h4 className="text-base font-bold text-[#212121] mb-2">Comandos de Voz</h4>
+                        <p className="text-[#616161] text-sm leading-relaxed">
+                            Agende retornos e novos pacientes apenas falando, ou enviando um comando de texto rápido.
                         </p>
                     </motion.div>
 
                     <motion.div
-                        className="bg-[#F5F5F5] rounded-xl p-6 border border-[#E0E0E0] cursor-pointer group"
+                        className="bg-[#F8F9FA] rounded-2xl p-6 border border-[#E0E0E0] flex flex-col h-full"
                         variants={{
-                            hidden: { opacity: 0, y: 30 },
+                            hidden: { opacity: 0, y: 20 },
                             visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                         }}
-                        whileHover={{
-                            scale: 1.03,
-                            backgroundColor: "#FFFFFF",
-                            borderColor: "#212121"
-                        }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <motion.div
-                            className="p-3 bg-[#E0E0E0] rounded-lg w-fit mb-4"
-                            whileHover={{ scale: 1.04, rotate: 2 }}
-                        >
+                        <div className="p-3 bg-white rounded-xl w-fit mb-4 shadow-sm border border-[#E0E0E0]">
                             <Zap className="w-6 h-6 text-[#212121]" />
-                        </motion.div>
-                        <h4 className="text-lg font-bold text-[#212121] mb-2 group-hover:text-[#212121] transition-colors">Sugestões Inteligentes</h4>
-                        <p className="text-[#616161] text-sm">
-                            Receba sugestões de horários otimizados baseados no seu padrão de atendimento e disponibilidade.
+                        </div>
+                        <h4 className="text-base font-bold text-[#212121] mb-2">Sugestões Otimizadas</h4>
+                        <p className="text-[#616161] text-sm leading-relaxed">
+                            Intervalos inteligentes baseados na complexidade do caso e no seu perfil de atendimento.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        className="bg-[#F8F9FA] rounded-2xl p-6 border border-[#E0E0E0] flex flex-col h-full"
+                        variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+                        }}
+                    >
+                        <div className="p-3 bg-white rounded-xl w-fit mb-4 shadow-sm border border-[#E0E0E0]">
+                            <Check className="w-6 h-6 text-green-600" />
+                        </div>
+                        <h4 className="text-base font-bold text-[#212121] mb-2">Triagem Automática</h4>
+                        <p className="text-[#616161] text-sm leading-relaxed">
+                            Questionários pré-consulta que classificam a urgência e resumem o caso antes do paciente chegar.
                         </p>
                     </motion.div>
                 </motion.div>
