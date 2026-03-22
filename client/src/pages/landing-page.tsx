@@ -11,6 +11,7 @@ import { LandingFeatures } from "@/components/landing-page/LandingFeatures";
 import { LandingForWhom } from "@/components/landing-page/LandingForWhom";
 import { LandingTestimonials } from "@/components/landing-page/LandingTestimonials";
 import { LandingPricing } from "@/components/landing-page/LandingPricing";
+import { LandingDownloads } from "@/components/landing-page/LandingDownloads";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
 import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
 import { LandingAISuggestions } from "@/components/landing-page/LandingAISuggestions";
@@ -54,6 +55,7 @@ export default function LandingPage() {
             <LandingForWhom />
             <LandingSecurity />
             <LandingPricing />
+            <LandingDownloads />
             <LandingTestimonials />
             <LandingFAQ />
           </main>

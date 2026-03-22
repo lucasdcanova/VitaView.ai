@@ -1,0 +1,58 @@
+name: Windows Desktop
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install desktop dependencies
+        run: npm ci
+
+      - name: Verify tag matches desktop version
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        shell: pwsh
+        run: |
+          $packageVersion = node -p "require('./package.json').version"
+          $tagVersion = "${env:GITHUB_REF_NAME}".Replace("desktop-v", "")
+          if ($packageVersion -ne $tagVersion) {
+            throw "Tag version $tagVersion does not match desktop/package.json version $packageVersion"
+          }
+
+      - name: Build installer
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run dist:win
+
+      - name: Build and publish release
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish:win
+
+      - name: Upload installer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitaview-windows-installer
+          path: desktop/release/*

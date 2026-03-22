@@ -15,6 +15,7 @@ export function LandingNavbar() {
         { id: "agenda", label: "Agenda" },
         { id: "beneficios", label: "Benefícios" },
         { id: "precos", label: "Planos" },
+        { id: "downloads", label: "Downloads" },
         { id: "para-quem", label: "Para Quem" },
         { id: "depoimentos", label: "Depoimentos" }
     ];

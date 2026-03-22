@@ -1,0 +1,71 @@
+{
+  "name": "vitaview-desktop",
+  "version": "1.0.0",
+  "description": "VitaView Windows desktop shell with auto-update support",
+  "main": "dist/main.js",
+  "author": "Lucas Canova",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucasdcanova/VitaView.ai.git"
+  },
+  "scripts": {
+    "clean": "rm -rf dist release",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "dev": "npm run build && cross-env VITAVIEW_DESKTOP_START_URL=http://localhost:3000/auth electron ./dist/main.js",
+    "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
+    "publish:win": "npm run build && electron-builder --win nsis --x64 --publish always"
+  },
+  "build": {
+    "appId": "br.com.lucascanova.vitaview.desktop",
+    "productName": "VitaView",
+    "artifactName": "VitaView-Setup.${ext}",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "lucasdcanova",
+        "repo": "VitaView.ai",
+        "releaseType": "release"
+      }
+    ],
+    "electronUpdaterCompatibility": ">=2.16",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.11",
+    "cross-env": "^10.1.0",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "typescript": "5.6.3"
+  }
+}

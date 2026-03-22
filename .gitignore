@@ -7,6 +7,9 @@ vite.config.ts.*
 .env
 .env.local
 .env.production
+desktop/node_modules
+desktop/dist
+desktop/release
 
 # iOS / Xcode
 ios/App/build/

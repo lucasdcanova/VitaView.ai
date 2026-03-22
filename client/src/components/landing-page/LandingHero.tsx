@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { Link } from "wouter";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 
@@ -193,6 +193,13 @@ export function LandingHero() {
         window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
     };
 
+    const scrollToDownloads = () => {
+        const downloadsSection = document.getElementById("downloads");
+        if (downloadsSection) {
+            downloadsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
     return (
         <>
             <motion.section
@@ -294,17 +301,17 @@ export function LandingHero() {
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                        className="relative z-20 touch-manipulation flex flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-[360px] sm:max-w-none"
+                        className="relative z-20 flex w-full max-w-[540px] flex-col items-stretch justify-center gap-3 touch-manipulation sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center"
                     >
                         <motion.div
                             whileHover={{ y: -2, scale: 1.015 }}
                             whileTap={{ scale: 0.97 }}
-                            className="inline-block flex-1 sm:flex-none"
+                            className="inline-block sm:flex-none"
                         >
                             <Link href="/auth">
                                 <Button
                                     size="lg"
-                                    className="w-full sm:w-auto bg-[#212121] hover:bg-[#424242] active:bg-[#616161] text-white px-4 sm:px-10 py-4 sm:py-6 rounded-xl font-heading font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all h-auto touch-manipulation pointer-events-auto cursor-pointer"
+                                    className="h-auto w-full rounded-xl bg-[#212121] px-4 py-4 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#424242] hover:shadow-xl active:bg-[#616161] sm:w-auto sm:px-10 sm:py-6 sm:text-base"
                                 >
                                     Entrar
                                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -315,13 +322,29 @@ export function LandingHero() {
                         <motion.div
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            className="inline-block flex-1 sm:flex-none"
+                            className="inline-block sm:flex-none"
+                        >
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={scrollToDownloads}
+                                className="h-auto w-full rounded-xl border-[#212121] bg-white/90 px-4 py-4 font-heading text-sm font-bold text-[#212121] shadow-md transition-all hover:bg-white hover:shadow-lg sm:w-auto sm:px-8 sm:py-6 sm:text-base"
+                            >
+                                Downloads
+                                <Download className="ml-2 h-4 w-4" />
+                            </Button>
+                        </motion.div>
+
+                        <motion.div
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="inline-block sm:flex-none"
                         >
                             <Button
                                 asChild
                                 size="lg"
                                 variant="outline"
-                                className="w-full sm:w-auto border-[#212121] text-[#212121] bg-white/80 hover:bg-white px-4 sm:px-10 py-4 sm:py-6 rounded-xl font-heading font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all h-auto"
+                                className="h-auto w-full rounded-xl border-[#D4D4D4] bg-transparent px-4 py-4 font-heading text-sm font-bold text-[#212121] transition-all hover:bg-white/70 sm:w-auto sm:px-8 sm:py-6 sm:text-base"
                             >
                                 <a href="#como-funciona">Conhecer</a>
                             </Button>
