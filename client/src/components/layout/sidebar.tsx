@@ -135,9 +135,7 @@ export default function Sidebar(props: SidebarProps) {
     if (b.isActive) return 1;
     return a.name.localeCompare(b.name, "pt-BR");
   });
-  const activeClinicQuickItem = sortedClinics.find((clinic) => clinic.isActive) ?? null;
-  const otherClinicQuickItems = sortedClinics.filter((clinic) => !clinic.isActive);
-  const showClinicQuickSwitch = sortedClinics.length > 1;
+  const showClinicQuickSwitch = sortedClinics.length > 0;
   const professionalProfile =
     user?.preferences && typeof user.preferences === "object"
       ? (user.preferences as Record<string, any>).professionalProfile
@@ -658,118 +656,44 @@ export default function Sidebar(props: SidebarProps) {
                 </div>
               )}
               {!isCollapsed && showClinicQuickSwitch && (
-                <div className="mt-3 rounded-2xl border border-lightGray/80 bg-gradient-to-b from-white to-lightGray/20 p-3 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset]">
-                  <div className="mb-3 flex items-center justify-between gap-2 px-1">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-mediumGray">
-                        Troca rápida
-                      </p>
-                      <p className="mt-1 text-xs text-charcoal/70">
-                        Alterne de ambiente sem sair da rotina.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-charcoal px-2.5 py-1 text-[10px] font-semibold text-pureWhite">
-                        {sortedClinics.length} clínicas
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleOpenClinicPage}
-                        className="rounded-full border border-lightGray bg-white px-2.5 py-1 text-[10px] font-semibold text-charcoal transition-colors hover:border-charcoal/20 hover:bg-lightGray/25"
-                      >
-                        Gerenciar
-                      </button>
-                    </div>
-                  </div>
-
-                  {activeClinicQuickItem && (
-                    <div className="mb-3 rounded-2xl border border-charcoal bg-charcoal px-3 py-3 text-pureWhite shadow-sm">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-pureWhite/65">
-                        Atendendo agora
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 text-sm font-bold text-pureWhite shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                          style={getClinicBadgeStyle(activeClinicQuickItem.name, true)}
-                        >
-                          {getClinicInitials(activeClinicQuickItem.name)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{activeClinicQuickItem.name}</p>
-                          <p className="truncate text-[11px] text-pureWhite/72">
-                            {roleLabel(activeClinicQuickItem.role)}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full bg-pureWhite/12 px-2 py-0.5 text-[10px] font-semibold text-pureWhite">
-                          Ativa
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleOpenClinicPage}
-                        className="mt-3 w-full rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-left text-[11px] font-medium text-pureWhite/82 transition-colors hover:bg-white/10"
-                      >
-                        Abrir gestão da clínica
-                      </button>
-                    </div>
-                  )}
-
-                  {otherClinicQuickItems.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-mediumGray">
-                        Outras clínicas
-                      </p>
-                      <ScrollArea className="max-h-[min(34vh,18rem)] pr-2">
-                        <div className="space-y-2">
-                          {otherClinicQuickItems.map((accessibleClinic) => (
-                            <button
-                              key={accessibleClinic.id}
-                              type="button"
-                              onClick={() => {
-                                handleClinicSwitch(accessibleClinic.id, accessibleClinic.isActive);
-                              }}
-                              disabled={selectClinicMutation.isPending}
-                              className={cn(
-                                "w-full rounded-2xl border border-lightGray bg-white/80 px-3 py-2.5 text-left transition-all hover:-translate-y-[1px] hover:border-charcoal/25 hover:bg-white hover:shadow-sm",
-                                selectClinicMutation.isPending && "opacity-70"
-                              )}
-                            >
-                              <div className="flex items-center gap-3">
-                                {switchingClinicId === accessibleClinic.id ? (
-                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/5 bg-white/75">
-                                    <BrandLoader className="h-4 w-4 animate-spin text-charcoal" />
-                                  </div>
-                                ) : (
-                                  <div
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
-                                    style={getClinicBadgeStyle(accessibleClinic.name, false)}
-                                  >
-                                    {getClinicInitials(accessibleClinic.name)}
-                                  </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-semibold text-charcoal">{accessibleClinic.name}</p>
-                                  <p className="truncate text-[11px] text-mediumGray">
-                                    {roleLabel(accessibleClinic.role)}
-                                  </p>
-                                </div>
-                                <span className="shrink-0 rounded-full bg-lightGray px-2 py-0.5 text-[10px] font-semibold text-charcoal">
-                                  {switchingClinicId === accessibleClinic.id ? "Abrindo" : "Entrar"}
-                                </span>
+                <div className="mt-2 space-y-1.5 pl-4 pr-1">
+                  <ScrollArea className="max-h-[min(24vh,10rem)] pr-2">
+                    <div className="space-y-1.5">
+                      {sortedClinics.map((accessibleClinic) => {
+                        const isSwitching = switchingClinicId === accessibleClinic.id;
+                        return (
+                          <button
+                            key={accessibleClinic.id}
+                            type="button"
+                            onClick={() => {
+                              handleClinicSwitch(accessibleClinic.id, accessibleClinic.isActive);
+                            }}
+                            disabled={accessibleClinic.isActive || selectClinicMutation.isPending}
+                            className={cn(
+                              "w-full rounded-md border px-2 py-1 text-left transition-all",
+                              accessibleClinic.isActive
+                                ? "border-[#D0D5DD] bg-[#F3F4F6] text-charcoal shadow-sm"
+                                : "border-lightGray bg-white/75 text-charcoal hover:border-charcoal/25 hover:bg-lightGray/25",
+                              selectClinicMutation.isPending && "opacity-70"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[11px] font-semibold leading-4">
+                                  {accessibleClinic.name}
+                                </p>
                               </div>
-                            </button>
-                          ))}
-                        </div>
-                      </ScrollArea>
+                              {!accessibleClinic.isActive && (
+                                <span className="shrink-0 rounded-full bg-lightGray px-1.5 py-0 text-[8px] font-semibold leading-4 text-charcoal">
+                                  {isSwitching ? "Abrindo" : "Entrar"}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleOpenClinicPage}
-                    className="mt-3 w-full rounded-xl border border-lightGray bg-white/65 px-3 py-2 text-left text-[11px] font-medium text-charcoal/78 transition-colors hover:border-charcoal/20 hover:bg-white"
-                  >
-                    Gerenciar clínicas em Minha Clínica
-                  </button>
+                  </ScrollArea>
                 </div>
               )}
             </div>

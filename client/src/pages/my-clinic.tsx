@@ -39,7 +39,6 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PatientHeader from "@/components/patient-header";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { isAppStoreRestrictedIOSAppShell } from '@/lib/app-shell';
@@ -122,6 +121,22 @@ const hasClinicAccessByPlan = (plan?: { name?: string | null; features?: unknown
     return hasAccessByName || hasAccessByFeatures;
 };
 
+const getSuggestedClinicName = (user?: { fullName?: string | null; username?: string | null } | null) => {
+    const rawName = (user?.fullName || user?.username || "").trim();
+    if (!rawName) return "Clínica";
+
+    const normalizedUsername = rawName
+        .replace(/_/g, " ")
+        .split("@")[0]
+        .trim();
+
+    const firstName = normalizedUsername.split(/\s+/).filter(Boolean)[0];
+    if (!firstName) return "Clínica";
+
+    const formattedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    return `Clínica de ${formattedFirstName}`;
+};
+
 const MyClinic = () => {
     const { toast } = useToast();
     const { user } = useAuth();
@@ -138,6 +153,12 @@ const MyClinic = () => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedClinicName, setEditedClinicName] = useState('');
     const [editingClinicId, setEditingClinicId] = useState<number | null>(null);
+    const suggestedClinicName = getSuggestedClinicName(user);
+
+    const openCreateClinicDialog = () => {
+        setClinicName((currentValue) => currentValue.trim() ? currentValue : suggestedClinicName);
+        setIsCreateClinicDialogOpen(true);
+    };
 
     const { data: clinicData, isLoading, refetch: refetchClinic } = useQuery<ClinicData>({
         queryKey: ['/api/my-clinic', user?.id ?? null, user?.clinicId ?? null],
@@ -436,7 +457,7 @@ const MyClinic = () => {
                                 Perfis de secretaria não podem criar novas clínicas. Use um convite ou troque para uma conta profissional administradora.
                             </p>
                         )}
-                        <Button onClick={() => setIsCreateClinicDialogOpen(true)} disabled={!canCreateClinic} className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6">
+                        <Button onClick={openCreateClinicDialog} disabled={!canCreateClinic} className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6">
                             <Building className="h-4 w-4 mr-2" />
                             Criar Minha Clínica
                         </Button>
@@ -495,6 +516,7 @@ const MyClinic = () => {
             };
             return score(a) - score(b);
         });
+        const currentClinicAccess = sortedClinics.find((entry) => entry.id === clinic.id);
         return (
             <>
                 {/* Clinic header */}
@@ -517,37 +539,12 @@ const MyClinic = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex w-full flex-col gap-3 md:w-[360px]">
-                        {showClinicSwitcher && (
-                            <div className="w-full">
-                                <Label className="text-xs text-muted-foreground mb-1.5 block">Clínica ativa</Label>
-                                <Select
-                                    value={String(clinic.id)}
-                                    onValueChange={(value) => {
-                                        const nextClinicId = Number(value);
-                                        if (!Number.isFinite(nextClinicId) || nextClinicId === clinic.id) return;
-                                        selectClinicMutation.mutate(nextClinicId);
-                                    }}
-                                    disabled={selectClinicMutation.isPending}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Selecionar clínica" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {sortedClinics.map((accessibleClinic) => (
-                                            <SelectItem key={accessibleClinic.id} value={String(accessibleClinic.id)}>
-                                                {accessibleClinic.name} ({roleLabel(accessibleClinic.role)})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                    <div className="flex w-full flex-col gap-3 md:w-[360px] md:items-end">
                         {canCreateClinic && (
                             <Button
                                 variant="outline"
-                                className="w-full justify-center rounded-xl border-border"
-                                onClick={() => setIsCreateClinicDialogOpen(true)}
+                                className="h-10 self-end rounded-xl border-border px-4 text-sm"
+                                onClick={openCreateClinicDialog}
                             >
                                 <Building className="h-4 w-4 mr-2" />
                                 Nova Clínica
@@ -556,136 +553,153 @@ const MyClinic = () => {
                     </div>
                 </div>
 
-                {(showClinicSwitcher || canCreateClinic) && (
-                    <Card className="border border-border shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="text-foreground">Ambientes de Clínica</CardTitle>
-                            <CardDescription className="text-muted-foreground">
-                                Selecione em qual clínica você vai atender agora e crie novas estruturas quando necessário.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {showClinicSwitcher ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {sortedClinics.map((accessibleClinic) => {
-                                        const isActiveClinic = accessibleClinic.id === clinic.id;
-                                        const isDefaultClinic = accessibleClinic.id === defaultClinicId;
-                                        const isEditingThisClinic = editingClinicId === accessibleClinic.id;
-                                        const canRenameClinic = accessibleClinic.role === 'admin';
-                                        return (
-                                            <div
-                                                key={accessibleClinic.id}
-                                                className={`rounded-2xl border p-4 text-left transition-all ${
-                                                    isActiveClinic
-                                                        ? "border-primary bg-primary/5"
-                                                        : "border-border bg-card hover:border-primary/40"
-                                                }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div>
-                                                        <p className="font-semibold text-foreground">{accessibleClinic.name}</p>
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            {roleLabel(accessibleClinic.role)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex flex-wrap items-center justify-end gap-2">
-                                                        {isDefaultClinic && (
-                                                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
-                                                                <Star className="h-3.5 w-3.5 mr-1" />
-                                                                Padrão
-                                                            </Badge>
-                                                        )}
-                                                        <Badge
-                                                            variant={isActiveClinic ? "default" : "outline"}
-                                                            className={isActiveClinic ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
-                                                        >
-                                                            {isActiveClinic ? "Ativa" : "Disponível"}
+                <Card className="border border-border shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-foreground">Ambientes de Clínica</CardTitle>
+                        <CardDescription className="text-muted-foreground">
+                            {showClinicSwitcher
+                                ? "Selecione em qual clínica você vai atender agora e gerencie seus ambientes."
+                                : "Visualize o ambiente ativo da sua conta e acompanhe como sua clínica está configurada."}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {showClinicSwitcher ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {sortedClinics.map((accessibleClinic) => {
+                                    const isActiveClinic = accessibleClinic.id === clinic.id;
+                                    const isDefaultClinic = accessibleClinic.id === defaultClinicId;
+                                    const isEditingThisClinic = editingClinicId === accessibleClinic.id;
+                                    const canRenameClinic = accessibleClinic.role === 'admin';
+                                    return (
+                                        <div
+                                            key={accessibleClinic.id}
+                                            className={`rounded-2xl border p-4 text-left transition-all ${
+                                                isActiveClinic
+                                                    ? "border-primary bg-primary/5"
+                                                    : "border-border bg-card hover:border-primary/40"
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="font-semibold text-foreground">{accessibleClinic.name}</p>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {roleLabel(accessibleClinic.role)}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                                    {isDefaultClinic && (
+                                                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
+                                                            <Star className="h-3.5 w-3.5 mr-1" />
+                                                            Padrão
                                                         </Badge>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-4 flex flex-wrap gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        className="rounded-xl bg-primary hover:bg-primary/90"
-                                                        onClick={() => {
-                                                            if (isActiveClinic || selectClinicMutation.isPending) return;
-                                                            selectClinicMutation.mutate(accessibleClinic.id);
-                                                        }}
-                                                        disabled={isActiveClinic || selectClinicMutation.isPending}
-                                                    >
-                                                        {isActiveClinic ? 'Em uso agora' : 'Usar nesta sessão'}
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="rounded-xl"
-                                                        onClick={() => setDefaultClinicMutation.mutate(accessibleClinic.id)}
-                                                        disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
-                                                    >
-                                                        <Star className="h-4 w-4 mr-2" />
-                                                        {isDefaultClinic ? 'Clínica padrão' : 'Definir como padrão'}
-                                                    </Button>
-                                                    {canRenameClinic && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="rounded-xl text-muted-foreground hover:text-foreground"
-                                                            onClick={() => {
-                                                                setEditingClinicId(accessibleClinic.id);
-                                                                setEditedClinicName(accessibleClinic.name);
-                                                            }}
-                                                        >
-                                                            <Edit2 className="h-4 w-4 mr-2" />
-                                                            Renomear
-                                                        </Button>
                                                     )}
+                                                    <Badge
+                                                        variant={isActiveClinic ? "default" : "outline"}
+                                                        className={isActiveClinic ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
+                                                    >
+                                                        {isActiveClinic ? "Ativa" : "Disponível"}
+                                                    </Badge>
                                                 </div>
+                                            </div>
 
-                                                {isEditingThisClinic && (
-                                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                                                        <Input
-                                                            value={editedClinicName}
-                                                            onChange={(e) => setEditedClinicName(e.target.value)}
-                                                            placeholder="Nome da clínica"
-                                                            className="flex-1 border-border focus:border-primary"
-                                                        />
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                className="bg-primary hover:bg-primary/90"
-                                                                onClick={() => updateClinicMutation.mutate({ clinicId: accessibleClinic.id, name: editedClinicName })}
-                                                                disabled={!editedClinicName.trim() || updateClinicMutation.isPending}
-                                                            >
-                                                                {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => {
-                                                                    setEditingClinicId(null);
-                                                                    setEditedClinicName(clinic.name);
-                                                                }}
-                                                                className="border-border"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    className="rounded-xl bg-primary hover:bg-primary/90"
+                                                    onClick={() => {
+                                                        if (isActiveClinic || selectClinicMutation.isPending) return;
+                                                        selectClinicMutation.mutate(accessibleClinic.id);
+                                                    }}
+                                                    disabled={isActiveClinic || selectClinicMutation.isPending}
+                                                >
+                                                    {isActiveClinic ? 'Em uso agora' : 'Usar nesta sessão'}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="rounded-xl"
+                                                    onClick={() => setDefaultClinicMutation.mutate(accessibleClinic.id)}
+                                                    disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
+                                                >
+                                                    <Star className="h-4 w-4 mr-2" />
+                                                    {isDefaultClinic ? 'Clínica padrão' : 'Definir como padrão'}
+                                                </Button>
+                                                {canRenameClinic && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="rounded-xl text-muted-foreground hover:text-foreground"
+                                                        onClick={() => {
+                                                            setEditingClinicId(accessibleClinic.id);
+                                                            setEditedClinicName(accessibleClinic.name);
+                                                        }}
+                                                    >
+                                                        <Edit2 className="h-4 w-4 mr-2" />
+                                                        Renomear
+                                                    </Button>
                                                 )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="rounded-2xl border border-border bg-muted/35 p-4">
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="font-medium text-foreground">{clinic.name}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Você está atendendo em uma única clínica no momento.
-                                            </p>
+
+                                            {isEditingThisClinic && (
+                                                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                                    <Input
+                                                        value={editedClinicName}
+                                                        onChange={(e) => setEditedClinicName(e.target.value)}
+                                                        placeholder="Nome da clínica"
+                                                        className="flex-1 border-border focus:border-primary"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-primary hover:bg-primary/90"
+                                                            onClick={() => updateClinicMutation.mutate({ clinicId: accessibleClinic.id, name: editedClinicName })}
+                                                            disabled={!editedClinicName.trim() || updateClinicMutation.isPending}
+                                                        >
+                                                            {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                setEditingClinicId(null);
+                                                                setEditedClinicName(clinic.name);
+                                                            }}
+                                                            className="border-border"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="rounded-2xl border border-border bg-muted/35 p-4">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div className="space-y-2">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-medium text-foreground">{clinic.name}</p>
+                                            {currentClinicAccess?.role && (
+                                                <Badge variant="outline" className="text-muted-foreground">
+                                                    {roleLabel(currentClinicAccess.role)}
+                                                </Badge>
+                                            )}
+                                            {clinic.id === defaultClinicId && (
+                                                <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
+                                                    <Star className="h-3.5 w-3.5 mr-1" />
+                                                    Padrão
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                            {canCreateClinic
+                                                ? "Você está atendendo em uma única clínica no momento, mas já pode estruturar novos ambientes quando precisar."
+                                                : "Sua conta está vinculada a este ambiente de clínica. Novos acessos e clínicas adicionais dependem do administrador."}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -696,29 +710,59 @@ const MyClinic = () => {
                                             <Star className="h-4 w-4 mr-2" />
                                             {clinic.id === defaultClinicId ? 'Clínica padrão' : 'Definir como padrão'}
                                         </Button>
+                                        {clinicData.isAdmin && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="rounded-xl text-muted-foreground hover:text-foreground"
+                                                onClick={() => {
+                                                    setEditingClinicId(clinic.id);
+                                                    setEditedClinicName(clinic.name);
+                                                }}
+                                            >
+                                                <Edit2 className="h-4 w-4 mr-2" />
+                                                Renomear
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
-                            )}
 
-                            {canCreateClinic && (
-                                <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-4">
-                                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                        <div>
-                                            <p className="font-medium text-foreground">Precisa de outra clínica?</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Crie uma nova clínica, mantenha equipes separadas e depois alterne o contexto de atendimento quando quiser.
-                                            </p>
+                                {editingClinicId === clinic.id && (
+                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <Input
+                                            value={editedClinicName}
+                                            onChange={(e) => setEditedClinicName(e.target.value)}
+                                            placeholder="Nome da clínica"
+                                            className="flex-1 border-border focus:border-primary"
+                                        />
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                className="bg-primary hover:bg-primary/90"
+                                                onClick={() => updateClinicMutation.mutate({ clinicId: clinic.id, name: editedClinicName })}
+                                                disabled={!editedClinicName.trim() || updateClinicMutation.isPending}
+                                            >
+                                                {updateClinicMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setEditingClinicId(null);
+                                                    setEditedClinicName(clinic.name);
+                                                }}
+                                                className="border-border"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        <Button onClick={() => setIsCreateClinicDialogOpen(true)} className="bg-primary hover:bg-primary/90 rounded-xl">
-                                            <Building className="h-4 w-4 mr-2" />
-                                            Criar Nova Clínica
-                                        </Button>
                                     </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
+                                )}
+                            </div>
+                        )}
+
+                    </CardContent>
+                </Card>
 
                 {/* Tabs */}
                 <Tabs defaultValue="equipe" className="w-full">
@@ -1059,7 +1103,7 @@ const MyClinic = () => {
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="clinicName" className="text-foreground">Nome da Clínica</Label>
-                                    <Input id="clinicName" placeholder="Ex: Clínica Integrada Saúde" value={clinicName}
+                                    <Input id="clinicName" placeholder={suggestedClinicName} value={clinicName}
                                         onChange={(e) => setClinicName(e.target.value)} className="border-border focus:border-primary" />
                                 </div>
                             </div>
