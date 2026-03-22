@@ -79,12 +79,12 @@ export function LandingDownloads() {
   return (
     <section
       id="downloads"
-      className="relative overflow-hidden bg-[#f5f1ea] py-14 text-[#111111] md:py-16 xl:py-20"
+      className="relative overflow-hidden bg-[#F4F4F4] py-14 text-[#111111] md:py-16 xl:py-20"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-0 top-0 h-px bg-black/8" />
-        <div className="absolute left-[8%] top-14 h-44 w-44 rounded-full bg-white/80 blur-3xl" />
-        <div className="absolute right-[10%] top-1/3 h-52 w-52 rounded-full bg-[#dff5e7] blur-3xl" />
+        <div className="absolute left-[8%] top-14 h-44 w-44 rounded-full bg-white/90 blur-3xl" />
+        <div className="absolute right-[10%] top-1/3 h-52 w-52 rounded-full bg-[#E1E1E1] blur-3xl" />
       </div>
 
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
