@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { isNativeIOSAppOnMac, isRestrictedAppShell } from "@/lib/app-shell";
+import { isNativeIOSApp, isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -96,11 +96,11 @@ export default function AuthPage() {
   const loginEmailInputRef = useRef<HTMLInputElement | null>(null);
   const loginPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const hideLandingBackButton = isRestrictedAppShell();
-  const isNativeMacShell = isNativeIOSAppOnMac();
+  const isNativeIOSShell = isNativeIOSApp();
   const isDarkMode = theme === "dark";
-  const loginAutocomplete = isNativeMacShell ? "off" : "on";
-  const loginEmailAutocomplete = isNativeMacShell ? "off" : "username";
-  const loginPasswordAutocomplete = isNativeMacShell ? "off" : "current-password";
+  const loginAutocomplete = isNativeIOSShell ? "off" : "on";
+  const loginEmailAutocomplete = isNativeIOSShell ? "off" : "username";
+  const loginPasswordAutocomplete = isNativeIOSShell ? "off" : "current-password";
 
   // Redirect logic removed to enforce manual login as requested
   // useEffect(() => {
@@ -137,7 +137,7 @@ export default function AuthPage() {
   const invitationTokenFromPath = ((acceptInvitationParams as { token?: string } | null)?.token ?? "").trim();
 
   const syncLoginFieldFromDom = useCallback((fieldName: keyof LoginFormValues, input: HTMLInputElement | null) => {
-    if (isNativeMacShell || !input) {
+    if (isNativeIOSShell || !input) {
       return;
     }
 
@@ -151,16 +151,16 @@ export default function AuthPage() {
       shouldTouch: true,
       shouldValidate: false,
     });
-  }, [isNativeMacShell, loginForm]);
+  }, [isNativeIOSShell, loginForm]);
 
   const syncLoginFormFromDom = useCallback(() => {
-    if (isNativeMacShell) {
+    if (isNativeIOSShell) {
       return;
     }
 
     syncLoginFieldFromDom("email", loginEmailInputRef.current);
     syncLoginFieldFromDom("password", loginPasswordInputRef.current);
-  }, [isNativeMacShell, syncLoginFieldFromDom]);
+  }, [isNativeIOSShell, syncLoginFieldFromDom]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -196,7 +196,7 @@ export default function AuthPage() {
   }, [acceptInvitationMatch, invitationTokenFromPath, location, registerForm]);
 
   useEffect(() => {
-    if (isNativeMacShell || tab !== "login" || typeof window === "undefined") {
+    if (isNativeIOSShell || tab !== "login" || typeof window === "undefined") {
       return;
     }
 
@@ -229,7 +229,7 @@ export default function AuthPage() {
       window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [isNativeMacShell, syncLoginFormFromDom, tab]);
+  }, [isNativeIOSShell, syncLoginFormFromDom, tab]);
 
   const onLoginSubmit = useCallback((values: LoginFormValues) => {
     loginMutation.mutate({
@@ -244,16 +244,16 @@ export default function AuthPage() {
 
     const isValid = await loginForm.trigger(["email", "password"], { shouldFocus: true });
     if (!isValid) {
-      if (!isNativeMacShell && loginForm.getFieldState("email").error) {
+      if (!isNativeIOSShell && loginForm.getFieldState("email").error) {
         loginEmailInputRef.current?.focus();
-      } else if (!isNativeMacShell && loginForm.getFieldState("password").error) {
+      } else if (!isNativeIOSShell && loginForm.getFieldState("password").error) {
         loginPasswordInputRef.current?.focus();
       }
       return;
     }
 
     onLoginSubmit(loginForm.getValues());
-  }, [isNativeMacShell, loginForm, onLoginSubmit, syncLoginFormFromDom]);
+  }, [isNativeIOSShell, loginForm, onLoginSubmit, syncLoginFormFromDom]);
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const {

@@ -110,6 +110,18 @@ const ShellContentLoadingFallback = () => (
   </div>
 );
 
+const NativeShellAuthBootstrap = () => {
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.pathname === "/auth") {
+      return;
+    }
+
+    window.location.replace("/auth");
+  }, []);
+
+  return <LandingLoadingFallback />;
+};
+
 // ============================================
 // LANDING PAGE - Sem nenhum provider pesado
 // ============================================
@@ -376,7 +388,7 @@ function AppRouter() {
   // Em shells de app (PWA standalone e iOS nativo), nunca abrir landing:
   // ir para auth e deixar auth decidir se redireciona para /agenda quando já autenticado.
   if (restrictedAppShell && isLandingRoute) {
-    return <Redirect to="/auth" />;
+    return <NativeShellAuthBootstrap />;
   }
 
   if (isLandingRoute) {
