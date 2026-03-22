@@ -289,7 +289,7 @@ export function LandingMigration() {
   return (
     <section
       id="migracao"
-      className="relative overflow-hidden bg-[#F4F2EE] py-14 text-[#212121] md:py-24 scroll-mt-20"
+      className="relative overflow-hidden bg-[#F4F2EE] py-8 md:py-12 min-h-[100dvh] flex flex-col justify-center text-[#212121]"
     >
       {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0">
@@ -308,32 +308,32 @@ export function LandingMigration() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#D4CEC4] bg-white/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#424242] backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-[#212121]" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#D4CEC4] bg-white/80 px-3 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.18em] text-[#424242] backdrop-blur-md">
+              <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#212121]" />
               {"Migração assistida de outro sistema"}
             </div>
 
-            <h2 className="max-w-2xl text-3xl font-heading font-bold leading-[1.06] tracking-tight text-[#212121] sm:text-4xl md:text-5xl">
-              {"Troque de sistema"}
+            <h2 className="max-w-2xl text-2xl font-heading font-bold leading-[1.06] tracking-tight text-[#212121] sm:text-3xl md:text-4xl lg:text-[42px]">
+              {"Troque de sistema "}
               <span className="block text-[#8A8A8A]">{"sem começar do zero."}</span>
             </h2>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-[#555555] md:text-lg">
+            <p className="mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#555555]">
               {"Se hoje seus dados estão em outro prontuário, a mudança não cai no colo da sua equipe. "}
               {"O time do VitaView cuida da migração completa para você."}
             </p>
 
-            <p className="mt-4 max-w-xl text-sm leading-7 text-[#6A6A6A] md:text-base">
+            <p className="mt-3 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-[#6A6A6A]">
               {"Pacientes, consultas, horários, telefones, prontuários e informações do sistema antigo "}
               {"entram organizados no VitaView, para sua clínica continuar operando com continuidade, "}
               {"não com retrabalho."}
             </p>
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-5 sm:mt-6 space-y-2.5 sm:space-y-3">
               {STEPS.map((step, index) => (
                 <motion.div
                   key={step.title}
-                  className="flex gap-4 rounded-2xl border border-[#DDD7CE] bg-white/72 p-4 shadow-[0_18px_40px_-32px_rgba(33,33,33,0.55)] backdrop-blur-sm"
+                  className="flex gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-[#DDD7CE] bg-white/72 p-3 sm:p-4 shadow-[0_12px_30px_-24px_rgba(33,33,33,0.4)] backdrop-blur-sm"
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.35 }}
@@ -343,25 +343,25 @@ export function LandingMigration() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#212121] text-sm font-bold text-white">
+                  <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-[#212121] text-xs sm:text-sm font-bold text-white">
                     {index + 1}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#212121] md:text-base">{step.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-[#616161]">{step.description}</p>
+                    <h3 className="text-sm font-bold text-[#212121]">{step.title}</h3>
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm leading-5 sm:leading-6 text-[#616161]">{step.description}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <div className="mt-8 flex flex-col items-start gap-4">
+            <div className="mt-6 flex flex-col items-start gap-3">
               <Link href="/auth">
-                <Button className="group h-auto rounded-xl bg-[#212121] px-6 py-4 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl sm:px-7 sm:text-base">
+                <Button className="group h-auto rounded-xl bg-[#212121] px-5 py-3 sm:px-6 sm:py-3.5 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl">
                   {"Quero migrar com a equipe"}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <p className="text-sm text-[#666666]">
+              <p className="text-xs sm:text-sm text-[#666666]">
                 {"Sem planilha, sem copiar e colar, sem parar a rotina do consultório."}
               </p>
             </div>
