@@ -14,6 +14,7 @@ import { LandingPricing } from "@/components/landing-page/LandingPricing";
 import { LandingDownloads } from "@/components/landing-page/LandingDownloads";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
 import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
+import { LandingExamProtocols } from "@/components/landing-page/LandingExamProtocols";
 import { LandingAISuggestions } from "@/components/landing-page/LandingAISuggestions";
 import { LandingVoiceTranscription } from "@/components/landing-page/LandingVoiceTranscription";
 import { LandingFAQ } from "@/components/landing-page/LandingFAQ";
@@ -49,6 +50,7 @@ export default function LandingPage() {
             <LandingVoiceTranscription />
             <LandingAISuggestions />
             <LandingPrescription />
+            <LandingExamProtocols />
             <LandingAppointmentScheduler />
             <LandingFeatures />
             <LandingMigration />

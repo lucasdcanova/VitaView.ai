@@ -79,7 +79,7 @@ export function LandingFooter() {
                         </div>
                     </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -93,6 +93,7 @@ export function LandingFooter() {
                                     { label: "Anamnese com IA", href: "#anamnese-ia" },
                                     { label: "Dose Inteligente", href: "#dose-inteligente" },
                                     { label: "Prescrição Digital", href: "#prescricao-digital" },
+                                    { label: "Solicitação de Exames", href: "#protocolos-exames" },
                                     { label: "Agenda com IA", href: "#agenda" },
                                     { label: "Quatro Pilares", href: "#recursos" },
                                 ].map((item, i) => (
@@ -159,40 +160,6 @@ export function LandingFooter() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
-                            <h3 className="text-white font-semibold mb-4">Contato</h3>
-                            <ul className="space-y-2">
-                                {[
-                                    { label: "contato@vitaview.ai", href: "mailto:contato@vitaview.ai" },
-                                    { label: "Instagram", href: "https://instagram.com/vitaview.ai" }
-                                ].map((item, i) => (
-                                    <motion.li
-                                        key={item.label}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.3, delay: 0.2 + (i * 0.05) }}
-                                    >
-                                        <motion.a
-                                            href={item.href}
-                                            target={item.href.startsWith('http') ? '_blank' : undefined}
-                                            rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                                            className="hover:text-white transition-colors relative group inline-block"
-                                            whileHover={{ x: 3 }}
-                                        >
-                                            {item.label}
-                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
-                                        </motion.a>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                        >
                             <h3 className="text-white font-semibold mb-4">Legal</h3>
                             <ul className="space-y-2">
                                 {[
@@ -230,7 +197,38 @@ export function LandingFooter() {
                     transition={{ duration: 0.7, delay: 0.5 }}
                 >
                     <p>&copy; {new Date().getFullYear()} VitaView AI. Todos os direitos reservados.</p>
-                    <div className="flex justify-center mt-4 md:mt-0">
+                    <div className="flex justify-center mt-4 md:mt-0 items-center gap-5">
+                        <motion.a
+                            href="mailto:contato@vitaview.ai"
+                            className="text-[#9E9E9E] hover:text-white transition-colors group"
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: 0.48 }}
+                            whileHover={{ y: -2, scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path
+                                        d="M4 6.75h16A1.25 1.25 0 0 1 21.25 8v8A1.25 1.25 0 0 1 20 17.25H4A1.25 1.25 0 0 1 2.75 16V8A1.25 1.25 0 0 1 4 6.75Z"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                    />
+                                    <path
+                                        d="m3.5 8 7.41 5.19a1.9 1.9 0 0 0 2.18 0L20.5 8"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                                <span className="text-sm font-medium group-hover:text-[#E0E0E0] transition-colors">
+                                    contato@vitaview.ai
+                                </span>
+                            </div>
+                        </motion.a>
+
                         <motion.a
                             href="https://instagram.com/vitaview.ai"
                             target="_blank"
