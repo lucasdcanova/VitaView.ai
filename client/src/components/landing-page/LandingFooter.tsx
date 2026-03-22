@@ -36,7 +36,7 @@ export function LandingFooter() {
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <motion.div
-                    className="flex flex-col md:flex-row justify-between"
+                    className="flex flex-col md:flex-row md:items-start"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -79,15 +79,15 @@ export function LandingFooter() {
                         </div>
                     </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-[1.2fr_0.8fr] gap-6 md:gap-8 md:ml-auto md:w-fit md:self-start">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: 0.08 }}
                         >
-                            <h3 className="text-white font-semibold mb-4">Plataforma</h3>
-                            <ul className="space-y-2">
+                            <h3 className="text-white font-semibold mb-4">Explorar</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-2">
                                 {[
                                     { label: "Visualização Clínica", href: "#como-funciona" },
                                     { label: "Anamnese com IA", href: "#anamnese-ia" },
@@ -96,36 +96,6 @@ export function LandingFooter() {
                                     { label: "Solicitação de Exames", href: "#protocolos-exames" },
                                     { label: "Agenda com IA", href: "#agenda" },
                                     { label: "Quatro Pilares", href: "#recursos" },
-                                ].map((item, i) => (
-                                    <motion.li
-                                        key={item.label}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.3, delay: 0.08 + (i * 0.05) }}
-                                    >
-                                        <motion.a
-                                            href={item.href}
-                                            className="hover:text-white transition-colors relative group inline-block"
-                                            whileHover={{ x: 3 }}
-                                        >
-                                            {item.label}
-                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
-                                        </motion.a>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.1 }}
-                        >
-                            <h3 className="text-white font-semibold mb-4">Explorar</h3>
-                            <ul className="space-y-2">
-                                {[
                                     { label: "Migração", href: "#migracao" },
                                     { label: "Para Quem", href: "#para-quem" },
                                     { label: "Segurança", href: "#seguranca" },
@@ -134,12 +104,12 @@ export function LandingFooter() {
                                     { label: "Multi-Plataforma", href: "#downloads" },
                                     { label: "Perguntas Frequentes", href: "#faq" }
                                 ].map((item, i) => (
-                                    <motion.li
+                                    <motion.div
                                         key={item.label}
                                         initial={{ opacity: 0, x: -10 }}
                                         whileInView={{ opacity: 1, x: 0 }}
                                         viewport={{ once: true }}
-                                        transition={{ duration: 0.3, delay: 0.1 + (i * 0.05) }}
+                                        transition={{ duration: 0.3, delay: 0.08 + (i * 0.04) }}
                                     >
                                         <motion.a
                                             href={item.href}
@@ -149,9 +119,9 @@ export function LandingFooter() {
                                             {item.label}
                                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
                                         </motion.a>
-                                    </motion.li>
+                                    </motion.div>
                                 ))}
-                            </ul>
+                            </div>
                         </motion.div>
 
                         <motion.div
