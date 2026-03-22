@@ -42,6 +42,7 @@ import { motion } from "framer-motion";
 import { isNativeIOSApp, isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useTheme } from "@/hooks/use-theme";
+import { cn } from "@/lib/utils";
 
 /**
  * VitaView AI Auth Page
@@ -98,6 +99,7 @@ export default function AuthPage() {
   const hideLandingBackButton = isRestrictedAppShell();
   const isNativeIOSShell = isNativeIOSApp();
   const isDarkMode = theme === "dark";
+  const hasCompactMobileHeader = hideLandingBackButton || isNativeIOSShell;
   const loginAutocomplete = isNativeIOSShell ? "off" : "on";
   const loginEmailAutocomplete = isNativeIOSShell ? "off" : "username";
   const loginPasswordAutocomplete = isNativeIOSShell ? "off" : "current-password";
@@ -339,17 +341,22 @@ export default function AuthPage() {
       </div>
 
       {/* Main Content - Centered Form */}
-      <div className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-4 py-16 sm:py-12">
-        <div className="mb-2 flex w-full max-w-md flex-col items-center">
+      <div
+        className={cn(
+          "relative z-10 flex min-h-[100svh] w-full flex-col items-center px-4 pb-8 sm:min-h-screen sm:justify-center sm:py-12",
+          hasCompactMobileHeader ? "justify-start pt-8" : "justify-start pt-16",
+        )}
+      >
+        <div className="mb-0.5 flex w-full max-w-md flex-col items-center sm:mb-2">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-2 flex items-center gap-3"
+            className="mb-1 flex items-center gap-3 sm:mb-2"
           >
-            <div className="my-1 flex w-full justify-center">
+            <div className="my-0.5 flex w-full justify-center sm:my-1">
               <Logo
-                size="xl"
+                size="lg"
                 showText={false}
                 variant="full"
                 className="flex-col items-center"
@@ -358,35 +365,35 @@ export default function AuthPage() {
           </motion.div>
         </div>
 
-        <Card className="relative mt-3 w-full max-w-md overflow-hidden rounded-[28px] border-border/80 bg-card/95 shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] backdrop-blur-sm">
+        <Card className="relative mt-1 w-full max-w-md overflow-hidden rounded-[24px] border-border/80 bg-card/95 shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:mt-3 sm:rounded-[28px]">
           {/* Banner de branding no topo do card */}
-          <div className="bg-primary px-4 py-3 text-center text-primary-foreground">
-            <span className="font-heading text-sm font-bold tracking-wide">
+          <div className="bg-primary px-4 py-2.5 text-center text-primary-foreground sm:py-3">
+            <span className="font-heading text-[11px] font-bold tracking-[0.08em] sm:text-sm sm:tracking-wide">
               O Prontuário que Pensa com Você
             </span>
           </div>
 
-          <CardHeader className="text-center pt-8 pb-4">
-            <CardTitle className="flex items-center justify-center gap-2 font-heading text-2xl font-bold text-foreground">
+          <CardHeader className="pb-3 pt-5 text-center sm:pb-4 sm:pt-8">
+            <CardTitle className="flex items-center justify-center gap-2 font-heading text-[1.75rem] font-bold leading-tight text-foreground sm:text-2xl">
               <span>Acesse sua conta</span>
             </CardTitle>
-            <CardDescription className="mt-2 text-center font-body text-muted-foreground">
+            <CardDescription className="mt-1 text-center font-body text-sm text-muted-foreground sm:mt-2">
               Bem-vindo ao VitaView AI
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="pb-8 px-8">
+          <CardContent className="px-5 pb-6 sm:px-8 sm:pb-8">
             <Tabs defaultValue="login" value={tab} onValueChange={(value) => setTab(value as "login" | "register")}>
-              <TabsList className="mb-6 grid w-full grid-cols-2 rounded-xl bg-muted/80 p-1">
+              <TabsList className="mb-5 grid h-10 w-full grid-cols-2 rounded-xl bg-muted/80 p-1 sm:mb-6">
                 <TabsTrigger
                   value="login"
-                  className="rounded-lg font-heading font-bold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="rounded-lg font-heading text-[13px] font-bold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
                 >
                   Entrar
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
-                  className="rounded-lg font-heading font-bold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="rounded-lg font-heading text-[13px] font-bold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
                 >
                   Cadastrar
                 </TabsTrigger>
@@ -394,13 +401,13 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={handleLoginSubmit} autoComplete={loginAutocomplete} noValidate className="space-y-5">
+                  <form onSubmit={handleLoginSubmit} autoComplete={loginAutocomplete} noValidate className="space-y-4 sm:space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Email</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Email</FormLabel>
                           <FormControl>
                             <Input
                               id="login-email"
@@ -429,7 +436,7 @@ export default function AuthPage() {
                               spellCheck={false}
                               inputMode="email"
                               enterKeyHint="next"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -442,7 +449,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Senha</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Senha</FormLabel>
                           <FormControl>
                             <Input
                               id="login-password"
@@ -470,7 +477,7 @@ export default function AuthPage() {
                               autoCorrect="off"
                               spellCheck={false}
                               enterKeyHint="go"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -479,7 +486,7 @@ export default function AuthPage() {
                     />
 
                     <div className="flex justify-end">
-                      <Link href="/forgot-password" className="px-0 font-body text-sm text-foreground hover:text-foreground/80 hover:underline">
+                      <Link href="/forgot-password" className="px-0 font-body text-[13px] text-foreground hover:text-foreground/80 hover:underline sm:text-sm">
                         Esqueceu a senha?
                       </Link>
                     </div>
@@ -501,7 +508,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="h-12 w-full rounded-xl bg-primary font-heading text-lg font-bold text-primary-foreground transition-all duration-200 hover:bg-primary/90"
+                      className="h-11 w-full rounded-xl bg-primary font-heading text-base font-bold text-primary-foreground transition-all duration-200 hover:bg-primary/90 sm:h-12 sm:text-lg"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -516,13 +523,13 @@ export default function AuthPage() {
                   </form>
                 </Form>
 
-                <div className="mt-6 text-center">
-                  <p className="font-body text-sm text-muted-foreground">
+                <div className="mt-5 text-center sm:mt-6">
+                  <p className="font-body text-[13px] text-muted-foreground sm:text-sm">
                     Não tem uma conta?{" "}
                     <Button
                       variant="link"
                       type="button"
-                      className="p-0 font-heading font-bold text-foreground hover:text-foreground/80"
+                      className="h-auto p-0 font-heading font-bold text-foreground hover:text-foreground/80"
                       onClick={() => setTab("register")}
                     >
                       Cadastre-se
@@ -533,13 +540,13 @@ export default function AuthPage() {
 
               <TabsContent value="register">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-3.5 sm:space-y-4">
                     <FormField
                       control={registerForm.control}
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Nome Completo</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Nome Completo</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Digite seu nome completo"
@@ -549,7 +556,7 @@ export default function AuthPage() {
                               name={field.name}
                               ref={field.ref}
                               autoComplete="name"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -562,7 +569,7 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Email</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Email</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
@@ -573,7 +580,7 @@ export default function AuthPage() {
                               name={field.name}
                               ref={field.ref}
                               autoComplete="email"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -586,14 +593,14 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Senha</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Senha</FormLabel>
                           <FormControl>
                             <Input
                               type="password"
                               placeholder="Crie uma senha"
                               {...field}
                               autoComplete="new-password"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -606,14 +613,14 @@ export default function AuthPage() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-heading font-bold text-foreground">Confirme a Senha</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Confirme a Senha</FormLabel>
                           <FormControl>
                             <Input
                               type="password"
                               placeholder="Confirme sua senha"
                               {...field}
                               autoComplete="new-password"
-                              className="h-11"
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage className="text-destructive" />
@@ -625,7 +632,7 @@ export default function AuthPage() {
                       control={registerForm.control}
                       name="isSecretaryInviteRegistration"
                       render={({ field }) => (
-                        <FormItem className="mt-1 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-4">
+                        <FormItem className="mt-1 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-3.5 sm:p-4">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -633,10 +640,10 @@ export default function AuthPage() {
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="cursor-pointer font-body text-sm text-muted-foreground">
+                            <FormLabel className="cursor-pointer font-body text-[13px] text-muted-foreground sm:text-sm">
                               Estou me cadastrando como <span className="font-bold text-foreground">secretária(o) por convite</span>
                             </FormLabel>
-                            <p className="font-body text-xs text-muted-foreground">
+                            <p className="font-body text-[11px] text-muted-foreground sm:text-xs">
                               Secretárias(os) só podem ser cadastradas(os) com convite da clínica (email ou código).
                             </p>
                           </div>
@@ -651,7 +658,7 @@ export default function AuthPage() {
                           name="clinicInvitationCode"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="font-heading font-bold text-foreground">Código do Convite</FormLabel>
+                              <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Código do Convite</FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="Ex: A1B2C3D4E5"
@@ -661,7 +668,7 @@ export default function AuthPage() {
                                   name={field.name}
                                   ref={field.ref}
                                   autoComplete="off"
-                                  className="h-11 uppercase tracking-wider"
+                                  className="h-10 rounded-xl px-3.5 uppercase tracking-wider"
                                   maxLength={10}
                                 />
                               </FormControl>
@@ -672,7 +679,7 @@ export default function AuthPage() {
 
                         {prefilledInvitationToken ? (
                           <div className="rounded-xl border border-border bg-muted/35 p-3">
-                            <p className="font-body text-xs text-muted-foreground">
+                            <p className="font-body text-[11px] text-muted-foreground sm:text-xs">
                               Convite detectado por link. Você também pode concluir o cadastro usando apenas o código acima.
                             </p>
                           </div>
@@ -684,12 +691,12 @@ export default function AuthPage() {
                       control={registerForm.control}
                       name="acceptedTerms"
                       render={({ field }) => (
-                        <FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-4">
+                        <FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-3.5 sm:p-4">
                           <FormControl>
                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="cursor-pointer font-body text-sm text-muted-foreground">
+                            <FormLabel className="cursor-pointer font-body text-[13px] text-muted-foreground sm:text-sm">
                               Li e aceito os{" "}
                               <Link href="/termos" target="_blank" className="font-semibold text-foreground underline hover:text-foreground/80">
                                 Termos de Uso
@@ -709,12 +716,12 @@ export default function AuthPage() {
                       control={registerForm.control}
                       name="acceptedHealthData"
                       render={({ field }) => (
-                        <FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-4">
+                        <FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-border bg-background/40 p-3.5 sm:p-4">
                           <FormControl>
                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="cursor-pointer font-body text-sm text-muted-foreground">
+                            <FormLabel className="cursor-pointer font-body text-[13px] text-muted-foreground sm:text-sm">
                               Concordo com o <span className="font-bold text-foreground">processamento de meus dados de saúde</span> para fins de análise clínica e uso de Inteligência Artificial, conforme descrito na Política de Privacidade.
                             </FormLabel>
                             <FormMessage className="text-destructive" />
@@ -726,7 +733,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="mt-2 h-12 w-full rounded-xl bg-primary font-heading font-bold text-primary-foreground hover:bg-primary/90"
+                      className="mt-2 h-11 w-full rounded-xl bg-primary font-heading text-base font-bold text-primary-foreground hover:bg-primary/90 sm:h-12"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? (
@@ -741,13 +748,13 @@ export default function AuthPage() {
                   </form>
                 </Form>
 
-                <div className="mt-6 text-center">
-                  <p className="font-body text-sm text-muted-foreground">
+                <div className="mt-5 text-center sm:mt-6">
+                  <p className="font-body text-[13px] text-muted-foreground sm:text-sm">
                     Já tem uma conta?{" "}
                     <Button
                       variant="link"
                       type="button"
-                      className="p-0 font-heading font-bold text-foreground hover:text-foreground/80"
+                      className="h-auto p-0 font-heading font-bold text-foreground hover:text-foreground/80"
                       onClick={() => setTab("login")}
                     >
                       Faça login
@@ -759,7 +766,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-8 text-center font-body text-sm text-muted-foreground">
+        <div className="mt-5 text-center font-body text-xs text-muted-foreground sm:mt-8 sm:text-sm">
           <p>&copy; 2025 VitaView AI. Todos os direitos reservados.</p>
         </div>
       </div>
