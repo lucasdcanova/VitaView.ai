@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { isRestrictedAppShell } from "@/lib/app-shell";
+import { isNativeIOSAppOnMac, isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -96,7 +96,11 @@ export default function AuthPage() {
   const loginEmailInputRef = useRef<HTMLInputElement | null>(null);
   const loginPasswordInputRef = useRef<HTMLInputElement | null>(null);
   const hideLandingBackButton = isRestrictedAppShell();
+  const isNativeMacShell = isNativeIOSAppOnMac();
   const isDarkMode = theme === "dark";
+  const loginAutocomplete = isNativeMacShell ? "off" : "on";
+  const loginEmailAutocomplete = isNativeMacShell ? "off" : "username";
+  const loginPasswordAutocomplete = isNativeMacShell ? "off" : "current-password";
 
   // Redirect logic removed to enforce manual login as requested
   // useEffect(() => {
@@ -133,7 +137,7 @@ export default function AuthPage() {
   const invitationTokenFromPath = ((acceptInvitationParams as { token?: string } | null)?.token ?? "").trim();
 
   const syncLoginFieldFromDom = useCallback((fieldName: keyof LoginFormValues, input: HTMLInputElement | null) => {
-    if (!input) {
+    if (isNativeMacShell || !input) {
       return;
     }
 
@@ -147,12 +151,16 @@ export default function AuthPage() {
       shouldTouch: true,
       shouldValidate: false,
     });
-  }, [loginForm]);
+  }, [isNativeMacShell, loginForm]);
 
   const syncLoginFormFromDom = useCallback(() => {
+    if (isNativeMacShell) {
+      return;
+    }
+
     syncLoginFieldFromDom("email", loginEmailInputRef.current);
     syncLoginFieldFromDom("password", loginPasswordInputRef.current);
-  }, [syncLoginFieldFromDom]);
+  }, [isNativeMacShell, syncLoginFieldFromDom]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -188,7 +196,7 @@ export default function AuthPage() {
   }, [acceptInvitationMatch, invitationTokenFromPath, location, registerForm]);
 
   useEffect(() => {
-    if (tab !== "login" || typeof window === "undefined") {
+    if (isNativeMacShell || tab !== "login" || typeof window === "undefined") {
       return;
     }
 
@@ -221,7 +229,7 @@ export default function AuthPage() {
       window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [syncLoginFormFromDom, tab]);
+  }, [isNativeMacShell, syncLoginFormFromDom, tab]);
 
   const onLoginSubmit = useCallback((values: LoginFormValues) => {
     loginMutation.mutate({
@@ -236,16 +244,16 @@ export default function AuthPage() {
 
     const isValid = await loginForm.trigger(["email", "password"], { shouldFocus: true });
     if (!isValid) {
-      if (loginForm.getFieldState("email").error) {
+      if (!isNativeMacShell && loginForm.getFieldState("email").error) {
         loginEmailInputRef.current?.focus();
-      } else if (loginForm.getFieldState("password").error) {
+      } else if (!isNativeMacShell && loginForm.getFieldState("password").error) {
         loginPasswordInputRef.current?.focus();
       }
       return;
     }
 
     onLoginSubmit(loginForm.getValues());
-  }, [loginForm, onLoginSubmit, syncLoginFormFromDom]);
+  }, [isNativeMacShell, loginForm, onLoginSubmit, syncLoginFormFromDom]);
 
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const {
@@ -386,7 +394,7 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={handleLoginSubmit} autoComplete="on" noValidate className="space-y-5">
+                  <form onSubmit={handleLoginSubmit} autoComplete={loginAutocomplete} noValidate className="space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="email"
@@ -415,7 +423,7 @@ export default function AuthPage() {
                                 field.ref(node);
                                 loginEmailInputRef.current = node;
                               }}
-                              autoComplete="username"
+                              autoComplete={loginEmailAutocomplete}
                               autoCapitalize="none"
                               autoCorrect="off"
                               spellCheck={false}
@@ -457,7 +465,7 @@ export default function AuthPage() {
                                 field.ref(node);
                                 loginPasswordInputRef.current = node;
                               }}
-                              autoComplete="current-password"
+                              autoComplete={loginPasswordAutocomplete}
                               autoCapitalize="none"
                               autoCorrect="off"
                               spellCheck={false}

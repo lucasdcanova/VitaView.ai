@@ -16,7 +16,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthenticatedScripts } from "@/components/authenticated-scripts";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
-import { isIOSAppShell, isRestrictedAppShell } from "@/lib/app-shell";
+import { isIOSAppShell, isNativeIOSAppOnMac, isRestrictedAppShell } from "@/lib/app-shell";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import AuthenticatedShell from "@/components/layout/authenticated-shell";
 import { preloadCoreAuthenticatedRoutes } from "@/lib/route-preload";
@@ -312,7 +312,7 @@ function AuthenticatedRoutes() {
 function AppRouter() {
   const [location] = useLocation();
   const restrictedAppShell = isRestrictedAppShell();
-  const iosAppShell = isIOSAppShell();
+  const iosAppShell = isIOSAppShell() && !isNativeIOSAppOnMac();
 
   // Rotas da landing page (sem nenhum provider)
   const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];

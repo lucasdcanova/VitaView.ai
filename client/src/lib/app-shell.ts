@@ -21,6 +21,15 @@ export const isNativeIOSApp = () => {
   }
 };
 
+export const isNativeIOSAppOnMac = () => {
+  if (typeof window === "undefined" || !isNativeIOSApp()) return false;
+
+  const ua = window.navigator.userAgent || "";
+  const platform = window.navigator.platform || "";
+
+  return ua.includes("Macintosh") || platform.startsWith("Mac");
+};
+
 export const isNativeAndroidApp = () => {
   if (typeof window === "undefined") return false;
 
