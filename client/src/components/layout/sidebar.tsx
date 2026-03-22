@@ -672,19 +672,19 @@ export default function Sidebar(props: SidebarProps) {
                             className={cn(
                               "w-full rounded-md border px-2 py-1 text-left transition-all",
                               accessibleClinic.isActive
-                                ? "border-[#D0D5DD] bg-[#F3F4F6] text-charcoal shadow-sm"
+                                ? "border-[#D0D5DD] bg-[#F3F4F6] !text-charcoal shadow-sm"
                                 : "border-lightGray bg-white/75 text-charcoal hover:border-charcoal/25 hover:bg-lightGray/25",
                               selectClinicMutation.isPending && "opacity-70"
                             )}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-[11px] font-semibold leading-4">
+                                <p className="truncate text-[11px] font-semibold leading-4 !text-[#111111]" style={{ color: "#111111" }}>
                                   {accessibleClinic.name}
                                 </p>
                               </div>
                               {!accessibleClinic.isActive && (
-                                <span className="shrink-0 rounded-full bg-lightGray px-1.5 py-0 text-[8px] font-semibold leading-4 text-charcoal">
+                                <span className="shrink-0 rounded-full bg-lightGray px-1.5 py-0 text-[8px] font-semibold leading-4 !text-[#111111] dark:!text-white">
                                   {isSwitching ? "Abrindo" : "Entrar"}
                                 </span>
                               )}

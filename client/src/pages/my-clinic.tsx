@@ -578,18 +578,33 @@ const MyClinic = () => {
                                                     ? "border-primary bg-primary/5"
                                                     : "border-border bg-card hover:border-primary/40"
                                             }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="font-semibold text-foreground">{accessibleClinic.name}</p>
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {roleLabel(accessibleClinic.role)}
-                                                    </p>
-                                                </div>
-                                                <div className="flex flex-wrap items-center justify-end gap-2">
-                                                    {isDefaultClinic && (
-                                                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
-                                                            <Star className="h-3.5 w-3.5 mr-1" />
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-semibold text-foreground">{accessibleClinic.name}</p>
+                                                            {canRenameClinic && (
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                                                                    onClick={() => {
+                                                                        setEditingClinicId(accessibleClinic.id);
+                                                                        setEditedClinicName(accessibleClinic.name);
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center justify-end gap-2">
+                                                        <Badge variant="outline" className="text-muted-foreground">
+                                                            {roleLabel(accessibleClinic.role)}
+                                                        </Badge>
+                                                        {isDefaultClinic && (
+                                                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
+                                                                <Star className="h-3.5 w-3.5 mr-1" />
                                                             Padrão
                                                         </Badge>
                                                     )}
@@ -624,20 +639,6 @@ const MyClinic = () => {
                                                     <Star className="h-4 w-4 mr-2" />
                                                     {isDefaultClinic ? 'Clínica padrão' : 'Definir como padrão'}
                                                 </Button>
-                                                {canRenameClinic && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="rounded-xl text-muted-foreground hover:text-foreground"
-                                                        onClick={() => {
-                                                            setEditingClinicId(accessibleClinic.id);
-                                                            setEditedClinicName(accessibleClinic.name);
-                                                        }}
-                                                    >
-                                                        <Edit2 className="h-4 w-4 mr-2" />
-                                                        Renomear
-                                                    </Button>
-                                                )}
                                             </div>
 
                                             {isEditingThisClinic && (
@@ -681,6 +682,19 @@ const MyClinic = () => {
                                     <div className="space-y-2">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <p className="font-medium text-foreground">{clinic.name}</p>
+                                            {clinicData.isAdmin && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                                                    onClick={() => {
+                                                        setEditingClinicId(clinic.id);
+                                                        setEditedClinicName(clinic.name);
+                                                    }}
+                                                >
+                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            )}
                                             {currentClinicAccess?.role && (
                                                 <Badge variant="outline" className="text-muted-foreground">
                                                     {roleLabel(currentClinicAccess.role)}
@@ -710,20 +724,6 @@ const MyClinic = () => {
                                             <Star className="h-4 w-4 mr-2" />
                                             {clinic.id === defaultClinicId ? 'Clínica padrão' : 'Definir como padrão'}
                                         </Button>
-                                        {clinicData.isAdmin && (
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                className="rounded-xl text-muted-foreground hover:text-foreground"
-                                                onClick={() => {
-                                                    setEditingClinicId(clinic.id);
-                                                    setEditedClinicName(clinic.name);
-                                                }}
-                                            >
-                                                <Edit2 className="h-4 w-4 mr-2" />
-                                                Renomear
-                                            </Button>
-                                        )}
                                     </div>
                                 </div>
 
