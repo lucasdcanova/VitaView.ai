@@ -38,4 +38,4 @@ echo "[ios:build:app-store] Archive ready: $ARCHIVE_PATH"
 if [ -n "$IPA_PATH" ]; then
   echo "[ios:build:app-store] IPA ready: $IPA_PATH"
 fi
-echo "[ios:build:app-store] This export is configured for App Store Connect and disables internal-only TestFlight builds."
+echo "[ios:build:app-store] Build/export complete. Publish to App Store Connect with upload-package, not upload-app."

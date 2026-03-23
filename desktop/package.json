@@ -17,7 +17,8 @@
     "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
     "publish:win": "npm run build && electron-builder --win nsis --x64 --publish always",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --universal --publish never",
-    "publish:mac": "npm run build && electron-builder --mac dmg zip --universal --publish always"
+    "publish:mac": "npm run build && electron-builder --mac dmg zip --universal --publish always",
+    "dist:mac:app-store": "npm run build && electron-builder --config electron-builder.mas.cjs --publish never"
   },
   "build": {
     "appId": "br.com.lucascanova.vitaview.desktop",

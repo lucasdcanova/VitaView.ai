@@ -16,6 +16,7 @@
     "desktop:dist:mac": "npm --prefix desktop run dist:mac",
     "desktop:publish:mac": "npm --prefix desktop run publish:mac",
     "ios:build:app-store": "sh ./scripts/build-ios-app-store.sh",
+    "ios:publish:app-store": "sh ./scripts/publish-ios-app-store.sh",
     "db:push": "drizzle-kit push",
     "test": "vitest",
     "test:ui": "vitest --ui",
