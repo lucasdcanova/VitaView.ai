@@ -13,10 +13,10 @@ import { Profile } from "@shared/schema";
 
 const profileSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    phone: z.string().min(10, "Telefone é obrigatório"),
-    birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
-    cpf: z.string().min(11, "CPF é obrigatório"),
-    planType: z.string().min(1, "Tipo de plano é obrigatório"),
+    phone: z.string().optional().or(z.literal("")),
+    birthDate: z.string().optional().or(z.literal("")),
+    cpf: z.string().optional().or(z.literal("")),
+    planType: z.string().optional().or(z.literal("")),
     // All other fields optional
     gender: z.string().optional(),
     rg: z.string().optional(),
@@ -123,8 +123,8 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
         const payload = {
             name: data.name,
             gender: data.gender || null,
-            birthDate: data.birthDate,
-            phone: data.phone,
+            birthDate: data.birthDate || null,
+            phone: data.phone || null,
             planType: data.planType || null,
             // Identification
             cpf: data.cpf || null,
@@ -205,7 +205,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                     name="phone"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Telefone *</FormLabel>
+                                            <FormLabel>Telefone</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="(00) 00000-0000" {...field} />
                                             </FormControl>
@@ -240,7 +240,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                     name="birthDate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Data de nascimento *</FormLabel>
+                                            <FormLabel>Data de nascimento</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
                                             </FormControl>
@@ -260,7 +260,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                     name="cpf"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>CPF *</FormLabel>
+                                            <FormLabel>CPF</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="000.000.000-00" {...field} />
                                             </FormControl>
@@ -474,7 +474,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                     name="planType"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Tipo de plano *</FormLabel>
+                                            <FormLabel>Tipo de plano</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="SUS, particular, convênio..." {...field} />
                                             </FormControl>
