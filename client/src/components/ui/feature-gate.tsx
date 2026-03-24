@@ -10,7 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Slot } from "@radix-ui/react-slot";
+import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { isAppStoreRestrictedIOSAppShell } from "@/lib/app-shell";
+import { cn } from "@/lib/utils";
 
 interface FeatureGateProps {
     children: React.ReactNode;
@@ -32,9 +42,10 @@ interface UserSubscription {
 }
 
 export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
-    ({ children, ...props }, ref) => {
+    ({ children, feature: _feature, ...props }, ref) => {
         const [, setLocation] = useLocation();
         const iosBillingRestricted = isAppStoreRestrictedIOSAppShell();
+        const [dialogOpen, setDialogOpen] = React.useState(false);
         const { data: subscriptionData, isLoading } = useQuery<UserSubscription>({
             queryKey: ['/api/user-subscription'],
             staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -51,52 +62,102 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
             return <Slot ref={ref} {...props}>{children}</Slot>;
         }
 
+        const lockedContent = (
+            <div
+                ref={ref}
+                {...props}
+                className={cn(
+                    "relative block opacity-70 grayscale-[0.3]",
+                    iosBillingRestricted ? "cursor-pointer" : "cursor-not-allowed",
+                    (props as React.HTMLAttributes<HTMLDivElement>).className
+                )}
+            >
+                <Badge
+                    variant="default"
+                    className="absolute right-2 top-2 z-20 gap-1 bg-charcoal/95 text-pureWhite shadow-md backdrop-blur-sm"
+                >
+                    <Lock className="h-3 w-3" />
+                    <span>Recurso Premium</span>
+                </Badge>
+
+                <div className="pointer-events-none">
+                    {children}
+                </div>
+            </div>
+        );
+
+        const upgradeContent = (
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 font-semibold text-lg">
+                    <Lock className="h-5 w-5" />
+                    <span>Recurso Premium</span>
+                </div>
+                <p className="text-sm">
+                    Esta funcionalidade está disponível exclusivamente nos planos <strong>Vita</strong>.
+                </p>
+                {iosBillingRestricted ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Upgrades estão indisponíveis no app iOS neste momento.
+                    </p>
+                ) : (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={() => setLocation('/subscription')}
+                    >
+                        Fazer Upgrade Agora
+                    </Button>
+                )}
+            </div>
+        );
+
+        if (iosBillingRestricted) {
+            return (
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <div
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDialogOpen(true);
+                        }}
+                    >
+                        {lockedContent}
+                    </div>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>Recurso Premium</DialogTitle>
+                            <DialogDescription>
+                                Este recurso está bloqueado no plano atual.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {upgradeContent}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                                Fechar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            );
+        }
+
         // If Free Plan -> Render logic
         return (
             <HoverCard openDelay={0} closeDelay={100}>
                 <HoverCardTrigger asChild>
-                    {/* Locked state wrapper receives the ref (for positioning/triggering) and props (like onClick from parent triggers) */}
                     <div
-                        ref={ref}
-                        {...props}
-                        className="relative block cursor-not-allowed opacity-70 grayscale-[0.3]"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
                     >
-                        {/* Transparent overlay to capture and block clicks */}
-                        <div
-                            className="absolute inset-0 z-50 bg-transparent"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation(); // Stop event from bubbling to parent triggers (like DialogTrigger)
-                            }}
-                        />
-                        <div className="pointer-events-none">
-                            {children}
-                        </div>
+                        {lockedContent}
                     </div>
                 </HoverCardTrigger>
                 <HoverCardContent className="w-80 bg-[#212121] text-white border-none p-4 shadow-xl">
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 font-semibold text-lg text-white">
-                            <Lock className="h-5 w-5" />
-                            <span>Recurso Premium</span>
-                        </div>
-                        <p className="text-sm text-gray-300">
-                            Esta funcionalidade está disponível exclusivamente nos planos <strong>Vita</strong>.
-                        </p>
-                        {iosBillingRestricted ? (
-                            <p className="mt-1 text-xs text-gray-400">
-                                Upgrades estão indisponíveis no app iOS neste momento.
-                            </p>
-                        ) : (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="w-full mt-2 bg-white text-[#212121] hover:bg-gray-200"
-                                onClick={() => setLocation('/subscription')}
-                            >
-                                Fazer Upgrade Agora
-                            </Button>
-                        )}
+                    <div className="text-white [&_p]:text-gray-300 [&_.text-muted-foreground]:text-gray-400 [&_button]:bg-white [&_button]:text-[#212121] [&_button]:hover:bg-gray-200">
+                        {upgradeContent}
                     </div>
                 </HoverCardContent>
             </HoverCard>

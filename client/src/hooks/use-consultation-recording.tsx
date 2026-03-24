@@ -227,17 +227,20 @@ export function ConsultationRecordingProvider({
     }
   }, []);
 
-  const cleanupMedia = useCallback(() => {
-    clearTimer();
-
+  const stopStreamTracks = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+  }, []);
+
+  const cleanupMedia = useCallback(() => {
+    clearTimer();
+    stopStreamTracks();
 
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
-  }, [clearTimer]);
+  }, [clearTimer, stopStreamTracks]);
 
   const resetSessionState = useCallback(() => {
     setRecordingState("idle");
@@ -408,11 +411,24 @@ export function ConsultationRecordingProvider({
           clearTimer();
 
           if (audioChunksRef.current.length === 0) {
-            resetSessionState();
+            cleanupMedia();
+            setCompletedResult(null);
+            setErrorMessage(
+              "A gravacao foi finalizada sem audio capturado. No iPhone, permita o microfone para o VitaView em Ajustes e tente novamente."
+            );
+            setRecordingState("error");
             return;
           }
 
           await processAudio();
+        };
+
+        mediaRecorder.onerror = (event) => {
+          console.error("Erro no MediaRecorder:", event);
+          cleanupMedia();
+          setCompletedResult(null);
+          setErrorMessage("A gravacao falhou no dispositivo. Tente novamente.");
+          setRecordingState("error");
         };
 
         mediaRecorder.start(1000);
@@ -487,6 +503,12 @@ export function ConsultationRecordingProvider({
     setRecordingState("processing");
 
     try {
+      try {
+        mediaRecorder.requestData();
+      } catch (requestDataError) {
+        console.warn("Nao foi possivel solicitar o ultimo chunk antes de parar:", requestDataError);
+      }
+
       mediaRecorder.stop();
     } catch (error) {
       console.error("Erro ao finalizar gravacao:", error);
@@ -496,9 +518,6 @@ export function ConsultationRecordingProvider({
       return;
     }
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
   }, [cleanupMedia]);
 
   const cancelRecording = useCallback(() => {

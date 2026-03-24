@@ -2593,9 +2593,15 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
       'audio/mp3': 'mp3',
       'audio/mpeg': 'mp3',
       'audio/wav': 'wav',
+      'audio/x-wav': 'wav',
+      'audio/wave': 'wav',
       'audio/ogg': 'ogg',
       'audio/m4a': 'm4a',
+      'audio/x-m4a': 'm4a',
+      'audio/aac': 'aac',
+      'audio/mp4a-latm': 'm4a',
       'audio/mp4': 'mp4',
+      'video/mp4': 'mp4',
     };
 
     const extension = extensionMap[mimeType] || 'webm';

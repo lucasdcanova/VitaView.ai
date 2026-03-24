@@ -2631,10 +2631,15 @@ export async function registerRoutes(app: Express): Promise<void> {
         'audio/mp3',
         'audio/mpeg',
         'audio/wav',
+        'audio/x-wav',
+        'audio/wave',
         'audio/ogg',
         'audio/m4a',
         'audio/mp4',
         'audio/x-m4a',
+        'audio/aac',
+        'audio/mp4a-latm',
+        'video/mp4',
       ];
       if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);

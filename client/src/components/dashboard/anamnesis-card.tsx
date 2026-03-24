@@ -888,7 +888,7 @@ export function AnamnesisCard() {
                     </div>
 
                     {/* Destaque para gravação de consulta */}
-                    <div className={`flex items-center justify-between rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25 ${isMobile ? 'p-2.5 gap-2' : 'p-4 gap-4'}`}>
+                    <div className={`rounded-xl border border-red-200/70 dark:border-red-500/35 bg-red-50/75 dark:bg-red-950/25 ${isMobile ? 'flex flex-col items-stretch p-2.5 gap-2.5' : 'flex items-center justify-between p-4 gap-4'}`}>
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div className={`shrink-0 rounded-full bg-red-100 dark:bg-red-500/20 border border-red-200/80 dark:border-red-500/35 ${isMobile ? 'p-1.5' : 'p-2'}`}>
                                 <Mic className={`text-red-600 dark:text-red-200 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
@@ -903,6 +903,7 @@ export function AnamnesisCard() {
                                 profileId={activeProfile?.id}
                                 patientName={activeProfile?.name}
                                 returnPath="/atendimento"
+                                className={isMobile ? "w-full" : "w-auto"}
                             />
                         </FeatureGate>
                     </div>
