@@ -202,9 +202,8 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
             {/* Panel - slides in from the right, full height */}
             <div
                 className={cn(
-                    "fixed right-0 top-0 z-[60] h-full w-full max-w-3xl",
+                    "fixed right-0 top-0 z-[60] flex h-full w-full max-w-3xl min-h-0 flex-col",
                     "bg-pureWhite border-l border-lightGray shadow-2xl",
-                    "flex flex-col",
                     "animate-in slide-in-from-right duration-300 ease-out"
                 )}
             >
@@ -222,10 +221,11 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                     </button>
                 </div>
 
-                {/* Scrollable form content */}
-                <div className="flex-1 overflow-y-auto px-6 py-6">
-                    <Form {...createForm}>
-                        <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
+                <Form {...createForm}>
+                    <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="flex min-h-0 flex-1 flex-col">
+                        {/* Scrollable form content */}
+                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6">
+                            <div className="space-y-6 pb-8">
                             {/* Dados Básicos */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Dados Básicos</h3>
@@ -262,7 +262,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Gênero</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Selecione o gênero" />
@@ -487,7 +487,7 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Estado civil</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Selecione" />
@@ -597,17 +597,20 @@ export default function CreatePatientDialog({ open, onOpenChange, onSuccess, pro
                                     )}
                                 />
                             </div>
-
-                            {/* Footer with actions - sticky at bottom */}
-                            <div className="flex justify-end gap-2 pt-4 pb-2 sticky bottom-0 bg-pureWhite border-t border-lightGray -mx-6 px-6 py-4 mt-6">
-                                <Button type="button" variant="outline" onClick={handleClose}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit">{profileToEdit ? "Salvar alterações" : "Cadastrar Paciente"}</Button>
                             </div>
-                        </form>
-                    </Form>
-                </div>
+                        </div>
+
+                        {/* Footer with actions */}
+                        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-lightGray bg-pureWhite px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+                            <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto">
+                                Cancelar
+                            </Button>
+                            <Button type="submit" className="w-full sm:w-auto">
+                                {profileToEdit ? "Salvar alterações" : "Cadastrar Paciente"}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </div>
         </>
     );
