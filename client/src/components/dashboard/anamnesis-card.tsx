@@ -440,14 +440,17 @@ export function AnamnesisCard() {
             surgeries: ExtractedSurgery[];
         };
     }) => {
-        setAnamnesisText(normalizeClinicalContent(result.anamnesis));
-
-        // Definir os dados extraídos para exibição
+        const normalizedAnamnesis = normalizeClinicalContent(result.anamnesis);
+        setAnamnesisText(normalizedAnamnesis);
         setExtractedRecord(normalizeExtractedRecord(result.extractedData));
+
+        if (normalizedAnamnesis) {
+            enhanceAnamnesisMutation.mutate({ text: normalizedAnamnesis, auto: true });
+        }
 
         toast({
             title: "Consulta transcrita com sucesso!",
-            description: "A anamnese e os dados clínicos foram preenchidos. Revise antes de salvar.",
+            description: "A anamnese foi preenchida e enviada automaticamente para refinamento com IA.",
         });
     };
 
@@ -552,6 +555,7 @@ export function AnamnesisCard() {
 
             try {
                 await apiRequest("POST", "/api/medications", {
+                    profileId,
                     name,
                     format: medication.format || "comprimido",
                     dosage: medication.dosage || "dose a confirmar",
@@ -618,6 +622,8 @@ export function AnamnesisCard() {
         await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] }),
             queryClient.invalidateQueries({ queryKey: ["/api/medications"] }),
+            queryClient.invalidateQueries({ queryKey: [`/api/medications?profileId=${profileId}`] }),
+            queryClient.invalidateQueries({ queryKey: [`/api/medications/history?profileId=${profileId}`] }),
             queryClient.invalidateQueries({ queryKey: ["/api/allergies"] }),
             queryClient.invalidateQueries({ queryKey: [`/api/allergies/patient/${profileId}`] }),
             queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] }),
@@ -786,21 +792,25 @@ export function AnamnesisCard() {
     });
 
     const enhanceAnamnesisMutation = useMutation({
-        mutationFn: async ({ text }: { text: string }) => {
+        mutationFn: async ({ text }: { text: string; auto?: boolean }) => {
             const res = await apiRequest("POST", "/api/patient-record/enhance", { text });
             return await res.json();
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             setAnamnesisText(normalizeClinicalContent(data.text));
             toast({
-                title: "Anamnese melhorada",
-                description: "O texto foi reescrito e formatado pela IA.",
+                title: variables.auto ? "Anamnese refinada automaticamente" : "Anamnese melhorada",
+                description: variables.auto
+                    ? "A transcrição foi revisada e formatada pela IA."
+                    : "O texto foi reescrito e formatado pela IA.",
             });
         },
-        onError: (error: any) => {
+        onError: (error: any, variables) => {
             toast({
-                title: "Erro ao melhorar texto",
-                description: error?.message || "Não foi possível melhorar o texto.",
+                title: variables.auto ? "Transcrição carregada com ajustes pendentes" : "Erro ao melhorar texto",
+                description: variables.auto
+                    ? "A transcrição foi preenchida, mas a melhoria automática não pôde ser concluída."
+                    : error?.message || "Não foi possível melhorar o texto.",
                 variant: "destructive",
             });
         },

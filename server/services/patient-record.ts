@@ -1,5 +1,6 @@
 import { pool } from "../db";
 import logger from "../logger";
+import { ensureMedicationSchema } from "./medication-management";
 
 type PatientRecordLists = {
   diagnoses: any[];
@@ -11,30 +12,60 @@ const uniqueList = (items: (string | null | undefined)[]) => {
   return Array.from(new Set(items.filter((item): item is string => Boolean(item && item.trim()))));
 };
 
-export async function fetchPatientRecord(userId: number): Promise<PatientRecordLists> {
+export async function fetchPatientRecord(userId: number, profileId?: number | null): Promise<PatientRecordLists> {
   try {
+    await ensureMedicationSchema();
+
     const [diagnosesResult, medicationsResult, allergiesResult] = await Promise.all([
-      pool.query(
-        `SELECT id, cid_code, diagnosis_date, status, notes 
-         FROM diagnoses 
-         WHERE user_id = $1 
-         ORDER BY diagnosis_date DESC`,
-        [userId]
-      ),
-      pool.query(
-        `SELECT id, name, format, dosage, frequency, notes, start_date, is_active 
-         FROM medications 
-         WHERE user_id = $1 AND is_active = true 
-         ORDER BY created_at DESC`,
-        [userId]
-      ),
-      pool.query(
-        `SELECT id, allergen, allergen_type, reaction, severity, notes 
-         FROM allergies 
-         WHERE user_id = $1 
-         ORDER BY created_at DESC`,
-        [userId]
-      )
+      profileId
+        ? pool.query(
+            `SELECT id, cid_code, diagnosis_date, status, notes
+               FROM diagnoses
+              WHERE user_id = $1
+                AND profile_id = $2
+              ORDER BY diagnosis_date DESC`,
+            [userId, profileId]
+          )
+        : pool.query(
+            `SELECT id, cid_code, diagnosis_date, status, notes
+               FROM diagnoses
+              WHERE user_id = $1
+              ORDER BY diagnosis_date DESC`,
+            [userId]
+          ),
+      profileId
+        ? pool.query(
+            `SELECT id, name, format, dosage, frequency, notes, start_date, end_date, is_active
+               FROM medications
+              WHERE profile_id = $1
+                AND is_active = true
+              ORDER BY created_at DESC`,
+            [profileId]
+          )
+        : pool.query(
+            `SELECT id, name, format, dosage, frequency, notes, start_date, end_date, is_active
+               FROM medications
+              WHERE user_id = $1
+                AND is_active = true
+              ORDER BY created_at DESC`,
+            [userId]
+          ),
+      profileId
+        ? pool.query(
+            `SELECT id, allergen, allergen_type, reaction, severity, notes
+               FROM allergies
+              WHERE user_id = $1
+                AND profile_id = $2
+              ORDER BY created_at DESC`,
+            [userId, profileId]
+          )
+        : pool.query(
+            `SELECT id, allergen, allergen_type, reaction, severity, notes
+               FROM allergies
+              WHERE user_id = $1
+              ORDER BY created_at DESC`,
+            [userId]
+          )
     ]);
     
     return {
@@ -52,7 +83,8 @@ export async function fetchPatientRecord(userId: number): Promise<PatientRecordL
 }
 
 export async function buildPatientRecordContext(userId: number, baseData: any = {}) {
-  const record = await fetchPatientRecord(userId);
+  const requestedProfileId = Number.parseInt(String(baseData?.profileId ?? ""), 10);
+  const record = await fetchPatientRecord(userId, Number.isFinite(requestedProfileId) ? requestedProfileId : null);
   
   const diagnosisLabels = record.diagnoses.map((diagnosis) => {
     const status = diagnosis.status ? ` (${diagnosis.status})` : "";

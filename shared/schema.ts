@@ -280,6 +280,7 @@ export const insertDiagnosisSchema = createInsertSchema(diagnoses).pick({
 export const medications = pgTable("medications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id),
   name: text("name").notNull(),
   format: text("format").notNull(), // comprimido, xarope, cápsula, etc.
   dosage: text("dosage").notNull(), // ex: 500, 10, etc. (valor numérico)
@@ -291,12 +292,14 @@ export const medications = pgTable("medications", {
   administrationRoute: text("administration_route").default("oral"), // oral, sublingual, injetavel, topico, etc.
   notes: text("notes"),
   startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertMedicationSchema = createInsertSchema(medications).pick({
   userId: true,
+  profileId: true,
   name: true,
   format: true,
   dosage: true,
@@ -308,6 +311,7 @@ export const insertMedicationSchema = createInsertSchema(medications).pick({
   administrationRoute: true,
   notes: true,
   startDate: true,
+  endDate: true,
   isActive: true,
 });
 

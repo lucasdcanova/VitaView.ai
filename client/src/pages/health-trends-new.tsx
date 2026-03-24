@@ -320,11 +320,21 @@ export default function HealthTrendsNew({
     [activeProfile?.id, fetchedDiagnoses, propDiagnoses],
   );
 
+  const medicationsQueryKey = activeProfile?.id
+    ? [`/api/medications?profileId=${activeProfile.id}`]
+    : ["/api/medications"];
+
   const { data: fetchedMedications = [], isLoading: medicationsLoading } = useQuery<any[]>({
-    queryKey: ["/api/medications"],
-    enabled: !propMedications,
+    queryKey: medicationsQueryKey,
+    enabled: !propMedications && !!activeProfile?.id,
   });
-  const medications = propMedications || fetchedMedications;
+  const medications = useMemo(
+    () =>
+      (propMedications || fetchedMedications).filter((medication: any) =>
+        activeProfile?.id ? medication.profileId === activeProfile.id : true,
+      ),
+    [activeProfile?.id, fetchedMedications, propMedications],
+  );
 
   const { data: fetchedAllergies = [], isLoading: allergiesLoading } = useQuery<any[]>({
     queryKey: ["/api/allergies"],

@@ -6,8 +6,68 @@ import { generateChronologicalReport, callOpenAIApi } from "../services/openai";
 import logger from "../logger";
 import { createHash } from "crypto";
 import { normalizeClinicalContent } from "@shared/clinical-rich-text";
+import {
+    createMedicationHistoryEvent,
+    ensureMedicationSchema,
+    getMedicationHistoryForProfile,
+    serializeMedication,
+} from "../services/medication-management";
+
+const parseCookies = (req: Request) =>
+    req.headers.cookie?.split(";").reduce((acc, cookie) => {
+        const parts = cookie.trim().split("=");
+        const key = parts[0];
+        const value = parts.slice(1).join("=");
+        acc[key] = value;
+        return acc;
+    }, {} as Record<string, string>) || {};
+
+const parseOptionalProfileId = (rawValue: unknown) => {
+    const parsed = Number.parseInt(String(rawValue ?? ""), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolveRequestedProfileId = (req: Request) =>
+    parseOptionalProfileId(req.query.profileId) ??
+    parseOptionalProfileId((req.body as Record<string, unknown> | undefined)?.profileId) ??
+    parseOptionalProfileId(parseCookies(req).active_profile_id);
+
+const resolveAccessibleProfile = async (req: Request, explicitProfileId?: number | null) => {
+    const profileId = explicitProfileId ?? resolveRequestedProfileId(req);
+    if (!profileId) {
+        return null;
+    }
+
+    const profile = await storage.getProfile(profileId);
+    if (!profile) {
+        return null;
+    }
+
+    const requester = req.user as any;
+    const requesterClinicId = requester?.clinicId as number | null | undefined;
+
+    if (profile.userId === requester.id) {
+        return profile;
+    }
+
+    if (requesterClinicId) {
+        if (profile.clinicId && profile.clinicId === requesterClinicId) {
+            return profile;
+        }
+
+        const profileOwner = await storage.getUser(profile.userId);
+        if (profileOwner?.clinicId && profileOwner.clinicId === requesterClinicId) {
+            return profile;
+        }
+    }
+
+    return null;
+};
 
 export function registerPatientRoutes(app: Express) {
+    void ensureMedicationSchema().catch((error) => {
+        logger.error("[PatientRoutes] Falha ao preparar schema de medicamentos", { error });
+    });
 
     // --- Diagnoses ---
     app.get("/api/diagnoses", ensureAuthenticated, async (req, res) => {
@@ -625,57 +685,74 @@ export function registerPatientRoutes(app: Express) {
     // --- Medications (using pool directly to preserve legacy logic) ---
     app.post("/api/medications", ensureAuthenticated, async (req, res) => {
         try {
-            const user = req.user as any;
+            await ensureMedicationSchema();
+
             const { name, format, dosage, dosageUnit, frequency, doseAmount, prescriptionType, quantity, administrationRoute, notes, startDate, isActive } = req.body;
+            const profile = await resolveAccessibleProfile(req);
+
+            if (!profile) {
+                return res.status(400).json({ message: "Selecione um paciente antes de registrar o medicamento" });
+            }
 
             if (!name) {
                 return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
             }
 
-            // Insert into database
             const result = await pool.query(
                 `INSERT INTO medications (
-          user_id, name, format, dosage, dosage_unit, frequency, dose_amount, 
-          prescription_type, quantity, administration_route, notes, start_date, is_active, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
-        RETURNING *`,
+                  user_id,
+                  profile_id,
+                  name,
+                  format,
+                  dosage,
+                  dosage_unit,
+                  frequency,
+                  dose_amount,
+                  prescription_type,
+                  quantity,
+                  administration_route,
+                  notes,
+                  start_date,
+                  end_date,
+                  is_active,
+                  created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NULL, $14, NOW())
+                RETURNING *`,
                 [
-                    user.id,
+                    profile.userId,
+                    profile.id,
                     name,
-                    format || 'comprimido',
+                    format || "comprimido",
                     dosage,
-                    dosageUnit || 'mg',
+                    dosageUnit || "mg",
                     frequency,
                     doseAmount || 1,
-                    prescriptionType || 'padrao',
+                    prescriptionType || "padrao",
                     quantity || null,
-                    administrationRoute || 'oral',
+                    administrationRoute || "oral",
                     notes || null,
                     startDate,
-                    isActive !== false
+                    isActive !== false,
                 ]
             );
 
             const newMedication = result.rows[0];
 
-            // Convert to camelCase for frontend
-            const responseData = {
-                id: newMedication.id,
+            await createMedicationHistoryEvent({
+                medicationId: newMedication.id,
                 userId: newMedication.user_id,
+                profileId: newMedication.profile_id,
+                eventType: "started",
                 name: newMedication.name,
                 format: newMedication.format,
                 dosage: newMedication.dosage,
                 dosageUnit: newMedication.dosage_unit,
                 frequency: newMedication.frequency,
-                doseAmount: newMedication.dose_amount,
-                prescriptionType: newMedication.prescription_type,
-                quantity: newMedication.quantity,
-                administrationRoute: newMedication.administration_route,
                 notes: newMedication.notes,
                 startDate: newMedication.start_date,
-                isActive: newMedication.is_active,
-                createdAt: newMedication.created_at
-            };
+            });
+
+            const responseData = serializeMedication(newMedication);
 
             console.log("✅ Medicamento criado com sucesso (PostgreSQL):", responseData);
             res.status(201).json(responseData);
@@ -687,101 +764,142 @@ export function registerPatientRoutes(app: Express) {
 
     app.get("/api/medications", ensureAuthenticated, async (req, res) => {
         try {
+            await ensureMedicationSchema();
+
             const user = req.user as any;
+            const profile = await resolveAccessibleProfile(req);
+            const result = profile
+                ? await pool.query(
+                    `SELECT *
+                       FROM medications
+                      WHERE profile_id = $1
+                        AND is_active = true
+                      ORDER BY created_at DESC`,
+                    [profile.id]
+                )
+                : await pool.query(
+                    `SELECT *
+                       FROM medications
+                      WHERE user_id = $1
+                        AND is_active = true
+                      ORDER BY created_at DESC`,
+                    [user.id]
+                );
 
-            const result = await pool.query(
-                `SELECT * FROM medications 
-         WHERE user_id = $1 AND is_active = true
-         ORDER BY created_at DESC`,
-                [user.id]
-            );
-
-            // Convert to camelCase for frontend
-            const medications = result.rows.map(m => ({
-                id: m.id,
-                userId: m.user_id,
-                name: m.name,
-                format: m.format,
-                dosage: m.dosage,
-                dosageUnit: m.dosage_unit,
-                frequency: m.frequency,
-                doseAmount: m.dose_amount,
-                prescriptionType: m.prescription_type,
-                quantity: m.quantity,
-                administrationRoute: m.administration_route,
-                notes: m.notes,
-                startDate: m.start_date,
-                isActive: m.is_active,
-                createdAt: m.created_at
-            }));
-
-            res.json(medications);
+            res.json(result.rows.map(serializeMedication));
         } catch (error) {
             console.error("Erro ao buscar medicamentos:", error);
             res.status(500).json({ message: "Erro ao buscar medicamentos" });
         }
     });
 
+    app.get("/api/medications/history", ensureAuthenticated, async (req, res) => {
+        try {
+            await ensureMedicationSchema();
+
+            const profile = await resolveAccessibleProfile(req);
+            if (!profile) {
+                return res.json([]);
+            }
+
+            const history = await getMedicationHistoryForProfile(profile.id);
+            res.json(history);
+        } catch (error) {
+            console.error("Erro ao buscar histórico de medicamentos:", error);
+            res.status(500).json({ message: "Erro ao buscar histórico de medicamentos" });
+        }
+    });
+
     app.put("/api/medications/:id", ensureAuthenticated, async (req, res) => {
         try {
-            const user = req.user as any;
-            const id = parseInt(req.params.id);
-            const { name, format, dosage, dosageUnit, frequency, doseAmount, prescriptionType, quantity, administrationRoute, notes, startDate } = req.body;
+            await ensureMedicationSchema();
 
+            const user = req.user as any;
+            const id = parseInt(req.params.id, 10);
+            const { name, format, dosage, dosageUnit, frequency, doseAmount, prescriptionType, quantity, administrationRoute, notes, startDate } = req.body;
 
             if (!name) {
                 return res.status(400).json({ message: "Nome do medicamento é obrigatório" });
             }
 
-            // Update in database
-            const result = await pool.query(
-                `UPDATE medications 
-         SET name = $1, format = $2, dosage = $3, dosage_unit = $4, frequency = $5, 
-             quantity = $6, administration_route = $7, notes = $8, start_date = $9,
-             dose_amount = $10, prescription_type = $11
-         WHERE id = $12 AND user_id = $13
-         RETURNING *`,
-                [
-                    name,
-                    format || 'comprimido',
-                    dosage,
-                    dosageUnit || 'mg',
-                    frequency,
-                    quantity || null,
-                    administrationRoute || 'oral',
-                    notes || null,
-                    startDate,
-                    doseAmount || 1,
-                    prescriptionType || 'padrao',
-                    id,
-                    user.id
-                ]
-            );
+            const currentResult = await pool.query(`SELECT * FROM medications WHERE id = $1 LIMIT 1`, [id]);
+            const currentMedication = currentResult.rows[0];
 
-            if (result.rows.length === 0) {
+            if (!currentMedication) {
                 return res.status(404).json({ message: "Medicamento não encontrado" });
             }
 
+            if (currentMedication.profile_id) {
+                const profile = await resolveAccessibleProfile(req, currentMedication.profile_id);
+                if (!profile) {
+                    return res.status(403).json({ message: "Acesso negado" });
+                }
+            } else if (currentMedication.user_id !== user.id) {
+                return res.status(403).json({ message: "Acesso negado" });
+            }
+
+            const result = await pool.query(
+                `UPDATE medications
+                    SET name = $1,
+                        format = $2,
+                        dosage = $3,
+                        dosage_unit = $4,
+                        frequency = $5,
+                        quantity = $6,
+                        administration_route = $7,
+                        notes = $8,
+                        start_date = $9,
+                        dose_amount = $10,
+                        prescription_type = $11,
+                        end_date = NULL
+                  WHERE id = $12
+                  RETURNING *`,
+                [
+                    name,
+                    format || "comprimido",
+                    dosage,
+                    dosageUnit || "mg",
+                    frequency,
+                    quantity || null,
+                    administrationRoute || "oral",
+                    notes || null,
+                    startDate,
+                    doseAmount || 1,
+                    prescriptionType || "padrao",
+                    id,
+                ]
+            );
+
             const updatedMedication = result.rows[0];
 
-            // Convert to camelCase for frontend
-            const responseData = {
-                id: updatedMedication.id,
-                userId: updatedMedication.user_id,
-                name: updatedMedication.name,
-                format: updatedMedication.format,
-                dosage: updatedMedication.dosage,
-                dosageUnit: updatedMedication.dosage_unit,
-                frequency: updatedMedication.frequency,
-                doseAmount: updatedMedication.dose_amount,
-                prescriptionType: updatedMedication.prescription_type,
-                quantity: updatedMedication.quantity,
-                administrationRoute: updatedMedication.administration_route,
-                notes: updatedMedication.notes,
-                startDate: updatedMedication.start_date,
-                isActive: updatedMedication.is_active,
-                createdAt: updatedMedication.created_at
-            };
+            if (updatedMedication?.profile_id) {
+                await createMedicationHistoryEvent({
+                    medicationId: updatedMedication.id,
+                    userId: updatedMedication.user_id,
+                    profileId: updatedMedication.profile_id,
+                    eventType: "updated",
+                    name: updatedMedication.name,
+                    format: updatedMedication.format,
+                    dosage: updatedMedication.dosage,
+                    dosageUnit: updatedMedication.dosage_unit,
+                    frequency: updatedMedication.frequency,
+                    notes: updatedMedication.notes,
+                    startDate: updatedMedication.start_date,
+                    metadata: {
+                        previous: {
+                            name: currentMedication.name,
+                            format: currentMedication.format,
+                            dosage: currentMedication.dosage,
+                            dosageUnit: currentMedication.dosage_unit,
+                            frequency: currentMedication.frequency,
+                            notes: currentMedication.notes,
+                            startDate: currentMedication.start_date,
+                        },
+                    },
+                });
+            }
+
+            const responseData = serializeMedication(updatedMedication);
 
             console.log("✅ Medicamento atualizado com sucesso (PostgreSQL):", responseData);
             res.json(responseData);
@@ -793,20 +911,56 @@ export function registerPatientRoutes(app: Express) {
 
     app.delete("/api/medications/:id", ensureAuthenticated, async (req, res) => {
         try {
-            const user = req.user as any;
-            const id = parseInt(req.params.id);
+            await ensureMedicationSchema();
 
-            // Soft delete - mark as inactive
+            const user = req.user as any;
+            const id = parseInt(req.params.id, 10);
+            const currentResult = await pool.query(`SELECT * FROM medications WHERE id = $1 LIMIT 1`, [id]);
+            const currentMedication = currentResult.rows[0];
+
+            if (!currentMedication) {
+                return res.status(404).json({ message: "Medicamento não encontrado" });
+            }
+
+            if (currentMedication.profile_id) {
+                const profile = await resolveAccessibleProfile(req, currentMedication.profile_id);
+                if (!profile) {
+                    return res.status(403).json({ message: "Acesso negado" });
+                }
+            } else if (currentMedication.user_id !== user.id) {
+                return res.status(403).json({ message: "Acesso negado" });
+            }
+
+            const endDate = typeof req.body?.endDate === "string" && req.body.endDate.trim()
+                ? req.body.endDate.trim()
+                : new Date().toISOString().slice(0, 10);
+
             const result = await pool.query(
-                `UPDATE medications 
-         SET is_active = false
-         WHERE id = $1 AND user_id = $2
-         RETURNING *`,
-                [id, user.id]
+                `UPDATE medications
+                    SET is_active = false,
+                        end_date = $2
+                  WHERE id = $1
+                  RETURNING *`,
+                [id, endDate]
             );
 
-            if (result.rows.length === 0) {
-                return res.status(404).json({ message: "Medicamento não encontrado" });
+            const deletedMedication = result.rows[0];
+
+            if (deletedMedication?.profile_id) {
+                await createMedicationHistoryEvent({
+                    medicationId: deletedMedication.id,
+                    userId: deletedMedication.user_id,
+                    profileId: deletedMedication.profile_id,
+                    eventType: "stopped",
+                    name: deletedMedication.name,
+                    format: deletedMedication.format,
+                    dosage: deletedMedication.dosage,
+                    dosageUnit: deletedMedication.dosage_unit,
+                    frequency: deletedMedication.frequency,
+                    notes: deletedMedication.notes,
+                    startDate: deletedMedication.start_date,
+                    endDate: deletedMedication.end_date,
+                });
             }
 
             console.log("✅ Medicamento marcado como inativo (PostgreSQL)");

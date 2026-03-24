@@ -62,8 +62,8 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
     return (
         <motion.div
-            className={`${cardBg} border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md dark:hover:shadow-black/30 transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-ring/40 animate-pulse ring-4 ring-charcoal/70 dark:ring-slate-200/25' : ''}`}
-            whileHover={{ scale: 1.02 }}
+            className={`${cardBg} w-full min-w-0 overflow-hidden border-l-4 ${cardBorder} rounded p-2 cursor-pointer hover:shadow-md dark:hover:shadow-black/30 transition-shadow relative ${showActiveIndicator ? 'ring-2 ring-ring/40 animate-pulse ring-4 ring-charcoal/70 dark:ring-slate-200/25' : ''}`}
+            whileHover={{ scale: 1.01 }}
         >
             {/* Status Badge */}
             {showActiveIndicator && (

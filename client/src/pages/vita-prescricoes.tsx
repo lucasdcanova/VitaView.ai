@@ -3,15 +3,15 @@ import { useContinuousMedications } from "@/hooks/use-continuous-medications";
 import { usePrescriptionHistory } from "@/hooks/use-prescription-history";
 import { AlertTriangle } from "lucide-react";
 
-import { MedicationDialog, type MedicationFormData } from "@/components/dialogs";
+import { MedicationDialog } from "@/components/dialogs";
 import type { Profile } from "@shared/schema";
-import { FeatureGate } from '@/components/ui/feature-gate';
 
 // Sub-components
 import { ContinuousMedicationsCard } from "@/components/prescriptions/ContinuousMedicationsCard";
 import { MedicationSelector } from "@/components/prescriptions/MedicationSelector";
 import { ActivePrescriptionForm } from "@/components/prescriptions/ActivePrescriptionForm";
 import { PrescriptionHistory } from "@/components/prescriptions/PrescriptionHistory";
+import { MedicationTreatmentSummary } from "@/components/prescriptions/MedicationTreatmentSummary";
 
 interface VitaPrescriptionsProps {
     patient: Profile;
@@ -20,24 +20,12 @@ interface VitaPrescriptionsProps {
 }
 
 export default function VitaPrescriptions({ patient, medications: propMedications, allergies: propAllergies }: VitaPrescriptionsProps) {
-    // Logic Hooks
     const logic = usePrescriptionLogic(patient);
     const customMedLogic = useCustomMedications();
-    const continuousMedsLogic = useContinuousMedications();
+    const continuousMedsLogic = useContinuousMedications(patient.id);
     const historyLogic = usePrescriptionHistory(patient.id);
 
-    // Continuous Meds - Mix of props and hook data
-    // We prioritize the hook data which is live from IDB/Server, falling back to props if needed
-    // Actually, useContinuousMedications fetches "/api/medications". That endpoint is generic. 
-    // Is it filtered by patient? The original code fetched "/api/medications" which likely returned current user/patient meds?
-    // Given the context of "patient-view", maybe we need to filter or pass patient ID?
-    // The original code used `useQuery(["/api/medications"])`. Assuming backend filters by session/context or it's global?
-    // Let's assume the hook works as intended for the current context.
-
-    // Combining propMedications (SSR/Parent) with live data if needed, or just use one.
-    // The hook data is likely more up-to-date after mutations.
     const displayMedications = continuousMedsLogic.medications.length > 0 ? continuousMedsLogic.medications : (propMedications || []);
-
 
     return (
         <div className="space-y-6 pb-20">
@@ -59,8 +47,12 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 </div>
             )}
 
+            <MedicationTreatmentSummary
+                medications={displayMedications}
+                history={continuousMedsLogic.history}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* --- LEFT COLUMN: CONTINUOUS MEDICATIONS --- */}
                 <ContinuousMedicationsCard
                     medications={displayMedications}
                     selectedMedications={continuousMedsLogic.selectedMedications}
@@ -76,9 +68,7 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                     }}
                 />
 
-                {/* --- RIGHT COLUMN: ACTIVE PRESCRIPTION (RECEITA) --- */}
                 <div className="space-y-6">
-                    {/* Selector */}
                     <MedicationSelector
                         onAdd={logic.addMedicationToReceituario}
                         searchValue={logic.receituarioSearchValue}
@@ -98,7 +88,6 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                         onDeleteCustomMedication={customMedLogic.deleteCustomMedication}
                     />
 
-                    {/* Active List */}
                     <ActivePrescriptionForm
                         items={logic.acuteItems}
                         observations={logic.prescriptionObservations}
@@ -112,26 +101,14 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 </div>
             </div>
 
-            {/* --- BOTTOM: HISTORY --- */}
             <PrescriptionHistory
                 prescriptions={historyLogic.prescriptions}
                 onReprint={(p) => {
-                    // For reprint, we might need to recreate the PDF logic
-                    // Or just load it into editor and print?
-                    // Original file had `generatePrescriptionPDF` called directly.
-                    // A simple way is to load it as if editing, then print.
-                    // But strictly speaking, "Reprint" should just generate PDF.
-                    // Ideally we add `handleReprint(prescription)` to logic.
-                    // For now, let's reuse edit -> print flow or just edit.
                     logic.handleEditPrescription(p);
                 }}
                 onEdit={logic.handleEditPrescription}
             />
 
-
-            {/* Dialogs */}
-
-            {/* Continuous Medications Dialog (Add/Edit) */}
             <MedicationDialog
                 open={continuousMedsLogic.isDialogOpen}
                 onOpenChange={(open) => {
@@ -144,9 +121,6 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 onRemove={continuousMedsLogic.handleDelete}
                 isRemovePending={continuousMedsLogic.isPending}
             />
-
-
-
         </div>
     );
 }

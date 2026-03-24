@@ -1321,213 +1321,213 @@ export function AgendaCalendar({
             })}
           </div>
         ) : viewMode === 'week' ? (
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Week Days Header */}
-            <div className="grid grid-cols-7 gap-2 mb-4 shrink-0">
-              {weekDays.map((day, i) => {
-                const date = addDays(startOfCurrentWeek, i);
-                const isToday = isSameDay(date, new Date());
+          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden pb-1">
+            <div className="flex min-h-full min-w-[1120px] flex-col gap-3">
+              <div className="grid grid-cols-7 gap-3 shrink-0">
+                {weekDays.map((day, i) => {
+                  const date = addDays(startOfCurrentWeek, i);
+                  const isToday = isSameDay(date, new Date());
 
-                return (
-                  <div key={i} className="text-center">
-                    <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">{day}</div>
-                    <div className={cn(
-                      "text-sm font-medium flex flex-col items-center justify-center mx-auto rounded-lg py-1 px-2",
-                      isToday ? "bg-[#212121] text-white dark:bg-[#2a3242] dark:text-[#f5f7fb]" : "text-foreground"
-                    )}>
-                      <span className="text-lg font-bold">{format(date, "d")}</span>
-                      <span className={cn("text-[10px] uppercase", isToday ? "text-muted-foreground" : "text-muted-foreground")}>
-                        {format(date, "MMM", { locale: ptBR })}
-                      </span>
+                  return (
+                    <div key={i} className="min-w-[150px] text-center">
+                      <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{day}</div>
+                      <div className={cn(
+                        "mx-auto flex flex-col items-center justify-center rounded-lg px-2 py-1 text-sm font-medium",
+                        isToday ? "bg-[#212121] text-white dark:bg-[#2a3242] dark:text-[#f5f7fb]" : "text-foreground"
+                      )}>
+                        <span className="text-lg font-bold">{format(date, "d")}</span>
+                        <span className="text-[10px] uppercase text-muted-foreground">
+                          {format(date, "MMM", { locale: ptBR })}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            {/* Week All Day Section */}
-            <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
-              {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
-                const date = addDays(startOfCurrentWeek, dayIndex);
-                const allDayApps = getFilteredAppointmentsForDay(date).filter(app => !!app.isAllDay);
+              <div className="grid grid-cols-7 gap-3 shrink-0">
+                {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                  const date = addDays(startOfCurrentWeek, dayIndex);
+                  const allDayApps = getFilteredAppointmentsForDay(date).filter(app => !!app.isAllDay);
 
-                if (allDayApps.length === 0) return <div key={dayIndex} />;
+                  if (allDayApps.length === 0) {
+                    return <div key={dayIndex} className="min-w-[150px]" />;
+                  }
 
-                return (
-                  <div key={dayIndex} className="space-y-1">
-                    {allDayApps.map((appointment, idx) => {
-                      const styles = getTypeStyles(appointment.type);
-                      return (
-                        <div key={appointment.id || idx} className={cn("text-xs font-semibold p-1 rounded border mb-1 truncate", styles.bg, styles.border, styles.text)}>
-                          Dia Inteiro - {appointment.patientName}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Week Time Slots Grid */}
-            <div className="grid grid-cols-7 gap-2 flex-1 overflow-y-auto">
-              {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
-                const date = addDays(startOfCurrentWeek, dayIndex);
-                return (
-                  <div key={dayIndex} className="bg-muted/40 rounded-lg p-2 h-full min-h-[200px] space-y-2">
-                    {getFilteredAppointmentsForDay(date)
-                      .filter(app => !app.isAllDay)
-                      .map((appointment, idx) => {
+                  return (
+                    <div key={dayIndex} className="min-w-[150px] space-y-1">
+                      {allDayApps.map((appointment, idx) => {
                         const styles = getTypeStyles(appointment.type);
-                        const isCancelled = appointment.status === 'cancelled';
                         return (
-                          <Popover key={appointment.id || idx}>
-                            <PopoverTrigger asChild>
-                              <div>
-                                <AppointmentCard
-                                  appointment={appointment}
-                                  styles={styles}
-                                  isInService={appointment.id === inServiceAppointmentId}
-                                  triageData={triageMap[appointment.id]}
-                                />
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                              <div className="grid gap-4">
-                                {(() => {
-                                  const canStartService = canStartServiceFromCalendarCard(appointment);
+                          <div key={appointment.id || idx} className={cn("mb-1 truncate rounded border p-1 text-xs font-semibold", styles.bg, styles.border, styles.text)}>
+                            Dia Inteiro - {appointment.patientName}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
 
-                                  return (
-                                    <AppointmentPopoverHeader
-                                      appointment={appointment}
-                                      styles={styles}
-                                      canStartService={canStartService}
-                                      onStartService={() => handleStartService(appointment)}
-                                      triageData={triageMap[appointment.id]}
-                                    />
-                                  );
-                                })()}
-                                <div className="grid gap-2">
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                    <span>{doctorName}</span>
-                                  </div>
-                                  {appointment.notes && (
-                                    <div className="mt-2 text-sm text-muted-foreground bg-muted/40 p-2 rounded">
-                                      {appointment.notes}
-                                    </div>
-                                  )}
-                                  {appointment.price && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                                      <span>
-                                        {(appointment.price / 100).toLocaleString('pt-BR', {
-                                          style: 'currency',
-                                          currency: 'BRL'
-                                        })}
-                                      </span>
-                                    </div>
-                                  )}
+              <div className="grid grid-cols-7 gap-3 flex-1 min-h-0 overflow-y-auto">
+                {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                  const date = addDays(startOfCurrentWeek, dayIndex);
+                  return (
+                    <div key={dayIndex} className="min-w-[150px] min-h-[240px] h-full space-y-2 rounded-lg bg-muted/40 p-2">
+                      {getFilteredAppointmentsForDay(date)
+                        .filter(app => !app.isAllDay)
+                        .map((appointment, idx) => {
+                          const styles = getTypeStyles(appointment.type);
+                          const isCancelled = appointment.status === 'cancelled';
+                          return (
+                            <Popover key={appointment.id || idx}>
+                              <PopoverTrigger asChild>
+                                <div className="w-full min-w-0">
+                                  <AppointmentCard
+                                    appointment={appointment}
+                                    styles={styles}
+                                    isInService={appointment.id === inServiceAppointmentId}
+                                    triageData={triageMap[appointment.id]}
+                                  />
                                 </div>
-                                <div className="flex flex-col gap-2">
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80">
+                                <div className="grid gap-4">
                                   {(() => {
                                     const canStartService = canStartServiceFromCalendarCard(appointment);
-                                    const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked') && !isCancelled;
 
                                     return (
-                                      <>
-                                        {(canStartService || canCheckIn) && (
-                                          <div className={cn("grid gap-2", canStartService && canCheckIn ? "grid-cols-2" : "grid-cols-1")}>
-                                            {canStartService && (
-                                              <Button
-                                                size="sm"
-                                                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
-                                                onClick={() => handleStartService(appointment)}
-                                                disabled={updateStatusMutation.isPending}
-                                              >
-                                                <Play className="w-4 h-4 mr-1" />
-                                                {appointment.status === 'in_progress' ? 'Retomar' : 'Atender'}
-                                              </Button>
-                                            )}
-                                            {canCheckIn && (
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="text-foreground border-border hover:bg-muted w-full"
-                                                onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
-                                                disabled={updateStatusMutation.isPending}
-                                              >
-                                                <UserCheck className="w-4 h-4 mr-1" />
-                                                Recepcionar
-                                              </Button>
-                                            )}
-                                          </div>
-                                        )}
-                                      </>
+                                      <AppointmentPopoverHeader
+                                        appointment={appointment}
+                                        styles={styles}
+                                        canStartService={canStartService}
+                                        onStartService={() => handleStartService(appointment)}
+                                        triageData={triageMap[appointment.id]}
+                                      />
                                     );
                                   })()}
-                                  {/* Other action buttons */}
                                   <div className="grid gap-2">
-                                    <div className={cn("grid gap-2", !appointment.type.includes('blocked') && !isCancelled ? "grid-cols-2" : "grid-cols-1")}>
-                                      {!appointment.type.includes('blocked') && !isCancelled && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <Clock className="w-4 h-4 text-muted-foreground" />
+                                      <span>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <User className="w-4 h-4 text-muted-foreground" />
+                                      <span>{doctorName}</span>
+                                    </div>
+                                    {appointment.notes && (
+                                      <div className="mt-2 rounded bg-muted/40 p-2 text-sm text-muted-foreground">
+                                        {appointment.notes}
+                                      </div>
+                                    )}
+                                    {appointment.price && (
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                                        <span>
+                                          {(appointment.price / 100).toLocaleString('pt-BR', {
+                                            style: 'currency',
+                                            currency: 'BRL'
+                                          })}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                    {(() => {
+                                      const canStartService = canStartServiceFromCalendarCard(appointment);
+                                      const canCheckIn = (!appointment.status || appointment.status === 'scheduled') && !appointment.type.includes('blocked') && !isCancelled;
+
+                                      return (
+                                        <>
+                                          {(canStartService || canCheckIn) && (
+                                            <div className={cn("grid gap-2", canStartService && canCheckIn ? "grid-cols-2" : "grid-cols-1")}>
+                                              {canStartService && (
+                                                <Button
+                                                  size="sm"
+                                                  className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                                                  onClick={() => handleStartService(appointment)}
+                                                  disabled={updateStatusMutation.isPending}
+                                                >
+                                                  <Play className="w-4 h-4 mr-1" />
+                                                  {appointment.status === 'in_progress' ? 'Retomar' : 'Atender'}
+                                                </Button>
+                                              )}
+                                              {canCheckIn && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  className="text-foreground border-border hover:bg-muted w-full"
+                                                  onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'waiting', checkedInAt: new Date() })}
+                                                  disabled={updateStatusMutation.isPending}
+                                                >
+                                                  <UserCheck className="w-4 h-4 mr-1" />
+                                                  Recepcionar
+                                                </Button>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
+                                    <div className="grid gap-2">
+                                      <div className={cn("grid gap-2", !appointment.type.includes('blocked') && !isCancelled ? "grid-cols-2" : "grid-cols-1")}>
+                                        {!appointment.type.includes('blocked') && !isCancelled && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-card hover:bg-muted"
+                                            onClick={() => {
+                                              setSelectedAppointment(appointment);
+                                              setTriageDialogOpen(true);
+                                            }}
+                                          >
+                                            <Stethoscope className="w-4 h-4 mr-1" />
+                                            Triagem
+                                          </Button>
+                                        )}
                                         <Button
                                           variant="outline"
                                           size="sm"
                                           className="bg-card hover:bg-muted"
-                                          onClick={() => {
-                                            setSelectedAppointment(appointment);
-                                            setTriageDialogOpen(true);
-                                          }}
+                                          onClick={() => onEditAppointment?.(appointment)}
                                         >
-                                          <Stethoscope className="w-4 h-4 mr-1" />
-                                          Triagem
+                                          Editar
                                         </Button>
-                                      )}
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-card hover:bg-muted"
-                                        onClick={() => onEditAppointment?.(appointment)}
-                                      >
-                                        Editar
-                                      </Button>
-                                    </div>
-                                    <div className={cn("grid gap-2", appointment.type.includes('blocked') ? "grid-cols-1" : "grid-cols-2")}>
-                                      {!appointment.type.includes('blocked') && (
+                                      </div>
+                                      <div className={cn("grid gap-2", appointment.type.includes('blocked') ? "grid-cols-1" : "grid-cols-2")}>
+                                        {!appointment.type.includes('blocked') && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                                            onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'cancelled', checkedInAt: null })}
+                                            disabled={updateStatusMutation.isPending || isCancelled}
+                                          >
+                                            <Ban className="w-4 h-4 mr-1" />
+                                            {isCancelled ? "Cancelada" : "Cancelar"}
+                                          </Button>
+                                        )}
                                         <Button
-                                          variant="outline"
+                                          variant="destructive"
                                           size="sm"
-                                          className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
-                                          onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'cancelled', checkedInAt: null })}
-                                          disabled={updateStatusMutation.isPending || isCancelled}
+                                          onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                                          disabled={deleteAppointmentMutation.isPending}
                                         >
-                                          <Ban className="w-4 h-4 mr-1" />
-                                          {isCancelled ? "Cancelada" : "Cancelar"}
+                                          <Trash2 className="w-4 h-4 mr-1" />
+                                          Apagar
                                         </Button>
-                                      )}
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                                        disabled={deleteAppointmentMutation.isPending}
-                                      >
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        Apagar
-                                      </Button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        );
-                      })}
-                  </div>
-                );
-              })}
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (

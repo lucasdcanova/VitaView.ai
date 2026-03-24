@@ -38,6 +38,7 @@ import { registerDocumentRoutes } from "./routes/documents";
 import { registerSecurityRoutes } from "./routes/security.routes";
 import { registerPatientRoutes } from "./routes/patient.routes";
 import { generateCertificateHTML, generatePrescriptionHTML, generateExamReportHTML, generateHealthReportHTML } from "./services/document-templates";
+import { ensureMedicationSchema, serializeMedication } from "./services/medication-management";
 import { seedTussDatabase } from "./services/tuss-seed";
 import { StorageManager } from "./services/storage-manager";
 
@@ -2064,6 +2065,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // This reduces waterfall API calls and improves page load performance
   app.get("/api/patient-dashboard/:profileId", ensureAuthenticated, async (req, res) => {
     try {
+      await ensureMedicationSchema();
+
       const profileId = parseInt(req.params.profileId);
       const userId = req.user!.id;
 
@@ -2126,9 +2129,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         storage.getTriageHistoryByProfileId(profileId),
         pool.query(
           `SELECT * FROM medications 
-           WHERE user_id = $1 AND is_active = true
+           WHERE profile_id = $1 AND is_active = true
            ORDER BY created_at DESC`,
-          [dataOwnerUserId]
+          [profileId]
         )
       ]);
 
@@ -2136,23 +2139,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       const diagnoses = allDiagnoses.filter(d => d.profileId === profileId);
 
       // Transform medications to camelCase
-      const medications = medicationsResult.rows.map(m => ({
-        id: m.id,
-        userId: m.user_id,
-        name: m.name,
-        format: m.format,
-        dosage: m.dosage,
-        dosageUnit: m.dosage_unit,
-        frequency: m.frequency,
-        doseAmount: m.dose_amount,
-        prescriptionType: m.prescription_type,
-        quantity: m.quantity,
-        administrationRoute: m.administration_route,
-        notes: m.notes,
-        startDate: m.start_date,
-        isActive: m.is_active,
-        createdAt: m.created_at
-      }));
+      const medications = medicationsResult.rows.map(serializeMedication);
 
       res.json({
         diagnoses: diagnoses || [],
@@ -5222,6 +5209,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Prescription generation route
   app.post("/api/prescriptions/generate", ensureAuthenticated, async (req, res) => {
     try {
+      await ensureMedicationSchema();
+
       const user = req.user as any;
       const { medicationIds, validityDays, observations, doctorName, doctorCrm, doctorSpecialty, medications: medicationsFromBody } = req.body;
 
@@ -5265,8 +5254,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Fallback: buscar do banco de dados se não enviado no corpo
         const result = await pool.query(
           `SELECT * FROM medications 
-             WHERE user_id = $1 AND id = ANY($2) AND is_active = true`,
-          [user.id, medicationIds]
+             WHERE user_id = $1
+               AND id = ANY($2)
+               AND is_active = true
+               AND ($3::int IS NULL OR profile_id = $3)
+          `,
+          [user.id, medicationIds, activeProfileId ? Number.parseInt(String(activeProfileId), 10) : null]
         );
         medicationsList = result.rows.map(m => ({
           id: m.id,
