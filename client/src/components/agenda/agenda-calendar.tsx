@@ -39,13 +39,14 @@ import { TriageDialog } from "@/components/triage/triage-dialog";
 import { Stethoscope } from "lucide-react";
 import { AppointmentCard } from "./appointment-card";
 import { AppointmentPopoverHeader } from "./appointment-popover-header";
+import { AppointmentInsuranceBadge, type AgendaAppointment } from "./appointment-insurance-badge";
 import { WaitingRoom } from "./waiting-room";
 
 interface AgendaCalendarProps {
-  appointments?: Record<number, Appointment[]>;
+  appointments?: AgendaAppointment[] | Record<number, AgendaAppointment[]>;
   weekStart?: Date;
   onNewAppointment?: () => void;
-  onEditAppointment?: (appointment: Appointment) => void;
+  onEditAppointment?: (appointment: AgendaAppointment) => void;
   fullWidth?: boolean;
   onAiSchedule?: () => void;
   aiCommand?: string;
@@ -55,13 +56,13 @@ interface AgendaCalendarProps {
   onFileSelect?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile?: (index: number) => void;
   fileInputRef?: React.RefObject<HTMLInputElement>;
-  waitingRoomAppointments?: Appointment[];
-  onStartService?: (appointment: Appointment) => void;
-  onRemoveCheckIn?: (appointment: Appointment) => void;
+  waitingRoomAppointments?: AgendaAppointment[];
+  onStartService?: (appointment: AgendaAppointment) => void;
+  onRemoveCheckIn?: (appointment: AgendaAppointment) => void;
 }
 
 export function AgendaCalendar({
-  appointments = {},
+  appointments = [],
   weekStart = new Date(),
   onNewAppointment,
   onEditAppointment,
@@ -89,7 +90,7 @@ export function AgendaCalendar({
     return [10, 15, 20, 30, 60].includes(parsed as any) ? parsed : 30;
   });
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AgendaAppointment | null>(null);
   const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
   const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
   const [waitingRoomDialogOpen, setWaitingRoomDialogOpen] = useState(false);
@@ -128,7 +129,7 @@ export function AgendaCalendar({
   // Get display name for the doctor
   const doctorName = user?.fullName || user?.username || "Médico";
 
-  const { data: appointmentsList = [] } = useQuery<Appointment[]>({
+  const { data: appointmentsList = [] } = useQuery<AgendaAppointment[]>({
     queryKey: ["/api/appointments", user?.clinicId ?? null],
   });
 
@@ -236,9 +237,12 @@ export function AgendaCalendar({
     // The `appointmentsList` data source is key. 
     // If `appointments` prop is passed (which `MyClinic` does), we should use that instead of the internal query if present.
 
-    const sourceAppointments = Object.keys(appointments).length > 0
-      ? Object.values(appointments).flat()
-      : appointmentsList;
+    const sourceAppointments =
+      Array.isArray(appointments)
+        ? appointments
+        : Object.keys(appointments).length > 0
+          ? Object.values(appointments).flat()
+          : appointmentsList;
 
     const dayApps = sourceAppointments.filter(app => {
       let appDate: Date;
@@ -353,7 +357,7 @@ export function AgendaCalendar({
     }
   };
 
-  const handleStartService = (appointment: Appointment) => {
+  const handleStartService = (appointment: AgendaAppointment) => {
     // If already in progress, just resume checking the patient locally
     if (appointment.status === 'in_progress') {
       if (appointment.profileId) {
@@ -442,7 +446,7 @@ export function AgendaCalendar({
     return new Date(date);
   };
 
-  const canStartServiceFromAppointment = (appointment: Appointment) => {
+  const canStartServiceFromAppointment = (appointment: AgendaAppointment) => {
     const appointmentDate = parseAppointmentDate(appointment.date);
     const isToday = isSameDay(appointmentDate, new Date());
     const isBlocked = appointment.type === "blocked";
@@ -460,7 +464,7 @@ export function AgendaCalendar({
     );
   };
 
-  const canStartServiceFromCalendarCard = (appointment: Appointment) => {
+  const canStartServiceFromCalendarCard = (appointment: AgendaAppointment) => {
     const isBlocked = appointment.type === "blocked";
     const isActive = appointment.id === inServiceAppointmentId;
 
@@ -1164,9 +1168,11 @@ export function AgendaCalendar({
                                   <Clock className="w-3.5 h-3.5" />
                                   {app.isAllDay ? "Dia Inteiro" : app.time}
                                 </span>
-                                <span className="text-sm font-semibold text-muted-foreground">
-                                  {app.duration} min
-                                </span>
+                                {typeof app.duration === "number" && (
+                                  <span className="text-sm font-semibold text-muted-foreground">
+                                    {app.duration} min
+                                  </span>
+                                )}
                                 {isCancelled && (
                                   <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-900/70 dark:text-rose-100">
                                     Cancelada
@@ -1174,27 +1180,28 @@ export function AgendaCalendar({
                                 )}
                               </div>
 
-                              <h4 className="text-xl font-bold mb-1 flex items-center gap-2">
+                              <h4 className="text-xl font-bold mb-1 flex flex-wrap items-center gap-2">
                                 {canStartService ? (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleStartService(app);
                                     }}
-                                    className="text-charcoal hover:text-charcoal/80 hover:underline cursor-pointer flex items-center gap-1 group"
+                                    className="text-charcoal hover:text-charcoal/80 hover:underline cursor-pointer flex min-w-0 items-center gap-1 group"
                                     title={app.status === 'in_progress' ? "Retomar atendimento" : "Iniciar atendimento"}
                                   >
                                     <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     {app.isTelemedicine && <Video className="w-4 h-4 text-muted-foreground mr-1" />}
-                                    {app.patientName}
+                                    <span className="truncate">{app.patientName}</span>
                                   </button>
                                 ) : (
-                                  <span className="text-foreground flex items-center gap-2">
+                                  <span className="text-foreground flex min-w-0 items-center gap-2">
                                     {isBlocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                                     {app.isTelemedicine && <Video className="w-3.5 h-3.5 text-muted-foreground" />}
-                                    {app.patientName}
+                                    <span className="truncate">{app.patientName}</span>
                                   </span>
                                 )}
+                                <AppointmentInsuranceBadge appointment={app} className="max-w-full" />
                                 {app.profileId && !isBlocked && (
                                   <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-charcoal" title="Ver perfil">
                                     <User className="h-4 w-4" />
@@ -1359,8 +1366,13 @@ export function AgendaCalendar({
                       {allDayApps.map((appointment, idx) => {
                         const styles = getTypeStyles(appointment.type);
                         return (
-                          <div key={appointment.id || idx} className={cn("mb-1 truncate rounded border p-1 text-xs font-semibold", styles.bg, styles.border, styles.text)}>
-                            Dia Inteiro - {appointment.patientName}
+                          <div key={appointment.id || idx} className={cn("mb-1 rounded border p-1 text-xs font-semibold", styles.bg, styles.border, styles.text)}>
+                            <div className="truncate">Dia Inteiro - {appointment.patientName}</div>
+                            <AppointmentInsuranceBadge
+                              appointment={appointment}
+                              compact
+                              className="mt-1 w-fit max-w-full"
+                            />
                           </div>
                         );
                       })}

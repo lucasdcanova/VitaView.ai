@@ -1,7 +1,9 @@
 import { Play } from "lucide-react";
 
+import { AppointmentInsuranceBadge, type AgendaAppointment } from "./appointment-insurance-badge";
+
 interface AppointmentPopoverHeaderProps {
-    appointment: any;
+    appointment: AgendaAppointment;
     styles: {
         dot: string;
     };
@@ -26,19 +28,26 @@ export function AppointmentPopoverHeader({ appointment, styles, canStartService,
 
     return (
         <div className="space-y-2">
-            <div className="flex items-center justify-between">
-                {canStartService && onStartService ? (
-                    <button
-                        onClick={onStartService}
-                        className="font-medium leading-none text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1 group"
-                        title="Clique para iniciar atendimento"
-                    >
-                        <Play className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {appointment.patientName}
-                    </button>
-                ) : (
-                    <h4 className="font-medium leading-none">{appointment.patientName}</h4>
-                )}
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                    {canStartService && onStartService ? (
+                        <button
+                            onClick={onStartService}
+                            className="font-medium leading-none text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex min-w-0 items-center gap-1 group"
+                            title="Clique para iniciar atendimento"
+                        >
+                            <Play className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <span className="truncate">{appointment.patientName}</span>
+                        </button>
+                    ) : (
+                        <h4 className="font-medium leading-none truncate">{appointment.patientName}</h4>
+                    )}
+                    <AppointmentInsuranceBadge
+                        appointment={appointment}
+                        compact
+                        className="w-fit max-w-full"
+                    />
+                </div>
                 {/* Manchester Priority Badge */}
                 {config && (
                     <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-muted">

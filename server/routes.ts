@@ -7,6 +7,7 @@ import { inArray, and, eq, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 // ... imports ...
 import { prescriptions, medications, insertCustomMedicationSchema, insertCustomExamSchema, aiCostLogs, users } from "@shared/schema";
+import type { Appointment, Profile } from "@shared/schema";
 import Stripe from "stripe";
 import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
@@ -120,6 +121,63 @@ const getPlanChargeAmount = (plan: { price: number; promoPrice?: number | null }
     return plan.promoPrice;
   }
   return plan.price;
+};
+
+type AppointmentWithInsurance = Appointment & {
+  insuranceName: string | null;
+  planType: string | null;
+  patientInsuranceLabel: string | null;
+};
+
+const normalizeInsuranceValue = (value?: string | null) => {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+};
+
+const buildPatientInsuranceLabel = (
+  profile?: Pick<Profile, "insuranceName" | "planType"> | null
+) => {
+  if (!profile) return null;
+
+  const insuranceName = normalizeInsuranceValue(profile.insuranceName);
+  const planType = normalizeInsuranceValue(profile.planType);
+
+  if (
+    insuranceName &&
+    planType &&
+    insuranceName.localeCompare(planType, "pt-BR", {
+      sensitivity: "accent",
+    }) !== 0
+  ) {
+    return `${insuranceName} • ${planType}`;
+  }
+
+  return insuranceName ?? planType ?? null;
+};
+
+const enrichAppointmentsWithInsurance = async (
+  ownerUserId: number,
+  appointmentList: Appointment[],
+  clinicId?: number | null
+): Promise<AppointmentWithInsurance[]> => {
+  const accessibleProfiles = await storage.getProfilesByUserId(
+    ownerUserId,
+    clinicId ?? undefined
+  );
+  const profilesById = new Map(accessibleProfiles.map((profile) => [profile.id, profile]));
+
+  return appointmentList.map((appointment) => {
+    const profile = appointment.profileId ? profilesById.get(appointment.profileId) : undefined;
+    const insuranceName = normalizeInsuranceValue(profile?.insuranceName);
+    const planType = normalizeInsuranceValue(profile?.planType);
+
+    return {
+      ...appointment,
+      insuranceName,
+      planType,
+      patientInsuranceLabel: buildPatientInsuranceLabel(profile),
+    };
+  });
 };
 
 const IOS_APP_SHELL_REQUEST_HEADER = "x-vitaview-app-shell";
@@ -800,14 +858,24 @@ export async function registerRoutes(app: Express): Promise<void> {
 
           // Agenda é sempre exclusiva do profissional selecionado.
           const appointments = await storage.getAppointmentsByUserId(professionalId);
-          return res.json(appointments || []);
+          const enrichedAppointments = await enrichAppointmentsWithInsurance(
+            professionalId,
+            appointments || [],
+            req.user.clinicId ?? null
+          );
+          return res.json(enrichedAppointments);
         } else {
           return res.status(403).json({ message: "Permissão negada para visualizar a agenda de outro profissional" });
         }
       }
 
       const appointments = await storage.getAppointmentsByUserId(targetUserId);
-      res.json(appointments || []);
+      const enrichedAppointments = await enrichAppointmentsWithInsurance(
+        targetUserId,
+        appointments || [],
+        req.user.clinicId ?? null
+      );
+      res.json(enrichedAppointments);
     } catch (error) {
       console.error("Erro ao buscar agendamentos:", error);
       res.status(500).json({ message: "Erro ao buscar agendamentos", error: (error as Error).message });

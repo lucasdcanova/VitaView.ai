@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { Play, Video } from "lucide-react";
 
+import { AppointmentInsuranceBadge, type AgendaAppointment } from "./appointment-insurance-badge";
+
 interface AppointmentCardProps {
-    appointment: any;
+    appointment: AgendaAppointment;
     styles: {
         bg: string;
         border: string;
@@ -50,7 +52,8 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
     // Only show "active" visual cues if the appointment is in progress AND it is the one currently in service in the global context
     const showActiveIndicator = isInProgress && isInService;
 
-    const statusStyle = STATUS_STYLES[appointment.status] || null;
+    const statusKey = appointment.status ?? "";
+    const statusStyle = STATUS_STYLES[statusKey] || null;
 
     // Use status-specific styles for in_progress (only if active) or completed, otherwise use type styles
     // If in_progress but not active, fallback to standard styles (or maybe a paused style, but standard is cleaner for "not attending right now")
@@ -85,11 +88,16 @@ export function AppointmentCard({ appointment, styles, isInService = false, tria
 
             <div className={`text-xs font-semibold ${timeClassName}`}>{appointment.isAllDay ? 'Dia Inteiro' : appointment.time}</div>
             <div className={`text-xs font-medium mt-1 truncate ${patientClassName}`}>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                     {appointment.isTelemedicine && (
                         <Video className="w-3 h-3 text-muted-foreground" />
                     )}
-                    {appointment.patientName}
+                    <span className="min-w-0 truncate">{appointment.patientName}</span>
+                    <AppointmentInsuranceBadge
+                        appointment={appointment}
+                        compact
+                        className="w-fit max-w-full"
+                    />
                 </div>
             </div>
             <div className={`text-xs capitalize ${typeClassName}`}>{appointment.type}</div>

@@ -3,6 +3,7 @@ import {
   useLocation } from "wouter";
 
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar";
+import { type AgendaAppointment } from "@/components/agenda/appointment-insurance-badge";
 import { NewAppointmentModal } from "@/components/agenda/new-appointment-modal";
 import { Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +74,7 @@ export default function Agenda() {
         }
     }, [isSecretary, professionals, selectedProfessionalId, setSelectedProfessionalId]);
 
-    const { data: appointments = [] } = useQuery<Appointment[]>({
+    const { data: appointments = [] } = useQuery<AgendaAppointment[]>({
         queryKey: ["/api/appointments", user?.clinicId ?? null, selectedProfessionalId ?? null],
         queryFn: async () => {
             const url = selectedProfessionalId
@@ -317,6 +318,7 @@ export default function Agenda() {
 
                 <div className="flex-1 overflow-auto">
                     <AgendaCalendar
+                        appointments={appointments}
                         onNewAppointment={handleNewAppointment}
                         onEditAppointment={handleEditAppointment}
                         fullWidth={true}
