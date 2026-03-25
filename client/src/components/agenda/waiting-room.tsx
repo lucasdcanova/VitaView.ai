@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { format, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Play, User, LogOut, Stethoscope } from "lucide-react";
+import { Clock, Play, User, LogOut, Stethoscope, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { TriageDialog } from "@/components/triage/triage-dialog";
 import type { Appointment } from "@shared/schema";
 
@@ -12,9 +23,10 @@ interface WaitingRoomProps {
     appointments: Appointment[];
     onStartService: (appointment: Appointment) => void;
     onRemoveCheckIn: (appointment: Appointment) => void;
+    onClearWaitingRoom?: () => void;
 }
 
-export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: WaitingRoomProps) {
+export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn, onClearWaitingRoom }: WaitingRoomProps) {
     const [now, setNow] = useState(new Date());
     const [triageDialogOpen, setTriageDialogOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -32,13 +44,46 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
         <>
             <Card className="mt-6 border-l-4 border-l-border shadow-sm bg-muted/50">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                        <Clock className="w-5 h-5 text-muted-foreground" />
-                        Sala de Espera
-                        <Badge variant="secondary" className="bg-muted text-foreground hover:bg-muted/80 ml-2">
-                            {waitingAppointments.length} {waitingAppointments.length === 1 ? 'paciente' : 'pacientes'}
-                        </Badge>
-                    </CardTitle>
+                    <div className="flex items-center justify-between w-full">
+                        <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                            <Clock className="w-5 h-5 text-muted-foreground" />
+                            Sala de Espera
+                            <Badge variant="secondary" className="bg-muted text-foreground hover:bg-muted/80 ml-2">
+                                {waitingAppointments.length} {waitingAppointments.length === 1 ? 'paciente' : 'pacientes'}
+                            </Badge>
+                        </CardTitle>
+                        {onClearWaitingRoom && waitingAppointments.length > 0 && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Limpar Sala
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Limpar sala de espera?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Todos os {waitingAppointments.length} {waitingAppointments.length === 1 ? 'paciente será removido' : 'pacientes serão removidos'} da sala de espera e seus agendamentos voltarão ao status &quot;agendado&quot;.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={onClearWaitingRoom}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            Limpar
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {waitingAppointments.length === 0 ? (

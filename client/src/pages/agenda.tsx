@@ -259,6 +259,17 @@ export default function Agenda() {
         }
     };
 
+    const handleClearWaitingRoom = () => {
+        const waitingAppointments = appointments.filter((apt: Appointment) => apt.status === 'waiting');
+        waitingAppointments.forEach((appointment: Appointment) => {
+            updateAppointmentMutation.mutate({
+                id: appointment.id,
+                status: 'scheduled',
+                checkedInAt: null
+            } as any);
+        });
+    };
+
     const handleStartServiceFromWaitingRoom = (appointment: Appointment) => {
         if (!appointment.profileId) {
             toast({
@@ -339,6 +350,7 @@ export default function Agenda() {
                                 checkedInAt: null
                             } as any);
                         }}
+                        onClearWaitingRoom={handleClearWaitingRoom}
                     />
                 </div>
             </div>

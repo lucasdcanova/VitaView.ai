@@ -59,6 +59,7 @@ interface AgendaCalendarProps {
   waitingRoomAppointments?: AgendaAppointment[];
   onStartService?: (appointment: AgendaAppointment) => void;
   onRemoveCheckIn?: (appointment: AgendaAppointment) => void;
+  onClearWaitingRoom?: () => void;
 }
 
 export function AgendaCalendar({
@@ -78,6 +79,7 @@ export function AgendaCalendar({
   waitingRoomAppointments = [],
   onStartService,
   onRemoveCheckIn,
+  onClearWaitingRoom,
 }: AgendaCalendarProps) {
   const SLOT_INTERVAL_OPTIONS = [10, 15, 20, 30, 60] as const;
   const [currentDate, setCurrentDate] = useState(weekStart);
@@ -1666,6 +1668,7 @@ export function AgendaCalendar({
                 setWaitingRoomDialogOpen(false);
               }}
               onRemoveCheckIn={onRemoveCheckIn}
+              onClearWaitingRoom={onClearWaitingRoom}
             />
           )}
         </DialogContent>
