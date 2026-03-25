@@ -1,23 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { format, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Play, User, LogOut, Stethoscope } from "lucide-react";
+import { Clock, Play, User, LogOut, Stethoscope, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TriageDialog } from "@/components/triage/triage-dialog";
-import type { Appointment } from "@shared/schema";
+import { type AgendaAppointment } from "./appointment-insurance-badge";
 
 interface WaitingRoomProps {
-    appointments: Appointment[];
-    onStartService: (appointment: Appointment) => void;
-    onRemoveCheckIn: (appointment: Appointment) => void;
+    appointments: AgendaAppointment[];
+    onStartService: (appointment: AgendaAppointment) => void;
+    onRemoveCheckIn: (appointment: AgendaAppointment) => void;
+    onClearWaitingRoom?: (appointments: AgendaAppointment[]) => void;
+    isClearingWaitingRoom?: boolean;
 }
 
-export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: WaitingRoomProps) {
+export function WaitingRoom({
+    appointments,
+    onStartService,
+    onRemoveCheckIn,
+    onClearWaitingRoom,
+    isClearingWaitingRoom = false,
+}: WaitingRoomProps) {
     const [now, setNow] = useState(new Date());
     const [triageDialogOpen, setTriageDialogOpen] = useState(false);
-    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedAppointment, setSelectedAppointment] = useState<AgendaAppointment | null>(null);
 
     // Update timer every minute
     useEffect(() => {
@@ -31,7 +39,7 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
     return (
         <>
             <Card className="mt-6 border-l-4 border-l-border shadow-sm bg-muted/50">
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 flex flex-row items-start justify-between gap-3 space-y-0">
                     <CardTitle className="text-lg flex items-center gap-2 text-foreground">
                         <Clock className="w-5 h-5 text-muted-foreground" />
                         Sala de Espera
@@ -39,6 +47,19 @@ export function WaitingRoom({ appointments, onStartService, onRemoveCheckIn }: W
                             {waitingAppointments.length} {waitingAppointments.length === 1 ? 'paciente' : 'pacientes'}
                         </Badge>
                     </CardTitle>
+                    {waitingAppointments.length > 0 && onClearWaitingRoom && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                            onClick={() => onClearWaitingRoom(waitingAppointments)}
+                            disabled={isClearingWaitingRoom}
+                        >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            {isClearingWaitingRoom ? "Limpando..." : "Limpar sala"}
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {waitingAppointments.length === 0 ? (

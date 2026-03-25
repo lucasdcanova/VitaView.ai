@@ -293,6 +293,45 @@ export default function Agenda() {
         );
     };
 
+    const clearWaitingRoomMutation = useMutation({
+        mutationFn: async (appointmentsToClear: Appointment[]) => {
+            await Promise.all(
+                appointmentsToClear.map((appointment) =>
+                    apiRequest("PATCH", `/api/appointments/${appointment.id}`, {
+                        status: "scheduled",
+                        checkedInAt: null,
+                    })
+                )
+            );
+        },
+        onSuccess: (_data, appointmentsToClear) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
+            toast({
+                title: "Sala de espera limpa",
+                description: `${appointmentsToClear.length} ${appointmentsToClear.length === 1 ? "paciente voltou" : "pacientes voltaram"} para o status agendado.`,
+            });
+        },
+        onError: () => {
+            toast({
+                title: "Erro",
+                description: "Não foi possível limpar a sala de espera.",
+                variant: "destructive",
+            });
+        }
+    });
+
+    const handleClearWaitingRoom = (appointmentsToClear: Appointment[]) => {
+        if (appointmentsToClear.length === 0 || clearWaitingRoomMutation.isPending) return;
+
+        const confirmed = window.confirm(
+            `Limpar a sala de espera e retornar ${appointmentsToClear.length} ${appointmentsToClear.length === 1 ? "paciente" : "pacientes"} para o status agendado?`
+        );
+
+        if (!confirmed) return;
+
+        clearWaitingRoomMutation.mutate(appointmentsToClear);
+    };
+
     return (
         <div className="flex h-full flex-col overflow-hidden bg-background">
             <div className="flex flex-1 flex-col overflow-hidden gap-0">
@@ -339,6 +378,8 @@ export default function Agenda() {
                                 checkedInAt: null
                             } as any);
                         }}
+                        onClearWaitingRoom={handleClearWaitingRoom}
+                        isClearingWaitingRoom={clearWaitingRoomMutation.isPending}
                     />
                 </div>
             </div>

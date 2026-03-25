@@ -59,6 +59,8 @@ interface AgendaCalendarProps {
   waitingRoomAppointments?: AgendaAppointment[];
   onStartService?: (appointment: AgendaAppointment) => void;
   onRemoveCheckIn?: (appointment: AgendaAppointment) => void;
+  onClearWaitingRoom?: (appointments: AgendaAppointment[]) => void;
+  isClearingWaitingRoom?: boolean;
 }
 
 export function AgendaCalendar({
@@ -78,6 +80,8 @@ export function AgendaCalendar({
   waitingRoomAppointments = [],
   onStartService,
   onRemoveCheckIn,
+  onClearWaitingRoom,
+  isClearingWaitingRoom = false,
 }: AgendaCalendarProps) {
   const SLOT_INTERVAL_OPTIONS = [10, 15, 20, 30, 60] as const;
   const [currentDate, setCurrentDate] = useState(weekStart);
@@ -918,9 +922,7 @@ export function AgendaCalendar({
             {(() => {
               const waitingPatients = waitingRoomAppointments.filter(apt => apt.status === 'waiting');
               return (
-                <button
-                  type="button"
-                  onClick={() => setWaitingRoomDialogOpen(true)}
+                <div
                   className={cn(
                     "rounded-xl border bg-white/70 backdrop-blur-sm shadow-sm text-left transition-colors w-full",
                     "dark:bg-black/15 dark:shadow-none",
@@ -930,36 +932,58 @@ export function AgendaCalendar({
                     isCompactDayExperience ? "px-3 py-2" : "xl:w-[320px] px-3 py-3"
                   )}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={cn("font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-[10px]" : "text-xs")}>
-                      Sala de espera
-                    </p>
-                    <span className={cn(
-                      "font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center",
-                      isCompactDayExperience ? "text-[10px]" : "text-[11px]",
-                      waitingPatients.length > 0
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                        : "bg-black/5 text-charcoal/50 dark:bg-white/10 dark:text-white/50"
-                    )}>
-                      {waitingPatients.length}
-                    </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setWaitingRoomDialogOpen(true)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className={cn("font-semibold uppercase tracking-[0.14em] text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-[10px]" : "text-xs")}>
+                          Sala de espera
+                        </p>
+                        <span className={cn(
+                          "font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center",
+                          isCompactDayExperience ? "text-[10px]" : "text-[11px]",
+                          waitingPatients.length > 0
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                            : "bg-black/5 text-charcoal/50 dark:bg-white/10 dark:text-white/50"
+                        )}>
+                          {waitingPatients.length}
+                        </span>
+                      </div>
+                      {waitingPatients.length > 0 ? (
+                        <div className={cn(isCompactDayExperience ? "mt-1" : "mt-2")}>
+                          <p className={cn("font-bold text-charcoal dark:text-white truncate", isCompactDayExperience ? "text-sm" : "text-base")}>
+                            {waitingPatients.map(p => p.patientName).slice(0, 3).join(', ')}
+                            {waitingPatients.length > 3 && ` +${waitingPatients.length - 3}`}
+                          </p>
+                          <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-xs" : "text-sm")}>
+                            Toque para ver detalhes
+                          </p>
+                        </div>
+                      ) : (
+                        <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "mt-1 text-xs" : "mt-2 text-sm")}>
+                          Nenhum paciente aguardando
+                        </p>
+                      )}
+                    </button>
+
+                    {waitingPatients.length > 0 && onClearWaitingRoom && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                        onClick={() => onClearWaitingRoom(waitingPatients)}
+                        disabled={isClearingWaitingRoom}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        {isClearingWaitingRoom ? "Limpando..." : "Limpar"}
+                      </Button>
+                    )}
                   </div>
-                  {waitingPatients.length > 0 ? (
-                    <div className={cn(isCompactDayExperience ? "mt-1" : "mt-2")}>
-                      <p className={cn("font-bold text-charcoal dark:text-white truncate", isCompactDayExperience ? "text-sm" : "text-base")}>
-                        {waitingPatients.map(p => p.patientName).slice(0, 3).join(', ')}
-                        {waitingPatients.length > 3 && ` +${waitingPatients.length - 3}`}
-                      </p>
-                      <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "text-xs" : "text-sm")}>
-                        Toque para ver detalhes
-                      </p>
-                    </div>
-                  ) : (
-                    <p className={cn("text-charcoal/70 dark:text-white/70", isCompactDayExperience ? "mt-1 text-xs" : "mt-2 text-sm")}>
-                      Nenhum paciente aguardando
-                    </p>
-                  )}
-                </button>
+                </div>
               );
             })()}
           </div>
@@ -1666,6 +1690,8 @@ export function AgendaCalendar({
                 setWaitingRoomDialogOpen(false);
               }}
               onRemoveCheckIn={onRemoveCheckIn}
+              onClearWaitingRoom={onClearWaitingRoom}
+              isClearingWaitingRoom={isClearingWaitingRoom}
             />
           )}
         </DialogContent>
