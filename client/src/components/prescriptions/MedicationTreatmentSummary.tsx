@@ -41,8 +41,8 @@ export function MedicationTreatmentSummary({ medications, history }: MedicationT
         .slice(0, 12);
 
     return (
-        <Card className="overflow-hidden border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.96)_100%)] shadow-sm dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.92)_0%,rgba(2,6,23,0.98)_100%)]">
-            <CardHeader className="border-b border-border/70 bg-white/70 backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35">
+        <Card className="overflow-hidden border-border/70 shadow-sm dark:border-white/10">
+            <CardHeader className="border-b border-border/70 bg-muted/40 dark:border-white/10 dark:bg-muted/30">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <CardTitle className="flex items-center gap-2 text-base text-foreground">
