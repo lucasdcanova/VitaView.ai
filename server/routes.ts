@@ -7,7 +7,15 @@ import { inArray, and, eq, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 // ... imports ...
 import { prescriptions, medications, insertCustomMedicationSchema, insertCustomExamSchema, aiCostLogs, users } from "@shared/schema";
-import type { Appointment, Profile } from "@shared/schema";
+import type { Appointment, Profile, SubscriptionPlan } from "@shared/schema";
+import {
+  IOS_APP_STORE_PRICE_MARKUP_PERCENT,
+  applyPlatformPriceAdjustment,
+  getBillingProviderForPlatform,
+  normalizeBillingPlatform,
+  type BillingContext,
+  type BillingPlatform,
+} from "@shared/billing";
 import Stripe from "stripe";
 import multer from "multer";
 import { CID10_DATABASE } from "../shared/data/cid10-database";
@@ -181,17 +189,72 @@ const enrichAppointmentsWithInsurance = async (
 };
 
 const IOS_APP_SHELL_REQUEST_HEADER = "x-vitaview-app-shell";
+const IOS_APP_STORE_BILLING_ENABLED =
+  process.env.IOS_APP_STORE_BILLING_ENABLED?.toLowerCase() === "true";
 
 const isIOSAppShellRequest = (req: Request) =>
   req.get(IOS_APP_SHELL_REQUEST_HEADER)?.toLowerCase() === "ios";
 
-const rejectIOSAppShellBilling = (req: Request, res: Response) => {
-  if (!isIOSAppShellRequest(req)) {
+const resolveBillingPlatformFromRequest = (req: Request): BillingPlatform => {
+  const queryPlatform =
+    typeof req.query?.platform === "string" ? req.query.platform : null;
+
+  if (queryPlatform) {
+    return normalizeBillingPlatform(queryPlatform);
+  }
+
+  return isIOSAppShellRequest(req) ? "ios" : "web";
+};
+
+const resolveBillingContextForRequest = (req: Request): BillingContext => {
+  const platform = resolveBillingPlatformFromRequest(req);
+  const provider = getBillingProviderForPlatform(platform);
+  const checkoutEnabled =
+    provider === "stripe" ? true : IOS_APP_STORE_BILLING_ENABLED;
+
+  return {
+    platform,
+    provider,
+    checkoutEnabled,
+    priceMarkupPercent:
+      platform === "ios" ? IOS_APP_STORE_PRICE_MARKUP_PERCENT : 0,
+    checkoutMessage:
+      provider === "app_store" && !checkoutEnabled
+        ? "Cobrança via App Store ainda não configurada. O catálogo iOS já foi preparado com os preços ajustados."
+        : null,
+  };
+};
+
+const mapPlanToBillingCatalogPlan = (
+  plan: SubscriptionPlan,
+  billingContext: BillingContext
+) => ({
+  ...plan,
+  basePrice: plan.price,
+  basePromoPrice: plan.promoPrice ?? null,
+  price: applyPlatformPriceAdjustment(plan.price, billingContext.platform) ?? 0,
+  promoPrice: applyPlatformPriceAdjustment(
+    plan.promoPrice ?? null,
+    billingContext.platform
+  ),
+  billingPlatform: billingContext.platform,
+  billingProvider: billingContext.provider,
+  checkoutEnabled: billingContext.checkoutEnabled,
+  priceMarkupPercent: billingContext.priceMarkupPercent,
+});
+
+const rejectUnsupportedBillingProvider = (req: Request, res: Response) => {
+  const billingContext = resolveBillingContextForRequest(req);
+
+  if (billingContext.provider === "stripe") {
     return false;
   }
 
-  res.status(403).json({
-    message: "Assinaturas, upgrades e cobrança estão indisponíveis no app iOS neste momento.",
+  res.status(billingContext.checkoutEnabled ? 501 : 409).json({
+    message:
+      billingContext.checkoutMessage ||
+      "O canal de cobrança desta plataforma ainda não está disponível.",
+    billingContext,
   });
   return true;
 };
@@ -3271,6 +3334,23 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  app.get("/api/subscription-catalog", async (req, res) => {
+    try {
+      const billingContext = resolveBillingContextForRequest(req);
+      const allPlans = await storage.getSubscriptionPlans();
+      const plans = allPlans
+        .filter((plan) => plan.isActive)
+        .map((plan) => mapPlanToBillingCatalogPlan(plan, billingContext));
+
+      res.json({
+        billingContext,
+        plans,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao montar catálogo de assinatura" });
+    }
+  });
+
   app.get("/api/user-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
@@ -3328,7 +3408,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Plano gratuito não requer pagamento" });
       }
 
-      if (rejectIOSAppShellBilling(req, res)) {
+      if (rejectUnsupportedBillingProvider(req, res)) {
         return;
       }
 
@@ -3378,7 +3458,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(503).json({ message: "Stripe não configurado" });
       }
 
-      if (rejectIOSAppShellBilling(req, res)) {
+      if (rejectUnsupportedBillingProvider(req, res)) {
         return;
       }
 
@@ -3425,7 +3505,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
 
-      if (plan.price > 0 && rejectIOSAppShellBilling(req, res)) {
+      if (plan.price > 0 && rejectUnsupportedBillingProvider(req, res)) {
         return;
       }
 
@@ -3718,7 +3798,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Plano não encontrado" });
       }
 
-      if (plan.price > 0 && rejectIOSAppShellBilling(req, res)) {
+      if (plan.price > 0 && rejectUnsupportedBillingProvider(req, res)) {
         return;
       }
 

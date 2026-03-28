@@ -49,7 +49,7 @@ import { ptBR } from 'date-fns/locale';
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
 import { BrandLoader } from "@/components/ui/brand-loader";
-import { isAppStoreRestrictedIOSAppShell } from "@/lib/app-shell";
+import { type BillingContext, type BillingProvider } from "@shared/billing";
 
 // Interfaces
 interface SubscriptionPlan {
@@ -66,6 +66,12 @@ interface SubscriptionPlan {
   trialPeriodDays?: number | null;
   isActive: boolean;
   createdAt: string;
+  basePrice?: number;
+  basePromoPrice?: number | null;
+  billingPlatform?: BillingContext['platform'];
+  billingProvider?: BillingProvider;
+  checkoutEnabled?: boolean;
+  priceMarkupPercent?: number;
 }
 
 interface Subscription {
@@ -86,6 +92,11 @@ interface Subscription {
 interface UserSubscription {
   subscription: Subscription | null;
   plan: SubscriptionPlan | null;
+}
+
+interface SubscriptionCatalogResponse {
+  billingContext: BillingContext;
+  plans: SubscriptionPlan[];
 }
 
 // Clinic-related interfaces
@@ -139,6 +150,34 @@ const hasClinicAccessByPlan = (planName?: string | null) => {
   );
 };
 
+const defaultBillingContext: BillingContext = {
+  platform: 'web',
+  provider: 'stripe',
+  checkoutEnabled: true,
+  priceMarkupPercent: 0,
+  checkoutMessage: null,
+};
+
+const formatCurrency = (amountInCents?: number | null) =>
+  `R$ ${((amountInCents || 0) / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const getPlanMonthlyEquivalentInCents = (plan?: SubscriptionPlan | null) => {
+  if (!plan || plan.price <= 0) return null;
+
+  if (plan.interval === 'year') return plan.price / 12;
+  if (plan.interval === '6month') return plan.price / 6;
+  return plan.price;
+};
+
+const getPlanBillingSuffix = (interval?: string | null) => {
+  if (interval === 'year') return '/ano';
+  if (interval === '6month') return '/semestre';
+  return '/mês';
+};
+
 const SubscriptionManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -173,9 +212,17 @@ const SubscriptionManagement = () => {
     enabled: !!user,
   });
 
-  const { data: subscriptionPlans = [] } = useQuery<SubscriptionPlan[]>({
-    queryKey: ['/api/subscription-plans']
+  const { data: subscriptionCatalog } = useQuery<SubscriptionCatalogResponse>({
+    queryKey: ['/api/subscription-catalog']
   });
+
+  const billingContext = subscriptionCatalog?.billingContext ?? defaultBillingContext;
+  const subscriptionPlans = subscriptionCatalog?.plans ?? [];
+  const usesAppStoreBilling = billingContext.provider === 'app_store';
+  const canStartPaidCheckout = billingContext.provider === 'stripe' && billingContext.checkoutEnabled;
+  const appStoreBannerDescription = billingContext.checkoutMessage
+    ? `${billingContext.checkoutMessage} Os preços do iOS já incluem ${billingContext.priceMarkupPercent}% para compensar a taxa da Apple.`
+    : `Os preços do iOS já incluem ${billingContext.priceMarkupPercent}% para compensar a taxa da Apple.`;
 
   // Clinic data query
   const { data: clinicData, refetch: refetchClinic } = useQuery<ClinicData>({
@@ -259,13 +306,31 @@ const SubscriptionManagement = () => {
   }));
 
   const allPlans = plansWithFeaturesArray.filter(plan => plan.isActive);
-  const iosAppShell = isAppStoreRestrictedIOSAppShell();
+  const findPlanByNameAndInterval = (baseName: string, interval: BillingPeriod) =>
+    allPlans.find(
+      (plan) =>
+        normalizePlanName(plan.name).includes(normalizePlanName(baseName)) &&
+        plan.interval === interval
+    );
+
+  const vitaProMonthlyPlan = findPlanByNameAndInterval('vita pro', 'month');
+  const vitaProSemiannualPlan = findPlanByNameAndInterval('vita pro', '6month');
+  const vitaProAnnualPlan = findPlanByNameAndInterval('vita pro', 'year');
+  const vitaTeamMonthlyPlan = findPlanByNameAndInterval('vita team', 'month');
+  const vitaTeamAnnualPlan = findPlanByNameAndInterval('vita team', 'year');
+  const vitaBusinessMonthlyPlan = findPlanByNameAndInterval('vita business', 'month');
+  const vitaBusinessAnnualPlan = findPlanByNameAndInterval('vita business', 'year');
+
+  const getPaidPlanActionLabel = (webLabel: string) => {
+    if (!usesAppStoreBilling) return webLabel;
+    return billingContext.checkoutEnabled ? 'Assinar via App Store' : 'Em breve na App Store';
+  };
 
   const categories = [
     {
       id: 'clinic' as PlanCategory,
       title: 'Vita Team',
-      description: 'Planos a partir de R$ 149/mês',
+      description: 'Planos para clínicas e equipes',
       icon: Building,
       color: 'bg-muted border-border hover:bg-card'
     },
@@ -387,7 +452,7 @@ const SubscriptionManagement = () => {
   }, [user, isLoadingSubscription, navigate]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || iosAppShell || stripeRedirectHandledRef.current) {
+    if (typeof window === 'undefined' || billingContext.provider !== 'stripe' || stripeRedirectHandledRef.current) {
       return;
     }
 
@@ -453,7 +518,7 @@ const SubscriptionManagement = () => {
     };
 
     void finalizeRedirectPurchase();
-  }, [iosAppShell, refetch, toast]);
+  }, [billingContext.provider, refetch, toast]);
 
   // Scroll to plans when category selected
   useEffect(() => {
@@ -473,22 +538,29 @@ const SubscriptionManagement = () => {
     await cancelSubscriptionMutation.mutateAsync();
   };
 
-  const showIOSBillingBlockedToast = (intent: 'plans' | 'billing') => {
+  const showBillingUnavailableToast = (intent: 'plans' | 'billing') => {
     setIsPaymentDialogOpen(false);
     setSelectedPlanId(null);
 
     toast({
-      title: intent === 'billing' ? 'Cobrança indisponível no app iOS' : 'Assinatura indisponível no app iOS',
-      description: intent === 'billing'
-        ? 'O gerenciamento de cobrança foi desativado no app iOS neste momento.'
-        : 'Contratação e upgrades foram desativados no app iOS neste momento.',
+      title: intent === 'billing'
+        ? usesAppStoreBilling
+          ? 'Cobrança via App Store em preparação'
+          : 'Cobrança indisponível'
+        : usesAppStoreBilling
+          ? 'Assinaturas iOS em preparação'
+          : 'Assinatura indisponível',
+      description: billingContext.checkoutMessage ||
+        (intent === 'billing'
+          ? 'O gerenciamento de cobrança não está disponível nesta plataforma.'
+          : 'A contratação de planos não está disponível nesta plataforma.'),
       variant: 'destructive',
     });
   };
 
   const handleManageBilling = async () => {
-    if (iosAppShell) {
-      showIOSBillingBlockedToast('billing');
+    if (billingContext.provider !== 'stripe') {
+      showBillingUnavailableToast('billing');
       return;
     }
 
@@ -540,8 +612,8 @@ const SubscriptionManagement = () => {
       return;
     }
 
-    if (iosAppShell) {
-      showIOSBillingBlockedToast('plans');
+    if (billingContext.provider !== 'stripe') {
+      showBillingUnavailableToast('plans');
       return;
     }
 
@@ -594,12 +666,12 @@ const SubscriptionManagement = () => {
             icon={<CreditCard className="h-6 w-6" />}
           />
           <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
-            {iosAppShell && (
+            {usesAppStoreBilling && (
               <Alert className="border-border bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70">
                 <ArrowRight className="h-4 w-4 text-primary" />
-                <AlertTitle>Assinaturas e upgrades indisponíveis no app iOS</AlertTitle>
+                <AlertTitle>Catálogo iOS preparado para a App Store</AlertTitle>
                 <AlertDescription className="mt-3 text-sm text-muted-foreground">
-                  A contratação de planos, upgrades e o gerenciamento de cobrança foram desativados no app iOS neste momento. Seu plano atual e o restante do sistema continuam funcionando normalmente.
+                  {appStoreBannerDescription}
                 </AlertDescription>
               </Alert>
             )}
@@ -693,8 +765,15 @@ const SubscriptionManagement = () => {
 
                       {/* RIGHT COLUMN: Pricing & Action */}
                       <div className="p-6 flex flex-col justify-center items-center text-center bg-card">
-                        <h3 className="text-2xl font-bold text-green-600 mb-1">1º Mês Grátis</h3>
-                        <p className="text-sm text-muted-foreground mb-6">Depois R$ 63,20/mês <br />(no plano anual)</p>
+                        <h3 className="text-2xl font-bold text-green-600 mb-1">
+                          {vitaProMonthlyPlan?.trialPeriodDays ? '1º Mês Grátis' : 'Escolha seu ciclo'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          {vitaProAnnualPlan
+                            ? `Depois ${formatCurrency(getPlanMonthlyEquivalentInCents(vitaProAnnualPlan))}/mês`
+                            : 'Planos a partir do melhor ciclo disponível'}
+                          <br />(no plano anual)
+                        </p>
 
                         <div className="w-full max-w-xs space-y-3 mb-6">
 
@@ -702,10 +781,14 @@ const SubscriptionManagement = () => {
                             {['Anual', 'Semestral', 'Mensal'].map((period) => {
                               const isSelected = selectedInterval === (period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month');
                               const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
-                              const price = period === 'Anual' ? 'R$ 63,20' : period === 'Semestral' ? 'R$ 71,10' : 'R$ 79,00';
-
-                              // Find actual plans from data
-                              const targetPlan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === (period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month'));
+                              const targetPlan =
+                                period === 'Anual'
+                                  ? vitaProAnnualPlan
+                                  : period === 'Semestral'
+                                    ? vitaProSemiannualPlan
+                                    : vitaProMonthlyPlan;
+                              const monthlyEquivalent = getPlanMonthlyEquivalentInCents(targetPlan);
+                              const price = monthlyEquivalent ? formatCurrency(monthlyEquivalent) : 'Indisponível';
 
                               return (
                                 <div
@@ -738,11 +821,15 @@ const SubscriptionManagement = () => {
                         <Button
                           size="lg"
                           className="w-full max-w-xs bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
-                          disabled={iosAppShell}
+                          disabled={!canStartPaidCheckout}
                           onClick={() => {
                             console.log('[Escolher Plano Button] Clicked, selectedInterval:', selectedInterval);
-                            // Find the selected plan ID based on interval
-                            const plan = (subscriptionPlans || []).find((p: any) => p.name.includes("Vita Pro") && p.interval === selectedInterval);
+                            const plan =
+                              selectedInterval === 'year'
+                                ? vitaProAnnualPlan
+                                : selectedInterval === '6month'
+                                  ? vitaProSemiannualPlan
+                                  : vitaProMonthlyPlan;
                             console.log('[Escolher Plano Button] Found plan:', plan);
                             if (plan) {
                               console.log('[Escolher Plano Button] Calling handleStartPayment with plan.id:', plan.id);
@@ -757,7 +844,7 @@ const SubscriptionManagement = () => {
                             }
                           }}
                         >
-                          {iosAppShell ? 'Indisponível no app iOS' : 'Escolher este Plano'}
+                          {getPaidPlanActionLabel('Escolher este Plano')}
                         </Button>
                         <p className="text-[10px] text-muted-foreground mt-4">
                           Cobrado {selectedInterval === 'year' ? 'anualmente' : selectedInterval === '6month' ? 'semestralmente' : 'mensalmente'}. Cancele a qualquer momento.
@@ -918,12 +1005,12 @@ const SubscriptionManagement = () => {
                                     <Button
                                       size="lg"
                                       className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-auto py-3 shadow-md transition-all hover:scale-[1.01]"
-                                      disabled={iosAppShell}
+                                      disabled={!canStartPaidCheckout}
                                       onClick={() => handleStartPayment(annualPlan.id)}
                                     >
                                       <div className="flex flex-col items-center w-full">
                                         <div className="flex items-center justify-center gap-2 w-full">
-                                          <span>{iosAppShell ? 'Indisponível no app iOS' : 'Mudar para Anual'}</span>
+                                          <span>{getPaidPlanActionLabel('Mudar para Anual')}</span>
                                         </div>
                                         <span className="text-[10px] font-normal opacity-90 mt-1">
                                           R$ {(annualMonthlyEquivalent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
@@ -938,7 +1025,7 @@ const SubscriptionManagement = () => {
                                   <Button
                                     variant="outline"
                                     className="w-full justify-between h-auto py-3 border-border hover:bg-muted"
-                                    disabled={iosAppShell}
+                                    disabled={!canStartPaidCheckout}
                                     onClick={() => handleStartPayment(semiannualPlan.id)}
                                   >
                                     <div className="text-left">
@@ -960,13 +1047,13 @@ const SubscriptionManagement = () => {
                                     <Button
                                       size="lg"
                                       className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
-                                      disabled={iosAppShell}
+                                      disabled={!canStartPaidCheckout}
                                       onClick={() => handleStartPayment(nextTierMonthly.id)}
                                     >
                                       <div className="text-left">
                                         <div className="font-bold text-sm">
-                                          {iosAppShell
-                                            ? 'Indisponível no app iOS'
+                                          {usesAppStoreBilling
+                                            ? getPaidPlanActionLabel('Upgrade')
                                             : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                         </div>
                                         <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -1022,12 +1109,12 @@ const SubscriptionManagement = () => {
                                 <Button
                                   size="lg"
                                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-6 shadow-md transition-all hover:scale-[1.02]"
-                                  disabled={iosAppShell}
+                                  disabled={!canStartPaidCheckout}
                                   onClick={() => handleStartPayment(annualPlan.id)}
                                 >
                                   <div className="flex flex-col items-center w-full">
                                     <div className="flex items-center justify-center gap-2 w-full">
-                                      <span>{iosAppShell ? 'Indisponível no app iOS' : 'Upgrade para Anual'}</span>
+                                      <span>{getPaidPlanActionLabel('Upgrade para Anual')}</span>
                                       <span className="flex items-center justify-center bg-green-800 text-white text-[10px] px-2 h-5 rounded-full font-bold">-{savingsAnnual}%</span>
                                     </div>
                                     <span className="text-xs font-normal opacity-90 mt-1">
@@ -1051,13 +1138,13 @@ const SubscriptionManagement = () => {
                                   <Button
                                     size="lg"
                                     className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
-                                    disabled={iosAppShell}
+                                    disabled={!canStartPaidCheckout}
                                     onClick={() => handleStartPayment(nextTierMonthly.id)}
                                   >
                                     <div className="text-left">
                                       <div className="font-bold text-sm">
-                                        {iosAppShell
-                                          ? 'Indisponível no app iOS'
+                                        {usesAppStoreBilling
+                                          ? getPaidPlanActionLabel('Upgrade')
                                           : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                       </div>
                                       <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -1084,13 +1171,13 @@ const SubscriptionManagement = () => {
                               <Button
                                 size="lg"
                                 className="w-full justify-between h-auto py-3 bg-card text-foreground hover:bg-muted font-semibold shadow-md transition-all hover:scale-[1.01]"
-                                disabled={iosAppShell}
+                                disabled={!canStartPaidCheckout}
                                 onClick={() => handleStartPayment(nextTierMonthly.id)}
                               >
                                 <div className="text-left">
                                   <div className="font-bold text-sm">
-                                    {iosAppShell
-                                      ? 'Indisponível no app iOS'
+                                    {usesAppStoreBilling
+                                      ? getPaidPlanActionLabel('Upgrade')
                                       : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                   </div>
                                   <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
@@ -1173,12 +1260,12 @@ const SubscriptionManagement = () => {
                   <CardContent className="flex-grow space-y-4">
                     <div>
                       {(() => {
-                        const annualPlan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'year' && p.isActive);
-                        const lowestMonthly = annualPlan ? (annualPlan.price / 100 / 12) : 149;
+                        const annualPlan = vitaTeamAnnualPlan;
+                        const lowestMonthly = getPlanMonthlyEquivalentInCents(annualPlan);
                         return (
                           <>
                             <span className="text-xs text-muted-foreground">A partir de </span>
-                            <span className="text-3xl font-bold">R$ {lowestMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                            <span className="text-3xl font-bold">{lowestMonthly ? formatCurrency(lowestMonthly) : 'Sob consulta'}</span>
                             <span className="text-sm text-muted-foreground">/mês</span>
                           </>
                         );
@@ -1202,10 +1289,10 @@ const SubscriptionManagement = () => {
                   <CardFooter>
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
-                      disabled={iosAppShell}
+                      disabled={!canStartPaidCheckout}
                       onClick={() => {
                         console.log('[Vita Team Button] Clicked');
-                        const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita team') && p.interval === 'month');
+                        const plan = vitaTeamMonthlyPlan;
                         console.log('[Vita Team Button] Found plan:', plan);
                         if (plan) {
                           handleStartPayment(plan.id);
@@ -1218,7 +1305,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      {iosAppShell ? 'Indisponível no app iOS' : 'Escolher Vita Team'}
+                      {getPaidPlanActionLabel('Escolher Vita Team')}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1235,12 +1322,12 @@ const SubscriptionManagement = () => {
                   <CardContent className="flex-grow space-y-4">
                     <div>
                       {(() => {
-                        const annualPlan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'year' && p.isActive);
-                        const lowestMonthly = annualPlan ? (annualPlan.price / 100 / 12) : 299;
+                        const annualPlan = vitaBusinessAnnualPlan;
+                        const lowestMonthly = getPlanMonthlyEquivalentInCents(annualPlan);
                         return (
                           <>
                             <span className="text-xs text-muted-foreground">A partir de </span>
-                            <span className="text-3xl font-bold">R$ {lowestMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                            <span className="text-3xl font-bold">{lowestMonthly ? formatCurrency(lowestMonthly) : 'Sob consulta'}</span>
                             <span className="text-sm text-muted-foreground">/mês</span>
                           </>
                         );
@@ -1264,10 +1351,10 @@ const SubscriptionManagement = () => {
                   <CardFooter>
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
-                      disabled={iosAppShell}
+                      disabled={!canStartPaidCheckout}
                       onClick={() => {
                         console.log('[Vita Business Button] Clicked');
-                        const plan = (subscriptionPlans || []).find((p: any) => p.name.toLowerCase().includes('vita business') && p.interval === 'month');
+                        const plan = vitaBusinessMonthlyPlan;
                         console.log('[Vita Business Button] Found plan:', plan);
                         if (plan) {
                           handleStartPayment(plan.id);
@@ -1280,7 +1367,7 @@ const SubscriptionManagement = () => {
                         }
                       }}
                     >
-                      {iosAppShell ? 'Indisponível no app iOS' : 'Escolher Vita Business'}
+                      {getPaidPlanActionLabel('Escolher Vita Business')}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1311,8 +1398,8 @@ const SubscriptionManagement = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={iosAppShell}>
-                      {iosAppShell ? 'Indisponível no app iOS' : 'Falar com Consultor'}
+                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={usesAppStoreBilling}>
+                      {usesAppStoreBilling ? 'Em breve na App Store' : 'Falar com Consultor'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1351,9 +1438,9 @@ const SubscriptionManagement = () => {
                   </div>
                   {hasActiveSubscription && (
                     <div className="mt-4 flex justify-end">
-                      {iosAppShell ? (
+                      {usesAppStoreBilling ? (
                         <p className="text-xs text-muted-foreground">
-                          O gerenciamento de cobrança está indisponível no app iOS.
+                          {billingContext.checkoutMessage || 'As assinaturas do iOS serão gerenciadas pela App Store.'}
                         </p>
                       ) : (
                         <Button
@@ -1377,7 +1464,7 @@ const SubscriptionManagement = () => {
           </div >
         </main >
 
-      {!iosAppShell && (
+      {billingContext.provider === 'stripe' && (
         <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
           console.log('[Payment Dialog] onOpenChange called with:', open);
           setIsPaymentDialogOpen(open);
@@ -1395,11 +1482,13 @@ const SubscriptionManagement = () => {
                       </Badge>
                     </div>
                     <div className="text-2xl font-bold text-primary">
-                      {selectedPlan.promoPrice ? `R$ ${(selectedPlan.promoPrice / 100).toFixed(2)}` :
+                      {selectedPlan.promoPrice ? formatCurrency(selectedPlan.promoPrice) :
                         selectedPlan.price === 0 ? 'Grátis' :
                           selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? '1 Mês Grátis' :
-                            `R$ ${(selectedPlan.price / 100).toFixed(2)}`}
-                      {!selectedPlan.trialPeriodDays && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
+                            formatCurrency(selectedPlan.price)}
+                      {!selectedPlan.trialPeriodDays && (
+                        <span className="text-sm font-normal text-muted-foreground">{getPlanBillingSuffix(selectedPlan.interval)}</span>
+                      )}
                     </div>
                     {selectedPlan.trialPeriodDays && selectedPlan.trialPeriodDays > 0 ? (
                       <div className="text-xs text-green-600 font-medium mt-1">

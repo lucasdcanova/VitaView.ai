@@ -96,9 +96,14 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
                     Esta funcionalidade está disponível exclusivamente nos planos <strong>Vita</strong>.
                 </p>
                 {iosBillingRestricted ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Upgrades estão indisponíveis no app iOS neste momento.
-                    </p>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={() => setLocation('/subscription')}
+                    >
+                        Ver preços no iOS
+                    </Button>
                 ) : (
                     <Button
                         variant="secondary"
@@ -128,7 +133,7 @@ export const FeatureGate = React.forwardRef<HTMLDivElement, FeatureGateProps>(
                         <DialogHeader>
                             <DialogTitle>Recurso Premium</DialogTitle>
                             <DialogDescription>
-                                Este recurso está bloqueado no plano atual.
+                                Este recurso está bloqueado no plano atual. No iOS, o catálogo de assinatura foi preparado para a App Store.
                             </DialogDescription>
                         </DialogHeader>
                         {upgradeContent}
