@@ -218,6 +218,15 @@ export default function Patients() {
       <main className="flex-1 overflow-y-auto bg-background">
         {isMobile ? (
           <div className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] supports-[backdrop-filter]:backdrop-blur-sm">
+            <div className="mb-3">
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Pacientes
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Busque e selecione um paciente para iniciar o atendimento.
+              </p>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <Button
                 onClick={handleOpenCreatePatient}
