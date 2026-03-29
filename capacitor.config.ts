@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
     zoomEnabled: false,
     contentInset: 'never',
     scrollEnabled: true,
+    backgroundColor: '#0F1115',
   },
   android: {
     // Ensure consistent background color for Android WebView.
