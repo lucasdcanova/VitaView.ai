@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   appId: 'br.com.lucascanova.vitaview',
   appName: 'VitaView',
   webDir: 'dist/public',
+  packageClassList: ['StoreKitPlugin'],
   ios: {
     // Make WKWebView layout behavior explicit on iPhone to avoid unwanted page scaling/insets.
     zoomEnabled: false,
