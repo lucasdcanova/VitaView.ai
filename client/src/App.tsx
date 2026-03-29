@@ -22,6 +22,7 @@ import AuthenticatedShell from "@/components/layout/authenticated-shell";
 import { preloadCoreAuthenticatedRoutes } from "@/lib/route-preload";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
+import { useIOSSubscriptionSync } from "@/hooks/use-ios-subscription-sync";
 
 declare global {
   interface Window {
@@ -179,6 +180,7 @@ function AuthenticatedRoutes() {
   function AuthenticatedWarmup() {
     const { user } = useAuth();
     const reactQueryClient = useQueryClient();
+    useIOSSubscriptionSync();
 
     useEffect(() => {
       if (!user) return;

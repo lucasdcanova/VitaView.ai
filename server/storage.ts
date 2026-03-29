@@ -1106,6 +1106,7 @@ export class MemStorage implements IStorage {
       id,
       interval: plan.interval || "month",
       stripePriceId: plan.stripePriceId || null,
+      appleProductId: plan.appleProductId || null,
       features: plan.features || null,
       isActive: plan.isActive ?? true,
       promoPrice: plan.promoPrice ?? null,
@@ -1146,6 +1147,8 @@ export class MemStorage implements IStorage {
       currentPeriodEnd: subscription.currentPeriodEnd || periodEnd,
       stripeCustomerId: subscription.stripeCustomerId || null,
       stripeSubscriptionId: subscription.stripeSubscriptionId || null,
+      appStoreTransactionId: subscription.appStoreTransactionId || null,
+      appStoreOriginalTransactionId: subscription.appStoreOriginalTransactionId || null,
       createdAt: now,
       canceledAt: null,
       profilesCreated: 0,
@@ -1547,6 +1550,8 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       stripeCustomerId: subscription.stripeCustomerId || null,
       stripeSubscriptionId: subscription.stripeSubscriptionId || null,
+      appStoreTransactionId: subscription.appStoreTransactionId || null,
+      appStoreOriginalTransactionId: subscription.appStoreOriginalTransactionId || null,
       status: subscription.status || 'active',
       canceledAt: null,
       profilesCreated: 0,
@@ -2114,7 +2119,14 @@ export class DatabaseStorage implements IStorage {
         ALTER TABLE subscription_plans 
         ADD COLUMN IF NOT EXISTS promo_price INTEGER,
         ADD COLUMN IF NOT EXISTS promo_description TEXT,
-        ADD COLUMN IF NOT EXISTS trial_period_days INTEGER DEFAULT 0
+        ADD COLUMN IF NOT EXISTS trial_period_days INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS apple_product_id VARCHAR(150)
+      `);
+
+      await db.execute(sql`
+        ALTER TABLE subscriptions
+        ADD COLUMN IF NOT EXISTS app_store_transaction_id VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS app_store_original_transaction_id VARCHAR(100)
       `);
 
       const existingPlans = await this.getSubscriptionPlans();
@@ -2126,6 +2138,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: 10,
           price: 0,
           interval: "month",
+          appleProductId: null,
           features: [
             "Anamnese **Básica**",
             "Limite de **1 prescrição** por dia",
@@ -2146,6 +2159,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 7900,
           interval: "month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_pro.monthly",
           features: [
             "Anamnese **com IA** e Gravação de Voz",
             "Prescrição **Ilimitada** com Alerta de Interações",
@@ -2168,6 +2182,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 42660,
           interval: "6month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_pro.semiannual",
           features: [
             "Anamnese **com IA** e Gravação de Voz",
             "Prescrição **Ilimitada** com Alerta de Interações",
@@ -2190,6 +2205,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 75840,
           interval: "year",
+          appleProductId: "br.com.lucascanova.vitaview.vita_pro.annual",
           features: [
             "Anamnese **com IA** e Gravação de Voz",
             "Prescrição **Ilimitada** com Alerta de Interações",
@@ -2211,6 +2227,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 14900,
           interval: "month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_team.monthly",
           features: [
             "Tudo do plano **Vita Pro**",
             "Até **5 profissionais** inclusos",
@@ -2233,6 +2250,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 80460,
           interval: "6month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_team.semiannual",
           features: [
             "Tudo do plano **Vita Pro**",
             "Até **5 profissionais** inclusos",
@@ -2255,6 +2273,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 143040,
           interval: "year",
+          appleProductId: "br.com.lucascanova.vitaview.vita_team.annual",
           features: [
             "Tudo do plano **Vita Pro**",
             "Até **5 profissionais** inclusos",
@@ -2276,6 +2295,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 24900,
           interval: "month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_business.monthly",
           features: [
             "Tudo do plano **Vita Team**",
             "**Profissionais ilimitados** (5+)",
@@ -2298,6 +2318,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 134460,
           interval: "6month",
+          appleProductId: "br.com.lucascanova.vitaview.vita_business.semiannual",
           features: [
             "Tudo do plano **Vita Team**",
             "**Profissionais ilimitados** (5+)",
@@ -2320,6 +2341,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 239040,
           interval: "year",
+          appleProductId: "br.com.lucascanova.vitaview.vita_business.annual",
           features: [
             "Tudo do plano **Vita Team**",
             "**Profissionais ilimitados** (5+)",
@@ -2341,6 +2363,7 @@ export class DatabaseStorage implements IStorage {
           maxUploadsPerProfile: -1,
           price: 99900,
           interval: "month",
+          appleProductId: "br.com.lucascanova.vitaview.hospitais.monthly",
           features: [
             "Infraestrutura dedicada",
             "Integração com sistemas hospitalares (HL7/FHIR)",
@@ -2377,6 +2400,7 @@ export class DatabaseStorage implements IStorage {
               maxProfiles: plan.maxProfiles,
               maxUploadsPerProfile: plan.maxUploadsPerProfile,
               price: plan.price,
+              appleProductId: plan.appleProductId,
               features: plan.features,
               promoPrice: plan.promoPrice,
               promoDescription: plan.promoDescription,

@@ -14,9 +14,6 @@ import { Card,
   CardTitle,
   CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert,
-  AlertDescription,
-  AlertTitle } from "@/components/ui/alert";
 import { Badge } from '@/components/ui/badge';
 import { Tabs,
   TabsContent,
@@ -48,8 +45,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import PatientHeader from "@/components/patient-header";
 import { StripePayment } from '@/components/ui/stripe-payment';
+import { IOSStoreKitPurchase } from '@/components/ui/ios-storekit-purchase';
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { type BillingContext, type BillingProvider } from "@shared/billing";
+import { StoreKit } from '@/lib/storekit';
 
 // Interfaces
 interface SubscriptionPlan {
@@ -68,6 +67,7 @@ interface SubscriptionPlan {
   createdAt: string;
   basePrice?: number;
   basePromoPrice?: number | null;
+  appleProductId?: string | null;
   billingPlatform?: BillingContext['platform'];
   billingProvider?: BillingProvider;
   checkoutEnabled?: boolean;
@@ -219,10 +219,7 @@ const SubscriptionManagement = () => {
   const billingContext = subscriptionCatalog?.billingContext ?? defaultBillingContext;
   const subscriptionPlans = subscriptionCatalog?.plans ?? [];
   const usesAppStoreBilling = billingContext.provider === 'app_store';
-  const canStartPaidCheckout = billingContext.provider === 'stripe' && billingContext.checkoutEnabled;
-  const appStoreBannerDescription = billingContext.checkoutMessage
-    ? `${billingContext.checkoutMessage} Os preços do iOS já incluem ${billingContext.priceMarkupPercent}% para compensar a taxa da Apple.`
-    : `Os preços do iOS já incluem ${billingContext.priceMarkupPercent}% para compensar a taxa da Apple.`;
+  const canStartPaidCheckout = billingContext.checkoutEnabled;
 
   // Clinic data query
   const { data: clinicData, refetch: refetchClinic } = useQuery<ClinicData>({
@@ -322,8 +319,7 @@ const SubscriptionManagement = () => {
   const vitaBusinessAnnualPlan = findPlanByNameAndInterval('vita business', 'year');
 
   const getPaidPlanActionLabel = (webLabel: string) => {
-    if (!usesAppStoreBilling) return webLabel;
-    return billingContext.checkoutEnabled ? 'Assinar via App Store' : 'Em breve na App Store';
+    return usesAppStoreBilling ? 'Assinar' : webLabel;
   };
 
   const categories = [
@@ -452,7 +448,7 @@ const SubscriptionManagement = () => {
   }, [user, isLoadingSubscription, navigate]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || billingContext.provider !== 'stripe' || stripeRedirectHandledRef.current) {
+    if (typeof window === 'undefined' || usesAppStoreBilling || !billingContext.checkoutEnabled || stripeRedirectHandledRef.current) {
       return;
     }
 
@@ -518,7 +514,7 @@ const SubscriptionManagement = () => {
     };
 
     void finalizeRedirectPurchase();
-  }, [billingContext.provider, refetch, toast]);
+  }, [billingContext.checkoutEnabled, refetch, toast, usesAppStoreBilling]);
 
   // Scroll to plans when category selected
   useEffect(() => {
@@ -534,6 +530,11 @@ const SubscriptionManagement = () => {
   }, [selectedCategory]);
 
   const handleCancelSubscription = async () => {
+    if (usesAppStoreBilling) {
+      await handleManageBilling();
+      return;
+    }
+
     setIsProcessing(true);
     await cancelSubscriptionMutation.mutateAsync();
   };
@@ -544,12 +545,8 @@ const SubscriptionManagement = () => {
 
     toast({
       title: intent === 'billing'
-        ? usesAppStoreBilling
-          ? 'Cobrança via App Store em preparação'
-          : 'Cobrança indisponível'
-        : usesAppStoreBilling
-          ? 'Assinaturas iOS em preparação'
-          : 'Assinatura indisponível',
+        ? 'Cobrança indisponível'
+        : 'Assinatura indisponível',
       description: billingContext.checkoutMessage ||
         (intent === 'billing'
           ? 'O gerenciamento de cobrança não está disponível nesta plataforma.'
@@ -559,7 +556,20 @@ const SubscriptionManagement = () => {
   };
 
   const handleManageBilling = async () => {
-    if (billingContext.provider !== 'stripe') {
+    if (usesAppStoreBilling) {
+      try {
+        await StoreKit.presentManageSubscriptions();
+      } catch (error: any) {
+        toast({
+          title: 'Não foi possível abrir suas assinaturas',
+          description: error?.message || 'Abra Ajustes > Assinaturas no iPhone.',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
+
+    if (!billingContext.checkoutEnabled) {
       showBillingUnavailableToast('billing');
       return;
     }
@@ -612,9 +622,21 @@ const SubscriptionManagement = () => {
       return;
     }
 
-    if (billingContext.provider !== 'stripe') {
+    if (!billingContext.checkoutEnabled) {
       showBillingUnavailableToast('plans');
       return;
+    }
+
+    if (usesAppStoreBilling) {
+      const plan = allPlans.find((currentPlan) => currentPlan.id === planId);
+      if (!plan?.appleProductId) {
+        toast({
+          title: 'Produto indisponível',
+          description: 'Este plano ainda não foi vinculado a um produto da App Store.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     console.log('[handleStartPayment] Paid plan, opening payment dialog');
@@ -666,18 +688,6 @@ const SubscriptionManagement = () => {
             icon={<CreditCard className="h-6 w-6" />}
           />
           <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
-            {usesAppStoreBilling && (
-              <Alert className="border-border bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70">
-                <ArrowRight className="h-4 w-4 text-primary" />
-                <AlertTitle>Catálogo iOS preparado para a App Store</AlertTitle>
-                <AlertDescription className="mt-3 text-sm text-muted-foreground">
-                  {appStoreBannerDescription}
-                </AlertDescription>
-              </Alert>
-            )}
-
-
-
             {/* SECTION 1: Plans for Independent Professionals */}
             <section className="space-y-6">
               <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -910,14 +920,16 @@ const SubscriptionManagement = () => {
                       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                            Cancelar assinatura
+                            {usesAppStoreBilling ? 'Gerenciar assinatura' : 'Cancelar assinatura'}
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Cancelar assinatura</DialogTitle>
                             <DialogDescription>
-                              Tem certeza que deseja cancelar sua assinatura? Você perderá acesso aos recursos premium ao final do período atual.
+                              {usesAppStoreBilling
+                                ? 'As assinaturas feitas no iPhone são gerenciadas pela sua conta Apple.'
+                                : 'Tem certeza que deseja cancelar sua assinatura? Você perderá acesso aos recursos premium ao final do período atual.'}
                             </DialogDescription>
                           </DialogHeader>
                           <DialogFooter>
@@ -1052,9 +1064,7 @@ const SubscriptionManagement = () => {
                                     >
                                       <div className="text-left">
                                         <div className="font-bold text-sm">
-                                          {usesAppStoreBilling
-                                            ? getPaidPlanActionLabel('Upgrade')
-                                            : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                          {`Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                         </div>
                                         <div className="text-xs text-gray-500 font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                       </div>
@@ -1143,9 +1153,7 @@ const SubscriptionManagement = () => {
                                   >
                                     <div className="text-left">
                                       <div className="font-bold text-sm">
-                                        {usesAppStoreBilling
-                                          ? getPaidPlanActionLabel('Upgrade')
-                                          : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                        {`Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                       </div>
                                       <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                     </div>
@@ -1176,9 +1184,7 @@ const SubscriptionManagement = () => {
                               >
                                 <div className="text-left">
                                   <div className="font-bold text-sm">
-                                    {usesAppStoreBilling
-                                      ? getPaidPlanActionLabel('Upgrade')
-                                      : `Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
+                                    {`Upgrade para ${nextTierMonthly.name.replace(/ mensal| semestral| anual/i, '').trim()}`}
                                   </div>
                                   <div className="text-xs text-muted-foreground font-normal">A partir de R$ {(nextTierMonthly.price / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês</div>
                                 </div>
@@ -1398,8 +1404,8 @@ const SubscriptionManagement = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={usesAppStoreBilling}>
-                      {usesAppStoreBilling ? 'Em breve na App Store' : 'Falar com Consultor'}
+                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      Falar com Consultor
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1438,24 +1444,18 @@ const SubscriptionManagement = () => {
                   </div>
                   {hasActiveSubscription && (
                     <div className="mt-4 flex justify-end">
-                      {usesAppStoreBilling ? (
-                        <p className="text-xs text-muted-foreground">
-                          {billingContext.checkoutMessage || 'As assinaturas do iOS serão gerenciadas pela App Store.'}
-                        </p>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 text-xs"
-                          onClick={handleManageBilling}
-                          disabled={billingPortalMutation.isPending}
-                        >
-                          <CreditCard className="h-4 w-4" />
-                          {billingPortalMutation.isPending
-                            ? 'Abrindo portal...'
-                            : 'Gerenciar meios de pagamento'}
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={handleManageBilling}
+                        disabled={billingPortalMutation.isPending}
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        {billingPortalMutation.isPending
+                          ? 'Abrindo portal...'
+                          : 'Gerenciar meios de pagamento'}
+                      </Button>
                     </div>
                   )}
                 </CardContent>
@@ -1464,7 +1464,7 @@ const SubscriptionManagement = () => {
           </div >
         </main >
 
-      {billingContext.provider === 'stripe' && (
+      {billingContext.checkoutEnabled && (
         <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
           console.log('[Payment Dialog] onOpenChange called with:', open);
           setIsPaymentDialogOpen(open);
@@ -1505,15 +1505,33 @@ const SubscriptionManagement = () => {
             </DialogHeader>
 
             {selectedPlanId ? (
-              <StripePayment
-                planId={selectedPlanId}
-                onSuccess={handlePaymentSuccess}
-                onCancel={() => {
-                  console.log('[StripePayment] onCancel called');
-                  setIsPaymentDialogOpen(false);
-                  setSelectedPlanId(null);
-                }}
-              />
+              usesAppStoreBilling ? (
+                selectedPlan?.appleProductId && user ? (
+                  <IOSStoreKitPurchase
+                    productId={selectedPlan.appleProductId}
+                    userId={user.id}
+                    onSuccess={handlePaymentSuccess}
+                    onCancel={() => {
+                      setIsPaymentDialogOpen(false);
+                      setSelectedPlanId(null);
+                    }}
+                  />
+                ) : (
+                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+                    Este plano ainda não foi vinculado a um produto da App Store.
+                  </div>
+                )
+              ) : (
+                <StripePayment
+                  planId={selectedPlanId}
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={() => {
+                    console.log('[StripePayment] onCancel called');
+                    setIsPaymentDialogOpen(false);
+                    setSelectedPlanId(null);
+                  }}
+                />
+              )
             ) : (
               <div className="text-center py-6">
                 <BrandLoader className="h-8 w-8 animate-spin mx-auto mb-3" />
