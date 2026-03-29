@@ -14,6 +14,7 @@
 		504EC3091FED79650016851F /* StoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3092FED79650016851F /* StoreKitPlugin.swift */; };
 		504EC3093FED79650016851F /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3094FED79650016851F /* SubscriptionManager.swift */; };
 		504EC3095FED79650016851F /* SubscriptionPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3096FED79650016851F /* SubscriptionPaywallView.swift */; };
+		504EC3097FED79650016851F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3098FED79650016851F /* ViewController.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
@@ -28,6 +29,7 @@
 		504EC3092FED79650016851F /* StoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPlugin.swift; sourceTree = "<group>"; };
 		504EC3094FED79650016851F /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		504EC3096FED79650016851F /* SubscriptionPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionPaywallView.swift; sourceTree = "<group>"; };
+		504EC3098FED79650016851F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 				504EC3092FED79650016851F /* StoreKitPlugin.swift */,
 				504EC3094FED79650016851F /* SubscriptionManager.swift */,
 				504EC3096FED79650016851F /* SubscriptionPaywallView.swift */,
+				504EC3098FED79650016851F /* ViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -168,6 +171,7 @@
 				504EC3091FED79650016851F /* StoreKitPlugin.swift in Sources */,
 				504EC3093FED79650016851F /* SubscriptionManager.swift in Sources */,
 				504EC3095FED79650016851F /* SubscriptionPaywallView.swift in Sources */,
+				504EC3097FED79650016851F /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
