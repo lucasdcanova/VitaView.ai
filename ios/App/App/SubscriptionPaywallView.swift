@@ -5,7 +5,7 @@ import StoreKit
 struct SubscriptionPaywallView: View {
     @ObservedObject var manager: SubscriptionManager
     let appAccountToken: UUID?
-    let onCompleted: ((Transaction?) -> Void)?
+    let onCompleted: ((StoreKit.Transaction?) -> Void)?
     let onClose: (() -> Void)?
 
     @State private var selectedCycle: VitaBillingCycle = .monthly

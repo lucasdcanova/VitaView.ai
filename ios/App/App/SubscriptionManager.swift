@@ -126,7 +126,13 @@ final class SubscriptionManager: ObservableObject {
     }
 
     func purchase(productId: String, appAccountToken: UUID? = nil) async throws -> VitaPurchaseOutcome {
-        guard let product = productsById[productId] ?? (try await Product.products(for: [productId]).first) else {
+        let product: Product?
+        if let cached = productsById[productId] {
+            product = cached
+        } else {
+            product = try await Product.products(for: [productId]).first
+        }
+        guard let product else {
             throw NSError(domain: "SubscriptionManager", code: 404, userInfo: [
                 NSLocalizedDescriptionKey: "Produto não encontrado na App Store."
             ])

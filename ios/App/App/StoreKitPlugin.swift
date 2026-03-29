@@ -17,7 +17,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "presentPaywall", returnType: CAPPluginReturnPromise)
     ]
 
-    private let manager = SubscriptionManager.shared
+    nonisolated(unsafe) private let manager = SubscriptionManager.shared
     private weak var paywallController: UIViewController?
 
     public override func load() {
@@ -27,7 +27,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func getProducts(_ call: CAPPluginCall) {
         let productIds = call.getArray("productIds", String.self) ?? []
 
-        Task {
+        Task { @MainActor in
             do {
                 try await manager.loadProducts()
                 let products = productIds.compactMap { productId in
@@ -54,7 +54,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
         let appAccountToken = call.getString("appAccountToken")
 
-        Task {
+        Task { @MainActor in
             do {
                 let outcome = try await manager.purchase(
                     productId: productId,
@@ -79,7 +79,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func restorePurchases(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             do {
                 let transactions = try await manager.restorePurchases()
                 call.resolve([
@@ -92,7 +92,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func syncCurrentEntitlements(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             do {
                 try await manager.refreshSubscriptionStatus()
                 call.resolve([
@@ -128,7 +128,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
             let view = SubscriptionPaywallView(
                 manager: manager,
                 appAccountToken: appAccountToken,
-                onCompleted: { [weak self] transaction in
+                onCompleted: { [weak self] (transaction: StoreKit.Transaction?) in
                     if let transaction {
                         self?.notifyListeners("transactionUpdate", data: [
                             "transaction": self?.serializeTransaction(transaction) ?? [:]
@@ -173,7 +173,7 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         return object
     }
 
-    private func serializeTransaction(_ transaction: Transaction) -> JSObject {
+    private func serializeTransaction(_ transaction: StoreKit.Transaction) -> JSObject {
         var object: JSObject = [
             "productId": transaction.productID,
             "transactionId": String(transaction.id),
