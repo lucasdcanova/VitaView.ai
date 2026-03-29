@@ -46,7 +46,14 @@ import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromC
 import logger from "./logger";
 import { createPrivateKey, createSign, randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
-import { sendClinicInvitationEmail, sendPasswordChangedEmail } from "./services/email.service";
+import {
+  sendClinicInvitationEmail,
+  sendPasswordChangedEmail,
+  sendPaymentConfirmationEmail,
+  sendSubscriptionRenewalEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCancelledEmail,
+} from "./services/email.service";
 import { financialService } from "./services/financial_service";
 import fs from "fs";
 import path from "path";
@@ -4067,6 +4074,19 @@ export async function registerRoutes(app: Express): Promise<void> {
             }
           }
 
+          // Send payment confirmation email
+          const paymentUser = await storage.getUser(userId);
+          if (paymentUser?.email && paymentUser?.fullName && plan) {
+            const periodEnd = calculatePeriodEnd(new Date(), plan.interval);
+            sendPaymentConfirmationEmail(
+              paymentUser.email,
+              paymentUser.fullName,
+              plan.name,
+              paymentIntent.amount,
+              periodEnd,
+            ).catch(err => logger.error('[Webhook] Failed to send payment confirmation email:', err));
+          }
+
           break;
         }
 
@@ -4142,6 +4162,45 @@ export async function registerRoutes(app: Express): Promise<void> {
               currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
               currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
             });
+
+            // Send renewal email (only for renewals, not the first invoice)
+            if (invoice.billing_reason === 'subscription_cycle') {
+              const renewalUser = await storage.getUser(subscription.userId);
+              const renewalPlan = subscription.planId ? await storage.getSubscriptionPlan(subscription.planId) : null;
+              if (renewalUser?.email && renewalUser?.fullName && renewalPlan) {
+                sendSubscriptionRenewalEmail(
+                  renewalUser.email,
+                  renewalUser.fullName,
+                  renewalPlan.name,
+                  invoice.amount_paid || 0,
+                  new Date(stripeSubscription.current_period_end * 1000),
+                ).catch(err => logger.error('[Webhook] Failed to send renewal email:', err));
+              }
+            }
+          }
+          break;
+        }
+
+        case "invoice.payment_failed": {
+          const failedInvoice = event.data.object as any;
+          const failedSubId = typeof failedInvoice.subscription === "string" ? failedInvoice.subscription : null;
+          if (!failedSubId) break;
+
+          const failedSubs = await storage.getAllSubscriptionsByStripeId(failedSubId);
+          for (const subscription of failedSubs) {
+            const failedUser = await storage.getUser(subscription.userId);
+            const failedPlan = subscription.planId ? await storage.getSubscriptionPlan(subscription.planId) : null;
+            if (failedUser?.email && failedUser?.fullName && failedPlan) {
+              const nextRetry = failedInvoice.next_payment_attempt
+                ? new Date(failedInvoice.next_payment_attempt * 1000)
+                : undefined;
+              sendPaymentFailedEmail(
+                failedUser.email,
+                failedUser.fullName,
+                failedPlan.name,
+                nextRetry,
+              ).catch(err => logger.error('[Webhook] Failed to send payment failed email:', err));
+            }
           }
           break;
         }
@@ -4152,6 +4211,21 @@ export async function registerRoutes(app: Express): Promise<void> {
 
           for (const subscription of relatedSubscriptions) {
             await storage.cancelUserSubscription(subscription.id);
+
+            // Send cancellation email
+            const cancelledUser = await storage.getUser(subscription.userId);
+            const cancelledPlan = subscription.planId ? await storage.getSubscriptionPlan(subscription.planId) : null;
+            const accessUntil = (canceledSubscription as any).current_period_end
+              ? new Date((canceledSubscription as any).current_period_end * 1000)
+              : new Date();
+            if (cancelledUser?.email && cancelledUser?.fullName && cancelledPlan) {
+              sendSubscriptionCancelledEmail(
+                cancelledUser.email,
+                cancelledUser.fullName,
+                cancelledPlan.name,
+                accessUntil,
+              ).catch(err => logger.error('[Webhook] Failed to send cancellation email:', err));
+            }
           }
           break;
         }

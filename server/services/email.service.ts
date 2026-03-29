@@ -8,7 +8,6 @@ interface EmailOptions {
     text?: string;
 }
 
-// Create transporter based on environment
 const createTransporter = () => {
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         return nodemailer.createTransport({
@@ -21,7 +20,6 @@ const createTransporter = () => {
             },
         });
     }
-
     logger.info('[Email] SMTP not configured - emails will be logged to console');
     return null;
 };
@@ -32,22 +30,13 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     const from = process.env.EMAIL_FROM || 'VitaView AI <contato@vitaview.ai>';
 
     if (!transporter) {
-        logger.info(`[Email Mock] To: ${options.to}`);
-        logger.info(`[Email Mock] Subject: ${options.subject}`);
-        logger.info(`[Email Mock] Body: ${options.text || 'HTML content'}`);
+        logger.info(`[Email Mock] To: ${options.to} | Subject: ${options.subject}`);
         return true;
     }
 
     try {
-        await transporter.sendMail({
-            from,
-            to: options.to,
-            subject: options.subject,
-            html: options.html,
-            text: options.text,
-        });
-
-        logger.info(`[Email] Successfully sent to ${options.to}`);
+        await transporter.sendMail({ from, ...options });
+        logger.info(`[Email] Sent to ${options.to} — ${options.subject}`);
         return true;
     } catch (error) {
         logger.error('[Email] Failed to send:', error);
@@ -55,94 +44,114 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     }
 };
 
-// ─── Shared design system ────────────────────────────────────────────────────
+// ─── Design system ────────────────────────────────────────────────────────────
 
-function emailWrapper(content: string): string {
+const YEAR = new Date().getFullYear();
+const BASE_URL = () => process.env.APP_URL || 'https://vitaview.ai';
+
+function em(content: string): string {
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>VitaView AI</title>
 </head>
-<body style="margin:0;padding:0;background-color:#e8e8e5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#e8e8e5;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+<body style="margin:0;padding:0;background-color:#e4e4e1;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#e4e4e1;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
-          <!-- HEADER: white bg + official logo -->
-          <tr>
-            <td style="background-color:#ffffff;padding:28px 40px;border-radius:4px 4px 0 0;text-align:center;">
-              <img src="https://vitaview.ai/LOGO%20COM%20TEXTO.PNG" width="200" alt="VitaView AI" style="display:inline-block;border:0;max-width:200px;">
-            </td>
-          </tr>
+        <!-- HEADER -->
+        <tr>
+          <td style="background-color:#ffffff;padding:26px 40px;border-radius:4px 4px 0 0;text-align:center;">
+            <img src="https://vitaview.ai/LOGO%20COM%20TEXTO.PNG" width="190" height="auto" alt="VitaView AI" style="display:inline-block;border:0;max-width:190px;">
+          </td>
+        </tr>
 
-          <!-- TEAL ACCENT LINE -->
-          <tr>
-            <td style="height:3px;background:#448C9B;font-size:0;line-height:0;">&nbsp;</td>
-          </tr>
+        <!-- TEAL DIVIDER -->
+        <tr><td style="height:3px;background-color:#448C9B;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-          <!-- BODY: black bg, white text -->
-          <tr>
-            <td style="background-color:#111111;padding:48px 40px 40px 40px;">
-              ${content}
-            </td>
-          </tr>
+        <!-- BODY -->
+        <tr>
+          <td style="background-color:#111111;padding:48px 40px 40px;">
+            ${content}
+          </td>
+        </tr>
 
-          <!-- FOOTER -->
-          <tr>
-            <td style="background-color:#0a0a0a;padding:24px 40px;border-top:1px solid #222;border-radius:0 0 4px 4px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="font-size:12px;color:#555;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-                    © ${new Date().getFullYear()} VitaView AI · Todos os direitos reservados<br>
-                    <a href="https://vitaview.ai" style="color:#555;text-decoration:none;">vitaview.ai</a>
-                    &nbsp;·&nbsp;
-                    <a href="mailto:contato@vitaview.ai" style="color:#555;text-decoration:none;">contato@vitaview.ai</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+        <!-- FOOTER -->
+        <tr>
+          <td style="background-color:#0a0a0a;padding:22px 40px;border-top:1px solid #1e1e1e;border-radius:0 0 4px 4px;">
+            <p style="margin:0;font-size:12px;color:#444;line-height:1.8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+              © ${YEAR} VitaView AI · Todos os direitos reservados<br>
+              <a href="https://vitaview.ai" style="color:#444;text-decoration:none;">vitaview.ai</a>
+              &nbsp;·&nbsp;
+              <a href="mailto:contato@vitaview.ai" style="color:#444;text-decoration:none;">contato@vitaview.ai</a>
+            </p>
+          </td>
+        </tr>
 
-        </table>
-      </td>
-    </tr>
+      </table>
+    </td></tr>
   </table>
 </body>
 </html>`;
 }
 
-function ctaButton(label: string, url: string): string {
-    return `
-    <table cellpadding="0" cellspacing="0" style="margin:32px 0;">
+const h1 = (t: string) =>
+    `<h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:normal;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;">${t}</h1>`;
+
+const p = (t: string) =>
+    `<p style="margin:0 0 14px;font-size:15px;color:#999;line-height:1.75;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${t}</p>`;
+
+const strong = (t: string) => `<strong style="color:#ffffff;">${t}</strong>`;
+
+const hr = () =>
+    `<table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0 0;"><tr><td style="height:1px;background-color:#1e1e1e;font-size:0;">&nbsp;</td></tr></table>`;
+
+const small = (t: string) =>
+    `<p style="margin:20px 0 0;font-size:13px;color:#444;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${t}</p>`;
+
+const btn = (label: string, url: string) => `
+    <table cellpadding="0" cellspacing="0" style="margin:28px 0;">
       <tr>
-        <td style="background-color:#ffffff;border-radius:2px;">
-          <a href="${url}" style="display:inline-block;padding:14px 32px;color:#111111;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.3px;">${label}</a>
+        <td style="background-color:#ffffff;">
+          <a href="${url}" style="display:inline-block;padding:13px 30px;color:#111111;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.2px;">${label}</a>
         </td>
       </tr>
     </table>`;
-}
 
-function divider(): string {
-    return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0 0 0;">
-      <tr><td style="height:1px;background-color:#222;font-size:0;line-height:0;">&nbsp;</td></tr>
+// Info box (for receipts / plan details)
+const infoBox = (rows: Array<[string, string]>) => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background-color:#1a1a1a;border-radius:4px;">
+      ${rows.map(([label, value]) => `
+      <tr>
+        <td style="padding:12px 20px;font-size:13px;color:#666;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #222;">${label}</td>
+        <td style="padding:12px 20px;font-size:13px;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #222;text-align:right;">${value}</td>
+      </tr>`).join('')}
     </table>`;
-}
 
-function heading(text: string): string {
-    return `<h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:normal;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;">${text}</h1>`;
-}
+// ─── Welcome ──────────────────────────────────────────────────────────────────
 
-function body(text: string): string {
-    return `<p style="margin:0 0 16px 0;font-size:15px;color:#aaaaaa;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
-}
+export const sendWelcomeEmail = async (email: string, fullName: string): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
 
-function note(text: string): string {
-    return `<p style="margin:24px 0 0 0;font-size:13px;color:#555;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
-}
+    const html = em(`
+        ${h1(`Bem-vindo, ${firstName}.`)}
+        ${p(`Sua conta no VitaView AI está pronta. Você tem acesso a uma plataforma completa para gestão de pacientes, prontuários eletrônicos e análise clínica com inteligência artificial.`)}
+        ${p(`Comece criando sua clínica, adicionando pacientes ou enviando exames para análise.`)}
+        ${btn('Acessar VitaView AI →', BASE_URL())}
+        ${hr()}
+        ${small(`Dúvidas? <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `Bem-vindo ao VitaView AI`,
+        html,
+        text: `Bem-vindo ao VitaView AI, ${firstName}! Sua conta está pronta. Acesse: ${BASE_URL()}`,
+    });
+};
 
 // ─── Clinic invitation ────────────────────────────────────────────────────────
 
@@ -152,44 +161,23 @@ export const sendClinicInvitationEmail = async (
     inviteToken: string,
     invitedByName: string
 ): Promise<boolean> => {
-    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
-    const inviteUrl = `${baseUrl}/accept-invitation/${inviteToken}`;
+    const inviteUrl = `${BASE_URL()}/accept-invitation/${inviteToken}`;
 
-    const html = emailWrapper(`
-        ${heading(`Você foi convidado para ${clinicName}`)}
-        ${body(`<strong style="color:#0f0f0f;">${invitedByName}</strong> convidou você para fazer parte da equipe de <strong style="color:#0f0f0f;">${clinicName}</strong> no VitaView AI.`)}
-        ${body(`Como membro da clínica, você terá acesso a recursos compartilhados para gestão de pacientes e prontuários com inteligência artificial.`)}
-        ${ctaButton('Aceitar convite →', inviteUrl)}
-        ${divider()}
-        ${note(`Este convite expira em 7 dias. Se você não esperava receber este email, pode ignorá-lo com segurança.`)}
+    const html = em(`
+        ${h1(`Convite para ${clinicName}`)}
+        ${p(`${strong(invitedByName)} convidou você para fazer parte da equipe de ${strong(clinicName)} no VitaView AI.`)}
+        ${p(`Como membro da clínica, você terá acesso a recursos compartilhados para gestão de pacientes e prontuários com inteligência artificial.`)}
+        ${btn('Aceitar convite →', inviteUrl)}
+        ${hr()}
+        ${small(`Este convite expira em 7 dias. Não esperava receber este email? Pode ignorá-lo com segurança.`)}
     `);
 
-    const text = `${invitedByName} convidou você para ${clinicName} no VitaView AI.\n\nAcesse: ${inviteUrl}\n\nEste convite expira em 7 dias.`;
-
-    return sendEmail({ to: email, subject: `Convite para ${clinicName} · VitaView AI`, html, text });
-};
-
-// ─── Welcome email ────────────────────────────────────────────────────────────
-
-export const sendWelcomeEmail = async (
-    email: string,
-    fullName: string
-): Promise<boolean> => {
-    const firstName = fullName.split(' ')[0];
-    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
-
-    const html = emailWrapper(`
-        ${heading(`Bem-vindo, ${firstName}.`)}
-        ${body(`Sua conta no VitaView AI está pronta. Você agora tem acesso a uma plataforma completa para gestão de pacientes, prontuários eletrônicos e análise clínica com inteligência artificial.`)}
-        ${body(`Comece enviando exames, criando prontuários ou configurando sua clínica.`)}
-        ${ctaButton('Acessar VitaView AI →', baseUrl)}
-        ${divider()}
-        ${note(`Dúvidas? Respondemos em <a href="mailto:contato@vitaview.ai" style="color:#aaa;">contato@vitaview.ai</a>`)}
-    `);
-
-    const text = `Bem-vindo ao VitaView AI, ${firstName}!\n\nSua conta está pronta. Acesse: ${baseUrl}`;
-
-    return sendEmail({ to: email, subject: `Bem-vindo ao VitaView AI`, html, text });
+    return sendEmail({
+        to: email,
+        subject: `Convite para ${clinicName} · VitaView AI`,
+        html,
+        text: `${invitedByName} convidou você para ${clinicName} no VitaView AI.\n\nAcesse: ${inviteUrl}\n\nExpira em 7 dias.`,
+    });
 };
 
 // ─── Password reset ───────────────────────────────────────────────────────────
@@ -200,50 +188,177 @@ export const sendPasswordResetEmail = async (
     resetToken: string
 ): Promise<boolean> => {
     const firstName = fullName.split(' ')[0];
-    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
-    const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
+    const resetUrl = `${BASE_URL()}/reset-password/${resetToken}`;
 
-    const html = emailWrapper(`
-        ${heading(`Redefinição de senha`)}
-        ${body(`Olá, ${firstName}. Recebemos uma solicitação para redefinir a senha da sua conta VitaView AI.`)}
-        ${body(`Este link é válido por <strong style="color:#0f0f0f;">1 hora</strong>. Após esse período, você precisará solicitar um novo link.`)}
-        ${ctaButton('Redefinir senha →', resetUrl)}
-        ${divider()}
-        ${note(`Se você não solicitou a redefinição, ignore este email. Sua senha permanece inalterada. Caso tenha dúvidas, entre em contato em <a href="mailto:contato@vitaview.ai" style="color:#aaa;">contato@vitaview.ai</a>`)}
+    const html = em(`
+        ${h1(`Redefinição de senha`)}
+        ${p(`Olá, ${firstName}. Recebemos uma solicitação para redefinir a senha da sua conta.`)}
+        ${p(`Este link é válido por ${strong('1 hora')}. Após esse prazo, solicite um novo.`)}
+        ${btn('Redefinir senha →', resetUrl)}
+        ${hr()}
+        ${small(`Não solicitou a redefinição? Ignore este email — sua senha permanece inalterada.<br>Dúvidas: <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
     `);
 
-    const text = `Olá ${firstName},\n\nAcesse o link para redefinir sua senha:\n${resetUrl}\n\nVálido por 1 hora. Se não foi você, ignore este email.`;
-
-    return sendEmail({ to: email, subject: `Redefinição de senha · VitaView AI`, html, text });
+    return sendEmail({
+        to: email,
+        subject: `Redefinição de senha · VitaView AI`,
+        html,
+        text: `Acesse o link para redefinir sua senha:\n${resetUrl}\n\nVálido por 1 hora.`,
+    });
 };
 
-// ─── Password changed alert ───────────────────────────────────────────────────
+// ─── Password changed ─────────────────────────────────────────────────────────
 
-export const sendPasswordChangedEmail = async (
-    email: string,
-    fullName: string
-): Promise<boolean> => {
+export const sendPasswordChangedEmail = async (email: string, fullName: string): Promise<boolean> => {
     const firstName = fullName.split(' ')[0];
     const now = new Date().toLocaleString('pt-BR', {
         timeZone: 'America/Sao_Paulo',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
     });
 
-    const html = emailWrapper(`
-        ${heading(`Sua senha foi alterada`)}
-        ${body(`Olá, ${firstName}. A senha da sua conta VitaView AI foi alterada em <strong style="color:#0f0f0f;">${now}</strong> (horário de Brasília).`)}
-        ${body(`Se foi você quem realizou essa alteração, este email é apenas uma confirmação — nenhuma ação é necessária.`)}
-        ${body(`Se você <strong style="color:#0f0f0f;">não reconhece essa ação</strong>, entre em contato imediatamente.`)}
-        ${ctaButton('Contatar suporte →', 'mailto:contato@vitaview.ai')}
-        ${divider()}
-        ${note(`<a href="mailto:contato@vitaview.ai" style="color:#aaa;">contato@vitaview.ai</a>`)}
+    const html = em(`
+        ${h1(`Senha alterada`)}
+        ${p(`Olá, ${firstName}. A senha da sua conta foi alterada em ${strong(now)} (horário de Brasília).`)}
+        ${p(`Se foi você, nenhuma ação é necessária.`)}
+        ${p(`Se você ${strong('não reconhece essa ação')}, entre em contato imediatamente.`)}
+        ${btn('Contatar suporte →', 'mailto:contato@vitaview.ai')}
+        ${hr()}
+        ${small(`<a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
     `);
 
-    const text = `Olá ${firstName},\n\nSua senha foi alterada em ${now}.\n\nSe não foi você, contate contato@vitaview.ai imediatamente.`;
+    return sendEmail({
+        to: email,
+        subject: `Senha alterada · VitaView AI`,
+        html,
+        text: `Sua senha foi alterada em ${now}.\n\nSe não foi você, contate contato@vitaview.ai imediatamente.`,
+    });
+};
 
-    return sendEmail({ to: email, subject: `Senha alterada · VitaView AI`, html, text });
+// ─── Payment confirmation (new subscription) ──────────────────────────────────
+
+export const sendPaymentConfirmationEmail = async (
+    email: string,
+    fullName: string,
+    planName: string,
+    amountCents: number,
+    periodEnd: Date,
+): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
+    const amount = (amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const renewDate = periodEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const html = em(`
+        ${h1(`Pagamento confirmado`)}
+        ${p(`Olá, ${firstName}. Seu pagamento foi processado com sucesso e seu plano está ativo.`)}
+        ${infoBox([
+            ['Plano', planName],
+            ['Valor', amount],
+            ['Próxima renovação', renewDate],
+        ])}
+        ${btn('Acessar VitaView AI →', BASE_URL())}
+        ${hr()}
+        ${small(`Dúvidas sobre a cobrança? <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `Pagamento confirmado · VitaView AI`,
+        html,
+        text: `Pagamento confirmado!\n\nPlano: ${planName}\nValor: ${amount}\nPróxima renovação: ${renewDate}\n\nAcesse: ${BASE_URL()}`,
+    });
+};
+
+// ─── Subscription renewal ─────────────────────────────────────────────────────
+
+export const sendSubscriptionRenewalEmail = async (
+    email: string,
+    fullName: string,
+    planName: string,
+    amountCents: number,
+    periodEnd: Date,
+): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
+    const amount = (amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const renewDate = periodEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const html = em(`
+        ${h1(`Assinatura renovada`)}
+        ${p(`Olá, ${firstName}. Sua assinatura foi renovada automaticamente.`)}
+        ${infoBox([
+            ['Plano', planName],
+            ['Valor cobrado', amount],
+            ['Ativa até', renewDate],
+        ])}
+        ${btn('Acessar VitaView AI →', BASE_URL())}
+        ${hr()}
+        ${small(`Para gerenciar sua assinatura, acesse as configurações da conta. Dúvidas: <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `Assinatura renovada · VitaView AI`,
+        html,
+        text: `Sua assinatura foi renovada.\n\nPlano: ${planName}\nValor: ${amount}\nAtiva até: ${renewDate}`,
+    });
+};
+
+// ─── Payment failed ───────────────────────────────────────────────────────────
+
+export const sendPaymentFailedEmail = async (
+    email: string,
+    fullName: string,
+    planName: string,
+    nextRetryDate?: Date,
+): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
+    const retryText = nextRetryDate
+        ? `Faremos uma nova tentativa em ${strong(nextRetryDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }))}.`
+        : `Por favor, atualize seu método de pagamento para evitar a suspensão do serviço.`;
+
+    const html = em(`
+        ${h1(`Falha no pagamento`)}
+        ${p(`Olá, ${firstName}. Não conseguimos processar o pagamento da sua assinatura ${strong(planName)}.`)}
+        ${p(retryText)}
+        ${p(`Para evitar a interrupção do acesso, atualize suas informações de pagamento.`)}
+        ${btn('Atualizar pagamento →', `${BASE_URL()}/assinatura`)}
+        ${hr()}
+        ${small(`Precisa de ajuda? <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `Falha no pagamento · VitaView AI`,
+        html,
+        text: `Não conseguimos processar o pagamento do plano ${planName}.\n\nAtualize seu pagamento em: ${BASE_URL()}/assinatura`,
+    });
+};
+
+// ─── Subscription cancelled ───────────────────────────────────────────────────
+
+export const sendSubscriptionCancelledEmail = async (
+    email: string,
+    fullName: string,
+    planName: string,
+    accessUntil: Date,
+): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
+    const until = accessUntil.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const html = em(`
+        ${h1(`Assinatura cancelada`)}
+        ${p(`Olá, ${firstName}. Sua assinatura ${strong(planName)} foi cancelada.`)}
+        ${p(`Você mantém acesso a todos os recursos até ${strong(until)}. Após essa data, sua conta será convertida para o plano gratuito.`)}
+        ${p(`Se mudar de ideia, reative sua assinatura a qualquer momento.`)}
+        ${btn('Reativar assinatura →', `${BASE_URL()}/assinatura`)}
+        ${hr()}
+        ${small(`Lamentamos vê-lo partir. Dúvidas: <a href="mailto:contato@vitaview.ai" style="color:#444;">contato@vitaview.ai</a>`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `Assinatura cancelada · VitaView AI`,
+        html,
+        text: `Sua assinatura ${planName} foi cancelada.\n\nAcesso mantido até: ${until}\n\nReative em: ${BASE_URL()}/assinatura`,
+    });
 };
