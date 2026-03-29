@@ -48,7 +48,7 @@ enum VitaPlanAccessLevel: Int {
 }
 
 enum VitaPurchaseOutcome {
-    case purchased(Transaction)
+    case purchased(VerificationResult<Transaction>)
     case pending
     case cancelled
 }
@@ -79,7 +79,7 @@ final class SubscriptionManager: ObservableObject {
     ]
 
     @Published private(set) var productsById: [String: Product] = [:]
-    @Published private(set) var activeTransactions: [Transaction] = []
+    @Published private(set) var activeTransactions: [VerificationResult<Transaction>] = []
     @Published private(set) var activePlanTier: VitaPlanTier?
     @Published private(set) var accessLevel: VitaPlanAccessLevel = .none
     @Published private(set) var isLoadingProducts = false
@@ -153,7 +153,7 @@ final class SubscriptionManager: ObservableObject {
             let transaction = try requireVerified(verification)
             await transaction.finish()
             try await refreshSubscriptionStatus()
-            return .purchased(transaction)
+            return .purchased(verification)
         case .pending:
             return .pending
         case .userCancelled:
@@ -163,18 +163,18 @@ final class SubscriptionManager: ObservableObject {
         }
     }
 
-    func restorePurchases() async throws -> [Transaction] {
+    func restorePurchases() async throws -> [VerificationResult<Transaction>] {
         try await AppStore.sync()
         try await refreshSubscriptionStatus()
         return activeTransactions
     }
 
     func refreshSubscriptionStatus() async throws {
-        var currentTransactions: [Transaction] = []
+        var currentTransactions: [VerificationResult<Transaction>] = []
 
         for await entitlement in Transaction.currentEntitlements {
-            let transaction = try requireVerified(entitlement)
-            currentTransactions.append(transaction)
+            _ = try requireVerified(entitlement)
+            currentTransactions.append(entitlement)
         }
 
         activeTransactions = currentTransactions
@@ -217,9 +217,12 @@ final class SubscriptionManager: ObservableObject {
         }
     }
 
-    private func highestTier(from transactions: [Transaction]) -> VitaPlanTier? {
-        let matchedTiers = transactions.compactMap { transaction in
-            Self.tier(for: transaction.productID)
+    private func highestTier(from transactions: [VerificationResult<Transaction>]) -> VitaPlanTier? {
+        let matchedTiers = transactions.compactMap { verification -> VitaPlanTier? in
+            switch verification {
+            case .verified(let transaction), .unverified(let transaction, _):
+                return Self.tier(for: transaction.productID)
+            }
         }
 
         return matchedTiers.max { lhs, rhs in

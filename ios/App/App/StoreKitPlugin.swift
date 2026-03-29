@@ -128,10 +128,10 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
             let view = SubscriptionPaywallView(
                 manager: manager,
                 appAccountToken: appAccountToken,
-                onCompleted: { [weak self] (transaction: StoreKit.Transaction?) in
-                    if let transaction {
+                onCompleted: { [weak self] (verification: VerificationResult<StoreKit.Transaction>?) in
+                    if let verification {
                         self?.notifyListeners("transactionUpdate", data: [
-                            "transaction": self?.serializeTransaction(transaction) ?? [:]
+                            "transaction": self?.serializeTransaction(verification) ?? [:]
                         ])
                     }
                     self?.paywallController?.dismiss(animated: true)
@@ -173,13 +173,21 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         return object
     }
 
-    private func serializeTransaction(_ transaction: StoreKit.Transaction) -> JSObject {
+    private func serializeTransaction(_ verification: VerificationResult<StoreKit.Transaction>) -> JSObject {
+        let transaction: StoreKit.Transaction
+        switch verification {
+        case .verified(let t):
+            transaction = t
+        case .unverified(let t, _):
+            transaction = t
+        }
+
         var object: JSObject = [
             "productId": transaction.productID,
             "transactionId": String(transaction.id),
             "originalTransactionId": String(transaction.originalID),
             "purchaseDate": ISO8601DateFormatter().string(from: transaction.purchaseDate),
-            "signedTransactionInfo": transaction.jwsRepresentation
+            "signedTransactionInfo": verification.jwsRepresentation
         ]
 
         if let expirationDate = transaction.expirationDate {
