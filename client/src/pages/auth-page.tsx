@@ -344,7 +344,9 @@ export default function AuthPage() {
       <div
         className={cn(
           "relative z-10 flex min-h-[100svh] w-full flex-col items-center px-4 pb-8 sm:min-h-screen sm:justify-center sm:py-12",
-          hasCompactMobileHeader ? "justify-start pt-8" : "justify-start pt-16",
+          hasCompactMobileHeader
+            ? "justify-start pt-[calc(env(safe-area-inset-top)+2rem)]"
+            : "justify-start pt-16",
         )}
       >
         <div className="mb-0.5 flex w-full max-w-md flex-col items-center sm:mb-2">
@@ -729,6 +731,20 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
+
+                    {registerMutation.isError && (
+                      <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-5 w-5 flex-shrink-0 text-destructive">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-heading font-bold text-destructive">Falha no cadastro</p>
+                          <p className="mt-0.5 font-body text-xs text-destructive/85">
+                            {registerMutation.error?.message || "Não foi possível criar sua conta. Tente novamente."}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <Button
                       type="submit"

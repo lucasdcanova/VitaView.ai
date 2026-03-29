@@ -358,6 +358,24 @@ export function setupAuth(app: Express) {
           return next(err);
         }
         console.log(`[AUTH] Session created successfully for user: ${user.id}`);
+
+        // Set auxiliary auth cookies so iOS WebView recognizes the session
+        // immediately after registration (same as login endpoint).
+        res.cookie('auth_user_id', user.id.toString(), {
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          httpOnly: false,
+          secure: false,
+          sameSite: 'lax',
+          path: '/'
+        });
+        res.cookie('auth_token', JSON.stringify({ id: user.id }), {
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          httpOnly: false,
+          secure: false,
+          sameSite: 'lax',
+          path: '/'
+        });
+
         const { password: _, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });

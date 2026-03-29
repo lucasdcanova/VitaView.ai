@@ -79,20 +79,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
-      // Configurar o cookie auxiliar para autenticação - REMOVED
-      // document.cookie = `auth_user_id=${user.id}; max-age=${7 * 24 * 60 * 60}; path=/; SameSite=Lax`;
       queryClient.setQueryData(["/api/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
-      // Show success message
       toast({
-        title: "Conta criada com sucesso! 🎉",
+        title: "Conta criada com sucesso!",
         description: "Bem-vindo ao VitaView! Você será redirecionado para o painel.",
       });
 
       // New users must configure or join a clinic before using the system.
-      setTimeout(() => {
-        navigate("/minha-clinica");
-      }, 1500);
+      navigate("/minha-clinica");
     },
     onError: (error: Error) => {
       toast({
