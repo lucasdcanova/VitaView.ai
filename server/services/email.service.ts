@@ -57,20 +57,6 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 
 // ─── Shared design system ────────────────────────────────────────────────────
 
-const LOGO_SVG = `
-  <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
-    <tr>
-      <td style="vertical-align:middle;padding-right:12px;">
-        <div style="background:#ffffff;border-radius:6px;padding:7px;display:inline-block;line-height:0;">
-          <img src="https://vitaview.ai/icon-192x192.png" width="34" height="34" alt="VitaView AI" style="display:block;border:0;">
-        </div>
-      </td>
-      <td style="vertical-align:middle;">
-        <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.3px;">VitaView</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);letter-spacing:0.5px;vertical-align:super;margin-left:2px;">AI</span>
-      </td>
-    </tr>
-  </table>`;
-
 function emailWrapper(content: string): string {
     return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -80,41 +66,41 @@ function emailWrapper(content: string): string {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>VitaView AI</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f0f0ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f0ed;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#e8e8e5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#e8e8e5;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
-          <!-- HEADER -->
+          <!-- HEADER: white bg + official logo -->
           <tr>
-            <td style="background-color:#0f0f0f;padding:32px 40px;border-radius:4px 4px 0 0;">
-              ${LOGO_SVG}
+            <td style="background-color:#ffffff;padding:28px 40px;border-radius:4px 4px 0 0;text-align:center;">
+              <img src="https://vitaview.ai/LOGO%20COM%20TEXTO.PNG" width="200" alt="VitaView AI" style="display:inline-block;border:0;max-width:200px;">
             </td>
           </tr>
 
           <!-- TEAL ACCENT LINE -->
           <tr>
-            <td style="height:3px;background:linear-gradient(90deg,#448C9B 0%,#2d6b77 100%);font-size:0;line-height:0;">&nbsp;</td>
+            <td style="height:3px;background:#448C9B;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
 
-          <!-- BODY -->
+          <!-- BODY: black bg, white text -->
           <tr>
-            <td style="background-color:#ffffff;padding:48px 40px 40px 40px;">
+            <td style="background-color:#111111;padding:48px 40px 40px 40px;">
               ${content}
             </td>
           </tr>
 
           <!-- FOOTER -->
           <tr>
-            <td style="background-color:#f7f7f5;padding:24px 40px;border-top:1px solid #e8e8e5;border-radius:0 0 4px 4px;">
+            <td style="background-color:#0a0a0a;padding:24px 40px;border-top:1px solid #222;border-radius:0 0 4px 4px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:12px;color:#999;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+                  <td style="font-size:12px;color:#555;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
                     © ${new Date().getFullYear()} VitaView AI · Todos os direitos reservados<br>
-                    <a href="https://vitaview.ai" style="color:#999;text-decoration:none;">vitaview.ai</a>
+                    <a href="https://vitaview.ai" style="color:#555;text-decoration:none;">vitaview.ai</a>
                     &nbsp;·&nbsp;
-                    <a href="mailto:contato@vitaview.ai" style="color:#999;text-decoration:none;">contato@vitaview.ai</a>
+                    <a href="mailto:contato@vitaview.ai" style="color:#555;text-decoration:none;">contato@vitaview.ai</a>
                   </td>
                 </tr>
               </table>
@@ -133,8 +119,8 @@ function ctaButton(label: string, url: string): string {
     return `
     <table cellpadding="0" cellspacing="0" style="margin:32px 0;">
       <tr>
-        <td style="background-color:#0f0f0f;">
-          <a href="${url}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.3px;">${label}</a>
+        <td style="background-color:#ffffff;border-radius:2px;">
+          <a href="${url}" style="display:inline-block;padding:14px 32px;color:#111111;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.3px;">${label}</a>
         </td>
       </tr>
     </table>`;
@@ -142,20 +128,20 @@ function ctaButton(label: string, url: string): string {
 
 function divider(): string {
     return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0 0 0;">
-      <tr><td style="height:1px;background-color:#f0f0ed;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr><td style="height:1px;background-color:#222;font-size:0;line-height:0;">&nbsp;</td></tr>
     </table>`;
 }
 
 function heading(text: string): string {
-    return `<h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:normal;color:#0f0f0f;letter-spacing:-0.5px;line-height:1.3;">${text}</h1>`;
+    return `<h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:normal;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;">${text}</h1>`;
 }
 
 function body(text: string): string {
-    return `<p style="margin:0 0 16px 0;font-size:15px;color:#555;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
+    return `<p style="margin:0 0 16px 0;font-size:15px;color:#aaaaaa;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
 }
 
 function note(text: string): string {
-    return `<p style="margin:24px 0 0 0;font-size:13px;color:#aaa;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
+    return `<p style="margin:24px 0 0 0;font-size:13px;color:#555;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">${text}</p>`;
 }
 
 // ─── Clinic invitation ────────────────────────────────────────────────────────
