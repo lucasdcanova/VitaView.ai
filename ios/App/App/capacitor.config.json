@@ -18,5 +18,5 @@
   "android": {
     "backgroundColor": "#FFFFFF"
   },
-  "packageClassList": []
+  "packageClassList": ["StoreKitPlugin"]
 }
