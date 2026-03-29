@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail } from "./services/email.service";
 
 declare global {
   namespace Express {
@@ -297,6 +298,13 @@ export function setupAuth(app: Express) {
 
       console.log(`[AUTH] User created in database - id: ${user.id}, email: ${user.email}`);
 
+      // Send welcome email (non-blocking)
+      if (user.email && user.fullName) {
+        sendWelcomeEmail(user.email, user.fullName).catch(err =>
+          console.error('[AUTH] Failed to send welcome email:', err)
+        );
+      }
+
       // Invite-first registration: automatically join clinic and set active context.
       if (matchedInvitation) {
         const attached = await storage.addClinicMember(matchedInvitation.clinicId, user.id, matchedInvitation.role);
@@ -482,21 +490,83 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email é obrigatório" });
       }
 
-      // Por enquanto, vamos apenas simular o envio de email
-      // Em produção, você deve:
-      // 1. Verificar se o usuário existe
-      // 2. Gerar um token único de recuperação
-      // 3. Salvar o token no banco com tempo de expiração
-      // 4. Enviar email real com link de recuperação
+      // Always return success to avoid user enumeration
+      const user = await storage.getUserByEmail(email);
+      if (user) {
+        const token = randomBytes(32).toString("hex");
+        const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-      console.log(`Email de recuperação de senha seria enviado para: ${email}`);
+        await storage.updateUser(user.id, {
+          passwordResetToken: token,
+          passwordResetExpiry: expiry,
+        });
 
-      // Simula sucesso no envio
+        if (user.email && user.fullName) {
+          sendPasswordResetEmail(user.email, user.fullName, token).catch(err =>
+            console.error('[AUTH] Failed to send password reset email:', err)
+          );
+        }
+      }
+
       res.status(200).json({
         message: "Se este email estiver cadastrado, você receberá instruções de recuperação de senha."
       });
     } catch (error) {
       console.error("Erro ao processar recuperação de senha:", error);
+      res.status(500).json({ message: "Erro ao processar solicitação" });
+    }
+  });
+
+  // Endpoint para redefinir a senha com token
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token e nova senha são obrigatórios" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Find user by reset token
+      const { db } = await import("./db");
+      const { users } = await import("@shared/schema");
+      const { eq, and, gt } = await import("drizzle-orm");
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.passwordResetToken, token),
+            gt(users.passwordResetExpiry, new Date())
+          )
+        )
+        .limit(1);
+
+      if (!user) {
+        return res.status(400).json({ message: "Token inválido ou expirado" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+      });
+
+      // Send security alert (non-blocking)
+      if (user.email && user.fullName) {
+        sendPasswordChangedEmail(user.email, user.fullName).catch(err =>
+          console.error('[AUTH] Failed to send password changed email:', err)
+        );
+      }
+
+      res.status(200).json({ message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error("Erro ao redefinir senha:", error);
       res.status(500).json({ message: "Erro ao processar solicitação" });
     }
   });

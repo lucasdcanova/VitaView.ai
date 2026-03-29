@@ -36,9 +36,9 @@ import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
-import { randomBytes, scrypt } from "crypto";
+import { createPrivateKey, createSign, randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
-import { sendClinicInvitationEmail } from "./services/email.service";
+import { sendClinicInvitationEmail, sendPasswordChangedEmail } from "./services/email.service";
 import { financialService } from "./services/financial_service";
 import fs from "fs";
 import path from "path";
@@ -124,11 +124,16 @@ const calculatePeriodEnd = (start: Date, interval: string | null | undefined): D
   return periodEnd;
 };
 
-const getPlanChargeAmount = (plan: { price: number; promoPrice?: number | null }) => {
-  if (typeof plan.promoPrice === "number" && plan.promoPrice > 0) {
-    return plan.promoPrice;
-  }
-  return plan.price;
+const getPlanChargeAmount = (
+  plan: { price: number; promoPrice?: number | null },
+  billingPlatform: BillingPlatform = "web"
+) => {
+  const baseAmount =
+    typeof plan.promoPrice === "number" && plan.promoPrice > 0
+      ? plan.promoPrice
+      : plan.price;
+
+  return applyPlatformPriceAdjustment(baseAmount, billingPlatform) ?? 0;
 };
 
 type AppointmentWithInsurance = Appointment & {
@@ -189,8 +194,6 @@ const enrichAppointmentsWithInsurance = async (
 };
 
 const IOS_APP_SHELL_REQUEST_HEADER = "x-vitaview-app-shell";
-const IOS_APP_STORE_BILLING_ENABLED =
-  process.env.IOS_APP_STORE_BILLING_ENABLED?.toLowerCase() === "true";
 
 const isIOSAppShellRequest = (req: Request) =>
   req.get(IOS_APP_SHELL_REQUEST_HEADER)?.toLowerCase() === "ios";
@@ -209,19 +212,14 @@ const resolveBillingPlatformFromRequest = (req: Request): BillingPlatform => {
 const resolveBillingContextForRequest = (req: Request): BillingContext => {
   const platform = resolveBillingPlatformFromRequest(req);
   const provider = getBillingProviderForPlatform(platform);
-  const checkoutEnabled =
-    provider === "stripe" ? true : IOS_APP_STORE_BILLING_ENABLED;
 
   return {
     platform,
     provider,
-    checkoutEnabled,
+    checkoutEnabled: true,
     priceMarkupPercent:
       platform === "ios" ? IOS_APP_STORE_PRICE_MARKUP_PERCENT : 0,
-    checkoutMessage:
-      provider === "app_store" && !checkoutEnabled
-        ? "Cobrança via App Store ainda não configurada. O catálogo iOS já foi preparado com os preços ajustados."
-        : null,
+    checkoutMessage: null,
   };
 };
 
@@ -259,6 +257,252 @@ const rejectUnsupportedBillingProvider = (req: Request, res: Response) => {
   return true;
 };
 
+const APP_STORE_BUNDLE_ID =
+  process.env.APPLE_APP_BUNDLE_ID || "br.com.lucascanova.vitaview";
+
+type AppStoreEnvironment = "sandbox" | "production";
+
+type AppStoreTransactionPayload = {
+  transactionId: string;
+  originalTransactionId?: string;
+  webOrderLineItemId?: string;
+  bundleId?: string;
+  productId: string;
+  appAccountToken?: string;
+  purchaseDate?: number;
+  originalPurchaseDate?: number;
+  expiresDate?: number;
+  revocationDate?: number;
+  revocationReason?: number;
+  signedDate?: number;
+  environment?: string;
+  type?: string;
+  inAppOwnershipType?: string;
+};
+
+const normalizeAppStoreEnvironment = (
+  value?: string | null
+): AppStoreEnvironment => {
+  const normalized = value?.toLowerCase() ?? "";
+  return normalized.includes("sandbox") || normalized.includes("xcode")
+    ? "sandbox"
+    : "production";
+};
+
+const base64UrlEncodeJson = (value: Record<string, unknown>) =>
+  Buffer.from(JSON.stringify(value)).toString("base64url");
+
+const signAppStoreJwt = () => {
+  const issuerId = process.env.APPLE_APP_STORE_ISSUER_ID;
+  const keyId = process.env.APPLE_APP_STORE_KEY_ID;
+  const privateKeyPath = process.env.APPLE_APP_STORE_PRIVATE_KEY_PATH;
+  const privateKeyValue =
+    process.env.APPLE_APP_STORE_PRIVATE_KEY ||
+    (privateKeyPath && fs.existsSync(privateKeyPath)
+      ? fs.readFileSync(privateKeyPath, "utf8")
+      : null);
+
+  if (!issuerId || !keyId || !privateKeyValue) {
+    return null;
+  }
+
+  const normalizedPrivateKey = privateKeyValue.includes("\\n")
+    ? privateKeyValue.replace(/\\n/g, "\n")
+    : privateKeyValue;
+  const now = Math.floor(Date.now() / 1000);
+  const header = {
+    alg: "ES256",
+    kid: keyId,
+    typ: "JWT",
+  };
+  const payload = {
+    iss: issuerId,
+    iat: now,
+    exp: now + 300,
+    aud: "appstoreconnect-v1",
+    bid: APP_STORE_BUNDLE_ID,
+  };
+  const unsignedToken = `${base64UrlEncodeJson(header)}.${base64UrlEncodeJson(
+    payload
+  )}`;
+  const signer = createSign("SHA256");
+  signer.update(unsignedToken);
+  signer.end();
+  const signature = signer.sign(createPrivateKey(normalizedPrivateKey));
+  return `${unsignedToken}.${signature.toString("base64url")}`;
+};
+
+const decodeSignedPayload = <T>(signedPayload: string): T => {
+  const payloadSegment = signedPayload.split(".")[1];
+  if (!payloadSegment) {
+    throw new Error("signed payload inválido");
+  }
+
+  return JSON.parse(
+    Buffer.from(payloadSegment, "base64url").toString("utf8")
+  ) as T;
+};
+
+const extractUserIdFromAppAccountToken = (appAccountToken?: string | null) => {
+  if (!appAccountToken) {
+    return null;
+  }
+
+  const compact = appAccountToken.replace(/-/g, "");
+  if (compact.length !== 32) {
+    return null;
+  }
+
+  const encodedUserId = compact.slice(-12);
+  const parsedUserId = Number.parseInt(encodedUserId, 16);
+  return Number.isInteger(parsedUserId) ? parsedUserId : null;
+};
+
+const fetchCanonicalAppStoreTransaction = async ({
+  transactionId,
+  environment,
+}: {
+  transactionId: string;
+  environment: AppStoreEnvironment;
+}) => {
+  const token = signAppStoreJwt();
+  if (!token) {
+    return null;
+  }
+
+  const baseUrl =
+    environment === "sandbox"
+      ? "https://api.storekit-sandbox.itunes.apple.com"
+      : "https://api.storekit.itunes.apple.com";
+  const response = await fetch(
+    `${baseUrl}/inApps/v1/transactions/${encodeURIComponent(transactionId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Falha ao consultar transação da Apple (${response.status}): ${errorText}`
+    );
+  }
+
+  const data = (await response.json()) as { signedTransactionInfo?: string };
+  if (!data.signedTransactionInfo) {
+    throw new Error("A Apple não retornou signedTransactionInfo");
+  }
+
+  return data.signedTransactionInfo;
+};
+
+const resolveAppStoreTransactionPayload = async ({
+  transactionId,
+  signedTransactionInfo,
+  environment,
+}: {
+  transactionId?: string;
+  signedTransactionInfo?: string | null;
+  environment?: string | null;
+}) => {
+  const normalizedEnvironment = normalizeAppStoreEnvironment(environment);
+  const canonicalSignedTransaction =
+    transactionId &&
+    (await fetchCanonicalAppStoreTransaction({
+      transactionId,
+      environment: normalizedEnvironment,
+    }).catch((error) => {
+      logger.warn("[App Store] Failed to fetch canonical transaction", {
+        transactionId,
+        environment: normalizedEnvironment,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }));
+
+  const signedPayload = canonicalSignedTransaction || signedTransactionInfo;
+  if (!signedPayload) {
+    throw new Error("Nenhuma transação da Apple foi enviada para sincronização");
+  }
+
+  const payload = decodeSignedPayload<AppStoreTransactionPayload>(signedPayload);
+  return {
+    payload,
+    signedPayload,
+    environment: normalizeAppStoreEnvironment(
+      payload.environment || normalizedEnvironment
+    ),
+  };
+};
+
+const syncAppStoreSubscriptionForUser = async ({
+  userId,
+  transactionId,
+  signedTransactionInfo,
+  environment,
+}: {
+  userId: number;
+  transactionId?: string;
+  signedTransactionInfo?: string | null;
+  environment?: string | null;
+}) => {
+  const { payload } = await resolveAppStoreTransactionPayload({
+    transactionId,
+    signedTransactionInfo,
+    environment,
+  });
+
+  if (payload.bundleId && payload.bundleId !== APP_STORE_BUNDLE_ID) {
+    throw new Error("A transação não pertence a este app");
+  }
+
+  const allPlans = await storage.getSubscriptionPlans();
+  const matchingPlan = allPlans.find(
+    (plan) => plan.appleProductId && plan.appleProductId === payload.productId
+  );
+
+  if (!matchingPlan) {
+    throw new Error(
+      `Nenhum plano interno corresponde ao produto ${payload.productId}`
+    );
+  }
+
+  const now = Date.now();
+  const expiresAt = payload.expiresDate ?? now;
+  const purchaseDate = payload.purchaseDate ?? now;
+  const isRevoked = typeof payload.revocationDate === "number";
+  const isExpired = expiresAt <= now;
+  const nextStatus = isRevoked || isExpired ? "canceled" : "active";
+
+  const subscription = await syncUserSubscriptionState({
+    userId,
+    planId: matchingPlan.id,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    appStoreTransactionId: payload.transactionId,
+    appStoreOriginalTransactionId:
+      payload.originalTransactionId || payload.transactionId,
+    currentPeriodStart: new Date(purchaseDate),
+    currentPeriodEnd: new Date(expiresAt),
+  });
+
+  const syncedSubscription =
+    nextStatus === "active"
+      ? subscription
+      : await storage.updateUserSubscription(subscription.id, {
+          status: nextStatus,
+          canceledAt: new Date(),
+        });
+
+  return {
+    payload,
+    plan: matchingPlan,
+    subscription: syncedSubscription,
+  };
+};
+
 const REUSABLE_STRIPE_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
   "trialing",
   "active",
@@ -273,10 +517,16 @@ const subscriptionHasPrice = (subscription: Stripe.Subscription, priceId: string
 const findReusableStripeSubscription = async ({
   customerId,
   priceId,
+  planId,
+  billingPlatform,
+  chargeAmount,
   userId,
 }: {
   customerId: string;
-  priceId: string;
+  priceId?: string | null;
+  planId?: number;
+  billingPlatform?: BillingPlatform;
+  chargeAmount?: number;
   userId?: number;
 }) => {
   if (!stripe) {
@@ -294,7 +544,20 @@ const findReusableStripeSubscription = async ({
       return false;
     }
 
-    if (!subscriptionHasPrice(subscription, priceId)) {
+    if (priceId) {
+      if (!subscriptionHasPrice(subscription, priceId)) {
+        return false;
+      }
+    } else if (
+      planId &&
+      billingPlatform &&
+      chargeAmount &&
+      !(
+        subscription.metadata?.planId === planId.toString() &&
+        subscription.metadata?.billingPlatform === billingPlatform &&
+        subscription.metadata?.chargeAmount === chargeAmount.toString()
+      )
+    ) {
       return false;
     }
 
@@ -311,28 +574,46 @@ const ensureStripeSubscriptionForPlan = async ({
   plan,
   userId,
   defaultPaymentMethodId,
+  billingPlatform,
 }: {
   customerId: string;
   plan: {
+    id: number;
+    name: string;
+    interval: string | null;
+    price: number;
+    promoPrice?: number | null;
     stripePriceId: string | null;
     trialPeriodDays?: number | null;
   };
   userId: number;
   defaultPaymentMethodId?: string | null;
+  billingPlatform: BillingPlatform;
 }) => {
   if (!stripe) {
     throw new Error("Stripe não configurado");
   }
 
-  if (!plan.stripePriceId) {
+  const chargeAmount = getPlanChargeAmount(plan, billingPlatform);
+  const useInlinePriceData = billingPlatform === "ios";
+
+  if (!plan.stripePriceId && !useInlinePriceData) {
     throw new Error("Plano sem stripePriceId configurado");
   }
 
-  const reusableSubscription = await findReusableStripeSubscription({
-    customerId,
-    priceId: plan.stripePriceId,
-    userId,
-  });
+  const reusableSubscription = useInlinePriceData
+    ? await findReusableStripeSubscription({
+        customerId,
+        planId: plan.id,
+        billingPlatform,
+        chargeAmount,
+        userId,
+      })
+    : await findReusableStripeSubscription({
+        customerId,
+        priceId: plan.stripePriceId!,
+        userId,
+      });
 
   if (reusableSubscription) {
     return reusableSubscription;
@@ -340,9 +621,30 @@ const ensureStripeSubscriptionForPlan = async ({
 
   const createParams: Stripe.SubscriptionCreateParams = {
     customer: customerId,
-    items: [{ price: plan.stripePriceId }],
+    items: useInlinePriceData
+      ? [
+          {
+            price_data: {
+              currency: "brl",
+              unit_amount: chargeAmount,
+              recurring:
+                plan.interval === "year"
+                  ? { interval: "month", interval_count: 12 }
+                  : plan.interval === "6month" || plan.interval === "semester"
+                    ? { interval: "month", interval_count: 6 }
+                    : { interval: "month", interval_count: 1 },
+              product_data: {
+                name: plan.name,
+              },
+            },
+          },
+        ]
+      : [{ price: plan.stripePriceId! }],
     metadata: {
       userId: userId.toString(),
+      planId: plan.id.toString(),
+      billingPlatform,
+      chargeAmount: chargeAmount.toString(),
     },
   };
 
@@ -362,6 +664,8 @@ const syncUserSubscriptionState = async ({
   planId,
   stripeCustomerId,
   stripeSubscriptionId,
+  appStoreTransactionId,
+  appStoreOriginalTransactionId,
   currentPeriodStart,
   currentPeriodEnd,
 }: {
@@ -369,6 +673,8 @@ const syncUserSubscriptionState = async ({
   planId: number;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  appStoreTransactionId?: string | null;
+  appStoreOriginalTransactionId?: string | null;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
 }) => {
@@ -377,13 +683,17 @@ const syncUserSubscriptionState = async ({
   if (
     existingSubscription &&
     existingSubscription.planId === planId &&
-    existingSubscription.stripeSubscriptionId === stripeSubscriptionId
+    existingSubscription.stripeSubscriptionId === stripeSubscriptionId &&
+    (existingSubscription.appStoreOriginalTransactionId || null) ===
+      (appStoreOriginalTransactionId || null)
   ) {
     return await storage.updateUserSubscription(existingSubscription.id, {
       status: "active",
       canceledAt: null,
       stripeCustomerId,
       stripeSubscriptionId,
+      appStoreTransactionId: appStoreTransactionId || null,
+      appStoreOriginalTransactionId: appStoreOriginalTransactionId || null,
       currentPeriodStart,
       currentPeriodEnd,
     });
@@ -399,6 +709,8 @@ const syncUserSubscriptionState = async ({
     status: "active",
     stripeCustomerId,
     stripeSubscriptionId,
+    appStoreTransactionId: appStoreTransactionId || null,
+    appStoreOriginalTransactionId: appStoreOriginalTransactionId || null,
     currentPeriodStart,
     currentPeriodEnd,
   });
@@ -2664,7 +2976,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       }
 
-      // If updating password, hash it
+      // If updating password, hash it and send security alert
       if (updateData.password) {
         const { scrypt, randomBytes } = await import("crypto");
         const { promisify } = await import("util");
@@ -2672,6 +2984,13 @@ export async function registerRoutes(app: Express): Promise<void> {
         const salt = randomBytes(16).toString("hex");
         const buf = (await scryptAsync(updateData.password, salt, 64)) as Buffer;
         updateData.password = `${buf.toString("hex")}.${salt}`;
+
+        const currentUser = await storage.getUser(userId);
+        if (currentUser?.email && currentUser?.fullName) {
+          sendPasswordChangedEmail(currentUser.email, currentUser.fullName).catch(err =>
+            logger.error('[Profile] Failed to send password changed email:', err)
+          );
+        }
       }
 
       // Merge preferences instead of overwriting
@@ -3351,6 +3670,85 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  app.post("/api/app-store/sync-subscription", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const {
+        transactionId,
+        signedTransactionInfo,
+        environment,
+      } = req.body as {
+        transactionId?: string;
+        signedTransactionInfo?: string;
+        environment?: string;
+      };
+
+      const { payload, plan, subscription } = await syncAppStoreSubscriptionForUser({
+        userId,
+        transactionId,
+        signedTransactionInfo,
+        environment,
+      });
+
+      return res.json({
+        success: true,
+        subscription,
+        plan,
+        environment: payload.environment || environment || "Production",
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Erro ao sincronizar assinatura da App Store: " + error.message,
+      });
+    }
+  });
+
+  app.post("/api/app-store/notifications", async (req, res) => {
+    try {
+      const signedPayload =
+        typeof req.body?.signedPayload === "string" ? req.body.signedPayload : null;
+
+      if (!signedPayload) {
+        return res.status(400).json({ message: "signedPayload é obrigatório" });
+      }
+
+      const notificationPayload = decodeSignedPayload<{
+        data?: {
+          signedTransactionInfo?: string;
+        };
+      }>(signedPayload);
+      const signedTransactionInfo =
+        notificationPayload.data?.signedTransactionInfo ?? null;
+
+      if (!signedTransactionInfo) {
+        return res.json({ received: true, ignored: true });
+      }
+
+      const transactionPayload =
+        decodeSignedPayload<AppStoreTransactionPayload>(signedTransactionInfo);
+      const userId = extractUserIdFromAppAccountToken(
+        transactionPayload.appAccountToken
+      );
+
+      if (!userId) {
+        return res.json({ received: true, ignored: true });
+      }
+
+      await syncAppStoreSubscriptionForUser({
+        userId,
+        transactionId: transactionPayload.transactionId,
+        signedTransactionInfo,
+        environment: transactionPayload.environment,
+      });
+
+      return res.json({ received: true });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "Erro ao processar notificação da App Store: " + error.message,
+      });
+    }
+  });
+
   app.get("/api/user-subscription", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
@@ -3373,10 +3771,11 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       // Buscar detalhes do plano de assinatura
       const plan = await storage.getSubscriptionPlan(subscription.planId!);
+      const billingContext = resolveBillingContextForRequest(req);
 
       res.json({
         subscription,
-        plan
+        plan: plan ? mapPlanToBillingCatalogPlan(plan, billingContext) : null
       });
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar assinatura do usuário" });
@@ -3412,7 +3811,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return;
       }
 
-      const amountToCharge = getPlanChargeAmount(plan);
+      const billingContext = resolveBillingContextForRequest(req);
+      const amountToCharge = getPlanChargeAmount(plan, billingContext.platform);
       if (!Number.isInteger(amountToCharge) || amountToCharge <= 0) {
         return res.status(400).json({ message: "Valor do plano inválido para cobrança" });
       }
@@ -3441,7 +3841,8 @@ export async function registerRoutes(app: Express): Promise<void> {
           userId: userId.toString(),
           planId: parsedPlanId.toString(),
           planName: plan.name,
-          amount: amountToCharge.toString()
+          amount: amountToCharge.toString(),
+          billingPlatform: billingContext.platform,
         },
         payment_method_types: ['card']
       });
@@ -3509,6 +3910,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return;
       }
 
+      const billingContext = resolveBillingContextForRequest(req);
+
       // Se é o plano gratuito, criar assinatura diretamente sem pagamento
       if (plan.price === 0) {
         const subscription = await storage.createUserSubscription({
@@ -3552,7 +3955,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           });
         }
 
-        const amountToCharge = getPlanChargeAmount(plan);
+        const amountToCharge = getPlanChargeAmount(plan, billingContext.platform);
         if (!Number.isInteger(amountToCharge) || amountToCharge <= 0) {
           return res.status(400).json({ message: "Valor do plano inválido para cobrança" });
         }
@@ -3567,6 +3970,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             planId: parsedPlanId.toString(),
             planName: plan.name,
             amount: amountToCharge.toString(),
+            billingPlatform: billingContext.platform,
           },
           payment_method_types: ["card"],
         });
@@ -3588,7 +3992,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         payment_method_types: ['card'],
         metadata: {
           userId: userId.toString(),
-          planId: parsedPlanId.toString()
+          planId: parsedPlanId.toString(),
+          billingPlatform: billingContext.platform,
         }
       });
 
@@ -3647,7 +4052,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             break;
           }
 
-          const expectedAmount = getPlanChargeAmount(plan);
+          const expectedAmount = Number(paymentIntent.metadata?.amount) || getPlanChargeAmount(plan);
           if (paymentIntent.amount !== expectedAmount) {
             logger.warn("[Stripe Webhook] payment_intent.succeeded with amount mismatch", {
               userId,
@@ -3693,7 +4098,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           }
 
           const plan = await storage.getSubscriptionPlan(planId);
-          if (!plan || !plan.stripePriceId || typeof setupIntent.customer !== "string") {
+          if (!plan || typeof setupIntent.customer !== "string") {
             break;
           }
 
@@ -3702,6 +4107,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             plan,
             userId,
             defaultPaymentMethodId: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : null,
+            billingPlatform: normalizeBillingPlatform(setupIntent.metadata?.billingPlatform),
           });
 
           await cancelPreviousStripeSubscriptionIfNeeded({
@@ -3802,7 +4208,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return;
       }
 
-      const expectedAmount = getPlanChargeAmount(plan);
+      const billingContext = resolveBillingContextForRequest(req);
+      const expectedAmount = getPlanChargeAmount(plan, billingContext.platform);
       let stripeCustomerId = req.user!.stripeCustomerId || null;
       let stripeSubscriptionId: string | null = null;
       let currentPeriodStart: Date | null = null;
@@ -3829,7 +4236,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           return res.status(503).json({ message: "Stripe não configurado para ativar assinatura recorrente" });
         }
 
-        if (!plan.stripePriceId) {
+        if (!plan.stripePriceId && billingContext.platform !== "ios") {
           return res.status(503).json({ message: "Plano sem stripePriceId configurado para assinatura recorrente" });
         }
 
@@ -3858,6 +4265,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           plan,
           userId,
           defaultPaymentMethodId: typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : null,
+          billingPlatform: normalizeBillingPlatform(setupIntentMetadata.billingPlatform),
         });
 
         const stripeSubscriptionPeriod = stripeSubscription as Stripe.Subscription & {
@@ -3975,6 +4383,12 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       if (!subscription) {
         return res.status(404).json({ message: "Nenhuma assinatura encontrada" });
+      }
+
+      if (subscription.appStoreOriginalTransactionId) {
+        return res.status(409).json({
+          message: "Assinaturas do iPhone devem ser gerenciadas pela sua conta Apple.",
+        });
       }
 
       // Se tiver ID de assinatura do Stripe, agendar cancelamento no fim do período

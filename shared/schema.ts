@@ -26,6 +26,8 @@ export const users = pgTable("users", {
   clinicRole: text("clinic_role"), // 'admin' | 'member'
   preferences: json("preferences"), // Store user preferences like dashboard layout
   addons: json("addons").default("[]"), // Active add-ons: ["transcription_power", "advanced_ai"]
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
 });
 
 // Profiles schema
@@ -435,6 +437,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   price: integer("price").notNull(), // in cents
   interval: varchar("interval", { length: 20 }).notNull().default("month"), // month, year
   stripePriceId: varchar("stripe_price_id", { length: 100 }),
+  appleProductId: varchar("apple_product_id", { length: 150 }),
   features: json("features"),
   promoPrice: integer("promo_price"), // in cents
   promoDescription: text("promo_description"),
@@ -453,6 +456,8 @@ export const subscriptions = pgTable("subscriptions", {
   currentPeriodEnd: timestamp("current_period_end").notNull(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 100 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 100 }),
+  appStoreTransactionId: varchar("app_store_transaction_id", { length: 100 }),
+  appStoreOriginalTransactionId: varchar("app_store_original_transaction_id", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   canceledAt: timestamp("canceled_at"),
   profilesCreated: integer("profiles_created").default(0).notNull(),
@@ -522,6 +527,7 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   price: true,
   interval: true,
   stripePriceId: true,
+  appleProductId: true,
   features: true,
   promoPrice: true,
   promoDescription: true,
@@ -537,6 +543,8 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
   currentPeriodEnd: true,
   stripeCustomerId: true,
   stripeSubscriptionId: true,
+  appStoreTransactionId: true,
+  appStoreOriginalTransactionId: true,
 });
 
 export type User = typeof users.$inferSelect;
