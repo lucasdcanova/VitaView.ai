@@ -52,7 +52,10 @@
       "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.readline\\(\\)\\); print\\(f''''fullName={d.get\\(fullName\\)}, crm={d.get\\(crm\\)}, specialty={d.get\\(specialty\\)}, rqe={d.get\\(rqe\\)}''''\\)\")",
       "Bash(chmod:*)",
       "Bash(/tmp/test-stripe-dialog.sh:*)",
-      "Bash(npx remotion:*)"
+      "Bash(npx remotion:*)",
+      "Bash(git remote:*)",
+      "Read(//Users/lucascanova/**)",
+      "Read(//Users/lucascanova/.ssh/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
