@@ -495,6 +495,8 @@ export class MemStorage implements IStorage {
       specialty: null,
       rqe: null,
       profilePhotoUrl: null,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
       addons: []
     };
     this.users.set(id, newUser);

@@ -1,5 +1,6 @@
 import { registerPlugin } from "@capacitor/core";
 import { buildStableAppAccountToken } from "@shared/app-store";
+export { buildStableAppAccountToken } from "@shared/app-store";
 
 export interface StoreKitProduct {
   id: string;

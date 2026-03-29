@@ -448,6 +448,10 @@ const syncAppStoreSubscriptionForUser = async ({
     currentPeriodEnd: new Date(expiresAt),
   });
 
+  if (!subscription) {
+    throw new Error("Failed to sync subscription state");
+  }
+
   const syncedSubscription =
     nextStatus === "active"
       ? subscription
@@ -582,7 +586,7 @@ const ensureStripeSubscriptionForPlan = async ({
   const createParams: Stripe.SubscriptionCreateParams = {
     customer: customerId,
     items: useInlinePriceData
-      ? [
+      ? ([
           {
             price_data: {
               currency: "brl",
@@ -598,7 +602,7 @@ const ensureStripeSubscriptionForPlan = async ({
               },
             },
           },
-        ]
+        ] as unknown as Stripe.SubscriptionCreateParams["items"])
       : [{ price: plan.stripePriceId! }],
     metadata: {
       userId: userId.toString(),
