@@ -60,14 +60,13 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 const LOGO_SVG = `
   <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
     <tr>
-      <td style="vertical-align:middle;padding-right:10px;">
-        <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 10L19 38L30 10" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M22 10L33 38L44 10" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-        </svg>
+      <td style="vertical-align:middle;padding-right:12px;">
+        <div style="background:#ffffff;border-radius:6px;padding:7px;display:inline-block;line-height:0;">
+          <img src="https://vitaview.ai/icon-192x192.png" width="34" height="34" alt="VitaView AI" style="display:block;border:0;">
+        </div>
       </td>
       <td style="vertical-align:middle;">
-        <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.3px;">VitaView</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:bold;color:rgba(255,255,255,0.55);letter-spacing:0.5px;vertical-align:super;margin-left:2px;">AI</span>
+        <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.3px;">VitaView</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);letter-spacing:0.5px;vertical-align:super;margin-left:2px;">AI</span>
       </td>
     </tr>
   </table>`;
