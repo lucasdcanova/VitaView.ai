@@ -3,6 +3,7 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 
 ASC_API_KEY_ID="${ASC_API_KEY_ID:-}"
 ASC_API_ISSUER_ID="${ASC_API_ISSUER_ID:-}"
@@ -47,7 +48,7 @@ SHORT_VERSION=$(printf '%s' "$APP_METADATA" | python3 -c 'import json,sys; print
 BUNDLE_VERSION=$(printf '%s' "$APP_METADATA" | python3 -c 'import json,sys; print(json.load(sys.stdin)["bundle_version"])')
 
 echo "[ios:publish:app-store] Uploading $BUNDLE_ID $SHORT_VERSION ($BUNDLE_VERSION) via upload-package"
-xcrun altool \
+"$DEVELOPER_DIR/usr/bin/xcrun" altool \
   --upload-package "$IPA_PATH" \
   -t ios \
   --provider-public-id "$ASC_PROVIDER_PUBLIC_ID" \
@@ -58,4 +59,5 @@ xcrun altool \
   --apiKey "$ASC_API_KEY_ID" \
   --apiIssuer "$ASC_API_ISSUER_ID" \
   --output-format json \
-  --show-progress
+  --show-progress \
+  --wait
