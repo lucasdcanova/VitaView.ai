@@ -23,6 +23,7 @@ xcodebuild \
   -configuration Release \
   -destination "generic/platform=iOS" \
   -archivePath "$ARCHIVE_PATH" \
+  -allowProvisioningUpdates \
   archive
 
 echo "[ios:build:app-store] Exporting archive for App Store Connect"
