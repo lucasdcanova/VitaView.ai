@@ -1,14 +1,25 @@
 import path from "path";
 import { URL } from "url";
 import { app, BrowserWindow, Menu, shell } from "electron";
-import electronUpdater from "electron-updater";
-
-const { autoUpdater } = electronUpdater;
 
 const APP_NAME = "VitaView";
 const APP_ID = "br.com.lucascanova.vitaview.desktop";
 const DEFAULT_PRODUCTION_URL = "https://vitaview.ai/auth";
 const DEFAULT_DEVELOPMENT_URL = "http://localhost:3000/auth";
+
+// Detect Mac App Store build: MAS builds set process.mas = true.
+const isMAS =
+  process.platform === "darwin" &&
+  app.isPackaged &&
+  (process as NodeJS.Process & { mas?: boolean }).mas === true;
+
+// V8 JIT compile-hints can crash under MAS sandbox (EXC_BREAKPOINT in
+// v8::Script::GetCompileHintsCollector on background compilation threads).
+// Disabling Maglev and Sparkplug avoids the problematic code path while
+// keeping TurboFan JIT active for acceptable performance.
+if (isMAS) {
+  app.commandLine.appendSwitch("js-flags", "--no-maglev --no-sparkplug");
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -182,9 +193,26 @@ async function createMainWindow() {
 }
 
 function setupAutoUpdates() {
-  if (!app.isPackaged || !["win32", "darwin"].includes(process.platform)) {
+  // MAS builds are updated through the App Store — electron-updater must not run.
+  if (!app.isPackaged || isMAS) {
     return;
   }
+
+  if (!["win32", "darwin"].includes(process.platform)) {
+    return;
+  }
+
+  // Lazy-import so MAS builds never load electron-updater at all.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { autoUpdater } = require("electron-updater") as {
+    autoUpdater: {
+      autoDownload: boolean;
+      autoInstallOnAppQuit: boolean;
+      disableWebInstaller: boolean;
+      on(event: string, cb: (...args: never[]) => void): void;
+      checkForUpdatesAndNotify(): Promise<unknown>;
+    };
+  };
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -193,15 +221,15 @@ function setupAutoUpdates() {
     autoUpdater.disableWebInstaller = false;
   }
 
-  autoUpdater.on("error", (error) => {
+  autoUpdater.on("error", (error: Error) => {
     console.error("Auto-update failed:", error);
   });
 
-  autoUpdater.on("update-available", (info) => {
+  autoUpdater.on("update-available", (info: { version: string }) => {
     console.log(`Update available: ${info.version}`);
   });
 
-  autoUpdater.on("update-downloaded", (info) => {
+  autoUpdater.on("update-downloaded", (info: { version: string }) => {
     console.log(`Update downloaded: ${info.version}. It will be installed when the app closes.`);
   });
 
