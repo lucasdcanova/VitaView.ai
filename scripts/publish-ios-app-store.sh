@@ -65,4 +65,4 @@ if [ -n "$ASC_PROVIDER_PUBLIC_ID" ]; then
   set -- --provider-public-id "$ASC_PROVIDER_PUBLIC_ID" "$@"
 fi
 
-"$DEVELOPER_DIR/usr/bin/xcrun" altool "$@"
+DEVELOPER_DIR="$DEVELOPER_DIR" xcrun altool "$@"
