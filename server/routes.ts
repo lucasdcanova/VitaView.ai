@@ -3093,9 +3093,14 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Endpoint para transcrição de áudio de consulta
-  // Endpoint para transcrição de áudio de consulta
   app.post(
     "/api/consultation/transcribe",
+    (req, res, next) => {
+      // Extend timeout to 5 min for long recordings (Whisper + GPT processing)
+      req.setTimeout(5 * 60 * 1000);
+      res.setTimeout(5 * 60 * 1000);
+      next();
+    },
     ensureAuthenticated,
     checkFairUse('transcriptionMinutes'),
     audioTranscriptionUpload.single('audio'),

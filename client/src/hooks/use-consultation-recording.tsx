@@ -266,11 +266,27 @@ export function ConsultationRecordingProvider({
         formData.append("profileId", session.profileId.toString());
       }
 
-      const response = await fetch("/api/consultation/transcribe", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min
+
+      let response: Response;
+      try {
+        response = await fetch("/api/consultation/transcribe", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+          signal: controller.signal,
+        });
+      } catch (fetchError) {
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
+          throw new Error(
+            "O processamento da gravacao excedeu o tempo limite. Tente gravar em segmentos menores."
+          );
+        }
+        throw fetchError;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

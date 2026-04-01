@@ -1007,7 +1007,8 @@ export let openai: OpenAI | null = null;
 
 if (process.env.OPENAI_API_KEY) {
   openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 4 * 60 * 1000, // 4 min – enough for Whisper on long recordings
   });
 } else {
   // OpenAI API key not found. OpenAI features will use fallback responses.

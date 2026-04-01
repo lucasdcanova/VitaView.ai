@@ -129,6 +129,11 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // Allow long-running requests (e.g. audio transcription) up to 5 min
+  server.timeout = 5 * 60 * 1000;
+  server.keepAliveTimeout = 65 * 1000;
+  server.headersTimeout = 66 * 1000;
+
   // ALWAYS serve the app on port 3000 (changed from 5000 due to macOS AirPlay conflict)
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
