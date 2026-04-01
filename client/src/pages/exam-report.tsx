@@ -6,14 +6,12 @@ import MobileHeader from "@/components/layout/mobile-header";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import OpenAILogo from "@/assets/openai-logo.svg";
 import {
   ArrowLeft,
   FileText,
   Image,
   Share2,
   Download,
-  Printer,
   Calendar,
   Building,
   UserRound,
@@ -462,11 +460,6 @@ export default function ExamReport() {
           <div className="sticky top-0 z-30 border-b bg-card/95 shadow-sm supports-[backdrop-filter]:backdrop-blur-sm">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Link href="/exam-history">
-                  <Button variant="outline" size="icon" className="h-9 w-9">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                </Link>
                 <div>
                   <h1 className="text-xl font-semibold text-foreground flex items-center">
                     {isLoading ? (
@@ -567,7 +560,13 @@ export default function ExamReport() {
               </div>
             </div>
 
-            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-y-2 border-t border-border bg-muted/30">
+            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-y-2 border-t border-border bg-muted/30">
+              <Link href="/exam-history">
+                <Button variant="ghost" size="sm" className="gap-1.5 mr-4 text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+              </Link>
               {!isLoading && data?.exam && (
                 <>
                   <div className="flex items-center text-sm text-muted-foreground mr-6">
@@ -595,11 +594,11 @@ export default function ExamReport() {
             </div>
           </div>
 
-          <div className="p-4 md:p-6">
+          <div className="p-4 md:p-6 max-w-5xl mx-auto">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
               {/* Report Details */}
-              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-2">
+              <div className="bg-card rounded-xl shadow-sm p-6">
                 {isLoading ? (
                   <>
                     <div className="flex justify-between items-start mb-6">
@@ -721,8 +720,8 @@ export default function ExamReport() {
                           <>
                             <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais parâmetros</h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {healthMetrics.slice(0, 4).map((metric, index) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {healthMetrics.slice(0, 6).map((metric, index) => (
                                 <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
                                   metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
                                     metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
@@ -1291,135 +1290,6 @@ export default function ExamReport() {
                 )}
               </div>
 
-              {/* Additional Information */}
-              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-1">
-                {isLoading ? (
-                  <>
-                    <Skeleton className="h-6 w-48 mb-4" />
-
-                    <div className="space-y-4 mb-6">
-                      {[...Array(4)].map((_, i) => (
-                        <div key={i} className="flex items-center">
-                          <Skeleton className="h-5 w-5 mr-3" />
-                          <div>
-                            <Skeleton className="h-4 w-24 mb-1" />
-                            <Skeleton className="h-3 w-32" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Skeleton className="h-px w-full my-4" />
-
-                    <Skeleton className="h-6 w-36 mb-4" />
-
-                    <div className="space-y-4 mb-6">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex items-center">
-                          <Skeleton className="h-5 w-5 mr-3" />
-                          <div>
-                            <Skeleton className="h-4 w-32 mb-1" />
-                            <Skeleton className="h-3 w-24" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Skeleton className="h-px w-full my-4" />
-
-                    <Skeleton className="h-6 w-24 mb-4" />
-
-                    <div className="space-y-3">
-                      {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} className="h-10 w-full" />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="text-lg font-semibold mb-4 text-foreground">Informações do Exame</h2>
-
-                    <div className="space-y-4 mb-6">
-                      <div className="flex items-center">
-                        <Calendar className="text-primary mr-3" size={18} />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Data do exame</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {data?.exam.examDate ? formatDate(data?.exam.examDate) : formatDate(data?.exam.uploadDate.toString())}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center">
-                        <Building className="text-primary mr-3" size={18} />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Laboratório</h3>
-                          <p className="text-sm text-muted-foreground">{data?.exam.laboratoryName || "Laboratório Central"}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center">
-                        <UserRound className="text-primary mr-3" size={18} />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Médico Solicitante</h3>
-                          <p className="text-sm text-muted-foreground">{data?.exam.requestingPhysician || "Não informado"}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center">
-                        <div className="mr-3 text-primary">
-                          {getFileIcon(data?.exam.fileType)}
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Tipo de arquivo</h3>
-                          <p className="text-sm text-muted-foreground">{data?.exam.fileType.toUpperCase()}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <hr className="my-4 border-border" />
-
-                    <h2 className="text-lg font-semibold mb-4 text-foreground">Análise por IA</h2>
-
-                    <div className="space-y-4 mb-6">
-                      <div className="flex items-center">
-                        <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Extração do documento</h3>
-                          <p className="text-sm text-muted-foreground">OpenAI GPT-5 Vision</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center">
-                        <img src={OpenAILogo} alt="OpenAI" className="w-6 h-6 mr-3" />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Recomendações</h3>
-                          <p className="text-sm text-muted-foreground">OpenAI GPT-4o</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center">
-                        <Calendar className="text-primary mr-3" size={18} />
-                        <div>
-                          <h3 className="text-sm font-medium text-foreground">Tempo de análise</h3>
-                          <p className="text-sm text-muted-foreground">~2 minutos</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <hr className="my-4 border-border" />
-
-                    <h2 className="text-lg font-semibold mb-4 text-foreground">Informações</h2>
-
-                    <div className="text-sm text-muted-foreground space-y-2">
-                      <p><strong>Data do exame:</strong> {data?.exam.examDate || 'Não informado'}</p>
-                      <p><strong>Laboratório:</strong> {data?.exam.laboratoryName || 'Não informado'}</p>
-                      <p><strong>Médico solicitante:</strong> {data?.exam.requestingPhysician || 'Não informado'}</p>
-                      <p><strong>Tipo de arquivo:</strong> {data?.exam.fileType?.toUpperCase() || 'Não informado'}</p>
-                    </div>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         </main>
