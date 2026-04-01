@@ -8,17 +8,27 @@ const DEFAULT_PRODUCTION_URL = "https://vitaview.ai/auth";
 const DEFAULT_DEVELOPMENT_URL = "http://localhost:3000/auth";
 
 // Detect Mac App Store build: MAS builds set process.mas = true.
+// Also check for sandbox indicators as fallback since process.mas can be
+// unreliable across Electron versions and macOS updates.
 const isMAS =
   process.platform === "darwin" &&
   app.isPackaged &&
-  (process as NodeJS.Process & { mas?: boolean }).mas === true;
+  ((process as NodeJS.Process & { mas?: boolean }).mas === true ||
+   (process as NodeJS.Process & { sandboxed?: boolean }).sandboxed === true ||
+   process.execPath.includes("/Wrapper/"));
 
 // V8 JIT compile-hints can crash under MAS sandbox (EXC_BREAKPOINT in
 // v8::Script::GetCompileHintsCollector on background compilation threads).
-// Disabling Maglev and Sparkplug avoids the problematic code path while
-// keeping TurboFan JIT active for acceptable performance.
+// macOS 26+ enforces stricter W^X policies that break multiple V8 JIT tiers.
+// Disabling Maglev, Sparkplug and compile hints avoids all known crash paths
+// while keeping TurboFan active for acceptable performance.
 if (isMAS) {
-  app.commandLine.appendSwitch("js-flags", "--no-maglev --no-sparkplug");
+  app.commandLine.appendSwitch(
+    "js-flags",
+    "--no-maglev --no-sparkplug --no-compile-hints-magic --no-turboshaft"
+  );
+  // Prevent Chromium from using MAP_JIT mmap which can fail under sandbox
+  app.commandLine.appendSwitch("disable-jit-for-webassembly");
 }
 
 let mainWindow: BrowserWindow | null = null;
