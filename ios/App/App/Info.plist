@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>O VitaView usa a câmera para capturar fotos de perfil e anexar documentos médicos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O VitaView acessa sua biblioteca de fotos para selecionar imagens de perfil e documentos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>O VitaView usa o microfone para gravar consultas e transcrever a anamnese com IA.</string>
 	<key>UILaunchStoryboardName</key>
