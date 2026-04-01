@@ -27,6 +27,7 @@ module.exports = {
     identity: "Lucas Canova (9D7X84MT44)",
     entitlements: "build/entitlements.mas.plist",
     entitlementsInherit: "build/entitlements.mas.inherit.plist",
+    provisioningProfile: "build/embedded.provisionprofile",
     sign: "./scripts/sign-mas.cjs",
     timestamp: "none",
     type: "distribution",
