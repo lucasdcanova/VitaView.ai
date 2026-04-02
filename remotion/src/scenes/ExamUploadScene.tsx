@@ -154,7 +154,7 @@ export const ExamUploadScene: React.FC = () => {
 
   const titleWords = wordReveal('Envie e a IA Analisa', frame, fps, 0.15 * fps, 0.07);
 
-  const maxW = v ? 520 : 900;
+  const maxW = v ? 680 : 1200;
 
   const docs = [
     { name: 'Hemograma', icon: '🩸', delay: 1 * fps },
@@ -173,7 +173,7 @@ export const ExamUploadScene: React.FC = () => {
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: v ? '70px 40px' : '60px 40px', gap: v ? 20 : 24,
+        padding: v ? '60px 30px' : '50px 60px', gap: v ? 20 : 24,
       }}>
         {/* Title */}
         <div style={{ maxWidth: maxW, textAlign: 'center' }}>

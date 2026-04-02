@@ -54,8 +54,8 @@ export const PatientCardScene: React.FC = () => {
   });
 
   const data = [65, 72, 68, 80, 75, 90, 85, 92, 88, 95, 91, 89];
-  const pad = v ? 70 : 80;
-  const maxW = v ? 520 : 880;
+  const pad = v ? 50 : 50;
+  const maxW = v ? 680 : 1200;
 
   return (
     <AbsoluteFill style={{ backgroundColor: c.bg }}>
@@ -114,11 +114,11 @@ export const PatientCardScene: React.FC = () => {
           <div style={{ fontFamily: montserrat, fontSize: fs(13, v), fontWeight: 700, color: c.textStrong, marginBottom: 10 }}>
             Evolução da Glicemia (12 meses)
           </div>
-          <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 480 : 840} ${v ? 80 : 110}`} preserveAspectRatio="none">
+          <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 640 : 1160} ${v ? 80 : 110}`} preserveAspectRatio="none">
             {[0, v ? 40 : 55, v ? 80 : 110].map(y => <line key={y} x1={0} y1={y} x2={v ? 850 : 1060} y2={y} stroke={c.strokeSoft} strokeWidth={1} />)}
             <polyline
               points={data.map((val, i) => {
-                const cW = v ? 440 : 800; const cH = v ? 64 : 90;
+                const cW = v ? 600 : 1120; const cH = v ? 64 : 90;
                 const x = (i / (data.length - 1)) * cW + 20;
                 const y = cH - ((val - 60) / 40) * cH + 10;
                 return `${x},${y}`;
@@ -126,7 +126,7 @@ export const PatientCardScene: React.FC = () => {
               fill="none" stroke={c.textDefault} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
             />
             {data.slice(0, Math.ceil(data.length * chartProgress)).map((val, i) => {
-              const cW = v ? 440 : 800; const cH = v ? 64 : 90;
+              const cW = v ? 600 : 1120; const cH = v ? 64 : 90;
               const x = (i / (data.length - 1)) * cW + 20;
               const y = cH - ((val - 60) / 40) * cH + 10;
               const ds = spring({ frame, fps, delay: 2.2 * fps + i * 0.05 * fps, config: { damping: 14, stiffness: 140 } });
