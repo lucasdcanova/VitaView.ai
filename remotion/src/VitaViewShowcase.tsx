@@ -1,4 +1,5 @@
 import React from 'react';
+import { useVideoConfig } from 'remotion';
 import { TransitionSeries, springTiming, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { slide } from '@remotion/transitions/slide';
@@ -9,65 +10,45 @@ import { ExamUploadScene } from './scenes/ExamUploadScene';
 import { PatientCardScene } from './scenes/PatientCardScene';
 import { ImportScene } from './scenes/ImportScene';
 import { OutroScene } from './scenes/OutroScene';
-import { FPS } from './theme';
-
-const ST = { config: { damping: 200 }, durationInFrames: 26 };
 
 export const VitaViewShowcase: React.FC = () => {
+  const { fps } = useVideoConfig();
+
+  const st = (frames: number) => springTiming({ config: { damping: 200 }, durationInFrames: Math.round(frames * fps / 30) });
+
   return (
     <TransitionSeries>
-      {/* 1. Intro — 3s */}
-      <TransitionSeries.Sequence durationInFrames={3 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(3 * fps)}>
         <IntroScene />
       </TransitionSeries.Sequence>
 
-      <TransitionSeries.Transition
-        presentation={fade()}
-        timing={springTiming({ ...ST, durationInFrames: 28 })}
-      />
+      <TransitionSeries.Transition presentation={fade()} timing={st(28)} />
 
-      {/* 2. Transcrição por Voz — 7s */}
-      <TransitionSeries.Sequence durationInFrames={7 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(7 * fps)}>
         <TranscriptionScene />
       </TransitionSeries.Sequence>
 
-      <TransitionSeries.Transition
-        presentation={slide({ direction: 'from-right' })}
-        timing={springTiming(ST)}
-      />
+      <TransitionSeries.Transition presentation={slide({ direction: 'from-right' })} timing={st(26)} />
 
-      {/* 3. Upload de Exames — 7s */}
-      <TransitionSeries.Sequence durationInFrames={7 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(7 * fps)}>
         <ExamUploadScene />
       </TransitionSeries.Sequence>
 
-      <TransitionSeries.Transition
-        presentation={wipe({ direction: 'from-left' })}
-        timing={linearTiming({ durationInFrames: 24 })}
-      />
+      <TransitionSeries.Transition presentation={wipe({ direction: 'from-left' })} timing={linearTiming({ durationInFrames: Math.round(24 * fps / 30) })} />
 
-      {/* 4. Painel do Paciente — 6s */}
-      <TransitionSeries.Sequence durationInFrames={6 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(6 * fps)}>
         <PatientCardScene />
       </TransitionSeries.Sequence>
 
-      <TransitionSeries.Transition
-        presentation={slide({ direction: 'from-bottom' })}
-        timing={springTiming(ST)}
-      />
+      <TransitionSeries.Transition presentation={slide({ direction: 'from-bottom' })} timing={st(26)} />
 
-      {/* 5. Importação de Prontuário — 8s */}
-      <TransitionSeries.Sequence durationInFrames={8 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(8 * fps)}>
         <ImportScene />
       </TransitionSeries.Sequence>
 
-      <TransitionSeries.Transition
-        presentation={fade()}
-        timing={springTiming({ ...ST, durationInFrames: 30 })}
-      />
+      <TransitionSeries.Transition presentation={fade()} timing={st(30)} />
 
-      {/* 6. Outro / CTA — 4s */}
-      <TransitionSeries.Sequence durationInFrames={4 * FPS}>
+      <TransitionSeries.Sequence durationInFrames={Math.round(4 * fps)}>
         <OutroScene />
       </TransitionSeries.Sequence>
     </TransitionSeries>
