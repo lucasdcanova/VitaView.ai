@@ -106,7 +106,7 @@ export const AgendaScene: React.FC = () => {
 
   const titleWords = wordReveal('Clique para Agendar', frame, fps, 0.15 * fps, 0.07);
   const pad = v ? 60 : 140;
-  const slotW = v ? width - 120 : 480;
+  const slotW = v ? 480 : 480;
 
   return (
     <AbsoluteFill style={{ backgroundColor: c.bg }}>

@@ -88,8 +88,8 @@ export const ExamUploadScene: React.FC = () => {
 
   const bannerReveal = reveal(frame, fps, 2.8 * fps, { y: -12 });
 
-  const pad = v ? 60 : 80;
-  const cW = v ? width - 120 : 420;
+  const pad = v ? 70 : 80;
+  const cW = v ? 480 : 420;
 
   return (
     <AbsoluteFill style={{ backgroundColor: c.bg }}>

@@ -30,8 +30,8 @@ export const TranscriptionScene: React.FC = () => {
 
   const titleWords = wordReveal('Voz para Prontuário', frame, fps, 0.15 * fps, 0.07);
   const waveActive = frame > 0.5 * fps && frame < 4 * fps;
-  const pad = v ? 60 : 80;
-  const cW = v ? width - 120 : 420;
+  const pad = v ? 70 : 80;
+  const cW = v ? 480 : 420;
 
   const cardDelay = 4.2 * fps;
   const cardR = reveal(frame, fps, cardDelay, { y: 20 });
