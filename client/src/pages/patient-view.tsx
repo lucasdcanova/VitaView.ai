@@ -260,7 +260,7 @@ export default function PatientView() {
                         {/* Header */}
                         {isMobile ? (
                             /* ── Mobile: Premium compact patient strip ── */
-                            <header className="sticky top-0 z-30 mb-2.5 bg-background/95 supports-[backdrop-filter]:backdrop-blur-sm py-1">
+                            <header className="sticky top-0 z-30 mb-2.5 bg-background py-1">
                                 {activeProfile ? (
                                     <div className="rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-black/[0.06] dark:border-white/10 px-3.5 py-2.5 shadow-sm">
                                         <div className="flex items-center justify-between gap-2">
@@ -301,7 +301,7 @@ export default function PatientView() {
                             </header>
                         ) : (
                             /* ── Desktop: Full header ── */
-                            <header className="sticky top-0 z-20 mb-6 bg-background/95 supports-[backdrop-filter]:backdrop-blur-sm py-2">
+                            <header className="sticky top-0 z-20 mb-6 bg-background py-2">
                                 <div className="flex items-center justify-between">
                                     <div className="min-w-0 flex-1">
                                         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">

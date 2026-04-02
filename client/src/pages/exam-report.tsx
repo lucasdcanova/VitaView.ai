@@ -457,7 +457,7 @@ export default function ExamReport() {
 
         <main className="flex-1 overflow-y-auto bg-background">
           {/* Cabeçalho */}
-          <div className="sticky top-0 z-30 border-b bg-card/95 shadow-sm supports-[backdrop-filter]:backdrop-blur-sm">
+          <div className="sticky top-0 z-30 border-b bg-card shadow-sm">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div>

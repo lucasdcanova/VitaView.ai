@@ -1083,7 +1083,7 @@ export default function HealthTrendsNew({
             <div className={embedded ? "w-full space-y-8" : "mx-auto max-w-6xl space-y-8"}>
               {/* Header com Nome do Paciente */}
               {!embedded && (
-                <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4 md:pb-6 bg-gray-50/95 supports-[backdrop-filter]:backdrop-blur-sm">
+                <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4 md:pb-6 bg-gray-50">
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
                       Prontuário do Paciente

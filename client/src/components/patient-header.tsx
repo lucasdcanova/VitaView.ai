@@ -67,7 +67,7 @@ export default function PatientHeader({
   const age = getAge(patient?.birthDate);
   const formattedBirthDate = formatDate(patient?.birthDate);
   const formattedExamDate = formatDate(lastExamDate);
-  const shouldRespectSafeAreaTop = safeAreaTop && compact && fullWidth;
+  const shouldRespectSafeAreaTop = safeAreaTop && fullWidth;
 
   const highlightItems = [
     {
@@ -98,7 +98,7 @@ export default function PatientHeader({
 
   return (
     <div className={cn(
-      "sticky top-0 z-30 border-border bg-card/95 supports-[backdrop-filter]:backdrop-blur-sm",
+      "sticky top-0 z-30 border-border bg-card",
       shouldRespectSafeAreaTop
         ? "px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] md:px-6 md:pt-6 md:pb-3"
         : compact

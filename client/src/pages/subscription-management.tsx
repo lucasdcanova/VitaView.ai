@@ -190,7 +190,10 @@ const SubscriptionManagement = () => {
   // billingPeriod removed
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [selectedInterval, setSelectedInterval] = useState<'month' | '6month' | 'year'>('year');
-  const [selectedIntervals, setSelectedIntervals] = useState<Record<string, string>>({});
+  const [selectedIntervals, setSelectedIntervals] = useState<Record<string, BillingPeriod>>({
+    'vita-team': 'year',
+    'vita-business': 'year',
+  });
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
   const stripeRedirectHandledRef = useRef(false);
@@ -314,8 +317,10 @@ const SubscriptionManagement = () => {
   const vitaProSemiannualPlan = findPlanByNameAndInterval('vita pro', '6month');
   const vitaProAnnualPlan = findPlanByNameAndInterval('vita pro', 'year');
   const vitaTeamMonthlyPlan = findPlanByNameAndInterval('vita team', 'month');
+  const vitaTeamSemiannualPlan = findPlanByNameAndInterval('vita team', '6month');
   const vitaTeamAnnualPlan = findPlanByNameAndInterval('vita team', 'year');
   const vitaBusinessMonthlyPlan = findPlanByNameAndInterval('vita business', 'month');
+  const vitaBusinessSemiannualPlan = findPlanByNameAndInterval('vita business', '6month');
   const vitaBusinessAnnualPlan = findPlanByNameAndInterval('vita business', 'year');
 
   const getPaidPlanActionLabel = (webLabel: string) => {
@@ -1001,7 +1006,7 @@ const SubscriptionManagement = () => {
                               </div>
 
                               <p className="text-sm text-muted-foreground">
-                                Você está pagando <strong>R${(currentPrice / 100).toFixed(2)}/mês</strong>.
+                                Você está pagando <strong>{formatCurrency(currentPrice)}/mês</strong>.
                               </p>
 
                               <div className="space-y-3">
@@ -1266,16 +1271,45 @@ const SubscriptionManagement = () => {
                   <CardContent className="flex-grow space-y-4">
                     <div>
                       {(() => {
-                        const annualPlan = vitaTeamAnnualPlan;
-                        const lowestMonthly = getPlanMonthlyEquivalentInCents(annualPlan);
+                        const interval = selectedIntervals['vita-team'] || 'year';
+                        const targetPlan = interval === 'year' ? vitaTeamAnnualPlan : interval === '6month' ? vitaTeamSemiannualPlan : vitaTeamMonthlyPlan;
+                        const monthlyEquiv = getPlanMonthlyEquivalentInCents(targetPlan);
                         return (
                           <>
-                            <span className="text-xs text-muted-foreground">A partir de </span>
-                            <span className="text-3xl font-bold">{lowestMonthly ? formatCurrency(lowestMonthly) : 'Sob consulta'}</span>
+                            <span className="text-3xl font-bold">{monthlyEquiv ? formatCurrency(monthlyEquiv) : 'Sob consulta'}</span>
                             <span className="text-sm text-muted-foreground">/mês</span>
                           </>
                         );
                       })()}
+                    </div>
+                    <div className="bg-muted p-1 rounded-lg border border-border">
+                      {(['Anual', 'Semestral', 'Mensal'] as const).map((period) => {
+                        const intervalKey: BillingPeriod = period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month';
+                        const isSelected = (selectedIntervals['vita-team'] || 'year') === intervalKey;
+                        const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
+                        const targetPlan = period === 'Anual' ? vitaTeamAnnualPlan : period === 'Semestral' ? vitaTeamSemiannualPlan : vitaTeamMonthlyPlan;
+                        const monthlyEquiv = getPlanMonthlyEquivalentInCents(targetPlan);
+                        const price = monthlyEquiv ? formatCurrency(monthlyEquiv) : '—';
+
+                        return (
+                          <div
+                            key={period}
+                            onClick={() => setSelectedIntervals(prev => ({ ...prev, 'vita-team': intervalKey }))}
+                            className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all text-sm mb-1 last:mb-0 ${isSelected ? 'bg-card shadow-sm border border-primary/20 ring-1 ring-primary/10' : 'hover:bg-muted'}`}
+                          >
+                            <div className="flex items-center">
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-2 ${isSelected ? 'border-primary' : 'border-muted-foreground'}`}>
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                              </div>
+                              <span className={isSelected ? 'font-medium text-foreground' : 'text-muted-foreground'}>{period}</span>
+                            </div>
+                            <div className="flex items-center">
+                              {discount && <span className="text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded mr-2">{discount}</span>}
+                              <span className={`font-semibold ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{price}/mês</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                     <ul className="space-y-2">
                       {[
@@ -1292,27 +1326,25 @@ const SubscriptionManagement = () => {
                       ))}
                     </ul>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col gap-2">
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
                       disabled={!canStartPaidCheckout}
                       onClick={() => {
-                        console.log('[Vita Team Button] Clicked');
-                        const plan = vitaTeamMonthlyPlan;
-                        console.log('[Vita Team Button] Found plan:', plan);
+                        const interval = selectedIntervals['vita-team'] || 'year';
+                        const plan = interval === 'year' ? vitaTeamAnnualPlan : interval === '6month' ? vitaTeamSemiannualPlan : vitaTeamMonthlyPlan;
                         if (plan) {
                           handleStartPayment(plan.id);
                         } else {
-                          toast({
-                            title: 'Erro',
-                            description: 'Plano Vita Team não encontrado. Entre em contato com o suporte.',
-                            variant: 'destructive'
-                          });
+                          toast({ title: 'Erro', description: 'Plano não encontrado.', variant: 'destructive' });
                         }
                       }}
                     >
                       {getPaidPlanActionLabel('Escolher Vita Team')}
                     </Button>
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      Cobrado {(selectedIntervals['vita-team'] || 'year') === 'year' ? 'anualmente' : (selectedIntervals['vita-team'] || 'year') === '6month' ? 'semestralmente' : 'mensalmente'}
+                    </p>
                   </CardFooter>
                 </Card>
 
@@ -1328,16 +1360,45 @@ const SubscriptionManagement = () => {
                   <CardContent className="flex-grow space-y-4">
                     <div>
                       {(() => {
-                        const annualPlan = vitaBusinessAnnualPlan;
-                        const lowestMonthly = getPlanMonthlyEquivalentInCents(annualPlan);
+                        const interval = selectedIntervals['vita-business'] || 'year';
+                        const targetPlan = interval === 'year' ? vitaBusinessAnnualPlan : interval === '6month' ? vitaBusinessSemiannualPlan : vitaBusinessMonthlyPlan;
+                        const monthlyEquiv = getPlanMonthlyEquivalentInCents(targetPlan);
                         return (
                           <>
-                            <span className="text-xs text-muted-foreground">A partir de </span>
-                            <span className="text-3xl font-bold">{lowestMonthly ? formatCurrency(lowestMonthly) : 'Sob consulta'}</span>
+                            <span className="text-3xl font-bold">{monthlyEquiv ? formatCurrency(monthlyEquiv) : 'Sob consulta'}</span>
                             <span className="text-sm text-muted-foreground">/mês</span>
                           </>
                         );
                       })()}
+                    </div>
+                    <div className="bg-muted p-1 rounded-lg border border-border">
+                      {(['Anual', 'Semestral', 'Mensal'] as const).map((period) => {
+                        const intervalKey: BillingPeriod = period === 'Anual' ? 'year' : period === 'Semestral' ? '6month' : 'month';
+                        const isSelected = (selectedIntervals['vita-business'] || 'year') === intervalKey;
+                        const discount = period === 'Anual' ? '-20%' : period === 'Semestral' ? '-10%' : '';
+                        const targetPlan = period === 'Anual' ? vitaBusinessAnnualPlan : period === 'Semestral' ? vitaBusinessSemiannualPlan : vitaBusinessMonthlyPlan;
+                        const monthlyEquiv = getPlanMonthlyEquivalentInCents(targetPlan);
+                        const price = monthlyEquiv ? formatCurrency(monthlyEquiv) : '—';
+
+                        return (
+                          <div
+                            key={period}
+                            onClick={() => setSelectedIntervals(prev => ({ ...prev, 'vita-business': intervalKey }))}
+                            className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all text-sm mb-1 last:mb-0 ${isSelected ? 'bg-card shadow-sm border border-primary/20 ring-1 ring-primary/10' : 'hover:bg-muted'}`}
+                          >
+                            <div className="flex items-center">
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-2 ${isSelected ? 'border-primary' : 'border-muted-foreground'}`}>
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                              </div>
+                              <span className={isSelected ? 'font-medium text-foreground' : 'text-muted-foreground'}>{period}</span>
+                            </div>
+                            <div className="flex items-center">
+                              {discount && <span className="text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded mr-2">{discount}</span>}
+                              <span className={`font-semibold ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{price}/mês</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                     <ul className="space-y-2">
                       {[
@@ -1354,27 +1415,25 @@ const SubscriptionManagement = () => {
                       ))}
                     </ul>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col gap-2">
                     <Button
                       className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground touch-manipulation"
                       disabled={!canStartPaidCheckout}
                       onClick={() => {
-                        console.log('[Vita Business Button] Clicked');
-                        const plan = vitaBusinessMonthlyPlan;
-                        console.log('[Vita Business Button] Found plan:', plan);
+                        const interval = selectedIntervals['vita-business'] || 'year';
+                        const plan = interval === 'year' ? vitaBusinessAnnualPlan : interval === '6month' ? vitaBusinessSemiannualPlan : vitaBusinessMonthlyPlan;
                         if (plan) {
                           handleStartPayment(plan.id);
                         } else {
-                          toast({
-                            title: 'Erro',
-                            description: 'Plano Vita Business não encontrado. Entre em contato com o suporte.',
-                            variant: 'destructive'
-                          });
+                          toast({ title: 'Erro', description: 'Plano não encontrado.', variant: 'destructive' });
                         }
                       }}
                     >
                       {getPaidPlanActionLabel('Escolher Vita Business')}
                     </Button>
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      Cobrado {(selectedIntervals['vita-business'] || 'year') === 'year' ? 'anualmente' : (selectedIntervals['vita-business'] || 'year') === '6month' ? 'semestralmente' : 'mensalmente'}
+                    </p>
                   </CardFooter>
                 </Card>
 
@@ -1432,7 +1491,7 @@ const SubscriptionManagement = () => {
                         <div className="grid grid-cols-4 py-3">
                           <div>{subscription?.currentPeriodStart && format(new Date(subscription.currentPeriodStart), 'dd/MM/yyyy')}</div>
                           <div>Assinatura - {currentPlan?.name}</div>
-                          <div>{currentPlan?.price === 0 ? 'Grátis' : `R$ ${(currentPlan?.price || 0) / 100},00`}</div>
+                          <div>{currentPlan?.price === 0 ? 'Grátis' : formatCurrency(currentPlan?.price)}</div>
                           <div>
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Pago</Badge>
                           </div>

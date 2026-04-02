@@ -217,7 +217,7 @@ export default function Patients() {
     <div className="flex h-full flex-col overflow-hidden bg-background">
       <main className="flex-1 overflow-y-auto bg-background">
         {isMobile ? (
-          <div className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] supports-[backdrop-filter]:backdrop-blur-sm">
+          <div className="sticky top-0 z-30 border-b border-border bg-card px-4 pb-3 pt-4">
             <div className="mb-3">
               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <Users className="h-5 w-5" />
