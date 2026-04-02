@@ -6,6 +6,8 @@ import {
   interpolate,
   spring,
   Easing,
+  Img,
+  staticFile,
 } from 'remotion';
 import { colors } from '../theme';
 import { montserrat, openSans } from '../fonts';
@@ -83,23 +85,17 @@ export const OutroScene: React.FC = () => {
         }}
       />
 
-      {/* Logo */}
-      <div
+      {/* Real logo */}
+      <Img
+        src={staticFile('logo-icon.png')}
         style={{
-          transform: `scale(${logoScale})`,
-          opacity: logoOpacity,
-          width: 80,
           height: 80,
-          borderRadius: 20,
-          backgroundColor: colors.charcoal,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          objectFit: 'contain',
+          transform: `scale(${interpolate(logoScale, [0, 1], [0.7, 1])})`,
+          opacity: logoOpacity,
           marginBottom: 32,
         }}
-      >
-        <span style={{ fontFamily: montserrat, fontSize: 42, fontWeight: 700, color: colors.pureWhite }}>V</span>
-      </div>
+      />
 
       {/* Title */}
       <div

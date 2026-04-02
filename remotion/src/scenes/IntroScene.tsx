@@ -6,8 +6,10 @@ import {
   interpolate,
   spring,
   Easing,
+  Img,
+  staticFile,
 } from 'remotion';
-import { colors, COMP_WIDTH, COMP_HEIGHT } from '../theme';
+import { colors } from '../theme';
 import { montserrat, openSans } from '../fonts';
 
 export const IntroScene: React.FC = () => {
@@ -16,41 +18,35 @@ export const IntroScene: React.FC = () => {
 
   // Logo animation
   const logoScale = spring({ frame, fps, config: { damping: 12, stiffness: 120 } });
-  const logoOpacity = interpolate(frame, [0, 0.3 * fps], [0, 1], {
+  const logoOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], {
     extrapolateRight: 'clamp',
   });
 
   // Title animation
-  const titleY = interpolate(
-    spring({ frame, fps, delay: 0.4 * fps, config: { damping: 200 } }),
-    [0, 1],
-    [40, 0],
-  );
-  const titleOpacity = interpolate(frame, [0.4 * fps, 0.8 * fps], [0, 1], {
+  const titleSpring = spring({ frame, fps, delay: 0.5 * fps, config: { damping: 200 } });
+  const titleY = interpolate(titleSpring, [0, 1], [40, 0]);
+  const titleOpacity = interpolate(frame, [0.5 * fps, 0.9 * fps], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   // Subtitle
-  const subtitleOpacity = interpolate(frame, [0.8 * fps, 1.2 * fps], [0, 1], {
+  const subtitleSpring = spring({ frame, fps, delay: 0.9 * fps, config: { damping: 200 } });
+  const subtitleY = interpolate(subtitleSpring, [0, 1], [30, 0]);
+  const subtitleOpacity = interpolate(frame, [0.9 * fps, 1.3 * fps], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const subtitleY = interpolate(
-    spring({ frame, fps, delay: 0.8 * fps, config: { damping: 200 } }),
-    [0, 1],
-    [30, 0],
-  );
 
   // Decorative line
-  const lineWidth = interpolate(frame, [1 * fps, 1.6 * fps], [0, 200], {
+  const lineWidth = interpolate(frame, [1.1 * fps, 1.7 * fps], [0, 240], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: Easing.out(Easing.quad),
   });
 
   // Badge
-  const badgeScale = spring({ frame, fps, delay: 1.4 * fps, config: { damping: 15, stiffness: 180 } });
+  const badgeScale = spring({ frame, fps, delay: 1.5 * fps, config: { damping: 15, stiffness: 180 } });
 
   return (
     <AbsoluteFill
@@ -60,7 +56,7 @@ export const IntroScene: React.FC = () => {
         alignItems: 'center',
       }}
     >
-      {/* Subtle background gradient */}
+      {/* Background gradient */}
       <div
         style={{
           position: 'absolute',
@@ -69,66 +65,16 @@ export const IntroScene: React.FC = () => {
         }}
       />
 
-      {/* Logo */}
-      <div
+      {/* Real PNG logo */}
+      <Img
+        src={staticFile('logo-full.png')}
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 24,
-          transform: `scale(${logoScale})`,
+          height: 140,
+          objectFit: 'contain',
+          transform: `scale(${interpolate(logoScale, [0, 1], [0.7, 1])})`,
           opacity: logoOpacity,
         }}
-      >
-        {/* V Logo mark */}
-        <div
-          style={{
-            width: 120,
-            height: 120,
-            borderRadius: 28,
-            backgroundColor: colors.charcoal,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: montserrat,
-              fontSize: 64,
-              fontWeight: 700,
-              color: colors.pureWhite,
-              lineHeight: 1,
-            }}
-          >
-            V
-          </span>
-        </div>
-      </div>
-
-      {/* Title */}
-      <div
-        style={{
-          marginTop: 40,
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
-          textAlign: 'center',
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: montserrat,
-            fontSize: 72,
-            fontWeight: 700,
-            color: colors.charcoal,
-            letterSpacing: -2,
-            margin: 0,
-          }}
-        >
-          VitaView
-          <span style={{ color: colors.mediumGray, fontWeight: 500 }}>.ai</span>
-        </h1>
-      </div>
+      />
 
       {/* Decorative line */}
       <div
@@ -137,7 +83,7 @@ export const IntroScene: React.FC = () => {
           height: 3,
           backgroundColor: colors.charcoal,
           borderRadius: 2,
-          marginTop: 20,
+          marginTop: 28,
         }}
       />
 
@@ -153,9 +99,10 @@ export const IntroScene: React.FC = () => {
         <p
           style={{
             fontFamily: openSans,
-            fontSize: 28,
+            fontSize: 30,
             color: colors.contentMuted,
             margin: 0,
+            fontWeight: 500,
           }}
         >
           Prontuario Medico Inteligente
@@ -165,11 +112,15 @@ export const IntroScene: React.FC = () => {
       {/* Badge */}
       <div
         style={{
-          marginTop: 32,
-          transform: `scale(${badgeScale})`,
+          marginTop: 36,
+          transform: `scale(${interpolate(badgeScale, [0, 1], [0.85, 1])})`,
+          opacity: interpolate(frame, [1.5 * fps, 1.7 * fps], [0, 1], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
           backgroundColor: colors.charcoal,
           borderRadius: 50,
-          padding: '12px 32px',
+          padding: '14px 36px',
         }}
       >
         <span
@@ -178,7 +129,7 @@ export const IntroScene: React.FC = () => {
             fontSize: 16,
             fontWeight: 700,
             color: colors.pureWhite,
-            letterSpacing: 2,
+            letterSpacing: 3,
             textTransform: 'uppercase',
           }}
         >
