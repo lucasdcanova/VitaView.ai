@@ -1,5 +1,4 @@
 // VitaView Design System Tokens for Remotion
-// Source: design-system.md
 
 export const colors = {
   charcoal: '#212121',
@@ -22,11 +21,23 @@ export const colors = {
   green500: '#22c55e',
   green600: '#16a34a',
   green50: '#f0fdf4',
-  green100: '#dcfce7',
   amber500: '#f59e0b',
   blue500: '#3b82f6',
+  blue600: '#2563eb',
 };
 
+// Landscape
 export const COMP_WIDTH = 1920;
 export const COMP_HEIGHT = 1080;
+
+// Vertical
+export const VERT_WIDTH = 1080;
+export const VERT_HEIGHT = 1920;
+
 export const FPS = 30;
+
+// Smooth spring configs
+export const SPRING_SMOOTH = { damping: 200 };
+export const SPRING_GENTLE = { damping: 26, stiffness: 120, mass: 1.2 };
+export const SPRING_SNAPPY = { damping: 20, stiffness: 200 };
+export const SPRING_BOUNCY = { damping: 10, stiffness: 100 };

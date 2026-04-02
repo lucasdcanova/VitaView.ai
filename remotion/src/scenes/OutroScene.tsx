@@ -5,33 +5,29 @@ import {
   useVideoConfig,
   interpolate,
   spring,
-  Easing,
   Img,
   staticFile,
 } from 'remotion';
-import { colors } from '../theme';
+import { colors, SPRING_SMOOTH, SPRING_GENTLE } from '../theme';
 import { montserrat, openSans } from '../fonts';
 
 const FeaturePill: React.FC<{ text: string; delay: number }> = ({ text, delay }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const entrance = spring({ frame, fps, delay, config: { damping: 15, stiffness: 140 } });
-  const opacity = interpolate(frame, [delay, delay + 0.2 * fps], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const entrance = spring({ frame, fps, delay, config: SPRING_GENTLE });
+  const opacity = interpolate(frame, [delay, delay + 0.25 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
     <div
       style={{
         opacity,
-        transform: `scale(${interpolate(entrance, [0, 1], [0.8, 1])})`,
-        backgroundColor: 'rgba(33,33,33,0.06)',
+        transform: `scale(${interpolate(entrance, [0, 1], [0.85, 1])})`,
+        backgroundColor: 'rgba(33,33,33,0.05)',
         borderRadius: 50,
-        padding: '10px 24px',
+        padding: '9px 22px',
         fontFamily: openSans,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 600,
         color: colors.contentDefault,
       }}
@@ -43,136 +39,67 @@ const FeaturePill: React.FC<{ text: string; delay: number }> = ({ text, delay })
 
 export const OutroScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const isVertical = height > width;
 
-  const logoScale = spring({ frame, fps, config: { damping: 12, stiffness: 120 } });
-  const logoOpacity = interpolate(frame, [0, 0.3 * fps], [0, 1], { extrapolateRight: 'clamp' });
+  const logoSpring = spring({ frame, fps, config: SPRING_GENTLE });
+  const logoOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], { extrapolateRight: 'clamp' });
 
-  const titleOpacity = interpolate(frame, [0.3 * fps, 0.6 * fps], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  const titleY = interpolate(
-    spring({ frame, fps, delay: 0.3 * fps, config: { damping: 200 } }),
-    [0, 1],
-    [30, 0],
-  );
+  const titleSpring = spring({ frame, fps, delay: 0.3 * fps, config: SPRING_SMOOTH });
+  const titleOpacity = interpolate(frame, [0.3 * fps, 0.7 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
-  const subtitleOpacity = interpolate(frame, [0.6 * fps, 0.9 * fps], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const subtitleOpacity = interpolate(frame, [0.7 * fps, 1 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
-  const ctaScale = spring({ frame, fps, delay: 2 * fps, config: { damping: 12, stiffness: 100 } });
-  const ctaOpacity = interpolate(frame, [2 * fps, 2.3 * fps], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const ctaSpring = spring({ frame, fps, delay: 2 * fps, config: SPRING_GENTLE });
+  const ctaOpacity = interpolate(frame, [2 * fps, 2.3 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: colors.pureWhite,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(1200px circle at 8% -10%, rgba(33, 33, 33, 0.04), transparent 45%), radial-gradient(900px circle at 100% 0%, rgba(66, 66, 66, 0.05), transparent 42%)`,
-        }}
-      />
+    <AbsoluteFill style={{ backgroundColor: colors.pureWhite, justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 50% 40%, rgba(33,33,33,0.035), transparent)` }} />
 
-      {/* Real logo */}
-      <Img
-        src={staticFile('logo-icon.png')}
-        style={{
-          height: 80,
-          objectFit: 'contain',
-          transform: `scale(${interpolate(logoScale, [0, 1], [0.7, 1])})`,
-          opacity: logoOpacity,
-          marginBottom: 32,
-        }}
-      />
-
-      {/* Title */}
-      <div
-        style={{
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
-          textAlign: 'center',
-        }}
-      >
-        <h1
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: isVertical ? 500 : 700, padding: '0 40px' }}>
+        <Img
+          src={staticFile('logo-icon.png')}
           style={{
-            fontFamily: montserrat,
-            fontSize: 64,
-            fontWeight: 700,
-            color: colors.charcoal,
-            letterSpacing: -2,
-            margin: 0,
-            lineHeight: 1.1,
+            height: isVertical ? 60 : 72,
+            objectFit: 'contain',
+            transform: `translateY(${interpolate(logoSpring, [0, 1], [30, 0])}px)`,
+            opacity: logoOpacity,
+            marginBottom: 28,
           }}
-        >
-          Prontuario do Futuro.
-          <br />
-          <span style={{ color: colors.mediumGray }}>Disponivel Hoje.</span>
-        </h1>
-      </div>
+        />
 
-      {/* Subtitle */}
-      <div style={{ opacity: subtitleOpacity, marginTop: 20, textAlign: 'center' }}>
-        <p style={{ fontFamily: openSans, fontSize: 22, color: colors.contentMuted, margin: 0 }}>
-          IA, transcricao, agenda e gestao — tudo em um so lugar.
-        </p>
-      </div>
-
-      {/* Feature pills */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 36, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 800 }}>
-        <FeaturePill text="Transcricao com IA" delay={1 * fps} />
-        <FeaturePill text="Agenda Inteligente" delay={1.15 * fps} />
-        <FeaturePill text="Prescricao Digital" delay={1.3 * fps} />
-        <FeaturePill text="Analise de Exames" delay={1.45 * fps} />
-        <FeaturePill text="Graficos de Evolucao" delay={1.6 * fps} />
-      </div>
-
-      {/* CTA */}
-      <div
-        style={{
-          marginTop: 48,
-          opacity: ctaOpacity,
-          transform: `scale(${interpolate(ctaScale, [0, 1], [0.9, 1])})`,
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: colors.charcoal,
-            borderRadius: 14,
-            padding: '18px 48px',
-            fontFamily: montserrat,
-            fontSize: 20,
-            fontWeight: 700,
-            color: colors.pureWhite,
-          }}
-        >
-          Teste Gratis por 30 Dias →
+        <div style={{ opacity: titleOpacity, transform: `translateY(${interpolate(titleSpring, [0, 1], [25, 0])}px)`, textAlign: 'center' }}>
+          <h1 style={{ fontFamily: montserrat, fontSize: isVertical ? 42 : 58, fontWeight: 700, color: colors.charcoal, letterSpacing: -2, margin: 0, lineHeight: 1.1 }}>
+            Prontuario do Futuro.
+            <br />
+            <span style={{ color: colors.mediumGray }}>Disponivel Hoje.</span>
+          </h1>
         </div>
-      </div>
 
-      {/* URL */}
-      <div
-        style={{
-          marginTop: 20,
-          opacity: ctaOpacity,
-          fontFamily: openSans,
-          fontSize: 18,
-          color: colors.mediumGray,
-          fontWeight: 600,
-        }}
-      >
-        vitaview.ai
+        <div style={{ opacity: subtitleOpacity, marginTop: 18, textAlign: 'center' }}>
+          <p style={{ fontFamily: openSans, fontSize: isVertical ? 18 : 20, color: colors.contentMuted, margin: 0 }}>
+            IA, transcricao, agenda e gestao — tudo em um lugar.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 30, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <FeaturePill text="Transcricao com IA" delay={Math.round(1 * fps)} />
+          <FeaturePill text="Agenda Inteligente" delay={Math.round(1.12 * fps)} />
+          <FeaturePill text="Prescricao Digital" delay={Math.round(1.24 * fps)} />
+          <FeaturePill text="Analise de Exames" delay={Math.round(1.36 * fps)} />
+          <FeaturePill text="Graficos de Evolucao" delay={Math.round(1.48 * fps)} />
+        </div>
+
+        <div style={{ marginTop: 40, opacity: ctaOpacity, transform: `scale(${interpolate(ctaSpring, [0, 1], [0.92, 1])})` }}>
+          <div style={{ backgroundColor: colors.charcoal, borderRadius: 14, padding: isVertical ? '16px 36px' : '17px 44px', fontFamily: montserrat, fontSize: isVertical ? 17 : 19, fontWeight: 700, color: colors.pureWhite }}>
+            Teste Gratis por 30 Dias →
+          </div>
+        </div>
+
+        <div style={{ marginTop: 16, opacity: ctaOpacity, fontFamily: openSans, fontSize: 16, color: colors.mediumGray, fontWeight: 600 }}>
+          vitaview.ai
+        </div>
       </div>
     </AbsoluteFill>
   );
