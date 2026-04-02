@@ -88,14 +88,14 @@ export const ExamUploadScene: React.FC = () => {
 
   const bannerReveal = reveal(frame, fps, 2.8 * fps, { y: -12 });
 
-  const pad = v ? 60 : 140;
-  const cW = v ? width - 120 : 520;
+  const pad = v ? 60 : 80;
+  const cW = v ? width - 120 : 420;
 
   return (
     <AbsoluteFill style={{ backgroundColor: c.bg }}>
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 40% at 30% 50%, rgba(96,165,250,0.04), transparent)` }} />
 
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 28 : 50 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 28 : 40, maxWidth: v ? undefined : 960, margin: '0 auto' }}>
         {/* Left: title + dropzone */}
         <div style={{ width: cW, display: 'flex', flexDirection: 'column', gap: v ? 18 : 22 }}>
           <div>

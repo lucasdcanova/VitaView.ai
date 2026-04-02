@@ -30,8 +30,8 @@ export const TranscriptionScene: React.FC = () => {
 
   const titleWords = wordReveal('Voz para Prontuário', frame, fps, 0.15 * fps, 0.07);
   const waveActive = frame > 0.5 * fps && frame < 4 * fps;
-  const pad = v ? 60 : 140;
-  const cW = v ? width - 120 : 500;
+  const pad = v ? 60 : 80;
+  const cW = v ? width - 120 : 420;
 
   const cardDelay = 4.2 * fps;
   const cardR = reveal(frame, fps, cardDelay, { y: 20 });
@@ -40,7 +40,7 @@ export const TranscriptionScene: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: c.bg }}>
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 50% 40% at 30% 50%, rgba(239,68,68,0.03), transparent)` }} />
 
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 24 : 46 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 24 : 36, maxWidth: v ? undefined : 960, margin: '0 auto' }}>
         {/* Left: recording */}
         <div style={{ width: cW, display: 'flex', flexDirection: 'column', gap: v ? 14 : 18 }}>
           <div>
