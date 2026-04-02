@@ -11,6 +11,7 @@ import {
 import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
 import { reveal, wordReveal, scaleIn } from '../anim';
+import { fs } from '../scale';
 
 // A single document that floats up, enters the "AI zone", and transforms
 const FloatingDoc: React.FC<{
@@ -67,7 +68,7 @@ const FloatingDoc: React.FC<{
         whiteSpace: 'nowrap',
       }}>
         <span style={{ fontSize: 18 }}>{icon}</span>
-        <span style={{ fontFamily: openSans, fontSize: v ? 12 : 13, fontWeight: 600, color: c.textDefault }}>{name}</span>
+        <span style={{ fontFamily: openSans, fontSize: fs(13, v), fontWeight: 600, color: c.textDefault }}>{name}</span>
       </div>
 
       {/* Result card */}
@@ -89,8 +90,8 @@ const FloatingDoc: React.FC<{
           transform: `scale(${resultSpring})`,
         }}>✓</div>
         <div>
-          <div style={{ fontFamily: montserrat, fontSize: v ? 11 : 12, fontWeight: 700, color: c.textStrong }}>{name}</div>
-          <div style={{ fontFamily: openSans, fontSize: 9, color: c.green }}>Analisado pela IA</div>
+          <div style={{ fontFamily: montserrat, fontSize: fs(12, v), fontWeight: 700, color: c.textStrong }}>{name}</div>
+          <div style={{ fontFamily: openSans, fontSize: fs(9, v), color: c.green }}>Analisado pela IA</div>
         </div>
       </div>
     </div>
@@ -137,9 +138,9 @@ const AIOrb: React.FC<{ delay: number; v: boolean }> = ({ delay, v }) => {
           transform: `rotate(${ringRotation}deg)`,
         }} />
 
-        <span style={{ fontFamily: montserrat, fontSize: v ? 14 : 16, fontWeight: 700, color: c.textStrong }}>IA</span>
+        <span style={{ fontFamily: montserrat, fontSize: fs(16, v), fontWeight: 700, color: c.textStrong }}>IA</span>
       </div>
-      <div style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted, textAlign: 'center' }}>
+      <div style={{ fontFamily: openSans, fontSize: fs(11, v), color: c.textMuted, textAlign: 'center' }}>
         Processando
       </div>
     </div>
@@ -176,17 +177,17 @@ export const ExamUploadScene: React.FC = () => {
       }}>
         {/* Title */}
         <div style={{ maxWidth: maxW, textAlign: 'center' }}>
-          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: fs(12, v), fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
             Análise de Exames
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
             {titleWords.map((w, i) => (
-              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 30 : 38, fontWeight: 700, color: c.textStrong, letterSpacing: -0.8 }}>{w.word}</span>
+              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: fs(38, v), fontWeight: 700, color: c.textStrong, letterSpacing: -0.8 }}>{w.word}</span>
             ))}
           </div>
           <p style={{
             ...reveal(frame, fps, 0.5 * fps, { y: 10 }),
-            fontFamily: openSans, fontSize: v ? 14 : 16, color: c.textMuted,
+            fontFamily: openSans, fontSize: fs(16, v), color: c.textMuted,
             margin: 0, marginTop: 8,
           }}>
             Envie o exame em PDF ou foto — o resultado aparece em segundos.
@@ -237,8 +238,8 @@ export const ExamUploadScene: React.FC = () => {
             { n: '12', label: 'Métricas extraídas' },
           ].map((item, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: montserrat, fontSize: v ? 22 : 28, fontWeight: 700, color: c.green }}>{item.n}</div>
-              <div style={{ fontFamily: openSans, fontSize: v ? 10 : 12, color: c.textMuted }}>{item.label}</div>
+              <div style={{ fontFamily: montserrat, fontSize: fs(28, v), fontWeight: 700, color: c.green }}>{item.n}</div>
+              <div style={{ fontFamily: openSans, fontSize: fs(12, v), color: c.textMuted }}>{item.label}</div>
             </div>
           ))}
         </div>

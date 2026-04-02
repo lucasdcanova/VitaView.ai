@@ -10,6 +10,7 @@ import {
 import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
 import { reveal, wordReveal, scaleIn } from '../anim';
+import { fs } from '../scale';
 
 // Animated floating data particles migrating from left to right
 const DataParticle: React.FC<{
@@ -62,7 +63,7 @@ const OldSystemCard: React.FC<{ delay: number; v: boolean }> = ({ delay, v }) =>
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <div style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.textSubtle }} />
-        <div style={{ fontFamily: montserrat, fontSize: v ? 12 : 14, fontWeight: 700, color: c.textMuted }}>
+        <div style={{ fontFamily: montserrat, fontSize: fs(14, v), fontWeight: 700, color: c.textMuted }}>
           Seu prontuário atual
         </div>
       </div>
@@ -88,11 +89,11 @@ const OldSystemCard: React.FC<{ delay: number; v: boolean }> = ({ delay, v }) =>
             <div style={{
               width: v ? 28 : 32, height: v ? 28 : 32, borderRadius: v ? 14 : 16,
               backgroundColor: c.bgSurface, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: montserrat, fontSize: v ? 9 : 10, fontWeight: 700, color: c.textSubtle,
+              fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: c.textSubtle,
             }}>
               {item.split(' ')[0][0]}{item.split(' ')[1]?.[0] || ''}
             </div>
-            <div style={{ fontFamily: openSans, fontSize: v ? 12 : 13, color: c.textDefault }}>{item}</div>
+            <div style={{ fontFamily: openSans, fontSize: fs(13, v), color: c.textDefault }}>{item}</div>
           </div>
         );
       })}
@@ -119,7 +120,7 @@ const VitaViewCard: React.FC<{ delay: number; v: boolean }> = ({ delay, v }) => 
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <div style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.green }} />
-        <div style={{ fontFamily: montserrat, fontSize: v ? 12 : 14, fontWeight: 700, color: c.green }}>
+        <div style={{ fontFamily: montserrat, fontSize: fs(14, v), fontWeight: 700, color: c.green }}>
           VitaView
         </div>
       </div>
@@ -142,11 +143,11 @@ const VitaViewCard: React.FC<{ delay: number; v: boolean }> = ({ delay, v }) => 
             <div style={{
               width: v ? 28 : 32, height: v ? 28 : 32, borderRadius: v ? 14 : 16,
               backgroundColor: c.greenMuted, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: montserrat, fontSize: v ? 9 : 10, fontWeight: 700, color: c.green,
+              fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: c.green,
             }}>
               {item.split(' ')[0][0]}{item.split(' ')[1]?.[0] || ''}
             </div>
-            <div style={{ flex: 1, fontFamily: openSans, fontSize: v ? 12 : 13, color: c.textDefault }}>{item}</div>
+            <div style={{ flex: 1, fontFamily: openSans, fontSize: fs(13, v), color: c.textDefault }}>{item}</div>
             {itemOpacity > 0.5 && (
               <span style={{
                 fontFamily: montserrat, fontSize: 10, fontWeight: 700, color: c.green,
@@ -177,10 +178,10 @@ const StatCounter: React.FC<{
 
   return (
     <div style={{ ...r, textAlign: 'center' }}>
-      <div style={{ fontFamily: montserrat, fontSize: v ? 28 : 36, fontWeight: 700, color: c.textStrong }}>
+      <div style={{ fontFamily: montserrat, fontSize: fs(36, v), fontWeight: 700, color: c.textStrong }}>
         {count.toLocaleString('pt-BR')}
       </div>
-      <div style={{ fontFamily: openSans, fontSize: v ? 11 : 13, color: c.textMuted, marginTop: 2 }}>{label}</div>
+      <div style={{ fontFamily: openSans, fontSize: fs(13, v), color: c.textMuted, marginTop: 2 }}>{label}</div>
     </div>
   );
 };
@@ -214,15 +215,15 @@ export const ImportScene: React.FC = () => {
       }}>
         {/* Title */}
         <div style={{ maxWidth: maxW, textAlign: 'center' }}>
-          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: fs(12, v), fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>
             Importação de Prontuário
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
             {titleWords.map((w, i) => (
-              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 28 : 38, fontWeight: 700, color: c.textStrong, letterSpacing: -0.8, lineHeight: 1.15 }}>{w.word}</span>
+              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: fs(38, v), fontWeight: 700, color: c.textStrong, letterSpacing: -0.8, lineHeight: 1.15 }}>{w.word}</span>
             ))}
           </div>
-          <p style={{ ...subR, fontFamily: openSans, fontSize: v ? 14 : 17, color: c.textMuted, margin: 0, marginTop: 10, lineHeight: 1.5 }}>
+          <p style={{ ...subR, fontFamily: openSans, fontSize: fs(17, v), color: c.textMuted, margin: 0, marginTop: 10, lineHeight: 1.5 }}>
             Importe pacientes, consultas e histórico completo — sem perder uma vírgula.
           </p>
         </div>

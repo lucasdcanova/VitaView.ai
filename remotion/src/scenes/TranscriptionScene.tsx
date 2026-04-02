@@ -10,6 +10,7 @@ import {
 import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
 import { reveal, wordReveal, scaleIn } from '../anim';
+import { fs } from '../scale';
 
 const LINES = [
   { speaker: 'Médico', text: 'Como você está se sentindo desde a última consulta?', time: 0 },
@@ -44,12 +45,12 @@ export const TranscriptionScene: React.FC = () => {
         {/* Left: recording */}
         <div style={{ width: cW, display: 'flex', flexDirection: 'column', gap: v ? 14 : 18 }}>
           <div>
-            <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: fs(12, v), fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
               Transcrição com IA
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
               {titleWords.map((w, i) => (
-                <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 26 : 34, fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
+                <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: fs(34, v), fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
               ))}
             </div>
           </div>
@@ -61,11 +62,11 @@ export const TranscriptionScene: React.FC = () => {
                 <div style={{ width: 12, height: 12, borderRadius: waveActive ? 3 : 6, backgroundColor: waveActive ? '#fff' : c.textSubtle }} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: montserrat, fontSize: 14, fontWeight: 700, color: c.textStrong }}>{waveActive ? 'Gravando...' : 'Gravação'}</div>
-                <div style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted }}>Consulta — Maria Silva</div>
+                <div style={{ fontFamily: montserrat, fontSize: fs(14, v), fontWeight: 700, color: c.textStrong }}>{waveActive ? 'Gravando...' : 'Gravação'}</div>
+                <div style={{ fontFamily: openSans, fontSize: fs(11, v), color: c.textMuted }}>Consulta — Maria Silva</div>
               </div>
               {waveActive && (
-                <div style={{ fontFamily: montserrat, fontSize: 16, fontWeight: 600, color: c.red }}>
+                <div style={{ fontFamily: montserrat, fontSize: fs(16, v), fontWeight: 600, color: c.red }}>
                   {Math.floor((frame - 0.5 * fps) / fps)}:{String(Math.floor(((frame - 0.5 * fps) % fps) / fps * 60) % 60).padStart(2, '0')}
                 </div>
               )}
@@ -89,8 +90,8 @@ export const TranscriptionScene: React.FC = () => {
 
                 return (
                   <div key={i} style={{ opacity: lo, transform: `translateY(${ly}px)`, marginBottom: 8, display: 'flex', gap: 7 }}>
-                    <div style={{ fontFamily: montserrat, fontSize: 10, fontWeight: 700, color: line.speaker === 'Médico' ? c.textDefault : c.blue, minWidth: 55, paddingTop: 2 }}>{line.speaker}</div>
-                    <div style={{ fontFamily: openSans, fontSize: 13, color: c.textDefault, lineHeight: 1.4 }}>
+                    <div style={{ fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: line.speaker === 'Médico' ? c.textDefault : c.blue, minWidth: 55, paddingTop: 2 }}>{line.speaker}</div>
+                    <div style={{ fontFamily: openSans, fontSize: fs(13, v), color: c.textDefault, lineHeight: 1.4 }}>
                       {line.text.slice(0, chars)}
                       {chars < line.text.length && chars > 0 && (
                         <span style={{ display: 'inline-block', width: 1.5, height: 13, backgroundColor: c.textStrong, marginLeft: 1, verticalAlign: 'middle', opacity: Math.sin(frame * 0.3) > 0 ? 1 : 0 }} />
@@ -108,10 +109,10 @@ export const TranscriptionScene: React.FC = () => {
           {frame > cardDelay - 0.5 * fps && (
             <div style={{ ...cardR, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${c.strokeSoft}`, display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: c.bg }}>IA</div>
+                <div style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: fs(11, v), fontWeight: 700, color: c.bg }}>IA</div>
                 <div>
-                  <div style={{ fontFamily: montserrat, fontSize: 15, fontWeight: 700, color: c.textStrong }}>Anamnese Gerada</div>
-                  <div style={{ fontFamily: openSans, fontSize: 10, color: c.textMuted }}>Processado automaticamente</div>
+                  <div style={{ fontFamily: montserrat, fontSize: fs(15, v), fontWeight: 700, color: c.textStrong }}>Anamnese Gerada</div>
+                  <div style={{ fontFamily: openSans, fontSize: fs(10, v), color: c.textMuted }}>Processado automaticamente</div>
                 </div>
               </div>
               <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -120,8 +121,8 @@ export const TranscriptionScene: React.FC = () => {
                   const fr = reveal(frame, fps, fd, { y: 8 });
                   return (
                     <div key={i} style={fr}>
-                      <div style={{ fontFamily: montserrat, fontSize: 10, fontWeight: 700, color: c.textSubtle, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>{field.label}</div>
-                      <div style={{ fontFamily: openSans, fontSize: 13, color: c.textDefault, lineHeight: 1.4 }}>{field.value}</div>
+                      <div style={{ fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: c.textSubtle, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>{field.label}</div>
+                      <div style={{ fontFamily: openSans, fontSize: fs(13, v), color: c.textDefault, lineHeight: 1.4 }}>{field.value}</div>
                     </div>
                   );
                 })}

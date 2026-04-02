@@ -10,6 +10,7 @@ import {
 import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
 import { reveal, wordReveal, scaleIn } from '../anim';
+import { fs } from '../scale';
 
 const Metric: React.FC<{
   label: string; value: string; status: 'ok' | 'warn' | 'alert'; delay: number; icon: string; v: boolean;
@@ -28,12 +29,12 @@ const Metric: React.FC<{
     <div style={{ opacity: o, transform: `scale(${interpolate(s, [0, 1], [0.92, 1])}) translateY(${interpolate(s, [0, 1], [12, 0])}px)`, backgroundColor: c.bgCard, borderRadius: 14, padding: v ? '12px 14px' : '16px 18px', border: `1px solid ${c.strokeSoft}`, display: 'flex', flexDirection: 'column', gap: 7 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: v ? 14 : 16 }}>{icon}</span>
-        <span style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted }}>{label}</span>
+        <span style={{ fontFamily: openSans, fontSize: fs(11, v), color: c.textMuted }}>{label}</span>
       </div>
-      <div style={{ fontFamily: montserrat, fontSize: v ? 20 : 24, fontWeight: 700, color: c.textStrong }}>{value}</div>
+      <div style={{ fontFamily: montserrat, fontSize: fs(24, v), fontWeight: 700, color: c.textStrong }}>{value}</div>
       <div style={{ backgroundColor: bg[status], borderRadius: 20, padding: '2px 9px', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 4 }}>
         <div style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: col[status] }} />
-        <span style={{ fontFamily: openSans, fontSize: 10, fontWeight: 600, color: col[status] }}>{txt[status]}</span>
+        <span style={{ fontFamily: openSans, fontSize: fs(10, v), fontWeight: 600, color: col[status] }}>{txt[status]}</span>
       </div>
     </div>
   );
@@ -63,22 +64,22 @@ export const PatientCardScene: React.FC = () => {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 14 : 20 }}>
         {/* Title */}
         <div style={{ width: maxW }}>
-          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
+          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: fs(12, v), fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
             Painel do Paciente
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             {titleWords.map((w, i) => (
-              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 26 : 34, fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
+              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: fs(34, v), fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
             ))}
           </div>
         </div>
 
         {/* Patient card */}
         <div style={{ ...cardR, width: maxW, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', padding: v ? '14px 16px' : '18px 22px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: v ? 42 : 50, height: v ? 42 : 50, borderRadius: v ? 21 : 25, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: v ? 16 : 20, fontWeight: 700, color: c.bg, flexShrink: 0 }}>MS</div>
+          <div style={{ width: v ? 42 : 50, height: v ? 42 : 50, borderRadius: v ? 21 : 25, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: fs(20, v), fontWeight: 700, color: c.bg, flexShrink: 0 }}>MS</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: montserrat, fontSize: v ? 16 : 20, fontWeight: 700, color: c.textStrong }}>Maria Silva</div>
-            <div style={{ fontFamily: openSans, fontSize: v ? 11 : 12, color: c.textMuted, marginTop: 1 }}>42 anos • Feminino • Particular</div>
+            <div style={{ fontFamily: montserrat, fontSize: fs(20, v), fontWeight: 700, color: c.textStrong }}>Maria Silva</div>
+            <div style={{ fontFamily: openSans, fontSize: fs(12, v), color: c.textMuted, marginTop: 1 }}>42 anos • Feminino • Particular</div>
           </div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {['Hipertensão', 'Diabetes T2', 'Hipotireoidismo'].map((tag, i) => {
@@ -87,7 +88,7 @@ export const PatientCardScene: React.FC = () => {
                 <div key={tag} style={{
                   ...reveal(frame, fps, td, { y: 6 }),
                   backgroundColor: c.bgSurface, borderRadius: 20, padding: '3px 10px',
-                  fontFamily: openSans, fontSize: 10, fontWeight: 600, color: c.textDefault,
+                  fontFamily: openSans, fontSize: fs(10, v), fontWeight: 600, color: c.textDefault,
                 }}>{tag}</div>
               );
             })}
@@ -110,7 +111,7 @@ export const PatientCardScene: React.FC = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.12)', padding: v ? '14px 16px' : '16px 22px',
           opacity: interpolate(frame, [2 * fps, 2.3 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
         }}>
-          <div style={{ fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: c.textStrong, marginBottom: 10 }}>
+          <div style={{ fontFamily: montserrat, fontSize: fs(13, v), fontWeight: 700, color: c.textStrong, marginBottom: 10 }}>
             Evolução da Glicemia (12 meses)
           </div>
           <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 480 : 840} ${v ? 80 : 110}`} preserveAspectRatio="none">
