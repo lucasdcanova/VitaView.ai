@@ -234,8 +234,11 @@ export default function Agenda() {
         }
     };
 
-    const handleNewAppointment = () => {
+    const [pendingSlotInfo, setPendingSlotInfo] = useState<{ date?: Date; time?: string } | null>(null);
+
+    const handleNewAppointment = (date?: Date, time?: string) => {
         setEditingAppointment(null);
+        setPendingSlotInfo(date || time ? { date, time } : null);
         setIsNewAppointmentOpen(true);
     };
 
@@ -388,10 +391,15 @@ export default function Agenda() {
                 open={isNewAppointmentOpen}
                 onOpenChange={(open) => {
                     setIsNewAppointmentOpen(open);
-                    if (!open) setEditingAppointment(null);
+                    if (!open) {
+                        setEditingAppointment(null);
+                        setPendingSlotInfo(null);
+                    }
                 }}
                 onSuccess={handleAppointmentSuccess}
                 initialData={editingAppointment}
+                slotDate={pendingSlotInfo?.date}
+                slotTime={pendingSlotInfo?.time}
             />
 
             {/* AI Proposal Dialog */}

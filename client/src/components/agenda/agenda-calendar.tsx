@@ -45,7 +45,7 @@ import { WaitingRoom } from "./waiting-room";
 interface AgendaCalendarProps {
   appointments?: AgendaAppointment[] | Record<number, AgendaAppointment[]>;
   weekStart?: Date;
-  onNewAppointment?: () => void;
+  onNewAppointment?: (date?: Date, time?: string) => void;
   onEditAppointment?: (appointment: AgendaAppointment) => void;
   fullWidth?: boolean;
   onAiSchedule?: () => void;
@@ -585,7 +585,7 @@ export function AgendaCalendar({
               {isCompactDayExperience && (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Button
-                    onClick={onNewAppointment}
+                    onClick={() => onNewAppointment?.()}
                     size="sm"
                     className="bg-card text-charcoal hover:bg-muted border-0 shadow-sm h-9 w-9 p-0"
                     title="Nova Consulta"
@@ -698,7 +698,7 @@ export function AgendaCalendar({
             {!isCompactDayExperience && (
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 xl:justify-end">
                 <Button
-                  onClick={onNewAppointment}
+                  onClick={() => onNewAppointment?.()}
                   className="bg-card text-charcoal hover:bg-muted border-0 font-semibold shadow-sm"
                   size="sm"
                 >
@@ -1340,7 +1340,7 @@ export function AgendaCalendar({
                           "h-full rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-border hover:text-muted-foreground transition-colors cursor-pointer",
                           isCompactDayExperience ? "min-h-[44px] text-xs" : "min-h-[60px] text-sm"
                         )}
-                        onClick={onNewAppointment}
+                        onClick={() => onNewAppointment?.(currentDate, formatSlotTime(hour, minute))}
                       >
                         <Plus className={cn(isCompactDayExperience ? "w-3.5 h-3.5 mr-1" : "w-4 h-4 mr-1")} />
                         {isCompactDayExperience ? "Livre" : "Disponível"}

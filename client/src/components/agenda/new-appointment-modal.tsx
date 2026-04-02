@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown, Lock, UserPlus, CalendarRange } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown, Lock, UserPlus, CalendarRange, ArrowLeft, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -85,10 +86,40 @@ interface NewAppointmentModalProps {
     onOpenChange: (open: boolean) => void;
     onSuccess?: (data: any) => void;
     initialData?: any;
+    slotDate?: Date;
+    slotTime?: string;
 }
 
-export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData }: NewAppointmentModalProps) {
+export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData, slotDate, slotTime }: NewAppointmentModalProps) {
     const [openCombobox, setOpenCombobox] = useState(false);
+    const [showNewPatientForm, setShowNewPatientForm] = useState(false);
+    const [newPatientName, setNewPatientName] = useState("");
+    const [newPatientPhone, setNewPatientPhone] = useState("");
+
+    const createPatientMutation = useMutation({
+        mutationFn: async (data: { name: string; phone: string }) => {
+            const res = await apiRequest("POST", "/api/profiles", {
+                name: data.name,
+                phone: data.phone || null,
+                relationship: null,
+                bloodType: null,
+                isDefault: false,
+                clinicId: null,
+                deceased: false,
+                deathDate: null,
+                deathTime: null,
+                deathCause: null,
+            });
+            return await res.json();
+        },
+        onSuccess: (newProfile) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+            form.setValue("profileId", newProfile.id.toString());
+            setShowNewPatientForm(false);
+            setNewPatientName("");
+            setNewPatientPhone("");
+        },
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -117,6 +148,10 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
 
     useEffect(() => {
         if (open) {
+            setShowNewPatientForm(false);
+            setNewPatientName("");
+            setNewPatientPhone("");
+
             if (initialData) {
                 // Format price from cents (123456) to string ("1.234,56")
                 let priceFormatted = "";
@@ -133,7 +168,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                     notes: initialData.notes || "",
                     price: priceFormatted,
                     isAllDay: initialData.isAllDay || false,
-                    isRange: false, // Assuming range edit isn't fully supported yet or we don't have range data in single appointment
+                    isRange: false,
                     isTelemedicine: initialData.isTelemedicine || false,
                     meetingLink: initialData.meetingLink || "",
                 });
@@ -146,7 +181,8 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
             } else {
                 form.reset({
                     type: "consulta",
-                    time: "09:00",
+                    time: slotTime || "09:00",
+                    date: slotDate || undefined,
                     notes: "",
                     price: "",
                     isRange: false,
@@ -155,7 +191,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                 setMode("appointment");
             }
         }
-    }, [open, initialData, form]);
+    }, [open, initialData, slotDate, slotTime, form]);
 
     const { data: profiles = [] } = useQuery<any[]>({
         queryKey: ["/api/profiles"],
@@ -264,7 +300,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                        {mode === 'appointment' && (
+                        {mode === 'appointment' && !showNewPatientForm && (
                             <FormField
                                 control={form.control}
                                 name="profileId"
@@ -317,6 +353,18 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                                 </CommandItem>
                                                             ))}
                                                         </CommandGroup>
+                                                        <CommandGroup>
+                                                            <CommandItem
+                                                                onSelect={() => {
+                                                                    setOpenCombobox(false);
+                                                                    setShowNewPatientForm(true);
+                                                                }}
+                                                                className="text-primary"
+                                                            >
+                                                                <UserPlus className="mr-2 h-4 w-4" />
+                                                                Novo Paciente
+                                                            </CommandItem>
+                                                        </CommandGroup>
                                                     </CommandList>
                                                 </Command>
                                             </PopoverContent>
@@ -325,6 +373,61 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                     </FormItem>
                                 )}
                             />
+                        )}
+
+                        {mode === 'appointment' && showNewPatientForm && (
+                            <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                                        <UserPlus className="h-4 w-4" />
+                                        Novo Paciente
+                                    </h4>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowNewPatientForm(false)}
+                                        className="h-7 px-2 text-xs"
+                                    >
+                                        <ArrowLeft className="h-3 w-3 mr-1" />
+                                        Voltar
+                                    </Button>
+                                </div>
+                                <div className="space-y-2">
+                                    <div>
+                                        <label className="text-sm font-medium">Nome *</label>
+                                        <Input
+                                            placeholder="Nome do paciente"
+                                            value={newPatientName}
+                                            onChange={(e) => setNewPatientName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">Telefone</label>
+                                        <Input
+                                            placeholder="(00) 00000-0000"
+                                            value={newPatientPhone}
+                                            onChange={(e) => setNewPatientPhone(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="w-full"
+                                    disabled={!newPatientName.trim() || createPatientMutation.isPending}
+                                    onClick={() => createPatientMutation.mutate({ name: newPatientName.trim(), phone: newPatientPhone.trim() })}
+                                >
+                                    {createPatientMutation.isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Criando...
+                                        </>
+                                    ) : (
+                                        "Cadastrar e Selecionar"
+                                    )}
+                                </Button>
+                            </div>
                         )}
 
                         {mode === 'appointment' ? (
