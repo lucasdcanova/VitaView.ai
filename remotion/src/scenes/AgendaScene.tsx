@@ -5,74 +5,40 @@ import {
   useVideoConfig,
   interpolate,
   spring,
-  Easing,
   Sequence,
 } from 'remotion';
-import { colors, SPRING_SMOOTH, SPRING_GENTLE } from '../theme';
+import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
+import { reveal, wordReveal, scaleIn } from '../anim';
 
-const TimeSlot: React.FC<{
-  time: string;
-  delay: number;
-  occupied?: boolean;
-  patientName?: string;
-  type?: string;
-  isClicked?: boolean;
-  clickFrame?: number;
-  isVertical: boolean;
-}> = ({ time, delay, occupied, patientName, type, isClicked, clickFrame = 0, isVertical }) => {
+const Slot: React.FC<{
+  time: string; delay: number; occupied?: boolean; name?: string; type?: string;
+  clicked?: boolean; clickAt?: number; v: boolean;
+}> = ({ time, delay, occupied, name, type, clicked, clickAt = 0, v }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const slideIn = spring({ frame, fps, delay, config: SPRING_SMOOTH });
-  const opacity = interpolate(slideIn, [0, 1], [0, 1]);
-  const y = interpolate(slideIn, [0, 1], [14, 0]);
-
-  const clickProgress = isClicked
-    ? spring({ frame, fps, delay: clickFrame, config: SPRING_GENTLE })
-    : 0;
-
-  const typeColors: Record<string, string> = {
-    consulta: colors.charcoal,
-    retorno: colors.blue500,
-    exames: colors.amber500,
-  };
+  const r = reveal(frame, fps, delay, { y: 12 });
+  const clickP = clicked ? spring({ frame, fps, delay: clickAt, config: S.gentle }) : 0;
+  const typeCol: Record<string, string> = { consulta: c.primary, retorno: c.blue, exames: c.amber };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 16,
-        opacity,
-        transform: `translateY(${y}px) scale(${isClicked ? interpolate(clickProgress, [0, 1], [1, 0.97]) : 1})`,
-        alignItems: 'stretch',
-        minHeight: isVertical ? 56 : 64,
-      }}
-    >
-      <div style={{ width: isVertical ? 58 : 72, fontFamily: montserrat, fontSize: isVertical ? 17 : 20, fontWeight: 700, color: colors.charcoal, textAlign: 'right', paddingTop: 6 }}>
-        {time}
-      </div>
-      <div
-        style={{
-          flex: 1,
-          borderRadius: 12,
-          padding: isVertical ? '10px 16px' : '12px 18px',
-          ...(occupied
-            ? { backgroundColor: colors.pureWhite, borderLeft: `3px solid ${typeColors[type || 'consulta'] || colors.charcoal}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }
-            : {
-                border: `2px dashed ${clickProgress > 0.5 ? colors.charcoal : colors.lightGray}`,
-                backgroundColor: clickProgress > 0.5 ? 'rgba(33,33,33,0.02)' : 'transparent',
-              }),
-        }}
-      >
+    <div style={{ ...r, display: 'flex', gap: 14, alignItems: 'stretch', minHeight: v ? 50 : 58, transform: `${r.transform} scale(${clicked ? interpolate(clickP, [0, 1], [1, 0.97]) : 1})` }}>
+      <div style={{ width: v ? 52 : 66, fontFamily: montserrat, fontSize: v ? 15 : 18, fontWeight: 700, color: c.textStrong, textAlign: 'right', paddingTop: 5 }}>{time}</div>
+      <div style={{
+        flex: 1, borderRadius: 12, padding: v ? '9px 14px' : '11px 16px',
+        ...(occupied
+          ? { backgroundColor: c.bgCard, borderLeft: `3px solid ${typeCol[type!] || c.primary}`, boxShadow: '0 1px 2px rgba(0,0,0,0.15)' }
+          : { border: `2px dashed ${clickP > 0.5 ? c.blue : c.strokeDefault}`, backgroundColor: clickP > 0.5 ? 'rgba(96,165,250,0.04)' : 'transparent' }),
+      }}>
         {occupied ? (
           <div>
-            <div style={{ fontFamily: montserrat, fontSize: isVertical ? 14 : 16, fontWeight: 700, color: colors.charcoal }}>{patientName}</div>
-            <div style={{ fontFamily: openSans, fontSize: 12, color: colors.contentMuted, marginTop: 1, textTransform: 'capitalize' }}>{type}</div>
+            <div style={{ fontFamily: montserrat, fontSize: v ? 13 : 15, fontWeight: 700, color: c.textStrong }}>{name}</div>
+            <div style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted, marginTop: 1, textTransform: 'capitalize' }}>{type}</div>
           </div>
         ) : (
-          <div style={{ fontFamily: openSans, fontSize: 13, color: colors.mediumGray, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 16 }}>+</span> Disponivel
+          <div style={{ fontFamily: openSans, fontSize: 12, color: c.textSubtle, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 14 }}>+</span> Disponível
           </div>
         )}
       </div>
@@ -80,83 +46,51 @@ const TimeSlot: React.FC<{
   );
 };
 
-const AppointmentModal: React.FC<{ isVertical: boolean }> = ({ isVertical }) => {
+const Modal: React.FC<{ v: boolean }> = ({ v }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const modalSpring = spring({ frame, fps, config: SPRING_GENTLE });
-  const modalOpacity = interpolate(frame, [0, 0.3 * fps], [0, 1], { extrapolateRight: 'clamp' });
+  const s = scaleIn(frame, fps, 0);
+  const o = interpolate(frame, [0, 0.35 * fps], [0, 1], { extrapolateRight: 'clamp' });
 
-  const f = (delay: number) => {
-    const s = spring({ frame, fps, delay, config: SPRING_SMOOTH });
-    const o = interpolate(frame, [delay, delay + 0.2 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-    return { opacity: o, transform: `translateY(${interpolate(s, [0, 1], [12, 0])}px)` };
-  };
+  const field = (d: number) => reveal(frame, fps, d, { y: 10 });
 
-  const highlightPulse = frame > 1.2 * fps
-    ? interpolate(frame - 1.2 * fps, [0, 0.4 * fps, 0.8 * fps], [0, 1, 0.6], { extrapolateRight: 'clamp' })
-    : 0;
-
-  const w = isVertical ? 360 : 380;
+  const hlPulse = frame > 1.2 * fps ? interpolate(frame - 1.2 * fps, [0, 0.5 * fps, 1 * fps], [0, 1, 0.5], { extrapolateRight: 'clamp' }) : 0;
 
   return (
-    <div
-      style={{
-        transform: `scale(${interpolate(modalSpring, [0, 1], [0.92, 1])})`,
-        opacity: modalOpacity,
-        width: w,
-        backgroundColor: colors.pureWhite,
-        borderRadius: 16,
-        boxShadow: '0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{ padding: '22px 24px 14px', borderBottom: `1px solid ${colors.strokeSoft}` }}>
-        <div style={{ fontFamily: montserrat, fontSize: 20, fontWeight: 700, color: colors.charcoal }}>Novo Agendamento</div>
-        <div style={{ fontFamily: openSans, fontSize: 13, color: colors.contentMuted, marginTop: 3 }}>Agende uma consulta ou bloqueie um horario.</div>
+    <div style={{ transform: `scale(${interpolate(s, [0, 1], [0.93, 1])})`, opacity: o, width: v ? '100%' : 370, maxWidth: 400, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 20px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+      <div style={{ padding: '20px 22px 12px', borderBottom: `1px solid ${c.strokeSoft}` }}>
+        <div style={{ fontFamily: montserrat, fontSize: 18, fontWeight: 700, color: c.textStrong }}>Novo Agendamento</div>
+        <div style={{ fontFamily: openSans, fontSize: 12, color: c.textMuted, marginTop: 2 }}>Agende uma consulta ou bloqueie um horário.</div>
       </div>
-
-      <div style={{ padding: '18px 24px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={f(0.2 * fps)}>
-          <div style={{ fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: colors.charcoal, marginBottom: 5 }}>Paciente</div>
-          <div style={{ border: `1px solid ${colors.strokeDefault}`, borderRadius: 8, padding: '9px 13px', fontFamily: openSans, fontSize: 13, color: colors.mediumGray, display: 'flex', justifyContent: 'space-between' }}>
-            Selecione o paciente <span style={{ fontSize: 9, color: colors.lightGray }}>▼</span>
+      <div style={{ padding: '16px 22px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={field(0.2 * fps)}>
+          <div style={{ fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: c.textDefault, marginBottom: 4 }}>Paciente</div>
+          <div style={{ border: `1px solid ${c.strokeDefault}`, borderRadius: 8, padding: '8px 12px', fontFamily: openSans, fontSize: 12, color: c.textSubtle, display: 'flex', justifyContent: 'space-between' }}>
+            Selecione o paciente <span style={{ fontSize: 8, color: c.strokeStrong }}>▼</span>
           </div>
         </div>
-
-        <div style={f(0.35 * fps)}>
-          <div
-            style={{
-              border: `1px solid ${highlightPulse > 0.3 ? colors.green500 : colors.strokeDefault}`,
-              borderRadius: 8,
-              padding: '9px 13px',
-              backgroundColor: `rgba(34,197,94,${0.03 + highlightPulse * 0.06})`,
-              fontFamily: montserrat,
-              fontSize: 13,
-              fontWeight: 600,
-              color: colors.green600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-            }}
-          >
-            <span style={{ fontSize: 16 }}>+</span> Novo Paciente
+        <div style={field(0.35 * fps)}>
+          <div style={{
+            border: `1px solid ${hlPulse > 0.3 ? c.green : c.strokeDefault}`, borderRadius: 8, padding: '8px 12px',
+            backgroundColor: `rgba(34,197,94,${0.03 + hlPulse * 0.06})`,
+            fontFamily: montserrat, fontSize: 12, fontWeight: 600, color: c.green, display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 14 }}>+</span> Novo Paciente
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: 12, ...f(0.5 * fps) }}>
+        <div style={{ display: 'flex', gap: 10, ...field(0.5 * fps) }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: colors.charcoal, marginBottom: 5 }}>Horario</div>
-            <div style={{ border: `1px solid ${colors.strokeDefault}`, borderRadius: 8, padding: '9px 13px', fontFamily: openSans, fontSize: 13, color: colors.charcoal, fontWeight: 600 }}>14:00</div>
+            <div style={{ fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: c.textDefault, marginBottom: 4 }}>Horário</div>
+            <div style={{ border: `1px solid ${c.strokeDefault}`, borderRadius: 8, padding: '8px 12px', fontFamily: openSans, fontSize: 12, color: c.textStrong, fontWeight: 600 }}>14:00</div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: colors.charcoal, marginBottom: 5 }}>Tipo</div>
-            <div style={{ border: `1px solid ${colors.strokeDefault}`, borderRadius: 8, padding: '9px 13px', fontFamily: openSans, fontSize: 13, color: colors.charcoal }}>Consulta</div>
+            <div style={{ fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: c.textDefault, marginBottom: 4 }}>Tipo</div>
+            <div style={{ border: `1px solid ${c.strokeDefault}`, borderRadius: 8, padding: '8px 12px', fontFamily: openSans, fontSize: 12, color: c.textStrong }}>Consulta</div>
           </div>
         </div>
-
-        <div style={f(0.65 * fps)}>
-          <div style={{ backgroundColor: colors.charcoal, borderRadius: 8, padding: '13px 18px', fontFamily: montserrat, fontSize: 14, fontWeight: 700, color: colors.pureWhite, textAlign: 'center' }}>
+        <div style={field(0.65 * fps)}>
+          <div style={{ backgroundColor: c.primary, borderRadius: 8, padding: '12px 16px', fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: c.bg, textAlign: 'center' }}>
             Agendar Consulta
           </div>
         </div>
@@ -168,51 +102,40 @@ const AppointmentModal: React.FC<{ isVertical: boolean }> = ({ isVertical }) => 
 export const AgendaScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
-  const isVertical = height > width;
+  const v = height > width;
 
-  const titleSpring = spring({ frame, fps, config: SPRING_SMOOTH });
-  const titleOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], { extrapolateRight: 'clamp' });
-
-  const pad = isVertical ? 50 : 160;
-  const slotsWidth = isVertical ? width - 100 : 500;
+  const titleWords = wordReveal('Clique para Agendar', frame, fps, 0.15 * fps, 0.07);
+  const pad = v ? 60 : 140;
+  const slotW = v ? width - 120 : 480;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: colors.surface0 }}>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: isVertical ? 'column' : 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: pad,
-          gap: isVertical ? 24 : 50,
-        }}
-      >
-        {/* Left: title + slots */}
-        <div style={{ width: slotsWidth, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ opacity: titleOpacity, transform: `translateY(${interpolate(titleSpring, [0, 1], [20, 0])}px)` }}>
-            <div style={{ fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: colors.mediumGray, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
+    <AbsoluteFill style={{ backgroundColor: c.bg }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 50% 40% at 70% 50%, rgba(96,165,250,0.03), transparent)` }} />
+
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 24 : 46 }}>
+        <div style={{ width: slotW, display: 'flex', flexDirection: 'column', gap: v ? 14 : 18 }}>
+          <div>
+            <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
               Agenda Inteligente
             </div>
-            <div style={{ fontFamily: montserrat, fontSize: isVertical ? 30 : 38, fontWeight: 700, color: colors.charcoal, letterSpacing: -1, lineHeight: 1.1 }}>
-              Clique para Agendar
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {titleWords.map((w, i) => (
+                <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 26 : 34, fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
+              ))}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <TimeSlot time="08:00" delay={Math.round(0.2 * fps)} occupied patientName="Maria Silva" type="consulta" isVertical={isVertical} />
-            <TimeSlot time="09:00" delay={Math.round(0.3 * fps)} occupied patientName="Joao Santos" type="retorno" isVertical={isVertical} />
-            <TimeSlot time="10:00" delay={Math.round(0.4 * fps)} occupied patientName="Ana Costa" type="exames" isVertical={isVertical} />
-            {!isVertical && <TimeSlot time="11:00" delay={Math.round(0.5 * fps)} isVertical={isVertical} />}
-            <TimeSlot time="14:00" delay={Math.round(0.6 * fps)} isClicked clickFrame={Math.round(2 * fps)} isVertical={isVertical} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <Slot time="08:00" delay={Math.round(0.25 * fps)} occupied name="Maria Silva" type="consulta" v={v} />
+            <Slot time="09:00" delay={Math.round(0.35 * fps)} occupied name="João Santos" type="retorno" v={v} />
+            <Slot time="10:00" delay={Math.round(0.45 * fps)} occupied name="Ana Costa" type="exames" v={v} />
+            {!v && <Slot time="11:00" delay={Math.round(0.55 * fps)} v={v} />}
+            <Slot time="14:00" delay={Math.round(v ? 0.55 : 0.65) * fps} clicked clickAt={Math.round(2 * fps)} v={v} />
           </div>
         </div>
 
-        {/* Right: modal */}
         <Sequence from={Math.round(2.5 * fps)} layout="none" premountFor={Math.round(0.5 * fps)}>
-          <AppointmentModal isVertical={isVertical} />
+          <Modal v={v} />
         </Sequence>
       </div>
     </AbsoluteFill>

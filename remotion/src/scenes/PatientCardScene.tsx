@@ -7,51 +7,33 @@ import {
   spring,
   Easing,
 } from 'remotion';
-import { colors, SPRING_SMOOTH, SPRING_GENTLE } from '../theme';
+import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
+import { reveal, wordReveal, scaleIn } from '../anim';
 
-const MetricCard: React.FC<{
-  label: string;
-  value: string;
-  status: 'normal' | 'alert' | 'warning';
-  delay: number;
-  icon: string;
-  isVertical: boolean;
-}> = ({ label, value, status, delay, icon, isVertical }) => {
+const Metric: React.FC<{
+  label: string; value: string; status: 'ok' | 'warn' | 'alert'; delay: number; icon: string; v: boolean;
+}> = ({ label, value, status, delay, icon, v }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const entrance = spring({ frame, fps, delay, config: SPRING_GENTLE });
-  const opacity = interpolate(frame, [delay, delay + 0.25 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const s = scaleIn(frame, fps, delay);
+  const o = interpolate(frame, [delay, delay + 0.3 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
-  const statusColor = status === 'alert' ? colors.alertRed : status === 'warning' ? colors.amber500 : colors.green600;
-  const statusBg = status === 'alert' ? 'rgba(211,47,47,0.07)' : status === 'warning' ? 'rgba(245,158,11,0.07)' : 'rgba(22,163,106,0.07)';
+  const col = { ok: c.green, warn: c.amber, alert: c.red };
+  const bg = { ok: c.greenMuted, warn: c.amberMuted, alert: c.redMuted };
+  const txt = { ok: 'Normal', warn: 'Atenção', alert: 'Alterado' };
 
   return (
-    <div
-      style={{
-        opacity,
-        transform: `scale(${interpolate(entrance, [0, 1], [0.9, 1])}) translateY(${interpolate(entrance, [0, 1], [16, 0])}px)`,
-        backgroundColor: colors.pureWhite,
-        borderRadius: 14,
-        padding: isVertical ? '14px 16px' : '18px 20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-        border: `1px solid ${colors.strokeSoft}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-        <span style={{ fontSize: isVertical ? 16 : 18 }}>{icon}</span>
-        <span style={{ fontFamily: openSans, fontSize: 12, color: colors.contentMuted }}>{label}</span>
+    <div style={{ opacity: o, transform: `scale(${interpolate(s, [0, 1], [0.92, 1])}) translateY(${interpolate(s, [0, 1], [12, 0])}px)`, backgroundColor: c.bgCard, borderRadius: 14, padding: v ? '12px 14px' : '16px 18px', border: `1px solid ${c.strokeSoft}`, display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: v ? 14 : 16 }}>{icon}</span>
+        <span style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted }}>{label}</span>
       </div>
-      <div style={{ fontFamily: montserrat, fontSize: isVertical ? 22 : 26, fontWeight: 700, color: colors.charcoal }}>{value}</div>
-      <div style={{ backgroundColor: statusBg, borderRadius: 20, padding: '3px 10px', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 5 }}>
-        <div style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: statusColor }} />
-        <span style={{ fontFamily: openSans, fontSize: 11, fontWeight: 600, color: statusColor }}>
-          {status === 'normal' ? 'Normal' : status === 'alert' ? 'Alterado' : 'Atencao'}
-        </span>
+      <div style={{ fontFamily: montserrat, fontSize: v ? 20 : 24, fontWeight: 700, color: c.textStrong }}>{value}</div>
+      <div style={{ backgroundColor: bg[status], borderRadius: 20, padding: '2px 9px', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: col[status] }} />
+        <span style={{ fontFamily: openSans, fontSize: 10, fontWeight: 600, color: col[status] }}>{txt[status]}</span>
       </div>
     </div>
   );
@@ -60,138 +42,94 @@ const MetricCard: React.FC<{
 export const PatientCardScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
-  const isVertical = height > width;
+  const v = height > width;
 
-  const titleSpring = spring({ frame, fps, config: SPRING_SMOOTH });
-  const titleOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], { extrapolateRight: 'clamp' });
-
-  const cardSpring = spring({ frame, fps, delay: 0.3 * fps, config: SPRING_SMOOTH });
-  const cardOpacity = interpolate(frame, [0.3 * fps, 0.6 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const titleWords = wordReveal('Visão Completa', frame, fps, 0.15 * fps, 0.08);
+  const cardR = reveal(frame, fps, 0.3 * fps, { y: 14 });
 
   const chartProgress = interpolate(frame, [2.2 * fps, 3.8 * fps], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
     easing: Easing.bezier(0.22, 1, 0.36, 1),
   });
 
-  const chartData = [65, 72, 68, 80, 75, 90, 85, 92, 88, 95, 91, 89];
-  const pad = isVertical ? 50 : 120;
-  const maxW = isVertical ? width - 100 : 1200;
+  const data = [65, 72, 68, 80, 75, 90, 85, 92, 88, 95, 91, 89];
+  const pad = v ? 50 : 100;
+  const maxW = v ? width - 100 : 1100;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: colors.surface0 }}>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: pad,
-          gap: isVertical ? 18 : 24,
-        }}
-      >
+    <AbsoluteFill style={{ backgroundColor: c.bg }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 40% at 60% 40%, rgba(34,197,94,0.03), transparent)` }} />
+
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 14 : 20 }}>
         {/* Title */}
-        <div style={{ width: maxW, opacity: titleOpacity, transform: `translateY(${interpolate(titleSpring, [0, 1], [20, 0])}px)` }}>
-          <div style={{ fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: colors.mediumGray, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
+        <div style={{ width: maxW }}>
+          <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
             Painel do Paciente
           </div>
-          <div style={{ fontFamily: montserrat, fontSize: isVertical ? 30 : 38, fontWeight: 700, color: colors.charcoal, letterSpacing: -1 }}>
-            Visao Completa
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+            {titleWords.map((w, i) => (
+              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 26 : 34, fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
+            ))}
           </div>
         </div>
 
         {/* Patient card */}
-        <div
-          style={{
-            width: maxW,
-            opacity: cardOpacity,
-            transform: `translateY(${interpolate(cardSpring, [0, 1], [14, 0])}px)`,
-            backgroundColor: colors.pureWhite,
-            borderRadius: 16,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-            padding: isVertical ? '18px 20px' : '22px 26px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-          }}
-        >
-          <div style={{ width: isVertical ? 48 : 56, height: isVertical ? 48 : 56, borderRadius: isVertical ? 24 : 28, backgroundColor: colors.charcoal, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: isVertical ? 18 : 22, fontWeight: 700, color: colors.pureWhite, flexShrink: 0 }}>
-            MS
-          </div>
+        <div style={{ ...cardR, width: maxW, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', padding: v ? '14px 16px' : '18px 22px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: v ? 42 : 50, height: v ? 42 : 50, borderRadius: v ? 21 : 25, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: v ? 16 : 20, fontWeight: 700, color: c.bg, flexShrink: 0 }}>MS</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: montserrat, fontSize: isVertical ? 18 : 22, fontWeight: 700, color: colors.charcoal }}>Maria Silva</div>
-            <div style={{ fontFamily: openSans, fontSize: isVertical ? 12 : 13, color: colors.contentMuted, marginTop: 2 }}>42 anos • Feminino • Particular</div>
+            <div style={{ fontFamily: montserrat, fontSize: v ? 16 : 20, fontWeight: 700, color: c.textStrong }}>Maria Silva</div>
+            <div style={{ fontFamily: openSans, fontSize: v ? 11 : 12, color: c.textMuted, marginTop: 1 }}>42 anos • Feminino • Particular</div>
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {['Hipertensao', 'Diabetes T2', 'Hipotireoidismo'].map((tag, i) => {
-              const td = 0.7 * fps + i * 0.12 * fps;
-              const ts = spring({ frame, fps, delay: td, config: SPRING_SMOOTH });
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {['Hipertensão', 'Diabetes T2', 'Hipotireoidismo'].map((tag, i) => {
+              const td = 0.65 * fps + i * 0.1 * fps;
               return (
                 <div key={tag} style={{
-                  opacity: interpolate(frame, [td, td + 0.2 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-                  transform: `scale(${interpolate(ts, [0, 1], [0.85, 1])})`,
-                  backgroundColor: colors.surface2, borderRadius: 20, padding: '4px 12px', fontFamily: openSans, fontSize: 11, fontWeight: 600, color: colors.contentDefault,
+                  ...reveal(frame, fps, td, { y: 6 }),
+                  backgroundColor: c.bgSurface, borderRadius: 20, padding: '3px 10px',
+                  fontFamily: openSans, fontSize: 10, fontWeight: 600, color: c.textDefault,
                 }}>{tag}</div>
               );
             })}
           </div>
         </div>
 
-        {/* Metrics grid */}
-        <div style={{ width: maxW, display: 'grid', gridTemplateColumns: isVertical ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isVertical ? 10 : 14 }}>
-          <MetricCard label="Glicemia" value="142 mg/dL" status="warning" delay={Math.round(1.2 * fps)} icon="🩸" isVertical={isVertical} />
-          <MetricCard label="Pressao" value="130/85" status="alert" delay={Math.round(1.35 * fps)} icon="💓" isVertical={isVertical} />
-          <MetricCard label="TSH" value="3.2 mUI/L" status="normal" delay={Math.round(1.5 * fps)} icon="🧪" isVertical={isVertical} />
-          <MetricCard label="HbA1c" value="7.1%" status="warning" delay={Math.round(1.65 * fps)} icon="📊" isVertical={isVertical} />
-          <MetricCard label="Colesterol" value="198 mg/dL" status="normal" delay={Math.round(1.8 * fps)} icon="🫀" isVertical={isVertical} />
-          <MetricCard label="Creatinina" value="0.9 mg/dL" status="normal" delay={Math.round(1.95 * fps)} icon="🔬" isVertical={isVertical} />
+        {/* Metrics */}
+        <div style={{ width: maxW, display: 'grid', gridTemplateColumns: v ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: v ? 8 : 12 }}>
+          <Metric label="Glicemia" value="142 mg/dL" status="warn" delay={Math.round(1.2 * fps)} icon="🩸" v={v} />
+          <Metric label="Pressão" value="130/85" status="alert" delay={Math.round(1.35 * fps)} icon="💓" v={v} />
+          <Metric label="TSH" value="3.2 mUI/L" status="ok" delay={Math.round(1.5 * fps)} icon="🧪" v={v} />
+          <Metric label="HbA1c" value="7.1%" status="warn" delay={Math.round(1.65 * fps)} icon="📊" v={v} />
+          <Metric label="Colesterol" value="198 mg/dL" status="ok" delay={Math.round(1.8 * fps)} icon="🫀" v={v} />
+          <Metric label="Creatinina" value="0.9 mg/dL" status="ok" delay={Math.round(1.95 * fps)} icon="🔬" v={v} />
         </div>
 
         {/* Chart */}
-        <div
-          style={{
-            width: maxW,
-            backgroundColor: colors.pureWhite,
-            borderRadius: 16,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-            padding: isVertical ? '16px 18px' : '18px 24px',
-            opacity: interpolate(frame, [2 * fps, 2.3 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-          }}
-        >
-          <div style={{ fontFamily: montserrat, fontSize: 14, fontWeight: 700, color: colors.charcoal, marginBottom: 12 }}>
-            Evolucao da Glicemia (12 meses)
+        <div style={{
+          width: maxW, backgroundColor: c.bgCard, borderRadius: 16,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)', padding: v ? '14px 16px' : '16px 22px',
+          opacity: interpolate(frame, [2 * fps, 2.3 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+        }}>
+          <div style={{ fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: c.textStrong, marginBottom: 10 }}>
+            Evolução da Glicemia (12 meses)
           </div>
-          <svg width="100%" height={isVertical ? 100 : 130} viewBox={`0 0 ${isVertical ? 900 : 1150} ${isVertical ? 100 : 130}`} preserveAspectRatio="none">
-            {[0, isVertical ? 50 : 65, isVertical ? 100 : 130].map((y) => (
-              <line key={y} x1={0} y1={y} x2={isVertical ? 900 : 1150} y2={y} stroke={colors.strokeSoft} strokeWidth={1} />
-            ))}
+          <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 850 : 1060} ${v ? 80 : 110}`} preserveAspectRatio="none">
+            {[0, v ? 40 : 55, v ? 80 : 110].map(y => <line key={y} x1={0} y1={y} x2={v ? 850 : 1060} y2={y} stroke={c.strokeSoft} strokeWidth={1} />)}
             <polyline
-              points={chartData
-                .map((val, i) => {
-                  const chartW = isVertical ? 860 : 1110;
-                  const chartH = isVertical ? 80 : 110;
-                  const x = (i / (chartData.length - 1)) * chartW + 20;
-                  const y = chartH - ((val - 60) / 40) * chartH + 10;
-                  return `${x},${y}`;
-                })
-                .slice(0, Math.ceil(chartData.length * chartProgress))
-                .join(' ')}
-              fill="none"
-              stroke={colors.charcoal}
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              points={data.map((val, i) => {
+                const cW = v ? 810 : 1020; const cH = v ? 64 : 90;
+                const x = (i / (data.length - 1)) * cW + 20;
+                const y = cH - ((val - 60) / 40) * cH + 10;
+                return `${x},${y}`;
+              }).slice(0, Math.ceil(data.length * chartProgress)).join(' ')}
+              fill="none" stroke={c.textDefault} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
             />
-            {chartData.slice(0, Math.ceil(chartData.length * chartProgress)).map((val, i) => {
-              const chartW = isVertical ? 860 : 1110;
-              const chartH = isVertical ? 80 : 110;
-              const x = (i / (chartData.length - 1)) * chartW + 20;
-              const y = chartH - ((val - 60) / 40) * chartH + 10;
-              const dd = 2.2 * fps + i * 0.06 * fps;
-              const ds = spring({ frame, fps, delay: dd, config: { damping: 14, stiffness: 140 } });
-              return <circle key={i} cx={x} cy={y} r={4 * ds} fill={colors.pureWhite} stroke={colors.charcoal} strokeWidth={2} />;
+            {data.slice(0, Math.ceil(data.length * chartProgress)).map((val, i) => {
+              const cW = v ? 810 : 1020; const cH = v ? 64 : 90;
+              const x = (i / (data.length - 1)) * cW + 20;
+              const y = cH - ((val - 60) / 40) * cH + 10;
+              const ds = spring({ frame, fps, delay: 2.2 * fps + i * 0.05 * fps, config: { damping: 14, stiffness: 140 } });
+              return <circle key={i} cx={x} cy={y} r={3.5 * ds} fill={c.bgCard} stroke={c.textDefault} strokeWidth={2} />;
             })}
           </svg>
         </div>

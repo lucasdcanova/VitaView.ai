@@ -7,115 +7,93 @@ import {
   spring,
   Easing,
 } from 'remotion';
-import { colors, SPRING_SMOOTH, SPRING_GENTLE } from '../theme';
+import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
+import { reveal, wordReveal, scaleIn } from '../anim';
 
 const LINES = [
-  { speaker: 'Medico', text: 'Como voce esta se sentindo desde a ultima consulta?', time: 0 },
-  { speaker: 'Paciente', text: 'Melhorei da dor lombar, mas ainda sinto cansaco.', time: 1.2 },
-  { speaker: 'Medico', text: 'Vamos solicitar alguns exames complementares.', time: 2.6 },
+  { speaker: 'Médico', text: 'Como você está se sentindo desde a última consulta?', time: 0 },
+  { speaker: 'Paciente', text: 'Melhorei da dor lombar, mas ainda sinto cansaço.', time: 1.2 },
+  { speaker: 'Médico', text: 'Vamos solicitar alguns exames complementares.', time: 2.6 },
 ];
 
 const FIELDS = [
-  { label: 'Queixa Principal', value: 'Cansaco persistente apos melhora de lombalgia' },
-  { label: 'Historia da Doenca Atual', value: 'Paciente refere melhora significativa do quadro algico lombar...' },
+  { label: 'Queixa Principal', value: 'Cansaço persistente após melhora de lombalgia' },
+  { label: 'História da Doença Atual', value: 'Paciente refere melhora significativa do quadro álgico lombar...' },
   { label: 'Conduta', value: 'Solicitar hemograma, TSH, ferritina. Retorno em 15 dias.' },
 ];
 
 export const TranscriptionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
-  const isVertical = height > width;
+  const v = height > width;
 
-  const titleSpring = spring({ frame, fps, config: SPRING_SMOOTH });
-  const titleOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], { extrapolateRight: 'clamp' });
-
+  const titleWords = wordReveal('Voz para Prontuário', frame, fps, 0.15 * fps, 0.07);
   const waveActive = frame > 0.5 * fps && frame < 4 * fps;
-  const pad = isVertical ? 50 : 160;
-  const cardW = isVertical ? width - 100 : 520;
+  const pad = v ? 60 : 140;
+  const cW = v ? width - 120 : 500;
 
-  // Anamnesis card
   const cardDelay = 4.2 * fps;
-  const cardSpring = spring({ frame, fps, delay: cardDelay, config: SPRING_SMOOTH });
-  const cardOpacity = interpolate(frame, [cardDelay, cardDelay + 0.4 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const cardR = reveal(frame, fps, cardDelay, { y: 20 });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: colors.surface0 }}>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: isVertical ? 'column' : 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: pad,
-          gap: isVertical ? 24 : 50,
-        }}
-      >
-        {/* Left: recording card */}
-        <div style={{ width: cardW, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ opacity: titleOpacity, transform: `translateY(${interpolate(titleSpring, [0, 1], [20, 0])}px)` }}>
-            <div style={{ fontFamily: montserrat, fontSize: 13, fontWeight: 700, color: colors.mediumGray, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
-              Transcricao com IA
+    <AbsoluteFill style={{ backgroundColor: c.bg }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 50% 40% at 30% 50%, rgba(239,68,68,0.03), transparent)` }} />
+
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: v ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', padding: pad, gap: v ? 24 : 46 }}>
+        {/* Left: recording */}
+        <div style={{ width: cW, display: 'flex', flexDirection: 'column', gap: v ? 14 : 18 }}>
+          <div>
+            <div style={{ ...reveal(frame, fps, 0), fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: c.textSubtle, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>
+              Transcrição com IA
             </div>
-            <div style={{ fontFamily: montserrat, fontSize: isVertical ? 30 : 38, fontWeight: 700, color: colors.charcoal, letterSpacing: -1, lineHeight: 1.1 }}>
-              Voz para Prontuario
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {titleWords.map((w, i) => (
+                <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: v ? 26 : 34, fontWeight: 700, color: c.textStrong, letterSpacing: -0.5 }}>{w.word}</span>
+              ))}
             </div>
           </div>
 
-          {/* Recording card */}
-          <div
-            style={{
-              backgroundColor: colors.pureWhite,
-              borderRadius: 16,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-              overflow: 'hidden',
-              opacity: interpolate(spring({ frame, fps, delay: 0.3 * fps, config: SPRING_SMOOTH }), [0, 1], [0, 1]),
-              transform: `translateY(${interpolate(spring({ frame, fps, delay: 0.3 * fps, config: SPRING_SMOOTH }), [0, 1], [12, 0])}px)`,
-            }}
-          >
+          <div style={{ ...reveal(frame, fps, 0.3 * fps, { y: 14 }), backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.strokeSoft}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: waveActive ? colors.alertRed : colors.lightGray, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 14, height: 14, borderRadius: waveActive ? 3 : 7, backgroundColor: colors.pureWhite }} />
+            <div style={{ padding: '14px 18px', borderBottom: `1px solid ${c.strokeSoft}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: waveActive ? c.red : c.bgSurface, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 12, height: 12, borderRadius: waveActive ? 3 : 6, backgroundColor: waveActive ? '#fff' : c.textSubtle }} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: montserrat, fontSize: 16, fontWeight: 700, color: colors.charcoal }}>{waveActive ? 'Gravando...' : 'Gravacao'}</div>
-                <div style={{ fontFamily: openSans, fontSize: 12, color: colors.contentMuted }}>Consulta — Maria Silva</div>
+                <div style={{ fontFamily: montserrat, fontSize: 14, fontWeight: 700, color: c.textStrong }}>{waveActive ? 'Gravando...' : 'Gravação'}</div>
+                <div style={{ fontFamily: openSans, fontSize: 11, color: c.textMuted }}>Consulta — Maria Silva</div>
               </div>
               {waveActive && (
-                <div style={{ fontFamily: montserrat, fontSize: 18, fontWeight: 600, color: colors.alertRed }}>
+                <div style={{ fontFamily: montserrat, fontSize: 16, fontWeight: 600, color: c.red }}>
                   {Math.floor((frame - 0.5 * fps) / fps)}:{String(Math.floor(((frame - 0.5 * fps) % fps) / fps * 60) % 60).padStart(2, '0')}
                 </div>
               )}
             </div>
 
             {/* Waveform */}
-            <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 2.5, height: 48 }}>
-              {Array.from({ length: 36 }).map((_, i) => {
-                const h = waveActive ? 6 + Math.sin(frame * 0.28 + i * 0.65) * 14 + Math.cos(frame * 0.18 + i * 1.05) * 6 : 3;
-                return <div key={i} style={{ width: 3.5, height: Math.max(3, h), borderRadius: 2, backgroundColor: waveActive ? colors.charcoal : colors.lightGray, opacity: waveActive ? 0.5 + Math.sin(frame * 0.15 + i) * 0.5 : 0.35 }} />;
+            <div style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 2, height: 40 }}>
+              {Array.from({ length: 32 }).map((_, i) => {
+                const h = waveActive ? 5 + Math.sin(frame * 0.26 + i * 0.62) * 12 + Math.cos(frame * 0.16 + i * 1) * 5 : 3;
+                return <div key={i} style={{ width: 3, height: Math.max(3, h), borderRadius: 1.5, backgroundColor: waveActive ? c.textDefault : c.strokeDefault, opacity: waveActive ? 0.45 + Math.sin(frame * 0.13 + i) * 0.55 : 0.3 }} />;
               })}
             </div>
 
-            {/* Transcription lines */}
-            <div style={{ padding: '10px 20px 20px' }}>
+            {/* Lines */}
+            <div style={{ padding: '8px 18px 18px' }}>
               {LINES.map((line, i) => {
                 const ld = line.time * fps + 0.5 * fps;
-                const lo = interpolate(frame, [ld, ld + 0.35 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-                const ly = interpolate(frame, [ld, ld + 0.35 * fps], [8, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.quad) });
-                const chars = frame > ld ? Math.min(line.text.length, Math.floor((frame - ld) / (fps * 0.028))) : 0;
+                const lo = interpolate(frame, [ld, ld + 0.4 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+                const ly = interpolate(frame, [ld, ld + 0.4 * fps], [8, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.quad) });
+                const chars = frame > ld ? Math.min(line.text.length, Math.floor((frame - ld) / (fps * 0.026))) : 0;
 
                 return (
-                  <div key={i} style={{ opacity: lo, transform: `translateY(${ly}px)`, marginBottom: 10, display: 'flex', gap: 8 }}>
-                    <div style={{ fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: line.speaker === 'Medico' ? colors.charcoal : colors.blue500, minWidth: 60, paddingTop: 2 }}>
-                      {line.speaker}
-                    </div>
-                    <div style={{ fontFamily: openSans, fontSize: 14, color: colors.contentDefault, lineHeight: 1.45 }}>
+                  <div key={i} style={{ opacity: lo, transform: `translateY(${ly}px)`, marginBottom: 8, display: 'flex', gap: 7 }}>
+                    <div style={{ fontFamily: montserrat, fontSize: 10, fontWeight: 700, color: line.speaker === 'Médico' ? c.textDefault : c.blue, minWidth: 55, paddingTop: 2 }}>{line.speaker}</div>
+                    <div style={{ fontFamily: openSans, fontSize: 13, color: c.textDefault, lineHeight: 1.4 }}>
                       {line.text.slice(0, chars)}
                       {chars < line.text.length && chars > 0 && (
-                        <span style={{ display: 'inline-block', width: 2, height: 14, backgroundColor: colors.charcoal, marginLeft: 1, verticalAlign: 'middle', opacity: Math.sin(frame * 0.3) > 0 ? 1 : 0 }} />
+                        <span style={{ display: 'inline-block', width: 1.5, height: 13, backgroundColor: c.textStrong, marginLeft: 1, verticalAlign: 'middle', opacity: Math.sin(frame * 0.3) > 0 ? 1 : 0 }} />
                       )}
                     </div>
                   </div>
@@ -126,37 +104,24 @@ export const TranscriptionScene: React.FC = () => {
         </div>
 
         {/* Right: AI anamnesis */}
-        <div style={{ width: cardW }}>
-          {frame > cardDelay - 0.3 * fps && (
-            <div
-              style={{
-                opacity: cardOpacity,
-                transform: `translateX(${interpolate(cardSpring, [0, 1], [25, 0])}px)`,
-                backgroundColor: colors.pureWhite,
-                borderRadius: 16,
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ padding: '18px 22px 14px', borderBottom: `1px solid ${colors.strokeSoft}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.charcoal, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: 12, fontWeight: 700, color: colors.pureWhite }}>
-                  IA
-                </div>
+        <div style={{ width: cW }}>
+          {frame > cardDelay - 0.5 * fps && (
+            <div style={{ ...cardR, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${c.strokeSoft}`, display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: c.bg }}>IA</div>
                 <div>
-                  <div style={{ fontFamily: montserrat, fontSize: 16, fontWeight: 700, color: colors.charcoal }}>Anamnese Gerada</div>
-                  <div style={{ fontFamily: openSans, fontSize: 11, color: colors.contentMuted }}>Processado automaticamente</div>
+                  <div style={{ fontFamily: montserrat, fontSize: 15, fontWeight: 700, color: c.textStrong }}>Anamnese Gerada</div>
+                  <div style={{ fontFamily: openSans, fontSize: 10, color: c.textMuted }}>Processado automaticamente</div>
                 </div>
               </div>
-
-              <div style={{ padding: '14px 22px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {FIELDS.map((field, i) => {
-                  const fd = cardDelay + (i + 1) * 0.28 * fps;
-                  const fs = spring({ frame, fps, delay: fd, config: SPRING_SMOOTH });
-                  const fo = interpolate(frame, [fd, fd + 0.25 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+                  const fd = cardDelay + (i + 1) * 0.3 * fps;
+                  const fr = reveal(frame, fps, fd, { y: 8 });
                   return (
-                    <div key={i} style={{ opacity: fo, transform: `translateY(${interpolate(fs, [0, 1], [10, 0])}px)` }}>
-                      <div style={{ fontFamily: montserrat, fontSize: 11, fontWeight: 700, color: colors.contentMuted, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>{field.label}</div>
-                      <div style={{ fontFamily: openSans, fontSize: 14, color: colors.contentDefault, lineHeight: 1.45 }}>{field.value}</div>
+                    <div key={i} style={fr}>
+                      <div style={{ fontFamily: montserrat, fontSize: 10, fontWeight: 700, color: c.textSubtle, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 }}>{field.label}</div>
+                      <div style={{ fontFamily: openSans, fontSize: 13, color: c.textDefault, lineHeight: 1.4 }}>{field.value}</div>
                     </div>
                   );
                 })}
