@@ -8,18 +8,29 @@ const ENTITLEMENTS_APP = path.resolve(__dirname, "../build/entitlements.mas.plis
 const ENTITLEMENTS_CHILD = path.resolve(__dirname, "../build/entitlements.mas.inherit.plist");
 const PROVISIONING_PROFILE = path.resolve(__dirname, "../build/embedded.provisionprofile");
 
+/**
+ * Strip ALL extended attributes, resource forks, and AppleDouble files from the
+ * app bundle. codesign refuses to sign binaries that carry "detritus".
+ */
+function cleanDetritus(appPath) {
+  spawnSync("dot_clean", ["-m", appPath], { stdio: "inherit" });
+  try {
+    execSync(`find "${appPath}" -name "._*" -delete 2>/dev/null`, { stdio: "inherit" });
+  } catch { /* ignore */ }
+  spawnSync("xattr", ["-cr", appPath], { stdio: "inherit" });
+}
+
 module.exports = async function signMas(opts) {
   if (opts.platform !== "mas") {
     console.log(`  • skipping custom sign for platform=${opts.platform} (waiting for MAS call)`);
     return;
   }
 
-  // Remove ALL extended attributes recursively
-  spawnSync("xattr", ["-cr", opts.app], { stdio: "inherit" });
+  // 1. First detritus pass
+  cleanDetritus(opts.app);
 
-  // Remove existing code signatures from ALL binaries to avoid
-  // "resource fork, Finder information, or similar detritus" codesign errors.
-  // Electron binaries ship pre-signed and must be stripped before MAS re-signing.
+  // 2. Remove existing code signatures from ALL binaries.
+  //    Electron binaries ship pre-signed and must be stripped before MAS re-signing.
   try {
     const binaries = execSync(
       `find "${opts.app}" -type f -perm +111 -exec file {} \\; | grep "Mach-O" | cut -d: -f1`,
@@ -34,18 +45,33 @@ module.exports = async function signMas(opts) {
     console.warn("  • warning: could not strip signatures:", e.message);
   }
 
-  // Clear xattrs again after signature removal
-  spawnSync("xattr", ["-cr", opts.app], { stdio: "inherit" });
+  // 3. Also deep-remove signatures from nested .app bundles
+  try {
+    const nestedApps = execSync(
+      `find "${opts.app}" -name "*.app" -not -path "${opts.app}" -type d`,
+      { encoding: "utf-8" }
+    ).trim().split("\n").filter(Boolean);
 
-  // Embed provisioning profile
+    for (const nested of nestedApps) {
+      spawnSync("codesign", ["--remove-signature", "--deep", nested], { stdio: "inherit" });
+    }
+  } catch { /* ignore */ }
+
+  // 4. Second detritus pass (codesign --remove-signature can leave xattrs)
+  cleanDetritus(opts.app);
+
+  // 5. Embed provisioning profile
   const destProfile = path.join(opts.app, "Contents", "embedded.provisionprofile");
   if (fs.existsSync(PROVISIONING_PROFILE)) {
     fs.copyFileSync(PROVISIONING_PROFILE, destProfile);
     console.log(`  • embedded provisioning profile into ${opts.app}`);
   }
 
-  // Fix file permissions
+  // 6. Fix file permissions
   spawnSync("chmod", ["-R", "a+r", opts.app], { stdio: "inherit" });
+
+  // 7. Final detritus pass right before signing — nothing touches the bundle after this
+  cleanDetritus(opts.app);
 
   await signAsync({
     app: opts.app,

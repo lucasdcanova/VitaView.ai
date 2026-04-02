@@ -5,7 +5,7 @@ module.exports = {
   appId: "br.com.lucascanova.vitaview",
   directories: {
     ...baseConfig.directories,
-    output: "release-mas",
+    output: "/tmp/vitaview-mas",
   },
   mac: {
     ...baseConfig.mac,
