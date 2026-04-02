@@ -63,21 +63,8 @@ export const IntroScene: React.FC = () => {
         </div>
 
         {/* Badge */}
-        <div
-          style={{
-            marginTop: 34,
-            transform: `scale(${interpolate(badgeScale, [0, 1], [0.88, 1])})`,
-            opacity: badgeOpacity,
-            backgroundColor: c.bgElevated,
-            border: `1px solid ${c.strokeDefault}`,
-            borderRadius: 50,
-            padding: v ? '11px 26px' : '12px 32px',
-          }}
-        >
-          <span style={{ fontFamily: montserrat, fontSize: v ? 12 : 14, fontWeight: 700, color: c.textDefault, letterSpacing: 3, textTransform: 'uppercase' }}>
-            Interações de UI
-          </span>
-        </div>
+        {/* spacer */}
+        <div style={{ height: 12 }} />
       </div>
     </AbsoluteFill>
   );

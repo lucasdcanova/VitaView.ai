@@ -4,10 +4,10 @@ import { fade } from '@remotion/transitions/fade';
 import { slide } from '@remotion/transitions/slide';
 import { wipe } from '@remotion/transitions/wipe';
 import { IntroScene } from './scenes/IntroScene';
-import { ImportScene } from './scenes/ImportScene';
-import { ExamUploadScene } from './scenes/ExamUploadScene';
 import { TranscriptionScene } from './scenes/TranscriptionScene';
+import { ExamUploadScene } from './scenes/ExamUploadScene';
 import { PatientCardScene } from './scenes/PatientCardScene';
+import { ImportScene } from './scenes/ImportScene';
 import { OutroScene } from './scenes/OutroScene';
 import { FPS } from './theme';
 
@@ -26,9 +26,9 @@ export const VitaViewShowcase: React.FC = () => {
         timing={springTiming({ ...ST, durationInFrames: 28 })}
       />
 
-      {/* 2. Importação de Prontuário — 8s */}
-      <TransitionSeries.Sequence durationInFrames={8 * FPS}>
-        <ImportScene />
+      {/* 2. Transcrição por Voz — 7s */}
+      <TransitionSeries.Sequence durationInFrames={7 * FPS}>
+        <TranscriptionScene />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -46,9 +46,9 @@ export const VitaViewShowcase: React.FC = () => {
         timing={linearTiming({ durationInFrames: 24 })}
       />
 
-      {/* 4. Transcrição — 7s */}
-      <TransitionSeries.Sequence durationInFrames={7 * FPS}>
-        <TranscriptionScene />
+      {/* 4. Painel do Paciente — 6s */}
+      <TransitionSeries.Sequence durationInFrames={6 * FPS}>
+        <PatientCardScene />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -56,9 +56,9 @@ export const VitaViewShowcase: React.FC = () => {
         timing={springTiming(ST)}
       />
 
-      {/* 5. Painel do Paciente — 6s */}
-      <TransitionSeries.Sequence durationInFrames={6 * FPS}>
-        <PatientCardScene />
+      {/* 5. Importação de Prontuário — 8s */}
+      <TransitionSeries.Sequence durationInFrames={8 * FPS}>
+        <ImportScene />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
