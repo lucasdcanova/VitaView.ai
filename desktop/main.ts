@@ -17,18 +17,13 @@ const isMAS =
    (process as NodeJS.Process & { sandboxed?: boolean }).sandboxed === true ||
    process.execPath.includes("/Wrapper/"));
 
-// V8 JIT compile-hints can crash under MAS sandbox (EXC_BREAKPOINT in
-// v8::Script::GetCompileHintsCollector on background compilation threads).
-// macOS 26+ enforces stricter W^X policies that break multiple V8 JIT tiers.
-// Disabling Maglev, Sparkplug and compile hints avoids all known crash paths
-// while keeping TurboFan active for acceptable performance.
+// macOS 26+ enforces strict W^X (Write XOR Execute) in the App Store sandbox,
+// breaking ALL V8 JIT tiers including TurboFan. The allow-jit entitlement no
+// longer permits MAP_JIT mmap in sandboxed MAS apps on macOS 26.4+.
+// Running V8 in jitless (interpreter-only) mode eliminates every JIT code path.
+// Performance impact is negligible since VitaView loads a remote web app.
 if (isMAS) {
-  app.commandLine.appendSwitch(
-    "js-flags",
-    "--no-maglev --no-sparkplug --no-compile-hints-magic --no-turboshaft"
-  );
-  // Prevent Chromium from using MAP_JIT mmap which can fail under sandbox
-  app.commandLine.appendSwitch("disable-jit-for-webassembly");
+  app.commandLine.appendSwitch("js-flags", "--jitless");
 }
 
 let mainWindow: BrowserWindow | null = null;
