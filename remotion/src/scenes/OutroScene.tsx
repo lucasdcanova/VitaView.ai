@@ -51,7 +51,7 @@ export const OutroScene: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }}>
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 45% at 50% 45%, rgba(149,163,188,0.06), transparent)` }} />
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: v ? 680 : 900, padding: '0 36px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: v ? 950 : 1200, padding: '0 36px' }}>
         <Img
           src={staticFile('logo-icon.png')}
           style={{
@@ -83,13 +83,7 @@ export const OutroScene: React.FC = () => {
           <Tag text="Visão Completa" delay={Math.round(tagBase + 0.3 * fps)} v={v} />
         </div>
 
-        <div style={{ marginTop: 36, opacity: ctaO, transform: `scale(${interpolate(ctaSpring, [0, 1], [0.93, 1])})` }}>
-          <div style={{ backgroundColor: c.primary, borderRadius: 14, padding: v ? '16px 34px' : '16px 42px', fontFamily: montserrat, fontSize: fs(18, v), fontWeight: 700, color: c.bg }}>
-            Comece Agora — 30 Dias Grátis
-          </div>
-        </div>
-
-        <div style={{ marginTop: 14, opacity: urlO, fontFamily: openSans, fontSize: fs(15, v), color: c.textSubtle, fontWeight: 600 }}>
+        <div style={{ marginTop: 36, opacity: urlO, fontFamily: openSans, fontSize: fs(18, v), color: c.textSubtle, fontWeight: 600 }}>
           vitaview.ai
         </div>
 

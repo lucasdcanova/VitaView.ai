@@ -6,6 +6,8 @@ import {
   interpolate,
   spring,
   Easing,
+  Img,
+  staticFile,
 } from 'remotion';
 import { c, S } from '../theme';
 import { montserrat, openSans } from '../fonts';
@@ -54,8 +56,8 @@ export const PatientCardScene: React.FC = () => {
   });
 
   const data = [65, 72, 68, 80, 75, 90, 85, 92, 88, 95, 91, 89];
-  const pad = v ? 50 : 50;
-  const maxW = v ? 680 : 1200;
+  const pad = v ? 30 : 30;
+  const maxW = v ? 950 : 1700;
 
   return (
     <AbsoluteFill style={{ backgroundColor: c.bg }}>
@@ -76,7 +78,7 @@ export const PatientCardScene: React.FC = () => {
 
         {/* Patient card */}
         <div style={{ ...cardR, width: maxW, backgroundColor: c.bgCard, borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.12)', padding: v ? '14px 16px' : '18px 22px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: v ? 42 : 50, height: v ? 42 : 50, borderRadius: v ? 21 : 25, backgroundColor: c.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: montserrat, fontSize: fs(20, v), fontWeight: 700, color: c.bg, flexShrink: 0 }}>MS</div>
+          <Img src={staticFile('avatar-patient.jpg')} style={{ width: v ? 48 : 56, height: v ? 48 : 56, borderRadius: v ? 24 : 28, objectFit: 'cover', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: montserrat, fontSize: fs(20, v), fontWeight: 700, color: c.textStrong }}>Maria Silva</div>
             <div style={{ fontFamily: openSans, fontSize: fs(12, v), color: c.textMuted, marginTop: 1 }}>42 anos • Feminino • Particular</div>
@@ -114,11 +116,11 @@ export const PatientCardScene: React.FC = () => {
           <div style={{ fontFamily: montserrat, fontSize: fs(13, v), fontWeight: 700, color: c.textStrong, marginBottom: 10 }}>
             Evolução da Glicemia (12 meses)
           </div>
-          <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 640 : 1160} ${v ? 80 : 110}`} preserveAspectRatio="none">
+          <svg width="100%" height={v ? 80 : 110} viewBox={`0 0 ${v ? 860 : 1560} ${v ? 80 : 110}`} preserveAspectRatio="none">
             {[0, v ? 40 : 55, v ? 80 : 110].map(y => <line key={y} x1={0} y1={y} x2={v ? 850 : 1060} y2={y} stroke={c.strokeSoft} strokeWidth={1} />)}
             <polyline
               points={data.map((val, i) => {
-                const cW = v ? 600 : 1120; const cH = v ? 64 : 90;
+                const cW = v ? 860 : 1520; const cH = v ? 64 : 90;
                 const x = (i / (data.length - 1)) * cW + 20;
                 const y = cH - ((val - 60) / 40) * cH + 10;
                 return `${x},${y}`;
@@ -126,7 +128,7 @@ export const PatientCardScene: React.FC = () => {
               fill="none" stroke={c.textDefault} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
             />
             {data.slice(0, Math.ceil(data.length * chartProgress)).map((val, i) => {
-              const cW = v ? 600 : 1120; const cH = v ? 64 : 90;
+              const cW = v ? 860 : 1520; const cH = v ? 64 : 90;
               const x = (i / (data.length - 1)) * cW + 20;
               const y = cH - ((val - 60) / 40) * cH + 10;
               const ds = spring({ frame, fps, delay: 2.2 * fps + i * 0.05 * fps, config: { damping: 14, stiffness: 140 } });

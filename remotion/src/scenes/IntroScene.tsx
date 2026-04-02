@@ -38,7 +38,7 @@ export const IntroScene: React.FC = () => {
         <Img
           src={staticFile('logo-full.png')}
           style={{
-            height: v ? 110 : 140,
+            height: v ? 160 : 200,
             objectFit: 'contain',
             filter: 'brightness(0) invert(1)',
             transform: `translateY(${interpolate(logoSpring, [0, 1], [40, 0])}px)`,

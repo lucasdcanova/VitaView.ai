@@ -194,7 +194,7 @@ export const ImportScene: React.FC = () => {
   const titleWords = wordReveal('Traga Todo Seu Prontuário.', frame, fps, 0.15 * fps, 0.06);
   const subR = reveal(frame, fps, 0.6 * fps, { y: 12 });
 
-  const maxW = v ? 680 : 1200;
+  const maxW = v ? 950 : 1700;
 
   // Arrow animation between cards
   const arrowDelay = 1 * fps;
@@ -211,7 +211,7 @@ export const ImportScene: React.FC = () => {
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: v ? '60px 24px' : '50px 60px', gap: v ? 24 : 20,
+        padding: v ? '40px 20px' : '40px 40px', gap: v ? 24 : 20,
       }}>
         {/* Title */}
         <div style={{ maxWidth: maxW, textAlign: 'center' }}>
