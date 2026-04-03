@@ -3,11 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>method</key>
-	<string>app-store</string>
+	<string>app-store-connect</string>
 	<key>signingStyle</key>
 	<string>manual</string>
 	<key>signingCertificate</key>
-	<string>3rd Party Mac Developer Application</string>
+	<string>3rd Party Mac Developer Application: Lucas Canova (9D7X84MT44)</string>
+	<key>installerSigningCertificate</key>
+	<string>3rd Party Mac Developer Installer: Lucas Canova (9D7X84MT44)</string>
 	<key>teamID</key>
 	<string>9D7X84MT44</string>
 	<key>provisioningProfiles</key>
