@@ -57,7 +57,7 @@ export const OutroScene: React.FC = () => {
           style={{
             height: v ? 64 : 72, objectFit: 'contain', filter: 'brightness(0) invert(1)',
             transform: `translateY(${interpolate(logoSpring, [0, 1], [24, 0])}px)`,
-            opacity: logoO, marginBottom: 30,
+            opacity: logoO, marginBottom: v ? 40 : 44,
           }}
         />
 
@@ -72,24 +72,24 @@ export const OutroScene: React.FC = () => {
           ))}
         </div>
 
-        <p style={{ ...subR, fontFamily: openSans, fontSize: fs(18, v), color: c.textMuted, margin: 0, marginTop: 18, textAlign: 'center', lineHeight: 1.5 }}>
+        <p style={{ ...subR, fontFamily: openSans, fontSize: fs(18, v), color: c.textMuted, margin: 0, marginTop: v ? 28 : 32, textAlign: 'center', lineHeight: 1.5 }}>
           O prontuário que trabalha por você.
         </p>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 28, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: v ? 10 : 12, marginTop: v ? 36 : 40, flexWrap: 'wrap', justifyContent: 'center' }}>
           <Tag text="Transcrição por Voz" delay={Math.round(tagBase)} v={v} />
           <Tag text="Análise com IA" delay={Math.round(tagBase + 0.1 * fps)} v={v} />
           <Tag text="Importação Total" delay={Math.round(tagBase + 0.2 * fps)} v={v} />
           <Tag text="Visão Completa" delay={Math.round(tagBase + 0.3 * fps)} v={v} />
         </div>
 
-        <div style={{ marginTop: 36, opacity: urlO, fontFamily: openSans, fontSize: fs(18, v), color: c.textSubtle, fontWeight: 600 }}>
+        <div style={{ marginTop: v ? 44 : 48, opacity: urlO, fontFamily: openSans, fontSize: fs(20, v), color: c.textSubtle, fontWeight: 600 }}>
           vitaview.ai
         </div>
 
         {/* Platform icons */}
         <div style={{
-          marginTop: 24, opacity: urlO,
+          marginTop: v ? 28 : 32, opacity: urlO,
           display: 'flex', alignItems: 'center', gap: v ? 20 : 24,
         }}>
           {/* Apple */}
