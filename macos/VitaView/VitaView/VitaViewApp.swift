@@ -6,7 +6,9 @@ struct VitaViewApp: App {
         WindowGroup {
             ContentView()
                 .frame(minWidth: 1100, minHeight: 720)
+                .ignoresSafeArea()
         }
         .defaultSize(width: 1440, height: 920)
+        .windowStyle(.hiddenTitleBar)
     }
 }
