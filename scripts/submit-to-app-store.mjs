@@ -33,7 +33,7 @@ const KEY_ID = flag("key-id", "ASC_KEY_ID");
 const ISSUER_ID = flag("issuer-id", "ASC_ISSUER_ID");
 const KEY_PATH = flag("key-path", "ASC_KEY_PATH");
 const APP_BUNDLE_ID = "br.com.lucascanova.vitaview";
-const PLATFORM = "IOS"; // IOS | MAC_OS
+const PLATFORM = flag("platform", "ASC_PLATFORM") || "MAC_OS";
 
 if (!KEY_ID || !ISSUER_ID || !KEY_PATH) {
   console.error("Missing required credentials. Provide --key-id, --issuer-id, and --key-path");
@@ -149,7 +149,7 @@ async function main() {
 
   // 3. Check if version 1.2 already exists
   console.log(`3️⃣  Checking for existing version ${VERSION}...`);
-  const versionsRes = await api("GET", `/apps/${appId}/appStoreVersions?filter%5BplatformId%5D=IOS&filter%5BversionString%5D=${VERSION}`);
+  const versionsRes = await api("GET", `/apps/${appId}/appStoreVersions?filter%5Bplatform%5D=${PLATFORM}&filter%5BversionString%5D=${VERSION}`);
 
   let versionId;
   if (versionsRes?.data?.length) {
