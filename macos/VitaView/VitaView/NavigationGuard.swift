@@ -17,6 +17,17 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         return origins
     }()
 
+    /// Domains that load as embedded iframes/scripts (Stripe, analytics, etc.)
+    private static let embeddedDomains: Set<String> = [
+        "js.stripe.com",
+        "m.stripe.com",
+        "m.stripe.network",
+        "api.stripe.com",
+        "hooks.stripe.com",
+        "accounts.google.com",
+        "apis.google.com",
+    ]
+
     init(loadError: Binding<WebLoadError?>, startURL: URL) {
         self._loadError = loadError
         self.startURL = startURL
@@ -26,6 +37,11 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         guard let scheme = url.scheme, let host = url.host else { return false }
         let origin = "\(scheme)://\(host)" + (url.port.map { ":\($0)" } ?? "")
         return Self.allowedOrigins.contains(origin)
+    }
+
+    private func isEmbedded(_ url: URL) -> Bool {
+        guard let host = url.host else { return false }
+        return Self.embeddedDomains.contains(host)
     }
 
     // MARK: - WKNavigationDelegate
@@ -38,11 +54,16 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
             return
         }
 
-        if isAllowed(url) {
+        // Allow app origins and embedded third-party iframes/scripts
+        if isAllowed(url) || isEmbedded(url) {
             decisionHandler(.allow)
-        } else {
+        } else if navigationAction.targetFrame != nil && navigationAction.targetFrame!.isMainFrame {
+            // Only open in browser if it's a main-frame navigation to an unknown domain
             decisionHandler(.cancel)
             NSWorkspace.shared.open(url)
+        } else {
+            // Sub-frame navigations to unknown domains: allow silently (iframes, scripts)
+            decisionHandler(.allow)
         }
     }
 
@@ -72,12 +93,6 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     // MARK: - WKUIDelegate
 
-    private static let silentDomains: Set<String> = [
-        "js.stripe.com",
-        "m.stripe.network",
-        "m.stripe.com",
-    ]
-
     func webView(_ webView: WKWebView,
                  createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction,
@@ -85,8 +100,8 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         if let url = navigationAction.request.url {
             if isAllowed(url) {
                 webView.load(navigationAction.request)
-            } else if let host = url.host, Self.silentDomains.contains(host) {
-                // Stripe metrics/tracking frames — silently ignore
+            } else if isEmbedded(url) {
+                // Embedded third-party frames — silently ignore new window
             } else {
                 NSWorkspace.shared.open(url)
             }
