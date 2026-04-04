@@ -312,7 +312,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                 type="button"
                                                 variant="link"
                                                 size="sm"
-                                                className="h-auto p-0 text-xs text-primary"
+                                                className="h-auto p-0 text-xs text-primary border-none outline-none ring-0 focus:ring-0 focus-visible:ring-0 shadow-none"
                                                 onClick={() => setShowNewPatientForm(true)}
                                             >
                                                 <UserPlus className="mr-1 h-3 w-3" />
