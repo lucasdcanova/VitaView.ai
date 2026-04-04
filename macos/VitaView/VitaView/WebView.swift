@@ -10,22 +10,18 @@ struct WebView: NSViewRepresentable {
     @Binding var loadError: WebLoadError?
 
     static var startURL: URL {
-        #if DEBUG
         if let override = ProcessInfo.processInfo.environment["VITAVIEW_DESKTOP_START_URL"],
            let url = URL(string: override) {
             return url
         }
-        return URL(string: "http://localhost:3000/auth")!
-        #else
         return URL(string: "https://vitaview.ai/auth")!
-        #endif
     }
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.mediaTypesRequiringUserActionForPlayback = []
 
-        let script = WKUserScript(
+        let bridgeScript = WKUserScript(
             source: """
             window.vitaViewDesktop = {
                 isDesktop: true,
@@ -36,7 +32,20 @@ struct WebView: NSViewRepresentable {
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true
         )
-        config.userContentController.addUserScript(script)
+        config.userContentController.addUserScript(bridgeScript)
+
+        let cssScript = WKUserScript(
+            source: """
+            (function() {
+                var style = document.createElement('style');
+                style.textContent = 'button[aria-label="Voltar para a landing page"] { display: none !important; }';
+                document.head.appendChild(style);
+            })();
+            """,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(cssScript)
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
