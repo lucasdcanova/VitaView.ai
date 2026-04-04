@@ -18,9 +18,13 @@ struct WindowConfigurator: NSViewRepresentable {
         let view = NSView()
         DispatchQueue.main.async {
             guard let window = view.window else { return }
+            window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
+            window.styleMask.insert(.fullSizeContentView)
             window.isMovableByWindowBackground = true
-            window.backgroundColor = .windowBackgroundColor
+
+            // Hide the title bar separator line
+            window.titlebarSeparatorStyle = .none
         }
         return view
     }

@@ -53,6 +53,7 @@ struct WebView: NSViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
+        webView.underPageBackgroundColor = .clear
         webView.load(URLRequest(url: Self.startURL))
         return webView
     }
