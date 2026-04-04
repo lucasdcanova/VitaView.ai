@@ -6,23 +6,16 @@ struct WebLoadError {
     let failedURL: String
 }
 
-struct WebView: NSViewRepresentable {
-    @Binding var loadError: WebLoadError?
+/// Singleton that keeps the WKWebView alive across window close/reopen cycles,
+/// preserving session cookies and login state.
+final class PersistentWebView {
+    static let shared = PersistentWebView()
 
-    /// Shared process pool so cookies and sessions persist across WKWebView recreations
-    private static let processPool = WKProcessPool()
+    let webView: WKWebView
 
-    static var startURL: URL {
-        if let override = ProcessInfo.processInfo.environment["VITAVIEW_DESKTOP_START_URL"],
-           let url = URL(string: override) {
-            return url
-        }
-        return URL(string: "https://vitaview.ai/auth")!
-    }
-
-    func makeNSView(context: Context) -> WKWebView {
+    private init() {
         let config = WKWebViewConfiguration()
-        config.processPool = Self.processPool
+        config.processPool = WKProcessPool()
         config.websiteDataStore = .default()
         config.mediaTypesRequiringUserActionForPlayback = []
 
@@ -54,12 +47,33 @@ struct WebView: NSViewRepresentable {
         )
         config.userContentController.addUserScript(cssScript)
 
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        webView.uiDelegate = context.coordinator
+        webView = WKWebView(frame: .zero, configuration: config)
         webView.allowsBackForwardNavigationGestures = true
         webView.underPageBackgroundColor = .clear
-        webView.load(URLRequest(url: Self.startURL))
+    }
+}
+
+struct WebView: NSViewRepresentable {
+    @Binding var loadError: WebLoadError?
+
+    static var startURL: URL {
+        if let override = ProcessInfo.processInfo.environment["VITAVIEW_DESKTOP_START_URL"],
+           let url = URL(string: override) {
+            return url
+        }
+        return URL(string: "https://vitaview.ai/auth")!
+    }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let webView = PersistentWebView.shared.webView
+        webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator
+
+        // Only load if no page has been loaded yet
+        if webView.url == nil {
+            webView.load(URLRequest(url: Self.startURL))
+        }
+
         return webView
     }
 
