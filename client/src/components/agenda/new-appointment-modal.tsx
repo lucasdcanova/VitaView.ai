@@ -306,7 +306,19 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                 name="profileId"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Paciente</FormLabel>
+                                        <div className="flex items-center justify-between">
+                                            <FormLabel>Paciente</FormLabel>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                size="sm"
+                                                className="h-auto p-0 text-xs text-primary"
+                                                onClick={() => setShowNewPatientForm(true)}
+                                            >
+                                                <UserPlus className="mr-1 h-3 w-3" />
+                                                Novo Paciente
+                                            </Button>
+                                        </div>
                                         <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -330,7 +342,23 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                 <Command>
                                                     <CommandInput placeholder="Buscar paciente..." />
                                                     <CommandList>
-                                                        <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
+                                                        <CommandEmpty>
+                                                            <div className="py-2 text-center">
+                                                                <p className="text-sm text-muted-foreground mb-2">Nenhum paciente encontrado.</p>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setOpenCombobox(false);
+                                                                        setShowNewPatientForm(true);
+                                                                    }}
+                                                                >
+                                                                    <UserPlus className="mr-2 h-4 w-4" />
+                                                                    Cadastrar Novo Paciente
+                                                                </Button>
+                                                            </div>
+                                                        </CommandEmpty>
                                                         <CommandGroup>
                                                             {profiles.map((profile) => (
                                                                 <CommandItem
