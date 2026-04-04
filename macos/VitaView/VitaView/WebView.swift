@@ -9,6 +9,9 @@ struct WebLoadError {
 struct WebView: NSViewRepresentable {
     @Binding var loadError: WebLoadError?
 
+    /// Shared process pool so cookies and sessions persist across WKWebView recreations
+    private static let processPool = WKProcessPool()
+
     static var startURL: URL {
         if let override = ProcessInfo.processInfo.environment["VITAVIEW_DESKTOP_START_URL"],
            let url = URL(string: override) {
@@ -19,6 +22,8 @@ struct WebView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
+        config.processPool = Self.processPool
+        config.websiteDataStore = .default()
         config.mediaTypesRequiringUserActionForPlayback = []
 
         let bridgeScript = WKUserScript(
