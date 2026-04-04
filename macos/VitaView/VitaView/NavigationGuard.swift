@@ -72,6 +72,12 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     // MARK: - WKUIDelegate
 
+    private static let silentDomains: Set<String> = [
+        "js.stripe.com",
+        "m.stripe.network",
+        "m.stripe.com",
+    ]
+
     func webView(_ webView: WKWebView,
                  createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction,
@@ -79,6 +85,8 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         if let url = navigationAction.request.url {
             if isAllowed(url) {
                 webView.load(navigationAction.request)
+            } else if let host = url.host, Self.silentDomains.contains(host) {
+                // Stripe metrics/tracking frames — silently ignore
             } else {
                 NSWorkspace.shared.open(url)
             }

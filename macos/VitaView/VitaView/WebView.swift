@@ -38,7 +38,9 @@ struct WebView: NSViewRepresentable {
             source: """
             (function() {
                 var style = document.createElement('style');
-                style.textContent = 'button[aria-label="Voltar para a landing page"] { display: none !important; }';
+                style.textContent = `
+                    button[aria-label="Voltar para a landing page"] { display: none !important; }
+                `;
                 document.head.appendChild(style);
             })();
             """,
