@@ -263,7 +263,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto pt-[env(safe-area-inset-top,0px)]">
                 <DialogHeader>
                     <DialogTitle>{isEditing ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
                     <DialogDescription>
