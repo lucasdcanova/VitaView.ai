@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VitaView</string>
+    <string name="title_activity_main">VitaView</string>
+    <string name="package_name">br.com.lucascanova.vitaview</string>
+    <string name="custom_url_scheme">br.com.lucascanova.vitaview</string>
+</resources>
