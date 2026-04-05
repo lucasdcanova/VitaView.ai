@@ -3103,28 +3103,39 @@ export async function registerRoutes(app: Express): Promise<void> {
     },
     ensureAuthenticated,
     checkFairUse('transcriptionMinutes'),
-    audioTranscriptionUpload.single('audio'),
+    audioTranscriptionUpload.array('audio', 10),
     async (req, res) => {
       try {
-        if (!req.file) {
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
           return res.status(400).json({ message: "Arquivo de áudio é obrigatório" });
         }
 
+        const totalSize = files.reduce((sum, f) => sum + f.size, 0);
         logger.info("[Transcription] Iniciando transcrição de consulta", {
           userId: req.user?.id,
-          fileSize: req.file.size,
-          mimeType: req.file.mimetype
+          fileCount: files.length,
+          totalSize,
+          mimeType: files[0].mimetype
         });
 
-        // Transcrever o áudio
-        const transcription = await transcribeConsultationAudio(
-          req.file.buffer,
-          req.file.mimetype,
-          req.user!.id,
-          req.tenantId
-        );
+        // Transcrever cada segmento e concatenar
+        const transcriptions: string[] = [];
+        for (const file of files) {
+          const segmentTranscription = await transcribeConsultationAudio(
+            file.buffer,
+            file.mimetype,
+            req.user!.id,
+            req.tenantId
+          );
+          if (segmentTranscription?.trim()) {
+            transcriptions.push(segmentTranscription);
+          }
+        }
 
-        if (!transcription || !transcription.trim()) {
+        const transcription = transcriptions.join(" ");
+
+        if (!transcription.trim()) {
           return res.status(400).json({ message: "Não foi possível transcrever o áudio. Verifique a qualidade da gravação." });
         }
 
@@ -3160,7 +3171,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         // Track usage
         const user = req.user as any;
         // Estimate minutes from file size (very rough approx: 1MB ~= 1 min mp3/m4a)
-        const estimatedMinutes = Math.ceil((req.file?.size || 1024 * 1024) / (1024 * 1024));
+        const estimatedMinutes = Math.ceil(totalSize / (1024 * 1024));
         await trackUsage(user.id, 'transcriptionMinutes', estimatedMinutes);
         await trackUsage(user.id, 'aiRequests', 1);
 

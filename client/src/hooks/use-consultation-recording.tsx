@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isIOSAppShell } from "@/lib/app-shell";
 
+// iOS recording reliability: reduce Blob count and auto-restart to prevent WKWebView crashes
+const IOS_TIMESLICE_MS = 30_000; // 30s chunks on iOS (vs 1s default) — 30 blobs at 15min instead of 900
+const DEFAULT_TIMESLICE_MS = 1_000;
+const CHUNK_CONSOLIDATION_INTERVAL_MS = 120_000; // Merge accumulated chunks every 2 min
+const IOS_SEGMENT_DURATION_MS = 10 * 60 * 1000; // Auto-restart recorder every 10 min on iOS
+const MAX_RECOVERY_ATTEMPTS = 3;
+
 export type ConsultationRecordingState =
   | "idle"
   | "recording"
@@ -215,6 +222,13 @@ export function ConsultationRecordingProvider({
     extension: "webm",
   });
 
+  // Reliability refs for iOS long-recording support
+  const segmentsRef = useRef<Blob[]>([]);
+  const consolidationTimerRef = useRef<number | null>(null);
+  const autoRestartTimerRef = useRef<number | null>(null);
+  const isAutoRestartingRef = useRef(false);
+  const recoveryAttemptsRef = useRef(0);
+
   const setSession = useCallback((session: ConsultationRecordingSession | null) => {
     sessionRef.current = session;
     setCurrentSession(session);
@@ -227,6 +241,17 @@ export function ConsultationRecordingProvider({
     }
   }, []);
 
+  const clearReliabilityTimers = useCallback(() => {
+    if (consolidationTimerRef.current !== null) {
+      window.clearInterval(consolidationTimerRef.current);
+      consolidationTimerRef.current = null;
+    }
+    if (autoRestartTimerRef.current !== null) {
+      window.clearTimeout(autoRestartTimerRef.current);
+      autoRestartTimerRef.current = null;
+    }
+  }, []);
+
   const stopStreamTracks = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -236,11 +261,15 @@ export function ConsultationRecordingProvider({
 
   const cleanupMedia = useCallback(() => {
     clearTimer();
+    clearReliabilityTimers();
     stopStreamTracks();
 
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
-  }, [clearTimer, stopStreamTracks]);
+    segmentsRef.current = [];
+    isAutoRestartingRef.current = false;
+    recoveryAttemptsRef.current = 0;
+  }, [clearTimer, clearReliabilityTimers, stopStreamTracks]);
 
   const resetSessionState = useCallback(() => {
     setRecordingState("idle");
@@ -249,25 +278,55 @@ export function ConsultationRecordingProvider({
     setSession(null);
   }, [setSession]);
 
+  const consolidateChunks = useCallback(() => {
+    if (audioChunksRef.current.length <= 1) return;
+    const consolidated = new Blob(audioChunksRef.current, {
+      type: recordingFormatRef.current.uploadMimeType,
+    });
+    audioChunksRef.current = [consolidated];
+  }, []);
+
+  const saveCurrentSegment = useCallback(() => {
+    if (audioChunksRef.current.length === 0) return;
+    const segment = new Blob(audioChunksRef.current, {
+      type: recordingFormatRef.current.uploadMimeType,
+    });
+    segmentsRef.current.push(segment);
+    audioChunksRef.current = [];
+  }, []);
+
   const processAudio = useCallback(async () => {
     try {
       const session = sessionRef.current;
-      const audioBlob = new Blob(audioChunksRef.current, {
-        type: recordingFormatRef.current.uploadMimeType,
-      });
-      const formData = new FormData();
 
-      formData.append(
-        "audio",
-        audioBlob,
-        `consultation.${recordingFormatRef.current.extension}`
-      );
+      // Save any remaining chunks as the final segment
+      saveCurrentSegment();
+
+      const allSegments = segmentsRef.current;
+      if (allSegments.length === 0) {
+        cleanupMedia();
+        setCompletedResult(null);
+        setErrorMessage(
+          "A gravacao foi finalizada sem audio capturado. No iPhone, permita o microfone para o VitaView em Ajustes e tente novamente."
+        );
+        setRecordingState("error");
+        return;
+      }
+
+      const formData = new FormData();
+      for (let i = 0; i < allSegments.length; i++) {
+        formData.append(
+          "audio",
+          allSegments[i],
+          `consultation-${i}.${recordingFormatRef.current.extension}`
+        );
+      }
       if (session?.profileId) {
         formData.append("profileId", session.profileId.toString());
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min
+      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
 
       let response: Response;
       try {
@@ -330,7 +389,7 @@ export function ConsultationRecordingProvider({
     } finally {
       cleanupMedia();
     }
-  }, [cleanupMedia, resetSessionState]);
+  }, [saveCurrentSegment, cleanupMedia, resetSessionState]);
 
   const startRecording = useCallback(
     async (options?: {
@@ -343,6 +402,8 @@ export function ConsultationRecordingProvider({
         setErrorMessage(null);
         setRecordingTime(0);
         audioChunksRef.current = [];
+        segmentsRef.current = [];
+        recoveryAttemptsRef.current = 0;
         setSession({
           profileId: options?.profileId ?? null,
           patientName: options?.patientName?.trim() || null,
@@ -397,61 +458,178 @@ export function ConsultationRecordingProvider({
 
         streamRef.current = stream;
 
-        const recordingFormat = getSupportedRecordingFormat();
-        recordingFormatRef.current = recordingFormat;
+        const isIOS = isIOSAppShell();
+        const timeslice = isIOS ? IOS_TIMESLICE_MS : DEFAULT_TIMESLICE_MS;
 
-        const mediaRecorder = recordingFormat.recorderMimeType
-          ? new MediaRecorder(stream, {
-              mimeType: recordingFormat.recorderMimeType,
-            })
-          : new MediaRecorder(stream);
-
-        recordingFormatRef.current = {
-          extension: recordingFormat.extension,
-          recorderMimeType: mediaRecorder.mimeType || recordingFormat.recorderMimeType,
-          uploadMimeType: normalizeUploadMimeType(
-            mediaRecorder.mimeType,
-            recordingFormat.uploadMimeType
-          ),
-        };
-
-        mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
+        // Auto-restart scheduler for iOS — restarts the recorder every 10 min
+        // to prevent WKWebView MediaRecorder memory exhaustion
+        const scheduleAutoRestart = () => {
+          if (autoRestartTimerRef.current !== null) {
+            window.clearTimeout(autoRestartTimerRef.current);
           }
+          autoRestartTimerRef.current = window.setTimeout(() => {
+            const mr = mediaRecorderRef.current;
+            if (!mr) return;
+
+            if (mr.state === "paused") {
+              // Don't restart while paused; reschedule for later
+              scheduleAutoRestart();
+              return;
+            }
+
+            if (mr.state === "recording") {
+              isAutoRestartingRef.current = true;
+              try {
+                mr.requestData();
+              } catch (_) {
+                // ignore
+              }
+              mr.stop();
+            }
+          }, IOS_SEGMENT_DURATION_MS);
         };
 
-        mediaRecorder.onstop = async () => {
-          clearTimer();
+        // Creates a MediaRecorder on the given stream, wires up all handlers, and starts it.
+        // Called initially and on auto-restart / error recovery.
+        const createAndStartRecorder = (s: MediaStream) => {
+          const recordingFormat = getSupportedRecordingFormat();
 
-          if (audioChunksRef.current.length === 0) {
-            cleanupMedia();
-            setCompletedResult(null);
-            setErrorMessage(
-              "A gravacao foi finalizada sem audio capturado. No iPhone, permita o microfone para o VitaView em Ajustes e tente novamente."
-            );
-            setRecordingState("error");
-            return;
-          }
+          const mr = recordingFormat.recorderMimeType
+            ? new MediaRecorder(s, {
+                mimeType: recordingFormat.recorderMimeType,
+              })
+            : new MediaRecorder(s);
 
-          await processAudio();
+          recordingFormatRef.current = {
+            extension: recordingFormat.extension,
+            recorderMimeType:
+              mr.mimeType || recordingFormat.recorderMimeType,
+            uploadMimeType: normalizeUploadMimeType(
+              mr.mimeType,
+              recordingFormat.uploadMimeType
+            ),
+          };
+
+          mr.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunksRef.current.push(event.data);
+            }
+          };
+
+          mr.onstop = async () => {
+            // Auto-restart path: save segment and spin up a new recorder seamlessly
+            if (isAutoRestartingRef.current) {
+              isAutoRestartingRef.current = false;
+              saveCurrentSegment();
+
+              const activeStream = streamRef.current;
+              if (
+                activeStream &&
+                activeStream.getTracks().some((t) => t.readyState === "live")
+              ) {
+                try {
+                  createAndStartRecorder(activeStream);
+                  scheduleAutoRestart();
+                  return;
+                } catch (restartErr) {
+                  console.error(
+                    "[Recording] Auto-restart failed:",
+                    restartErr
+                  );
+                }
+              }
+              // Fall through to process audio if auto-restart failed
+            }
+
+            // Normal stop (user-initiated or failed auto-restart)
+            clearTimer();
+            clearReliabilityTimers();
+            setRecordingState("processing");
+
+            if (
+              audioChunksRef.current.length === 0 &&
+              segmentsRef.current.length === 0
+            ) {
+              cleanupMedia();
+              setCompletedResult(null);
+              setErrorMessage(
+                "A gravacao foi finalizada sem audio capturado. No iPhone, permita o microfone para o VitaView em Ajustes e tente novamente."
+              );
+              setRecordingState("error");
+              return;
+            }
+
+            await processAudio();
+          };
+
+          mr.onerror = (event) => {
+            console.error("[Recording] MediaRecorder error:", event);
+
+            // Preserve whatever audio we already have
+            saveCurrentSegment();
+
+            // Attempt recovery: create a new recorder on the same stream
+            if (recoveryAttemptsRef.current < MAX_RECOVERY_ATTEMPTS) {
+              recoveryAttemptsRef.current++;
+              const activeStream = streamRef.current;
+              if (
+                activeStream &&
+                activeStream
+                  .getTracks()
+                  .some((t) => t.readyState === "live")
+              ) {
+                try {
+                  createAndStartRecorder(activeStream);
+                  if (isIOS) scheduleAutoRestart();
+                  console.log(
+                    `[Recording] Recovery successful (attempt ${recoveryAttemptsRef.current})`
+                  );
+                  return;
+                } catch (recoveryErr) {
+                  console.error(
+                    "[Recording] Recovery restart failed:",
+                    recoveryErr
+                  );
+                }
+              }
+            }
+
+            // Recovery exhausted — process whatever audio we managed to capture
+            clearTimer();
+            clearReliabilityTimers();
+
+            if (segmentsRef.current.length > 0) {
+              setRecordingState("processing");
+              processAudio();
+            } else {
+              cleanupMedia();
+              setCompletedResult(null);
+              setErrorMessage(
+                "A gravacao falhou no dispositivo. Tente novamente."
+              );
+              setRecordingState("error");
+            }
+          };
+
+          mediaRecorderRef.current = mr;
+          mr.start(timeslice);
         };
 
-        mediaRecorder.onerror = (event) => {
-          console.error("Erro no MediaRecorder:", event);
-          cleanupMedia();
-          setCompletedResult(null);
-          setErrorMessage("A gravacao falhou no dispositivo. Tente novamente.");
-          setRecordingState("error");
-        };
-
-        mediaRecorder.start(1000);
+        createAndStartRecorder(stream);
         setRecordingState("recording");
+
         timerRef.current = window.setInterval(() => {
           setRecordingTime((previous) => previous + 1);
         }, 1000);
+
+        // Periodically merge small chunks into one Blob to reduce memory pressure
+        consolidationTimerRef.current = window.setInterval(() => {
+          consolidateChunks();
+        }, CHUNK_CONSOLIDATION_INTERVAL_MS);
+
+        if (isIOS) {
+          scheduleAutoRestart();
+        }
       } catch (error) {
         console.error("Erro ao iniciar gravacao:", error);
 
@@ -489,21 +667,30 @@ export function ConsultationRecordingProvider({
         setRecordingState("error");
       }
     },
-    [clearTimer, cleanupMedia, processAudio, resetSessionState, setSession]
+    [
+      clearTimer,
+      cleanupMedia,
+      processAudio,
+      resetSessionState,
+      setSession,
+      consolidateChunks,
+      saveCurrentSegment,
+      clearReliabilityTimers,
+    ]
   );
 
   const togglePause = useCallback(() => {
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder) return;
 
-    if (recordingState === "recording") {
+    if (recordingState === "recording" && mediaRecorder.state === "recording") {
       mediaRecorder.pause();
       clearTimer();
       setRecordingState("paused");
       return;
     }
 
-    if (recordingState === "paused") {
+    if (recordingState === "paused" && mediaRecorder.state === "paused") {
       mediaRecorder.resume();
       timerRef.current = window.setInterval(() => {
         setRecordingTime((previous) => previous + 1);
@@ -513,6 +700,8 @@ export function ConsultationRecordingProvider({
   }, [clearTimer, recordingState]);
 
   const stopRecording = useCallback(() => {
+    isAutoRestartingRef.current = false;
+
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
@@ -522,7 +711,10 @@ export function ConsultationRecordingProvider({
       try {
         mediaRecorder.requestData();
       } catch (requestDataError) {
-        console.warn("Nao foi possivel solicitar o ultimo chunk antes de parar:", requestDataError);
+        console.warn(
+          "Nao foi possivel solicitar o ultimo chunk antes de parar:",
+          requestDataError
+        );
       }
 
       mediaRecorder.stop();
@@ -533,10 +725,10 @@ export function ConsultationRecordingProvider({
       setRecordingState("error");
       return;
     }
-
   }, [cleanupMedia]);
 
   const cancelRecording = useCallback(() => {
+    isAutoRestartingRef.current = false;
     const mediaRecorder = mediaRecorderRef.current;
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
