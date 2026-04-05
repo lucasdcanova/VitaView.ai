@@ -28,7 +28,7 @@ export default function MobileHeader(props: MobileHeaderProps) {
       <div aria-hidden="true" className={`md:hidden ${mobileHeaderHeightClass}`} />
 
       <header
-        className={`fixed inset-x-0 top-0 z-40 md:hidden will-change-transform transform-gpu ${mobileHeaderHeightClass}`}
+        className={`fixed inset-x-0 top-0 z-40 md:hidden ${mobileHeaderHeightClass}`}
       >
         {/* Soft glass + gradient transition into the iOS status bar area */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-pureWhite via-pureWhite/95 to-pureWhite/75 backdrop-blur-xl" />

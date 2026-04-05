@@ -103,7 +103,7 @@ export function NotificationBell() {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0">
+            <PopoverContent align="end" sideOffset={8} className="z-[100] w-80 p-0">
                 <div className="px-4 py-3 border-b border-border font-medium">Notificações</div>
 
                 {invitations.length === 0 ? (
