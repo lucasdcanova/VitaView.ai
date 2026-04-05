@@ -488,7 +488,7 @@ export default function VitaAssistPage() {
                                 <SelectValue placeholder="Paciente" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">Sem contexto</SelectItem>
+                                <SelectItem value="none">Selecionar paciente para contexto</SelectItem>
                                 {profiles.map((profile) => (
                                     <SelectItem key={profile.id} value={profile.id.toString()}>
                                         {profile.name}
