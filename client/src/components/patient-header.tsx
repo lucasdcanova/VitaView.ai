@@ -102,7 +102,7 @@ export default function PatientHeader({
       shouldRespectSafeAreaTop
         ? "px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.875rem)] md:px-6 md:pt-6 md:pb-3"
         : compact
-            ? "px-4 pt-4 pb-2 md:px-6 md:pt-6 md:pb-3"
+            ? "px-3 pt-3 pb-2 md:px-6 md:pt-6 md:pb-3"
             : "p-4 md:p-6",
       fullWidth ? "border-b border-x-0 border-t-0 rounded-none" : "border rounded-2xl mb-6 shadow-sm"
     )}>
@@ -120,7 +120,7 @@ export default function PatientHeader({
               )}
               <h1 className={cn(
                 "font-heading font-bold tracking-tight text-foreground flex items-center gap-2",
-                compact ? "text-xl sm:text-2xl md:text-3xl" : "text-2xl md:text-3xl"
+                compact ? "text-lg sm:text-2xl md:text-3xl" : "text-2xl md:text-3xl"
               )}>
                 {icon && <span className="text-muted-foreground">{icon}</span>}
                 {title}

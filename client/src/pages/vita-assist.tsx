@@ -462,50 +462,50 @@ export default function VitaAssistPage() {
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background">
             <PatientHeader
                 title="Vita Assist"
-                description="IA para raciocínio clínico, conduta e interpretação de contexto do atendimento."
+                description={isMobile ? undefined : "IA para raciocínio clínico, conduta e interpretação de contexto do atendimento."}
                 showTitleAsMain={true}
                 fullWidth={true}
                 compact={true}
-                icon={<Sparkles className="h-6 w-6" />}
+                icon={<Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />}
             >
-                <div className="flex w-full flex-col gap-2.5 md:w-auto md:min-w-[340px] md:items-stretch lg:min-w-[420px] lg:items-end">
-                    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center md:justify-start lg:justify-end">
+                <div className="flex w-full flex-col gap-1.5 sm:gap-2.5 md:w-auto md:min-w-[340px] md:items-stretch lg:min-w-[420px] lg:items-end">
+                    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:flex-wrap sm:items-center md:justify-start lg:justify-end">
                         <Button
                             variant={showHistory ? "secondary" : "outline"}
                             size="sm"
                             onClick={() => setShowHistory(!showHistory)}
-                            className="h-11 w-full justify-center gap-2 rounded-2xl border-border/80 bg-background/80 px-3 text-sm hover:bg-muted/60 sm:w-auto"
+                            className="h-9 w-full justify-center gap-1.5 rounded-xl border-border/80 bg-background/80 px-2.5 text-xs hover:bg-muted/60 sm:h-11 sm:gap-2 sm:rounded-2xl sm:px-3 sm:text-sm sm:w-auto"
                         >
-                            {isMobile ? <PanelLeft className="h-4 w-4" /> : <History className="h-4 w-4" />}
+                            {isMobile ? <PanelLeft className="h-3.5 w-3.5" /> : <History className="h-4 w-4" />}
                             <span>Histórico</span>
                         </Button>
+
+                        <Select
+                            value={selectedProfileId?.toString() || "none"}
+                            onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
+                        >
+                            <SelectTrigger className="h-9 w-full rounded-xl border-border/70 bg-background text-xs shadow-sm sm:h-11 sm:rounded-2xl sm:text-sm sm:max-w-[320px]">
+                                <SelectValue placeholder="Paciente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Sem contexto</SelectItem>
+                                {profiles.map((profile) => (
+                                    <SelectItem key={profile.id} value={profile.id.toString()}>
+                                        {profile.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
                         <Button
                             onClick={startNewConversation}
                             size="sm"
-                            className="h-11 w-full justify-center gap-2 rounded-2xl bg-[#1E3A5F] px-3 text-sm text-white shadow-sm hover:bg-[#2A4F7C] sm:w-auto"
+                            className="h-9 w-full justify-center gap-1.5 rounded-xl bg-[#1E3A5F] px-2.5 text-xs text-white shadow-sm hover:bg-[#2A4F7C] sm:h-11 sm:gap-2 sm:rounded-2xl sm:px-3 sm:text-sm sm:w-auto"
                         >
-                            <Plus className="h-4 w-4" />
-                            <span>Nova consulta</span>
+                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <span>Nova</span>
                         </Button>
                     </div>
-
-                    <Select
-                        value={selectedProfileId?.toString() || "none"}
-                        onValueChange={(value) => setSelectedProfileId(value === "none" ? null : parseInt(value))}
-                    >
-                        <SelectTrigger className="h-11 w-full rounded-2xl border-border/70 bg-background text-sm shadow-sm sm:max-w-[320px]">
-                            <SelectValue placeholder="Selecionar paciente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">Sem contexto</SelectItem>
-                            {profiles.map((profile) => (
-                                <SelectItem key={profile.id} value={profile.id.toString()}>
-                                    {profile.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
                 </div>
             </PatientHeader>
 
@@ -534,34 +534,30 @@ export default function VitaAssistPage() {
                         className="flex-1 overflow-y-auto overscroll-contain"
                     >
                         {!selectedConversationId && displayedMessages.length === 0 ? (
-                            <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-8 text-center sm:py-10 md:px-6">
-                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15 sm:h-20 sm:w-20 sm:rounded-[28px]">
-                                    <Sparkles className="h-8 w-8 text-white sm:h-10 sm:w-10" />
+                            <div className="mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-4 py-4 text-center sm:py-10 md:px-6">
+                                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1E3A5F] shadow-lg shadow-[#1E3A5F]/15 sm:mb-5 sm:h-20 sm:w-20 sm:rounded-[28px]">
+                                    <Sparkles className="h-5 w-5 text-white sm:h-10 sm:w-10" />
                                 </div>
-                                <h2 className="mb-2 text-2xl font-heading font-bold tracking-tight text-foreground sm:text-3xl">
-                                    Bem-vindo ao Vita Assist
+                                <h2 className="mb-4 text-lg font-heading font-bold tracking-tight text-foreground sm:mb-8 sm:text-3xl">
+                                    Como posso ajudar?
                                 </h2>
-                                <p className="mb-6 max-w-2xl px-2 text-sm leading-6 text-muted-foreground sm:mb-8 sm:leading-7">
-                                    Seu consultor médico de IA. Tire dúvidas sobre diagnósticos, tratamentos e
-                                    guidelines médicos com respostas baseadas em evidências.
-                                </p>
-                                <div className="grid w-full max-w-3xl gap-3 px-1 sm:px-2 md:grid-cols-2 xl:grid-cols-3">
+                                <div className="grid w-full max-w-3xl gap-2 px-1 sm:gap-3 sm:px-2 md:grid-cols-2 xl:grid-cols-3">
                                     {[
-                                        "Quais são as diretrizes atuais para tratamento de hipertensão?",
-                                        "Como investigar anemia ferropriva?",
+                                        "Diretrizes atuais para hipertensão",
+                                        "Investigação de anemia ferropriva",
                                         "Diagnóstico diferencial de dor torácica",
                                     ].map((suggestion) => (
                                         <Button
                                             key={suggestion}
                                             variant="outline"
-                                            className="h-auto min-h-[88px] justify-start whitespace-normal rounded-2xl border-border/70 bg-background px-4 py-4 text-left text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-muted/40 hover:shadow-md sm:min-h-[96px]"
+                                            className="h-auto min-h-0 justify-start whitespace-normal rounded-xl border-border/70 bg-background px-3 py-2.5 text-left text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-muted/40 hover:shadow-md sm:min-h-[96px] sm:rounded-2xl sm:px-4 sm:py-4"
                                             onClick={() => {
                                                 setInputMessage(suggestion);
                                                 textareaRef.current?.focus();
                                             }}
                                         >
-                                            <MessageSquare className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-[#448C9B]" />
-                                            <span className="text-left text-[13px] leading-5 text-foreground sm:text-sm sm:leading-6">
+                                            <MessageSquare className="mr-2 mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#448C9B] sm:h-4 sm:w-4" />
+                                            <span className="text-left text-xs leading-4 text-foreground sm:text-sm sm:leading-6">
                                                 {suggestion}
                                             </span>
                                         </Button>
@@ -643,23 +639,23 @@ export default function VitaAssistPage() {
                         )}
                     </div>
 
-                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-3 pb-[calc(0.875rem+env(safe-area-inset-bottom))] pt-3 supports-[backdrop-filter]:backdrop-blur-xl sm:px-4 sm:pt-4 md:px-6 md:pb-4">
+                    <div className="flex-shrink-0 border-t border-border bg-card/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 supports-[backdrop-filter]:backdrop-blur-xl sm:px-4 sm:pt-4 md:px-6 md:pb-4">
                         <div className="mx-auto max-w-5xl">
-                            <div className="rounded-[24px] border border-border/70 bg-background p-2.5 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)] sm:rounded-[28px] sm:p-3">
+                            <div className="rounded-xl border border-border/70 bg-background p-2 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.35)] sm:rounded-[28px] sm:p-3">
                                 <div className="flex items-end gap-2">
                                     <Textarea
                                         ref={textareaRef}
                                         value={inputMessage}
                                         onChange={(e) => setInputMessage(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        placeholder="Pergunte sobre hipótese diagnóstica, conduta, investigação ou interpretação clínica..."
-                                        className="min-h-[48px] resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] shadow-none focus-visible:ring-0 sm:min-h-[56px] sm:py-3 sm:text-base"
+                                        placeholder="Pergunte ao Vita Assist..."
+                                        className="min-h-[40px] resize-none border-0 bg-transparent px-2 py-2 text-sm shadow-none focus-visible:ring-0 sm:min-h-[56px] sm:py-3 sm:text-base"
                                         disabled={sendMessageMutation.isPending}
                                     />
                                     <Button
                                         onClick={handleSendMessage}
                                         disabled={!inputMessage.trim() || sendMessageMutation.isPending}
-                                        className="mb-1 h-11 rounded-2xl bg-[#1E3A5F] px-3.5 hover:bg-[#2A4F7C] sm:h-12 sm:px-4"
+                                        className="mb-0.5 h-9 rounded-xl bg-[#1E3A5F] px-3 hover:bg-[#2A4F7C] sm:mb-1 sm:h-12 sm:rounded-2xl sm:px-4"
                                     >
                                         {sendMessageMutation.isPending ? (
                                             <BrandLoader className="h-5 w-5 animate-spin" />
@@ -674,8 +670,8 @@ export default function VitaAssistPage() {
                             </div>
                         </div>
 
-                        <p className="mt-3 text-center text-xs text-muted-foreground">
-                            Vita Assist é uma ferramenta de apoio. Decisões clínicas são responsabilidade do profissional.
+                        <p className="mt-2 text-center text-[10px] leading-tight text-muted-foreground sm:mt-3 sm:text-xs">
+                            Ferramenta de apoio. Decisões clínicas são responsabilidade do profissional.
                         </p>
                     </div>
                 </div>
