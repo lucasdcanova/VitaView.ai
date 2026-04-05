@@ -601,7 +601,7 @@ export default function Sidebar(props: SidebarProps) {
               <NavItem href="/vita-assist" icon={Sparkles} label="Vita Assist" tourId="nav-vita-assist" />
               <NavItem href="/minha-clinica" icon={Building} label="Minha Clínica" tourId="nav-minha-clinica" />
               {isCollapsed && showClinicQuickSwitch && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-1 space-y-0.5 px-1">
                   {sortedClinics.map((accessibleClinic) => (
                     <TooltipProvider key={accessibleClinic.id} delayDuration={0}>
                       <Tooltip>
@@ -613,23 +613,23 @@ export default function Sidebar(props: SidebarProps) {
                             }}
                             disabled={accessibleClinic.isActive || selectClinicMutation.isPending}
                             className={cn(
-                              "relative flex w-full items-center justify-center rounded-2xl border p-2.5 transition-all",
+                              "relative flex w-full items-center justify-center rounded-lg p-1 transition-all",
                               accessibleClinic.isActive
-                                ? "border-charcoal bg-charcoal text-pureWhite shadow-sm"
-                                : "border-lightGray bg-white/80 text-charcoal hover:border-charcoal/25 hover:bg-lightGray/35",
-                              selectClinicMutation.isPending && "opacity-70"
+                                ? "opacity-100"
+                                : "opacity-50 hover:opacity-80",
+                              selectClinicMutation.isPending && "opacity-40"
                             )}
                             aria-label={`Selecionar clínica ${accessibleClinic.name}`}
                           >
                             {switchingClinicId === accessibleClinic.id ? (
-                              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/5 bg-white/75">
-                                <BrandLoader className="h-4 w-4 animate-spin text-charcoal" />
+                              <div className="flex h-6 w-6 items-center justify-center">
+                                <BrandLoader className="h-3 w-3 animate-spin text-charcoal" />
                               </div>
                             ) : (
                               <div
                                 className={cn(
-                                  "flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]",
-                                  accessibleClinic.isActive ? "border border-white/15 text-pureWhite" : "border border-black/5 text-charcoal"
+                                  "flex h-6 w-6 items-center justify-center rounded-md text-[9px] font-semibold",
+                                  accessibleClinic.isActive ? "text-pureWhite" : "text-charcoal"
                                 )}
                                 style={getClinicBadgeStyle(accessibleClinic.name, accessibleClinic.isActive)}
                               >
@@ -637,7 +637,7 @@ export default function Sidebar(props: SidebarProps) {
                               </div>
                             )}
                             {accessibleClinic.isActive && (
-                              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400" />
+                              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
                             )}
                           </button>
                         </TooltipTrigger>
