@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, Check, Zap, Shield, RefreshCw, Sparkles } from "lucide-react";
+import { FileText, Zap, Shield, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -25,31 +25,40 @@ export function LandingPrescription() {
                                 <span className="text-[#757575]">em segundos.</span>
                             </h2>
                             <p className="text-lg text-[#616161] mb-8 leading-relaxed">
-                                Acesse um banco de medicamentos completo e atualizado.
-                                Envie prescrições digitais com assinatura certificada e verificação automática de interações.
+                                Renove tratamentos contínuos com velocidade e segurança.
+                                A IA cruza medicamentos, histórico e alergias antes de gerar a prescrição para destacar interações relevantes no momento da revisão.
                             </p>
 
                             <div className="space-y-4 mb-8">
                                 {[
+                                    {
+                                        icon: <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />,
+                                        title: "Análise de Interações com IA",
+                                        desc: "Cruza medicamentos, alergias e histórico do paciente antes de imprimir.",
+                                        featured: true
+                                    },
                                     { icon: <Zap className="w-5 h-5" />, title: "Renovação em 1 clique", desc: "Repita receitas anteriores instantaneamente." },
-                                    { icon: <Shield className="w-5 h-5" />, title: "Segurança Clínica", desc: "Alertas de alergias e interações medicamentosas." },
                                     { icon: <Sparkles className="w-5 h-5" />, title: "Sugestão Inteligente", desc: "IA que sugere a melhor dose para cada medicamento." },
+                                    { icon: <Shield className="w-5 h-5" />, title: "Segurança Clínica", desc: "Alertas de alergias e interações medicamentosas." },
                                     { icon: <RefreshCw className="w-5 h-5" />, title: "Base Atualizada", desc: "Milhares de medicamentos com posologia sugerida." }
                                 ].map((item, index) => (
                                     <motion.div
                                         key={index}
-                                        className="flex items-start gap-4 p-4 bg-white rounded-xl border border-[#E0E0E0] shadow-sm hover:border-[#212121] transition-colors"
+                                        className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${item.featured
+                                            ? "bg-[#212121] border-[#212121] shadow-lg shadow-black/10"
+                                            : "bg-white border-[#E0E0E0] shadow-sm hover:border-[#212121]"
+                                            }`}
                                         initial={{ opacity: 0, y: 10 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: 0.2 + (index * 0.1) }}
                                     >
-                                        <div className="p-2 bg-[#F5F5F5] rounded-lg text-[#212121]">
+                                        <div className={`p-2 rounded-lg ${item.featured ? "bg-white/10 text-white" : "bg-[#F5F5F5] text-[#212121]"}`}>
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-[#212121] text-sm">{item.title}</h4>
-                                            <p className="text-[#757575] text-xs leading-relaxed">{item.desc}</p>
+                                            <h4 className={`font-bold text-sm ${item.featured ? "text-white" : "text-[#212121]"}`}>{item.title}</h4>
+                                            <p className={`text-xs leading-relaxed ${item.featured ? "text-white/70" : "text-[#757575]"}`}>{item.desc}</p>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -85,12 +94,12 @@ export function LandingPrescription() {
                                             <FileText className="text-white w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-[#212121]">Receita Digital</h3>
-                                            <p className="text-xs text-[#9E9E9E]">Assinada digitalmente</p>
+                                            <h3 className="font-bold text-[#212121]">Prescrição Médica</h3>
+                                            <p className="text-xs text-[#9E9E9E]">Pronta para imprimir</p>
                                         </div>
                                     </div>
-                                    <div className="px-2 py-1 bg-green-50 text-green-700 text-xs font-bold rounded border border-green-100 uppercase tracking-wide">
-                                        Válida
+                                    <div className="px-2 py-1 bg-slate-50 text-slate-700 text-xs font-bold rounded border border-slate-200 uppercase tracking-wide">
+                                        Revisada
                                     </div>
                                 </div>
 
@@ -120,47 +129,88 @@ export function LandingPrescription() {
                                     </button>
                                 </div>
                                 <div className="mt-2">
-                                    <button className="w-full bg-white border border-[#E0E0E0] text-[#212121] py-3 rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2 hover:bg-[#F5F5F5] transition-colors">
-                                        <Shield className="w-4 h-4 text-emerald-600" />
-                                        Verificar Interações
+                                    <button className="w-full bg-[#161616] border border-[#212121] text-white py-3 rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2 hover:bg-black transition-colors">
+                                        <Sparkles className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                        Analisar Interações com IA
                                     </button>
                                 </div>
 
-                                 {/* Interactive Notification */}
-                                 <motion.div
-                                    className="hidden lg:block absolute -right-6 top-1/2 transform -translate-y-1/2 bg-[#212121] text-white p-5 rounded-xl shadow-2xl max-w-[220px] border border-white/10"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    whileInView={{ opacity: 1, x: 0 }}
+                                <motion.div
+                                    className="mt-4 rounded-2xl bg-[#161616] text-white p-4 md:p-5 shadow-2xl border border-[#2B2B2B] overflow-hidden relative"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.8, type: "spring" }}
                                 >
-                                    <div className="flex items-start gap-3">
-                                        <div className="bg-green-500/20 p-1.5 rounded-full shrink-0">
-                                            <Check className="w-3.5 h-3.5 text-green-400" />
+                                    <div className="absolute -top-8 right-4 h-24 w-24 rounded-full bg-yellow-400/10 blur-3xl"></div>
+                                    <div className="relative flex items-start justify-between gap-3 mb-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="bg-white/8 border border-white/10 p-2.5 rounded-xl shrink-0">
+                                                <Sparkles className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/45 mb-1">Análise de Interações com IA</p>
+                                                <p className="text-sm font-semibold leading-tight">Varredura clínica automática antes da impressão</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold leading-tight mb-1">Interação verificada</p>
-                                            <p className="text-[10px] text-white/70 leading-relaxed">Cruzamento automático com histórico e alergias do paciente.</p>
+                                        <div className="shrink-0 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-yellow-300">
+                                            Essencial
+                                        </div>
+                                    </div>
+
+                                    <div className="relative grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
+                                        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                            <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+                                                <div>
+                                                    <p className="text-xs font-semibold text-white">Sertralina 50mg + Zolpidem 10mg</p>
+                                                    <p className="text-[11px] text-white/50 mt-1">Risco moderado de sedação e piora de atenção no dia seguinte.</p>
+                                                </div>
+                                                <span className="rounded-full bg-amber-400/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                                                    Moderado
+                                                </span>
+                                            </div>
+
+                                            <div className="pt-3 space-y-2">
+                                                <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[11px] text-white/70">
+                                                    <span>Histórico cruzado automaticamente</span>
+                                                    <span className="font-semibold text-white">Alergias + uso contínuo</span>
+                                                </div>
+                                                <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[11px] text-white/70">
+                                                    <span>Recomendação da IA</span>
+                                                    <span className="font-semibold text-yellow-300">Orientar uso noturno</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 mb-2">Paciente</p>
+                                                <div className="space-y-2 text-[11px] text-white/70">
+                                                    <div className="flex items-center justify-between">
+                                                        <span>Alergia registrada</span>
+                                                        <span className="font-semibold text-white">AINEs</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span>Medicamentos ativos</span>
+                                                        <span className="font-semibold text-white">2 em uso</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span>Status</span>
+                                                        <span className="font-semibold text-emerald-300">Pronto para revisar</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200/80 mb-2">Resumo IA</p>
+                                                <p className="text-[11px] leading-relaxed text-yellow-50/90">
+                                                    A plataforma sinaliza interações relevantes antes de emitir a receita, com contexto clínico e recomendação objetiva para a revisão final.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
 
-                                {/* Signature Badge Mockup */}
-                                <motion.div
-                                    className="hidden lg:flex absolute -left-8 -bottom-4 bg-white border border-[#E0E0E0] p-3 rounded-lg shadow-xl items-center gap-3 z-20"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: 1, duration: 0.5 }}
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
-                                        <Shield className="w-4 h-4 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-[#212121] uppercase tracking-wider">Assinatura Digital</p>
-                                        <p className="text-[9px] text-[#9E9E9E]">Certificado ICP-Brasil</p>
-                                    </div>
-                                </motion.div>
                             </div>
                         </motion.div>
                     </div>
