@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -10,7 +11,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        configureAudioSession()
         return true
+    }
+
+    private func configureAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+            )
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+            NSLog("[VitaView] AVAudioSession configured: category=playAndRecord, mode=default")
+        } catch {
+            NSLog("[VitaView] Failed to configure AVAudioSession: \(error.localizedDescription)")
+        }
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -26,7 +43,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks paused while the app was inactive.
+        // Re-activate audio session when returning to foreground to ensure
+        // MediaRecorder in WKWebView can capture audio after app switch.
+        configureAudioSession()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

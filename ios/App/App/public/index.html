@@ -1,66 +1,248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>VitaView</title>
-    <meta http-equiv="refresh" content="0; url=https://vitaview.ai/auth" />
-    <style>
-      :root {
-        color-scheme: light dark;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f4f4f4;
-      }
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          background: #0f1115;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no" />
+
+  <!-- Primary Meta Tags -->
+  <title>VitaView AI — Prontuário Inteligente com IA para Médicos</title>
+  <meta name="description"
+    content="Prontuário inteligente que organiza exames, prescrições e histórico do paciente com IA. Transcrição de voz, análise laboratorial e agenda integrada. LGPD compliant.">
+  <meta name="keywords"
+    content="prontuário eletrônico, prontuário inteligente, software médico, gestão clínica, inteligência artificial saúde, PEP, prescrição digital, análise de exames, LGPD saúde">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="pt-BR">
+  <meta name="author" content="VitaView AI">
+  <link rel="canonical" href="https://vitaview.ai/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vitaview.ai/">
+  <meta property="og:site_name" content="VitaView AI">
+  <meta property="og:title" content="VitaView AI — Prontuário Inteligente com IA para Médicos">
+  <meta property="og:description"
+    content="Prontuário inteligente que organiza exames, prescrições e histórico do paciente com IA. Transcrição de voz, análise laboratorial e agenda integrada.">
+  <meta property="og:image" content="https://vitaview.ai/LOGO%20COM%20TEXTO.PNG">
+  <meta property="og:locale" content="pt_BR">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VitaView AI — Prontuário Inteligente com IA para Médicos">
+  <meta name="twitter:description"
+    content="Prontuário inteligente que organiza exames, prescrições e histórico do paciente com IA. LGPD compliant.">
+  <meta name="twitter:image" content="https://vitaview.ai/LOGO%20COM%20TEXTO.PNG">
+
+  <!-- Theme and Icons -->
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="msapplication-TileColor" content="#FFFFFF">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="icon" type="image/png" href="/icon-192x192.png" data-theme-favicon="true" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" data-theme-apple-icon="true" />
+  <meta name="msapplication-TileImage" content="/icon-192x192.png">
+
+  <!-- DNS prefetch for fonts only - other APIs loaded after auth -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//fonts.gstatic.com">
+
+  <!-- Preconnect to fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/manifest.json" id="app-manifest">
+
+  <!-- CSP Nonce (will be set by server) -->
+  <meta name="csp-nonce" content="">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "VitaView AI",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Web",
+    "description": "Prontuário inteligente com IA que organiza exames, prescrições e histórico do paciente. Transcrição de voz, análise laboratorial e agenda integrada.",
+    "url": "https://vitaview.ai",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL",
+      "description": "Teste grátis disponível"
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "VitaView AI",
+      "url": "https://vitaview.ai",
+      "logo": "https://vitaview.ai/logo_rounded.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "contato@vitaview.ai",
+        "contactType": "customer service"
+      }
+    },
+    "featureList": [
+      "Prontuário eletrônico inteligente",
+      "Análise de exames com IA",
+      "Transcrição de voz para prontuário",
+      "Prescrição digital com assinatura",
+      "Agenda inteligente",
+      "Conformidade LGPD"
+    ]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Como funciona a Anamnese com IA e gravação de voz?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Durante a consulta, você ativa a gravação de voz e foca totalmente no paciente. Nossa IA transcreve a conversa em tempo real, estrutura as informações em formato clínico (queixa principal, história da doença atual, exame físico) e gera a anamnese completa automaticamente. Você só revisa e confirma."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "O que a Prescrição Inteligente oferece?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A prescrição inteligente permite buscar medicamentos com autocomplete, definir posologia e gerar o documento final em segundos. Além disso, o sistema alerta sobre interações medicamentosas, ajudando a evitar erros e garantindo mais segurança para o paciente."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Como a Agenda com IA e triagem pré-consulta funcionam?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A agenda inteligente organiza seus horários e permite que pacientes façam agendamento online. Antes da consulta, o sistema aplica uma triagem automática por questionário, classificando a urgência e preparando um resumo pré-consulta para que você já chegue com contexto do caso."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "O que é o Vita Assist?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "O Vita Assist é seu assistente clínico com IA. Ele pode sugerir hipóteses diagnósticas com base nos dados do paciente, recomendar protocolos de exames, auxiliar na interpretação de resultados e responder dúvidas clínicas — tudo integrado ao prontuário do paciente."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Quais planos estão disponíveis?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oferecemos o Vita Pro para profissionais independentes, o Vita Team para clínicas com até 5 profissionais, e o Vita Business para clínicas maiores com até 15 profissionais. Todos incluem anamnese com IA, prescrição inteligente e agenda. Planos semestrais e anuais têm desconto de até 20%."
         }
       }
+    ]
+  }
+  </script>
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: inherit;
-        color: #111827;
+  <!-- Critical CSS inline (will be added by build process) -->
+  <style>
+    /* Critical above-the-fold styles */
+    html {
+      -webkit-text-size-adjust: 100%;
+      -moz-text-size-adjust: 100%;
+           text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #F4F4F4;
+      overflow-x: hidden;
+    }
+
+    #root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    /* Loading state styles */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #1e3a5f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
       }
 
-      @media (prefers-color-scheme: dark) {
-        body {
-          color: #f3f4f6;
-        }
+      100% {
+        transform: rotate(360deg);
       }
+    }
 
-      main {
-        width: min(28rem, calc(100vw - 2rem));
-        padding: 1.5rem;
-        border-radius: 1.25rem;
-        background: rgba(255, 255, 255, 0.88);
-        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
-        text-align: center;
-      }
+    .loading-text {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
 
-      @media (prefers-color-scheme: dark) {
-        main {
-          background: rgba(17, 24, 39, 0.88);
-          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
-        }
-      }
+    /* Hide scrollbar but keep functionality */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
 
-      a {
-        color: inherit;
-      }
-    </style>
-    <script>
-      window.location.replace("https://vitaview.ai/auth");
-    </script>
-  </head>
-  <body>
-    <main>
-      <h1>Abrindo VitaView...</h1>
-      <p>Se nada acontecer, <a href="https://vitaview.ai/auth">toque aqui para continuar</a>.</p>
-    </main>
-  </body>
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-DdZHzG-i.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor/react-vendor-C-g40fxq.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor/ui-vendor-BsTSXrtL.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor/query-vendor-DCxFfMkz.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor/chart-vendor-C6v87pNO.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor/motion-vendor-DQdWdKht.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor/form-vendor-Di2vmwjz.js">
+  <link rel="stylesheet" crossorigin href="/assets/css/index-D-Po7IlA.css">
+</head>
+
+<body>
+  <div id="root">
+    <!-- Loading state while React loads -->
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <div class="loading-text">Carregando VitaView AI...</div>
+    </div>
+  </div>
+
+  <!-- Main application script -->
+</body>
+
 </html>

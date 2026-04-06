@@ -448,17 +448,44 @@ export function ConsultationRecordingProvider({
           }
         }
 
+        const isIOS = isIOSAppShell();
+
+        // On iOS/WKWebView, advanced audio constraints can yield a silent
+        // stream even when permission is granted. Request plain audio there
+        // and let iOS apply its own processing via AVAudioSession.
+        const audioConstraints: MediaTrackConstraints | boolean = isIOS
+          ? true
+          : {
+              echoCancellation: true,
+              noiseSuppression: true,
+              sampleRate: 44100,
+            };
+
         const stream = await getAudioStream({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 44100,
-          },
+          audio: audioConstraints,
         });
 
         streamRef.current = stream;
 
-        const isIOS = isIOSAppShell();
+        // Diagnostic logging — helps verify the stream actually has live
+        // audio tracks. Empty/muted tracks are the tell-tale sign of a
+        // missing AVAudioSession configuration on iOS.
+        const audioTracks = stream.getAudioTracks();
+        console.log("[Recording] Audio tracks obtained:", {
+          count: audioTracks.length,
+          platform: isIOS ? "ios" : "web",
+          tracks: audioTracks.map((t) => ({
+            label: t.label,
+            enabled: t.enabled,
+            muted: t.muted,
+            readyState: t.readyState,
+          })),
+        });
+
+        if (audioTracks.length === 0) {
+          throw new Error("NO_AUDIO_TRACKS");
+        }
+
         const timeslice = isIOS ? IOS_TIMESLICE_MS : DEFAULT_TIMESLICE_MS;
 
         // Auto-restart scheduler for iOS — restarts the recorder every 10 min
@@ -511,6 +538,10 @@ export function ConsultationRecordingProvider({
           };
 
           mr.ondataavailable = (event) => {
+            console.log("[Recording] ondataavailable", {
+              size: event.data.size,
+              type: event.data.type,
+            });
             if (event.data.size > 0) {
               audioChunksRef.current.push(event.data);
             }

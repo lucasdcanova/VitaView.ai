@@ -1,23 +1,23 @@
 {
-  "appId": "br.com.lucascanova.vitaview",
-  "appName": "VitaView",
-  "webDir": "dist/public",
-  "server": {
-    "url": "https://vitaview.ai/auth",
-    "cleartext": false,
-    "allowNavigation": [
-      "vitaview.ai",
-      "*.vitaview.ai"
-    ]
-  },
-  "ios": {
-    "zoomEnabled": false,
-    "contentInset": "never",
-    "scrollEnabled": true,
-    "backgroundColor": "#0F1115"
-  },
-  "android": {
-    "backgroundColor": "#FFFFFF"
-  },
-  "packageClassList": ["StoreKitPlugin"]
+	"appId": "br.com.lucascanova.vitaview",
+	"appName": "VitaView",
+	"webDir": "dist/public",
+	"packageClassList": [],
+	"ios": {
+		"zoomEnabled": false,
+		"contentInset": "never",
+		"scrollEnabled": true,
+		"backgroundColor": "#0F1115"
+	},
+	"android": {
+		"backgroundColor": "#FFFFFF"
+	},
+	"server": {
+		"url": "https://vitaview.ai/auth",
+		"cleartext": false,
+		"allowNavigation": [
+			"vitaview.ai",
+			"*.vitaview.ai"
+		]
+	}
 }
