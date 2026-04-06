@@ -289,7 +289,7 @@ export function LandingMigration() {
   return (
     <section
       id="migracao"
-      className="relative overflow-hidden bg-[#F4F2EE] py-8 md:py-12 min-h-[100dvh] flex flex-col justify-center text-[#212121]"
+      className="relative overflow-hidden bg-[#F5F5F5] py-8 md:py-12 min-h-[100dvh] flex flex-col justify-center text-[#212121]"
     >
       {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0">

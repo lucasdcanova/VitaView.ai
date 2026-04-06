@@ -1,103 +1,276 @@
-import { motion } from "framer-motion";
-import { FileText, Stethoscope, Brain, Upload, ArrowRight, Check } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, ArrowUp, Brain, FileText, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+
+const mockupStates = [
+    {
+        label: "Resumo do caso",
+        user: "Organize os pontos principais antes da consulta.",
+        assistantTitle: "Contexto carregado",
+        assistantText:
+            "Sintomas persistentes, ferritina reduzida e histórico recente já reunidos em um único resumo para revisão rápida.",
+        chips: ["Histórico clínico", "Exames recentes", "Paciente em atendimento"],
+    },
+    {
+        label: "Hipóteses e próximos passos",
+        user: "Quais pontos devo revisar agora com base nesse quadro?",
+        assistantTitle: "Apoio ao raciocínio",
+        assistantText:
+            "O Vita Assist ajuda a estruturar hipóteses, destacar sinais de atenção e sugerir próximos passos para avaliação individual.",
+        chips: ["Hipóteses clínicas", "Sinais de alerta", "Próximos exames"],
+    },
+    {
+        label: "Rascunho clínico",
+        user: "Monte um rascunho objetivo para evolução e orientação.",
+        assistantTitle: "Texto pronto para lapidar",
+        assistantText:
+            "Transforma a conversa em rascunhos claros para evolução, resumo do atendimento e orientação ao paciente.",
+        chips: ["Evolução clínica", "Orientação", "Texto mais objetivo"],
+    },
+];
+
+const capabilities = [
+    {
+        icon: <Brain className="w-4 h-4" />,
+        title: "Entende o contexto do caso",
+        description: "Histórico, exames e conversa ativa reunidos no mesmo fluxo.",
+    },
+    {
+        icon: <Sparkles className="w-4 h-4" />,
+        title: "Ajuda a pensar mais rápido",
+        description: "Organiza hipóteses, dúvidas e próximos passos sem tirar o paciente do centro.",
+    },
+    {
+        icon: <FileText className="w-4 h-4" />,
+        title: "Acelera a documentação",
+        description: "Gera rascunhos claros para evolução e orientação clínica.",
+    },
+];
 
 export function LandingFeatures() {
-    const features = [
-        {
-            id: "anamnese",
-            title: "Anamnese Objetiva",
-            description: "Esqueça formulários infinitos. Registre o essencial em uma interface limpa e focada.",
-            icon: <Stethoscope className="w-6 h-6 text-[#212121]" />,
-            color: "bg-[#212121]", // Black
-            lightColor: "bg-[#F5F5F5]",
-            items: ["Histórico unificado", "Modelos ágeis", "Navegação rápida"]
-        },
-        {
-            id: "prescricao",
-            title: "Prescrição Ágil",
-            description: "Prescreva em segundos com verificação automática de interações e banco atualizado.",
-            icon: <FileText className="w-6 h-6 text-[#212121]" />,
-            color: "bg-[#E0E0E0]", // Light Grey
-            lightColor: "bg-white",
-            items: ["Base BR atualizada", "Alertas de segurança", "Assinatura digital"]
-        },
-        {
-            id: "vita-assist",
-            title: "Vita Assist AI",
-            description: "Seu copiloto clínico. Resumos, dúvidas de protocolos e rascunhos no chat.",
-            icon: <Brain className="w-6 h-6 text-[#212121]" />,
-            color: "bg-[#424242]", // Dark Grey
-            lightColor: "bg-[#FAFAFA]",
-            items: ["Resumo de caso", "Segunda opinião", "Busca inteligente"]
-        },
-        {
-            id: "exames",
-            title: "Central de Exames",
-            description: "Extração automática de dados de PDFs e imagens para gráficos de evolução.",
-            icon: <Upload className="w-6 h-6 text-[#212121]" />,
-            color: "bg-[#F5F5F5]", // Very Light Grey
-            lightColor: "bg-white",
-            items: ["OCR preciso", "Gráficos evolutivos", "Upload fácil"]
-        }
-    ];
+    const [activeState, setActiveState] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setActiveState((current) => (current + 1) % mockupStates.length);
+        }, 3200);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    const currentState = mockupStates[activeState];
 
     return (
-        <section id="recursos" className="py-16 md:py-24 bg-[#0A0A0A] relative min-h-[100dvh] flex flex-col justify-center">
-            <div className="container mx-auto px-5 sm:px-6 lg:px-8">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <span className="text-xs font-bold tracking-[0.2em] text-white/40 uppercase mb-4 block">
-                        Diferencial Estratégico
-                    </span>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white mb-6 leading-[1.1] tracking-tight">
-                        Quatro pilares. <br />
-                        <span className="text-white/40 font-medium">Tudo o que você precisa.</span>
-                    </h2>
-                    <p className="text-lg md:text-xl text-white/60 leading-relaxed max-w-2xl mx-auto">
-                        Removemos o excesso para focar na essência. Ferramentas desenhadas sob medida para economizar o recurso mais precioso do médico: o tempo.
-                    </p>
-                </div>
+        <section
+            id="recursos"
+            className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center"
+        >
+            <div className="absolute inset-0 pointer-events-none hidden md:block">
+                <div className="absolute left-[10%] top-16 w-72 h-72 rounded-full bg-white/[0.04] blur-[120px]" />
+                <div className="absolute right-[8%] bottom-12 w-80 h-80 rounded-full bg-white/[0.03] blur-[140px]" />
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                    {features.map((feature, index) => (
-                        <motion.div
-                            key={feature.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-100px" }}
-                            transition={{ duration: 0.5, delay: index * 0.15 }}
-                            className={`group relative rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 cursor-default flex flex-col bg-white/[0.03] backdrop-blur-md`}
-                        >
-                            <div className={`p-8 flex-1 flex flex-col`}>
-                                <div className={`w-14 h-14 rounded-2xl bg-white text-black flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500`}>
-                                    {feature.icon}
+            <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
+                <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+                    <motion.div
+                        className="lg:w-[42%]"
+                        initial={{ opacity: 0, y: 18 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-120px" }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">
+                            Vita Assist
+                        </span>
+
+                        <h2 className="mt-5 text-3xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white leading-[1.04] tracking-tight">
+                            Vita Assist <br />
+                            <span className="text-white/45">na rotina do atendimento.</span>
+                        </h2>
+
+                        <p className="mt-5 max-w-xl text-base md:text-[17px] leading-relaxed text-white/65">
+                            Um assistente clínico dentro da plataforma, com contexto do paciente, chat contínuo e apoio
+                            para resumir, organizar e documentar melhor cada consulta.
+                        </p>
+
+                        <div className="mt-7 space-y-4">
+                            {capabilities.map((item, index) => (
+                                <motion.div
+                                    key={item.title}
+                                    initial={{ opacity: 0, y: 16 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: "-120px" }}
+                                    transition={{ duration: 0.4, delay: 0.08 * index }}
+                                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                                >
+                                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-black">
+                                        {item.icon}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                                        <p className="mt-1 text-sm leading-relaxed text-white/55">{item.description}</p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        <div className="mt-10 md:mt-12">
+                            <Link href="/auth?next=%2Fvita-assist">
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="border border-white/30 text-white hover:bg-white hover:text-black px-6 py-4 text-sm rounded-lg transition-all"
+                                >
+                                    Abrir Vita Assist <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        className="lg:w-[58%] w-full"
+                        initial={{ opacity: 0, y: 22 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-120px" }}
+                        transition={{ duration: 0.55, delay: 0.08 }}
+                    >
+                        <div className="relative">
+                            <div className="absolute -inset-2 rounded-[32px] bg-white/[0.05] blur-2xl opacity-60" />
+
+                            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#111111] shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
+                                <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-4 sm:px-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+                                            <Sparkles className="w-5 h-5 text-white/80" />
+                                        </div>
+                                        <div>
+                                            <p className="text-base font-bold text-white">Vita Assist</p>
+                                            <p className="text-sm text-white/60">Chat com IA clínica contextual dentro da plataforma</p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        className="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
+                                        style={{ color: "#D7D7D7" }}
+                                    >
+                                        <MessageSquare className="w-3 h-3" />
+                                        Atendimento ativo
+                                    </div>
                                 </div>
 
-                                <h3 className="text-xl font-bold text-white mb-3 group-hover:translate-x-1 transition-transform">{feature.title}</h3>
+                                <div className="min-h-[360px] flex flex-col">
+                                    <div className="border-b border-white/10 px-4 py-4 sm:px-6">
+                                        <div className="mb-3">
+                                            <p className="text-sm font-semibold text-white">Conversa ativa com o paciente em atendimento</p>
+                                            <p className="mt-1 text-xs text-white/50">
+                                                O Vita Assist entende o contexto clínico, responde no chat e ajuda a estruturar a próxima ação.
+                                            </p>
+                                        </div>
 
-                                <p className="text-white/50 mb-8 leading-relaxed text-sm lg:text-[15px]">
-                                    {feature.description}
-                                </p>
-
-                                <ul className="mt-auto space-y-3">
-                                    {feature.items.map((item, i) => (
-                                        <li key={i} className="flex items-center text-white/70 text-xs sm:text-sm font-medium">
-                                            <div className="mr-3 p-1 rounded-full bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white transition-all">
-                                                <Check className="w-3 h-3" />
+                                        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black">
+                                                <Sparkles className="w-4 h-4" />
                                             </div>
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+                                            <div>
+                                                <p className="text-[12px] font-semibold text-white">Dor abdominal persistente</p>
+                                                <p className="text-[11px] text-white/45">Assistente acompanhando o caso em tempo real</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                <div className="mt-12 text-center">
-                    <Button variant="outline" size="lg" className="border border-white/30 text-white hover:bg-white hover:text-black px-6 py-5 text-base rounded-lg transition-all">
-                        Explorar todas as funcionalidades <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
+                                    <div className="flex flex-col">
+                                        <div className="border-b border-white/10 px-4 py-3 sm:px-6">
+                                            <div className="flex flex-wrap gap-2">
+                                                <AnimatePresence mode="wait">
+                                                    <motion.div
+                                                        key={currentState.label}
+                                                        initial={{ opacity: 0, y: 6 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -6 }}
+                                                        transition={{ duration: 0.25 }}
+                                                        className="flex flex-wrap gap-2"
+                                                    >
+                                                        {currentState.chips.map((chip) => (
+                                                            <span
+                                                                key={chip}
+                                                                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white"
+                                                                style={{ color: "#E5E5E5" }}
+                                                            >
+                                                                {chip}
+                                                            </span>
+                                                        ))}
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 space-y-5 p-4 sm:p-6">
+                                            <AnimatePresence mode="wait">
+                                                <motion.div
+                                                    key={`user-${activeState}`}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    transition={{ duration: 0.25 }}
+                                                    className="ml-auto w-fit max-w-[78%] rounded-[20px] rounded-br-md bg-white px-4 py-3 text-sm text-black shadow-[0_10px_24px_rgba(255,255,255,0.06)]"
+                                                >
+                                                    {currentState.user}
+                                                </motion.div>
+                                            </AnimatePresence>
+
+                                            <AnimatePresence mode="wait">
+                                                <motion.div
+                                                    key={`assistant-${activeState}`}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    transition={{ duration: 0.28 }}
+                                                    className="max-w-[94%] rounded-[22px] rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-4 text-white"
+                                                >
+                                                    <div className="mb-3 flex items-center gap-3">
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.08)]">
+                                                            <Sparkles className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-white">Vita Assist</p>
+                                                            <p
+                                                                className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/70"
+                                                                style={{ color: "#BDBDBD" }}
+                                                            >
+                                                                {currentState.label}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                                                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/70" style={{ color: "#B0B0B0" }}>
+                                                            {currentState.assistantTitle}
+                                                        </p>
+                                                        <p className="mt-2 text-[15px] leading-relaxed text-white/82">
+                                                            {currentState.assistantText}
+                                                        </p>
+                                                    </div>
+                                                </motion.div>
+                                            </AnimatePresence>
+                                        </div>
+
+                                        <div className="border-t border-white/10 px-4 py-4 sm:px-6">
+                                            <div className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[#161616] px-4 py-3">
+                                                <p className="flex-1 text-sm text-white" style={{ color: "#D8D8D8" }}>
+                                                    Pergunte sobre o caso, peça um resumo ou monte um rascunho clínico.
+                                                </p>
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black">
+                                                    <ArrowUp className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
         </section>

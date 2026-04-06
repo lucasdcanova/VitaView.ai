@@ -43,7 +43,7 @@ export function LandingTestimonials() {
   return (
     <section
       id="depoimentos"
-      className="relative overflow-hidden py-10 scroll-mt-16 md:py-12 xl:py-14"
+      className="relative overflow-hidden py-12 scroll-mt-16 md:py-20 min-h-[100dvh] flex flex-col justify-center"
     >
       <div className="absolute inset-0 bg-[#111111]" />
       <div className="pointer-events-none absolute inset-0 hidden md:block">
@@ -57,28 +57,28 @@ export function LandingTestimonials() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mx-auto mb-8 max-w-4xl text-center md:mb-10"
+          className="mx-auto mb-6 max-w-4xl text-center md:mb-7"
         >
           <span
-            className="inline-flex items-center rounded-full border border-white/12 bg-white/6 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] !text-white/70"
+            className="inline-flex items-center rounded-full border border-white/12 bg-white/6 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.22em] !text-white/65"
             style={{ color: "rgba(255,255,255,0.7)" }}
           >
             Depoimentos
           </span>
           <h2
-            className="mt-4 text-3xl font-heading font-bold leading-[1.05] tracking-tight !text-[#F5F5F5] md:text-5xl lg:text-6xl"
+            className="mt-3 text-2xl font-heading font-semibold leading-[1.06] tracking-tight !text-[#F5F5F5] md:text-[2.3rem] lg:text-[2.7rem]"
             style={{ color: "#F5F5F5" }}
           >
-            O Que Dizem Nossos <br />
+            O Que Dizem Nossos{" "}
             <span
-              className="font-medium !text-[#A8A8A8]"
+              className="font-normal !text-[#A8A8A8]"
               style={{ color: "#A8A8A8" }}
             >
               Usuários
             </span>
           </h2>
           <p
-            className="mx-auto mt-4 max-w-2xl font-body text-sm leading-relaxed !text-[#B0B0B0] md:text-base"
+            className="mx-auto mt-3 max-w-2xl font-body text-[13px] leading-relaxed !text-[#B0B0B0] md:text-[14px]"
             style={{ color: "#B0B0B0" }}
           >
             Relatos de profissionais que adotaram o VitaView AI na rotina e passaram a conduzir
@@ -86,7 +86,7 @@ export function LandingTestimonials() {
           </p>
         </motion.div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <motion.article
               key={testimonial.name}
@@ -95,22 +95,22 @@ export function LandingTestimonials() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: index * 0.08 }}
               whileHover={{ y: -6 }}
-              className="group relative overflow-hidden rounded-[28px] border border-white/12 bg-white/[0.08] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] transition-shadow duration-300 hover:bg-white/[0.1] hover:shadow-[0_24px_70px_rgba(0,0,0,0.34)]"
+              className="group relative overflow-hidden rounded-[28px] border border-white/12 bg-white/[0.08] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.28)] transition-shadow duration-300 hover:bg-white/[0.1] hover:shadow-[0_24px_70px_rgba(0,0,0,0.34)]"
             >
               <div
                 className="absolute inset-x-0 top-0 h-1.5"
                 style={{ background: `linear-gradient(90deg, ${testimonial.accent}, transparent)` }}
               />
 
-              <div className="mb-5 flex items-start justify-between gap-4">
+              <div className="mb-4 flex items-start justify-between gap-3">
                 <div
-                  className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 text-sm font-bold text-[#111111] shadow-[0_8px_24px_rgba(255,255,255,0.12)]"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold text-[#111111] shadow-[0_8px_24px_rgba(255,255,255,0.12)]"
                   style={{ backgroundColor: testimonial.accent }}
                 >
                   {testimonial.initials}
                 </div>
                 <span
-                  className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] !text-[#D0D0D0]"
+                  className="rounded-full border border-white/12 bg-white/8 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.12em] !text-[#C8C8C8]"
                   style={{ color: "#D0D0D0" }}
                 >
                   {testimonial.context}
@@ -118,37 +118,37 @@ export function LandingTestimonials() {
               </div>
 
               <p
-                className="min-h-[9rem] text-[15px] leading-7 !text-white md:min-h-[10rem]"
+                className="min-h-[7.5rem] text-[13px] leading-5 !text-white/92 md:min-h-[8.5rem]"
                 style={{ color: "#FFFFFF" }}
               >
                 "{testimonial.quote}"
               </p>
 
-              <div className="mt-5 border-t border-white/10 pt-4">
+              <div className="mt-4 border-t border-white/10 pt-3.5">
                 <p
-                  className="text-xs font-semibold uppercase tracking-[0.18em] !text-[#B5B5B5]"
+                  className="text-[10px] font-medium uppercase tracking-[0.14em] !text-[#B5B5B5]"
                   style={{ color: "#B5B5B5" }}
                 >
                   impacto percebido
                 </p>
                 <p
-                  className="mt-2 text-sm font-medium leading-6 !text-[#E1E1E1]"
+                  className="mt-1.5 text-[12px] font-medium leading-5 !text-[#E1E1E1]"
                   style={{ color: "#E1E1E1" }}
                 >
                   {testimonial.metric}
                 </p>
               </div>
 
-              <div className="mt-5 flex items-center justify-between gap-4">
+              <div className="mt-4 flex items-center justify-between gap-4">
                 <div>
                   <h3
-                    className="text-base font-bold !text-[#FAFAFA]"
+                    className="text-[14px] font-semibold !text-[#FAFAFA]"
                     style={{ color: "#FAFAFA" }}
                   >
                     {testimonial.name}
                   </h3>
                   <p
-                    className="text-sm !text-[#C3C3C3]"
+                    className="text-[12px] !text-[#C3C3C3]"
                     style={{ color: "#C3C3C3" }}
                   >
                     {testimonial.role}
@@ -156,13 +156,13 @@ export function LandingTestimonials() {
                 </div>
                 <div className="text-right">
                   <p
-                    className="text-sm font-semibold !text-[#F5F5F5]"
+                    className="text-[12px] font-medium !text-[#F5F5F5]"
                     style={{ color: "#F5F5F5" }}
                   >
                     Verificado
                   </p>
                   <p
-                    className="text-xs !text-[#B5B5B5]"
+                    className="text-[10px] !text-[#B5B5B5]"
                     style={{ color: "#B5B5B5" }}
                   >
                     uso em rotina clínica
@@ -178,18 +178,18 @@ export function LandingTestimonials() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45, delay: 0.15 }}
-          className="mx-auto mt-8 grid max-w-5xl gap-px overflow-hidden rounded-[28px] border border-white/12 bg-white/12 md:mt-10 md:grid-cols-3"
+          className="mx-auto mt-6 grid max-w-5xl gap-px overflow-hidden rounded-[28px] border border-white/12 bg-white/12 md:mt-7 md:grid-cols-3"
         >
           {stats.map((stat) => (
-            <div key={stat.label} className="bg-white/[0.08] px-6 py-6 text-center backdrop-blur-sm md:px-8">
+            <div key={stat.label} className="bg-white/[0.08] px-6 py-5 text-center backdrop-blur-sm md:px-8">
               <p
-                className="text-3xl font-heading font-bold tracking-tight !text-[#FAFAFA] md:text-4xl"
+                className="text-[26px] font-heading font-semibold tracking-tight !text-[#FAFAFA] md:text-[1.8rem]"
                 style={{ color: "#FAFAFA" }}
               >
                 {stat.value}
               </p>
               <p
-                className="mt-2 text-sm !text-[#C0C0C0]"
+                className="mt-1 text-[12px] !text-[#C0C0C0]"
                 style={{ color: "#C0C0C0" }}
               >
                 {stat.label}

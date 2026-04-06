@@ -37,7 +37,7 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-16 md:py-24 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="faq" className="py-12 md:py-20 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
             {/* Elementos decorativos */}
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
@@ -50,19 +50,19 @@ export function LandingFAQ() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
-                    className="text-center mb-16 md:mb-20"
+                    className="text-center mb-10 md:mb-12"
                 >
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white mb-6 leading-[1.1] tracking-tight">
+                    <h2 className="text-3xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white mb-4 leading-[1.08] tracking-tight">
                         Perguntas <span className="text-[#9E9E9E]">Frequentes.</span>
                     </h2>
-                    <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto px-2">
+                    <p className="text-base md:text-[17px] text-white/60 max-w-2xl mx-auto px-2">
                         Tire suas dúvidas sobre as ferramentas do VitaView AI e como elas podem transformar sua rotina clínica.
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
                     {/* Coluna Esquerda: FAQ Accordion */}
-                    <div className="lg:col-span-7 space-y-4">
+                    <div className="lg:col-span-7 space-y-3">
                         {faqs.map((faq, index) => (
                             <motion.div
                                 key={index}
@@ -72,11 +72,11 @@ export function LandingFAQ() {
                                 transition={{ duration: 0.3, delay: index * 0.1 }}
                             >
                                 <motion.div
-                                    className={`p-5 rounded-xl border ${activeFaq === index ? 'bg-white/10 border-white/30 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'} cursor-pointer transition-all duration-300 backdrop-blur-sm`}
+                                    className={`p-4 rounded-xl border ${activeFaq === index ? 'bg-white/10 border-white/30 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'} cursor-pointer transition-all duration-300 backdrop-blur-sm`}
                                     onClick={() => toggleFaq(index)}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <h3 className={`font-semibold text-lg ${activeFaq === index ? 'text-[#E0E0E0]' : 'text-white'}`}>
+                                        <h3 className={`font-semibold text-[15px] md:text-base ${activeFaq === index ? 'text-[#E0E0E0]' : 'text-white'}`}>
                                             {faq.question}
                                         </h3>
                                         <motion.div
@@ -113,17 +113,17 @@ export function LandingFAQ() {
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 sticky top-24"
+                            className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 sticky top-24"
                         >
-                            <h3 className="text-2xl font-bold text-white mb-6">Estamos aqui para ajudar</h3>
-                            <p className="text-[#9E9E9E] mb-8">
+                            <h3 className="text-xl font-bold text-white mb-4">Estamos aqui para ajudar</h3>
+                            <p className="text-[#9E9E9E] mb-6 text-sm">
                                 Não encontrou o que procurava? Nossa equipe de suporte está pronta para atender você.
                             </p>
 
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 <a
                                     href="mailto:contato@vitaview.ai"
-                                    className="flex items-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+                                    className="flex items-center p-3.5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-[#E0E0E0]/20 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <svg className="w-6 h-6 text-[#E0E0E0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export function LandingFAQ() {
                                     </div>
                                     <div>
                                         <div className="text-sm text-[#9E9E9E]">Email de Suporte</div>
-                                        <div className="text-lg font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
+                                        <div className="text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
                                     </div>
                                 </a>
 

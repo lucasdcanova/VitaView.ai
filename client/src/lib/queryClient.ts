@@ -75,7 +75,12 @@ const normalizeNetworkError = (error: unknown): Error => {
       /failed to fetch|networkerror|load failed|err_connection_refused/i.test(message);
 
     if (isNetworkFailure) {
-      return new Error("Não foi possível conectar ao servidor. Verifique se o backend está ativo em http://localhost:3000.");
+      const origin =
+        typeof window !== "undefined" && window.location?.origin
+          ? window.location.origin
+          : "o endereço local da aplicação";
+
+      return new Error(`Não foi possível conectar ao servidor. Verifique se o backend está ativo em ${origin}.`);
     }
 
     return error;

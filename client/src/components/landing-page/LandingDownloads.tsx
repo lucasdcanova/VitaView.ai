@@ -79,7 +79,7 @@ export function LandingDownloads() {
   return (
     <section
       id="downloads"
-      className="relative overflow-hidden bg-[#F4F4F4] py-14 text-[#111111] md:py-16 xl:py-20"
+      className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden bg-[#F4F4F4] py-12 text-[#111111] md:py-20"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-0 top-0 h-px bg-black/8" />
@@ -88,7 +88,7 @@ export function LandingDownloads() {
       </div>
 
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
+        <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -99,10 +99,10 @@ export function LandingDownloads() {
             <span className="inline-flex items-center rounded-full border border-black/10 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-black/50">
               Downloads
             </span>
-            <h2 className="mt-4 text-3xl font-heading font-bold leading-[0.98] tracking-tight text-[#111111] md:text-5xl">
+            <h2 className="mt-4 text-3xl font-heading font-bold leading-[0.98] tracking-tight text-[#111111] md:text-[2.7rem]">
               Baixe o VitaView.
             </h2>
-            <p className="mt-4 max-w-sm font-body text-sm leading-6 text-black/58 md:text-base">
+            <p className="mt-3 max-w-sm font-body text-[13px] leading-6 text-black/58 md:text-[15px]">
               Windows, macOS, iPhone, iPad, Android ou navegador.
             </p>
           </motion.div>
@@ -122,11 +122,11 @@ export function LandingDownloads() {
                   whileHover={{ y: -4 }}
                   viewport={{ once: true, amount: 0.15 }}
                   transition={{ duration: 0.4, delay: index * 0.04 }}
-                  className="group rounded-[28px] border border-black/10 bg-white/88 p-5 shadow-[0_18px_60px_rgba(17,17,17,0.05)] backdrop-blur-sm transition-[border-color,background-color] duration-300 hover:border-black/18 hover:bg-white md:p-6"
+                  className="group rounded-[28px] border border-black/10 bg-white/88 p-4 shadow-[0_18px_60px_rgba(17,17,17,0.05)] backdrop-blur-sm transition-[border-color,background-color] duration-300 hover:border-black/18 hover:bg-white md:p-5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <span
-                      className="inline-flex h-12 w-12 items-center justify-center rounded-[18px]"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[18px]"
                       style={{
                         color: platform.logoColor,
                         backgroundColor: platform.logoBackground,
@@ -138,12 +138,12 @@ export function LandingDownloads() {
                     <ArrowUpRight className="h-4 w-4 text-black/35 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-black/60" />
                   </div>
 
-                  <div className="mt-12">
-                    <h3 className="text-[1.15rem] font-heading font-bold tracking-tight text-[#111111]">
+                  <div className="mt-9">
+                    <h3 className="text-[1.05rem] font-heading font-bold tracking-tight text-[#111111]">
                       {platform.title}
                     </h3>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-black/8 pt-4">
+                    <div className="mt-3 flex items-center justify-between border-t border-black/8 pt-3">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/50">
                         {platform.label}
                       </span>

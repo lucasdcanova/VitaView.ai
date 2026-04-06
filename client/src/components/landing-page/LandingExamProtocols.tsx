@@ -22,8 +22,8 @@ export function LandingExamProtocols() {
         },
         {
             icon: <ShieldCheck className="w-5 h-5" />,
-            title: "Padronização da conduta",
-            desc: "Mantenha consistência entre profissionais e reduza omissões em pedidos frequentes."
+            title: "Mais clareza na solicitação",
+            desc: "Organize pedidos frequentes com mais consistência documental, sem perder a individualização de cada caso."
         }
     ];
 
@@ -58,7 +58,7 @@ export function LandingExamProtocols() {
 
                         <p className="text-base md:text-lg text-white/65 leading-relaxed mb-8 max-w-xl">
                             Crie protocolos personalizados para os cenários que mais se repetem na sua rotina
-                            e transforme a solicitação de exames em um fluxo rápido, padronizado e seguro.
+                            e transforme a solicitação de exames em um fluxo rápido, organizado e seguro.
                         </p>
 
                         <div className="space-y-5">
@@ -71,11 +71,25 @@ export function LandingExamProtocols() {
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.2 + (index * 0.1) }}
                                 >
-                                    <div className="p-2 bg-white/6 rounded-xl text-white border border-white/10">
+                                    <div
+                                        className={`p-2 rounded-xl border ${
+                                            index === 0
+                                                ? "bg-[#7BE0C3]/10 text-[#7BE0C3] border-[#7BE0C3]/20"
+                                                : "bg-white/6 text-white border-white/10"
+                                        }`}
+                                    >
                                         {benefit.icon}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-white text-lg">{benefit.title}</h4>
+                                        <h4
+                                            className={`font-bold text-lg ${
+                                                index === 0
+                                                    ? "text-[#7BE0C3] underline decoration-[#7BE0C3]/40 underline-offset-4 decoration-1"
+                                                    : "text-white"
+                                            }`}
+                                        >
+                                            {benefit.title}
+                                        </h4>
                                         <p className="text-sm text-white/55 leading-relaxed">{benefit.desc}</p>
                                     </div>
                                 </motion.div>
@@ -123,8 +137,8 @@ export function LandingExamProtocols() {
                                                     Pronto para reutilizar em consultas de acompanhamento e primeira avaliação.
                                                 </p>
                                             </div>
-                                            <div className="rounded-full bg-white text-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
-                                                Padrão
+                                            <div className="rounded-full border border-[#7BE0C3]/20 bg-[#7BE0C3]/12 text-[#7BE0C3] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
+                                                Modelo
                                             </div>
                                         </div>
                                     </div>
@@ -166,7 +180,7 @@ export function LandingExamProtocols() {
                                                 resultado
                                             </p>
                                             <p className="mt-2 text-sm font-medium text-white/85">
-                                                Pedido mais rápido, uniforme e fácil de revisar
+                                                Pedido mais rápido, claro e fácil de revisar
                                             </p>
                                         </div>
                                     </div>
