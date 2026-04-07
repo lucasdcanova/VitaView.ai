@@ -81,6 +81,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { isIOSAppShell } from "@/lib/app-shell";
 
 const MEDICAL_SPECIALTIES = [
   "Alergia e Imunologia",
@@ -151,6 +152,7 @@ export default function Profile() {
   const { theme, setTheme } = useTheme();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const hideHeaderOnIOSApp = isIOSAppShell();
 
   // Image cropping state
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -439,14 +441,16 @@ export default function Profile() {
   return (
     <div className="flex h-full flex-col bg-background">
       <main className="flex-1 overflow-y-auto bg-background">
-          <PatientHeader
-            title="Conta profissional"
-            description="Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma."
-            showTitleAsMain={true}
-            fullWidth={true}
-            compact={true}
-            icon={<Stethoscope className="h-6 w-6" />}
-          />
+          {!hideHeaderOnIOSApp && (
+            <PatientHeader
+              title="Conta profissional"
+              description="Gerencie seus dados como profissional de saúde e ajuste preferências da plataforma."
+              showTitleAsMain={true}
+              fullWidth={true}
+              compact={true}
+              icon={<Stethoscope className="h-6 w-6" />}
+            />
+          )}
           <div className="p-4 md:p-6">
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

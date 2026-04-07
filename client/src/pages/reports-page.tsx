@@ -42,6 +42,8 @@ import { TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { isIOSAppShell } from "@/lib/app-shell";
 
 export default function ReportsPage() {
     const [range, setRange] = useState("30d");
@@ -49,6 +51,8 @@ export default function ReportsPage() {
     const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
     const [isStartDateOpen, setIsStartDateOpen] = useState(false);
     const [isEndDateOpen, setIsEndDateOpen] = useState(false);
+    const isMobile = useIsMobile();
+    const iosMobileChartMode = isIOSAppShell() && isMobile;
 
     const { data: analytics, isLoading } = useQuery({
         queryKey: ["/api/analytics", range, customStartDate?.toISOString(), customEndDate?.toISOString()],
@@ -321,17 +325,17 @@ export default function ReportsPage() {
                                                 Distribuição por categoria
                                             </CardDescription>
                                         </CardHeader>
-                                        <CardContent>
-                                            <div className="h-[300px] flex items-center justify-center">
+                                        <CardContent className={iosMobileChartMode ? "px-2 pb-4 pt-0" : undefined}>
+                                            <div className={cn("h-[300px] flex items-center justify-center", iosMobileChartMode && "h-[340px]")}>
                                                 {analytics?.examsByType?.length > 0 ? (
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
                                                             <Pie
                                                                 data={analytics?.examsByType}
                                                                 cx="50%"
-                                                                cy="50%"
-                                                                innerRadius={60}
-                                                                outerRadius={80}
+                                                                cy={iosMobileChartMode ? "42%" : "50%"}
+                                                                innerRadius={iosMobileChartMode ? 72 : 60}
+                                                                outerRadius={iosMobileChartMode ? 108 : 80}
                                                                 paddingAngle={5}
                                                                 dataKey="value"
                                                             >
@@ -340,7 +344,12 @@ export default function ReportsPage() {
                                                                 ))}
                                                             </Pie>
                                                             <Tooltip />
-                                                            <Legend />
+                                                            <Legend
+                                                                verticalAlign={iosMobileChartMode ? "bottom" : "middle"}
+                                                                align={iosMobileChartMode ? "center" : "right"}
+                                                                layout={iosMobileChartMode ? "horizontal" : "vertical"}
+                                                                wrapperStyle={iosMobileChartMode ? { width: "100%", paddingTop: 12 } : undefined}
+                                                            />
                                                         </PieChart>
                                                     </ResponsiveContainer>
                                                 ) : (

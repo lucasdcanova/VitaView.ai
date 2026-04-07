@@ -41,6 +41,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PatientHeader from "@/components/patient-header";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { isIOSAppShell } from '@/lib/app-shell';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Clinic {
     id: number;
@@ -140,6 +142,9 @@ const MyClinic = () => {
     const { toast } = useToast();
     const { user } = useAuth();
     const [, navigate] = useLocation();
+    const isMobile = useIsMobile();
+    const hideHeaderOnIOSApp = isIOSAppShell();
+    const compactIOSClinicLabels = hideHeaderOnIOSApp && isMobile;
     const queryClient = useQueryClient();
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
     const [isCreateClinicDialogOpen, setIsCreateClinicDialogOpen] = useState(false);
@@ -534,7 +539,7 @@ const MyClinic = () => {
                         {canCreateClinic && (
                             <Button
                                 variant="outline"
-                                className="h-10 self-end rounded-xl border-border px-4 text-sm"
+                                className={`h-10 rounded-xl border-border px-4 text-sm ${compactIOSClinicLabels ? 'w-full justify-center self-stretch' : 'self-end'}`}
                                 onClick={openCreateClinicDialog}
                             >
                                 <Building className="h-4 w-4 mr-2" />
@@ -628,7 +633,7 @@ const MyClinic = () => {
                                                     disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
                                                 >
                                                     <Star className="h-4 w-4 mr-2" />
-                                                    {isDefaultClinic ? 'Clínica padrão' : 'Definir como padrão'}
+                                                    {isDefaultClinic ? 'Clínica padrão' : compactIOSClinicLabels ? 'Padrão' : 'Definir como padrão'}
                                                 </Button>
                                             </div>
 
@@ -713,7 +718,7 @@ const MyClinic = () => {
                                             disabled={clinic.id === defaultClinicId || setDefaultClinicMutation.isPending}
                                         >
                                             <Star className="h-4 w-4 mr-2" />
-                                            {clinic.id === defaultClinicId ? 'Clínica padrão' : 'Definir como padrão'}
+                                            {clinic.id === defaultClinicId ? 'Clínica padrão' : compactIOSClinicLabels ? 'Padrão' : 'Definir como padrão'}
                                         </Button>
                                     </div>
                                 </div>
@@ -843,7 +848,7 @@ const MyClinic = () => {
                                             </div>
                                             {clinicData.isAdmin && professionals.length < profLimit && (
                                                 <Button onClick={() => { setInviteRole('member'); setIsInviteDialogOpen(true); }} size="sm" className="bg-primary hover:bg-primary/90 rounded-lg">
-                                                    <UserPlus className="h-4 w-4 mr-2" />Convidar Profissional
+                                                    <UserPlus className="h-4 w-4 mr-2" />{compactIOSClinicLabels ? 'Convidar' : 'Convidar Profissional'}
                                                 </Button>
                                             )}
                                         </CardHeader>
@@ -1073,13 +1078,15 @@ const MyClinic = () => {
 
     return (
         <div className="flex h-full flex-col overflow-hidden bg-background">
-            <PatientHeader
-                title="Minha Clínica"
-                description="Gerencie sua equipe, agenda e configurações da clínica."
-                showTitleAsMain={true}
-                fullWidth={true}
-                icon={<Building className="h-6 w-6" />}
-            />
+            {!hideHeaderOnIOSApp && (
+                <PatientHeader
+                    title="Minha Clínica"
+                    description="Gerencie sua equipe, agenda e configurações da clínica."
+                    showTitleAsMain={true}
+                    fullWidth={true}
+                    icon={<Building className="h-6 w-6" />}
+                />
+            )}
             <div className="flex-1 overflow-auto">
                 <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
                     {renderContent()}

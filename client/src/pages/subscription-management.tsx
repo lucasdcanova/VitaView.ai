@@ -49,6 +49,7 @@ import { IOSStoreKitPurchase } from '@/components/ui/ios-storekit-purchase';
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { type BillingContext, type BillingProvider } from "@shared/billing";
 import { StoreKit } from '@/lib/storekit';
+import { isIOSAppShell } from '@/lib/app-shell';
 
 // Interfaces
 interface SubscriptionPlan {
@@ -189,10 +190,40 @@ const VITA_PRO_FEATURES = [
   "Gestão de pacientes <strong>ilimitada</strong>",
 ];
 
+const toFeatureList = (features: unknown): string[] => {
+  if (Array.isArray(features)) {
+    return features.filter((feature): feature is string => typeof feature === 'string' && feature.trim().length > 0);
+  }
+
+  if (typeof features === 'string') {
+    const trimmed = features.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((feature): feature is string => typeof feature === 'string' && feature.trim().length > 0);
+      }
+    } catch {
+      // fall through to plain string handling
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
+const formatFeatureHtml = (feature: unknown) => {
+  if (typeof feature !== 'string') return '';
+  return feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+};
+
 const SubscriptionManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const hideHeaderOnIOSApp = isIOSAppShell();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -206,7 +237,7 @@ const SubscriptionManagement = () => {
     'vita-business': 'year',
   });
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const plansRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLElement | null>(null);
   const stripeRedirectHandledRef = useRef(false);
 
   // Clinic management states
@@ -464,6 +495,14 @@ const SubscriptionManagement = () => {
   }, [user, isLoadingSubscription, navigate]);
 
   useEffect(() => {
+    mainContentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined' || usesAppStoreBilling || !billingContext.checkoutEnabled || stripeRedirectHandledRef.current) {
       return;
     }
@@ -531,19 +570,6 @@ const SubscriptionManagement = () => {
 
     void finalizeRedirectPurchase();
   }, [billingContext.checkoutEnabled, refetch, toast, usesAppStoreBilling]);
-
-  // Scroll to plans when category selected
-  useEffect(() => {
-    if (selectedCategory && plansRef.current) {
-      // Small delay to ensure layout is ready
-      setTimeout(() => {
-        plansRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 100);
-    }
-  }, [selectedCategory]);
 
   const handleCancelSubscription = async () => {
     if (usesAppStoreBilling) {
@@ -692,22 +718,26 @@ const SubscriptionManagement = () => {
   const hasActiveSubscription = subscriptionData?.subscription && subscriptionData.subscription.status === 'active';
   const currentPlan = subscriptionData?.plan;
   const subscription = subscriptionData?.subscription;
-  const currentPlanFeatures = normalizePlanName(currentPlan?.name).includes('vita pro')
+  const currentPlanName = normalizePlanName(currentPlan?.name);
+  const isCurrentPlanVitaPro =
+    currentPlanName.includes('vita pro') ||
+    (currentPlanName.includes('vita') && !currentPlanName.includes('team') && !currentPlanName.includes('business') && !currentPlanName.includes('hospital') && !currentPlanName.includes('gratuito'));
+  const currentPlanFeatures = isCurrentPlanVitaPro
     ? VITA_PRO_FEATURES
-    : Array.isArray(currentPlan?.features)
-      ? currentPlan.features
-      : [];
+    : toFeatureList(currentPlan?.features);
 
   return (
     <div className="flex h-full flex-col bg-background">
-        <main className="flex-1 bg-background overflow-y-auto">
-          <PatientHeader
-            title="Assinatura e Planos"
-            description="Gerencie seu plano atual e explore novas opções."
-            showTitleAsMain={true}
-            fullWidth={true}
-            icon={<CreditCard className="h-6 w-6" />}
-          />
+        <main ref={mainContentRef} className="flex-1 bg-background overflow-y-auto">
+          {!hideHeaderOnIOSApp && (
+            <PatientHeader
+              title="Assinatura e Planos"
+              description="Gerencie seu plano atual e explore novas opções."
+              showTitleAsMain={true}
+              fullWidth={true}
+              icon={<CreditCard className="h-6 w-6" />}
+            />
+          )}
           <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-12">
             {/* SECTION 1: Plans for Independent Professionals */}
             <section className="space-y-6">
@@ -774,7 +804,7 @@ const SubscriptionManagement = () => {
                               ].map((item, i) => (
                                 <li key={i} className="flex items-start text-sm">
                                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span dangerouslySetInnerHTML={{ __html: item }} />
+                                  <span dangerouslySetInnerHTML={{ __html: formatFeatureHtml(item) }} />
                                 </li>
                               ))}
                             </ul>
@@ -923,7 +953,7 @@ const SubscriptionManagement = () => {
                           {currentPlanFeatures.map((feature, index) => (
                             <li key={index} className="flex items-start text-sm">
                               <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                              <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                              <span dangerouslySetInnerHTML={{ __html: formatFeatureHtml(feature) }} />
                             </li>
                           ))}
                         </ul>
@@ -1264,7 +1294,7 @@ const SubscriptionManagement = () => {
 
 
             {/* SECTION 3: Plans for Clinics - all plans available via StoreKit IAP on iOS */}
-            <section className="space-y-8" ref={plansRef}>
+            <section className="space-y-8">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Building className="h-5 w-5 text-primary" />
                 Clínicas Multiprofissionais

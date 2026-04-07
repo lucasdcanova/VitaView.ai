@@ -118,7 +118,7 @@ export function ExamUploadLauncher({
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Sparkles className="h-3.5 w-3.5 text-muted-foreground/80" />
                   <p className="leading-5 text-muted-foreground/90">
-                    Voce tambem pode arrastar o exame direto para a area de upload.
+                    Voce tambem pode arrastar o exame para a area de upload.
                   </p>
                 </div>
               </div>

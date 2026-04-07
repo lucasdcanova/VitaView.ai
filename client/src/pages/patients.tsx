@@ -54,10 +54,48 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import PatientAvatar from "@/components/patient-avatar";
 
+function parseSafeDate(value: string | Date | number | null | undefined): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const direct = new Date(trimmed);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct;
+  }
+
+  const normalizedSqlDateTime = trimmed.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}(?::\d{2})?)$/);
+  if (normalizedSqlDateTime) {
+    const parsed = new Date(`${normalizedSqlDateTime[1]}T${normalizedSqlDateTime[2]}`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  const dateOnly = trimmed.match(/^\d{4}-\d{2}-\d{2}$/);
+  if (dateOnly) {
+    const parsed = new Date(`${trimmed}T12:00:00`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
 function calculateAge(birthDate: string | Date | null | undefined): number | null {
-  if (!birthDate) return null;
-  const date = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
-  if (isNaN(date.getTime())) return null;
+  const date = parseSafeDate(birthDate);
+  if (!date) return null;
   return differenceInYears(new Date(), date);
 }
 
@@ -492,8 +530,9 @@ export default function Patients() {
                 {filteredProfiles.map((profile: Profile) => {
                   const age = calculateAge(profile.birthDate);
                   const isActive = activeProfile?.id === profile.id;
-                  const registrationDate = profile.createdAt
-                    ? format(new Date(profile.createdAt), "dd/MM/yyyy", { locale: ptBR })
+                  const createdAt = parseSafeDate(profile.createdAt);
+                  const registrationDate = createdAt
+                    ? format(createdAt, "dd/MM/yyyy", { locale: ptBR })
                     : null;
 
                   return (
