@@ -5021,33 +5021,87 @@ export async function registerRoutes(app: Express): Promise<void> {
       const { token } = req.params;
       const userId = req.user!.id;
 
+      logger.info("[ClinicInvite] accept request", { userId, token: token?.slice(0, 10) });
+
       const invitation = await storage.getClinicInvitationByToken(token);
       if (!invitation) {
-        return res.status(404).json({ message: "Convite não encontrado" });
+        logger.warn("[ClinicInvite] invite not found", { token: token?.slice(0, 10) });
+        return res.status(404).json({ message: "Convite não encontrado." });
       }
 
       if (invitation.status !== 'pending') {
-        return res.status(400).json({ message: "Este convite já foi utilizado" });
+        logger.warn("[ClinicInvite] invite not pending", { invitationId: invitation.id, status: invitation.status });
+        return res.status(400).json({
+          message: invitation.status === 'accepted'
+            ? "Este convite já foi aceito anteriormente."
+            : invitation.status === 'rejected'
+            ? "Este convite já foi recusado."
+            : invitation.status === 'expired'
+            ? "Este convite expirou."
+            : "Este convite já foi utilizado."
+        });
       }
 
       if (new Date() > invitation.expiresAt) {
         await storage.updateClinicInvitation(invitation.id, { status: 'expired' });
-        return res.status(400).json({ message: "Este convite expirou" });
+        return res.status(400).json({ message: "Este convite expirou." });
       }
 
       // Check if user's email matches invitation
       const user = req.user!;
       if (user.email && user.email.toLowerCase() !== invitation.email.toLowerCase()) {
-        return res.status(400).json({
-          message: "Este convite foi enviado para outro email"
+        logger.warn("[ClinicInvite] email mismatch", {
+          userEmail: user.email?.toLowerCase(),
+          inviteEmail: invitation.email?.toLowerCase(),
         });
+        return res.status(400).json({
+          message: `Este convite foi enviado para ${invitation.email}. Faça login com essa conta para aceitar.`
+        });
+      }
+
+      // Verifica limites da clinica destino antes de tentar adicionar — assim
+      // conseguimos retornar uma mensagem específica em vez do genérico false.
+      const targetClinic = await storage.getClinic(invitation.clinicId);
+      if (!targetClinic) {
+        logger.error("[ClinicInvite] target clinic not found", { clinicId: invitation.clinicId });
+        return res.status(404).json({ message: "A clínica que enviou o convite não existe mais." });
+      }
+
+      const currentMembers = await storage.getClinicMembers(invitation.clinicId);
+      const alreadyMember = currentMembers.some((m) => m.id === userId);
+      if (!alreadyMember) {
+        const professionalsCount = currentMembers.filter(
+          (m) => m.clinicRole === 'admin' || m.clinicRole === 'member'
+        ).length;
+        const secretariesCount = currentMembers.filter((m) => m.clinicRole === 'secretary').length;
+        const isSecretaryRole = invitation.role === 'secretary';
+        const limit = isSecretaryRole ? targetClinic.maxSecretaries : targetClinic.maxProfessionals;
+        const used = isSecretaryRole ? secretariesCount : professionalsCount;
+        if (used >= limit) {
+          logger.warn("[ClinicInvite] clinic membership limit reached", {
+            clinicId: invitation.clinicId,
+            role: invitation.role,
+            used,
+            limit,
+          });
+          return res.status(400).json({
+            message: isSecretaryRole
+              ? `A clínica atingiu o limite de ${limit} secretária(s). Peça ao administrador para liberar uma vaga ou ajustar o plano.`
+              : `A clínica atingiu o limite de ${limit} profissional(is). Peça ao administrador para liberar uma vaga ou ajustar o plano.`
+          });
+        }
       }
 
       // Add user to clinic with role
       const success = await storage.addClinicMember(invitation.clinicId, userId, invitation.role);
       if (!success) {
+        logger.error("[ClinicInvite] addClinicMember returned false", {
+          clinicId: invitation.clinicId,
+          userId,
+          role: invitation.role,
+        });
         return res.status(400).json({
-          message: "Não foi possível adicionar ao clinic. Limite de membros pode ter sido atingido."
+          message: "Não foi possível adicionar você à clínica. Tente novamente em instantes."
         });
       }
 
@@ -5058,23 +5112,38 @@ export async function registerRoutes(app: Express): Promise<void> {
       user.clinicId = invitation.clinicId;
       user.clinicRole = invitation.role;
 
-      // Ensure the session is saved with the new user state
-      req.login(user, (err) => {
-        if (err) {
-          logger.error("Error saving session after accepting invitation:", err);
-        }
+      // Ensure the session is saved with the new user state. Aguarda o req.login
+      // antes de responder para evitar race entre o redirect do frontend e a
+      // sessão atualizada.
+      await new Promise<void>((resolve) => {
+        req.login(user, (err) => {
+          if (err) {
+            logger.error("[ClinicInvite] error saving session after accept", err);
+          }
+          resolve();
+        });
       });
 
       const clinic = await storage.getClinic(invitation.clinicId);
 
+      logger.info("[ClinicInvite] accept success", {
+        userId,
+        clinicId: invitation.clinicId,
+        role: invitation.role,
+      });
+
       res.json({
         success: true,
-        message: "Você foi adicionado à clínica com sucesso",
+        message: "Você foi adicionado à clínica com sucesso.",
         clinic
       });
     } catch (error) {
-      logger.error("Error accepting invitation:", error);
-      res.status(500).json({ message: "Erro ao aceitar convite" });
+      logger.error("[ClinicInvite] Error accepting invitation:", error);
+      res.status(500).json({
+        message: error instanceof Error
+          ? `Erro ao aceitar convite: ${error.message}`
+          : "Erro ao aceitar convite."
+      });
     }
   });
 
