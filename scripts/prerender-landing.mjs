@@ -20,6 +20,7 @@ const DIST_LANDING = path.resolve(ROOT, 'dist', 'landing');
 const PAGES = [
   { route: '/termos', component: '../client/src/pages/terms-page.tsx', output: 'termos.html' },
   { route: '/privacidade', component: '../client/src/pages/privacy-page.tsx', output: 'privacidade.html' },
+  { route: '/excluir-conta', component: '../client/src/pages/delete-account-page.tsx', output: 'excluir-conta.html' },
   // quick-summary usa useAuth, não pode ser pre-renderizada como HTML estático
 ];
 
@@ -202,12 +203,14 @@ async function main() {
       const titles = {
         '/termos': 'Termos de Uso - VitaView AI',
         '/privacidade': 'Política de Privacidade - VitaView AI',
+        '/excluir-conta': 'Excluir conta - VitaView AI',
         '/quick-summary': 'Resumo Rápido - VitaView AI',
       };
 
       const descriptions = {
         '/termos': 'Termos de Uso da plataforma VitaView AI.',
         '/privacidade': 'Política de Privacidade da plataforma VitaView AI.',
+        '/excluir-conta': 'Como excluir definitivamente sua conta VitaView AI e quais dados são removidos.',
         '/quick-summary': 'Resumo rápido sobre a plataforma VitaView AI.',
       };
 

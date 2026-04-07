@@ -143,10 +143,23 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Servir landing pages como HTML estático pré-renderizado (sem React)
+  // Servir landing pages como HTML estático pré-renderizado (sem React).
+  // Múltiplas rotas podem mapear para o mesmo arquivo (ex.: /excluir-conta e
+  // /delete-account servem a mesma página, com URLs em PT e EN para Apple/Google).
   const landingRoutes: Record<string, string> = {
     '/termos': 'termos.html',
     '/privacidade': 'privacidade.html',
+    '/excluir-conta': 'excluir-conta.html',
+    '/delete-account': 'excluir-conta.html',
+  };
+
+  // Redirects 301 para URLs alternativos que apontam para as páginas oficiais.
+  // Existe porque o Google Play Console foi configurado com /privacy (404)
+  // antes da padronização para /privacidade.
+  const landingRedirects: Record<string, string> = {
+    '/privacy': '/privacidade',
+    '/privacy-policy': '/privacidade',
+    '/terms': '/termos',
   };
 
   if (fs.existsSync(landingPath)) {
@@ -158,6 +171,13 @@ export function serveStatic(app: Express) {
         });
         log(`Landing page estática registrada: ${route} -> ${fileName}`);
       }
+    }
+
+    for (const [from, to] of Object.entries(landingRedirects)) {
+      app.get(from, (_req, res) => {
+        res.redirect(301, to);
+      });
+      log(`Landing redirect registrado: ${from} -> ${to}`);
     }
   }
 

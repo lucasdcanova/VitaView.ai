@@ -45,6 +45,7 @@ declare global {
 const Home = lazyWithRetry(() => import("@/pages/home"), "page-home");
 const TermsPage = lazyWithRetry(() => import("@/pages/terms-page"), "page-terms");
 const PrivacyPage = lazyWithRetry(() => import("@/pages/privacy-page"), "page-privacy");
+const DeleteAccountPage = lazyWithRetry(() => import("@/pages/delete-account-page"), "page-delete-account");
 const QuickSummaryPage = lazyWithRetry(() => import("@/pages/quick-summary-page"), "page-quick-summary");
 const NotFound = lazyWithRetry(() => import("@/pages/not-found"), "page-not-found");
 
@@ -133,6 +134,8 @@ function LandingRoutes() {
         <Route path="/" component={Home} />
         <Route path="/termos" component={TermsPage} />
         <Route path="/privacidade" component={PrivacyPage} />
+        <Route path="/excluir-conta" component={DeleteAccountPage} />
+        <Route path="/delete-account" component={DeleteAccountPage} />
         <Route path="/quick-summary" component={QuickSummaryPage} />
       </Switch>
     </Suspense>
@@ -329,11 +332,16 @@ function AppRouter() {
   const iosAppShell = isIOSAppShell() && !isNativeIOSAppOnMac();
 
   // Rotas da landing page (sem nenhum provider)
-  const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];
+  const landingPaths = ['/', '/termos', '/privacidade', '/excluir-conta', '/delete-account', '/quick-summary'];
   const isLandingRoute = landingPaths.some(path => location === path);
-  // Páginas legais (Termos / Privacidade) precisam ficar acessíveis dentro do app
-  // shell iOS para atender Guideline 3.1.2(c). Apenas a landing comercial é bloqueada.
-  const isLegalRoute = location === '/termos' || location === '/privacidade';
+  // Páginas legais (Termos / Privacidade / Excluir conta) precisam ficar acessíveis dentro do
+  // app shell iOS para atender Guideline 3.1.2(c) e a exigência da Google Play de URL público
+  // de exclusão de conta. Apenas a landing comercial é bloqueada.
+  const isLegalRoute =
+    location === '/termos' ||
+    location === '/privacidade' ||
+    location === '/excluir-conta' ||
+    location === '/delete-account';
 
   // Rotas de autenticação (apenas AuthProvider)
   const authPaths = ['/auth', '/forgot-password'];
