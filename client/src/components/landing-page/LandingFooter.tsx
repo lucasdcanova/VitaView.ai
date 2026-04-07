@@ -1,5 +1,16 @@
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Globe2 } from "lucide-react";
+import { FaAndroid, FaApple, FaWindows } from "react-icons/fa";
+import { platformDownloadLinks } from "./download-links";
+
+const footerPlatforms = [
+    { key: "windows", title: "Windows", href: platformDownloadLinks.windows.href, icon: FaWindows, iconColor: "#00A4EF" },
+    { key: "mac", title: "macOS", href: platformDownloadLinks.mac.href, icon: FaApple, iconColor: "#F5F5F5" },
+    { key: "ios", title: "iPhone", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" },
+    { key: "ipad", title: "iPad", href: platformDownloadLinks.ipad.href, icon: FaApple, iconColor: "#F5F5F5" },
+    { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" },
+    { key: "web", title: "Web", href: platformDownloadLinks.web.href, icon: Globe2, iconColor: "#E7C88D", target: "_blank" as const }
+];
 
 export function LandingFooter() {
     return (
@@ -35,6 +46,62 @@ export function LandingFooter() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
+                <motion.div
+                    id="downloads"
+                    className="mb-10 rounded-[30px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm md:mb-12 md:p-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className="grid gap-5 md:grid-cols-[0.72fr_1.28fr] md:items-center">
+                        <div className="max-w-sm">
+                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
+                                Downloads
+                            </span>
+                            <h2 className="mt-4 text-2xl font-heading font-bold tracking-tight text-white md:text-[2.1rem]">
+                                Baixe o VitaView.
+                            </h2>
+                            <p className="mt-2 text-[13px] leading-6 text-white/55 md:text-[14px]">
+                                Acesse no desktop, no celular ou direto pelo navegador.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                            {footerPlatforms.map((platform, index) => {
+                                const Icon = platform.icon;
+
+                                return (
+                                    <motion.a
+                                        key={platform.key}
+                                        href={platform.href}
+                                        target={platform.target}
+                                        rel="noopener noreferrer"
+                                        className="group flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-white/78 transition-colors duration-300 hover:bg-white/[0.06] hover:text-white"
+                                        initial={{ opacity: 0, y: 16 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ duration: 0.35, delay: index * 0.04 }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[14px] bg-white/[0.05]">
+                                                <Icon className="h-4.5 w-4.5" style={{ color: platform.iconColor }} />
+                                            </span>
+                                            <div>
+                                                <p className="text-[14px] font-semibold text-white">{platform.title}</p>
+                                                <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">
+                                                    {platform.key === "web" ? "abrir" : "baixar"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
+                                    </motion.a>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </motion.div>
+
                 <motion.div
                     className="flex flex-col md:flex-row md:items-start"
                     initial={{ opacity: 0, y: 20 }}

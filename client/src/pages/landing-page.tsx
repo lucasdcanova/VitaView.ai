@@ -10,7 +10,6 @@ import { LandingAppointmentScheduler } from "@/components/landing-page/LandingAp
 import { LandingFeatures } from "@/components/landing-page/LandingFeatures";
 import { LandingTestimonials } from "@/components/landing-page/LandingTestimonials";
 import { LandingPricing } from "@/components/landing-page/LandingPricing";
-import { LandingDownloads } from "@/components/landing-page/LandingDownloads";
 import { LandingSecurity } from "@/components/landing-page/LandingSecurity";
 import { LandingPrescription } from "@/components/landing-page/LandingPrescription";
 import { LandingExamProtocols } from "@/components/landing-page/LandingExamProtocols";
@@ -56,7 +55,6 @@ export default function LandingPage() {
             <LandingMigration />
             <LandingTestimonials />
             <LandingPricing />
-            <LandingDownloads />
             <LandingFAQ />
           </main>
 

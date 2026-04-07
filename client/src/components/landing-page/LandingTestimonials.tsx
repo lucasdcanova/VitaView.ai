@@ -43,9 +43,9 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "3 perfis clínicos", label: "consultório próprio, ambulatório intenso e clínica com equipe" },
-  { value: "7 a 11 meses", label: "janela de uso retratada nos relatos desta seção" },
-  { value: "1 fluxo central", label: "histórico, exames e prescrição revisitados no mesmo contexto" },
+  { value: "Retomada do caso", label: "menos tempo procurando histórico e exames antes da consulta" },
+  { value: "Revisão mais direta", label: "prescrição, documentos e últimas condutas no mesmo fluxo" },
+  { value: "Adoção sem atrito", label: "entrada gradual na rotina, inclusive em clínica com equipe" },
 ];
 
 export function LandingTestimonials() {

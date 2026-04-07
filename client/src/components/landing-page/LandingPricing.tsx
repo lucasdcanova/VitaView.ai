@@ -1,9 +1,18 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, ChevronRight, HelpCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 export function LandingPricing() {
+    const freeFeatures = [
+        "Anamnese básica sem IA",
+        "Prescrição digital limitada",
+        "Agenda básica",
+        "Até 5 pacientes",
+        "Upload de exames limitado",
+        "Relatórios básicos"
+    ];
+
     return (
         <section id="precos" className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden bg-[#F4F4F4] py-12 md:py-20">
             {/* Elementos decorativos de fundo */}
@@ -21,19 +30,19 @@ export function LandingPricing() {
                         transition={{ duration: 0.5 }}
                     >
                         <h2 className="mb-3 text-3xl font-heading font-bold leading-[1.05] tracking-tight text-[#212121] sm:text-4xl md:text-[2.8rem] lg:text-[3.2rem]">
-                            Simples, Completo e <br />
-                            <span className="text-[#9E9E9E] font-medium">Acessível.</span>
+                            Comece grátis, e evolua
+                            <br />
+                            <span className="text-[#9E9E9E] font-medium">no seu ritmo.</span>
                         </h2>
                         <p className="mx-auto max-w-2xl font-body text-[13px] text-[#757575] md:text-[14px]">
-                            Nosso diferencial é entregar tudo o que você precisa sem cobrar mais por isso.
-                            Enquanto outras plataformas cobram R$ 89 ou R$ 99 por recursos limitados,
-                            nós oferecemos a experiência completa por um valor justo.
+                            Você pode entrar no VitaView sem custo com o plano gratuito. Se depois fizer sentido
+                            ampliar a rotina com IA, mais pacientes e mais automação, o Vita Pro entra como próximo passo.
                         </p>
                     </motion.div>
                 </div>
 
                 <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-3 md:grid-cols-3 md:gap-4">
-                    {/* Plano Básico (Comparativo) */}
+                    {/* Plano Gratuito */}
                     <motion.div
                         className="rounded-2xl border border-[#E0E0E0] bg-white/50 p-4 opacity-75 backdrop-blur-sm md:scale-95 md:p-5"
                         initial={{ opacity: 0, x: 20 }}
@@ -42,28 +51,29 @@ export function LandingPricing() {
                         transition={{ duration: 0.5 }}
                     >
                         <div className="mb-2.5">
-                            <h3 className="text-lg font-bold text-[#757575] md:text-xl">Outras Plataformas</h3>
+                            <div className="inline-flex rounded-full border border-[#D9D9D9] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#757575]">
+                                Plano de entrada
+                            </div>
+                            <h3 className="mt-2 text-lg font-bold text-[#757575] md:text-xl">Gratuito</h3>
                             <div className="mt-2.5 flex items-baseline">
-                                <span className="text-2xl font-bold text-[#9E9E9E] md:text-3xl">R$ 89-99</span>
+                                <span className="text-2xl font-bold text-[#9E9E9E] md:text-3xl">R$ 0</span>
                                 <span className="text-[#9E9E9E] ml-1">/mês</span>
                             </div>
-                            <p className="mt-1.5 text-xs text-[#9E9E9E] md:text-sm">Média de mercado para planos iniciais</p>
+                            <p className="mt-1.5 text-xs text-[#9E9E9E] md:text-sm">Para começar a organizar a rotina sem custo</p>
                         </div>
                         <ul className="mb-1 space-y-2 border-t border-[#E0E0E0] pt-3.5 md:space-y-2.5">
-                            {[
-                                "IA cobrada como extra",
-                                "Limite de pacientes",
-                                "Agenda sem integração",
-                                "Prescrição limitada",
-                                "Prontuário engessado",
-                                "Suporte apenas por e-mail"
-                            ].map((feature, i) => (
-                                <li key={i} className="flex items-center text-[13px] text-[#9E9E9E] md:text-[14px]">
-                                    <HelpCircle className="mr-2.5 h-4 w-4 flex-shrink-0" />
+                            {freeFeatures.map((feature, i) => (
+                                <li key={i} className="flex items-center text-[13px] text-[#757575] md:text-[14px]">
+                                    <CheckCircle2 className="mr-2.5 h-4 w-4 flex-shrink-0 text-[#9E9E9E]" />
                                     <span>{feature}</span>
                                 </li>
                             ))}
                         </ul>
+                        <Link href="/auth">
+                            <Button variant="outline" className="mt-4 h-11 w-full border-2 border-[#E0E0E0] text-sm text-[#616161] hover:bg-[#F5F5F5] md:text-base">
+                                Começar sem custo
+                            </Button>
+                        </Link>
                     </motion.div>
 
                     {/* Plano Vita - Destaque */}
@@ -120,7 +130,7 @@ export function LandingPricing() {
 
                         <Link href="/auth">
                             <Button className="h-10 w-full rounded-xl bg-[#212121] text-[15px] font-bold text-white shadow-lg transition-all hover:bg-[#424242] hover:shadow-xl md:h-11 md:text-base">
-                                Começar Teste de 30 Dias
+                                Conhecer Vita Pro
                                 <ChevronRight className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
@@ -129,7 +139,7 @@ export function LandingPricing() {
                         </p>
                     </motion.div>
 
-                    {/* Plano Enterprise */}
+                    {/* Plano Vita Team */}
                     <motion.div
                         className="relative z-10 rounded-2xl border border-[#E0E0E0] bg-white p-4 md:p-5"
                         initial={{ opacity: 0, x: -20 }}
@@ -137,30 +147,39 @@ export function LandingPricing() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.4 }}
                     >
-                        <div className="mb-2.5">
-                            <h3 className="text-lg font-bold text-[#212121] md:text-xl">Enterprise</h3>
-                            <div className="mt-2.5 flex items-baseline">
-                                <span className="text-2xl font-bold text-[#212121] md:text-3xl">Sob Consulta</span>
+                        <div className="mb-4">
+                            <div className="inline-flex rounded-full border border-[#E0E0E0] bg-[#F8F8F8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#757575]">
+                                Clínicas
                             </div>
-                            <p className="mt-1.5 text-xs text-[#757575] md:text-sm">Para clínicas e hospitais</p>
+                            <h3 className="mt-2 text-lg font-bold text-[#212121] md:text-xl">Vita Team</h3>
+                            <div className="mt-2.5 flex items-baseline">
+                                <span className="mr-0.5 text-lg font-bold leading-none text-[#212121] md:text-xl">R$</span>
+                                <span className="text-3xl font-bold leading-none text-[#212121] md:text-4xl">119</span>
+                                <span className="ml-0.5 text-lg font-bold leading-none text-[#212121] md:text-xl">,20</span>
+                                <span className="mb-0.5 ml-1 text-sm text-[#757575] md:text-base">/mês</span>
+                            </div>
+                            <p className="mt-1.5 text-xs text-[#757575] md:text-sm">Para pequenas clínicas e equipes multiprofissionais</p>
+                            <p className="mt-1 text-[11px] text-[#9E9E9E] md:text-xs">no plano anual · <span className="line-through">R$ 149/mês</span> avulso</p>
                         </div>
                         <ul className="mb-4 space-y-2 border-t border-[#E0E0E0] pt-3.5 md:space-y-2.5">
                             {[
-                                "Profissionais ilimitados",
-                                "Integração HL7/FHIR",
-                                "Análise de dados populacional",
-                                "Gestor de conta dedicado",
-                                "SLA de suporte 24/7"
+                                "Tudo do <strong>Vita Pro</strong>",
+                                "Até <strong>5 profissionais</strong> inclusos",
+                                "<strong>Conta administradora</strong>",
+                                "<strong>Gerenciamento de equipe</strong>",
+                                "Relatórios consolidados da clínica"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center text-[13px] text-[#616161] md:text-[14px]">
                                     <CheckCircle2 className="mr-2.5 h-4 w-4 flex-shrink-0 text-[#9E9E9E]" />
-                                    <span>{feature}</span>
+                                    <span dangerouslySetInnerHTML={{ __html: feature }} />
                                 </li>
                             ))}
                         </ul>
-                        <Button variant="outline" className="h-11 w-full border-2 border-[#E0E0E0] text-sm text-[#616161] hover:bg-[#F5F5F5] md:text-base">
-                            Falar com Consultor
-                        </Button>
+                        <Link href="/auth">
+                            <Button variant="outline" className="h-11 w-full border-2 border-[#E0E0E0] text-sm text-[#616161] hover:bg-[#F5F5F5] md:text-base">
+                                Conhecer Vita Team
+                            </Button>
+                        </Link>
                     </motion.div>
                 </div>
             </div>
