@@ -111,13 +111,13 @@ export function LandingPricing() {
                         <ul className="mb-4 space-y-2 md:space-y-2.5">
                             {[
                                 "Anamnese com <strong>gravação de voz</strong>",
-                                "Prescrição <strong>Ilimitada</strong> com Alerta de Interações",
+                                "Prescrição <strong>Ilimitada</strong> com sugestão de dose e alerta de interações",
                                 "Protocolos de Exames <strong>Personalizáveis</strong>",
-                                "<strong>Análise</strong> de exames estruturada",
+                                "Upload de Exames <strong>Ilimitados</strong> com análise estruturada",
                                 "Gráficos de <strong>Evolução</strong> de Exames",
-                                "Upload de Exames <strong>Ilimitados</strong>",
+                                "Agenda clínica com <strong>triagem pré-consulta</strong>",
                                 "<strong>Vita Assist</strong> – Assistente clínico contextual",
-                                "Relatórios <strong>Completos</strong>"
+                                "Gestão de pacientes <strong>ilimitada</strong>"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center text-[13px] md:text-[14px]">
                                     <div className="mr-2.5 flex-shrink-0 rounded-full bg-[#212121] p-1">
