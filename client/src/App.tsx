@@ -331,6 +331,9 @@ function AppRouter() {
   // Rotas da landing page (sem nenhum provider)
   const landingPaths = ['/', '/termos', '/privacidade', '/quick-summary'];
   const isLandingRoute = landingPaths.some(path => location === path);
+  // Páginas legais (Termos / Privacidade) precisam ficar acessíveis dentro do app
+  // shell iOS para atender Guideline 3.1.2(c). Apenas a landing comercial é bloqueada.
+  const isLegalRoute = location === '/termos' || location === '/privacidade';
 
   // Rotas de autenticação (apenas AuthProvider)
   const authPaths = ['/auth', '/forgot-password'];
@@ -387,9 +390,10 @@ function AppRouter() {
     };
   }, [iosAppShell]);
 
-  // Em shells de app (PWA standalone e iOS nativo), nunca abrir landing:
+  // Em shells de app (PWA standalone e iOS nativo), nunca abrir a landing comercial:
   // ir para auth e deixar auth decidir se redireciona para /agenda quando já autenticado.
-  if (restrictedAppShell && isLandingRoute) {
+  // Exceção: páginas legais (Termos/Privacidade) ficam acessíveis para atender ao Guideline 3.1.2(c).
+  if (restrictedAppShell && isLandingRoute && !isLegalRoute) {
     return <NativeShellAuthBootstrap />;
   }
 
