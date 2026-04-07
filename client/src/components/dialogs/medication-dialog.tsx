@@ -3852,6 +3852,123 @@ const normalizeFormat = (format: string) => {
         .replace(/ç/g, "c");
 };
 
+const normalizeSuggestionText = (value?: string) =>
+    (value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ç/g, "c")
+        .trim();
+
+const mapSuggestionUnitToDosageUnit = (presentation: MedicationPresentation) => {
+    const formatLower = normalizeSuggestionText(presentation.format);
+    const unitLower = normalizeSuggestionText(presentation.suggestedUnit || presentation.unit);
+
+    if (formatLower.includes("comprimido")) return "cp";
+    if (formatLower.includes("capsula")) return "cps";
+    if (formatLower.includes("gota")) return "gt";
+    if (formatLower.includes("injecao") || formatLower.includes("ampola")) return "amp";
+    if (formatLower.includes("spray") || formatLower.includes("aerossol")) return "puff";
+    if (formatLower.includes("sache")) return "sache";
+    if (formatLower.includes("adesivo")) return "adesivo";
+    if (formatLower.includes("supositorio")) return "supositorio";
+
+    if (unitLower.includes("gota")) return "gt";
+    if (unitLower.includes("caps")) return "cps";
+    if (unitLower.includes("comprim")) return "cp";
+    if (unitLower.includes("amp")) return "amp";
+    if (unitLower.includes("jato") || unitLower.includes("puff")) return "puff";
+    if (unitLower.includes("aplica")) return "aplicacao";
+    if (unitLower.includes("sache")) return "sache";
+    if (unitLower.includes("adesivo")) return "adesivo";
+    if (unitLower.includes("supositorio") || unitLower.includes("unidade")) return formatLower.includes("supositorio") ? "supositorio" : "cp";
+    if (unitLower.includes("ml")) return "ml";
+    if (unitLower.includes("mcg")) return "mcg";
+    if (unitLower.includes("ui")) return "ui";
+    if (unitLower.includes("g")) return unitLower === "g" ? "g" : "mg";
+    return "mg";
+};
+
+const mapSuggestionFrequency = (presentation: MedicationPresentation, medicationInfo?: MedicationInfo | null) => {
+    const commonDose = normalizeSuggestionText(presentation.commonDose);
+
+    if (commonDose.includes("se necessario") || commonDose.includes("quando necessario")) {
+        return "Quando necessário";
+    }
+    if (commonDose.includes("dose unica") || commonDose.includes("dose única") || commonDose.includes("dose unica")) {
+        return "Dose única";
+    }
+    if (commonDose.includes("1x/semana") || commonDose.includes("1x por semana")) {
+        return "1x por semana";
+    }
+    if (commonDose.includes("1x/mes") || commonDose.includes("1x por mes")) {
+        return "1x por mês";
+    }
+
+    const timesPerDayRangeMatch = commonDose.match(/(\d+)\s*[-–]\s*(\d+)x\/dia/);
+    if (timesPerDayRangeMatch) {
+        return `${timesPerDayRangeMatch[1]}x ao dia`;
+    }
+
+    const hourRangeMatch = commonDose.match(/(\d+)\s*[-–]\s*(\d+)h/);
+    if (hourRangeMatch) {
+        const largerInterval = Math.max(Number(hourRangeMatch[1]), Number(hourRangeMatch[2]));
+        if ([4, 6, 8, 12].includes(largerInterval)) {
+            return `${largerInterval}h em ${largerInterval}h`;
+        }
+    }
+
+    if (commonDose.includes("12/12h")) return "12h em 12h";
+    if (commonDose.includes("8/8h")) return "8h em 8h";
+    if (commonDose.includes("6/6h")) return "6h em 6h";
+    if (commonDose.includes("4/4h")) return "4h em 4h";
+    if (commonDose.includes("4x/dia")) return "4x ao dia";
+    if (commonDose.includes("3x/dia")) return "3x ao dia";
+    if (commonDose.includes("2x/dia")) return "2x ao dia";
+    if (commonDose.includes("1x/dia") || commonDose.includes("a noite") || commonDose.includes("a noite")) {
+        return "1x ao dia";
+    }
+
+    const fallback = medicationInfo?.commonFrequencies?.find((frequency) =>
+        FREQUENCIES.some((option) => option.value === frequency)
+    );
+
+    return fallback || "";
+};
+
+const getSuggestionLowerDose = (presentation: MedicationPresentation) => {
+    if (presentation.suggestedDose) {
+        return presentation.suggestedDose;
+    }
+
+    const commonDose = presentation.commonDose || "";
+    const dosageWithUiMatch = commonDose.match(/(\d+(?:[.,]\d+)?)\s*(?:[-–]\s*\d+(?:[.,]\d+)?)?\s*ui/i);
+    if (dosageWithUiMatch) {
+        return dosageWithUiMatch[1].replace(",", ".");
+    }
+
+    const genericRangeMatch = commonDose.match(/(\d+(?:[.,]\d+)?)(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?/);
+    if (genericRangeMatch) {
+        return genericRangeMatch[1].replace(",", ".");
+    }
+
+    return "1";
+};
+
+const getInsulinUnitsPerContainer = (presentation: MedicationPresentation) => {
+    const concentration = Number.parseFloat((presentation.dosage || "").replace(",", "."));
+    if (!Number.isFinite(concentration) || concentration <= 0) {
+        return 300;
+    }
+
+    const formatLower = normalizeSuggestionText(presentation.format);
+    if (formatLower.includes("refil") || formatLower.includes("caneta")) {
+        return concentration * 3;
+    }
+
+    return concentration * 10;
+};
+
 export function MedicationDialog({
     open,
     onOpenChange,
@@ -3867,6 +3984,7 @@ export function MedicationDialog({
     const [searchValue, setSearchValue] = useState("");
     const [dosagePopoverOpen, setDosagePopoverOpen] = useState(false);
     const [selectedMedInfo, setSelectedMedInfo] = useState<MedicationInfo | null>(null);
+    const [selectedSuggestionPresentation, setSelectedSuggestionPresentation] = useState<MedicationPresentation | null>(null);
     const [patientWeight, setPatientWeight] = useState<string>("");
 
     // Ref para controlar quando ignorar o próximo evento de foco (após seleção)
@@ -3955,6 +4073,7 @@ export function MedicationDialog({
         } else {
             setSelectedMedInfo(null);
         }
+        setSelectedSuggestionPresentation(null);
     }, [selectedMedName]);
 
     // Filtrar medicamentos baseado na busca - agora usa lista com apresentações + customizados
@@ -4055,7 +4174,24 @@ export function MedicationDialog({
                 return; // Não calcular para "Quando necessário" ou outros
         }
 
-        if (isSolid) {
+        const isInsulinSuggestion = Boolean(
+            selectedSuggestionPresentation &&
+            normalizeSuggestionText(selectedSuggestionPresentation.unit).includes("ui") &&
+            (formatLower.includes("injecao") || formatLower.includes("refil") || formatLower.includes("caneta"))
+        );
+
+        if (isInsulinSuggestion) {
+            const dailyUnits = Number.parseFloat((watchedDosage || "").replace(",", ".")) || 0;
+            const totalMonthlyUI = dailyUnits * frequencyMultiplier;
+            const unitsPerContainer = getInsulinUnitsPerContainer(selectedSuggestionPresentation!);
+            const totalContainers = Math.max(1, Math.ceil(totalMonthlyUI / unitsPerContainer));
+
+            if (formatLower.includes("refil") || formatLower.includes("caneta")) {
+                form.setValue("quantity", `${totalContainers} ${totalContainers === 1 ? "refil/caneta" : "refis/canetas"}`);
+            } else {
+                form.setValue("quantity", `${totalContainers} ${totalContainers === 1 ? "ampola" : "ampolas"}`);
+            }
+        } else if (isSolid) {
             // Para sólidos: calcular total de comprimidos/cápsulas
             const dosePerTake = parseInt(watchedDosage) || 1;
             const totalQuantity = dosePerTake * frequencyMultiplier;
@@ -4115,7 +4251,7 @@ export function MedicationDialog({
         } else {
             // Outros formatos: Não preencher automaticamente
         }
-    }, [watchedFrequency, watchedFormat, watchedDosage, form]);
+    }, [watchedFrequency, watchedFormat, watchedDosage, form, selectedSuggestionPresentation]);
 
     // Função para aplicar sugestão de dosagem
     const applyDosageSuggestion = useCallback((presentation: MedicationPresentation) => {
@@ -4123,11 +4259,31 @@ export function MedicationDialog({
         skipNextFocusRef.current = true;
 
         const formatLower = presentation.format.toLowerCase();
+        const mappedUnit = mapSuggestionUnitToDosageUnit(presentation);
+        const mappedFrequency = mapSuggestionFrequency(presentation, selectedMedInfo);
+        const normalizedDose = getSuggestionLowerDose(presentation);
+        const isInsulinSuggestion = normalizeSuggestionText(presentation.unit).includes("ui");
+
+        setSelectedSuggestionPresentation(presentation);
+
+        if (isInsulinSuggestion) {
+            form.setValue("dosage", normalizedDose);
+            form.setValue("dosageUnit", "ui");
+            if (mappedFrequency) {
+                form.setValue("frequency", mappedFrequency);
+            }
+            form.setValue("format", normalizeFormat(presentation.format));
+            setDosagePopoverOpen(false);
+            setTimeout(() => {
+                skipNextFocusRef.current = false;
+            }, 200);
+            return;
+        }
 
         // Determinar a unidade apropriada baseada no formato
-        let unit = "comprimido";
+        let unit = mappedUnit;
         if (formatLower.includes('capsula') || formatLower.includes('cápsula')) {
-            unit = "cápsula";
+            unit = "cps";
         } else if (formatLower.includes('gotas')) {
             // Para gotas, usar a dose em gotas (ex: 20-40 gotas)
             // Pegar o valor comum da dose se disponível
@@ -4135,7 +4291,10 @@ export function MedicationDialog({
                 const match = presentation.commonDose.match(/(\d+)[-–]?(\d+)?/);
                 if (match) {
                     form.setValue("dosage", match[1]); // Usa o valor mínimo
-                    form.setValue("dosageUnit", "gotas");
+                    form.setValue("dosageUnit", mappedUnit);
+                    if (mappedFrequency) {
+                        form.setValue("frequency", mappedFrequency);
+                    }
                     form.setValue("format", normalizeFormat(presentation.format));
                     setDosagePopoverOpen(false);
                     setTimeout(() => { skipNextFocusRef.current = false; }, 200);
@@ -4149,16 +4308,19 @@ export function MedicationDialog({
             formatLower.includes('xarope')) {
             unit = "ml";
             form.setValue("dosage", "5"); // Dose padrão de líquido
-            form.setValue("dosageUnit", "ml");
+            form.setValue("dosageUnit", mappedUnit);
+            if (mappedFrequency) {
+                form.setValue("frequency", mappedFrequency);
+            }
             form.setValue("format", normalizeFormat(presentation.format));
             setDosagePopoverOpen(false);
             setTimeout(() => { skipNextFocusRef.current = false; }, 200);
             return;
         } else if (formatLower.includes('injecao') || formatLower.includes('injeção') ||
             formatLower.includes('ampola')) {
-            unit = "ampola";
+            unit = "amp";
         } else if (formatLower.includes('spray') || formatLower.includes('aerosol')) {
-            unit = "jatos";
+            unit = "puff";
             let dosage = "1";
 
             // Tentar extrair dose comum (ex: "1-2 jatos")
@@ -4170,7 +4332,10 @@ export function MedicationDialog({
             }
 
             form.setValue("dosage", dosage);
-            form.setValue("dosageUnit", unit);
+            form.setValue("dosageUnit", mappedUnit);
+            if (mappedFrequency) {
+                form.setValue("frequency", mappedFrequency);
+            }
             form.setValue("format", normalizeFormat(presentation.format));
             setDosagePopoverOpen(false);
             setTimeout(() => { skipNextFocusRef.current = false; }, 200);
@@ -4180,6 +4345,9 @@ export function MedicationDialog({
         // Para formas sólidas (comprimido, cápsula) e injetáveis, usar "1" como dose padrão
         form.setValue("dosage", "1");
         form.setValue("dosageUnit", unit);
+        if (mappedFrequency) {
+            form.setValue("frequency", mappedFrequency);
+        }
         form.setValue("format", normalizeFormat(presentation.format));
         setDosagePopoverOpen(false);
 
@@ -4187,7 +4355,7 @@ export function MedicationDialog({
         setTimeout(() => {
             skipNextFocusRef.current = false;
         }, 200);
-    }, [form]);
+    }, [form, selectedMedInfo]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -4258,7 +4426,7 @@ export function MedicationDialog({
                                             <div className="flex items-center border-b px-3">
                                                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                                                 <input
-                                                    className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="flex h-10 w-full rounded-md border-0 bg-transparent py-3 text-sm shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                                                     placeholder="Buscar medicamento..."
                                                     value={searchValue}
                                                     onChange={(e) => setSearchValue(e.target.value)}
@@ -4473,21 +4641,21 @@ export function MedicationDialog({
                                                 <PopoverTrigger asChild>
                                                     <button
                                                         type="button"
-                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 transition-colors"
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500 hover:text-yellow-600 transition-colors"
                                                         onClick={() => {
                                                             if (selectedMedInfo) setDosagePopoverOpen(true);
                                                         }}
                                                         title="Ver sugestões de dose"
                                                     >
-                                                        <Sparkles className="h-4 w-4" />
+                                                        <Sparkles className="h-4 w-4 fill-yellow-500" />
                                                     </button>
                                                 </PopoverTrigger>
                                             </div>
                                             {selectedMedInfo && (
                                                 <PopoverContent className="w-[400px] p-0" align="start" side="bottom">
-                                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 border-b">
-                                                        <div className="flex items-center gap-2 text-blue-700">
-                                                            <Sparkles className="h-4 w-4" />
+                                                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-2 border-b">
+                                                        <div className="flex items-center gap-2 text-amber-700">
+                                                            <Sparkles className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                                                             <span className="font-medium text-sm">Sugestão IA</span>
                                                             <Badge variant="outline" className="text-xs ml-auto">{selectedMedInfo.category}</Badge>
                                                         </div>
@@ -4553,6 +4721,11 @@ export function MedicationDialog({
                                                                                 if (calculation) {
                                                                                     form.setValue("dosage", `${calculation.mlPerAdminLow}-${calculation.mlPerAdminHigh}`);
                                                                                     form.setValue("dosageUnit", "ml");
+                                                                                    setSelectedSuggestionPresentation(pres);
+                                                                                    const mappedFrequency = mapSuggestionFrequency(pres, selectedMedInfo);
+                                                                                    if (mappedFrequency) {
+                                                                                        form.setValue("frequency", mappedFrequency);
+                                                                                    }
                                                                                     form.setValue("format", normalizeFormat(pres.format));
                                                                                     skipNextFocusRef.current = true;
                                                                                     setDosagePopoverOpen(false);
@@ -4739,7 +4912,7 @@ export function MedicationDialog({
                                 <Button
                                     type="button"
                                     variant="destructive"
-                                    onClick={onRemove}
+                                    onClick={() => onRemove()}
                                     disabled={isRemovePending}
                                 >
                                     {isRemovePending ? "Removendo..." : "Remover Medicamento"}

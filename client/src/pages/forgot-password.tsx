@@ -1,5 +1,4 @@
-import {
-  useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -74,66 +73,80 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-white p-6">
-      {/* Botão para voltar */}
+    <div className="relative min-h-screen overflow-hidden bg-[#F4F4F4]">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-10%] top-[-12%] h-72 w-72 rounded-full bg-black/[0.05] blur-3xl" />
+        <div className="absolute bottom-[-16%] right-[-8%] h-80 w-80 rounded-full bg-black/[0.06] blur-3xl" />
+      </div>
+
       <Link href="/auth" className="absolute top-4 left-4 z-10">
-        <Button variant="outline" className="rounded-full w-10 h-10 p-0 flex items-center justify-center">
+        <Button
+          variant="outline"
+          className="flex h-10 w-10 items-center justify-center rounded-full border-border/70 bg-background/85 p-0 shadow-sm backdrop-blur-sm hover:bg-background"
+        >
           <ArrowLeft size={18} />
         </Button>
       </Link>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo VitaView */}
-        <div className="flex justify-center mb-6">
-          <Logo
-            size="lg"
-            showText={false}
-            variant="full"
-            className="flex-col items-center"
-          />
-        </div>
+      <div className="relative z-10 flex min-h-[100svh] w-full flex-col items-center justify-start px-4 pb-8 pt-16 sm:min-h-screen sm:justify-center sm:py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="mb-2 flex justify-center sm:mb-3">
+            <Logo
+              size="lg"
+              showText={false}
+              variant="full"
+              className="flex-col items-center"
+            />
+          </div>
 
-        <Card className="bg-white rounded-xl shadow-lg border-t-4 border-t-[#1E3A5F] border border-gray-100">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-              <Mail className="h-6 w-6 text-[#448C9B]" />
-              Recuperar Senha
-            </CardTitle>
-            <CardDescription className="text-gray-600 mt-2">
-              {submitted
-                ? "Verifique seu email para continuar"
-                : "Digite seu email para receber as instruções de recuperação"}
-            </CardDescription>
-          </CardHeader>
+          <Card className="relative overflow-hidden rounded-[24px] border-border/80 bg-card/95 shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:rounded-[28px]">
+            <div className="bg-primary px-4 py-2.5 text-center text-primary-foreground sm:py-3">
+              <span className="font-heading text-[11px] font-bold tracking-[0.08em] sm:text-sm sm:tracking-wide">
+                Recuperação de acesso
+              </span>
+            </div>
 
-          <CardContent>
+            <CardHeader className="pb-3 pt-5 text-center sm:pb-4 sm:pt-8">
+              <CardTitle className="flex items-center justify-center gap-2 font-heading text-[1.75rem] font-bold leading-tight text-foreground sm:text-2xl">
+                <Mail className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
+                <span>Recuperar senha</span>
+              </CardTitle>
+              <CardDescription className="mt-1 text-center font-body text-sm text-muted-foreground sm:mt-2">
+                {submitted
+                  ? "Verifique seu email para continuar"
+                  : "Digite seu email para receber as instruções de recuperação"}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="px-5 pb-6 sm:px-8 sm:pb-8">
             {!submitted ? (
               <>
                 {error && (
-                  <Alert variant="destructive" className="mb-4">
+                  <Alert variant="destructive" className="mb-4 rounded-xl border-destructive/20 bg-destructive/10">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="font-heading text-[13px] font-bold text-foreground sm:text-sm">Email</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="seu@email.com"
+                              placeholder="Digite seu email"
                               {...field}
                               disabled={isSubmitting}
+                              className="h-10 rounded-xl px-3.5"
                             />
                           </FormControl>
                           <FormMessage />
@@ -144,24 +157,24 @@ export default function ForgotPasswordPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-[#448C9B] hover:bg-[#336D7A] font-bold text-white"
+                      className="h-11 w-full rounded-xl bg-primary font-heading text-base font-bold text-primary-foreground transition-all duration-200 hover:bg-primary/90 sm:h-12 sm:text-lg"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
                         <>
-                          <BrandLoader className="mr-2 h-4 w-4 animate-spin" />
+                          <BrandLoader className="mr-2 h-5 w-5 animate-spin" />
                           Enviando...
                         </>
                       ) : (
-                        "Enviar Email de Recuperação"
+                        "Enviar instruções por email"
                       )}
                     </Button>
                   </form>
                 </Form>
 
-                <div className="mt-6 text-center">
+                <div className="mt-5 text-center sm:mt-6">
                   <Link href="/auth">
-                    <Button variant="link" className="text-sm text-[#1E3A5F]">
+                    <Button variant="link" className="h-auto p-0 font-heading text-sm font-bold text-foreground hover:text-foreground/80">
                       Voltar para o login
                     </Button>
                   </Link>
@@ -174,13 +187,13 @@ export default function ForgotPasswordPage() {
                 transition={{ duration: 0.3 }}
                 className="text-center space-y-4"
               >
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100">
                   <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
 
-                <Alert className="bg-green-50 border-green-200">
+                <Alert className="rounded-xl border-emerald-200 bg-emerald-50">
                   <AlertDescription className="text-green-800">
                     Um email com instruções para redefinir sua senha foi enviado para <strong>{form.getValues("email")}</strong>
                   </AlertDescription>
@@ -190,7 +203,7 @@ export default function ForgotPasswordPage() {
                   Não recebeu o email? Verifique sua pasta de spam ou{" "}
                   <Button
                     variant="link"
-                    className="p-0 text-[#448C9B]"
+                    className="h-auto p-0 font-heading font-bold text-primary"
                     onClick={() => {
                       setSubmitted(false);
                       setError(null);
@@ -201,15 +214,16 @@ export default function ForgotPasswordPage() {
                 </p>
 
                 <Link href="/auth">
-                  <Button variant="outline" className="mt-4">
+                  <Button variant="outline" className="mt-4 h-11 rounded-xl border-border bg-transparent px-6 font-heading font-bold hover:bg-muted/60">
                     Voltar para o login
                   </Button>
                 </Link>
               </motion.div>
             )}
-          </CardContent>
-        </Card>
-      </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }

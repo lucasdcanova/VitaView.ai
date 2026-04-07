@@ -768,22 +768,25 @@ export function registerPatientRoutes(app: Express) {
 
             const user = req.user as any;
             const profile = await resolveAccessibleProfile(req);
+            const status = typeof req.query.status === "string" ? req.query.status : "active";
+            const isActiveFilter =
+                status === "inactive" ? false : status === "all" ? null : true;
             const result = profile
                 ? await pool.query(
                     `SELECT *
                        FROM medications
                       WHERE profile_id = $1
-                        AND is_active = true
+                        AND ($2::boolean IS NULL OR is_active = $2)
                       ORDER BY created_at DESC`,
-                    [profile.id]
+                    [profile.id, isActiveFilter]
                 )
                 : await pool.query(
                     `SELECT *
                        FROM medications
                       WHERE user_id = $1
-                        AND is_active = true
+                        AND ($2::boolean IS NULL OR is_active = $2)
                       ORDER BY created_at DESC`,
-                    [user.id]
+                    [user.id, isActiveFilter]
                 );
 
             res.json(result.rows.map(serializeMedication));
@@ -909,7 +912,7 @@ export function registerPatientRoutes(app: Express) {
         }
     });
 
-    app.delete("/api/medications/:id", ensureAuthenticated, async (req, res) => {
+    app.post("/api/medications/:id/suspend", ensureAuthenticated, async (req, res) => {
         try {
             await ensureMedicationSchema();
 
@@ -964,7 +967,40 @@ export function registerPatientRoutes(app: Express) {
             }
 
             console.log("✅ Medicamento marcado como inativo (PostgreSQL)");
-            res.json({ message: "Medicamento excluído com sucesso" });
+            res.json({ message: "Medicamento suspenso com sucesso" });
+        } catch (error) {
+            console.error("Erro ao suspender medicamento:", error);
+            res.status(500).json({ message: "Erro ao suspender medicamento" });
+        }
+    });
+
+    app.delete("/api/medications/:id", ensureAuthenticated, async (req, res) => {
+        try {
+            await ensureMedicationSchema();
+
+            const user = req.user as any;
+            const id = parseInt(req.params.id, 10);
+            const currentResult = await pool.query(`SELECT * FROM medications WHERE id = $1 LIMIT 1`, [id]);
+            const currentMedication = currentResult.rows[0];
+
+            if (!currentMedication) {
+                return res.status(404).json({ message: "Medicamento não encontrado" });
+            }
+
+            if (currentMedication.profile_id) {
+                const profile = await resolveAccessibleProfile(req, currentMedication.profile_id);
+                if (!profile) {
+                    return res.status(403).json({ message: "Acesso negado" });
+                }
+            } else if (currentMedication.user_id !== user.id) {
+                return res.status(403).json({ message: "Acesso negado" });
+            }
+
+            await pool.query(`DELETE FROM medication_history WHERE medication_id = $1`, [id]);
+            await pool.query(`DELETE FROM medications WHERE id = $1`, [id]);
+
+            console.log("✅ Medicamento removido definitivamente (PostgreSQL)");
+            res.json({ message: "Medicamento removido com sucesso" });
         } catch (error) {
             console.error("Erro ao excluir medicamento:", error);
             res.status(500).json({ message: "Erro ao excluir medicamento" });

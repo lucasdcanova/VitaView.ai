@@ -11,7 +11,6 @@ import { ContinuousMedicationsCard } from "@/components/prescriptions/Continuous
 import { MedicationSelector } from "@/components/prescriptions/MedicationSelector";
 import { ActivePrescriptionForm } from "@/components/prescriptions/ActivePrescriptionForm";
 import { PrescriptionHistory } from "@/components/prescriptions/PrescriptionHistory";
-import { MedicationTreatmentSummary } from "@/components/prescriptions/MedicationTreatmentSummary";
 
 interface VitaPrescriptionsProps {
     patient: Profile;
@@ -47,20 +46,17 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 </div>
             )}
 
-            <MedicationTreatmentSummary
-                medications={displayMedications}
-                history={continuousMedsLogic.history}
-            />
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ContinuousMedicationsCard
                     medications={displayMedications}
+                    previousMedications={continuousMedsLogic.previousMedications}
                     selectedMedications={continuousMedsLogic.selectedMedications}
                     onToggleSelection={continuousMedsLogic.toggleSelection}
                     onToggleSelectAll={continuousMedsLogic.toggleSelectAll}
                     onAddMedication={continuousMedsLogic.openAddDialog}
                     onEditMedication={continuousMedsLogic.openEditDialog}
                     onDeleteMedication={continuousMedsLogic.handleDelete}
+                    onStopMedication={continuousMedsLogic.handleStopMedication}
                     onRenewPrescription={() => {
                         // Filter selected meds
                         const selected = displayMedications.filter(m => continuousMedsLogic.selectedMedications.has(m.id));
@@ -118,7 +114,7 @@ export default function VitaPrescriptions({ patient, medications: propMedication
                 onSubmit={continuousMedsLogic.handleSubmit}
                 isPending={continuousMedsLogic.isPending}
                 mode={continuousMedsLogic.editingMedication ? "edit" : "create"}
-                onRemove={continuousMedsLogic.handleDelete}
+                onRemove={() => continuousMedsLogic.handleDelete()}
                 isRemovePending={continuousMedsLogic.isPending}
             />
         </div>

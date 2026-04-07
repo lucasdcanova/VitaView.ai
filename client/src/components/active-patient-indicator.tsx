@@ -316,7 +316,7 @@ export default function ActivePatientIndicator({
                             <Heart className="h-[17px] w-[17px]" />
                         </div>
                         <div className="min-w-0">
-                            <span className="block whitespace-normal break-words font-heading text-[13px] font-extrabold leading-none tracking-[0.01em] text-[#111827] sm:text-[14px] md:text-[15px]">
+                            <span className="block whitespace-normal break-words font-heading text-[12px] font-extrabold leading-none tracking-[0.01em] text-[#111827] sm:text-[13px] md:text-[14px]">
                                 Ir para atendimento
                             </span>
                         </div>

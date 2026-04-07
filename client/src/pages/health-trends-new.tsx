@@ -799,14 +799,14 @@ export default function HealthTrendsNew({
     {
       value: "evolution",
       label: "Evoluções",
-      shortLabel: "Evol.",
+      shortLabel: "Evoluções",
       icon: FileText,
       count: timelineItems.filter((item) => item.type === "evolution").length,
     },
     {
       value: "diagnosis",
       label: "Diagnósticos",
-      shortLabel: "Diag.",
+      shortLabel: "Diagnósticos",
       icon: ShieldCheck,
       count: timelineItems.filter((item) => item.type === "diagnosis").length,
     },
@@ -1139,7 +1139,7 @@ export default function HealthTrendsNew({
                   <div className="space-y-6 pb-12">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <div className="shrink-0 rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-400/20">
+                        <div className="shrink-0 rounded-lg bg-white p-2 text-gray-500 ring-1 ring-gray-200/80 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700/60">
                           <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
                         <div className="min-w-0">
@@ -1167,7 +1167,7 @@ export default function HealthTrendsNew({
                       </div>
                     </div>
 
-                    <div className="flex flex-nowrap overflow-x-auto items-center gap-2 rounded-2xl border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/70 dark:shadow-black/20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="inline-flex max-w-full flex-nowrap overflow-x-auto items-center gap-2 rounded-2xl border border-gray-200/90 p-2 dark:border-slate-800 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                       {timelineFilterOptions.map((option) => {
                         const Icon = option.icon;
                         const isActive = timelineFilter === option.value;

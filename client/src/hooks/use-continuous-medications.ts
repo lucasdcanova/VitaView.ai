@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -38,22 +38,83 @@ export function useContinuousMedications(profileId?: number | null) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingMedication, setEditingMedication] = useState<any>(null);
     const [selectedMedications, setSelectedMedications] = useState<Set<number>>(new Set());
+    const [hardDeletedMedicationIds, setHardDeletedMedicationIds] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         setSelectedMedications(new Set());
+        setHardDeletedMedicationIds(new Set());
     }, [profileId]);
 
     const medicationsUrl = profileId ? `/api/medications?profileId=${profileId}` : "/api/medications";
+    const previousMedicationsUrl = profileId
+        ? `/api/medications?profileId=${profileId}&status=inactive`
+        : "/api/medications?status=inactive";
     const historyUrl = profileId ? `/api/medications/history?profileId=${profileId}` : null;
 
     const { data: medications = [], isLoading } = useQuery<any[]>({
         queryKey: [medicationsUrl],
     });
 
+    const { data: previousMedications = [] } = useQuery<any[]>({
+        queryKey: [previousMedicationsUrl],
+    });
+
     const { data: history = [] } = useQuery<MedicationHistoryEntry[]>({
         queryKey: [historyUrl || "/api/medications/history"],
         enabled: Boolean(historyUrl),
     });
+
+    const filteredPreviousMedications = useMemo(() => {
+        const activeMedicationIds = new Set(
+            medications.map((medication: any) => medication.id)
+        );
+
+        const inactiveMedications = previousMedications.filter((medication: any) => {
+            const isStopped = medication?.isActive === false || Boolean(medication?.endDate);
+            return isStopped && !activeMedicationIds.has(medication.id) && !hardDeletedMedicationIds.has(medication.id);
+        });
+
+        const stoppedHistoryEntries = history
+            .filter((entry) => entry.eventType === "stopped")
+            .map((entry) => ({
+                id: entry.medicationId ?? `history-${entry.id}`,
+                medicationId: entry.medicationId ?? null,
+                name: entry.name,
+                format: entry.format,
+                dosage: entry.dosage,
+                dosageUnit: entry.dosageUnit,
+                frequency: entry.frequency,
+                notes: entry.notes,
+                startDate: entry.startDate,
+                endDate: entry.endDate,
+                isActive: false,
+                createdAt: entry.occurredAt,
+                prescriptionType:
+                    typeof entry.metadata === "object" &&
+                    entry.metadata !== null &&
+                    "prescriptionType" in entry.metadata
+                        ? (entry.metadata as { prescriptionType?: string }).prescriptionType ?? "padrao"
+                        : "padrao",
+            }))
+            .filter((entry) =>
+                !activeMedicationIds.has(entry.medicationId ?? -1) &&
+                !hardDeletedMedicationIds.has(entry.medicationId ?? -1)
+            );
+
+        const previousByKey = new Map<string, any>();
+
+        [...inactiveMedications, ...stoppedHistoryEntries].forEach((medication) => {
+            const key = medication.medicationId
+                ? `medication-${medication.medicationId}`
+                : `${medication.name}-${medication.startDate || ""}-${medication.endDate || ""}`;
+
+            if (!previousByKey.has(key)) {
+                previousByKey.set(key, medication);
+            }
+        });
+
+        return Array.from(previousByKey.values());
+    }, [hardDeletedMedicationIds, history, medications, previousMedications]);
 
     const medicationForm = useForm<MedicationFormData>({
         resolver: zodResolver(medicationSchema),
@@ -129,12 +190,47 @@ export function useContinuousMedications(profileId?: number | null) {
             apiRequest("DELETE", `/api/medications/${id}`, {
                 profileId: profileId ?? undefined,
             }),
-        onSuccess: async () => {
+        onSuccess: async (_, deletedId) => {
+            setHardDeletedMedicationIds((prev) => {
+                const next = new Set(prev);
+                next.add(deletedId);
+                return next;
+            });
+            queryClient.setQueryData<any[]>([medicationsUrl], (current = []) =>
+                current.filter((medication) => medication.id !== deletedId)
+            );
+            queryClient.setQueryData<any[]>([previousMedicationsUrl], (current = []) =>
+                current.filter((medication) => medication.id !== deletedId)
+            );
+            if (historyUrl) {
+                queryClient.setQueryData<MedicationHistoryEntry[]>([historyUrl], (current = []) =>
+                    current.filter((entry) => entry.medicationId !== deletedId)
+                );
+            }
             await invalidateMedicationQueries(queryClient);
+            setSelectedMedications((prev) => new Set([...prev].filter((selectedId) => selectedId !== deletedId)));
+            setEditingMedication((current: any) => (current?.id === deletedId ? null : current));
+            setIsDialogOpen(false);
             toast({ title: "Sucesso", description: "Medicamento excluído com sucesso!" });
         },
         onError: () => {
             toast({ title: "Erro", description: "Erro ao excluir medicamento.", variant: "destructive" });
+        },
+    });
+
+    const stopMedicationMutation = useMutation({
+        mutationFn: ({ id, endDate }: { id: number; endDate: string }) =>
+            apiRequest("POST", `/api/medications/${id}/suspend`, {
+                profileId: profileId ?? undefined,
+                endDate,
+            }),
+        onSuccess: async (_, variables) => {
+            await invalidateMedicationQueries(queryClient);
+            setSelectedMedications((prev) => new Set([...prev].filter((selectedId) => selectedId !== variables.id)));
+            toast({ title: "Sucesso", description: "Medicamento movido para o histórico prévio." });
+        },
+        onError: () => {
+            toast({ title: "Erro", description: "Erro ao cessar uso do medicamento.", variant: "destructive" });
         },
     });
 
@@ -196,6 +292,10 @@ export function useContinuousMedications(profileId?: number | null) {
         }
     };
 
+    const handleStopMedication = (id: number, endDate: string) => {
+        stopMedicationMutation.mutate({ id, endDate });
+    };
+
     const toggleSelection = (id: number) => {
         setSelectedMedications((prev) => {
             const next = new Set(prev);
@@ -221,6 +321,7 @@ export function useContinuousMedications(profileId?: number | null) {
 
     return {
         medications,
+        previousMedications: filteredPreviousMedications,
         history,
         isLoading,
         isDialogOpen,
@@ -234,8 +335,13 @@ export function useContinuousMedications(profileId?: number | null) {
         openEditDialog,
         handleSubmit,
         handleDelete,
+        handleStopMedication,
         toggleSelection,
         toggleSelectAll,
-        isPending: addMedicationMutation.isPending || editMedicationMutation.isPending || deleteMedicationMutation.isPending,
+        isPending:
+            addMedicationMutation.isPending ||
+            editMedicationMutation.isPending ||
+            deleteMedicationMutation.isPending ||
+            stopMedicationMutation.isPending,
     };
 }

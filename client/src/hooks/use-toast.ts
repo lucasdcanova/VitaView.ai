@@ -141,10 +141,19 @@ type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
   const id = genId()
+  const resolvedVariant = props.variant ?? "success"
+  const resolvedDuration =
+    typeof props.duration === "number"
+      ? props.duration
+      : resolvedVariant === "destructive"
+        ? 6000
+        : 5000
 
   // Garante que title e description sejam sempre strings válidas
   const safeProps = {
     ...props,
+    variant: resolvedVariant,
+    duration: resolvedDuration,
     title: props.title && typeof props.title === 'object' ? JSON.stringify(props.title) : props.title,
     description: props.description && typeof props.description === 'object' ? JSON.stringify(props.description) : props.description
   };
@@ -154,6 +163,8 @@ function toast({ ...props }: Toast) {
       type: "UPDATE_TOAST",
       toast: { 
         ...props,
+        variant: props.variant ?? resolvedVariant,
+        duration: typeof props.duration === "number" ? props.duration : resolvedDuration,
         // Garante que title e description sejam sempre strings válidas na atualização
         title: props.title && typeof props.title === 'object' ? JSON.stringify(props.title) : props.title,
         description: props.description && typeof props.description === 'object' ? JSON.stringify(props.description) : props.description,

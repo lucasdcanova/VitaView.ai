@@ -965,77 +965,161 @@ export function AnamnesisCard() {
                         buttonLabel="Enviar exames"
                     />
                     {/* Action buttons */}
-                    <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center justify-between gap-3"}>
-                        <Button
-                            type="button"
-                            onClick={() => {
-                                if (!anamnesisPlainText) {
-                                    toast({
-                                        title: "Texto vazio",
-                                        description: "Escreva algo para salvar.",
-                                        variant: "destructive"
-                                    });
-                                    return;
-                                }
-                                if (!activeProfile?.id) {
-                                    toast({
-                                        title: "Nenhum paciente selecionado",
-                                        description: "Selecione um paciente antes de salvar a evolução.",
-                                        variant: "destructive"
-                                    });
-                                    return;
-                                }
-                                addEvolutionMutation.mutate({
-                                    text: anamnesisText,
-                                    profileId: activeProfile.id,
-                                    recordToApply: extractedRecord,
-                                });
-                            }}
-                            disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
-                            className={`gap-1.5 bg-[#212121] text-white hover:bg-[#424242] ${isMobile ? 'text-xs h-9 order-1 w-full' : 'gap-2'}`}
-                        >
-                            {addEvolutionMutation.isPending ? (
-                                <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
-                            ) : (
-                                <Save className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                            )}
-                            Salvar Consulta
-                        </Button>
+                    <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-3"}>
+                        {isMobile ? (
+                            <>
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!anamnesisPlainText) {
+                                            toast({
+                                                title: "Texto vazio",
+                                                description: "Escreva algo para salvar.",
+                                                variant: "destructive"
+                                            });
+                                            return;
+                                        }
+                                        if (!activeProfile?.id) {
+                                            toast({
+                                                title: "Nenhum paciente selecionado",
+                                                description: "Selecione um paciente antes de salvar a evolução.",
+                                                variant: "destructive"
+                                            });
+                                            return;
+                                        }
+                                        addEvolutionMutation.mutate({
+                                            text: anamnesisText,
+                                            profileId: activeProfile.id,
+                                            recordToApply: extractedRecord,
+                                        });
+                                    }}
+                                    disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
+                                    className="text-xs h-9 order-1 w-full gap-1.5 bg-[#212121] text-white hover:bg-[#424242]"
+                                >
+                                    {addEvolutionMutation.isPending ? (
+                                        <BrandLoader className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Save className="h-3.5 w-3.5" />
+                                    )}
+                                    Salvar Consulta
+                                </Button>
 
-                        <FeatureGate feature="ai-enhance">
-                            <Button
-                                type="button"
-                                onClick={handleEnhanceAnamnesis}
-                                disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
-                                variant="outline"
-                                className={`gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900 ${isMobile ? 'text-xs h-9 order-3 w-full' : 'gap-2'}`}
-                            >
-                                {enhanceAnamnesisMutation.isPending ? (
-                                    <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
-                                ) : (
-                                    <Wand2 className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                                )}
-                                {isMobile ? 'IA Melhorar' : 'Melhorar com IA'}
-                            </Button>
-                        </FeatureGate>
-                        <FeatureGate feature="ai-analyze">
-                            <Button
-                                type="button"
-                                onClick={handleAnalyzeAnamnesis}
-                                disabled={analyzeAnamnesisMutation.isPending}
-                                className={`gap-1.5 ${isMobile ? 'text-xs h-9 order-4 w-full' : 'gap-2'}`}
-                            >
-                                {analyzeAnamnesisMutation.isPending ? (
-                                    <BrandLoader className={isMobile ? "h-3.5 w-3.5 animate-spin" : "h-4 w-4 animate-spin"} />
-                                ) : (
-                                    <Sparkles className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                                )}
-                                {isMobile ? 'Extrair IA' : 'Extrair dados com IA'}
-                            </Button>
-                        </FeatureGate>
-                        <Button type="button" variant="ghost" size={isMobile ? "sm" : "default"} onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className={isMobile ? "text-xs order-2 w-full" : ""}>
-                            Limpar texto
-                        </Button>
+                                <FeatureGate feature="ai-enhance">
+                                    <Button
+                                        type="button"
+                                        onClick={handleEnhanceAnamnesis}
+                                        disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
+                                        variant="outline"
+                                        className="text-xs h-9 order-3 w-full gap-1.5 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                                    >
+                                        {enhanceAnamnesisMutation.isPending ? (
+                                            <BrandLoader className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Wand2 className="h-3.5 w-3.5" />
+                                        )}
+                                        IA Melhorar
+                                    </Button>
+                                </FeatureGate>
+                                <FeatureGate feature="ai-analyze">
+                                    <Button
+                                        type="button"
+                                        onClick={handleAnalyzeAnamnesis}
+                                        disabled={analyzeAnamnesisMutation.isPending}
+                                        className="text-xs h-9 order-4 w-full gap-1.5"
+                                    >
+                                        {analyzeAnamnesisMutation.isPending ? (
+                                            <BrandLoader className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="h-3.5 w-3.5" />
+                                        )}
+                                        Extrair IA
+                                    </Button>
+                                </FeatureGate>
+                                <Button type="button" variant="ghost" size="sm" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className="text-xs order-2 w-full">
+                                    Limpar texto
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="flex w-full flex-wrap items-center gap-3">
+                                <div className="flex items-center">
+                                    <Button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!anamnesisPlainText) {
+                                                toast({
+                                                    title: "Texto vazio",
+                                                    description: "Escreva algo para salvar.",
+                                                    variant: "destructive"
+                                                });
+                                                return;
+                                            }
+                                            if (!activeProfile?.id) {
+                                                toast({
+                                                    title: "Nenhum paciente selecionado",
+                                                    description: "Selecione um paciente antes de salvar a evolução.",
+                                                    variant: "destructive"
+                                                });
+                                                return;
+                                            }
+                                            addEvolutionMutation.mutate({
+                                                text: anamnesisText,
+                                                profileId: activeProfile.id,
+                                                recordToApply: extractedRecord,
+                                            });
+                                        }}
+                                        disabled={addEvolutionMutation.isPending || !anamnesisPlainText || !activeProfile?.id}
+                                        className="gap-2 bg-[#212121] text-white hover:bg-[#424242]"
+                                    >
+                                        {addEvolutionMutation.isPending ? (
+                                            <BrandLoader className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Save className="h-4 w-4" />
+                                        )}
+                                        Salvar Consulta
+                                    </Button>
+                                </div>
+
+                                <span className="mx-3 h-6 w-px bg-gray-300" aria-hidden="true" />
+
+                                <div className="flex items-center justify-center gap-2.5">
+                                    <FeatureGate feature="ai-enhance">
+                                        <Button
+                                            type="button"
+                                            onClick={handleEnhanceAnamnesis}
+                                            disabled={enhanceAnamnesisMutation.isPending || !anamnesisPlainText}
+                                            variant="outline"
+                                            className="gap-2 text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                                        >
+                                            {enhanceAnamnesisMutation.isPending ? (
+                                                <BrandLoader className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Wand2 className="h-4 w-4" />
+                                            )}
+                                            Melhorar com IA
+                                        </Button>
+                                    </FeatureGate>
+                                    <FeatureGate feature="ai-analyze">
+                                        <Button
+                                            type="button"
+                                            onClick={handleAnalyzeAnamnesis}
+                                            disabled={analyzeAnamnesisMutation.isPending}
+                                            className="gap-2"
+                                        >
+                                            {analyzeAnamnesisMutation.isPending ? (
+                                                <BrandLoader className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Sparkles className="h-4 w-4" />
+                                            )}
+                                            Extrair dados com IA
+                                        </Button>
+                                    </FeatureGate>
+                                </div>
+
+                                <Button type="button" variant="ghost" size="default" onClick={handleResetAnamnesis} disabled={!anamnesisText && !extractedRecord} className="ml-auto">
+                                    Limpar texto
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
