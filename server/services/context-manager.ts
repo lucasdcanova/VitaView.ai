@@ -149,7 +149,7 @@ export class ContextManager {
 
             const [
                 allDiagnoses,
-                surgeries,
+                allSurgeries,
                 allergies,
                 exams,
                 evolutions,
@@ -173,6 +173,8 @@ export class ContextManager {
                     new Date(b.diagnosisDate || b.createdAt || 0).getTime() -
                     new Date(a.diagnosisDate || a.createdAt || 0).getTime()
                 );
+
+            const surgeries = allSurgeries.filter((surgery: any) => surgery.profileId === profileId);
 
             const examResults = await Promise.all(
                 exams.map((exam: any) => this.storage.getExamResultByExamId(exam.id))

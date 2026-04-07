@@ -342,11 +342,21 @@ export default function HealthTrendsNew({
   });
   const allergies = propAllergies || fetchedAllergies;
 
+  const surgeriesQueryKey = activeProfile?.id
+    ? [`/api/surgeries?profileId=${activeProfile.id}`]
+    : ["/api/surgeries"];
+
   const { data: fetchedSurgeries = [], isLoading: surgeriesLoading } = useQuery<any[]>({
-    queryKey: ["/api/surgeries"],
-    enabled: !propSurgeries,
+    queryKey: surgeriesQueryKey,
+    enabled: !propSurgeries && !!activeProfile?.id,
   });
-  const surgeries = propSurgeries || fetchedSurgeries;
+  const surgeries = useMemo(
+    () =>
+      (propSurgeries || fetchedSurgeries).filter((surgery: any) =>
+        activeProfile?.id ? surgery.profileId === activeProfile.id : true,
+      ),
+    [activeProfile?.id, fetchedSurgeries, propSurgeries],
+  );
 
   const { data: habits = [] } = useQuery<any[]>({
     queryKey: ["/api/habits"],
@@ -516,9 +526,20 @@ export default function HealthTrendsNew({
 
   // Mutations para cirurgias
   const addSurgeryMutation = useMutation({
-    mutationFn: (data: SurgeryForm) => apiRequest("POST", "/api/surgeries", data),
+    mutationFn: async (data: SurgeryForm) => {
+      if (!activeProfile?.id) {
+        throw new Error("Selecione um paciente antes de registrar uma cirurgia.");
+      }
+      return apiRequest("POST", "/api/surgeries", {
+        ...data,
+        profileId: activeProfile.id,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      if (activeProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
+      }
       surgeryForm.reset();
       setIsSurgeryDialogOpen(false);
       toast({
@@ -526,10 +547,10 @@ export default function HealthTrendsNew({
         description: "Cirurgia registrada com sucesso!",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: "Erro ao registrar cirurgia. Tente novamente.",
+        description: error?.message || "Erro ao registrar cirurgia. Tente novamente.",
         variant: "destructive",
       });
     },
@@ -540,6 +561,9 @@ export default function HealthTrendsNew({
       apiRequest("PUT", `/api/surgeries/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      if (activeProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
+      }
       setEditingSurgery(null);
       setIsEditSurgeryDialogOpen(false);
       toast({
@@ -560,6 +584,9 @@ export default function HealthTrendsNew({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/surgeries/${id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+      if (activeProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
+      }
       toast({
         title: "Sucesso",
         description: "Cirurgia excluída com sucesso!",

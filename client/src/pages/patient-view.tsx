@@ -160,15 +160,26 @@ export default function PatientView() {
     });
 
     const createSurgeryMutation = useMutation({
-        mutationFn: (data: SurgeryFormData) => apiRequest("POST", "/api/surgeries", data),
+        mutationFn: async (data: SurgeryFormData) => {
+            if (!activeProfile?.id) {
+                throw new Error("Selecione um paciente antes de registrar uma cirurgia.");
+            }
+            return apiRequest("POST", "/api/surgeries", {
+                ...data,
+                profileId: activeProfile.id,
+            });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
+            if (activeProfile?.id) {
+                queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
+            }
             toast({ title: "Sucesso", description: "Cirurgia registrada com sucesso." });
             setIsSurgeryDialogOpen(false);
             surgeryForm.reset();
         },
-        onError: () => {
-            toast({ title: "Erro", description: "Erro ao registrar cirurgia.", variant: "destructive" });
+        onError: (error: any) => {
+            toast({ title: "Erro", description: error?.message || "Erro ao registrar cirurgia.", variant: "destructive" });
         },
     });
 

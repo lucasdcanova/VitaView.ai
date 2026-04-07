@@ -606,6 +606,7 @@ export function AnamnesisCard() {
 
             try {
                 await apiRequest("POST", "/api/surgeries", {
+                    profileId,
                     procedureName,
                     surgeryDate,
                     hospitalName: surgery.hospitalName || null,

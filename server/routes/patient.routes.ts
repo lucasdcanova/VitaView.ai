@@ -176,7 +176,12 @@ export function registerPatientRoutes(app: Express) {
     // --- Surgeries ---
     app.get("/api/surgeries", ensureAuthenticated, async (req, res) => {
         try {
-            const surgeries = await storage.getSurgeriesByUserId((req.user as any).id);
+            const userId = (req.user as any).id;
+            const requestedProfileId = Number.parseInt(String(req.query.profileId ?? ""), 10);
+            const allSurgeries = await storage.getSurgeriesByUserId(userId);
+            const surgeries = Number.isFinite(requestedProfileId)
+                ? allSurgeries.filter((surgery: any) => surgery.profileId === requestedProfileId)
+                : allSurgeries;
             res.json(surgeries || []);
         } catch (error) {
             res.status(500).json({ message: "Erro ao buscar cirurgias" });
@@ -185,8 +190,14 @@ export function registerPatientRoutes(app: Express) {
 
     app.post("/api/surgeries", ensureAuthenticated, async (req, res) => {
         try {
+            const profileId = Number.parseInt(String(req.body.profileId ?? ""), 10);
+            if (!Number.isFinite(profileId)) {
+                return res.status(400).json({ message: "Paciente é obrigatório para registrar uma cirurgia" });
+            }
+
             const surgeryData = {
                 userId: (req.user as any).id,
+                profileId,
                 procedureName: req.body.procedureName,
                 hospitalName: req.body.hospitalName,
                 surgeonName: req.body.surgeonName,
@@ -214,7 +225,16 @@ export function registerPatientRoutes(app: Express) {
                 return res.status(403).json({ message: "Acesso negado" });
             }
 
-            const updatedSurgery = await storage.updateSurgery(surgeryId, req.body);
+            const updatePayload = { ...req.body };
+            if ("profileId" in updatePayload) {
+                const profileId = Number.parseInt(String(updatePayload.profileId ?? ""), 10);
+                if (!Number.isFinite(profileId)) {
+                    return res.status(400).json({ message: "Paciente inválido para esta cirurgia" });
+                }
+                updatePayload.profileId = profileId;
+            }
+
+            const updatedSurgery = await storage.updateSurgery(surgeryId, updatePayload);
             res.json(updatedSurgery);
         } catch (error) {
             res.status(500).json({ message: "Erro ao atualizar cirurgia" });

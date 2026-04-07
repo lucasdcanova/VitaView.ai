@@ -2574,12 +2574,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       // Filter diagnoses strictly for this patient profile.
       const diagnoses = allDiagnoses.filter(d => d.profileId === profileId);
 
+      // Filter surgeries strictly for this patient profile.
+      const filteredSurgeries = (surgeries || []).filter((s: any) => s.profileId === profileId);
+
       // Transform medications to camelCase
       const medications = medicationsResult.rows.map(serializeMedication);
 
       res.json({
         diagnoses: diagnoses || [],
-        surgeries: surgeries || [],
+        surgeries: filteredSurgeries,
         allergies: allergies || [],
         exams: exams || [],
         healthMetrics: healthMetrics || [],

@@ -388,6 +388,7 @@ export const insertAllergySchema = createInsertSchema(allergies).pick({
 export const surgeries = pgTable("surgeries", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  profileId: integer("profile_id").references(() => profiles.id), // Link to patient profile
   procedureName: text("procedure_name").notNull(),
   hospitalName: text("hospital_name"),
   surgeonName: text("surgeon_name"),
@@ -398,6 +399,7 @@ export const surgeries = pgTable("surgeries", {
 
 export const insertSurgerySchema = createInsertSchema(surgeries).pick({
   userId: true,
+  profileId: true,
   procedureName: true,
   hospitalName: true,
   surgeonName: true,
