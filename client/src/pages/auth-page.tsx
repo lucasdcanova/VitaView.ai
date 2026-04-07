@@ -309,7 +309,7 @@ export default function AuthPage() {
         <Button
           variant="outline"
           type="button"
-          className="absolute left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border-border/70 bg-background/85 p-0 shadow-sm backdrop-blur-sm hover:bg-background"
+          className="absolute left-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex h-10 w-10 items-center justify-center rounded-full border-border/70 bg-background/85 p-0 shadow-sm backdrop-blur-sm hover:bg-background"
           onClick={() => navigate("/")}
           aria-label="Voltar para a landing page"
         >
@@ -317,7 +317,7 @@ export default function AuthPage() {
         </Button>
       )}
 
-      <div className="absolute right-4 top-4 z-50">
+      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50">
         <Button
           variant="ghost"
           type="button"
@@ -343,10 +343,10 @@ export default function AuthPage() {
       {/* Main Content - Centered Form */}
       <div
         className={cn(
-          "relative z-10 flex min-h-[100svh] w-full flex-col items-center px-4 pb-8 sm:min-h-screen sm:justify-center sm:py-12",
+          "relative z-10 flex min-h-[100svh] w-full flex-col items-center justify-center px-4 sm:min-h-screen sm:py-12",
           hasCompactMobileHeader
-            ? "justify-start pt-[calc(env(safe-area-inset-top)+2rem)]"
-            : "justify-start pt-16",
+            ? "pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]"
+            : "pt-[max(env(safe-area-inset-top),4rem)] pb-8",
         )}
       >
         <div className="mb-0.5 flex w-full max-w-md flex-col items-center sm:mb-2">
