@@ -129,8 +129,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Allow long-running requests (e.g. audio transcription) up to 5 min
-  server.timeout = 5 * 60 * 1000;
+  // Allow long-running requests (e.g. audio transcription with multiple Whisper
+  // calls + GPT anamnesis) up to 12 min. Render proxy idle timeout é 100s, mas
+  // streaming HTTP via keep-alive mantém a conexão viva enquanto há tráfego.
+  server.timeout = 12 * 60 * 1000;
   server.keepAliveTimeout = 65 * 1000;
   server.headersTimeout = 66 * 1000;
 

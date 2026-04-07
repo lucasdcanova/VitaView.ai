@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { AudioWaveform } from "@/components/audio-waveform";
 import {
   formatRecordingTime,
   useConsultationRecording,
@@ -46,6 +47,7 @@ export function ConsultationRecorder({
   const {
     recordingState,
     recordingTime,
+    audioLevel,
     errorMessage,
     currentSession,
     startRecording,
@@ -155,12 +157,16 @@ export function ConsultationRecorder({
                       </p>
                       <div
                         className={cn(
-                          "inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[12px] font-semibold leading-none shadow-[0_1px_0_rgba(255,255,255,0.45)_inset]",
+                          "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[12px] font-semibold leading-none shadow-[0_1px_0_rgba(255,255,255,0.45)_inset]",
                           recordingState === "recording"
                             ? "border-red-200 bg-white/80 text-red-700 dark:border-red-400/30 dark:bg-red-950/35 dark:text-red-100"
                             : "border-amber-200 bg-white/80 text-amber-700 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-100"
                         )}
                       >
+                        <AudioWaveform
+                          level={audioLevel}
+                          active={recordingState === "recording"}
+                        />
                         {formatRecordingTime(recordingTime)}
                       </div>
                     </div>

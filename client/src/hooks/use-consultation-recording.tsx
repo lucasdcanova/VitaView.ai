@@ -21,12 +21,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isIOSAppShell } from "@/lib/app-shell";
 
-// iOS recording reliability: reduce Blob count and auto-restart to prevent WKWebView crashes
-const IOS_TIMESLICE_MS = 30_000; // 30s chunks on iOS (vs 1s default) — 30 blobs at 15min instead of 900
+// Reliability: chunked recording with periodic auto-restart to manter cada
+// segmento bem abaixo do limite de 25MB do Whisper, em qualquer plataforma.
+// iOS: WKWebView precisa de timeslice maior para reduzir Blob count.
+// Web/desktop: timeslice de 1s permite consolidação suave.
+const IOS_TIMESLICE_MS = 30_000;
 const DEFAULT_TIMESLICE_MS = 1_000;
 const CHUNK_CONSOLIDATION_INTERVAL_MS = 120_000; // Merge accumulated chunks every 2 min
-const IOS_SEGMENT_DURATION_MS = 10 * 60 * 1000; // Auto-restart recorder every 10 min on iOS
+// Segmentos de 5 min em ambas plataformas. Em mp4/AAC (~6MB/min) isso da ~30MB
+// no pior caso, mas com bitrate típico do MediaRecorder fica em ~8-15MB.
+// Reduzir mais que isso aumenta overhead de uploads sem benefício.
+const SEGMENT_DURATION_MS = 5 * 60 * 1000;
 const MAX_RECOVERY_ATTEMPTS = 3;
+// Limite teórico Whisper: 25MB. Avisamos antes disso para dar margem.
+const MAX_SEGMENT_SIZE_BYTES = 24 * 1024 * 1024;
 
 export type ConsultationRecordingState =
   | "idle"
@@ -170,6 +178,7 @@ const getAudioStream = async (constraints: MediaStreamConstraints): Promise<Medi
 interface ConsultationRecordingContextType {
   recordingState: ConsultationRecordingState;
   recordingTime: number;
+  audioLevel: number; // 0..1 — nível RMS do microfone para feedback visual
   errorMessage: string | null;
   currentSession: ConsultationRecordingSession | null;
   completedResult: ConsultationTranscriptionResult | null;
@@ -205,6 +214,7 @@ export function ConsultationRecordingProvider({
   const [recordingState, setRecordingState] =
     useState<ConsultationRecordingState>("idle");
   const [recordingTime, setRecordingTime] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [currentSession, setCurrentSession] =
@@ -222,12 +232,20 @@ export function ConsultationRecordingProvider({
     extension: "webm",
   });
 
-  // Reliability refs for iOS long-recording support
+  // Reliability refs for long-recording support
   const segmentsRef = useRef<Blob[]>([]);
   const consolidationTimerRef = useRef<number | null>(null);
   const autoRestartTimerRef = useRef<number | null>(null);
   const isAutoRestartingRef = useRef(false);
   const recoveryAttemptsRef = useRef(0);
+
+  // Web Audio API refs para visualização de nível de áudio em tempo real.
+  // Confirma que o microfone está realmente captando — útil para diagnóstico
+  // do bug "iOS sem áudio captado" e como feedback visual ao usuário.
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const audioLevelFrameRef = useRef<number | null>(null);
 
   const setSession = useCallback((session: ConsultationRecordingSession | null) => {
     sessionRef.current = session;
@@ -259,9 +277,80 @@ export function ConsultationRecordingProvider({
     }
   }, []);
 
+  const stopAudioLevelMonitor = useCallback(() => {
+    if (audioLevelFrameRef.current !== null) {
+      cancelAnimationFrame(audioLevelFrameRef.current);
+      audioLevelFrameRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.disconnect();
+      } catch (_) {
+        // ignore
+      }
+      sourceNodeRef.current = null;
+    }
+    if (analyserRef.current) {
+      try {
+        analyserRef.current.disconnect();
+      } catch (_) {
+        // ignore
+      }
+      analyserRef.current = null;
+    }
+    if (audioContextRef.current) {
+      const ctx = audioContextRef.current;
+      audioContextRef.current = null;
+      // close pode rejeitar se já estiver fechado
+      ctx.close().catch(() => undefined);
+    }
+    setAudioLevel(0);
+  }, []);
+
+  const startAudioLevelMonitor = useCallback((stream: MediaStream) => {
+    try {
+      const AudioContextCtor: typeof AudioContext | undefined =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextCtor) return;
+
+      const ctx = new AudioContextCtor();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.6;
+      source.connect(analyser);
+
+      audioContextRef.current = ctx;
+      sourceNodeRef.current = source;
+      analyserRef.current = analyser;
+
+      const buffer = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        const a = analyserRef.current;
+        if (!a) return;
+        a.getByteTimeDomainData(buffer);
+        // RMS — média quadrática centrada em 128 (silêncio = 128)
+        let sumSquares = 0;
+        for (let i = 0; i < buffer.length; i++) {
+          const normalized = (buffer[i] - 128) / 128;
+          sumSquares += normalized * normalized;
+        }
+        const rms = Math.sqrt(sumSquares / buffer.length);
+        // Boost para que falas normais (~0.05 RMS) já preencham bem a barra
+        const boosted = Math.min(1, rms * 4);
+        setAudioLevel(boosted);
+        audioLevelFrameRef.current = requestAnimationFrame(tick);
+      };
+      audioLevelFrameRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      console.warn("[Recording] AudioContext nao disponivel:", err);
+    }
+  }, []);
+
   const cleanupMedia = useCallback(() => {
     clearTimer();
     clearReliabilityTimers();
+    stopAudioLevelMonitor();
     stopStreamTracks();
 
     mediaRecorderRef.current = null;
@@ -269,7 +358,7 @@ export function ConsultationRecordingProvider({
     segmentsRef.current = [];
     isAutoRestartingRef.current = false;
     recoveryAttemptsRef.current = 0;
-  }, [clearTimer, clearReliabilityTimers, stopStreamTracks]);
+  }, [clearTimer, clearReliabilityTimers, stopAudioLevelMonitor, stopStreamTracks]);
 
   const resetSessionState = useCallback(() => {
     setRecordingState("idle");
@@ -313,6 +402,27 @@ export function ConsultationRecordingProvider({
         return;
       }
 
+      // Validar tamanho de cada segmento antes do upload. Whisper rejeita > 25MB.
+      // Se algum segmento ultrapassar isso, abortamos com mensagem clara em vez
+      // de fazer um upload que vai falhar silenciosamente no servidor.
+      const oversized = allSegments.find((seg) => seg.size > MAX_SEGMENT_SIZE_BYTES);
+      if (oversized) {
+        cleanupMedia();
+        setCompletedResult(null);
+        setErrorMessage(
+          `Um trecho da gravação ficou muito grande (${(oversized.size / (1024 * 1024)).toFixed(1)}MB). O Whisper aceita até 25MB por segmento. Tente gravar consultas em sessões um pouco mais curtas.`
+        );
+        setRecordingState("error");
+        return;
+      }
+
+      const totalUploadSize = allSegments.reduce((sum, s) => sum + s.size, 0);
+      console.log("[Recording] Enviando para transcrição", {
+        segments: allSegments.length,
+        totalBytes: totalUploadSize,
+        sizes: allSegments.map((s) => s.size),
+      });
+
       const formData = new FormData();
       for (let i = 0; i < allSegments.length; i++) {
         formData.append(
@@ -326,7 +436,9 @@ export function ConsultationRecordingProvider({
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+      // 11 min — abaixo do timeout do servidor (12 min) para receber resposta
+      // de erro em vez de cair em ECONNRESET. Suporta consultas longas (~2h).
+      const timeoutId = setTimeout(() => controller.abort(), 11 * 60 * 1000);
 
       let response: Response;
       try {
@@ -488,8 +600,14 @@ export function ConsultationRecordingProvider({
 
         const timeslice = isIOS ? IOS_TIMESLICE_MS : DEFAULT_TIMESLICE_MS;
 
-        // Auto-restart scheduler for iOS — restarts the recorder every 10 min
-        // to prevent WKWebView MediaRecorder memory exhaustion
+        // Inicia monitor de nivel de audio (para feedback visual e diagnostico).
+        // Isso roda em paralelo ao MediaRecorder usando o mesmo MediaStream.
+        startAudioLevelMonitor(stream);
+
+        // Auto-restart scheduler — restarts the recorder a cada SEGMENT_DURATION_MS
+        // em todas as plataformas para garantir que cada segmento fique abaixo do
+        // limite de 25MB do Whisper. Antes só rodava em iOS, deixando gravações
+        // longas no web/PWA acumuladas em UM blob gigante que estourava o limite.
         const scheduleAutoRestart = () => {
           if (autoRestartTimerRef.current !== null) {
             window.clearTimeout(autoRestartTimerRef.current);
@@ -513,7 +631,7 @@ export function ConsultationRecordingProvider({
               }
               mr.stop();
             }
-          }, IOS_SEGMENT_DURATION_MS);
+          }, SEGMENT_DURATION_MS);
         };
 
         // Creates a MediaRecorder on the given stream, wires up all handlers, and starts it.
@@ -561,6 +679,9 @@ export function ConsultationRecordingProvider({
                 try {
                   createAndStartRecorder(activeStream);
                   scheduleAutoRestart();
+                  console.log("[Recording] Auto-restart segmento OK", {
+                    totalSegments: segmentsRef.current.length,
+                  });
                   return;
                 } catch (restartErr) {
                   console.error(
@@ -611,7 +732,7 @@ export function ConsultationRecordingProvider({
               ) {
                 try {
                   createAndStartRecorder(activeStream);
-                  if (isIOS) scheduleAutoRestart();
+                  scheduleAutoRestart();
                   console.log(
                     `[Recording] Recovery successful (attempt ${recoveryAttemptsRef.current})`
                   );
@@ -658,9 +779,9 @@ export function ConsultationRecordingProvider({
           consolidateChunks();
         }, CHUNK_CONSOLIDATION_INTERVAL_MS);
 
-        if (isIOS) {
-          scheduleAutoRestart();
-        }
+        // Auto-restart roda em todas as plataformas para manter cada segmento
+        // bem abaixo do limite de 25MB do Whisper.
+        scheduleAutoRestart();
       } catch (error) {
         console.error("Erro ao iniciar gravacao:", error);
 
@@ -707,6 +828,7 @@ export function ConsultationRecordingProvider({
       consolidateChunks,
       saveCurrentSegment,
       clearReliabilityTimers,
+      startAudioLevelMonitor,
     ]
   );
 
@@ -816,6 +938,7 @@ export function ConsultationRecordingProvider({
       value={{
         recordingState,
         recordingTime,
+        audioLevel,
         errorMessage,
         currentSession,
         completedResult,

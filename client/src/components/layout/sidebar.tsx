@@ -27,6 +27,7 @@ import ActivePatientIndicator from "@/components/active-patient-indicator";
 import { NotificationBell } from "@/components/notification-bell";
 import ThemeToggleButton from "@/components/layout/theme-toggle-button";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { AudioWaveform } from "@/components/audio-waveform";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -64,7 +65,7 @@ export default function Sidebar(props: SidebarProps) {
   const queryClient = useQueryClient();
   const { user, logoutMutation } = useAuth();
   const { profiles, activeProfile, setActiveProfile } = useProfiles();
-  const { recordingState, recordingTime, currentSession } =
+  const { recordingState, recordingTime, audioLevel, currentSession } =
     useConsultationRecording();
   const { data: clinicContext } = useQuery<{
     clinic: { id: number; name: string } | null;
@@ -533,8 +534,14 @@ export default function Sidebar(props: SidebarProps) {
                       <p className="text-sm font-semibold">
                         {currentSession?.patientName || "Paciente selecionado"}
                       </p>
-                      <p className="text-xs text-pureWhite/80">
-                        Tempo: {formatRecordingTime(recordingTime)}
+                      <p className="flex items-center gap-2 text-xs text-pureWhite/80">
+                        <AudioWaveform
+                          level={audioLevel}
+                          active={recordingState === "recording"}
+                          bars={4}
+                          className="h-3 text-current"
+                        />
+                        {formatRecordingTime(recordingTime)}
                       </p>
                     </div>
                   </TooltipContent>
@@ -579,10 +586,16 @@ export default function Sidebar(props: SidebarProps) {
                 <div className="flex items-center gap-2 pl-1">
                   <div
                     className={cn(
-                      "rounded-lg border border-border/70 bg-background/75 px-2.5 py-1 font-mono text-xs font-semibold shadow-[0_1px_0_rgba(255,255,255,0.35)_inset] dark:bg-background/70",
+                      "flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/75 px-2.5 py-1 font-mono text-xs font-semibold shadow-[0_1px_0_rgba(255,255,255,0.35)_inset] dark:bg-background/70",
                       recordingStatusMeta.timerClass
                     )}
                   >
+                    <AudioWaveform
+                      level={audioLevel}
+                      active={recordingState === "recording"}
+                      bars={4}
+                      className="h-3"
+                    />
                     {formatRecordingTime(recordingTime)}
                   </div>
                   <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -2587,66 +2587,89 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
     throw new Error("OpenAI client not initialized. API key may be missing.");
   }
 
-  try {
-    // Determinar extensão do arquivo baseada no mime type
-    const extensionMap: Record<string, string> = {
-      'audio/webm': 'webm',
-      'audio/mp3': 'mp3',
-      'audio/mpeg': 'mp3',
-      'audio/wav': 'wav',
-      'audio/x-wav': 'wav',
-      'audio/wave': 'wav',
-      'audio/ogg': 'ogg',
-      'audio/m4a': 'm4a',
-      'audio/x-m4a': 'm4a',
-      'audio/aac': 'aac',
-      'audio/mp4a-latm': 'm4a',
-      'audio/mp4': 'mp4',
-      'video/mp4': 'mp4',
-    };
-
-    const extension = extensionMap[mimeType] || 'webm';
-    const filename = `consultation-${Date.now()}.${extension}`;
-
-    // Criar File object para a API garantindo compatibilidade de tipos
-    const audioUint8Array = new Uint8Array(audioBuffer);
-    const audioFile = new File([audioUint8Array], filename, { type: mimeType });
-
-    logger.info("[OpenAI Whisper] Iniciando transcrição", {
-      filename,
-      mimeType,
-      bufferSize: audioBuffer.length
-    });
-
-    const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
-      model: "whisper-1",
-      language: "pt", // Português
-      response_format: "text",
-      prompt: "Transcrição de consulta médica em português brasileiro. Termos médicos, medicamentos, diagnósticos, sintomas."
-    });
-
-    // Approximate token usage for audio duration (or just count 1 request)
-    // Whisper doesn't return token usage, so we might need a different strategy or just log the event.
-    // For now, let's log with 0 tokens to at least record the activity in ai_cost_logs
-    // or estimate based on text length (approx 1 token per 0.75 words, 1 word ~ 5 chars -> 1 token ~ 4 chars)
-    const estimatedTokens = Math.ceil(transcription.length / 4);
-    ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
-      prompt_tokens: 0,
-      completion_tokens: estimatedTokens
-    }, userId, clinicId);
-
-    logger.info("[OpenAI Whisper] Transcrição concluída", {
-      transcriptionLength: transcription.length
-    });
-
-    return transcription;
-  } catch (error) {
-    logger.error("[OpenAI Whisper] Erro na transcrição", {
-      message: error instanceof Error ? error.message : String(error)
-    });
-    throw new Error(`Falha na transcrição do áudio: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  // Validação preventiva: Whisper rejeita arquivos > 25MB com erro pouco descritivo.
+  const WHISPER_MAX_BYTES = 25 * 1024 * 1024;
+  if (audioBuffer.length > WHISPER_MAX_BYTES) {
+    throw new Error(
+      `Arquivo de áudio excede 25MB (limite Whisper). Tamanho: ${(audioBuffer.length / (1024 * 1024)).toFixed(1)}MB`
+    );
   }
+
+  // Determinar extensão do arquivo baseada no mime type
+  const extensionMap: Record<string, string> = {
+    'audio/webm': 'webm',
+    'audio/mp3': 'mp3',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/ogg': 'ogg',
+    'audio/m4a': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/aac': 'aac',
+    'audio/mp4a-latm': 'm4a',
+    'audio/mp4': 'mp4',
+    'video/mp4': 'mp4',
+  };
+
+  const extension = extensionMap[mimeType] || 'webm';
+  const filename = `consultation-${Date.now()}.${extension}`;
+
+  // Retry com backoff exponencial — Whisper pode falhar transitivamente por
+  // rede, rate-limit ou indisponibilidade momentânea.
+  const MAX_ATTEMPTS = 3;
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      // Criar File object novo a cada tentativa (Buffer pode ser consumido)
+      const audioUint8Array = new Uint8Array(audioBuffer);
+      const audioFile = new File([audioUint8Array], filename, { type: mimeType });
+
+      logger.info("[OpenAI Whisper] Iniciando transcrição", {
+        filename,
+        mimeType,
+        bufferSize: audioBuffer.length,
+        attempt,
+      });
+
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-1",
+        language: "pt",
+        response_format: "text",
+        prompt: "Transcrição de consulta médica em português brasileiro. Termos médicos, medicamentos, diagnósticos, sintomas."
+      });
+
+      const estimatedTokens = Math.ceil(transcription.length / 4);
+      ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
+        prompt_tokens: 0,
+        completion_tokens: estimatedTokens
+      }, userId, clinicId);
+
+      logger.info("[OpenAI Whisper] Transcrição concluída", {
+        transcriptionLength: transcription.length,
+        attempt,
+      });
+
+      return transcription;
+    } catch (error) {
+      lastError = error;
+      logger.warn("[OpenAI Whisper] Tentativa falhou", {
+        attempt,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      if (attempt < MAX_ATTEMPTS) {
+        // backoff: 1s, 2s, 4s
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+      }
+    }
+  }
+
+  logger.error("[OpenAI Whisper] Erro na transcrição após retries", {
+    message: lastError instanceof Error ? lastError.message : String(lastError)
+  });
+  throw new Error(`Falha na transcrição do áudio: ${lastError instanceof Error ? lastError.message : 'Erro desconhecido'}`);
 }
 
 /**
@@ -2759,7 +2782,9 @@ A anamnese deve seguir a estrutura SOAP ou similar, MAS OMITINDO SEÇÕES SEM DA
         { role: "user", content: prompt }
       ],
       temperature: 0.3,
-      max_tokens: 4000
+      // 8000 tokens para acomodar anamneses de consultas longas (>30 min) sem
+      // truncar a saída JSON. Antes era 4000 e gravações longas perdiam dados.
+      max_tokens: 8000
     });
 
     const content = extractResponseText(response);

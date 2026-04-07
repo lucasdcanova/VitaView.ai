@@ -3063,10 +3063,14 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
 
   // Configure multer for audio transcription uploads
+  // 25MB é o limite por arquivo da API Whisper. Para gravações longas, o
+  // frontend deve dividir em segmentos < 25MB. Aceitamos até 60 segmentos
+  // para suportar consultas de até ~5h (segmentos de ~5min cada).
   const audioTranscriptionUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 25 * 1024 * 1024, // 25MB max (Whisper API limit)
+      fileSize: 25 * 1024 * 1024, // 25MB max por arquivo (Whisper API limit)
+      files: 60,
     },
     fileFilter: (req, file, cb) => {
       const allowedMimes = [
@@ -3096,14 +3100,15 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post(
     "/api/consultation/transcribe",
     (req, res, next) => {
-      // Extend timeout to 5 min for long recordings (Whisper + GPT processing)
-      req.setTimeout(5 * 60 * 1000);
-      res.setTimeout(5 * 60 * 1000);
+      // Long-recording requests podem demorar: upload + N transcrições Whisper + anamnese GPT
+      // Aumentamos para 12 min para acomodar consultas de até ~2h sem timeout precoce.
+      req.setTimeout(12 * 60 * 1000);
+      res.setTimeout(12 * 60 * 1000);
       next();
     },
     ensureAuthenticated,
     checkFairUse('transcriptionMinutes'),
-    audioTranscriptionUpload.array('audio', 10),
+    audioTranscriptionUpload.array('audio', 60),
     async (req, res) => {
       try {
         const files = req.files as Express.Multer.File[];
@@ -3116,24 +3121,53 @@ export async function registerRoutes(app: Express): Promise<void> {
           userId: req.user?.id,
           fileCount: files.length,
           totalSize,
-          mimeType: files[0].mimetype
+          mimeType: files[0].mimetype,
+          segmentSizes: files.map(f => f.size),
         });
 
-        // Transcrever cada segmento e concatenar
-        const transcriptions: string[] = [];
-        for (const file of files) {
-          const segmentTranscription = await transcribeConsultationAudio(
-            file.buffer,
-            file.mimetype,
-            req.user!.id,
-            req.tenantId
-          );
-          if (segmentTranscription?.trim()) {
-            transcriptions.push(segmentTranscription);
-          }
+        // Validar tamanho de cada segmento antes de chamar Whisper (limite 25MB).
+        // Whisper rejeita uploads maiores que 25MB com erro pouco descritivo.
+        const oversizedSegments = files.filter(f => f.size > 25 * 1024 * 1024);
+        if (oversizedSegments.length > 0) {
+          logger.warn("[Transcription] Segmentos acima de 25MB detectados", {
+            userId: req.user?.id,
+            sizes: oversizedSegments.map(f => f.size),
+          });
+          return res.status(413).json({
+            message: "Um ou mais trechos da gravação excedem 25MB (limite do Whisper). Tente gravar em sessões mais curtas.",
+            code: "AUDIO_SEGMENT_TOO_LARGE"
+          });
         }
 
-        const transcription = transcriptions.join(" ");
+        // Transcrever segmentos em PARALELO (limitado a 4 simultâneos para não
+        // sobrecarregar a API Whisper) — antes era sequencial e estourava o timeout
+        // em gravações longas com múltiplos segmentos.
+        const CONCURRENCY = 4;
+        const transcriptions: string[] = new Array(files.length).fill("");
+        for (let i = 0; i < files.length; i += CONCURRENCY) {
+          const batch = files.slice(i, i + CONCURRENCY);
+          const results = await Promise.all(
+            batch.map((file) =>
+              transcribeConsultationAudio(
+                file.buffer,
+                file.mimetype,
+                req.user!.id,
+                req.tenantId
+              ).catch((err) => {
+                logger.error("[Transcription] Falha em segmento", {
+                  index: i,
+                  error: err instanceof Error ? err.message : String(err),
+                });
+                return ""; // segmento falho não derruba toda a gravação
+              })
+            )
+          );
+          results.forEach((txt, idx) => {
+            if (txt?.trim()) transcriptions[i + idx] = txt;
+          });
+        }
+
+        const transcription = transcriptions.filter(Boolean).join(" ");
 
         if (!transcription.trim()) {
           return res.status(400).json({ message: "Não foi possível transcrever o áudio. Verifique a qualidade da gravação." });
@@ -3170,8 +3204,15 @@ export async function registerRoutes(app: Express): Promise<void> {
 
         // Track usage
         const user = req.user as any;
-        // Estimate minutes from file size (very rough approx: 1MB ~= 1 min mp3/m4a)
-        const estimatedMinutes = Math.ceil(totalSize / (1024 * 1024));
+        // Estimativa por tipo de codec — webm/opus ~1.5MB/min, mp4/AAC ~6MB/min,
+        // mp3 ~1MB/min. Usamos um divisor médio que reflete melhor o real.
+        const primaryMime = files[0].mimetype || "";
+        const mbPerMinute = primaryMime.includes("mp4") || primaryMime.includes("m4a") || primaryMime.includes("aac")
+          ? 5
+          : primaryMime.includes("mp3") || primaryMime.includes("mpeg")
+          ? 1
+          : 1.5; // webm/opus default
+        const estimatedMinutes = Math.max(1, Math.ceil(totalSize / (mbPerMinute * 1024 * 1024)));
         await trackUsage(user.id, 'transcriptionMinutes', estimatedMinutes);
         await trackUsage(user.id, 'aiRequests', 1);
 
