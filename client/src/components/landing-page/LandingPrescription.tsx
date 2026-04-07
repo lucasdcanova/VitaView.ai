@@ -5,12 +5,12 @@ import { Link } from "wouter";
 
 export function LandingPrescription() {
     return (
-        <section id="prescricao-digital" className="py-12 md:py-20 bg-[#FAFAFA] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="prescricao-digital" className="py-10 md:py-20 bg-[#FAFAFA] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
                     {/* Text Content */}
-                    <div className="lg:w-1/2 order-2 lg:order-1">
+                    <div className="lg:w-1/2 order-2 lg:order-1 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -31,7 +31,18 @@ export function LandingPrescription() {
                                 O VitaView cruza medicamentos, histórico e alergias antes de gerar a prescrição, destacando interações relevantes no momento da revisão.
                             </p>
 
-                            <div className="space-y-4 mb-8">
+                            <div className="grid grid-cols-1 gap-3 mb-8 md:hidden">
+                                <div className="rounded-2xl border border-[#E0E0E0] bg-white p-4 shadow-sm">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">Interações relevantes</p>
+                                    <p className="mt-2 text-sm text-[#616161] leading-relaxed">Cruza histórico, alergias e medicações antes de emitir a receita.</p>
+                                </div>
+                                <div className="rounded-2xl border border-[#E0E0E0] bg-white p-4 shadow-sm">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">Renovação em fluxo</p>
+                                    <p className="mt-2 text-sm text-[#616161] leading-relaxed">Repete tratamentos contínuos com menos cliques e mais clareza na revisão.</p>
+                                </div>
+                            </div>
+
+                            <div className="hidden md:block space-y-4 mb-8">
                                 {[
                                     {
                                         icon: <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />,
@@ -67,7 +78,7 @@ export function LandingPrescription() {
                             </div>
 
                             <Link href="/auth">
-                                <Button className="bg-[#212121] hover:bg-[#424242] text-white font-bold py-6 px-8 rounded-lg text-lg shadow-lg transition-all">
+                                <Button className="bg-[#212121] hover:bg-[#424242] text-white font-bold w-full sm:w-auto py-6 px-8 rounded-lg text-lg shadow-lg transition-all">
                                     Experimentar Prescrição Digital
                                 </Button>
                             </Link>

@@ -14,7 +14,7 @@ export function LandingPricing() {
     ];
 
     return (
-        <section id="precos" className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden bg-[#F4F4F4] py-12 md:py-20">
+        <section id="precos" className="relative flex md:min-h-[100dvh] flex-col justify-center overflow-hidden bg-[#F4F4F4] py-10 md:py-20">
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-1/2 right-0 w-96 h-96 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -31,7 +31,7 @@ export function LandingPricing() {
                     >
                         <h2 className="mb-3 text-3xl font-heading font-bold leading-[1.05] tracking-tight text-[#212121] sm:text-4xl md:text-[2.8rem] lg:text-[3.2rem]">
                             Comece grátis, e evolua
-                            <br />
+                            <br className="hidden sm:block" />
                             <span className="text-[#9E9E9E] font-medium">no seu ritmo.</span>
                         </h2>
                         <p className="mx-auto max-w-2xl font-body text-[13px] text-[#757575] md:text-[14px]">
@@ -44,7 +44,7 @@ export function LandingPricing() {
                 <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-3 md:grid-cols-3 md:gap-4">
                     {/* Plano Gratuito */}
                     <motion.div
-                        className="rounded-2xl border border-[#E0E0E0] bg-white/50 p-4 opacity-75 backdrop-blur-sm md:scale-95 md:p-5"
+                        className="order-2 w-full max-w-md mx-auto rounded-2xl border border-[#E0E0E0] bg-white/50 p-4 opacity-75 backdrop-blur-sm md:order-1 md:max-w-none md:scale-95 md:p-5"
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -78,7 +78,7 @@ export function LandingPricing() {
 
                     {/* Plano Vita - Destaque */}
                     <motion.div
-                        className="relative z-20 rounded-2xl border-2 border-[#212121] bg-white p-4 shadow-xl md:scale-[1.02] md:p-5"
+                        className="relative order-1 z-20 w-full max-w-md mx-auto rounded-2xl border-2 border-[#212121] bg-white p-4 shadow-xl md:order-2 md:max-w-none md:scale-[1.02] md:p-5"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -141,7 +141,7 @@ export function LandingPricing() {
 
                     {/* Plano Vita Team */}
                     <motion.div
-                        className="relative z-10 rounded-2xl border border-[#E0E0E0] bg-white p-4 md:p-5"
+                        className="relative order-3 z-10 w-full max-w-md mx-auto rounded-2xl border border-[#E0E0E0] bg-white p-4 md:max-w-none md:p-5"
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}

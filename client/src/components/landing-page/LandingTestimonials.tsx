@@ -52,7 +52,7 @@ export function LandingTestimonials() {
   return (
     <section
       id="depoimentos"
-      className="relative overflow-hidden py-12 scroll-mt-16 md:py-20 min-h-[100dvh] flex flex-col justify-center"
+      className="relative overflow-hidden py-10 scroll-mt-16 md:py-20 md:min-h-[100dvh] flex flex-col justify-center"
     >
       <div className="absolute inset-0 bg-[#111111]" />
       <div className="pointer-events-none absolute inset-0 hidden md:block">

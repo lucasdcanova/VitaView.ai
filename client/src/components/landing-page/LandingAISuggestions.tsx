@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function LandingAISuggestions() {
     return (
-        <section id="dose-inteligente" className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white min-h-[100dvh] flex flex-col justify-center">
+        <section id="dose-inteligente" className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white md:min-h-[100dvh] flex flex-col justify-center">
             {/* Background Effects - Subtle Monochrome */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
@@ -13,10 +13,10 @@ export function LandingAISuggestions() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+                <div className="flex flex-col items-center gap-7 lg:flex-row lg:gap-24">
 
                     {/* Visual Mockup - Prescription Input with AI Suggestion */}
-                    <div className="lg:w-1/2 flex flex-col gap-8 relative">
+                    <div className="lg:w-1/2 w-full max-w-md lg:max-w-none flex flex-col gap-4 md:gap-8 relative">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -27,8 +27,8 @@ export function LandingAISuggestions() {
                             {/* Glow behind the mockup */}
                             <div className="absolute -inset-1 bg-white/10 rounded-xl blur-xl opacity-30"></div>
 
-                            <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
-                                <div className="space-y-6">
+                            <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-5 sm:p-8 relative overflow-hidden">
+                                <div className="space-y-5">
                                     {/* Mock Label */}
                                     <div className="flex justify-between items-center">
                                         <label className="text-sm font-medium text-white/80">Medicamento / Substância</label>
@@ -37,7 +37,7 @@ export function LandingAISuggestions() {
 
                                     {/* Mock Input Field */}
                                     <div className="relative">
-                                        <div className="flex items-center bg-[#1A1A1A] border border-white/20 rounded-lg p-4 shadow-inner">
+                                        <div className="flex items-center bg-[#1A1A1A] border border-white/20 rounded-lg p-3.5 sm:p-4 shadow-inner">
                                             <div className="w-px h-6 bg-white/20 mr-4 animate-pulse"></div>
                                             <span className="text-lg text-white font-medium">Dipi</span>
                                         </div>
@@ -78,7 +78,7 @@ export function LandingAISuggestions() {
                                     </div>
                                     
                                     {/* Spacing for dropdown */}
-                                    <div className="h-20 lg:h-24"></div>
+                                    <div className="h-14 lg:h-24"></div>
                                 </div>
                             </div>
                         </motion.div>
@@ -89,7 +89,7 @@ export function LandingAISuggestions() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: 0.3 }}
-                            className="relative lg:ml-12 z-10"
+                            className="relative lg:ml-12 z-10 hidden md:block"
                         >
                             <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-5 relative overflow-hidden">
                                 <div className="flex items-center gap-3 mb-4">
@@ -120,7 +120,7 @@ export function LandingAISuggestions() {
                     </div>
 
                     {/* Text Content */}
-                    <div className="lg:w-1/2">
+                    <div className="lg:w-1/2 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -132,17 +132,28 @@ export function LandingAISuggestions() {
                                 <span>Preenchimento assistido na prescrição</span>
                                 <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
                             </div>
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-tight mb-6">
+                            <h2 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-tight mb-5 md:mb-6">
                                 Sugestão de dose <br />
                                 <span className="text-white/50">
                                     pronta para revisar.
                                 </span>
                             </h2>
-                            <p className="text-lg text-white/70 mb-8 leading-relaxed">
+                            <p className="text-sm md:text-lg text-white/70 mb-7 md:mb-8 leading-relaxed">
                                 Esqueça a busca manual por posologias. O VitaView considera o contexto do paciente e antecipa a dose mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.
                             </p>
 
-                            <div className="grid grid-cols-1 gap-6 mb-8">
+                            <div className="grid grid-cols-1 gap-3 mb-8 md:hidden">
+                                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Contexto do paciente</p>
+                                    <p className="mt-2 text-sm text-white/65 leading-relaxed">Peso, histórico e alertas entram na dose sugerida antes do preenchimento final.</p>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Preenchimento mais direto</p>
+                                    <p className="mt-2 text-sm text-white/65 leading-relaxed">A melhor hipótese de posologia já aparece no campo para revisão rápida.</p>
+                                </div>
+                            </div>
+
+                            <div className="hidden md:grid grid-cols-1 gap-6 mb-8">
                                 {[
                                     {
                                         icon: <Brain className="w-5 h-5" />,
@@ -173,7 +184,7 @@ export function LandingAISuggestions() {
                             </div>
 
                             <Link href="/auth">
-                                <Button className="bg-white text-[#0A0A0A] hover:bg-gray-200 font-bold py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-white/10 transition-all border border-transparent">
+                                <Button className="bg-white text-[#0A0A0A] hover:bg-gray-200 font-bold w-full sm:w-auto py-6 px-8 rounded-lg text-lg shadow-lg hover:shadow-white/10 transition-all border border-transparent">
                                     Ver na Prática
                                 </Button>
                             </Link>

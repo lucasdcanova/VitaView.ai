@@ -23,10 +23,10 @@ export function LandingAnamnesis() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-20">
+                <div className="flex flex-col items-center gap-6 lg:flex-row lg:gap-20">
 
                     {/* Lado Esquerdo: Texto */}
-                    <div className="lg:w-1/2">
+                    <div className="order-2 lg:order-1 lg:w-1/2 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -50,7 +50,18 @@ export function LandingAnamnesis() {
                                 Foque no paciente, não na tela. Grave a consulta e o VitaView transcreve, resume e organiza tudo automaticamente no padrão médico.
                             </p>
 
-                            <div className="space-y-4 mb-8">
+                            <div className="grid grid-cols-1 gap-3 mb-8 md:hidden">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">Captação segura</p>
+                                    <p className="mt-2 text-sm text-white/70 leading-relaxed">Áudio protegido e processado em tempo real no fluxo da consulta.</p>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">Prontuário pronto para revisar</p>
+                                    <p className="mt-2 text-sm text-white/70 leading-relaxed">A conversa vira registro estruturado, com menos retrabalho depois do atendimento.</p>
+                                </div>
+                            </div>
+
+                            <div className="hidden md:block space-y-4 mb-8">
                                 <div className="flex items-start">
                                     <div className="mt-1 mr-4 bg-white/10 p-2 rounded-lg border border-white/10">
                                         <Mic className="w-5 h-5 text-white" />
@@ -76,7 +87,7 @@ export function LandingAnamnesis() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Button className="bg-white hover:bg-white/90 text-[#212121] px-8 py-6 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">
+                                <Button className="bg-white hover:bg-white/90 text-[#212121] w-full sm:w-auto px-8 py-6 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all">
                                     Ver na Prática <Play className="ml-2 w-4 h-4" />
                                 </Button>
                             </a>
@@ -84,7 +95,7 @@ export function LandingAnamnesis() {
                     </div>
 
                     {/* Lado Direito: Animação */}
-                    <div className="lg:w-1/2 w-full">
+                    <div className="order-1 lg:order-2 lg:w-1/2 w-full">
                         <motion.div
                             className="relative bg-[#FAFAFA] rounded-2xl border border-[#E0E0E0] shadow-2xl overflow-hidden aspect-[4/3] md:aspect-[16/10]"
                             initial={{ opacity: 0, scale: 0.95 }}

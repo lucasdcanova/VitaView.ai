@@ -107,6 +107,18 @@ const EXTRACTION_BATCHES = [
     ],
 ];
 
+const MOBILE_LAB_STEPS = [
+    { label: "Entrada", value: "PDFs, imagens e laudos enviados em poucos toques" },
+    { label: "Leitura", value: "Resultados e marcadores organizados sem trabalho manual" },
+    { label: "Prontuário", value: "Comparativo e histórico já entram na mesma linha de cuidado" },
+];
+
+const MOBILE_LAB_SUMMARY = [
+    { title: "Hemoglobina", description: "Comparativo rápido entre exames anteriores e o resultado atual.", tone: "text-emerald-300" },
+    { title: "Glicemia", description: "Sinalização de atenção quando a evolução foge do padrão esperado.", tone: "text-amber-300" },
+    { title: "Evolução", description: "Histórico consolidado para revisar o caso sem abrir várias telas.", tone: "text-white/80" },
+];
+
 function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: boolean; prefersReducedMotion: boolean }) {
     const [step, setStep] = useState(0);
     const [cycle, setCycle] = useState(0);
@@ -492,7 +504,7 @@ export function LandingLabView() {
     const prefersReducedMotion = useReducedMotion() ?? false;
 
     return (
-        <section id="como-funciona" className="py-6 md:py-8 min-h-[100dvh] flex flex-col justify-center bg-[#0A0A0A] relative overflow-hidden">
+        <section id="como-funciona" className="py-6 md:py-8 md:min-h-[100dvh] flex flex-col justify-center bg-[#0A0A0A] relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute left-0 top-20 w-72 h-72 bg-white rounded-full opacity-5 blur-3xl"></div>
@@ -542,7 +554,90 @@ export function LandingLabView() {
                             : { duration: 0.62, delay: 0.08, ease: [0.22, 1, 0.36, 1] }
                     }
                 >
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+                    <div className="md:hidden space-y-4">
+                        <motion.div
+                            className="bg-black/40 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/10"
+                            initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+                            animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+                            transition={
+                                prefersReducedMotion
+                                    ? { duration: 0 }
+                                    : { duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }
+                            }
+                        >
+                            <UploadAnimationPanel
+                                isActive={isAnalyzerInView}
+                                prefersReducedMotion={prefersReducedMotion}
+                            />
+                        </motion.div>
+
+                        <motion.div
+                            className="grid gap-3"
+                            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+                            animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                            transition={
+                                prefersReducedMotion
+                                    ? { duration: 0 }
+                                    : { duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }
+                            }
+                        >
+                            {MOBILE_LAB_STEPS.map((item) => (
+                                <div
+                                    key={item.label}
+                                    className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-3.5 text-left"
+                                >
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">
+                                        {item.label}
+                                    </p>
+                                    <p className="mt-1.5 text-[13px] leading-5 text-white/82">
+                                        {item.value}
+                                    </p>
+                                </div>
+                            ))}
+                        </motion.div>
+
+                        <motion.div
+                            className="rounded-[24px] border border-white/10 bg-white/[0.05] p-4"
+                            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+                            animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                            transition={
+                                prefersReducedMotion
+                                    ? { duration: 0 }
+                                    : { duration: 0.5, delay: 0.24, ease: [0.22, 1, 0.36, 1] }
+                            }
+                        >
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center">
+                                    <LineChart className="w-4 h-4 text-white/78" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                                        O que aparece na revisão
+                                    </p>
+                                    <p className="text-sm font-semibold text-white">
+                                        Tudo pronto para retomar o caso
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                {MOBILE_LAB_SUMMARY.map((item) => (
+                                    <div
+                                        key={item.title}
+                                        className="rounded-[18px] border border-white/8 bg-black/30 px-4 py-3"
+                                    >
+                                        <p className={`text-sm font-semibold ${item.tone}`}>
+                                            {item.title}
+                                        </p>
+                                        <p className="mt-1 text-[12px] leading-5 text-white/65">
+                                            {item.description}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
                         {/* LEFT — Upload & AI Processing Panel */}
                         <motion.div
                             className="bg-black/40 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/10"
@@ -751,7 +846,7 @@ export function LandingLabView() {
                 >
                     <Link href="/auth?tab=register">
                         <button
-                            className="bg-white hover:bg-[#E0E0E0] text-[#111111] font-bold py-3 px-8 rounded-lg shadow-lg text-base transition-colors"
+                            className="bg-white hover:bg-[#E0E0E0] text-[#111111] font-bold py-3 px-8 rounded-lg shadow-lg text-base transition-colors w-full sm:w-auto"
                         >
                             Experimentar na prática
                             <ArrowRight className="ml-2 h-5 w-5 inline text-[#111111]" />

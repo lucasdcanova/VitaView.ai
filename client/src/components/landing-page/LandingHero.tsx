@@ -204,7 +204,7 @@ export function LandingHero() {
         <>
             <motion.section
                 style={{ opacity: heroOpacity, y: heroTranslateY }}
-                className="min-h-[100dvh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y"
+                className="min-h-[100svh] md:h-screen w-full relative bg-white flex flex-col overflow-hidden touch-pan-y"
             >
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <motion.video
@@ -354,7 +354,7 @@ export function LandingHero() {
             </motion.section>
 
             {/* Scroll indicator */}
-            <div className="fixed inset-x-0 bottom-4 md:bottom-6 z-30 flex justify-center pointer-events-none">
+            <div className="fixed inset-x-0 bottom-4 md:bottom-6 z-30 hidden md:flex justify-center pointer-events-none">
                 <motion.button
                     type="button"
                     onClick={scrollToFirstSection}

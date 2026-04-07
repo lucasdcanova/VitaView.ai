@@ -289,7 +289,7 @@ export function LandingMigration() {
   return (
     <section
       id="migracao"
-      className="relative overflow-hidden bg-[#F5F5F5] py-8 md:py-12 min-h-[100dvh] flex flex-col justify-center text-[#212121]"
+      className="relative overflow-hidden bg-[#F5F5F5] py-8 md:py-12 md:min-h-[100dvh] flex flex-col justify-center text-[#212121]"
     >
       {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0">
@@ -299,10 +299,11 @@ export function LandingMigration() {
       </div>
 
       <div className="container relative z-10 mx-auto px-5 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.96fr_1.04fr] lg:gap-16">
+        <div className="grid items-center gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:gap-16">
 
           {/* ── LEFT: Text column ── */}
           <motion.div
+            className="order-2 lg:order-1 w-full max-w-md lg:max-w-none"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -331,7 +332,19 @@ export function LandingMigration() {
               {"não com retrabalho."}
             </p>
 
-            <div className="mt-5 sm:mt-6 space-y-2.5 sm:space-y-3">
+            <div className="mt-5 grid grid-cols-1 gap-3 md:hidden">
+              {STEPS.map((step) => (
+                <div
+                  key={step.title}
+                  className="rounded-2xl border border-[#DDD7CE] bg-white/82 p-4 shadow-[0_12px_30px_-24px_rgba(33,33,33,0.4)]"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8A8A8A]">{step.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[#616161]">{step.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block mt-5 sm:mt-6 space-y-2.5 sm:space-y-3">
               {STEPS.map((step, index) => (
                 <motion.div
                   key={step.title}
@@ -358,7 +371,7 @@ export function LandingMigration() {
 
             <div className="mt-6 flex flex-col items-start gap-3">
               <Link href="/auth">
-                <Button className="group h-auto rounded-xl bg-[#212121] px-5 py-3 sm:px-6 sm:py-3.5 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl">
+                <Button className="group h-auto w-full sm:w-auto rounded-xl bg-[#212121] px-5 py-3 sm:px-6 sm:py-3.5 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl">
                   {"Quero migrar com a equipe"}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
@@ -371,6 +384,7 @@ export function LandingMigration() {
 
           {/* ── RIGHT: Animation card ── */}
           <motion.div
+            className="order-1 lg:order-2"
             ref={cardRef}
             initial={reduced ? false : { opacity: 0, scale: 0.98, y: 18 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}

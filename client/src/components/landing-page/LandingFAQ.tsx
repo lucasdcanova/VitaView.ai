@@ -37,7 +37,7 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-12 md:py-20 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="faq" className="py-8 md:py-10 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden">
             {/* Elementos decorativos */}
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
@@ -50,19 +50,19 @@ export function LandingFAQ() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
-                    className="text-center mb-10 md:mb-12"
+                    className="text-center mb-6 md:mb-7"
                 >
-                    <h2 className="text-3xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white mb-4 leading-[1.08] tracking-tight">
+                    <h2 className="text-2xl md:text-4xl lg:text-[2.8rem] font-heading font-bold text-white mb-3 leading-[1.08] tracking-tight">
                         Perguntas <span className="text-[#9E9E9E]">Frequentes.</span>
                     </h2>
-                    <p className="text-base md:text-[17px] text-white/60 max-w-2xl mx-auto px-2">
+                    <p className="text-sm md:text-[15px] text-white/60 max-w-2xl mx-auto px-2">
                         Tire suas dúvidas sobre as ferramentas do VitaView e como elas se encaixam na sua rotina clínica.
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 items-start">
                     {/* Coluna Esquerda: FAQ Accordion */}
-                    <div className="lg:col-span-7 space-y-3">
+                    <div className="lg:col-span-7 space-y-2.5">
                         {faqs.map((faq, index) => (
                             <motion.div
                                 key={index}
@@ -72,19 +72,19 @@ export function LandingFAQ() {
                                 transition={{ duration: 0.3, delay: index * 0.1 }}
                             >
                                 <motion.div
-                                    className={`p-4 rounded-xl border ${activeFaq === index ? 'bg-white/10 border-white/30 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'} cursor-pointer transition-all duration-300 backdrop-blur-sm`}
+                                    className={`p-3.5 md:p-4 rounded-xl border ${activeFaq === index ? 'bg-white/10 border-white/30 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'} cursor-pointer transition-all duration-300 backdrop-blur-sm`}
                                     onClick={() => toggleFaq(index)}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <h3 className={`font-semibold text-[15px] md:text-base ${activeFaq === index ? 'text-[#E0E0E0]' : 'text-white'}`}>
+                                        <h3 className={`font-semibold text-[14px] md:text-[15px] ${activeFaq === index ? 'text-[#E0E0E0]' : 'text-white'}`}>
                                             {faq.question}
                                         </h3>
                                         <motion.div
                                             animate={{ rotate: activeFaq === index ? 180 : 0 }}
                                             transition={{ duration: 0.3 }}
-                                            className={`flex items-center justify-center w-8 h-8 rounded-full ${activeFaq === index ? 'bg-[#E0E0E0] text-[#212121]' : 'bg-white/10 text-white'}`}
+                                            className={`flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full ${activeFaq === index ? 'bg-[#E0E0E0] text-[#212121]' : 'bg-white/10 text-white'}`}
                                         >
-                                            <ChevronDown className="w-5 h-5" />
+                                            <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />
                                         </motion.div>
                                     </div>
 
@@ -92,12 +92,12 @@ export function LandingFAQ() {
                                         {activeFaq === index && (
                                             <motion.div
                                                 initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                animate={{ height: "auto", opacity: 1, marginTop: 16 }}
+                                                animate={{ height: "auto", opacity: 1, marginTop: 12 }}
                                                 exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                                 transition={{ duration: 0.3 }}
                                                 className="overflow-hidden"
                                             >
-                                                <p className="text-[#9E9E9E] leading-relaxed">{faq.answer}</p>
+                                                <p className="text-[14px] text-[#9E9E9E] leading-relaxed">{faq.answer}</p>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -113,62 +113,44 @@ export function LandingFAQ() {
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 sticky top-24"
+                            className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 md:p-5 border border-white/20 sticky top-16"
                         >
-                            <h3 className="text-xl font-bold text-white mb-4">Estamos aqui para ajudar</h3>
-                            <p className="text-[#9E9E9E] mb-6 text-sm">
+                            <h3 className="text-base md:text-xl font-bold text-white mb-2.5 md:mb-3">Estamos aqui para ajudar</h3>
+                            <p className="text-[#9E9E9E] mb-3.5 md:mb-4 text-[13px] md:text-sm">
                                 Não encontrou o que procurava? Nossa equipe de suporte está pronta para atender você.
                             </p>
 
-                            <div className="space-y-5">
+                            <div className="space-y-3">
                                 <a
                                     href="mailto:contato@vitaview.ai"
-                                    className="flex items-center p-3.5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+                                    className="flex items-center p-2.5 md:p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-[#E0E0E0]/20 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                    <div className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-[#E0E0E0]/20 flex items-center justify-center mr-3 md:mr-4 group-hover:scale-110 transition-transform">
                                         <svg className="w-6 h-6 text-[#E0E0E0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-[#9E9E9E]">Email de Suporte</div>
-                                        <div className="text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
+                                        <div className="text-[13px] text-[#9E9E9E]">Email de Suporte</div>
+                                        <div className="text-[15px] md:text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
                                     </div>
                                 </a>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
                                         <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
                                             <Clock className="w-5 h-5 text-[#9E9E9E]" />
                                         </div>
                                         <div className="text-sm font-medium text-white">Canal direto</div>
                                         <div className="text-xs text-[#9E9E9E] mt-1">Contato por e-mail</div>
                                     </div>
-                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
                                         <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
                                             <ShieldCheck className="w-5 h-5 text-[#9E9E9E]" />
                                         </div>
                                         <div className="text-sm font-medium text-white">Canal oficial</div>
                                         <div className="text-xs text-[#9E9E9E] mt-1">Atendimento da equipe VitaView</div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 pt-8 border-t border-white/10">
-                                <p className="text-sm text-[#9E9E9E] text-center mb-4">Siga-nos nas redes sociais</p>
-                                <div className="flex justify-center space-x-4">
-                                    {['Instagram'].map((social) => (
-                                        <a
-                                            key={social}
-                                            href="https://instagram.com/vitaview.ai"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#E0E0E0] hover:text-[#212121] transition-all duration-300"
-                                        >
-                                            <span className="sr-only">{social}</span>
-                                            {social === 'Instagram' && <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>}
-                                        </a>
-                                    ))}
                                 </div>
                             </div>
                         </motion.div>

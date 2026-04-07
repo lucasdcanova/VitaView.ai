@@ -30,7 +30,7 @@ export function LandingExamProtocols() {
     return (
         <section
             id="protocolos-exames"
-            className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white min-h-[100dvh] flex flex-col justify-center"
+            className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white md:min-h-[100dvh] flex flex-col justify-center"
         >
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-16 left-[8%] w-72 h-72 bg-white/5 rounded-full blur-[100px] opacity-20" />
@@ -38,9 +38,9 @@ export function LandingExamProtocols() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+                <div className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-24">
                     <motion.div
-                        className="lg:w-1/2"
+                        className="lg:w-1/2 w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -53,17 +53,26 @@ export function LandingExamProtocols() {
                             <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
                         </div>
 
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-[1.1] mb-5 tracking-tight">
+                        <h2 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-[1.1] mb-5 tracking-tight">
                             Exames laboratoriais <br />
                             <span className="text-white/45">sem retrabalho.</span>
                         </h2>
 
-                        <p className="text-base md:text-lg text-white/65 leading-relaxed mb-8 max-w-xl">
+                        <p className="text-sm md:text-lg text-white/65 leading-relaxed mb-8 max-w-xl">
                             Crie protocolos personalizados para os cenários que mais se repetem na sua rotina
                             e transforme a solicitação de exames em um fluxo rápido, organizado e seguro.
                         </p>
 
-                        <div className="space-y-5">
+                        <div className="grid grid-cols-1 gap-3 md:hidden">
+                            {benefits.map((benefit) => (
+                                <div key={benefit.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">{benefit.title}</p>
+                                    <p className="mt-2 text-sm text-white/65 leading-relaxed">{benefit.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="hidden md:block space-y-5">
                             {benefits.map((benefit, index) => (
                                 <motion.div
                                     key={benefit.title}
@@ -106,7 +115,7 @@ export function LandingExamProtocols() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.55, delay: 0.15 }}
                     >
-                        <div className="relative max-w-[460px] mx-auto">
+                        <div className="relative max-w-[420px] md:max-w-[460px] mx-auto">
                             <div className="absolute -inset-1 bg-white/10 rounded-[28px] blur-2xl opacity-30" />
 
                             <div className="relative rounded-[28px] border border-white/10 bg-[#111111] shadow-2xl overflow-hidden">
@@ -168,7 +177,7 @@ export function LandingExamProtocols() {
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                                         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">
                                                 ação
@@ -189,7 +198,7 @@ export function LandingExamProtocols() {
 
                                     <div className="rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 flex items-start gap-3">
                                         <Sparkles className="w-4 h-4 text-white mt-0.5 shrink-0" />
-                                        <p className="text-xs leading-relaxed text-white/55">
+                                        <p className="text-[11px] sm:text-xs leading-relaxed text-white/55">
                                             Protocolos podem refletir sua forma de solicitar exames por hipótese, especialidade
                                             ou linha de cuidado, reduzindo repetição manual ao longo do dia.
                                         </p>

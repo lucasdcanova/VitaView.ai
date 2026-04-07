@@ -67,13 +67,13 @@ export function LandingSecurity() {
     const currentState = securityStates[activeState];
 
     return (
-        <section id="seguranca" className="py-12 md:py-20 bg-white relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="seguranca" className="py-10 md:py-20 bg-white relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
             <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-14">
+                <div className="flex flex-col-reverse lg:flex-row-reverse items-center gap-8 lg:gap-14">
                     <motion.div
-                        className="lg:w-[46%]"
+                        className="lg:w-[46%] w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -95,7 +95,16 @@ export function LandingSecurity() {
                             sessão, aplicação e armazenamento de documentos sensíveis, com controles presentes no fluxo da plataforma.
                         </p>
 
-                        <div className="mt-6 space-y-3">
+                        <div className="mt-6 grid grid-cols-1 gap-3 md:hidden">
+                            {proofItems.map((item) => (
+                                <div key={item.title} className="rounded-2xl border border-[#E0E0E0] bg-[#FAFAFA] p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">{item.title}</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-[#616161]">{item.description}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="hidden md:block mt-6 space-y-3">
                             {proofItems.map((item, index) => (
                                 <motion.div
                                     key={item.title}

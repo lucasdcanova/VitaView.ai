@@ -65,7 +65,7 @@ export function LandingFeatures() {
     return (
         <section
             id="recursos"
-            className="py-12 md:py-20 bg-[#0A0A0A] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center"
+            className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center"
         >
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute left-[10%] top-16 w-72 h-72 rounded-full bg-white/[0.04] blur-[120px]" />
@@ -73,9 +73,9 @@ export function LandingFeatures() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+                <div className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-14">
                     <motion.div
-                        className="lg:w-[42%]"
+                        className="lg:w-[42%] w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, y: 18 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-120px" }}
@@ -87,17 +87,26 @@ export function LandingFeatures() {
                             <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
                         </div>
 
-                        <h2 className="mt-5 text-3xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white leading-[1.04] tracking-tight">
+                        <h2 className="mt-5 text-2xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white leading-[1.04] tracking-tight">
                             Vita Assist <br />
                             <span className="text-white/45">na rotina do atendimento.</span>
                         </h2>
 
-                        <p className="mt-5 max-w-xl text-base md:text-[17px] leading-relaxed text-white/65">
+                        <p className="mt-5 max-w-xl text-sm md:text-[17px] leading-relaxed text-white/65">
                             Um assistente clínico dentro da plataforma, com contexto do paciente, chat contínuo e apoio
                             para resumir, organizar e documentar melhor cada consulta.
                         </p>
 
-                        <div className="mt-7 space-y-4">
+                        <div className="mt-6 grid grid-cols-1 gap-3 md:hidden">
+                            {capabilities.map((item) => (
+                                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">{item.title}</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-white/60">{item.description}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="hidden md:block mt-7 space-y-4">
                             {capabilities.map((item, index) => (
                                 <motion.div
                                     key={item.title}
@@ -123,7 +132,7 @@ export function LandingFeatures() {
                                 <Button
                                     variant="outline"
                                     size="lg"
-                                    className="border border-white/30 text-white hover:bg-white hover:text-black px-6 py-4 text-sm rounded-lg transition-all"
+                                    className="border border-white/30 text-white hover:bg-white hover:text-black w-full sm:w-auto px-6 py-4 text-sm rounded-lg transition-all"
                                 >
                                     Abrir Vita Assist <ArrowRight className="ml-2 w-4 h-4" />
                                 </Button>
@@ -138,7 +147,7 @@ export function LandingFeatures() {
                         viewport={{ once: true, margin: "-120px" }}
                         transition={{ duration: 0.55, delay: 0.08 }}
                     >
-                        <div className="relative">
+                        <div className="relative max-w-[560px] mx-auto">
                             <div className="absolute -inset-2 rounded-[32px] bg-white/[0.05] blur-2xl opacity-60" />
 
                             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#111111] shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
@@ -162,7 +171,7 @@ export function LandingFeatures() {
                                     </div>
                                 </div>
 
-                                <div className="min-h-[360px] flex flex-col">
+                                <div className="min-h-[320px] md:min-h-[360px] flex flex-col">
                                     <div className="border-b border-white/10 px-4 py-4 sm:px-6">
                                         <div className="mb-3">
                                             <p className="text-sm font-semibold text-white">Conversa ativa com o paciente em atendimento</p>

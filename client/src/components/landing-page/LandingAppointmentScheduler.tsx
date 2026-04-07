@@ -2,16 +2,22 @@ import { motion } from "framer-motion";
 import { Calendar, ChevronDown, ChevronRight, Brain, Check } from "lucide-react";
 import { Link } from "wouter";
 
+const mobileAgendaSignals = [
+    { title: "Retornos do dia", description: "Paciente, horário e contexto principal visíveis sem abrir outra tela." },
+    { title: "Encaixes e urgências", description: "As prioridades aparecem rápido para reorganizar a agenda no celular." },
+    { title: "Rotina contínua", description: "Consultas, retornos e exames ficam no mesmo fluxo de acompanhamento." },
+];
+
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className="py-10 md:py-14 bg-[#F5F5F5] text-[#212121] relative overflow-hidden scroll-mt-16 min-h-[100dvh] flex flex-col justify-center">
+        <section id="agenda" className="py-10 md:py-14 bg-[#F5F5F5] text-[#212121] relative overflow-hidden scroll-mt-16 md:min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className="text-center mb-6 md:mb-8"
+                    className="text-center mb-6 md:mb-8 max-w-3xl mx-auto"
                 >
                     <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-3 md:mb-4">Agenda Clínica</h2>
                     <p className="text-base md:text-lg text-[#616161] max-w-2xl mx-auto px-2">
@@ -20,36 +26,82 @@ export function LandingAppointmentScheduler() {
                 </motion.div>
 
                 {/* Mobile Simplified Calendar View */}
-                <motion.div
-                    className="md:hidden bg-white rounded-2xl shadow-xl overflow-hidden max-w-sm mx-auto"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                >
-                    <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-4 text-white flex items-center gap-3">
-                        <Calendar className="w-5 h-5" />
-                        <div>
-                            <h3 className="text-base font-bold">Agenda da Semana</h3>
-                            <p className="text-xs text-[#E0E0E0]">Próximas consultas</p>
+                <div className="md:hidden max-w-sm mx-auto space-y-4">
+                    <motion.div
+                        className="bg-white rounded-2xl shadow-xl overflow-hidden"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-4 text-white flex items-center gap-3">
+                            <Calendar className="w-5 h-5" />
+                            <div>
+                                <h3 className="text-base font-bold">Agenda da Semana</h3>
+                                <p className="text-xs text-[#E0E0E0]">Próximas consultas</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="p-4 space-y-3">
-                        {[
-                            { time: "09:00", name: "Maria Silva", type: "Consulta", color: "border-[#3B82F6]", bg: "bg-[#E8F1FB]" },
-                            { time: "14:30", name: "João Santos", type: "Retorno", color: "border-[#22C55E]", bg: "bg-[#EAF7EE]" },
-                            { time: "10:00", name: "Ana Costa", type: "Exames", color: "border-[#F59E0B]", bg: "bg-[#FFF4E5]" },
-                        ].map((apt, i) => (
-                            <div key={i} className={`${apt.bg} border-l-4 ${apt.color} rounded-lg p-3 flex items-center justify-between`}>
-                                <div>
-                                    <div className="text-xs font-semibold text-[#212121]">{apt.time}</div>
-                                    <div className="text-sm font-medium text-[#212121]">{apt.name}</div>
+                        <div className="p-4 space-y-3">
+                            {[
+                                { time: "09:00", name: "Maria Silva", type: "Consulta", color: "border-[#3B82F6]", bg: "bg-[#E8F1FB]" },
+                                { time: "14:30", name: "João Santos", type: "Retorno", color: "border-[#22C55E]", bg: "bg-[#EAF7EE]" },
+                                { time: "10:00", name: "Ana Costa", type: "Exames", color: "border-[#F59E0B]", bg: "bg-[#FFF4E5]" },
+                            ].map((apt, i) => (
+                                <div key={i} className={`${apt.bg} border-l-4 ${apt.color} rounded-lg p-3 flex items-center justify-between`}>
+                                    <div>
+                                        <div className="text-xs font-semibold text-[#212121]">{apt.time}</div>
+                                        <div className="text-sm font-medium text-[#212121]">{apt.name}</div>
+                                    </div>
+                                    <span className="text-xs text-[#616161] font-medium">{apt.type}</span>
                                 </div>
-                                <span className="text-xs text-[#616161] font-medium">{apt.type}</span>
+                            ))}
+                        </div>
+                        <div className="border-t border-[#E0E0E0] bg-[#FAFAFA] px-4 py-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">
+                                semana em andamento
+                            </p>
+                            <p className="mt-1 text-[13px] leading-5 text-[#616161]">
+                                Retornos, exames e encaixes organizados em uma leitura só.
+                            </p>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        className="grid gap-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.55, delay: 0.28 }}
+                    >
+                        {mobileAgendaSignals.map((item) => (
+                            <div
+                                key={item.title}
+                                className="rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.04)]"
+                            >
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">
+                                    {item.title}
+                                </p>
+                                <p className="mt-1.5 text-[13px] leading-5 text-[#616161]">
+                                    {item.description}
+                                </p>
                             </div>
                         ))}
-                    </div>
-                </motion.div>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 18 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.45, delay: 0.35 }}
+                    >
+                        <Link href="/auth">
+                            <button className="w-full rounded-xl bg-[#212121] px-5 py-4 text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#424242]">
+                                Organizar agenda no VitaView AI
+                                <ChevronRight className="ml-2 inline h-4 w-4" />
+                            </button>
+                        </Link>
+                    </motion.div>
+                </div>
 
                 {/* Desktop Full Calendar */}
                 <motion.div

@@ -3,13 +3,13 @@ import { Mic, Lock, Wand2, RefreshCcw, FileSearch } from "lucide-react";
 
 export function LandingVoiceTranscription() {
     return (
-        <section id="anamnese-ia" className="py-12 md:py-20 bg-[#F5F5F5] relative overflow-hidden min-h-[100dvh] flex flex-col justify-center">
+        <section id="anamnese-ia" className="py-10 md:py-20 bg-[#F5F5F5] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16 lg:gap-24">
+                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-16 lg:gap-24">
 
                     {/* Left: Voice Animation Mockup */}
                     {/* Left: AI Animation Mockups Stack */}
-                    <div className="md:w-1/2 w-full flex flex-col items-center gap-6 sm:gap-8 relative z-10 py-4">
+                    <div className="md:w-1/2 w-full flex flex-col items-center gap-5 sm:gap-8 relative z-10 py-2 md:py-4">
                         
                         {/* 1. Voice Mockup */}
                         <motion.div
@@ -51,7 +51,7 @@ export function LandingVoiceTranscription() {
 
                         {/* 2. Melhorar com IA mockup */}
                         <motion.div
-                            className="bg-white border border-[#E0E0E0] rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden relative w-full max-w-[420px] md:ml-12 z-20"
+                            className="hidden md:block bg-white border border-[#E0E0E0] rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden relative w-full max-w-[420px] md:ml-12 z-20"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -84,7 +84,7 @@ export function LandingVoiceTranscription() {
 
                         {/* 3. Extrair com IA mockup */}
                         <motion.div
-                            className="bg-white border border-[#E0E0E0] rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden relative w-full max-w-[420px] md:-ml-6 z-10"
+                            className="hidden md:block bg-white border border-[#E0E0E0] rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden relative w-full max-w-[420px] md:-ml-6 z-10"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -110,7 +110,7 @@ export function LandingVoiceTranscription() {
 
                     {/* Right: Text Content */}
                     <motion.div
-                        className="md:w-1/2 flex flex-col items-start"
+                        className="md:w-1/2 w-full max-w-md md:max-w-none flex flex-col items-start"
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -131,7 +131,18 @@ export function LandingVoiceTranscription() {
                             Foque apenas no paciente. O VitaView transforma áudio em texto clínico, lapida anotações rápidas e destaca o núcleo de históricos médicos extensos automaticamente.
                         </p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8">
+                        <div className="grid grid-cols-1 gap-3 mt-6 md:hidden w-full">
+                            <div className="rounded-2xl border border-[#E0E0E0] bg-white p-4 shadow-[0_16px_30px_-24px_rgba(0,0,0,0.28)]">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">Refinamento clínico</p>
+                                <p className="mt-2 text-sm leading-relaxed text-[#616161]">Lapida anotações rápidas e transforma linguagem coloquial em texto médico.</p>
+                            </div>
+                            <div className="rounded-2xl border border-[#E0E0E0] bg-white p-4 shadow-[0_16px_30px_-24px_rgba(0,0,0,0.28)]">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9E9E9E]">Extração de contexto</p>
+                                <p className="mt-2 text-sm leading-relaxed text-[#616161]">Destaca sintomas, histórico e medicações a partir de blocos extensos de texto.</p>
+                            </div>
+                        </div>
+
+                        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8">
                             <div className="flex gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 border border-[#E0E0E0]">
                                     <Lock className="w-5 h-5 text-[#212121]" />

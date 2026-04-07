@@ -5,16 +5,16 @@ import { platformDownloadLinks } from "./download-links";
 
 const footerPlatforms = [
     { key: "windows", title: "Windows", href: platformDownloadLinks.windows.href, icon: FaWindows, iconColor: "#00A4EF" },
+    { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" },
+    { key: "web", title: "Web", href: platformDownloadLinks.web.href, icon: Globe2, iconColor: "#E7C88D", target: "_blank" as const },
     { key: "mac", title: "macOS", href: platformDownloadLinks.mac.href, icon: FaApple, iconColor: "#F5F5F5" },
     { key: "ios", title: "iPhone", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" },
-    { key: "ipad", title: "iPad", href: platformDownloadLinks.ipad.href, icon: FaApple, iconColor: "#F5F5F5" },
-    { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" },
-    { key: "web", title: "Web", href: platformDownloadLinks.web.href, icon: Globe2, iconColor: "#E7C88D", target: "_blank" as const }
+    { key: "ipad", title: "iPad", href: platformDownloadLinks.ipad.href, icon: FaApple, iconColor: "#F5F5F5" }
 ];
 
 export function LandingFooter() {
     return (
-        <footer className="bg-[#212121] text-[#9E9E9E] py-10 md:py-12 relative overflow-hidden">
+        <footer className="bg-[#212121] text-[#9E9E9E] py-8 md:py-9 relative overflow-hidden">
             {/* Elementos decorativos do footer */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <motion.div
@@ -48,28 +48,30 @@ export function LandingFooter() {
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <motion.div
                     id="downloads"
-                    className="mb-10 rounded-[30px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm md:mb-12 md:p-6"
+                    className="mb-8 rounded-[30px] border border-white/10 bg-white/[0.04] p-4 md:p-5 backdrop-blur-sm md:mb-9"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className="grid gap-5 md:grid-cols-[0.72fr_1.28fr] md:items-center">
-                        <div className="max-w-sm">
-                            <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/45">
+                    <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:items-center">
+                        <div className="max-w-md md:max-w-none">
+                            <div className="inline-flex items-center gap-3 text-[10px] md:text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45 md:whitespace-nowrap">
                                 <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/35" />
-                                <span>Acesso em qualquer dispositivo</span>
+                                <span>Disponível em toda a rotina</span>
                                 <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/35" />
                             </div>
-                            <h2 className="mt-4 text-2xl font-heading font-bold tracking-tight text-white md:text-[2.1rem]">
-                                Baixe o VitaView.
+                            <h2 className="mt-3 text-[1.6rem] font-heading font-bold tracking-tight text-white md:text-[1.8rem] md:whitespace-nowrap">
+                                Baixe o VitaView AI.
                             </h2>
-                            <p className="mt-2 text-[13px] leading-6 text-white/55 md:text-[14px]">
-                                Desktop, celular ou navegador no mesmo ecossistema de uso.
+                            <p className="mt-1.5 max-w-[34rem] text-[12px] leading-5 text-white/55 md:text-[13px]">
+                                No desktop, no celular ou direto no navegador,
+                                <br />
+                                com continuidade no mesmo fluxo clínico.
                             </p>
                         </div>
 
-                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {footerPlatforms.map((platform, index) => {
                                 const Icon = platform.icon;
 
@@ -79,14 +81,14 @@ export function LandingFooter() {
                                         href={platform.href}
                                         target={platform.target}
                                         rel="noopener noreferrer"
-                                        className="group flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-white/78 transition-colors duration-300 hover:bg-white/[0.06] hover:text-white"
+                                        className="group flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-white/78 transition-colors duration-300 hover:bg-white/[0.06] hover:text-white"
                                         initial={{ opacity: 0, y: 16 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ duration: 0.35, delay: index * 0.04 }}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[14px] bg-white/[0.05]">
+                                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-white/[0.05]">
                                                 <Icon className="h-4.5 w-4.5" style={{ color: platform.iconColor }} />
                                             </span>
                                             <div>
@@ -112,11 +114,11 @@ export function LandingFooter() {
                     transition={{ duration: 0.7 }}
                 >
                     <motion.div
-                        className="mb-6 md:mb-0"
+                        className="mb-5 md:mb-0"
                         whileHover={{ y: -2, scale: 1.01 }}
                         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="flex items-center mb-4">
+                        <div className="flex items-center mb-3">
                             <img
                                 src="/icon-192x192-dark.png"
                                 alt="VitaView AI"
@@ -128,34 +130,30 @@ export function LandingFooter() {
                             O Prontuário que pensa com você. Simples, objetivo e completo.
                         </p>
 
-                        {/* Inscrição na newsletter */}
-                        <div className="mt-6 hidden md:block">
-                            <p className="text-sm mb-2 font-medium text-[#9E9E9E]">Fique atualizado:</p>
-                            <div className="flex">
-                                <input
-                                    type="email"
-                                    placeholder="Seu e-mail"
-                                    className="bg-[#212121] border border-[#424242] px-3 py-2 rounded-l-md text-sm focus:outline-none focus:ring-1 focus:ring-[#212121] text-white w-full max-w-[200px]"
-                                />
-                                <motion.button
-                                    className="bg-[#212121] hover:bg-[#424242] px-3 py-2 rounded-r-md text-white text-sm"
-                                    whileHover={{ y: -1, scale: 1.015 }}
-                                    whileTap={{ scale: 0.97 }}
-                                >
+                        <div className="mt-4 hidden md:block">
+                            <motion.a
+                                href="mailto:contato@vitaview.ai"
+                                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
+                                whileHover={{ y: -1, scale: 1.015 }}
+                                whileTap={{ scale: 0.97 }}
+                            >
+                                <span>contato@vitaview.ai</span>
+                                <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06]">
                                     <ChevronRight className="w-4 h-4" />
-                                </motion.button>
-                            </div>
+                                </span>
+                            </motion.a>
                         </div>
                     </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-[1.2fr_0.8fr] gap-6 md:gap-8 md:ml-auto md:w-fit md:self-start">
+                    <div className="grid grid-cols-2 gap-5 md:ml-auto md:w-[min(100%,48rem)] md:grid-cols-[1fr_auto] md:gap-10 md:self-start">
                         <motion.div
+                            className="md:min-w-0"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: 0.08 }}
                         >
-                            <h3 className="text-white font-semibold mb-4">Explorar</h3>
+                            <h3 className="text-white font-semibold mb-3">Explorar</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-2">
                                 {[
                                     { label: "Visualização Clínica", href: "#como-funciona" },
@@ -169,7 +167,6 @@ export function LandingFooter() {
                                     { label: "Segurança", href: "#seguranca" },
                                     { label: "Depoimentos", href: "#depoimentos" },
                                     { label: "Planos", href: "#precos" },
-                                    { label: "Downloads", href: "#downloads" },
                                     { label: "Perguntas Frequentes", href: "#faq" }
                                 ].map((item, i) => (
                                     <motion.div
@@ -185,7 +182,7 @@ export function LandingFooter() {
                                             whileHover={{ x: 3 }}
                                         >
                                             {item.label}
-                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
+                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/60 group-hover:w-full transition-all duration-300"></span>
                                         </motion.a>
                                     </motion.div>
                                 ))}
@@ -193,12 +190,13 @@ export function LandingFooter() {
                         </motion.div>
 
                         <motion.div
+                            className="md:justify-self-end"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
-                            <h3 className="text-white font-semibold mb-4">Legal</h3>
+                            <h3 className="text-white font-semibold mb-3">Legal</h3>
                             <ul className="space-y-2">
                                 {[
                                     { label: "Termos de Uso", href: "/termos" },
@@ -218,7 +216,7 @@ export function LandingFooter() {
                                             whileHover={{ x: 3 }}
                                         >
                                             {item.label}
-                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#212121] group-hover:w-full transition-all duration-300"></span>
+                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/60 group-hover:w-full transition-all duration-300"></span>
                                         </motion.a>
                                     </motion.li>
                                 ))}
@@ -228,7 +226,7 @@ export function LandingFooter() {
                 </motion.div>
 
                 <motion.div
-                    className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center"
+                    className="border-t border-gray-800 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center"
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
