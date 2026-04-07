@@ -137,7 +137,7 @@ export function LandingVoiceTranscription() {
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-bold text-[#212121] mb-0.5">Gravação Segura</h4>
-                                    <p className="text-xs text-[#616161] leading-relaxed">Criptografia ponta a ponta na captação do áudio.</p>
+                                    <p className="text-xs text-[#616161] leading-relaxed">Camadas de proteção no acesso e no armazenamento das informações captadas.</p>
                                 </div>
                             </div>
 

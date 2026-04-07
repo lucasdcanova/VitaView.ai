@@ -162,13 +162,12 @@ export function LandingFooter() {
                                     { label: "Prescrição Digital", href: "#prescricao-digital" },
                                     { label: "Solicitação de Exames", href: "#protocolos-exames" },
                                     { label: "Agenda com IA", href: "#agenda" },
-                                    { label: "Quatro Pilares", href: "#recursos" },
+                                    { label: "Vita Assist", href: "#recursos" },
                                     { label: "Migração", href: "#migracao" },
-                                    { label: "Para Quem", href: "#para-quem" },
                                     { label: "Segurança", href: "#seguranca" },
                                     { label: "Depoimentos", href: "#depoimentos" },
                                     { label: "Planos", href: "#precos" },
-                                    { label: "Multi-Plataforma", href: "#downloads" },
+                                    { label: "Downloads", href: "#downloads" },
                                     { label: "Perguntas Frequentes", href: "#faq" }
                                 ].map((item, i) => (
                                     <motion.div
@@ -202,7 +201,7 @@ export function LandingFooter() {
                                 {[
                                     { label: "Termos de Uso", href: "/termos" },
                                     { label: "Privacidade", href: "/privacidade" },
-                                    { label: "Segurança", href: "#beneficios" }
+                                    { label: "Segurança", href: "#seguranca" }
                                 ].map((item, i) => (
                                     <motion.li
                                         key={item.label}

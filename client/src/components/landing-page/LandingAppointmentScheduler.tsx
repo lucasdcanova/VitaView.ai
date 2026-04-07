@@ -30,7 +30,7 @@ export function LandingAppointmentScheduler() {
                     <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-4 text-white flex items-center gap-3">
                         <Calendar className="w-5 h-5" />
                         <div>
-                            <h3 className="text-base font-bold">Abril 2025</h3>
+                            <h3 className="text-base font-bold">Agenda da Semana</h3>
                             <p className="text-xs text-[#E0E0E0]">Próximas consultas</p>
                         </div>
                     </div>
@@ -66,8 +66,8 @@ export function LandingAppointmentScheduler() {
                                 <div className="flex items-center gap-4">
                                     <Calendar className="w-7 h-7" />
                                     <div>
-                                        <h3 className="text-xl font-bold">Abril 2025</h3>
-                                        <p className="text-sm text-[#E0E0E0]">Semana 14 - 20 de Abril</p>
+                                        <h3 className="text-xl font-bold">Agenda da Semana</h3>
+                                        <p className="text-sm text-[#E0E0E0]">Visão organizada dos próximos atendimentos</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -276,7 +276,7 @@ export function LandingAppointmentScheduler() {
                                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9E9E9E] mb-1">Assistente IA</p>
                                 <h4 className="text-sm font-bold text-[#212121] leading-tight mb-1">Ajuda na marcação</h4>
                                 <p className="text-[11px] text-[#616161] leading-snug">
-                                    Foto ou texto da agenda para sugerir encaixes.
+                                    Apoio para organizar encaixes e prioridades ao longo do dia.
                                 </p>
                             </div>
                         </div>

@@ -10,13 +10,14 @@ export function LandingNavbar() {
     const [isScrolled, setIsScrolled] = useState(false);
 
     const navItems = [
-        { id: "demonstracoes", label: "Vita Timeline" },
-        { id: "como-funciona", label: "View Laboratorial" },
+        { id: "como-funciona", label: "Exames" },
+        { id: "anamnese-ia", label: "Anamnese IA" },
+        { id: "prescricao-digital", label: "Prescrição" },
         { id: "agenda", label: "Agenda" },
-        { id: "beneficios", label: "Benefícios" },
+        { id: "recursos", label: "Vita Assist" },
+        { id: "seguranca", label: "Segurança" },
         { id: "precos", label: "Planos" },
         { id: "downloads", label: "Downloads" },
-        { id: "para-quem", label: "Para Quem" },
         { id: "depoimentos", label: "Depoimentos" }
     ];
 
@@ -110,9 +111,7 @@ export function LandingNavbar() {
                             whileTap={{ scale: 0.97 }}
                         >
                             <a
-                                href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20VitaView%20AI"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href="mailto:contato@vitaview.ai?subject=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20do%20VitaView"
                             >
                                 <Button variant="outline" className="border-[#212121] text-[#212121] hover:bg-gray-100 font-bold hidden xl:flex">
                                     Agendar Demo

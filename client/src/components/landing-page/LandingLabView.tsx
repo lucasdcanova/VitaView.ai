@@ -76,11 +76,11 @@ function FallingFile({ delay, fileName, onLand }: { delay: number; fileName: str
 /* ── Upload Animation Panel ── */
 const FILE_BATCHES = [
     [
-        { name: "hemograma_abr2025.pdf", size: "1.2 MB" },
+        { name: "hemograma_recente.pdf", size: "1.2 MB" },
         { name: "perfil_lipidico.pdf", size: "840 KB" },
     ],
     [
-        { name: "glicemia_mar2025.pdf", size: "956 KB" },
+        { name: "glicemia_controle.pdf", size: "956 KB" },
         { name: "urina_tipo1.pdf", size: "1.1 MB" },
     ],
     [
