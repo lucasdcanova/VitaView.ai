@@ -449,9 +449,9 @@ export default function Profile() {
           />
           <div className="p-4 md:p-6">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* User Information */}
-              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-2 border border-border">
+              <div className="bg-card rounded-xl shadow-sm p-6 xl:col-span-2 border border-border">
                 <div className="flex flex-col items-center sm:items-start sm:flex-row mb-6">
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 mb-3 sm:mb-0 sm:mr-6 group">
                     <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-3xl sm:text-4xl font-semibold overflow-hidden">
@@ -526,7 +526,7 @@ export default function Profile() {
                         <h3 className="text-base sm:text-lg font-medium text-foreground mb-3">Informações Pessoais</h3>
                         <Form {...profileForm}>
                           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                               <FormField
                                 control={profileForm.control}
                                 name="fullName"
@@ -573,7 +573,7 @@ export default function Profile() {
                                 <Separator className="my-6" />
 
                                 <h3 className="text-base sm:text-lg font-medium text-foreground mb-3">Dados Profissionais</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                   <FormField
                                     control={profileForm.control}
                                     name="crm"
@@ -658,7 +658,7 @@ export default function Profile() {
                             )}
 
                             {user?.clinicRole !== 'secretary' && (
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                 <FormField
                                   control={profileForm.control}
                                   name="website"
@@ -927,7 +927,7 @@ export default function Profile() {
               </div>
 
               {/* Settings and Preferences */}
-              <div className="bg-card rounded-xl shadow-sm p-6 md:col-span-1 border border-border">
+              <div className="bg-card rounded-xl shadow-sm p-6 xl:col-span-1 border border-border">
                 <h2 className="text-lg font-semibold mb-4 text-foreground">Preferências</h2>
 
                 <div className="space-y-4">

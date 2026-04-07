@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -16,6 +17,35 @@ interface IOSStoreKitPurchaseProps {
   onCancel?: () => void;
   onSuccess?: () => void;
 }
+
+const formatSubscriptionPeriod = (product: StoreKitProduct | null): string | null => {
+  if (!product) return null;
+  const unit = product.subscriptionPeriodUnit?.toLowerCase();
+  const value = product.subscriptionPeriodValue;
+  if (unit && typeof value === "number" && value > 0) {
+    const map: Record<string, [string, string]> = {
+      day: ["dia", "dias"],
+      week: ["semana", "semanas"],
+      month: ["mês", "meses"],
+      year: ["ano", "anos"],
+    };
+    const labels = map[unit];
+    if (labels) {
+      return `${value} ${value === 1 ? labels[0] : labels[1]}`;
+    }
+  }
+  const display = (product?.displayName || "").toLowerCase();
+  if (display.includes("anual") || display.includes("annual") || display.includes("yearly") || display.includes("year")) {
+    return "1 ano";
+  }
+  if (display.includes("semestral") || display.includes("6 month") || display.includes("six month")) {
+    return "6 meses";
+  }
+  if (display.includes("mensal") || display.includes("monthly") || display.includes("month")) {
+    return "1 mês";
+  }
+  return null;
+};
 
 const syncTransaction = async (transaction: StoreKitTransaction) => {
   await apiRequest("POST", "/api/app-store/sync-subscription", {
@@ -167,12 +197,28 @@ export const IOSStoreKitPurchase = ({
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-muted/40 p-4">
-          <div className="font-medium text-foreground">{product?.displayName}</div>
-          <div className="mt-1 text-2xl font-semibold text-foreground">
+          <div className="font-semibold text-base text-foreground">{product?.displayName}</div>
+          {formatSubscriptionPeriod(product) && (
+            <div className="mt-1 text-xs text-muted-foreground">
+              Duração: {formatSubscriptionPeriod(product)}
+            </div>
+          )}
+          <div className="mt-2 text-2xl font-semibold text-foreground">
             {product?.displayPrice}
+            {formatSubscriptionPeriod(product) && (
+              <span className="text-sm font-normal text-muted-foreground"> / {formatSubscriptionPeriod(product)}</span>
+            )}
           </div>
-          <div className="mt-2 text-xs text-muted-foreground">
-            A assinatura será cobrada e gerenciada pela sua conta Apple.
+          <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+            <p>
+              O pagamento será cobrado na sua conta Apple ID na confirmação da compra.
+            </p>
+            <p>
+              A assinatura é renovada automaticamente, a menos que seja cancelada com pelo menos 24 horas de antecedência ao final do período atual. Sua conta Apple ID será cobrada pela renovação no mesmo valor dentro das 24 horas anteriores ao final do período atual.
+            </p>
+            <p>
+              Você pode gerenciar suas assinaturas e desativar a renovação automática nos Ajustes da sua conta Apple após a compra.
+            </p>
           </div>
         </div>
       )}
@@ -198,6 +244,24 @@ export const IOSStoreKitPurchase = ({
         <Button variant="ghost" disabled={isPurchasing} onClick={onCancel}>
           Voltar
         </Button>
+      </div>
+
+      <div className="pt-2 text-center text-[11px] text-muted-foreground">
+        Ao continuar, você concorda com os{" "}
+        <Link
+          href="/termos"
+          className="underline font-medium text-foreground hover:text-primary"
+        >
+          Termos de Uso (EULA)
+        </Link>
+        {" "}e a{" "}
+        <Link
+          href="/privacidade"
+          className="underline font-medium text-foreground hover:text-primary"
+        >
+          Política de Privacidade
+        </Link>
+        .
       </div>
     </div>
   );

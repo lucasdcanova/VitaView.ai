@@ -4,7 +4,7 @@ import {
   useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { apiRequest,
   queryClient } from '@/lib/queryClient';
 import { Card,
@@ -701,9 +701,9 @@ const SubscriptionManagement = () => {
               </h2>
 
               {!hasActiveSubscription ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Free Plan Card - Updated with complete features list */}
-                  <Card className="border-dashed border-2 md:col-span-1 relative">
+                  <Card className="border-dashed border-2 lg:col-span-1 relative">
                     <div className="absolute top-3 right-3">
                       <Badge variant="secondary" className="text-[10px] uppercase font-bold">Plano Atual</Badge>
                     </div>
@@ -740,11 +740,11 @@ const SubscriptionManagement = () => {
                   </Card>
 
                   {/* Vita Pro Card - NEW 2-COLUMN LAYOUT */}
-                  <Card className="md:col-span-2 border-primary/20 shadow-md relative overflow-hidden">
+                  <Card className="lg:col-span-2 border-primary/20 shadow-md relative overflow-hidden">
                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg border-l border-b border-primary/20 shadow-sm">
                       RECOMENDADO
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 h-full">
                       {/* LEFT COLUMN: Features */}
                       <div className="p-6 bg-muted/50 border-r border-border flex flex-col justify-between">
                         <div>
@@ -870,7 +870,7 @@ const SubscriptionManagement = () => {
                 </div>
               ) : (
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {/* ... existing active plan view ... */}
                   <Card>
                     <CardHeader>
@@ -1254,14 +1254,15 @@ const SubscriptionManagement = () => {
             }
 
 
-            {/* SECTION 3: Plans for Clinics */}
+            {/* SECTION 3: Plans for Clinics - hidden on iOS (no In-App Purchase products available) */}
+            {!usesAppStoreBilling && (
             <section className="space-y-8" ref={plansRef}>
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Building className="h-5 w-5 text-primary" />
                 Clínicas Multiprofissionais
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Vita Team */}
                 <Card className="flex flex-col border-border shadow-sm hover:shadow-md transition-all">
                   <CardHeader>
@@ -1470,8 +1471,10 @@ const SubscriptionManagement = () => {
                 </Card>
               </div>
             </section>
+            )}
 
-            {/* SECTION 4: Payment History */}
+            {/* SECTION 4: Payment History - hidden on iOS where Apple manages billing */}
+            {!usesAppStoreBilling && (
             <section className="space-y-6">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <History className="h-5 w-5 text-primary" />
@@ -1517,6 +1520,36 @@ const SubscriptionManagement = () => {
                       </Button>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </section>
+            )}
+
+            {/* Auto-renewal & Legal disclosures (required for App Store Guideline 3.1.2) */}
+            <section className="space-y-4 pt-2">
+              <Card className="bg-muted/30">
+                <CardContent className="pt-6 space-y-3 text-xs text-muted-foreground">
+                  {usesAppStoreBilling && (
+                    <>
+                      <p>
+                        <strong className="text-foreground">Renovação automática:</strong> A assinatura é renovada automaticamente, a menos que seja cancelada com pelo menos 24 horas de antecedência ao final do período atual. Sua conta Apple ID será cobrada pela renovação dentro das 24 horas anteriores ao final do período atual.
+                      </p>
+                      <p>
+                        <strong className="text-foreground">Gerenciamento:</strong> Você pode gerenciar suas assinaturas e desativar a renovação automática nos Ajustes da sua conta Apple após a compra.
+                      </p>
+                    </>
+                  )}
+                  <p className="pt-1">
+                    Ao assinar, você concorda com os{" "}
+                    <Link href="/termos" className="underline font-semibold text-foreground hover:text-primary">
+                      Termos de Uso (EULA)
+                    </Link>
+                    {" "}e a{" "}
+                    <Link href="/privacidade" className="underline font-semibold text-foreground hover:text-primary">
+                      Política de Privacidade
+                    </Link>
+                    .
+                  </p>
                 </CardContent>
               </Card>
             </section>
