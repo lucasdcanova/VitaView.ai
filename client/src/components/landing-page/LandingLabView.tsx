@@ -107,22 +107,25 @@ const EXTRACTION_BATCHES = [
     ],
 ];
 
-const MOBILE_LAB_STEPS = [
-    { label: "Entrada", value: "PDFs, imagens e laudos enviados em poucos toques" },
-    { label: "Leitura", value: "Resultados e marcadores organizados sem trabalho manual" },
-    { label: "Prontuário", value: "Comparativo e histórico já entram na mesma linha de cuidado" },
-];
-
 const MOBILE_LAB_SUMMARY = [
     { title: "Hemoglobina", description: "Comparativo rápido entre exames anteriores e o resultado atual.", tone: "text-emerald-300" },
     { title: "Glicemia", description: "Sinalização de atenção quando a evolução foge do padrão esperado.", tone: "text-amber-300" },
     { title: "Evolução", description: "Histórico consolidado para revisar o caso sem abrir várias telas.", tone: "text-white/80" },
 ];
 
-function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: boolean; prefersReducedMotion: boolean }) {
+function UploadAnimationPanel({
+    isActive,
+    prefersReducedMotion,
+    mobileCompact = false,
+}: {
+    isActive: boolean;
+    prefersReducedMotion: boolean;
+    mobileCompact?: boolean;
+}) {
     const [step, setStep] = useState(0);
     const [cycle, setCycle] = useState(0);
     const [showFallingFiles, setShowFallingFiles] = useState(false);
+    const stableMobileMotion = prefersReducedMotion || mobileCompact;
     // step: 0 = idle/files falling, 1 = files landed, 2 = uploading, 3 = AI processing, 4 = done
 
     const currentFiles = FILE_BATCHES[cycle % FILE_BATCHES.length];
@@ -210,11 +213,13 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                     className="absolute pointer-events-none"
                                     style={{ left: "28%", top: 0 }}
                                     initial={{ y: -70, opacity: 0, rotate: -12 }}
-                                    animate={{
-                                        y: [-70, 10, 4],
-                                        opacity: [0, 1, 1],
-                                        rotate: [-12, 4, 0],
-                                    }}
+                                    animate={stableMobileMotion
+                                        ? { y: [-70, 10, 4], opacity: [0, 1, 1], rotate: [-12, 4, 0] }
+                                        : {
+                                            y: [-70, 10, 4],
+                                            opacity: [0, 1, 1],
+                                            rotate: [-12, 4, 0],
+                                        }}
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     transition={{
                                         duration: 0.65,
@@ -226,13 +231,15 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                         <FileText className="w-4 h-4 md:w-5 md:h-5 text-white/70" />
                                         <span className="text-[6px] md:text-[7px] text-white/50 mt-0.5 font-medium">.PDF</span>
                                         {/* Landing ripple */}
-                                        <motion.div
-                                            className="absolute -bottom-1 left-1/2 w-12 h-2 bg-white/10 rounded-full"
-                                            style={{ x: "-50%" }}
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            animate={{ scale: [0, 1.5], opacity: [0, 0.5, 0] }}
-                                            transition={{ duration: 0.4, delay: 0.65 }}
-                                        />
+                                        {!stableMobileMotion && (
+                                            <motion.div
+                                                className="absolute -bottom-1 left-1/2 w-12 h-2 bg-white/10 rounded-full"
+                                                style={{ x: "-50%" }}
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: [0, 1.5], opacity: [0, 0.5, 0] }}
+                                                transition={{ duration: 0.4, delay: 0.65 }}
+                                            />
+                                        )}
                                     </div>
                                     <span className="text-[7px] text-white/40 text-center mt-0.5 block max-w-[70px] truncate">{currentFiles[0]?.name}</span>
                                 </motion.div>
@@ -257,13 +264,15 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                     <div className="w-9 h-11 md:w-10 md:h-12 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 flex flex-col items-center justify-center shadow-lg shadow-black/40 relative">
                                         <FileText className="w-4 h-4 md:w-5 md:h-5 text-white/70" />
                                         <span className="text-[6px] md:text-[7px] text-white/50 mt-0.5 font-medium">.PDF</span>
-                                        <motion.div
-                                            className="absolute -bottom-1 left-1/2 w-12 h-2 bg-white/10 rounded-full"
-                                            style={{ x: "-50%" }}
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            animate={{ scale: [0, 1.5], opacity: [0, 0.5, 0] }}
-                                            transition={{ duration: 0.4, delay: 0.9 }}
-                                        />
+                                        {!stableMobileMotion && (
+                                            <motion.div
+                                                className="absolute -bottom-1 left-1/2 w-12 h-2 bg-white/10 rounded-full"
+                                                style={{ x: "-50%" }}
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: [0, 1.5], opacity: [0, 0.5, 0] }}
+                                                transition={{ duration: 0.4, delay: 0.9 }}
+                                            />
+                                        )}
                                     </div>
                                     <span className="text-[7px] text-white/40 text-center mt-0.5 block max-w-[70px] truncate">{currentFiles[1]?.name}</span>
                                 </motion.div>
@@ -281,9 +290,13 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                 exit={{ opacity: 0 }}
                                 className="flex flex-col items-center gap-1.5"
                             >
-                                <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
+                                {stableMobileMotion ? (
                                     <Upload className="w-6 h-6 text-white/30" />
-                                </motion.div>
+                                ) : (
+                                    <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
+                                        <Upload className="w-6 h-6 text-white/30" />
+                                    </motion.div>
+                                )}
                                 <span className="text-[10px] text-white/40">Aguardando arquivos...</span>
                             </motion.div>
                         )}
@@ -308,13 +321,17 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                 transition={{ duration: 0.3 }}
                                 className="flex flex-col items-center gap-1.5"
                             >
-                                <motion.div
-                                    initial={{ scale: 0.8 }}
-                                    animate={{ scale: [0.8, 1.1, 1] }}
-                                    transition={{ duration: 0.4 }}
-                                >
+                                {stableMobileMotion ? (
                                     <FileText className="w-7 h-7 text-white/70" />
-                                </motion.div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ scale: 0.8 }}
+                                        animate={{ scale: [0.8, 1.1, 1] }}
+                                        transition={{ duration: 0.4 }}
+                                    >
+                                        <FileText className="w-7 h-7 text-white/70" />
+                                    </motion.div>
+                                )}
                                 <span className="text-xs text-white/70 font-medium">{currentFiles.length} arquivos detectados</span>
                             </motion.div>
                         )}
@@ -349,9 +366,13 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                 exit={{ opacity: 0 }}
                                 className="flex flex-col items-center gap-2"
                             >
-                                <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}>
+                                {stableMobileMotion ? (
                                     <Brain className="w-7 h-7 text-purple-400" />
-                                </motion.div>
+                                ) : (
+                                    <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}>
+                                        <Brain className="w-7 h-7 text-purple-400" />
+                                    </motion.div>
+                                )}
                                 <span className="text-xs text-purple-300/90 font-medium">Estruturando resultados...</span>
                                 {/* Scanning dots */}
                                 <div className="flex gap-1">
@@ -375,13 +396,17 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                 transition={{ type: "spring", stiffness: 300, damping: 18 }}
                                 className="flex flex-col items-center gap-1.5"
                             >
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: [0, 1.3, 1] }}
-                                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                                >
+                                {stableMobileMotion ? (
                                     <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                                </motion.div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: [0, 1.3, 1] }}
+                                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    </motion.div>
+                                )}
                                 <span className="text-xs text-emerald-300 font-semibold">Integrado ao prontuário!</span>
                             </motion.div>
                         )}
@@ -456,7 +481,7 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
 
                 {/* AI Extraction Results */}
                 <AnimatePresence mode="wait">
-                    {step >= 4 && (
+                    {step >= 4 && !mobileCompact && (
                         <motion.div
                             key={`results-${cycle}`}
                             initial={{ opacity: 0, height: 0 }}
@@ -568,32 +593,8 @@ export function LandingLabView() {
                             <UploadAnimationPanel
                                 isActive={isAnalyzerInView}
                                 prefersReducedMotion={prefersReducedMotion}
+                                mobileCompact
                             />
-                        </motion.div>
-
-                        <motion.div
-                            className="grid gap-3"
-                            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-                            animate={isAnalyzerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                            transition={
-                                prefersReducedMotion
-                                    ? { duration: 0 }
-                                    : { duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }
-                            }
-                        >
-                            {MOBILE_LAB_STEPS.map((item) => (
-                                <div
-                                    key={item.label}
-                                    className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-3.5 text-left"
-                                >
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">
-                                        {item.label}
-                                    </p>
-                                    <p className="mt-1.5 text-[13px] leading-5 text-white/82">
-                                        {item.value}
-                                    </p>
-                                </div>
-                            ))}
                         </motion.div>
 
                         <motion.div

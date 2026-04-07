@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, Globe2 } from "lucide-react";
 import { FaAndroid, FaApple, FaWindows } from "react-icons/fa";
 import { platformDownloadLinks } from "./download-links";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const footerPlatforms = [
     { key: "windows", title: "Windows", href: platformDownloadLinks.windows.href, icon: FaWindows, iconColor: "#00A4EF" },
@@ -12,33 +13,35 @@ const footerPlatforms = [
 ];
 
 export function LandingFooter() {
+    const isMobile = useIsMobile();
+
     return (
         <footer className="bg-[#212121] text-[#9E9E9E] py-8 md:py-9 relative overflow-hidden">
             {/* Elementos decorativos do footer */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <motion.div
                     className="absolute top-0 left-0 w-96 h-96 bg-[#424242] rounded-full opacity-5 blur-3xl"
-                    animate={{
+                    animate={isMobile ? { x: 0, y: 0, scale: 1 } : {
                         x: [0, 10, 0],
                         y: [0, -10, 0],
                         scale: [1, 1.05, 1]
                     }}
                     transition={{
-                        duration: 15,
-                        repeat: Infinity,
+                        duration: isMobile ? 0 : 15,
+                        repeat: isMobile ? 0 : Infinity,
                         repeatType: "reverse"
                     }}
                 />
                 <motion.div
                     className="absolute bottom-0 right-0 w-96 h-96 bg-[#212121] rounded-full opacity-5 blur-3xl"
-                    animate={{
+                    animate={isMobile ? { x: 0, y: 0, scale: 1 } : {
                         x: [0, -10, 0],
                         y: [0, 10, 0],
                         scale: [1, 1.05, 1]
                     }}
                     transition={{
-                        duration: 12,
-                        repeat: Infinity,
+                        duration: isMobile ? 0 : 12,
+                        repeat: isMobile ? 0 : Infinity,
                         repeatType: "reverse"
                     }}
                 />

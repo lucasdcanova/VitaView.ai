@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ArrowUp, Brain, FileText, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const mockupStates = [
     {
@@ -51,14 +52,21 @@ const capabilities = [
 
 export function LandingFeatures() {
     const [activeState, setActiveState] = useState(0);
+    const isMobile = useIsMobile();
+    const stableMobileMotion = isMobile;
 
     useEffect(() => {
+        if (stableMobileMotion) {
+            setActiveState(0);
+            return;
+        }
+
         const timer = setInterval(() => {
             setActiveState((current) => (current + 1) % mockupStates.length);
         }, 3200);
 
         return () => clearInterval(timer);
-    }, []);
+    }, [stableMobileMotion]);
 
     const currentState = mockupStates[activeState];
 
@@ -73,7 +81,7 @@ export function LandingFeatures() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-14">
+                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
                     <motion.div
                         className="lg:w-[42%] w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, y: 18 }}
@@ -172,7 +180,7 @@ export function LandingFeatures() {
                                 </div>
 
                                 <div className="min-h-[320px] md:min-h-[360px] flex flex-col">
-                                    <div className="border-b border-white/10 px-4 py-4 sm:px-6">
+                                    <div className="hidden md:block border-b border-white/10 px-4 py-4 sm:px-6">
                                         <div className="mb-3">
                                             <p className="text-sm font-semibold text-white">Conversa ativa com o paciente em atendimento</p>
                                             <p className="mt-1 text-xs text-white/50">
@@ -192,7 +200,7 @@ export function LandingFeatures() {
                                     </div>
 
                                     <div className="flex flex-col">
-                                        <div className="border-b border-white/10 px-4 py-3 sm:px-6">
+                                        <div className="hidden md:block border-b border-white/10 px-4 py-3 sm:px-6">
                                             <div className="flex flex-wrap gap-2">
                                                 <AnimatePresence mode="wait">
                                                     <motion.div
@@ -217,15 +225,15 @@ export function LandingFeatures() {
                                             </div>
                                         </div>
 
-                                        <div className="flex-1 space-y-5 p-4 sm:p-6">
+                                        <div className="flex-1 space-y-5 p-4 sm:p-6 min-h-[240px] md:min-h-0">
                                             <AnimatePresence mode="wait">
                                                 <motion.div
                                                     key={`user-${activeState}`}
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
-                                                    transition={{ duration: 0.25 }}
-                                                    className="ml-auto w-fit max-w-[78%] rounded-[20px] rounded-br-md bg-white px-4 py-3 text-sm text-black shadow-[0_10px_24px_rgba(255,255,255,0.06)]"
+                                                    transition={stableMobileMotion ? { duration: 0 } : { duration: 0.25 }}
+                                                    className="ml-auto w-fit max-w-[78%] rounded-[20px] rounded-br-md bg-white px-4 py-3 text-sm text-black shadow-[0_10px_24px_rgba(255,255,255,0.06)] min-h-[68px] md:min-h-0"
                                                 >
                                                     {currentState.user}
                                                 </motion.div>
@@ -237,8 +245,8 @@ export function LandingFeatures() {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
-                                                    transition={{ duration: 0.28 }}
-                                                    className="max-w-[94%] rounded-[22px] rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-4 text-white"
+                                                    transition={stableMobileMotion ? { duration: 0 } : { duration: 0.28 }}
+                                                    className="max-w-[94%] rounded-[22px] rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-4 text-white min-h-[150px] md:min-h-0"
                                                 >
                                                     <div className="mb-3 flex items-center gap-3">
                                                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.08)]">

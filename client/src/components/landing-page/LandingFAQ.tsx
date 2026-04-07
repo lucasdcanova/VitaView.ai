@@ -135,23 +135,6 @@ export function LandingFAQ() {
                                         <div className="text-[15px] md:text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
                                     </div>
                                 </a>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
-                                        <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
-                                            <Clock className="w-5 h-5 text-[#9E9E9E]" />
-                                        </div>
-                                        <div className="text-sm font-medium text-white">Canal direto</div>
-                                        <div className="text-xs text-[#9E9E9E] mt-1">Contato por e-mail</div>
-                                    </div>
-                                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
-                                        <div className="w-10 h-10 mx-auto bg-[#212121]/20 rounded-full flex items-center justify-center mb-3">
-                                            <ShieldCheck className="w-5 h-5 text-[#9E9E9E]" />
-                                        </div>
-                                        <div className="text-sm font-medium text-white">Canal oficial</div>
-                                        <div className="text-xs text-[#9E9E9E] mt-1">Atendimento da equipe VitaView</div>
-                                    </div>
-                                </div>
                             </div>
                         </motion.div>
                     </div>

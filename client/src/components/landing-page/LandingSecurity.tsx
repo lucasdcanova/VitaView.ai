@@ -7,6 +7,7 @@ import {
     Server,
     ShieldCheck,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const securityStates = [
     {
@@ -55,14 +56,21 @@ const proofItems = [
 
 export function LandingSecurity() {
     const [activeState, setActiveState] = useState(0);
+    const isMobile = useIsMobile();
+    const stableMobileMotion = isMobile;
 
     useEffect(() => {
+        if (stableMobileMotion) {
+            setActiveState(0);
+            return;
+        }
+
         const timer = setInterval(() => {
             setActiveState((current) => (current + 1) % securityStates.length);
         }, 3200);
 
         return () => clearInterval(timer);
-    }, []);
+    }, [stableMobileMotion]);
 
     const currentState = securityStates[activeState];
 
@@ -71,7 +79,7 @@ export function LandingSecurity() {
             <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col-reverse lg:flex-row-reverse items-center gap-8 lg:gap-14">
+                <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-14">
                     <motion.div
                         className="lg:w-[46%] w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, x: 20 }}
@@ -179,8 +187,8 @@ export function LandingSecurity() {
                                             initial={{ opacity: 0, y: 12 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -12 }}
-                                            transition={{ duration: 0.28 }}
-                                            className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-white"
+                                            transition={stableMobileMotion ? { duration: 0 } : { duration: 0.28 }}
+                                            className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-white min-h-[252px] md:min-h-0"
                                         >
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex items-center gap-3">
@@ -212,7 +220,7 @@ export function LandingSecurity() {
                                                 ))}
                                             </div>
 
-                                            <div className="mt-4 rounded-2xl border border-white/10 bg-[#161616] p-3">
+                                            <div className="hidden md:block mt-4 rounded-2xl border border-white/10 bg-[#161616] p-3">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/40">
                                                         Status do momento

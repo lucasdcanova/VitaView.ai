@@ -104,8 +104,15 @@ export function useContinuousMedications(profileId?: number | null) {
         const previousByKey = new Map<string, any>();
 
         [...inactiveMedications, ...stoppedHistoryEntries].forEach((medication) => {
-            const key = medication.medicationId
-                ? `medication-${medication.medicationId}`
+            const normalizedMedicationId =
+                typeof medication.medicationId === "number"
+                    ? medication.medicationId
+                    : typeof medication.id === "number"
+                        ? medication.id
+                        : null;
+
+            const key = normalizedMedicationId !== null
+                ? `medication-${normalizedMedicationId}`
                 : `${medication.name}-${medication.startDate || ""}-${medication.endDate || ""}`;
 
             if (!previousByKey.has(key)) {

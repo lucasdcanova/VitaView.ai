@@ -10,7 +10,7 @@ export function LandingPrescription() {
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
                     {/* Text Content */}
-                    <div className="lg:w-1/2 order-2 lg:order-1 w-full max-w-md lg:max-w-none">
+                    <div className="lg:w-1/2 order-1 lg:order-1 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -86,7 +86,7 @@ export function LandingPrescription() {
                     </div>
 
                     {/* Visual Mockup */}
-                    <div className="lg:w-1/2 order-1 lg:order-2">
+                    <div className="lg:w-1/2 order-2 lg:order-2">
                         <motion.div
                             className="relative"
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -195,7 +195,7 @@ export function LandingPrescription() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-3">
+                                        <div className="hidden md:block space-y-3">
                                             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                                                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45 mb-2">Paciente</p>
                                                 <div className="space-y-2 text-[11px] text-white/70">

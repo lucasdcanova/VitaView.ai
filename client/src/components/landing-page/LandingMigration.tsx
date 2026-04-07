@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -225,7 +226,9 @@ export function LandingMigration() {
     amount: 0.25,
     margin: "0px 0px -10% 0px",
   });
+  const isMobile = useIsMobile();
   const reduced = useReducedMotion() ?? false;
+  const stableMobileMotion = reduced || isMobile;
   const hub = useMemo(() => getHubPoint(zoneSize), [zoneSize]);
   const animatedAssets = useMemo(
     () =>
@@ -302,8 +305,8 @@ export function LandingMigration() {
         <div className="grid items-center gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:gap-16">
 
           {/* ── LEFT: Text column ── */}
-          <motion.div
-            className="order-2 lg:order-1 w-full max-w-md lg:max-w-none"
+            <motion.div
+              className="order-1 lg:order-1 w-full max-w-md lg:max-w-none"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -384,7 +387,7 @@ export function LandingMigration() {
 
           {/* ── RIGHT: Animation card ── */}
           <motion.div
-            className="order-1 lg:order-2"
+            className="order-2 lg:order-2"
             ref={cardRef}
             initial={reduced ? false : { opacity: 0, scale: 0.98, y: 18 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
@@ -436,7 +439,7 @@ export function LandingMigration() {
                     label={a.label}
                     pillCls={a.pillCls}
                     isInView={isInView}
-                    reduced={reduced}
+                    reduced={stableMobileMotion}
                     index={i}
                     pillRef={(node) => {
                       pillRefs.current[i] = node;
@@ -475,15 +478,15 @@ export function LandingMigration() {
                         strokeWidth="1.2"
                         strokeLinecap="round"
                         strokeDasharray="3 8"
-                        initial={reduced ? false : { pathLength: 0, opacity: 0.1 }}
+                        initial={stableMobileMotion ? false : { pathLength: 0, opacity: 0.1 }}
                         animate={
                           isInView
                             ? { pathLength: 1, opacity: 0.88 }
                             : { pathLength: 0, opacity: 0.1 }
                         }
                         transition={{
-                          duration: reduced ? 0 : 0.7,
-                          delay: reduced ? 0 : i * 0.08,
+                          duration: stableMobileMotion ? 0 : 0.7,
+                          delay: stableMobileMotion ? 0 : i * 0.08,
                           ease: [0.22, 1, 0.36, 1],
                         }}
                       />
@@ -492,9 +495,9 @@ export function LandingMigration() {
                         cy={a.anchor.y}
                         r="2.6"
                         fill="rgba(255,255,255,0.9)"
-                        initial={reduced ? false : { opacity: 0, scale: 0.6 }}
+                        initial={stableMobileMotion ? false : { opacity: 0, scale: 0.6 }}
                         animate={isInView ? { opacity: 0.96, scale: 1 } : { opacity: 0, scale: 0.6 }}
-                        transition={{ duration: 0.28, delay: reduced ? 0 : i * 0.06 }}
+                        transition={{ duration: 0.28, delay: stableMobileMotion ? 0 : i * 0.06 }}
                       />
                     </g>
                   ))}
@@ -505,17 +508,17 @@ export function LandingMigration() {
                     cy={hub.y}
                     r="40"
                     fill="url(#hubGlow)"
-                    initial={reduced ? false : { opacity: 0 }}
+                    initial={stableMobileMotion ? false : { opacity: 0 }}
                     animate={
                       isInView
-                        ? reduced
+                        ? stableMobileMotion
                           ? { opacity: 1 }
                           : { opacity: [0.3, 0.8, 0.3] }
                         : { opacity: 0 }
                     }
                     transition={{
                       duration: 2.6,
-                      repeat: reduced ? 0 : Infinity,
+                      repeat: stableMobileMotion ? 0 : Infinity,
                       ease: "easeInOut",
                       delay: 0.5,
                     }}
@@ -529,7 +532,7 @@ export function LandingMigration() {
                     fill="none"
                     stroke="rgba(255,255,255,0.09)"
                     strokeWidth="1"
-                    initial={reduced ? false : { opacity: 0 }}
+                    initial={stableMobileMotion ? false : { opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ duration: 0.4, delay: 0.55 }}
                   />
@@ -542,17 +545,17 @@ export function LandingMigration() {
                     fill="rgba(255,255,255,0.07)"
                     stroke="rgba(255,255,255,0.22)"
                     strokeWidth="1.2"
-                    initial={reduced ? false : { opacity: 0 }}
+                    initial={stableMobileMotion ? false : { opacity: 0 }}
                     animate={
                       isInView
-                        ? reduced
+                        ? stableMobileMotion
                           ? { opacity: 1 }
                           : { opacity: [0.6, 1, 0.6] }
                         : { opacity: 0 }
                     }
                     transition={{
                       duration: 2.4,
-                      repeat: reduced ? 0 : Infinity,
+                      repeat: stableMobileMotion ? 0 : Infinity,
                       ease: "easeInOut",
                       delay: 0.6,
                     }}
@@ -564,13 +567,13 @@ export function LandingMigration() {
                     cy={hub.y}
                     r="8.5"
                     fill="rgba(255,255,255,0.18)"
-                    initial={reduced ? false : { opacity: 0 }}
+                    initial={stableMobileMotion ? false : { opacity: 0 }}
                     animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ duration: 0.4, delay: 0.7 }}
                   />
 
                   <motion.g
-                    initial={reduced ? false : { opacity: 0, scale: 0.86 }}
+                    initial={stableMobileMotion ? false : { opacity: 0, scale: 0.86 }}
                     animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
                     transition={{ duration: 0.38, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
                     style={{
@@ -602,7 +605,7 @@ export function LandingMigration() {
                   </motion.g>
 
                   {/* Traveling dots — animate along each path */}
-                  {!reduced &&
+                  {!stableMobileMotion &&
                     animatedAssets.map((a) => (
                       <circle key={`dot-${a.label}`} r="2.8" fill="white" opacity="0">
                         {isInView && (
@@ -629,10 +632,10 @@ export function LandingMigration() {
               </div>
 
               {/* ③ Divider */}
-              <div className="my-4 border-t border-white/[0.06]" />
+              <div className="my-4 hidden md:block border-t border-white/[0.06]" />
 
               {/* ④ Result strip — compact, below animation */}
-              <div className="relative z-10">
+              <div className="relative z-10 hidden md:block">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
                     VitaView pronto

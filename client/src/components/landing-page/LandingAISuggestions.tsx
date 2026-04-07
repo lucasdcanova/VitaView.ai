@@ -16,7 +16,7 @@ export function LandingAISuggestions() {
                 <div className="flex flex-col items-center gap-7 lg:flex-row lg:gap-24">
 
                     {/* Visual Mockup - Prescription Input with AI Suggestion */}
-                    <div className="lg:w-1/2 w-full max-w-md lg:max-w-none flex flex-col gap-4 md:gap-8 relative">
+                    <div className="order-2 lg:order-1 lg:w-1/2 w-full max-w-md lg:max-w-none flex flex-col gap-4 md:gap-8 relative">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +120,7 @@ export function LandingAISuggestions() {
                     </div>
 
                     {/* Text Content */}
-                    <div className="lg:w-1/2 w-full max-w-md lg:max-w-none">
+                    <div className="order-1 lg:order-2 lg:w-1/2 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             whileInView={{ opacity: 1, x: 0 }}

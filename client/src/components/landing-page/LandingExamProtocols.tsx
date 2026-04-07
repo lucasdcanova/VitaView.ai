@@ -38,7 +38,7 @@ export function LandingExamProtocols() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-24">
+                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-24">
                     <motion.div
                         className="lg:w-1/2 w-full max-w-md lg:max-w-none"
                         initial={{ opacity: 0, x: -20 }}
@@ -177,7 +177,7 @@ export function LandingExamProtocols() {
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                    <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                                         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">
                                                 ação
@@ -196,7 +196,7 @@ export function LandingExamProtocols() {
                                         </div>
                                     </div>
 
-                                    <div className="rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 flex items-start gap-3">
+                                    <div className="hidden md:flex rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 items-start gap-3">
                                         <Sparkles className="w-4 h-4 text-white mt-0.5 shrink-0" />
                                         <p className="text-[11px] sm:text-xs leading-relaxed text-white/55">
                                             Protocolos podem refletir sua forma de solicitar exames por hipótese, especialidade

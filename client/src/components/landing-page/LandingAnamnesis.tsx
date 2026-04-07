@@ -2,17 +2,25 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Wand2, FileText, CheckCircle2, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function LandingAnamnesis() {
     const [step, setStep] = useState(0); // 0: Recording, 1: Processando, 2: Finalizado
+    const isMobile = useIsMobile();
+    const stableMobileMotion = isMobile;
 
     useEffect(() => {
+        if (stableMobileMotion) {
+            setStep(0);
+            return;
+        }
+
         const timer = setInterval(() => {
             setStep((prev) => (prev + 1) % 3);
         }, 4000); // 4 segundos por estado
 
         return () => clearInterval(timer);
-    }, []);
+    }, [stableMobileMotion]);
 
     return (
         <section className="py-12 md:py-24 bg-[#0A0A0A] relative overflow-hidden">
@@ -26,7 +34,7 @@ export function LandingAnamnesis() {
                 <div className="flex flex-col items-center gap-6 lg:flex-row lg:gap-20">
 
                     {/* Lado Esquerdo: Texto */}
-                    <div className="order-2 lg:order-1 lg:w-1/2 w-full max-w-md lg:max-w-none">
+                    <div className="order-1 lg:order-1 lg:w-1/2 w-full max-w-md lg:max-w-none">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -95,7 +103,7 @@ export function LandingAnamnesis() {
                     </div>
 
                     {/* Lado Direito: Animação */}
-                    <div className="order-1 lg:order-2 lg:w-1/2 w-full">
+                    <div className="order-2 lg:order-2 lg:w-1/2 w-full">
                         <motion.div
                             className="relative bg-[#FAFAFA] rounded-2xl border border-[#E0E0E0] shadow-2xl overflow-hidden aspect-[4/3] md:aspect-[16/10]"
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -127,8 +135,8 @@ export function LandingAnamnesis() {
                                             <div className="relative">
                                                 <motion.div
                                                     className="absolute inset-0 bg-red-100 rounded-full"
-                                                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                    animate={stableMobileMotion ? { opacity: 0.18, scale: 1 } : { scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                                                    transition={stableMobileMotion ? { duration: 0 } : { duration: 2, repeat: Infinity }}
                                                 />
                                                 <div className="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center relative z-10 shadow-lg shadow-red-200">
                                                     <Mic className="w-10 h-10 text-white" />
@@ -141,12 +149,20 @@ export function LandingAnamnesis() {
                                                 </p>
                                                 <div className="flex justify-center gap-1 mt-4 h-4 items-end">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <motion.div
-                                                            key={i}
-                                                            className="w-1 bg-[#212121] rounded-full"
-                                                            animate={{ height: [10, 24, 10] }}
-                                                            transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1 }}
-                                                        />
+                                                        stableMobileMotion ? (
+                                                            <div
+                                                                key={i}
+                                                                className="w-1 bg-[#212121] rounded-full"
+                                                                style={{ height: [10, 16, 22, 16, 10][i] }}
+                                                            />
+                                                        ) : (
+                                                            <motion.div
+                                                                key={i}
+                                                                className="w-1 bg-[#212121] rounded-full"
+                                                                animate={{ height: [10, 24, 10] }}
+                                                                transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1 }}
+                                                            />
+                                                        )
                                                     ))}
                                                 </div>
                                             </div>
@@ -162,7 +178,7 @@ export function LandingAnamnesis() {
                                             exit={{ opacity: 0 }}
                                             className="flex flex-col items-center w-full max-w-md"
                                         >
-                                            <div className="w-16 h-16 bg-[#212121] rounded-2xl flex items-center justify-center mb-6 shadow-xl animate-bounce">
+                                            <div className={`w-16 h-16 bg-[#212121] rounded-2xl flex items-center justify-center mb-6 shadow-xl ${stableMobileMotion ? "" : "animate-bounce"}`}>
                                                 <Wand2 className="w-8 h-8 text-white" />
                                             </div>
                                             <h3 className="text-xl font-bold text-[#212121] mb-2">Estruturando atendimento</h3>
