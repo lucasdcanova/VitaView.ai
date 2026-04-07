@@ -20,27 +20,6 @@ install_js_dependencies() {
   npm install --include=dev
 }
 
-set_ci_build_number() {
-  if [ -z "${CI_BUILD_NUMBER:-}" ]; then
-    echo "[ci_pre_xcodebuild] CI_BUILD_NUMBER not set; keeping existing build number"
-    return 0
-  fi
-
-  case "$CI_BUILD_NUMBER" in
-    *[!0-9]*)
-      echo "[ci_pre_xcodebuild] CI_BUILD_NUMBER is not numeric ($CI_BUILD_NUMBER); skipping build-number override"
-      return 0
-      ;;
-  esac
-
-  BUILD_NUMBER=$((10000 + CI_BUILD_NUMBER))
-  echo "[ci_pre_xcodebuild] Setting build number to $BUILD_NUMBER (CI_BUILD_NUMBER=$CI_BUILD_NUMBER)"
-  (
-    cd ios/App
-    xcrun agvtool new-version -all "$BUILD_NUMBER"
-  )
-}
-
 ensure_node_tooling() {
   REQUIRED_NODE_MAJOR=22
 
@@ -119,7 +98,9 @@ if command -v npm >/dev/null 2>&1; then
   echo "[ci_pre_xcodebuild] npm: $(npm -v)"
 fi
 
-set_ci_build_number
+# Build number is controlled by CURRENT_PROJECT_VERSION in project.pbxproj and
+# bumped manually per release. Previous attempts to override via agvtool here
+# were no-ops because the project doesn't use VERSIONING_SYSTEM=apple-generic.
 
 missing=0
 for required_path in \
