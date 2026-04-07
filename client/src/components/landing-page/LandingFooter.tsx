@@ -56,14 +56,16 @@ export function LandingFooter() {
                 >
                     <div className="grid gap-5 md:grid-cols-[0.72fr_1.28fr] md:items-center">
                         <div className="max-w-sm">
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
-                                Downloads
-                            </span>
+                            <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/45">
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/35" />
+                                <span>Acesso em qualquer dispositivo</span>
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/35" />
+                            </div>
                             <h2 className="mt-4 text-2xl font-heading font-bold tracking-tight text-white md:text-[2.1rem]">
                                 Baixe o VitaView.
                             </h2>
                             <p className="mt-2 text-[13px] leading-6 text-white/55 md:text-[14px]">
-                                Acesse no desktop, no celular ou direto pelo navegador.
+                                Desktop, celular ou navegador no mesmo ecossistema de uso.
                             </p>
                         </div>
 
@@ -157,11 +159,11 @@ export function LandingFooter() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-2">
                                 {[
                                     { label: "Visualização Clínica", href: "#como-funciona" },
-                                    { label: "Anamnese com IA", href: "#anamnese-ia" },
-                                    { label: "Dose Inteligente", href: "#dose-inteligente" },
+                                    { label: "Anamnese", href: "#anamnese-ia" },
+                                    { label: "Sugestão de dose", href: "#dose-inteligente" },
                                     { label: "Prescrição Digital", href: "#prescricao-digital" },
                                     { label: "Solicitação de Exames", href: "#protocolos-exames" },
-                                    { label: "Agenda com IA", href: "#agenda" },
+                                    { label: "Agenda clínica", href: "#agenda" },
                                     { label: "Vita Assist", href: "#recursos" },
                                     { label: "Migração", href: "#migracao" },
                                     { label: "Segurança", href: "#seguranca" },

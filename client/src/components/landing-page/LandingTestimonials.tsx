@@ -68,12 +68,14 @@ export function LandingTestimonials() {
           transition={{ duration: 0.5 }}
           className="mx-auto mb-6 max-w-4xl text-center md:mb-7"
         >
-          <span
-            className="inline-flex items-center rounded-full border border-white/12 bg-white/6 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.22em] !text-white/65"
-            style={{ color: "rgba(255,255,255,0.7)" }}
+          <div
+            className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] !text-white/55"
+            style={{ color: "rgba(255,255,255,0.62)" }}
           >
-            Depoimentos
-          </span>
+            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+            <span>Relatos de uso em rotina real</span>
+            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+          </div>
           <h2
             className="mt-3 text-2xl font-heading font-semibold leading-[1.06] tracking-tight !text-[#F5F5F5] md:text-[2.3rem] lg:text-[2.7rem]"
             style={{ color: "#F5F5F5" }}
@@ -90,7 +92,7 @@ export function LandingTestimonials() {
             className="mx-auto mt-3 max-w-2xl font-body text-[13px] leading-relaxed !text-[#B0B0B0] md:text-[14px]"
             style={{ color: "#B0B0B0" }}
           >
-            Relatos menos ensaiados de médicos que já colocaram o VitaView entre retorno,
+            Relatos diretos de médicos que já colocaram o VitaView entre retorno,
             revisão de exames e acompanhamento contínuo.
           </p>
         </motion.div>

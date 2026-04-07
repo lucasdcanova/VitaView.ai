@@ -79,10 +79,12 @@ export function LandingSecurity() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
                     >
-                        <span className="inline-flex items-center gap-2 rounded-full border border-[#E0E0E0] bg-[#F7F7F7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#424242]">
+                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-[#666666]">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
                             <ShieldCheck className="w-3.5 h-3.5 text-[#212121]" />
-                            Segurança Operacional
-                        </span>
+                            <span>Controles ativos na operação</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+                        </div>
 
                         <h2 className="mt-5 text-3xl sm:text-4xl md:text-[3.15rem] md:whitespace-nowrap font-heading font-bold text-[#212121] leading-[1.02] tracking-tight">
                             Segurança <span className="text-[#9E9E9E]">Inegociável.</span>
@@ -90,7 +92,7 @@ export function LandingSecurity() {
 
                         <p className="mt-5 max-w-xl text-base md:text-[17px] leading-relaxed text-[#616161]">
                             A proteção no VitaView não depende de uma única barreira. Ela se distribui entre acesso,
-                            sessão, aplicação e armazenamento de documentos sensíveis, com recursos já presentes na plataforma.
+                            sessão, aplicação e armazenamento de documentos sensíveis, com controles presentes no fluxo da plataforma.
                         </p>
 
                         <div className="mt-6 space-y-3">

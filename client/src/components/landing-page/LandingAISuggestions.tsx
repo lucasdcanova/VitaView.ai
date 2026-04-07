@@ -32,7 +32,7 @@ export function LandingAISuggestions() {
                                     {/* Mock Label */}
                                     <div className="flex justify-between items-center">
                                         <label className="text-sm font-medium text-white/80">Medicamento / Substância</label>
-                                        <span className="text-xs text-white/40">Busca inteligente</span>
+                                        <span className="text-xs text-white/40">Busca contextual</span>
                                     </div>
 
                                     {/* Mock Input Field */}
@@ -53,7 +53,7 @@ export function LandingAISuggestions() {
                                             <div className="p-1">
                                                 <div className="flex items-center justify-between px-3 py-2 bg-white/5 rounded">
                                                     <span className="text-white font-medium">Dipirona 500mg</span>
-                                                    <span className="text-xs bg-white text-black px-1.5 py-0.5 rounded font-bold">IA</span>
+                                                    <span className="text-xs bg-white text-black px-1.5 py-0.5 rounded font-bold">Vita</span>
                                                 </div>
                                             </div>
 
@@ -113,7 +113,7 @@ export function LandingAISuggestions() {
                                     </div>
                                 </div>
                                 <p className="mt-4 text-[11px] text-white/40 italic text-center">
-                                    "IA ajustando dosagem via algoritmos de farmacologia integrada."
+                                    Dosagem sugerida a partir do contexto farmacológico do paciente.
                                 </p>
                             </div>
                         </motion.div>
@@ -127,17 +127,19 @@ export function LandingAISuggestions() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                         >
-                            <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white font-bold tracking-wide text-xs uppercase mb-4 border border-white/20">
-                                Diferencial VitaView
-                            </span>
+                            <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                                <span>Preenchimento assistido na prescrição</span>
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                            </div>
                             <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-tight mb-6">
-                                Sugestão Inteligente <br />
+                                Sugestão de dose <br />
                                 <span className="text-white/50">
-                                    de Dose.
+                                    pronta para revisar.
                                 </span>
                             </h2>
                             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-                                Esqueça a busca manual por posologias. Nossa IA analisa o contexto do paciente e sugere a posologia mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.
+                                Esqueça a busca manual por posologias. O VitaView considera o contexto do paciente e antecipa a dose mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.
                             </p>
 
                             <div className="grid grid-cols-1 gap-6 mb-8">

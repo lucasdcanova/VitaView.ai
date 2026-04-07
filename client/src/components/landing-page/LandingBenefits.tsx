@@ -59,21 +59,25 @@ export function LandingBenefits() {
                     transition={{ duration: 0.5 }}
                     className="text-center mb-10 md:mb-16"
                 >
-                    <motion.span
-                        className="inline-block px-4 py-1.5 bg-[#E0E0E0] text-[#212121] border border-[#9E9E9E] shadow-sm rounded-full text-sm font-medium mb-4 md:mb-6"
+                    <motion.div
+                        className="mb-4 md:mb-6 flex justify-center"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
                     >
-                        Visão Completa
-                    </motion.span>
+                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#555555]">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#757575]" />
+                            <span>Painel clínico em perspectiva</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#757575]" />
+                        </div>
+                    </motion.div>
 
                     <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-4 md:mb-6">
-                        Uma Nova <span className="text-[#424242]">Visão</span> para a Saúde
+                        Uma Nova <span className="text-[#424242]">Leitura</span> da Saúde
                     </h2>
                     <p className="text-base md:text-lg text-[#212121] text-opacity-90 mb-8 md:mb-12 max-w-2xl mx-auto px-2">
-                        O VitaView AI amplia sua capacidade de análise, transformando dados complexos em uma visão clara e acionável da vida do paciente.
+                        O VitaView organiza exames, histórico e evolução em uma visão clara e acionável da jornada do paciente.
                     </p>
                 </motion.div>
 

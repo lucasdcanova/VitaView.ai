@@ -19,9 +19,11 @@ export function LandingForWhom() {
                     transition={{ duration: 0.5 }}
                     className="text-center mb-8 md:mb-10"
                 >
-                    <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#E0E0E0] text-[#212121] mb-4">
-                        <Users className="w-4 h-4 mr-2" />
-                        <span className="text-xs font-medium uppercase tracking-[0.12em]">Versatilidade Profissional</span>
+                    <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                        <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                        <Users className="w-3.5 h-3.5 text-white/75" />
+                        <span>Fluxos para diferentes operações</span>
+                        <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
                     </div>
                     <h2 className="text-2xl md:text-[2.5rem] font-bold text-white mb-3 md:mb-4">
                         Soluções para cada <span className="text-white">Cenário</span>
@@ -58,11 +60,11 @@ export function LandingForWhom() {
                             <ul className="space-y-2">
                                 <li className="flex items-start">
                                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                                    <span className="text-[#9E9E9E] text-[13px]">Prontuário inteligente automatizado</span>
+                                    <span className="text-[#9E9E9E] text-[13px]">Prontuário estruturado e automatizado</span>
                                 </li>
                                 <li className="flex items-start">
                                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />
-                                    <span className="text-[#9E9E9E] text-[13px]">Agenda e lembretes inteligentes</span>
+                                    <span className="text-[#9E9E9E] text-[13px]">Agenda e lembretes organizados</span>
                                 </li>
                                 <li className="flex items-start">
                                     <CheckCircle2 className="h-5 w-5 text-[#212121] mt-0.5 mr-2 flex-shrink-0" />

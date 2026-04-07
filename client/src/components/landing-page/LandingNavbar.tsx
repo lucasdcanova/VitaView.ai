@@ -11,7 +11,7 @@ export function LandingNavbar() {
 
     const navItems = [
         { id: "como-funciona", label: "Exames" },
-        { id: "anamnese-ia", label: "Anamnese IA" },
+        { id: "anamnese-ia", label: "Anamnese" },
         { id: "prescricao-digital", label: "Prescrição" },
         { id: "agenda", label: "Agenda" },
         { id: "recursos", label: "Vita Assist" },

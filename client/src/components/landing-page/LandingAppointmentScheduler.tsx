@@ -13,9 +13,9 @@ export function LandingAppointmentScheduler() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-6 md:mb-8"
                 >
-                    <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-3 md:mb-4">Agenda Inteligente</h2>
+                    <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-3 md:mb-4">Agenda Clínica</h2>
                     <p className="text-base md:text-lg text-[#616161] max-w-2xl mx-auto px-2">
-                        Visualize consultas, horários livres e prioridades em uma única agenda, com apoio de IA para organizar sua rotina clínica.
+                        Visualize consultas, horários livres e prioridades em uma única agenda, com contexto suficiente para organizar a rotina sem retrabalho.
                     </p>
                 </motion.div>
 
@@ -273,7 +273,7 @@ export function LandingAppointmentScheduler() {
                                 <Brain className="w-4.5 h-4.5 text-[#212121]" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9E9E9E] mb-1">Assistente IA</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9E9E9E] mb-1">Apoio de agenda</p>
                                 <h4 className="text-sm font-bold text-[#212121] leading-tight mb-1">Ajuda na marcação</h4>
                                 <p className="text-[11px] text-[#616161] leading-snug">
                                     Apoio para organizar encaixes e prioridades ao longo do dia.

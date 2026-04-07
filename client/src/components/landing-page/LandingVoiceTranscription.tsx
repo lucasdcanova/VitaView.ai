@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Mic, Sparkles, Lock, Wand2, RefreshCcw, FileSearch } from "lucide-react";
+import { Mic, Lock, Wand2, RefreshCcw, FileSearch } from "lucide-react";
 
 export function LandingVoiceTranscription() {
     return (
@@ -59,7 +59,7 @@ export function LandingVoiceTranscription() {
                         >
                             <div className="bg-[#F9F9F9] border-b border-[#E0E0E0] px-4 py-2.5 flex items-center gap-2">
                                 <RefreshCcw className="w-4 h-4 text-[#212121]" />
-                                <span className="text-xs font-bold text-[#212121] uppercase tracking-wide">Melhoria Inteligente</span>
+                                <span className="text-xs font-bold text-[#212121] uppercase tracking-wide">Refinamento Clínico</span>
                             </div>
                             <div className="p-5 flex flex-col gap-3">
                                 <div className="bg-[#FAFAFA] border border-[#E0E0E0] rounded-lg p-3 relative opacity-80">
@@ -74,7 +74,7 @@ export function LandingVoiceTranscription() {
                                     </div>
                                 </div>
                                 <div className="bg-[#F4FFF4] border border-[#CDECCD] rounded-lg p-3 relative">
-                                    <span className="absolute -top-2.5 left-3 bg-[#CDECCD] text-[#1D7A1D] text-[9px] font-bold px-1.5 py-0.5 rounded">REFINAMENTO IA</span>
+                                    <span className="absolute -top-2.5 left-3 bg-[#CDECCD] text-[#1D7A1D] text-[9px] font-bold px-1.5 py-0.5 rounded">TEXTO REVISADO</span>
                                     <p className="text-[12px] text-[#212121] mt-1 font-medium leading-relaxed">
                                         Cefaleia há 3 dias, associada a episódios de náusea.
                                     </p>
@@ -116,18 +116,19 @@ export function LandingVoiceTranscription() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.2 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#F5F5F5] border border-[#E0E0E0] mb-4">
-                            <Sparkles className="w-3 h-3 text-[#212121]" />
-                            <span className="text-[10px] font-bold text-[#212121] uppercase tracking-wide">Inteligência Artificial</span>
+                        <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#666666]">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
+                            <span>Anotações em linguagem clínica</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
                         </div>
 
                         <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-[1.1] mb-5 tracking-tight">
-                            Sua parceira inteligente na <br />
-                            <span className="text-[#9E9E9E]">construção da anamnese.</span>
+                            Sua consulta vira <br />
+                            <span className="text-[#9E9E9E]">anamnese organizada.</span>
                         </h2>
 
                         <p className="text-base md:text-lg text-[#616161] leading-relaxed mb-6 max-w-lg">
-                            Foque apenas no paciente. O VitaView não só transforma áudio em texto clínico, como também aprimora anotações rápidas que você digita e extrai o núcleo de históricos médicos extensos automaticamente.
+                            Foque apenas no paciente. O VitaView transforma áudio em texto clínico, lapida anotações rápidas e destaca o núcleo de históricos médicos extensos automaticamente.
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8">
@@ -156,7 +157,7 @@ export function LandingVoiceTranscription() {
                                     <RefreshCcw className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Melhorar com IA</h4>
+                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Lapidar texto</h4>
                                     <p className="text-xs text-[#616161] leading-relaxed">Aprimora e formata textos digitados manualmente.</p>
                                 </div>
                             </div>
@@ -166,7 +167,7 @@ export function LandingVoiceTranscription() {
                                     <FileSearch className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Extrair com IA</h4>
+                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Extrair contexto</h4>
                                     <p className="text-xs text-[#616161] leading-relaxed">Pinça sintomas e histórico de grandes blocos de texto.</p>
                                 </div>
                             </div>

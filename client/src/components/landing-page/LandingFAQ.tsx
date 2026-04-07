@@ -15,24 +15,24 @@ export function LandingFAQ() {
 
     const faqs = [
         {
-            question: "Como funciona a Anamnese com IA e gravação de voz?",
-            answer: "Durante a consulta, você ativa a gravação de voz e foca totalmente no paciente. Nossa IA transcreve a conversa em tempo real, estrutura as informações em formato clínico (queixa principal, história da doença atual, exame físico) e gera a anamnese completa automaticamente. Você só revisa e confirma."
+            question: "Como funciona a anamnese com gravação de voz?",
+            answer: "Durante a consulta, você ativa a gravação de voz e foca totalmente no paciente. O VitaView transcreve a conversa em tempo real, estrutura as informações em formato clínico e gera a anamnese automaticamente. Você só revisa e confirma."
         },
         {
-            question: "O que a Prescrição Inteligente oferece?",
-            answer: "A prescrição inteligente permite buscar medicamentos com autocomplete, definir posologia e gerar o documento final em segundos. Além disso, o sistema alerta sobre interações medicamentosas, ajudando a evitar erros e garantindo mais segurança para o paciente."
+            question: "O que a prescrição digital oferece?",
+            answer: "A prescrição digital permite buscar medicamentos com autocomplete, definir posologia e gerar o documento final em segundos. Além disso, o sistema alerta sobre interações medicamentosas, ajudando a evitar erros e garantindo mais segurança para o paciente."
         },
         {
-            question: "Como a Agenda com IA e triagem pré-consulta funcionam?",
-            answer: "A agenda inteligente ajuda a organizar horários, encaixes e prioridades da rotina. Antes da consulta, a triagem e o contexto do atendimento ficam mais acessíveis para que você chegue ao caso com um panorama melhor."
+            question: "Como a agenda e a triagem pré-consulta funcionam?",
+            answer: "A agenda ajuda a organizar horários, encaixes e prioridades da rotina. Antes da consulta, a triagem e o contexto do atendimento ficam mais acessíveis para que você chegue ao caso com um panorama melhor."
         },
         {
             question: "O que é o Vita Assist?",
-            answer: "O Vita Assist é seu assistente clínico com IA. Ele pode sugerir hipóteses diagnósticas com base nos dados do paciente, recomendar protocolos de exames, auxiliar na interpretação de resultados e responder dúvidas clínicas — tudo integrado ao prontuário do paciente."
+            answer: "O Vita Assist é o assistente clínico do VitaView. Ele ajuda a sugerir hipóteses, recomendar protocolos de exames, apoiar a interpretação de resultados e responder dúvidas clínicas com base no contexto do prontuário."
         },
         {
             question: "Quais planos estão disponíveis?",
-            answer: "Você pode começar no plano Gratuito. Para uma rotina individual com mais IA, volume e automação, há o Vita Pro. Para clínicas com até 5 profissionais, o Vita Team amplia a operação com recursos de equipe e gestão centralizada."
+            answer: "Você pode começar no plano Gratuito. Para uma rotina individual com mais automação e volume, há o Vita Pro. Para clínicas com até 5 profissionais, o Vita Team amplia a operação com recursos de equipe e gestão centralizada."
         }
     ];
 
@@ -56,7 +56,7 @@ export function LandingFAQ() {
                         Perguntas <span className="text-[#9E9E9E]">Frequentes.</span>
                     </h2>
                     <p className="text-base md:text-[17px] text-white/60 max-w-2xl mx-auto px-2">
-                        Tire suas dúvidas sobre as ferramentas do VitaView AI e como elas podem transformar sua rotina clínica.
+                        Tire suas dúvidas sobre as ferramentas do VitaView e como elas se encaixam na sua rotina clínica.
                     </p>
                 </motion.div>
 

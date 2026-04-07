@@ -308,9 +308,11 @@ export function LandingMigration() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#D4CEC4] bg-white/80 px-3 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.18em] text-[#424242] backdrop-blur-md">
+            <div className="mb-4 inline-flex items-center gap-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.22em] text-[#666666]">
+              <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
               <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#212121]" />
-              {"Migração assistida de outro sistema"}
+              <span>{"Entrada assistida a partir de outro sistema"}</span>
+              <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
             </div>
 
             <h2 className="max-w-2xl text-2xl font-heading font-bold leading-[1.06] tracking-tight text-[#212121] sm:text-3xl md:text-4xl lg:text-[42px]">

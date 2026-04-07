@@ -33,9 +33,11 @@ export function LandingAnamnesis() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                         >
-                            <span className="inline-block py-1 px-3 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white/90 mb-6 tracking-wide uppercase backdrop-blur-sm">
-                                <span className="mr-2">✨</span> Inteligência Artificial
-                            </span>
+                            <div className="mb-6 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                                <span>Consulta captada em tempo real</span>
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                            </div>
 
                             <h2 className="text-3xl md:text-5xl font-heading font-bold text-white mb-6 leading-tight">
                                 Sua voz vira <br />
@@ -45,7 +47,7 @@ export function LandingAnamnesis() {
                             </h2>
 
                             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-                                Foque no paciente, não na tela. Grave a consulta e nossa IA transcreve, resume e organiza tudo automaticamente no padrão médico.
+                                Foque no paciente, não na tela. Grave a consulta e o VitaView transcreve, resume e organiza tudo automaticamente no padrão médico.
                             </p>
 
                             <div className="space-y-4 mb-8">
@@ -152,7 +154,7 @@ export function LandingAnamnesis() {
                                             <div className="w-16 h-16 bg-[#212121] rounded-2xl flex items-center justify-center mb-6 shadow-xl animate-bounce">
                                                 <Wand2 className="w-8 h-8 text-white" />
                                             </div>
-                                            <h3 className="text-xl font-bold text-[#212121] mb-2">Processando com IA</h3>
+                                            <h3 className="text-xl font-bold text-[#212121] mb-2">Estruturando atendimento</h3>
                                             <div className="w-full bg-[#E0E0E0] rounded-full h-2 mb-6 overflow-hidden">
                                                 <motion.div
                                                     className="bg-[#212121] h-2 rounded-full"

@@ -81,9 +81,11 @@ export function LandingFeatures() {
                         viewport={{ once: true, margin: "-120px" }}
                         transition={{ duration: 0.5 }}
                     >
-                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">
-                            Vita Assist
-                        </span>
+                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                            <span>Assistente clínico contextual</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                        </div>
 
                         <h2 className="mt-5 text-3xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white leading-[1.04] tracking-tight">
                             Vita Assist <br />
@@ -147,7 +149,7 @@ export function LandingFeatures() {
                                         </div>
                                         <div>
                                             <p className="text-base font-bold text-white">Vita Assist</p>
-                                            <p className="text-sm text-white/60">Chat com IA clínica contextual dentro da plataforma</p>
+                                            <p className="text-sm text-white/60">Chat clínico contextual dentro da plataforma</p>
                                         </div>
                                     </div>
 

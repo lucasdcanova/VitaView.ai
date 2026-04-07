@@ -162,7 +162,7 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                         <FileUp className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-sm md:text-base font-bold text-white">Envio Inteligente</h3>
+                        <h3 className="text-sm md:text-base font-bold text-white">Envio de exames</h3>
                         <p className="text-[10px] md:text-xs text-[#9E9E9E]">Arraste arquivos para análise automática</p>
                     </div>
                 </div>
@@ -340,7 +340,7 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                                 <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}>
                                     <Brain className="w-7 h-7 text-purple-400" />
                                 </motion.div>
-                                <span className="text-xs text-purple-300/90 font-medium">IA analisando documentos...</span>
+                                <span className="text-xs text-purple-300/90 font-medium">Estruturando resultados...</span>
                                 {/* Scanning dots */}
                                 <div className="flex gap-1">
                                     {[0, 1, 2].map(i => (
@@ -456,7 +456,7 @@ function UploadAnimationPanel({ isActive, prefersReducedMotion }: { isActive: bo
                             <div className="bg-emerald-500/[0.08] border border-emerald-500/20 rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span className="text-[11px] text-emerald-300 font-semibold">Dados extraídos pela IA</span>
+                                    <span className="text-[11px] text-emerald-300 font-semibold">Dados estruturados para o prontuário</span>
                                 </div>
                                 <div className="space-y-1.5">
                                     {currentExtractions.map((item, i) => (
@@ -507,21 +507,25 @@ export function LandingLabView() {
                     transition={{ duration: 0.5 }}
                     className="text-center mb-6 md:mb-10"
                 >
-                    <motion.span
-                        className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full text-sm font-medium mb-3 md:mb-4"
+                    <motion.div
+                        className="mb-4 md:mb-5 flex justify-center"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
                     >
-                        Análise Inteligente
-                    </motion.span>
+                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                            <span>Exames integrados ao prontuário</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                        </div>
+                    </motion.div>
 
                     <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">
-                        Envie exames, <span className="text-[#9E9E9E]">a IA faz o resto</span>
+                        Envie exames, <span className="text-[#9E9E9E]">tudo entra estruturado</span>
                     </h2>
                     <p className="text-sm md:text-base text-[#E0E0E0] mb-4 md:mb-6 max-w-2xl mx-auto px-2">
-                        Arraste PDFs ou imagens de exames e nossa IA extrai, interpreta e integra todos os resultados
+                        Arraste PDFs ou imagens de exames e o VitaView extrai, interpreta e integra todos os resultados
                         diretamente no prontuário do paciente — com gráficos de evolução automáticos.
                     </p>
                 </motion.div>

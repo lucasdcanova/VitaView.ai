@@ -17,28 +17,30 @@ export function LandingPrescription() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                         >
-                            <span className="inline-block py-1 px-3 rounded-full bg-white text-[#212121] font-bold tracking-wide text-xs uppercase mb-4 border border-[#E0E0E0] shadow-sm">
-                                Prescrição Facilitada
-                            </span>
+                            <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#666666]">
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
+                                <span>Revisão de prescrição em fluxo</span>
+                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+                            </div>
                             <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-tight mb-6">
                                 Renovação de receitas <br />
                                 <span className="text-[#757575]">em segundos.</span>
                             </h2>
                             <p className="text-lg text-[#616161] mb-8 leading-relaxed">
                                 Renove tratamentos contínuos com velocidade e segurança.
-                                A IA cruza medicamentos, histórico e alergias antes de gerar a prescrição para destacar interações relevantes no momento da revisão.
+                                O VitaView cruza medicamentos, histórico e alergias antes de gerar a prescrição, destacando interações relevantes no momento da revisão.
                             </p>
 
                             <div className="space-y-4 mb-8">
                                 {[
                                     {
                                         icon: <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />,
-                                        title: "Análise de Interações com IA",
+                                        title: "Revisão de Interações",
                                         desc: "Cruza medicamentos, alergias e histórico do paciente antes de imprimir.",
                                         featured: true
                                     },
                                     { icon: <Zap className="w-5 h-5" />, title: "Renovação em 1 clique", desc: "Repita receitas anteriores instantaneamente." },
-                                    { icon: <Sparkles className="w-5 h-5" />, title: "Sugestão Inteligente", desc: "IA que sugere a melhor dose para cada medicamento." },
+                                    { icon: <Sparkles className="w-5 h-5" />, title: "Dose sugerida", desc: "Posologia sugerida com base no contexto da prescrição." },
                                     { icon: <Shield className="w-5 h-5" />, title: "Segurança Clínica", desc: "Alertas de alergias e interações medicamentosas." },
                                     { icon: <RefreshCw className="w-5 h-5" />, title: "Base Atualizada", desc: "Milhares de medicamentos com posologia sugerida." }
                                 ].map((item, index) => (
@@ -131,7 +133,7 @@ export function LandingPrescription() {
                                 <div className="mt-2">
                                     <button className="w-full bg-[#161616] border border-[#212121] text-white py-3 rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2 hover:bg-black transition-colors">
                                         <Sparkles className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                        Analisar Interações com IA
+                                        Revisar interações
                                     </button>
                                 </div>
 
@@ -149,7 +151,7 @@ export function LandingPrescription() {
                                                 <Sparkles className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/45 mb-1">Análise de Interações com IA</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/45 mb-1">Interações relevantes</p>
                                                 <p className="text-sm font-semibold leading-tight">Varredura clínica automática antes da impressão</p>
                                             </div>
                                         </div>
@@ -176,7 +178,7 @@ export function LandingPrescription() {
                                                     <span className="font-semibold text-white">Alergias + uso contínuo</span>
                                                 </div>
                                                 <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[11px] text-white/70">
-                                                    <span>Recomendação da IA</span>
+                                                    <span>Orientação sugerida</span>
                                                     <span className="font-semibold text-yellow-300">Orientar uso noturno</span>
                                                 </div>
                                             </div>
@@ -202,7 +204,7 @@ export function LandingPrescription() {
                                             </div>
 
                                             <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 p-3">
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200/80 mb-2">Resumo IA</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-200/80 mb-2">Resumo clínico</p>
                                                 <p className="text-[11px] leading-relaxed text-yellow-50/90">
                                                     A plataforma sinaliza interações relevantes antes de emitir a receita, com contexto clínico e recomendação objetiva para a revisão final.
                                                 </p>

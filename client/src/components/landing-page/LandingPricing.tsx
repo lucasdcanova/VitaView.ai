@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export function LandingPricing() {
     const freeFeatures = [
-        "Anamnese básica sem IA",
+        "Anamnese básica",
         "Prescrição digital limitada",
         "Agenda básica",
         "Até 5 pacientes",
@@ -36,7 +36,7 @@ export function LandingPricing() {
                         </h2>
                         <p className="mx-auto max-w-2xl font-body text-[13px] text-[#757575] md:text-[14px]">
                             Você pode entrar no VitaView sem custo com o plano gratuito. Se depois fizer sentido
-                            ampliar a rotina com IA, mais pacientes e mais automação, o Vita Pro entra como próximo passo.
+                            ampliar a capacidade da rotina, o volume de pacientes e as automações, o Vita Pro entra como próximo passo.
                         </p>
                     </motion.div>
                 </div>
@@ -110,13 +110,13 @@ export function LandingPricing() {
 
                         <ul className="mb-4 space-y-2 md:space-y-2.5">
                             {[
-                                "Anamnese com <strong>IA</strong> e Gravação de Voz",
+                                "Anamnese com <strong>gravação de voz</strong>",
                                 "Prescrição <strong>Ilimitada</strong> com Alerta de Interações",
                                 "Protocolos de Exames <strong>Personalizáveis</strong>",
-                                "Análise de Exames com <strong>IA</strong>",
+                                "<strong>Análise</strong> de exames estruturada",
                                 "Gráficos de <strong>Evolução</strong> de Exames",
                                 "Upload de Exames <strong>Ilimitados</strong>",
-                                "<strong>Vita Assist</strong> – Assistente Inteligente",
+                                "<strong>Vita Assist</strong> – Assistente clínico contextual",
                                 "Relatórios <strong>Completos</strong>"
                             ].map((feature, i) => (
                                 <li key={i} className="flex items-center text-[13px] md:text-[14px]">

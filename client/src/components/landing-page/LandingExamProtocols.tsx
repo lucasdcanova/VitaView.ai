@@ -46,10 +46,12 @@ export function LandingExamProtocols() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
                     >
-                        <span className="inline-flex items-center gap-2 py-1 px-3 rounded-full bg-white/10 text-white font-bold tracking-wide text-xs uppercase mb-4 border border-white/15">
-                            <FlaskConical className="w-3.5 h-3.5" />
-                            Solicitação Inteligente
-                        </span>
+                        <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
+                            <FlaskConical className="w-3.5 h-3.5 text-white/70" />
+                            <span>Protocolos para pedidos recorrentes</span>
+                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                        </div>
 
                         <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-[1.1] mb-5 tracking-tight">
                             Exames laboratoriais <br />

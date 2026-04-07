@@ -292,7 +292,7 @@ export function LandingHero() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.45, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        Concentre-se no paciente enquanto nossa IA cuida da burocracia.
+                        Concentre-se no paciente enquanto o VitaView organiza a rotina clínica.
                         Uma plataforma simples, objetiva e completa.
                     </motion.p>
 
