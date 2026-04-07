@@ -178,6 +178,17 @@ const getPlanBillingSuffix = (interval?: string | null) => {
   return '/mês';
 };
 
+const VITA_PRO_FEATURES = [
+  "Anamnese com <strong>gravação de voz</strong>",
+  "Prescrição <strong>Ilimitada</strong> com sugestão de dose e alerta de interações",
+  "Protocolos de Exames <strong>Personalizáveis</strong>",
+  "Upload de Exames <strong>Ilimitados</strong> com análise estruturada",
+  "Gráficos de <strong>Evolução</strong> de Exames",
+  "Agenda clínica com <strong>triagem pré-consulta</strong>",
+  "<strong>Vita Assist</strong> – Assistente clínico contextual",
+  "Gestão de pacientes <strong>ilimitada</strong>",
+];
+
 const SubscriptionManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -681,6 +692,11 @@ const SubscriptionManagement = () => {
   const hasActiveSubscription = subscriptionData?.subscription && subscriptionData.subscription.status === 'active';
   const currentPlan = subscriptionData?.plan;
   const subscription = subscriptionData?.subscription;
+  const currentPlanFeatures = normalizePlanName(currentPlan?.name).includes('vita pro')
+    ? VITA_PRO_FEATURES
+    : Array.isArray(currentPlan?.features)
+      ? currentPlan.features
+      : [];
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -754,14 +770,7 @@ const SubscriptionManagement = () => {
                           <div className="space-y-3">
                             <ul className="space-y-2">
                               {[
-                                "Anamnese com <strong>IA</strong> e Gravação de Voz",
-                                "Prescrição <strong>Ilimitada</strong> com Alerta de Interações",
-                                "Protocolos de Exames <strong>Personalizáveis</strong>",
-                                "Análise de Exames com <strong>IA</strong>",
-                                "Gráficos de <strong>Evolução</strong> de Exames",
-                                "Upload de Exames <strong>Ilimitados</strong>",
-                                "<strong>Vita Assist</strong> – Assistente Inteligente",
-                                "Relatórios <strong>Completos</strong>"
+                                ...VITA_PRO_FEATURES
                               ].map((item, i) => (
                                 <li key={i} className="flex items-start text-sm">
                                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
@@ -911,7 +920,7 @@ const SubscriptionManagement = () => {
                       <div>
                         <h4 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Recursos Inclusos</h4>
                         <ul className="space-y-2">
-                          {Array.isArray(currentPlan?.features) && currentPlan?.features.map((feature, index) => (
+                          {currentPlanFeatures.map((feature, index) => (
                             <li key={index} className="flex items-start text-sm">
                               <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
                               <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
