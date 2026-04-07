@@ -1254,8 +1254,7 @@ const SubscriptionManagement = () => {
             }
 
 
-            {/* SECTION 3: Plans for Clinics - hidden on iOS (no In-App Purchase products available) */}
-            {!usesAppStoreBilling && (
+            {/* SECTION 3: Plans for Clinics - all plans available via StoreKit IAP on iOS */}
             <section className="space-y-8" ref={plansRef}>
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Building className="h-5 w-5 text-primary" />
@@ -1471,7 +1470,6 @@ const SubscriptionManagement = () => {
                 </Card>
               </div>
             </section>
-            )}
 
             {/* SECTION 4: Payment History - hidden on iOS where Apple manages billing */}
             {!usesAppStoreBilling && (
