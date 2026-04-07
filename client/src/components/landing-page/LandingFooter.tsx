@@ -8,8 +8,7 @@ const footerPlatforms = [
     { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" },
     { key: "web", title: "Web", href: platformDownloadLinks.web.href, icon: Globe2, iconColor: "#E7C88D", target: "_blank" as const },
     { key: "mac", title: "macOS", href: platformDownloadLinks.mac.href, icon: FaApple, iconColor: "#F5F5F5" },
-    { key: "ios", title: "iPhone", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" },
-    { key: "ipad", title: "iPad", href: platformDownloadLinks.ipad.href, icon: FaApple, iconColor: "#F5F5F5" }
+    { key: "ios", title: "iOS", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" }
 ];
 
 export function LandingFooter() {
