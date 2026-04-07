@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useRoute, Link, useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Sidebar from "@/components/layout/sidebar";
-import MobileHeader from "@/components/layout/mobile-header";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -51,14 +49,6 @@ function getChangeIconForMetric(change: string | null): JSX.Element {
   }
 }
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import {
   Tabs,
   TabsContent,
@@ -421,8 +411,64 @@ export default function ExamReport() {
     structuredAnalysis?.detailedAnalysis ||
     (typeof data?.result?.detailedAnalysis === "string" ? data.result.detailedAnalysis : "");
 
+  const handleDownloadPdf = async () => {
+    if (!data) return;
+    const newTab = window.open('', '_blank');
+    if (newTab) {
+      newTab.document.write(
+        '<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Relatório...</div></body></html>'
+      );
+    }
+    try {
+      const response = await fetch(`/api/export-exam-report/${examId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        if (newTab) newTab.location.href = url;
+        else window.open(url, '_blank');
+      } else {
+        newTab?.close();
+        alert('Erro ao gerar o PDF do relatório');
+      }
+    } catch (error) {
+      newTab?.close();
+      console.error('Erro ao baixar PDF:', error);
+      alert('Erro ao gerar o PDF do relatório');
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: `Relatório de Exame - ${data?.exam.name}`,
+          text: data?.result?.summary || undefined,
+          url: window.location.href,
+        })
+        .catch(() => {
+          navigator.clipboard.writeText(window.location.href);
+          alert('Link copiado para a área de transferência!');
+        });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copiado para a área de transferência!');
+    }
+  };
+
+  const isAnalyzed =
+    data?.exam?.status === "analyzed" || data?.exam?.status === "extraction_only";
+  const labName =
+    data?.exam?.laboratoryName ||
+    structuredMetadata.institutionName ||
+    structuredMetadata.laboratoryName;
+  const physicianName =
+    data?.exam?.requestingPhysician || structuredMetadata.requestingPhysician;
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       {/* Diálogo de confirmação de exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -448,190 +494,107 @@ export default function ExamReport() {
         </DialogContent>
       </Dialog>
 
-      <div className="md:hidden">
-        <MobileHeader />
-      </div>
-
-      <div className="flex flex-1 relative">
-        <Sidebar className="hidden md:flex" />
-
-        <main className="flex-1 overflow-y-auto bg-background">
-          {/* Cabeçalho */}
-          <div className="sticky top-0 z-30 border-b bg-card shadow-sm">
-            <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div>
-                  <h1 className="text-xl font-semibold text-foreground flex items-center">
-                    {isLoading ? (
-                      <Skeleton className="h-6 w-32" />
-                    ) : (
-                      <>
-                        {data?.exam?.name || "Resultado do Exame"}
-                        {(data?.exam?.status === "analyzed" || data?.exam?.status === "extraction_only") && (
-                          <Badge className="ml-3 bg-green-100 text-green-800 hover:bg-green-100 border border-green-200">
-                            Analisado
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                  </h1>
-                  {!isLoading && data?.exam && (
-                    <div className="flex items-center text-sm text-muted-foreground space-x-3">
-                      <span>Enviado {formatRelativeDate(data.exam?.uploadDate?.toString())}</span>
-                      <span>•</span>
-                      <span className="flex items-center">
-                        {getFileIcon(data.exam?.fileType)}{' '}
-                        <span className="ml-1">{data.exam?.fileType?.toUpperCase()}</span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="p-4 md:p-6 max-w-5xl mx-auto">
+          {/* Header da página — segue o padrão de patient-view: dentro do main, sticky leve */}
+          <header className="sticky top-0 z-20 -mx-4 md:-mx-6 mb-4 bg-background/95 backdrop-blur-sm px-4 md:px-6 py-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="hidden md:flex"
-                  onClick={async () => {
-                    if (!data) return;
-
-                    const newTab = window.open('', '_blank');
-                    if (newTab) {
-                      newTab.document.write('<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><div>Gerando Relatório...</div></body></html>');
-                    }
-
-                    try {
-                      const response = await fetch(`/api/export-exam-report/${examId}`, {
-                        method: 'POST',
-                        credentials: 'include'
-                      });
-
-                      if (response.ok) {
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        if (newTab) newTab.location.href = url;
-                        else window.open(url, '_blank');
-                      } else {
-                        newTab?.close();
-                        alert('Erro ao gerar o PDF do relatório');
-                      }
-                    } catch (error) {
-                      newTab?.close();
-                      console.error('Erro ao baixar PDF:', error);
-                      alert('Erro ao gerar o PDF do relatório');
-                    }
-                  }}
+                  className="-ml-2 mb-1 h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setLocation("/exam-history")}
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Baixar PDF
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hidden md:flex"
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: `Relatório de Exame - ${data?.exam.name}`,
-                        text: data?.result?.summary || undefined,
-                        url: window.location.href
-                      }).catch(() => {
-                        navigator.clipboard.writeText(window.location.href);
-                        alert('Link copiado para a área de transferência!');
-                      });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('Link copiado para a área de transferência!');
-                    }
-                  }}
-                >
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Compartilhar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={handleDeleteClick}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </Button>
-              </div>
-            </div>
-
-            <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-y-2 border-t border-border bg-muted/30">
-              <Link href="/exam-history">
-                <Button variant="ghost" size="sm" className="gap-1.5 mr-4 text-muted-foreground hover:text-foreground">
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>
-              </Link>
-              {!isLoading && data?.exam && (
-                <>
-                  <div className="flex items-center text-sm text-muted-foreground mr-6">
-                    <Calendar className="mr-2 h-4 w-4 text-primary-500" />
-                    <span className="font-medium">
-                      {formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
-                    </span>
-                  </div>
-
-                  {(data.exam.laboratoryName || structuredMetadata.institutionName || structuredMetadata.laboratoryName) && (
-                    <div className="flex items-center text-sm text-muted-foreground mr-6">
-                      <Building className="mr-2 h-4 w-4 text-primary-500" />
-                      <span className="font-medium">{data.exam.laboratoryName || structuredMetadata.institutionName || structuredMetadata.laboratoryName}</span>
-                    </div>
-                  )}
-
-                  {(data.exam.requestingPhysician || structuredMetadata.requestingPhysician) && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <UserRound className="mr-2 h-4 w-4 text-primary-500" />
-                      <span className="font-medium">Dr. {data.exam.requestingPhysician || structuredMetadata.requestingPhysician}</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="p-4 md:p-6 max-w-5xl mx-auto">
-
-            <div>
-              {/* Report Details */}
-              <div className="bg-card rounded-xl shadow-sm p-6">
                 {isLoading ? (
-                  <>
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <Skeleton className="h-7 w-64 mb-2" />
-                        <Skeleton className="h-5 w-40" />
-                      </div>
-                      <div className="flex space-x-2">
-                        <Skeleton className="h-9 w-9 rounded-lg" />
-                        <Skeleton className="h-9 w-9 rounded-lg" />
-                        <Skeleton className="h-9 w-9 rounded-lg" />
-                      </div>
-                    </div>
+                  <Skeleton className="h-7 w-64" />
+                ) : (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight break-words">
+                      {data?.exam?.name || "Resultado do Exame"}
+                    </h1>
+                    {isAnalyzed && (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-900">
+                        Analisado
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                {!isLoading && data?.exam && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground md:text-sm">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {data?.result?.analysisDate
+                        ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
+                        : formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
+                    </span>
+                    {labName && (
+                      <span className="flex items-center gap-1">
+                        <Building className="h-3.5 w-3.5" />
+                        <span className="truncate max-w-[200px] md:max-w-none">{labName}</span>
+                      </span>
+                    )}
+                    {physicianName && (
+                      <span className="flex items-center gap-1">
+                        <UserRound className="h-3.5 w-3.5" />
+                        Dr. {physicianName}
+                      </span>
+                    )}
+                    {data?.exam?.fileType && (
+                      <span className="flex items-center gap-1">
+                        {getFileIcon(data.exam.fileType)}
+                        {data.exam.fileType.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-1 md:gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:flex h-8 w-8"
+                  onClick={handleDownloadPdf}
+                  title="Baixar PDF"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:flex h-8 w-8"
+                  onClick={handleShare}
+                  title="Compartilhar"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  onClick={handleDeleteClick}
+                  title="Excluir exame"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </header>
 
-                    <div className="mb-6">
-                      <Skeleton className="h-10 w-full mb-6" />
-                      <Skeleton className="h-32 w-full mb-4" />
-                      <Skeleton className="h-32 w-full" />
-                    </div>
-                  </>
+          <div>
+            {/* Report Details — sem card wrapper extra; o conteúdo flui direto sob o header */}
+            <div>
+                {isLoading ? (
+                  <div className="mb-6">
+                    <Skeleton className="h-10 w-full mb-6" />
+                    <Skeleton className="h-32 w-full mb-4" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
                 ) : (
                   <>
-                    <div className="mb-6">
-                      <h2 className="text-xl font-semibold text-foreground">{data?.exam.name}</h2>
-                      <p className="text-muted-foreground">
-                        {data?.result?.analysisDate
-                          ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
-                          : data?.exam?.uploadDate
-                            ? `Enviado em ${formatDate(data.exam.uploadDate.toString())}`
-                            : "Data de análise indisponível"}
-                      </p>
-                    </div>
-
                     <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
                       <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
                         <TabsTrigger
@@ -1288,12 +1251,10 @@ export default function ExamReport() {
                     </Tabs>
                   </>
                 )}
-              </div>
-
             </div>
           </div>
-        </main>
-      </div >
-    </div >
+        </div>
+      </main>
+    </div>
   );
 }
