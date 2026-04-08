@@ -180,7 +180,20 @@ export const ExamUploadScene: React.FC = () => {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
             {titleWords.map((w, i) => (
-              <span key={i} style={{ ...w.style, fontFamily: montserrat, fontSize: fs(38, v), fontWeight: 700, color: c.textStrong, letterSpacing: -0.8 }}>{w.word}</span>
+              <span
+                key={i}
+                style={{
+                  ...w.style,
+                  fontFamily: montserrat,
+                  fontSize: fs(38, v),
+                  fontWeight: 700,
+                  color: c.textStrong,
+                  letterSpacing: -0.8,
+                  marginRight: v ? 16 : 12,
+                }}
+              >
+                {w.word}
+              </span>
             ))}
           </div>
           <p style={{

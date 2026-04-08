@@ -28,13 +28,17 @@ export const TranscriptionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
   const v = height > width;
+  const timelineScale = v ? 1.18 : 1;
+  const waveStart = 0.5 * fps;
+  const waveEnd = (v ? 4.9 : 4) * fps;
+  const charRevealStep = fps * (v ? 0.034 : 0.026);
 
   const titleWords = wordReveal('Voz para Prontuário', frame, fps, 0.15 * fps, 0.07);
-  const waveActive = frame > 0.5 * fps && frame < 4 * fps;
+  const waveActive = frame > waveStart && frame < waveEnd;
   const pad = v ? 30 : 30;
   const cW = v ? 850 : 750;
 
-  const cardDelay = 4.2 * fps;
+  const cardDelay = (v ? 5.1 : 4.2) * fps;
   const cardR = reveal(frame, fps, cardDelay, { y: 20 });
 
   return (
@@ -83,14 +87,14 @@ export const TranscriptionScene: React.FC = () => {
             {/* Lines */}
             <div style={{ padding: '8px 18px 18px' }}>
               {LINES.map((line, i) => {
-                const ld = line.time * fps + 0.5 * fps;
+                const ld = line.time * timelineScale * fps + waveStart;
                 const lo = interpolate(frame, [ld, ld + 0.4 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
                 const ly = interpolate(frame, [ld, ld + 0.4 * fps], [8, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.quad) });
-                const chars = frame > ld ? Math.min(line.text.length, Math.floor((frame - ld) / (fps * 0.026))) : 0;
+                const chars = frame > ld ? Math.min(line.text.length, Math.floor((frame - ld) / charRevealStep)) : 0;
 
                 return (
-                  <div key={i} style={{ opacity: lo, transform: `translateY(${ly}px)`, marginBottom: 8, display: 'flex', gap: 7 }}>
-                    <div style={{ fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: line.speaker === 'Médico' ? c.textDefault : c.blue, minWidth: 55, paddingTop: 2 }}>{line.speaker}</div>
+                  <div key={i} style={{ opacity: lo, transform: `translateY(${ly}px)`, marginBottom: 8, display: 'flex', gap: v ? 12 : 10 }}>
+                    <div style={{ fontFamily: montserrat, fontSize: fs(10, v), fontWeight: 700, color: line.speaker === 'Médico' ? c.textDefault : c.blue, minWidth: v ? 68 : 62, paddingTop: 2 }}>{line.speaker}</div>
                     <div style={{ fontFamily: openSans, fontSize: fs(13, v), color: c.textDefault, lineHeight: 1.4 }}>
                       {line.text.slice(0, chars)}
                       {chars < line.text.length && chars > 0 && (
