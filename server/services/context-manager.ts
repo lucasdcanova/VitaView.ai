@@ -1,11 +1,15 @@
 import { IStorage } from "../storage";
+import { pool } from "../db";
 import logger from "../logger";
 import { stripClinicalHtml } from "@shared/clinical-rich-text";
 
-// Limite maior para permitir que o Vita Assist veja o histórico clínico inteiro
-// em formato condensado, sem estourar desnecessariamente o contexto do modelo.
-const CONTEXT_CHAR_LIMIT = 24000;
-const ITEM_EXCERPT_LIMIT = 280;
+// Limites generosos: o GPT-4o aceita 128k tokens (~512k chars) de entrada e a
+// resposta do Vita Assist usa só ~6k tokens, então temos folga para incluir o
+// histórico clínico completo do paciente sem truncar detalhes importantes.
+const CONTEXT_CHAR_LIMIT = 80000;
+const ITEM_EXCERPT_LIMIT = 600;
+const EVOLUTION_EXCERPT_LIMIT = 800;
+const EXAM_SUMMARY_EXCERPT_LIMIT = 600;
 
 interface ScoredItem {
     type: 'exam' | 'medication' | 'diagnosis' | 'allergy' | 'evolution';
@@ -133,6 +137,64 @@ export class ContextManager {
     }
 
     /**
+     * Busca medicações em uso (isActive=true) e suspensas (isActive=false) do
+     * paciente, direto do banco. A tabela `medications` é mantida via
+     * /api/medications fora do storage tradicional, então consultamos via pool.
+     */
+    private async getMedicationsForProfile(profileId: number): Promise<{
+        active: any[];
+        suspended: any[];
+    }> {
+        try {
+            const result = await pool.query(
+                `SELECT id, name, format, dosage, dosage_unit, frequency, dose_amount,
+                        prescription_type, quantity, administration_route, notes,
+                        start_date, end_date, is_active, created_at
+                   FROM medications
+                  WHERE profile_id = $1
+                  ORDER BY is_active DESC, created_at DESC`,
+                [profileId]
+            );
+            const rows = result.rows || [];
+            return {
+                active: rows.filter((row: any) => row.is_active === true),
+                suspended: rows.filter((row: any) => row.is_active === false),
+            };
+        } catch (error) {
+            logger.warn("[ContextManager] Failed to fetch medications", { profileId, error });
+            return { active: [], suspended: [] };
+        }
+    }
+
+    private formatMedicationLine(medication: any): string {
+        const name = this.normalizeText(medication.name || "Medicamento");
+        const dosage = this.normalizeText(medication.dosage);
+        const dosageUnit = this.normalizeText(medication.dosage_unit || medication.dosageUnit);
+        const frequency = this.normalizeText(medication.frequency);
+        const route = this.normalizeText(medication.administration_route || medication.administrationRoute);
+        const format = this.normalizeText(medication.format);
+        const startDate = medication.start_date || medication.startDate;
+        const endDate = medication.end_date || medication.endDate;
+        const notes = this.truncateText(medication.notes, 160);
+
+        const dosageStr = dosage ? `${dosage}${dosageUnit ? ` ${dosageUnit}` : ""}` : "";
+        const since = startDate ? `desde ${this.formatDate(startDate)}` : "";
+        const until = endDate ? `até ${this.formatDate(endDate)}` : "";
+        const window = [since, until].filter(Boolean).join(" ");
+
+        const parts = [
+            name,
+            dosageStr,
+            frequency,
+            format ? `(${format}${route ? `, ${route}` : ""})` : route ? `(${route})` : "",
+            window,
+            notes ? `obs: ${notes}` : "",
+        ].filter(Boolean);
+
+        return parts.join(" | ");
+    }
+
+    /**
      * Gera um contexto clínico integral, condensando todo o histórico do paciente
      * em seções organizadas para o Vita Assist responder com base no prontuário.
      */
@@ -156,6 +218,7 @@ export class ContextManager {
                 triageHistory,
                 prescriptions,
                 healthMetrics,
+                medicationsForProfile,
             ] = await Promise.all([
                 this.storage.getDiagnosesByUserId(dataOwnerUserId),
                 this.storage.getSurgeriesByUserId(dataOwnerUserId),
@@ -165,7 +228,11 @@ export class ContextManager {
                 this.storage.getTriageHistoryByProfileId(profileId),
                 this.storage.getPrescriptionsByProfileId(profileId),
                 this.storage.getHealthMetricsByUserId(dataOwnerUserId, profileId, clinicId),
+                this.getMedicationsForProfile(profileId),
             ]);
+
+            const activeMedications = medicationsForProfile.active;
+            const suspendedMedications = medicationsForProfile.suspended;
 
             const diagnoses = allDiagnoses
                 .filter((diagnosis: any) => diagnosis.profileId === profileId)
@@ -263,7 +330,7 @@ export class ContextManager {
                         exam?.summary ||
                         exam?.laboratoryName ||
                         exam?.name,
-                        180
+                        EXAM_SUMMARY_EXCERPT_LIMIT
                     );
                     const examName = this.normalizeText(exam.name || exam.title || "Exame");
                     const laboratoryName = this.normalizeText(exam.laboratoryName);
@@ -279,9 +346,17 @@ export class ContextManager {
                 )
                 .map((evolution: any) => {
                     const professionalName = this.normalizeText(evolution.professionalName || "Profissional");
-                    const text = this.truncateText(evolution.text, 220);
+                    const text = this.truncateText(evolution.text, EVOLUTION_EXCERPT_LIMIT);
                     return `${this.formatDate(evolution.date || evolution.createdAt)} | ${professionalName}: ${text}`;
                 });
+
+            const activeMedicationLines = activeMedications.map((medication: any) =>
+                this.formatMedicationLine(medication)
+            );
+
+            const suspendedMedicationLines = suspendedMedications.map((medication: any) =>
+                this.formatMedicationLine(medication)
+            );
 
             const triageLines = triageHistory
                 .slice()
@@ -329,11 +404,28 @@ export class ContextManager {
             contextBuilder = this.appendSection(contextBuilder, "RESUMO CLÍNICO", [
                 `Diagnósticos ativos/crônicos: ${activeDiagnoses.length > 0 ? activeDiagnoses.map((diagnosis: any) => this.normalizeText(diagnosis.cidCode)).join(", ") : "nenhum registrado"}`,
                 `Alergias relevantes: ${allergies.length > 0 ? allergies.map((allergy: any) => this.normalizeText(allergy.allergen)).join(", ") : "nenhuma registrada"}`,
+                `Medicações em uso atual: ${activeMedications.length}`,
                 `Prescrições no prontuário: ${prescriptions.length}`,
                 `Evoluções registradas: ${evolutions.length}`,
                 `Exames registrados: ${exams.length}`,
                 `Triagens registradas: ${triageHistory.length}`,
             ]);
+
+            contextBuilder = this.appendSection(
+                contextBuilder,
+                `MEDICAÇÕES EM USO ATUAL (${activeMedicationLines.length})`,
+                activeMedicationLines.length > 0
+                    ? activeMedicationLines
+                    : ["Nenhuma medicação em uso registrada no prontuário."]
+            );
+
+            if (suspendedMedicationLines.length > 0) {
+                contextBuilder = this.appendSection(
+                    contextBuilder,
+                    `MEDICAÇÕES SUSPENSAS (${suspendedMedicationLines.length})`,
+                    suspendedMedicationLines
+                );
+            }
 
             contextBuilder = this.appendSection(
                 contextBuilder,
@@ -357,8 +449,10 @@ export class ContextManager {
 
             contextBuilder = this.appendSection(
                 contextBuilder,
-                `PRESCRIÇÕES E MEDICAÇÕES (${prescriptionLines.length})`,
-                prescriptionLines.length > 0 ? prescriptionLines : ["Nenhuma prescrição registrada."]
+                `HISTÓRICO DE PRESCRIÇÕES EMITIDAS (${prescriptionLines.length})`,
+                prescriptionLines.length > 0
+                    ? prescriptionLines
+                    : ["Nenhuma prescrição emitida registrada."]
             );
 
             contextBuilder = this.appendSection(
@@ -392,6 +486,8 @@ export class ContextManager {
                 keywords,
                 diagnoses: diagnosisLines.length,
                 allergies: allergyLines.length,
+                activeMedications: activeMedicationLines.length,
+                suspendedMedications: suspendedMedicationLines.length,
                 prescriptions: prescriptionLines.length,
                 surgeries: surgeryLines.length,
                 triages: triageLines.length,

@@ -2955,7 +2955,9 @@ Princípios obrigatórios de resposta:
 - Diferencie evidência forte de opinião especializada.
 - Use linguagem técnica, objetiva e profissional.
 - Quando houver contexto de paciente, use esse histórico como base principal da resposta.
-- Considere diagnósticos, evoluções, exames, triagens, alergias e prescrições antes de responder.
+- Considere TODAS as seções fornecidas: diagnósticos, MEDICAÇÕES EM USO ATUAL, evoluções, exames, triagens, alergias, prescrições e cirurgias antes de responder.
+- A seção "MEDICAÇÕES EM USO ATUAL" lista o que o paciente está tomando hoje — sempre confira interações, alergias e contraindicações contra esses itens.
+- Mantenha continuidade da conversa: o histórico de mensagens anteriores faz parte do contexto e deve ser respeitado nas respostas seguintes.
 - Se uma informação necessária não estiver no histórico fornecido, diga explicitamente que ela não consta no prontuário disponível.
 
 Limites de atuação:
@@ -3001,7 +3003,9 @@ export async function vitaAssistChat(
       model: model,
       messages: chatMessages,
       temperature: 0.4,
-      max_tokens: 4000
+      // 6000 tokens — espaço suficiente para respostas clínicas longas com
+      // múltiplas seções (resumo, condutas, referências) sem truncar.
+      max_tokens: 6000
     });
 
     if (response.usage) {
