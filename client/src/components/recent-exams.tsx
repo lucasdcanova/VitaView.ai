@@ -10,6 +10,15 @@ import { LazyComponent, useLazyLoading } from "@/components/ui/lazy-image";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import { useProfiles } from "@/hooks/use-profiles";
+import { setExamReturnContext } from "@/lib/exam-navigation";
+
+const captureReturnContext = () => {
+  if (typeof window === "undefined") return;
+  setExamReturnContext({
+    path: window.location.pathname || "/atendimento",
+    label: "Voltar",
+  });
+};
 
 export default function RecentExams() {
   const { ref, isInView } = useLazyLoading(0.1, '100px');
@@ -98,8 +107,12 @@ export default function RecentExams() {
           <h2 className="text-xl font-semibold text-gray-800">Exames Recentes</h2>
           <p className="text-sm text-gray-500 mt-1">Visualize seus exames analisados pela IA</p>
         </div>
-        <Link href="/history">
-          <Button variant="outline" className="flex items-center gap-1 text-primary-600 border-primary-200 hover:border-primary-300 hover:bg-primary-50 font-medium px-4">
+        <Link href="/exam-history">
+          <Button
+            variant="outline"
+            className="flex items-center gap-1 text-primary-600 border-primary-200 hover:border-primary-300 hover:bg-primary-50 font-medium px-4"
+            onClick={captureReturnContext}
+          >
             Ver todos
             <ArrowUpRight size={16} />
           </Button>
@@ -216,6 +229,7 @@ export default function RecentExams() {
                         <Button
                           size="sm"
                           className="bg-primary-600 hover:bg-primary-700 shadow-sm font-medium px-3 flex items-center gap-1"
+                          onClick={captureReturnContext}
                         >
                           Ver análise
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -241,8 +255,12 @@ export default function RecentExams() {
           ))}
 
           <div className="flex justify-center pt-4 mt-2">
-            <Link href="/history">
-              <Button variant="outline" className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 border-primary-100 hover:border-primary-200 font-medium flex items-center gap-2">
+            <Link href="/exam-history">
+              <Button
+                variant="outline"
+                className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 border-primary-100 hover:border-primary-200 font-medium flex items-center gap-2"
+                onClick={captureReturnContext}
+              >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>

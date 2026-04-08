@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
 import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "@/hooks/use-profiles";
 import {
   ArrowLeft,
   FileText,
@@ -33,8 +34,21 @@ import {
   Clipboard,
   LineChart,
   Clock,
-  Trash2
+  Trash2,
+  MoreVertical,
+  Sparkles
 } from "lucide-react";
+import Sidebar from "@/components/layout/sidebar";
+import MobileHeader from "@/components/layout/mobile-header";
+import PatientHeader from "@/components/patient-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getExamReturnContext, clearExamReturnContext } from "@/lib/exam-navigation";
 
 // Função para mostrar ícone de variação baseado no valor
 function getChangeIconForMetric(change: string | null): JSX.Element {
@@ -122,7 +136,20 @@ export default function ExamReport() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { activeProfile } = useProfiles();
   const examId = match && params ? parseInt(params.id) : 0;
+
+  // Smart back navigation: if the user came from atendimento or another
+  // page, return there instead of the hardcoded exam history.
+  const returnContext = getExamReturnContext({
+    path: "/exam-history",
+    label: "Voltar ao histórico",
+  });
+
+  const handleBack = () => {
+    setLocation(returnContext.path);
+    clearExamReturnContext();
+  };
 
   // Verificar se existe um parâmetro 'tab' na URL para definir a aba ativa inicialmente
   const getInitialTab = () => {
@@ -166,8 +193,9 @@ export default function ExamReport() {
         variant: "default",
       });
 
-      // Redirecionando para a página de resultados
-      setLocation("/results");
+      // Voltar ao contexto de origem (atendimento, histórico, etc.)
+      setLocation(returnContext.path);
+      clearExamReturnContext();
     },
     onError: (error) => {
       toast({
@@ -467,8 +495,24 @@ export default function ExamReport() {
   const physicianName =
     data?.exam?.requestingPhysician || structuredMetadata.requestingPhysician;
 
+  // Compact metadata pieces for the PatientHeader description.
+  const metadataParts: string[] = [];
+  if (data?.exam) {
+    const dateLabel = data?.result?.analysisDate
+      ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
+      : formatDate(data.exam.examDate || data.exam.uploadDate?.toString());
+    if (dateLabel) metadataParts.push(dateLabel);
+    if (labName) metadataParts.push(labName);
+    if (physicianName) metadataParts.push(`Dr. ${physicianName}`);
+    if (data.exam.fileType) metadataParts.push(data.exam.fileType.toUpperCase());
+  }
+  const headerDescription = metadataParts.length ? metadataParts.join(" • ") : undefined;
+  const headerTitle = data?.exam?.name || "Resultado do exame";
+
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
+      <MobileHeader />
+
       {/* Diálogo de confirmação de exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -494,97 +538,69 @@ export default function ExamReport() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-1 overflow-y-auto bg-background">
-        <div className="p-4 md:p-6 max-w-5xl mx-auto">
-          {/* Header da página — segue o padrão de patient-view: dentro do main, sticky leve */}
-          <header className="sticky top-0 z-20 -mx-4 md:-mx-6 mb-4 bg-background/95 backdrop-blur-sm px-4 md:px-6 py-2">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-2 mb-1 h-8 gap-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => setLocation("/exam-history")}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-64" />
-                ) : (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight break-words">
-                      {data?.exam?.name || "Resultado do Exame"}
-                    </h1>
-                    {isAnalyzed && (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-900">
-                        Analisado
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                {!isLoading && data?.exam && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground md:text-sm">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {data?.result?.analysisDate
-                        ? `Analisado em ${formatDate(data.result.analysisDate.toString())}`
-                        : formatDate(data.exam.examDate || data.exam.uploadDate?.toString())}
-                    </span>
-                    {labName && (
-                      <span className="flex items-center gap-1">
-                        <Building className="h-3.5 w-3.5" />
-                        <span className="truncate max-w-[200px] md:max-w-none">{labName}</span>
-                      </span>
-                    )}
-                    {physicianName && (
-                      <span className="flex items-center gap-1">
-                        <UserRound className="h-3.5 w-3.5" />
-                        Dr. {physicianName}
-                      </span>
-                    )}
-                    {data?.exam?.fileType && (
-                      <span className="flex items-center gap-1">
-                        {getFileIcon(data.exam.fileType)}
-                        {data.exam.fileType.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-1 md:gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden md:flex h-8 w-8"
-                  onClick={handleDownloadPdf}
-                  title="Baixar PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden md:flex h-8 w-8"
-                  onClick={handleShare}
-                  title="Compartilhar"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                  onClick={handleDeleteClick}
-                  title="Excluir exame"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </header>
+      <div className="flex flex-1 relative">
+        <Sidebar />
 
-          <div>
+        <main className="flex-1 bg-background overflow-y-auto">
+          <PatientHeader
+            title={isLoading ? "Carregando exame..." : headerTitle}
+            description={headerDescription}
+            patient={activeProfile}
+            showTitleAsMain
+            compact
+            icon={<Microscope className="h-5 w-5 sm:h-6 sm:w-6" />}
+          >
+            <div className="flex w-full items-center gap-2 md:w-auto md:justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBack}
+                className="h-9 gap-1.5 rounded-xl border-border/80 bg-background/80 px-3 text-xs sm:h-10 sm:text-sm"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="truncate">{returnContext.label}</span>
+              </Button>
+              {isAnalyzed && (
+                <Badge className="hidden h-9 items-center rounded-full border border-green-500/30 bg-green-500/10 px-2.5 text-xs font-medium text-green-700 dark:bg-green-500/15 dark:text-green-300 sm:flex">
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  Analisado
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto h-9 w-9 rounded-xl border border-border/60 sm:h-10 sm:w-10"
+                    title="Mais ações"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="z-[100] w-56">
+                  <DropdownMenuItem onClick={handleDownloadPdf} className="cursor-pointer">
+                    <Download className="mr-2 h-4 w-4" />
+                    Baixar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Compartilhar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleDeleteClick}
+                    className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir exame
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </PatientHeader>
+
+          <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl mx-auto">
+            <div>
             {/* Report Details — sem card wrapper extra; o conteúdo flui direto sob o header */}
             <div>
                 {isLoading ? (
@@ -1253,8 +1269,9 @@ export default function ExamReport() {
                 )}
             </div>
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

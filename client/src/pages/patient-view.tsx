@@ -78,6 +78,7 @@ const ExamTimeline = lazy(() => import("./exam-timeline"));
 
 import { useUploadManager } from "@/hooks/use-upload-manager";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { setExamReturnContext } from "@/lib/exam-navigation";
 
 // Loading skeleton for lazy-loaded tabs
 const TabLoadingSkeleton = () => (
@@ -625,12 +626,30 @@ export default function PatientView() {
                                                     {/* Exams List */}
                                                     <Card className="h-fit">
                                                         <CardHeader className="pb-3">
-                                                            <div className="flex items-center justify-between">
+                                                            <div className="flex items-center justify-between gap-2">
                                                                 <CardTitle className="text-base flex items-center gap-2">
                                                                     <FileText className="h-5 w-5 text-primary-600" />
                                                                     Resultados de Exames
                                                                 </CardTitle>
-                                                                <Badge variant="outline">{exams.length} exames</Badge>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge variant="outline">{exams.length} exames</Badge>
+                                                                    {exams.length > 0 && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                                                            onClick={() => {
+                                                                                setExamReturnContext({
+                                                                                    path: "/atendimento",
+                                                                                    label: "Voltar ao atendimento",
+                                                                                });
+                                                                                setLocation("/exam-history");
+                                                                            }}
+                                                                        >
+                                                                            Ver tudo
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </CardHeader>
                                                         <CardContent>
@@ -646,7 +665,13 @@ export default function PatientView() {
                                                                         <div
                                                                             key={exam.id}
                                                                             className="flex items-center p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent transition-all cursor-pointer"
-                                                                            onClick={() => setLocation(`/report/${exam.id}`)}
+                                                                            onClick={() => {
+                                                                                setExamReturnContext({
+                                                                                    path: "/atendimento",
+                                                                                    label: "Voltar ao atendimento",
+                                                                                });
+                                                                                setLocation(`/report/${exam.id}`);
+                                                                            }}
                                                                         >
                                                                             <div className="bg-primary/20 p-2 rounded-lg mr-3">
                                                                                 <FileText className="h-5 w-5 text-primary" />

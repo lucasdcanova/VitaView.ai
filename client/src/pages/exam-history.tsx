@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -15,6 +15,7 @@ import {
   Activity,
   Clock,
   Tag,
+  ArrowLeft,
   ArrowUpDown,
   User,
   Microscope,
@@ -24,8 +25,15 @@ import {
   ChevronDown,
   AlertCircle,
   MoreVertical,
-  Trash2
+  Trash2,
+  ArrowRight
 } from "lucide-react";
+import {
+  setExamReturnContext,
+  getExamReturnContext,
+  clearExamReturnContext,
+  type ExamReturnContext,
+} from "@/lib/exam-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
 import PatientHeader from "@/components/patient-header";
@@ -84,6 +92,32 @@ export default function ExamHistory() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeProfile, isLoading: isLoadingProfiles } = useProfiles();
+  const [, setLocation] = useLocation();
+
+  // Smart back navigation: when user came from atendimento/dashboard,
+  // remember it so the "Voltar" link returns to the right place.
+  const parentContext = useMemo<ExamReturnContext | null>(() => {
+    if (typeof window === "undefined") return null;
+    const ctx = getExamReturnContext({ path: "", label: "" });
+    return ctx.path && ctx.path !== "/exam-history" ? ctx : null;
+  }, []);
+
+  const handleOpenExam = (examId: number) => {
+    // Set the return path so /report/:id can return to exam-history with
+    // the parent context still intact.
+    setExamReturnContext({
+      path: "/exam-history",
+      label: "Voltar ao histórico",
+    });
+    setLocation(`/report/${examId}`);
+  };
+
+  const handleBackToParent = () => {
+    if (parentContext) {
+      setLocation(parentContext.path);
+      clearExamReturnContext();
+    }
+  };
 
   // Mutation para excluir um exame
   const deleteMutation = useMutation({
@@ -427,56 +461,70 @@ export default function ExamHistory() {
   // Exam card component for grid view
   const ExamCard = ({ exam }: { exam: Exam }) => {
     const displayName = getExamDisplayName(exam);
-    const subtitle =
-      exam.laboratoryName ||
-      (exam.examDate ? `Realizado em ${formatDate(exam.examDate)}` : "Origem não informada");
+    const isReady = exam.status === "analyzed" || exam.status === "extraction_only";
+    const examDateLabel = exam.examDate ? formatDate(exam.examDate) : null;
+
+    const handleCardClick = () => {
+      if (!isReady) return;
+      handleOpenExam(exam.id);
+    };
 
     return (
-      <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-md">
-        <CardHeader className="pb-3 border-b border-border">
-          <div className="flex flex-wrap items-start gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className={`p-2 rounded-md flex-shrink-0 ${getExamTypeColor(exam.fileType)}`}>
-                {getFileIcon(exam.fileType, 18)}
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-sm font-semibold text-foreground truncate">
-                  {displayName}
-                </CardTitle>
-                <CardDescription className="text-xs text-muted-foreground truncate">{subtitle}</CardDescription>
-              </div>
+      <Card
+        onClick={handleCardClick}
+        className={cn(
+          "group flex h-full flex-col overflow-hidden border-border/70 bg-card transition-all duration-200",
+          isReady
+            ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+            : "opacity-90"
+        )}
+      >
+        <CardHeader className="space-y-3 pb-3">
+          <div className="flex items-start gap-3">
+            <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${getExamTypeColor(exam.fileType)}`}>
+              {getFileIcon(exam.fileType, 18)}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex-shrink-0">{getStatusBadge(exam.status)}</div>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-base font-semibold leading-tight text-foreground line-clamp-2">
+                {displayName}
+              </CardTitle>
+              {exam.laboratoryName && (
+                <CardDescription className="mt-1 truncate text-xs text-muted-foreground">
+                  {exam.laboratoryName}
+                </CardDescription>
+              )}
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <div className="hidden sm:block">{getStatusBadge(exam.status)}</div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {(exam.status === 'analyzed' || exam.status === 'extraction_only') && (
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  {isReady && (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href={`/diagnosis/${exam.id}`} className="cursor-pointer">
                           <FileBarChart className="mr-2 h-4 w-4" />
-                          Ver diagnóstico
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/report/${exam.id}`} className="cursor-pointer">
-                          <Activity className="mr-2 h-4 w-4" />
-                          Ver análise detalhada
+                          Ver diagnóstico resumido
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
                   )}
                   <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
-                    onClick={() => handleDeleteClick(exam)}
+                    className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-900/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(exam);
+                    }}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir exame
@@ -486,70 +534,50 @@ export default function ExamHistory() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 pb-2">
-          <div className="grid grid-cols-1 gap-3 text-sm">
-            <div className="flex justify-between items-center pb-2 border-b border-dashed border-border">
-              <div className="flex items-center text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-                <span>Data do Exame:</span>
-              </div>
-              <span className="font-medium">
-                {exam.examDate ? formatDate(exam.examDate) : (
-                  <span className="text-muted-foreground text-xs">Não informada</span>
-                )}
+        <CardContent className="flex-1 pb-3 pt-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+            {examDateLabel && (
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {examDateLabel}
               </span>
-            </div>
-
-            <div className="flex justify-between items-center pb-2 border-b border-dashed border-border">
-              <div className="flex items-center text-muted-foreground">
-                <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-                <span>Médico Solicitante:</span>
-              </div>
-              <span className="font-medium">
-                {exam.requestingPhysician || (
-                  <span className="text-muted-foreground text-xs">Não informado</span>
-                )}
+            )}
+            {exam.requestingPhysician && (
+              <span className="inline-flex items-center gap-1">
+                <User className="h-3.5 w-3.5" />
+                Dr. {exam.requestingPhysician}
               </span>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div className="flex items-center text-muted-foreground">
-                <Microscope className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-                <span>Tipo de Arquivo:</span>
-              </div>
-              <Badge variant="outline" className={cn("capitalize", getExamTypeColor(exam.fileType))}>
+            )}
+            {exam.fileType && (
+              <span className="inline-flex items-center gap-1 uppercase">
+                <Microscope className="h-3.5 w-3.5" />
                 {exam.fileType}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="pt-3 mt-auto flex flex-wrap gap-3 justify-between items-center border-t border-border">
-          <div className="text-xs text-muted-foreground">
-            Enviado {formatRelativeDate(exam.uploadDate.toString())}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(exam.status === 'analyzed' || exam.status === 'extraction_only') ? (
-              <div className="inline-flex gap-2">
-                <Link href={`/diagnosis/${exam.id}`}>
-                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
-                    <FileBarChart className="mr-1 h-3.5 w-3.5" />
-                    Diagnóstico
-                  </Button>
-                </Link>
-                <Link href={`/report/${exam.id}`}>
-                  <Button size="sm" className="h-8 px-3 text-xs">
-                    <Activity className="mr-1 h-3.5 w-3.5" />
-                    Detalhes
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
-                <Clock className="mr-1 h-3.5 w-3.5" />
-                Processando...
-              </Button>
+              </span>
             )}
           </div>
+        </CardContent>
+        <CardFooter className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+          <div className="text-[11px] text-muted-foreground">
+            Enviado {formatRelativeDate(exam.uploadDate.toString())}
+          </div>
+          {isReady ? (
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 rounded-lg px-3 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenExam(exam.id);
+              }}
+            >
+              Abrir
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled>
+              <Clock className="mr-1 h-3.5 w-3.5" />
+              Processando
+            </Button>
+          )}
         </CardFooter>
       </Card>
     );
@@ -562,7 +590,18 @@ export default function ExamHistory() {
       <div className="flex flex-1 relative">
         <Sidebar />
 
-        <main className="flex-1 bg-gray-50 overflow-y-auto">
+        <main className="flex-1 bg-background overflow-y-auto">
+          {parentContext && (
+            <div className="border-b border-border/60 bg-muted/30 px-4 py-2 md:px-6">
+              <button
+                onClick={handleBackToParent}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:text-sm"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                {parentContext.label}
+              </button>
+            </div>
+          )}
           <div className="p-4 md:p-6">
             <PatientHeader
               title="Histórico de exames"
