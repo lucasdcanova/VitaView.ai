@@ -697,7 +697,7 @@ export default function Sidebar(props: SidebarProps) {
                                 </p>
                               </div>
                               {!accessibleClinic.isActive && (
-                                <span className="shrink-0 rounded-full bg-lightGray px-1.5 py-0 text-[8px] font-semibold leading-4 !text-[#111111] dark:!text-white">
+                                <span className="shrink-0 rounded-full bg-lightGray px-1.5 py-0 text-[7.5px] font-semibold leading-4 !text-[#111111] dark:!text-white">
                                   {isSwitching ? "Abrindo" : "Entrar"}
                                 </span>
                               )}
