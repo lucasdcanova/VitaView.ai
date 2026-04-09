@@ -239,6 +239,13 @@ export function ConsultationRecordingProvider({
   const isAutoRestartingRef = useRef(false);
   const recoveryAttemptsRef = useRef(0);
 
+  // Streaming transcription refs — cada segmento é transcrito assim que sai
+  // do MediaRecorder, evitando o upload monolítico no fim que estourava o
+  // timeout do Cloudflare/Render em consultas longas.
+  const segmentTranscriptionsRef = useRef<string[]>([]);
+  const pendingUploadsRef = useRef<Promise<void>[]>([]);
+  const uploadFailureRef = useRef<Error | null>(null);
+
   // Web Audio API refs para visualização de nível de áudio em tempo real.
   // Confirma que o microfone está realmente captando — útil para diagnóstico
   // do bug "iOS sem áudio captado" e como feedback visual ao usuário.
@@ -356,6 +363,9 @@ export function ConsultationRecordingProvider({
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
     segmentsRef.current = [];
+    segmentTranscriptionsRef.current = [];
+    pendingUploadsRef.current = [];
+    uploadFailureRef.current = null;
     isAutoRestartingRef.current = false;
     recoveryAttemptsRef.current = 0;
   }, [clearTimer, clearReliabilityTimers, stopAudioLevelMonitor, stopStreamTracks]);
@@ -375,24 +385,91 @@ export function ConsultationRecordingProvider({
     audioChunksRef.current = [consolidated];
   }, []);
 
+  // Envia um segmento isolado para transcrição e armazena o texto na ordem.
+  // Roda em background — falhas vão para uploadFailureRef e são checadas no
+  // finalize. Não usa AbortSignal próprio porque cada chamada deve ser curta
+  // (<60s) e o servidor já tem timeout de 90s.
+  const uploadSegment = useCallback(async (segment: Blob, index: number) => {
+    const formData = new FormData();
+    formData.append(
+      "audio",
+      segment,
+      `consultation-${index}.${recordingFormatRef.current.extension}`
+    );
+
+    try {
+      const response = await fetch("/api/consultation/transcribe-segment", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        if (
+          response.status === 403 &&
+          errorData.code === "TRANSCRIPTION_LIMIT_EXCEEDED"
+        ) {
+          const limitError = new Error("TRANSCRIPTION_LIMIT_EXCEEDED");
+          (limitError as any).code = "TRANSCRIPTION_LIMIT_EXCEEDED";
+          throw limitError;
+        }
+
+        throw new Error(errorData.message || `Erro ${response.status} ao enviar segmento`);
+      }
+
+      const result = await response.json();
+      if (!result?.success || typeof result.text !== "string") {
+        throw new Error("Resposta inválida da transcrição de segmento");
+      }
+
+      segmentTranscriptionsRef.current[index] = result.text;
+      console.log("[Recording] Segmento transcrito", {
+        index,
+        chars: result.text.length,
+      });
+    } catch (err) {
+      if (!uploadFailureRef.current) {
+        uploadFailureRef.current = err instanceof Error ? err : new Error(String(err));
+      }
+      console.error("[Recording] Falha no upload do segmento", { index, err });
+      throw err;
+    }
+  }, []);
+
   const saveCurrentSegment = useCallback(() => {
     if (audioChunksRef.current.length === 0) return;
     const segment = new Blob(audioChunksRef.current, {
       type: recordingFormatRef.current.uploadMimeType,
     });
-    segmentsRef.current.push(segment);
     audioChunksRef.current = [];
-  }, []);
+
+    // Validação local: bloqueia segmentos > 24MB antes de subir.
+    if (segment.size > MAX_SEGMENT_SIZE_BYTES) {
+      uploadFailureRef.current = new Error(
+        `Um trecho ficou muito grande (${(segment.size / (1024 * 1024)).toFixed(1)}MB). Whisper aceita até 25MB.`
+      );
+      return;
+    }
+
+    const index = segmentsRef.current.length;
+    segmentsRef.current.push(segment);
+    segmentTranscriptionsRef.current[index] = "";
+
+    // Dispara upload em background; .catch evita unhandledrejection.
+    const uploadPromise = uploadSegment(segment, index).catch(() => undefined);
+    pendingUploadsRef.current.push(uploadPromise as Promise<void>);
+  }, [uploadSegment]);
 
   const processAudio = useCallback(async () => {
     try {
       const session = sessionRef.current;
 
-      // Save any remaining chunks as the final segment
+      // Salva o último chunk como segmento final (e dispara o upload).
       saveCurrentSegment();
 
-      const allSegments = segmentsRef.current;
-      if (allSegments.length === 0) {
+      if (segmentsRef.current.length === 0) {
         cleanupMedia();
         setCompletedResult(null);
         setErrorMessage(
@@ -402,83 +479,60 @@ export function ConsultationRecordingProvider({
         return;
       }
 
-      // Validar tamanho de cada segmento antes do upload. Whisper rejeita > 25MB.
-      // Se algum segmento ultrapassar isso, abortamos com mensagem clara em vez
-      // de fazer um upload que vai falhar silenciosamente no servidor.
-      const oversized = allSegments.find((seg) => seg.size > MAX_SEGMENT_SIZE_BYTES);
-      if (oversized) {
-        cleanupMedia();
-        setCompletedResult(null);
-        setErrorMessage(
-          `Um trecho da gravação ficou muito grande (${(oversized.size / (1024 * 1024)).toFixed(1)}MB). O Whisper aceita até 25MB por segmento. Tente gravar consultas em sessões um pouco mais curtas.`
-        );
-        setRecordingState("error");
-        return;
-      }
-
-      const totalUploadSize = allSegments.reduce((sum, s) => sum + s.size, 0);
-      console.log("[Recording] Enviando para transcrição", {
-        segments: allSegments.length,
-        totalBytes: totalUploadSize,
-        sizes: allSegments.map((s) => s.size),
+      console.log("[Recording] Aguardando uploads pendentes", {
+        pendingUploads: pendingUploadsRef.current.length,
+        totalSegments: segmentsRef.current.length,
       });
 
-      const formData = new FormData();
-      for (let i = 0; i < allSegments.length; i++) {
-        formData.append(
-          "audio",
-          allSegments[i],
-          `consultation-${i}.${recordingFormatRef.current.extension}`
-        );
-      }
-      if (session?.profileId) {
-        formData.append("profileId", session.profileId.toString());
-      }
+      // Aguarda todos os uploads em background terminarem.
+      await Promise.all(pendingUploadsRef.current);
 
-      const controller = new AbortController();
-      // 11 min — abaixo do timeout do servidor (12 min) para receber resposta
-      // de erro em vez de cair em ECONNRESET. Suporta consultas longas (~2h).
-      const timeoutId = setTimeout(() => controller.abort(), 11 * 60 * 1000);
-
-      let response: Response;
-      try {
-        response = await fetch("/api/consultation/transcribe", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-          signal: controller.signal,
-        });
-      } catch (fetchError) {
-        if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
-          throw new Error(
-            "O processamento da gravacao excedeu o tempo limite. Tente gravar em segmentos menores."
-          );
-        }
-        throw fetchError;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-
-        if (
-          response.status === 403 &&
-          errorData.code === "TRANSCRIPTION_LIMIT_EXCEEDED"
-        ) {
+      // Se algum upload falhou irrecuperavelmente, abortamos com mensagem clara.
+      if (uploadFailureRef.current) {
+        const failure = uploadFailureRef.current;
+        if ((failure as any).code === "TRANSCRIPTION_LIMIT_EXCEEDED") {
           setShowUpgradeDialog(true);
           setCompletedResult(null);
           resetSessionState();
           return;
         }
-
-        throw new Error(errorData.message || `Erro ${response.status}`);
+        throw failure;
       }
 
-      const result = await response.json();
+      const transcripts = segmentTranscriptionsRef.current.filter(
+        (t) => typeof t === "string" && t.trim().length > 0
+      );
 
+      if (transcripts.length === 0) {
+        throw new Error(
+          "Não foi possível transcrever nenhum trecho da gravação. Verifique a qualidade do áudio."
+        );
+      }
+
+      console.log("[Recording] Chamando finalize", {
+        segments: transcripts.length,
+        totalChars: transcripts.reduce((sum, t) => sum + t.length, 0),
+      });
+
+      // Chamada única curta — apenas 1 chamada GPT, fica abaixo do limite do proxy.
+      const finalizeRes = await fetch("/api/consultation/finalize", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          segments: transcripts,
+          profileId: session?.profileId ?? null,
+        }),
+      });
+
+      if (!finalizeRes.ok) {
+        const errorData = await finalizeRes.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro ${finalizeRes.status}`);
+      }
+
+      const result = await finalizeRes.json();
       if (!result.success) {
-        throw new Error(result.message || "Erro ao processar transcricao");
+        throw new Error(result.message || "Erro ao finalizar a consulta.");
       }
 
       setCompletedResult({
@@ -515,6 +569,9 @@ export function ConsultationRecordingProvider({
         setRecordingTime(0);
         audioChunksRef.current = [];
         segmentsRef.current = [];
+        segmentTranscriptionsRef.current = [];
+        pendingUploadsRef.current = [];
+        uploadFailureRef.current = null;
         recoveryAttemptsRef.current = 0;
         setSession({
           profileId: options?.profileId ?? null,

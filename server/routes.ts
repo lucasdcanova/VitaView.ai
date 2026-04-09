@@ -3237,6 +3237,163 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
     });
 
+  // ============================================================================
+  // STREAMING TRANSCRIPTION (segment-by-segment + finalize)
+  // ----------------------------------------------------------------------------
+  // O endpoint legado acima envia TODOS os segmentos + faz Whisper + GPT em uma
+  // única request. Isso estoura o timeout de 100s do Cloudflare/Render para
+  // gravações longas, deixando consultas >10-15min "travadas" no cliente.
+  //
+  // Os dois endpoints abaixo quebram o pipeline em chamadas curtas (<60s):
+  //   1) /api/consultation/transcribe-segment — recebe 1 arquivo, devolve texto
+  //   2) /api/consultation/finalize — recebe array de textos, devolve anamnese
+  //
+  // O cliente faz upload de cada segmento ASSIM QUE ele é gravado (em paralelo
+  // com a gravação subsequente), então quando o médico clica "parar" só falta
+  // o último segmento + finalize — resposta quase imediata.
+  // ============================================================================
+
+  app.post(
+    "/api/consultation/transcribe-segment",
+    (req, res, next) => {
+      // Cada segmento individual deve caber bem abaixo do limite Cloudflare.
+      // 90s dá folga para upload + 1 chamada Whisper + 2 retries.
+      req.setTimeout(90 * 1000);
+      res.setTimeout(90 * 1000);
+      next();
+    },
+    ensureAuthenticated,
+    checkFairUse('transcriptionMinutes'),
+    audioTranscriptionUpload.single('audio'),
+    async (req, res) => {
+      try {
+        const file = req.file as Express.Multer.File | undefined;
+        if (!file) {
+          return res.status(400).json({ message: "Arquivo de áudio é obrigatório" });
+        }
+
+        if (file.size > 25 * 1024 * 1024) {
+          logger.warn("[Transcription] Segmento excede 25MB", {
+            userId: req.user?.id,
+            size: file.size,
+          });
+          return res.status(413).json({
+            message: "O segmento excede 25MB (limite do Whisper).",
+            code: "AUDIO_SEGMENT_TOO_LARGE",
+          });
+        }
+
+        logger.info("[Transcription] Segmento recebido", {
+          userId: req.user?.id,
+          size: file.size,
+          mimeType: file.mimetype,
+        });
+
+        const text = await transcribeConsultationAudio(
+          file.buffer,
+          file.mimetype,
+          req.user!.id,
+          req.tenantId
+        );
+
+        // Track usage por segmento (estimativa por bitrate)
+        const mbPerMinute = file.mimetype.includes("mp4") || file.mimetype.includes("m4a") || file.mimetype.includes("aac")
+          ? 5
+          : file.mimetype.includes("mp3") || file.mimetype.includes("mpeg")
+          ? 1
+          : 1.5;
+        const estimatedMinutes = Math.max(1, Math.ceil(file.size / (mbPerMinute * 1024 * 1024)));
+        await trackUsage(req.user!.id, 'transcriptionMinutes', estimatedMinutes);
+
+        res.json({ success: true, text });
+      } catch (error) {
+        logger.error("[Transcription] Falha em segmento isolado", {
+          userId: req.user?.id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({
+          message: error instanceof Error ? error.message : "Erro ao transcrever segmento",
+        });
+      }
+    }
+  );
+
+  app.post(
+    "/api/consultation/finalize",
+    (req, res, next) => {
+      // Apenas 1 chamada GPT — fica bem abaixo do limite do proxy.
+      req.setTimeout(120 * 1000);
+      res.setTimeout(120 * 1000);
+      next();
+    },
+    ensureAuthenticated,
+    async (req, res) => {
+      try {
+        const segments: unknown = req.body?.segments;
+        if (!Array.isArray(segments) || segments.length === 0) {
+          return res.status(400).json({ message: "É necessário enviar ao menos um trecho transcrito." });
+        }
+
+        const transcription = segments
+          .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+          .map((s) => s.trim())
+          .join(" ");
+
+        if (!transcription) {
+          return res.status(400).json({ message: "Nenhum trecho transcrito válido foi recebido." });
+        }
+
+        let patientData = null;
+        const profileId = req.body?.profileId ? parseInt(req.body.profileId) : null;
+        if (profileId) {
+          try {
+            const profile = await storage.getProfile(profileId);
+            if (profile && profile.userId === req.user!.id) {
+              patientData = {
+                name: profile.name,
+                gender: profile.gender,
+                birthDate: profile.birthDate,
+              };
+            }
+          } catch (err) {
+            logger.warn("[Transcription] Falha ao buscar perfil no finalize", { profileId, error: err });
+          }
+        }
+
+        const result = await processTranscriptionToAnamnesis(
+          transcription,
+          patientData,
+          req.user!.id,
+          req.tenantId
+        );
+
+        await trackUsage(req.user!.id, 'aiRequests', 1);
+
+        logger.info("[Transcription] Finalize concluído", {
+          userId: req.user?.id,
+          segments: segments.length,
+          transcriptionLength: transcription.length,
+          anamnesisLength: result.anamnesis.length,
+        });
+
+        res.json({
+          success: true,
+          transcription,
+          anamnesis: result.anamnesis,
+          extractedData: result.extractedData,
+        });
+      } catch (error) {
+        logger.error("[Transcription] Falha no finalize", {
+          userId: req.user?.id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({
+          message: error instanceof Error ? error.message : "Erro ao finalizar a consulta.",
+        });
+      }
+    }
+  );
+
   // PROFILE PHOTO UPLOAD
   // ============================================================================
 
