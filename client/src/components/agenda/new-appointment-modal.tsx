@@ -5,8 +5,9 @@ import * as z from "zod";
 import { Calendar as CalendarIcon, Clock, Check, ChevronsUpDown, Lock, UserPlus, CalendarRange, ArrowLeft, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useProfiles } from "@/hooks/use-profiles";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -193,10 +194,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
         }
     }, [open, initialData, slotDate, slotTime, form]);
 
-    const { data: profiles = [] } = useQuery<any[]>({
-        queryKey: ["/api/profiles"],
-        enabled: open, // Only fetch when modal is open
-    });
+    const { profiles } = useProfiles();
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         const selectedProfile = profiles.find((p: any) => p.id.toString() === values.profileId);
