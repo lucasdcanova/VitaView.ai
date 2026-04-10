@@ -344,12 +344,6 @@ export default function ExamResultSingle() {
       queryClient.invalidateQueries({
         queryKey: ["/api/reports/chronological"],
       });
-      toast({
-        title: "Exame excluido com sucesso",
-        description:
-          "O exame e todos os dados associados foram removidos.",
-        variant: "default",
-      });
       setLocation("/results");
     },
     onError: (error) => {

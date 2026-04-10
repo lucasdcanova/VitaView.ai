@@ -135,7 +135,6 @@ export default function PatientView() {
         mutationFn: (data: DiagnosisFormData & { profileId?: number }) => apiRequest("POST", "/api/diagnoses", data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
-            toast({ title: "Sucesso", description: "Diagnóstico registrado com sucesso." });
             setIsDiagnosisDialogOpen(false);
             diagnosisForm.reset();
         },
@@ -175,7 +174,6 @@ export default function PatientView() {
             if (activeProfile?.id) {
                 queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
             }
-            toast({ title: "Sucesso", description: "Cirurgia registrada com sucesso." });
             setIsSurgeryDialogOpen(false);
             surgeryForm.reset();
         },

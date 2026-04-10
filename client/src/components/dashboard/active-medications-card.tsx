@@ -51,7 +51,6 @@ export function ActiveMedicationsCard() {
             queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
             medicationForm.reset();
             setIsMedicationDialogOpen(false);
-            toast({ title: "Sucesso", description: "Medicamento adicionado!" });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao adicionar medicamento.", variant: "destructive" }),
     });
@@ -63,7 +62,6 @@ export function ActiveMedicationsCard() {
             editMedicationForm.reset();
             setIsEditMedicationDialogOpen(false);
             setEditingMedication(null);
-            toast({ title: "Sucesso", description: "Medicamento atualizado!" });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao atualizar.", variant: "destructive" }),
     });
@@ -72,7 +70,6 @@ export function ActiveMedicationsCard() {
         mutationFn: (id: number) => apiRequest("DELETE", `/api/medications/${id}`, {}),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
-            toast({ title: "Sucesso", description: "Medicamento removido." });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao remover.", variant: "destructive" }),
     });

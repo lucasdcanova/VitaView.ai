@@ -191,7 +191,6 @@ const MyClinic = () => {
                 queryClient.invalidateQueries(),
                 refetchClinic(),
             ]);
-            toast({ title: 'Clínica criada!', description: 'A nova clínica já foi definida como ambiente ativo.' });
         },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
@@ -233,11 +232,6 @@ const MyClinic = () => {
                 queryClient.invalidateQueries(),
                 refetchClinic(),
             ]);
-
-            toast({
-                title: 'Clínica selecionada',
-                description: 'O contexto ativo foi atualizado em todo o app.',
-            });
         },
         onError: (error: Error) => {
             toast({ title: 'Erro', description: error.message, variant: 'destructive' });
@@ -252,7 +246,7 @@ const MyClinic = () => {
             if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao remover membro'); }
             return res.json();
         },
-        onSuccess: () => { toast({ title: 'Membro removido' }); refetchClinic(); },
+        onSuccess: () => { refetchClinic(); },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
 
@@ -283,10 +277,6 @@ const MyClinic = () => {
                 queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
                 queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
             ]);
-            toast({
-                title: 'Convite aceito',
-                description: 'Você foi vinculado à clínica com sucesso.',
-            });
             refetchClinic();
         },
         onError: (error: Error) => {
@@ -309,7 +299,6 @@ const MyClinic = () => {
                 queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
                 refetchClinic(),
             ]);
-            toast({ title: 'Clínica atualizada!', description: 'O nome do ambiente foi salvo com sucesso.' });
         },
         onError: (error: Error) => { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); }
     });
@@ -328,10 +317,6 @@ const MyClinic = () => {
         onSuccess: (updatedUser, clinicId) => {
             queryClient.setQueryData(['/api/user'], updatedUser);
             queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-            toast({
-                title: 'Clínica padrão atualizada',
-                description: 'Esse será o ambiente aberto automaticamente ao entrar no app.',
-            });
         },
         onError: (error: Error) => {
             toast({ title: 'Erro', description: error.message, variant: 'destructive' });

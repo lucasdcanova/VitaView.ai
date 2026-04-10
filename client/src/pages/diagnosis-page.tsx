@@ -123,11 +123,6 @@ export default function DiagnosisPage() {
       return await analyzeExtractedExam(examId, patientData);
     },
     onSuccess: () => {
-      toast({
-        title: "Análise concluída com sucesso",
-        description: "O exame foi analisado utilizando IA avançada (OpenAI)",
-        variant: "default",
-      });
       // Após a análise, atualizamos os insights
       queryClient.invalidateQueries({ queryKey: [`/api/exams/${examId}/insights`] });
     },

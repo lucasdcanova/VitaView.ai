@@ -57,7 +57,6 @@ export default function KnowledgeBaseAdmin() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/support/articles"] });
             setIsOpen(false);
-            toast({ title: "Success", description: "Article saved successfully" });
         },
         onError: () => {
             toast({ title: "Error", description: "Failed to save article", variant: "destructive" });

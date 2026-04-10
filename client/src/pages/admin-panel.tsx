@@ -252,10 +252,6 @@ function BugReportsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/bug-reports'] });
-      toast({
-        title: "Status atualizado",
-        description: "O status do relatório foi atualizado.",
-      });
     },
     onError: () => {
       toast({
@@ -909,10 +905,6 @@ export default function AdminPanel() {
     try {
       const response = await apiRequest('PATCH', `/api/admin/users/${selectedUser.id}`, userData);
       if (response.ok) {
-        toast({
-          title: "Usuário atualizado",
-          description: "As informações do usuário foram atualizadas com sucesso.",
-        });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
         setIsUserEditOpen(false);
       } else {
@@ -935,10 +927,6 @@ export default function AdminPanel() {
     try {
       const response = await apiRequest('DELETE', `/api/admin/users/${selectedUser.id}`);
       if (response.ok) {
-        toast({
-          title: "Usuário excluído",
-          description: "O usuário foi removido com sucesso.",
-        });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
         setIsUserDeleteOpen(false);
       } else {
@@ -961,10 +949,6 @@ export default function AdminPanel() {
     try {
       const response = await apiRequest('POST', `/api/admin/users/${selectedUser.id}/change-plan`, { planId });
       if (response.ok) {
-        toast({
-          title: "Plano alterado",
-          description: "O plano do usuário foi alterado com sucesso.",
-        });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
         setIsChangePlanOpen(false);
       } else {
@@ -1039,10 +1023,6 @@ export default function AdminPanel() {
     try {
       const response = await apiRequest('PATCH', `/api/admin/plans/${selectedPlan.id}`, planData);
       if (response.ok) {
-        toast({
-          title: "Plano atualizado",
-          description: "O plano foi atualizado com sucesso.",
-        });
         queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
         setIsPlanEditOpen(false);
         setSelectedPlan(null);

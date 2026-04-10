@@ -102,10 +102,6 @@ export default function Agenda() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
-            toast({
-                title: "Algendamento realizado",
-                description: "Operação realizada com sucesso.",
-            });
             setAiProposal(null);
             setAiCommand("");
         },
@@ -128,10 +124,6 @@ export default function Agenda() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
-            toast({
-                title: "Agendamento atualizado",
-                description: "Os dados do agendamento foram atualizados.",
-            });
             setIsNewAppointmentOpen(false);
             setEditingAppointment(null);
         },
@@ -152,10 +144,6 @@ export default function Agenda() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
-            toast({
-                title: "Agenda desbloqueada",
-                description: `${data.count} bloqueios foram removidos.`,
-            });
             setAiProposal(null);
             setAiCommand("");
         },
@@ -309,10 +297,6 @@ export default function Agenda() {
         },
         onSuccess: (_data, appointmentsToClear) => {
             queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
-            toast({
-                title: "Sala de espera limpa",
-                description: `${appointmentsToClear.length} ${appointmentsToClear.length === 1 ? "paciente voltou" : "pacientes voltaram"} para o status agendado.`,
-            });
         },
         onError: () => {
             toast({

@@ -69,10 +69,6 @@ export function RegisterDeathDialog({
             return res.json();
         },
         onSuccess: () => {
-            toast({
-                title: "Óbito registrado",
-                description: "As informações de óbito foram salvas com sucesso.",
-            });
             queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
             queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard", patient.id] });
             onOpenChange(false);

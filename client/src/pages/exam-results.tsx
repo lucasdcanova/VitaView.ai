@@ -78,12 +78,6 @@ export default function ExamResults() {
       // Invalidar a consulta de métricas de saúde
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
-
-      toast({
-        title: "Métricas excluídas",
-        description: `${data.count} métricas de saúde foram removidas com sucesso.`,
-        variant: "default",
-      });
     },
     onError: (error) => {
       toast({

@@ -187,12 +187,6 @@ export default function ExamReport() {
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
 
-      toast({
-        title: "Exame excluído com sucesso",
-        description: "O exame e todos os dados associados foram removidos.",
-        variant: "default",
-      });
-
       // Voltar ao contexto de origem (atendimento, histórico, etc.)
       setLocation(returnContext.path);
       clearExamReturnContext();

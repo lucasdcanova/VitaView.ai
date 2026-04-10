@@ -111,10 +111,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Paciente cadastrado",
-        description: "O paciente foi adicionado ao seu painel",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
     },
     onError: (error) => {
@@ -133,11 +129,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (updatedProfile) => {
-      toast({
-        title: "Paciente atualizado",
-        description: "Os dados do paciente foram atualizados",
-      });
-
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
 
       // Update active profile if it was the one that was updated
@@ -161,11 +152,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return id;
     },
     onSuccess: (deletedId) => {
-      toast({
-        title: "Paciente removido",
-        description: "O paciente foi removido do painel",
-      });
-
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
 
       // If active profile was deleted, select a different one

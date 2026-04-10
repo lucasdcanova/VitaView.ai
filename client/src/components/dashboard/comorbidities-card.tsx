@@ -25,7 +25,6 @@ export function ComorbiditiesCard({ diagnoses, onAdd }: ComorbiditiesCardProps) 
         mutationFn: (id: number) => apiRequest("DELETE", `/api/diagnoses/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
-            toast({ title: "Sucesso", description: "Comorbidade removida." });
         },
         onError: () => {
             toast({ title: "Erro", description: "Erro ao remover comorbidade.", variant: "destructive" });

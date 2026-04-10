@@ -27,7 +27,6 @@ export function SurgeriesCard({ surgeries, onAdd }: SurgeriesCardProps) {
         mutationFn: (id: number) => apiRequest("DELETE", `/api/surgeries/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/surgeries"] });
-            toast({ title: "Sucesso", description: "Cirurgia removida." });
         },
         onError: () => {
             toast({ title: "Erro", description: "Erro ao remover cirurgia.", variant: "destructive" });

@@ -131,11 +131,6 @@ export default function ExamHistory() {
       queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports/chronological"] });
 
-      toast({
-        title: "Exame excluído",
-        description: "O exame foi removido com sucesso.",
-        variant: "default",
-      });
       setDeleteDialogOpen(false);
     },
     onError: (error: Error) => {

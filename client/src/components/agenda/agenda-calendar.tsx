@@ -191,10 +191,6 @@ export function AgendaCalendar({
         clearPatientInService();
       }
       queryClient.invalidateQueries({ queryKey: ["/api/appointments", user?.clinicId ?? null] });
-      toast({
-        title: "Agendamento apagado",
-        description: "O agendamento foi removido com sucesso.",
-      });
     },
     onError: () => {
       toast({
@@ -367,10 +363,6 @@ export function AgendaCalendar({
       if (appointment.profileId) {
         setPatientInService(appointment.profileId, appointment.id);
         setLocation('/atendimento');
-        toast({
-          title: "Atendimento retomado",
-          description: `Retomando atendimento de ${appointment.patientName}`
-        });
       }
       return;
     }

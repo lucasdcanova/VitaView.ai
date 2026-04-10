@@ -88,10 +88,6 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                                 hasChanges = true;
 
                                 if (newStatus === 'analyzed') {
-                                    toast({
-                                        title: "Análise concluída",
-                                        description: `O exame ${upload.name} foi processado com sucesso.`
-                                    });
                                     queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
                                     queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard"] });
                                     queryClient.invalidateQueries({ queryKey: ["/api/health-metrics/latest"] });
@@ -187,11 +183,6 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
                 }
                 return u;
             }));
-
-            toast({
-                title: "Upload iniciado",
-                description: "Seus arquivos estão sendo processados em segundo plano."
-            });
 
         } catch (error: any) {
             console.error("Upload error", error);

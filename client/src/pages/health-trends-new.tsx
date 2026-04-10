@@ -394,10 +394,6 @@ export default function HealthTrendsNew({
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Diagnóstico registrado",
-        description: "O diagnóstico foi adicionado à sua linha do tempo.",
-      });
       form.reset();
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
@@ -419,10 +415,6 @@ export default function HealthTrendsNew({
     mutationFn: ({ id, data }: { id: number; data: DiagnosisForm }) =>
       apiRequest("PUT", `/api/diagnoses/${id}`, data),
     onSuccess: () => {
-      toast({
-        title: "Diagnóstico atualizado",
-        description: "O diagnóstico foi atualizado com sucesso.",
-      });
       setIsEditDialogOpen(false);
       setEditingDiagnosis(null);
       queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
@@ -443,10 +435,6 @@ export default function HealthTrendsNew({
   const removeDiagnosisMutation = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/diagnoses/${id}`),
     onSuccess: () => {
-      toast({
-        title: "Diagnóstico removido",
-        description: "O diagnóstico foi removido da sua linha do tempo.",
-      });
       setIsEditDialogOpen(false);
       setEditingDiagnosis(null);
       queryClient.invalidateQueries({ queryKey: ["/api/diagnoses"] });
@@ -471,10 +459,6 @@ export default function HealthTrendsNew({
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
       allergyForm.reset();
       setIsAllergyDialogOpen(false);
-      toast({
-        title: "Alergia registrada",
-        description: "Alergia medicamentosa registrada com sucesso!",
-      });
     },
     onError: () => {
       toast({
@@ -492,10 +476,6 @@ export default function HealthTrendsNew({
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
       setEditingAllergy(null);
       setIsEditAllergyDialogOpen(false);
-      toast({
-        title: "Sucesso",
-        description: "Alergia atualizada com sucesso!",
-      });
     },
     onError: () => {
       toast({
@@ -510,10 +490,6 @@ export default function HealthTrendsNew({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/allergies/${id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
-      toast({
-        title: "Sucesso",
-        description: "Alergia excluída com sucesso!",
-      });
     },
     onError: () => {
       toast({
@@ -542,10 +518,6 @@ export default function HealthTrendsNew({
       }
       surgeryForm.reset();
       setIsSurgeryDialogOpen(false);
-      toast({
-        title: "Cirurgia registrada",
-        description: "Cirurgia registrada com sucesso!",
-      });
     },
     onError: (error: any) => {
       toast({
@@ -566,10 +538,6 @@ export default function HealthTrendsNew({
       }
       setEditingSurgery(null);
       setIsEditSurgeryDialogOpen(false);
-      toast({
-        title: "Sucesso",
-        description: "Cirurgia atualizada com sucesso!",
-      });
     },
     onError: () => {
       toast({
@@ -587,10 +555,6 @@ export default function HealthTrendsNew({
       if (activeProfile?.id) {
         queryClient.invalidateQueries({ queryKey: [`/api/surgeries?profileId=${activeProfile.id}`] });
       }
-      toast({
-        title: "Sucesso",
-        description: "Cirurgia excluída com sucesso!",
-      });
     },
     onError: () => {
       toast({
@@ -609,10 +573,6 @@ export default function HealthTrendsNew({
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
       setIsHabitDialogOpen(false);
       habitForm.reset();
-      toast({
-        title: "Hábito registrado",
-        description: "O hábito foi registrado com sucesso.",
-      });
     },
     onError: () => {
       toast({
@@ -631,10 +591,6 @@ export default function HealthTrendsNew({
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
       setIsEditHabitDialogOpen(false);
       setEditingHabit(null);
-      toast({
-        title: "Hábito atualizado",
-        description: "O hábito foi atualizado com sucesso.",
-      });
     },
     onError: () => {
       toast({
@@ -651,10 +607,6 @@ export default function HealthTrendsNew({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
-      toast({
-        title: "Hábito excluído",
-        description: "O hábito foi removido com sucesso.",
-      });
     },
     onError: () => {
       toast({
@@ -670,10 +622,6 @@ export default function HealthTrendsNew({
     mutationFn: (data: DoctorForm) => apiRequest("POST", "/api/doctors", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Médico cadastrado",
-        description: "O médico foi adicionado com sucesso.",
-      });
       setIsDoctorFormDialogOpen(false);
       doctorForm.reset();
     },
@@ -691,10 +639,6 @@ export default function HealthTrendsNew({
       apiRequest("PUT", `/api/doctors/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Médico atualizado",
-        description: "Os dados do médico foram atualizados com sucesso.",
-      });
       setIsEditDoctorDialogOpen(false);
       setEditingDoctor(null);
     },
@@ -711,10 +655,6 @@ export default function HealthTrendsNew({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/doctors/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Médico removido",
-        description: "O médico foi removido com sucesso.",
-      });
     },
     onError: (error: any) => {
       toast({
@@ -729,10 +669,6 @@ export default function HealthTrendsNew({
     mutationFn: (id: number) => apiRequest("PUT", `/api/doctors/${id}/set-default`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({
-        title: "Médico padrão definido",
-        description: "Este médico foi definido como padrão.",
-      });
     },
     onError: (error: any) => {
       toast({

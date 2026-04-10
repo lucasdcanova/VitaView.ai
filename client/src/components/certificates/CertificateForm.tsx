@@ -83,7 +83,6 @@ export function CertificateForm({
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['/api/certificate-templates'] });
-            toast({ title: "Modelo salvo com sucesso" });
             setIsSaveTemplateOpen(false);
             setTemplateName("");
         },
@@ -98,7 +97,6 @@ export function CertificateForm({
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['/api/certificate-templates'] });
-            toast({ title: "Modelo excluído" });
         }
     });
 
@@ -130,8 +128,6 @@ export function CertificateForm({
             setCustomCertText(content);
         }
 
-        // Ideally navigate/scroll to text area or highlight it so user knows it loaded
-        toast({ title: "Modelo carregado: " + template.title });
     };
 
     return (

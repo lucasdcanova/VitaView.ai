@@ -283,7 +283,6 @@ const SubscriptionManagement = () => {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: 'Clínica criada!', description: 'Sua clínica foi configurada com sucesso.' });
       setIsCreateClinicDialogOpen(false);
       setClinicName('');
       refetchClinic();
@@ -303,6 +302,7 @@ const SubscriptionManagement = () => {
       return res.json();
     },
     onSuccess: () => {
+      // Mantemos esse toast: dispara um e-mail externo, sem feedback visual imediato.
       toast({ title: 'Convite enviado!', description: `Um convite foi enviado para ${inviteEmail}` });
       setIsInviteDialogOpen(false);
       setInviteEmail('');
@@ -323,7 +323,6 @@ const SubscriptionManagement = () => {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: 'Membro removido', description: 'O membro foi removido da clínica.' });
       refetchClinic();
     },
     onError: (error: Error) => {
@@ -547,11 +546,6 @@ const SubscriptionManagement = () => {
 
         await apiRequest('POST', '/api/activate-subscription', payload);
 
-        toast({
-          title: 'Assinatura realizada!',
-          description: 'Seu plano foi atualizado com sucesso.',
-        });
-
         setIsPaymentDialogOpen(false);
         setSelectedPlanId(null);
         refetch();
@@ -646,10 +640,6 @@ const SubscriptionManagement = () => {
           const errorData = await res.json();
           throw new Error(errorData.message || 'Erro ao ativar plano');
         }
-        toast({
-          title: 'Plano ativado!',
-          description: 'Seu plano gratuito foi ativado com sucesso.',
-        });
         refetch();
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/limits'] });
       } catch (error: any) {
@@ -699,10 +689,6 @@ const SubscriptionManagement = () => {
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
     setSelectedPlanId(null);
-    toast({
-      title: 'Assinatura realizada!',
-      description: 'Seu plano foi atualizado com sucesso.',
-    });
     refetch();
     queryClient.invalidateQueries({ queryKey: ['/api/subscription/limits'] });
   };

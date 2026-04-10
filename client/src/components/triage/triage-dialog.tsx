@@ -129,11 +129,6 @@ export function TriageDialog({ open, onOpenChange, appointmentId, patientName, p
 
             if (!response.ok) throw new Error("Erro ao salvar triagem");
 
-            toast({
-                title: "Sucesso",
-                description: existingTriage ? "Triagem atualizada com sucesso" : "Triagem registrada com sucesso",
-            });
-
             onOpenChange(false);
         } catch (error) {
             console.error("Error saving triage:", error);

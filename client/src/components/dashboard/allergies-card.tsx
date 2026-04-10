@@ -59,7 +59,6 @@ export function AllergiesCard({ profileId, allergies: propAllergies }: Allergies
             queryClient.invalidateQueries({ queryKey });
             allergyForm.reset();
             setIsAllergyDialogOpen(false);
-            toast({ title: "Sucesso", description: "Alergia registrada!" });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao registrar alergia.", variant: "destructive" }),
     });
@@ -70,7 +69,6 @@ export function AllergiesCard({ profileId, allergies: propAllergies }: Allergies
             queryClient.invalidateQueries({ queryKey });
             setIsEditAllergyDialogOpen(false);
             setEditingAllergy(null);
-            toast({ title: "Sucesso", description: "Alergia atualizada!" });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao atualizar.", variant: "destructive" }),
     });
@@ -79,7 +77,6 @@ export function AllergiesCard({ profileId, allergies: propAllergies }: Allergies
         mutationFn: (id: number) => apiRequest("DELETE", `/api/allergies/${id}`, {}),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
-            toast({ title: "Sucesso", description: "Alergia removida." });
         },
         onError: () => toast({ title: "Erro", description: "Falha ao remover.", variant: "destructive" }),
     });

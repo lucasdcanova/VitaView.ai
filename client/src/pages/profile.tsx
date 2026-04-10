@@ -282,7 +282,6 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({ title: "Foto atualizada", description: "Sua foto de perfil foi atualizada com sucesso." });
     },
     onError: (error: Error) => {
       toast({ title: "Erro ao enviar foto", description: error.message, variant: "destructive" });
@@ -297,7 +296,6 @@ export default function Profile() {
     onSuccess: () => {
       profileForm.setValue('professionalPhoto', '');
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({ title: "Foto removida", description: "Sua foto de perfil foi removida." });
     },
     onError: (error: Error) => {
       toast({ title: "Erro ao remover foto", description: error.message, variant: "destructive" });
@@ -317,10 +315,6 @@ export default function Profile() {
     mutationFn: updateUserProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -335,10 +329,6 @@ export default function Profile() {
     mutationFn: (data: SecurityFormValues) => updateUserProfile({ password: data.newPassword }),
     onSuccess: () => {
       securityForm.reset();
-      toast({
-        title: "Senha atualizada",
-        description: "Sua senha foi atualizada com sucesso.",
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -411,10 +401,6 @@ export default function Profile() {
     onSuccess: () => {
       // Clear all local storage and cookies handled by use-auth but extra check here
       queryClient.clear();
-      toast({
-        title: "Conta excluída",
-        description: "Sua conta foi excluída com sucesso. Sentiremos sua falta.",
-      });
       // Redirect to login/home
       navigate("/");
     },
