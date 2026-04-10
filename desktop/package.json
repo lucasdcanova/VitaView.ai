@@ -79,7 +79,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
-    }
+    },
+    "afterPack": "./scripts/after-pack-clean.cjs"
   },
   "dependencies": {
     "electron-updater": "^6.8.3"

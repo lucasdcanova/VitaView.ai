@@ -85,5 +85,25 @@ module.exports = async function signMas(opts) {
     preAutoEntitlements: false,
   });
 
+  // Re-sign the main binary to ensure allow-jit and disable-library-validation
+  // are present. @electron/osx-sign may strip entitlements not explicitly listed
+  // in the provisioning profile, but codesign accepts them for MAS builds when
+  // the matching capability is enabled on the App ID.
+  const mainBinary = path.join(opts.app, "Contents", "MacOS", "VitaView");
+  if (fs.existsSync(mainBinary)) {
+    spawnSync("codesign", [
+      "--force", "--sign", SIGN_IDENTITY,
+      "--entitlements", ENTITLEMENTS_APP,
+      mainBinary,
+    ], { stdio: "inherit" });
+    // Re-sign the app bundle to update the seal after touching the main binary
+    spawnSync("codesign", [
+      "--force", "--sign", SIGN_IDENTITY,
+      "--entitlements", ENTITLEMENTS_APP,
+      opts.app,
+    ], { stdio: "inherit" });
+    console.log(`  • re-signed main binary with allow-jit entitlement`);
+  }
+
   console.log(`  • MAS signing complete for ${opts.app}`);
 };
