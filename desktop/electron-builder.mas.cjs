@@ -19,8 +19,8 @@ module.exports = {
         arch: ["arm64"],
       },
     ],
-    bundleShortVersion: "1.0",
-    bundleVersion: "3",
+    bundleShortVersion: "1.3",
+    bundleVersion: "254",
   },
   mas: {
     ...(baseConfig.mas || {}),
@@ -31,8 +31,8 @@ module.exports = {
     sign: "./scripts/sign-mas.cjs",
     timestamp: "none",
     type: "distribution",
-    bundleShortVersion: "1.0",
-    bundleVersion: "3",
+    bundleShortVersion: "1.3",
+    bundleVersion: "254",
   },
   afterPack: "./scripts/after-pack-mas.cjs",
 };
