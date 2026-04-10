@@ -132,6 +132,7 @@ function LandingRoutes() {
     <Suspense fallback={<LandingLoadingFallback />}>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/landing-page" component={Home} />
         <Route path="/termos" component={TermsPage} />
         <Route path="/privacidade" component={PrivacyPage} />
         <Route path="/excluir-conta" component={DeleteAccountPage} />
@@ -332,7 +333,7 @@ function AppRouter() {
   const iosAppShell = isIOSAppShell() && !isNativeIOSAppOnMac();
 
   // Rotas da landing page (sem nenhum provider)
-  const landingPaths = ['/', '/termos', '/privacidade', '/excluir-conta', '/delete-account', '/quick-summary'];
+  const landingPaths = ['/', '/landing-page', '/termos', '/privacidade', '/excluir-conta', '/delete-account', '/quick-summary'];
   const isLandingRoute = landingPaths.some(path => location === path);
   // Páginas legais (Termos / Privacidade / Excluir conta) precisam ficar acessíveis dentro do
   // app shell iOS para atender Guideline 3.1.2(c) e a exigência da Google Play de URL público
