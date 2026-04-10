@@ -337,8 +337,15 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                 </FormControl>
                                             </PopoverTrigger>
                                             <PopoverContent
-                                                className="w-[400px] p-0"
+                                                className="w-[400px] p-0 z-[200]"
                                                 onOpenAutoFocus={(e) => e.preventDefault()}
+                                                onInteractOutside={(e) => {
+                                                    // Impede que cliques dentro do dialog fechem o popover
+                                                    const target = e.target as HTMLElement;
+                                                    if (target.closest('[role="dialog"]')) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
                                             >
                                                 <Command>
                                                     <CommandInput placeholder="Buscar paciente..." />
