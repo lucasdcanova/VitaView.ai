@@ -1,6 +1,6 @@
 import path from "path";
 import { URL } from "url";
-import { app, BrowserWindow, Menu, shell } from "electron";
+import { app, BrowserWindow, Menu, shell, ipcMain } from "electron";
 
 const APP_NAME = "VitaView";
 const APP_ID = "br.com.lucascanova.vitaview.desktop";
@@ -197,28 +197,87 @@ async function createMainWindow() {
   return window;
 }
 
+// ----------------------------------------------------------------------------
+// Auto-update
+// ----------------------------------------------------------------------------
+// O updater roda em background e expõe seu estado ao renderer via IPC.
+// Não usamos `checkForUpdatesAndNotify` porque ele dispara um diálogo nativo
+// do Windows que atrapalha a experiência do usuário. Em vez disso, o frontend
+// React mostra um banner sutil quando há uma atualização pronta.
+
+type UpdateStatusKind =
+  | "idle"
+  | "checking"
+  | "available"
+  | "not-available"
+  | "downloading"
+  | "downloaded"
+  | "error"
+  | "unsupported";
+
+interface UpdateStatus {
+  kind: UpdateStatusKind;
+  version?: string;
+  currentVersion: string;
+  progress?: number; // 0..100
+  error?: string;
+  checkedAt?: number;
+}
+
+interface ElectronAutoUpdater {
+  autoDownload: boolean;
+  autoInstallOnAppQuit: boolean;
+  disableWebInstaller: boolean;
+  on(event: string, cb: (...args: any[]) => void): void;
+  checkForUpdates(): Promise<unknown>;
+  quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void;
+}
+
+let autoUpdaterInstance: ElectronAutoUpdater | null = null;
+let updateStatus: UpdateStatus = {
+  kind: "idle",
+  currentVersion: app.getVersion(),
+};
+// Re-check a cada 6 horas para apps abertos por longos períodos.
+const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let updateCheckTimer: NodeJS.Timeout | null = null;
+
+function broadcastUpdateStatus() {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) {
+      win.webContents.send("vitaview:update-status", updateStatus);
+    }
+  }
+}
+
+function setUpdateStatus(patch: Partial<UpdateStatus>) {
+  updateStatus = {
+    ...updateStatus,
+    ...patch,
+    currentVersion: app.getVersion(),
+  };
+  broadcastUpdateStatus();
+}
+
 function setupAutoUpdates() {
-  // MAS builds are updated through the App Store — electron-updater must not run.
+  // MAS builds são atualizadas pela App Store — electron-updater não roda.
   if (!app.isPackaged || isMAS) {
+    setUpdateStatus({ kind: "unsupported" });
     return;
   }
 
   if (!["win32", "darwin"].includes(process.platform)) {
+    setUpdateStatus({ kind: "unsupported" });
     return;
   }
 
-  // Lazy-import so MAS builds never load electron-updater at all.
+  // Lazy-import para que MAS builds nunca carreguem electron-updater.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { autoUpdater } = require("electron-updater") as {
-    autoUpdater: {
-      autoDownload: boolean;
-      autoInstallOnAppQuit: boolean;
-      disableWebInstaller: boolean;
-      on(event: string, cb: (...args: never[]) => void): void;
-      checkForUpdatesAndNotify(): Promise<unknown>;
-    };
+    autoUpdater: ElectronAutoUpdater;
   };
 
+  autoUpdaterInstance = autoUpdater;
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
@@ -226,19 +285,76 @@ function setupAutoUpdates() {
     autoUpdater.disableWebInstaller = false;
   }
 
-  autoUpdater.on("error", (error: Error) => {
-    console.error("Auto-update failed:", error);
+  autoUpdater.on("checking-for-update", () => {
+    setUpdateStatus({ kind: "checking", checkedAt: Date.now() });
   });
 
   autoUpdater.on("update-available", (info: { version: string }) => {
-    console.log(`Update available: ${info.version}`);
+    console.log(`[Updater] Update available: ${info.version}`);
+    setUpdateStatus({ kind: "available", version: info.version });
+  });
+
+  autoUpdater.on("update-not-available", (info: { version: string }) => {
+    console.log(`[Updater] No updates (current ${info.version})`);
+    setUpdateStatus({ kind: "not-available", version: info.version });
+  });
+
+  autoUpdater.on("download-progress", (progress: { percent: number }) => {
+    setUpdateStatus({ kind: "downloading", progress: Math.round(progress.percent) });
   });
 
   autoUpdater.on("update-downloaded", (info: { version: string }) => {
-    console.log(`Update downloaded: ${info.version}. It will be installed when the app closes.`);
+    console.log(`[Updater] Update downloaded: ${info.version}`);
+    setUpdateStatus({ kind: "downloaded", version: info.version, progress: 100 });
   });
 
-  void autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.on("error", (error: Error) => {
+    console.error("[Updater] Auto-update failed:", error);
+    setUpdateStatus({ kind: "error", error: error.message });
+  });
+
+  // Check inicial + recheck periódico para sessões longas.
+  void autoUpdater.checkForUpdates().catch((err) => {
+    console.error("[Updater] Initial check failed:", err);
+  });
+
+  if (updateCheckTimer) {
+    clearInterval(updateCheckTimer);
+  }
+  updateCheckTimer = setInterval(() => {
+    if (!autoUpdaterInstance) return;
+    void autoUpdaterInstance.checkForUpdates().catch((err) => {
+      console.error("[Updater] Periodic check failed:", err);
+    });
+  }, UPDATE_CHECK_INTERVAL_MS);
+}
+
+function registerUpdateIpc() {
+  ipcMain.handle("vitaview:get-update-status", () => updateStatus);
+  ipcMain.handle("vitaview:get-app-version", () => app.getVersion());
+
+  ipcMain.handle("vitaview:check-for-updates", async () => {
+    if (!autoUpdaterInstance) {
+      return { ok: false, reason: "unsupported" as const };
+    }
+    try {
+      await autoUpdaterInstance.checkForUpdates();
+      return { ok: true as const };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setUpdateStatus({ kind: "error", error: message });
+      return { ok: false, reason: "error" as const, message };
+    }
+  });
+
+  ipcMain.handle("vitaview:install-update-now", () => {
+    if (!autoUpdaterInstance || updateStatus.kind !== "downloaded") {
+      return { ok: false, reason: "not-ready" as const };
+    }
+    // isSilent=true (Windows): sem prompt; isForceRunAfter=true: reabre o app.
+    autoUpdaterInstance.quitAndInstall(true, true);
+    return { ok: true as const };
+  });
 }
 
 const singleInstanceLock = app.requestSingleInstanceLock();
@@ -264,6 +380,7 @@ app.setAppUserModelId(APP_ID);
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
+  registerUpdateIpc();
   mainWindow = await createMainWindow();
   setupAutoUpdates();
 

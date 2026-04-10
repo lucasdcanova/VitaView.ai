@@ -46,6 +46,7 @@ import { Stethoscope,
   ImagePlus,
   HelpCircle,
 } from "lucide-react";
+import DesktopUpdateCard from "@/components/desktop/desktop-update-card";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -997,6 +998,8 @@ export default function Profile() {
                       />
                     </div>
                   </div>
+
+                  <DesktopUpdateCard />
                 </div>
 
                 <hr className="my-6 border-border" />
