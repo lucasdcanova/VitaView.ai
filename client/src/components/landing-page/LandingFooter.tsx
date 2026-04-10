@@ -1,15 +1,17 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Globe2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { FaAndroid, FaApple, FaWindows } from "react-icons/fa";
 import { platformDownloadLinks } from "./download-links";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const footerPlatforms = [
+const desktopPlatforms = [
     { key: "windows", title: "Windows", href: platformDownloadLinks.windows.href, icon: FaWindows, iconColor: "#00A4EF" },
-    { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" },
-    { key: "web", title: "Web", href: platformDownloadLinks.web.href, icon: Globe2, iconColor: "#E7C88D", target: "_blank" as const },
-    { key: "mac", title: "macOS", href: platformDownloadLinks.mac.href, icon: FaApple, iconColor: "#F5F5F5" },
-    { key: "ios", title: "iOS", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" }
+    { key: "mac", title: "macOS", href: platformDownloadLinks.mac.href, icon: FaApple, iconColor: "#F5F5F5" }
+];
+
+const mobilePlatforms = [
+    { key: "ios", title: "iOS", href: platformDownloadLinks.ios.href, icon: FaApple, iconColor: "#F5F5F5" },
+    { key: "android", title: "Android", href: platformDownloadLinks.android.href, icon: FaAndroid, iconColor: "#3DDC84" }
 ];
 
 export function LandingFooter() {
@@ -56,54 +58,90 @@ export function LandingFooter() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:items-center">
-                        <div className="max-w-md md:max-w-none">
-                            <div className="inline-flex items-center gap-3 text-[10px] md:text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45 md:whitespace-nowrap">
+                    <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between w-full">
+                        <div className="min-w-0 flex-1 space-y-4 md:space-y-5">
+                            <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45 md:whitespace-nowrap">
                                 <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/35" />
                                 <span>Disponível em toda a rotina</span>
                                 <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/35" />
                             </div>
-                            <h2 className="mt-3 text-[1.6rem] font-heading font-bold tracking-tight text-white md:text-[1.8rem] md:whitespace-nowrap">
-                                Baixe o VitaView AI.
-                            </h2>
-                            <p className="mt-1.5 max-w-[34rem] text-[12px] leading-5 text-white/55 md:text-[13px]">
-                                No desktop, no celular ou direto no navegador,
-                                <br />
-                                com continuidade no mesmo fluxo clínico.
-                            </p>
+
+                            <div>
+                                <h2 className="text-[1.8rem] font-heading font-bold tracking-tight text-white md:text-[2rem] xl:text-[2.2rem]">
+                                    Baixe o VitaView AI.
+                                </h2>
+                                <p className="mt-1.5 max-w-[34rem] text-[13px] leading-relaxed text-white/55 xl:text-[14.5px]">
+                                    No desktop e no celular, com continuidade no mesmo fluxo clínico.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {footerPlatforms.map((platform, index) => {
-                                const Icon = platform.icon;
+                        <div className="flex flex-col sm:flex-row gap-6 md:gap-8 xl:gap-10 xl:items-center xl:justify-end">
+                            {/* Desktop Platforms */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-[11px] xl:text-[12px] font-semibold text-white/40 uppercase tracking-wider">Computador</h3>
+                                    <span className="hidden sm:block h-[1px] w-12 bg-white/10"></span>
+                                </div>
+                                <div className="grid gap-3 grid-cols-2 sm:flex sm:flex-nowrap">
+                                    {desktopPlatforms.map((platform, index) => {
+                                        const Icon = platform.icon;
+                                        return (
+                                            <motion.a
+                                                key={platform.key}
+                                                href={platform.href}
+                                                className="group flex w-full items-center justify-between border border-white/10 bg-white/[0.03] transition-colors duration-300 hover:bg-white/[0.06] hover:text-white h-[3.5rem] rounded-[18px] pl-2.5 pr-3.5 sm:h-[3.6rem] md:h-[3.8rem] md:w-auto md:min-w-[11rem] xl:h-[4.2rem] xl:min-w-[12rem] xl:rounded-[20px] xl:pl-3 xl:pr-4"
+                                                initial={{ opacity: 0, y: 16 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true }}
+                                                transition={{ duration: 0.35, delay: index * 0.04 }}
+                                            >
+                                                <div className="flex items-center gap-2.5 xl:gap-3.5">
+                                                    <span className="inline-flex items-center justify-center bg-white/[0.055] ring-1 ring-white/[0.045] h-10 w-10 text-white/80 rounded-[14px] sm:h-11 sm:w-11 md:h-12 md:w-12 md:rounded-[15px] xl:h-[3.2rem] xl:w-[3.2rem] xl:rounded-[16px]">
+                                                        <Icon className="-translate-y-[1px] -translate-x-[1px] h-[1.8rem] w-[1.8rem] sm:h-[2rem] sm:w-[2rem] md:h-[2.1rem] md:w-[2.1rem] xl:h-[2.3rem] xl:w-[2.3rem]" style={{ color: platform.iconColor }} />
+                                                    </span>
+                                                    <p className="text-[14px] font-semibold leading-none text-white/90 sm:text-[14.5px] md:text-[15px] xl:text-[16px]">{platform.title}</p>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60 md:h-4.5 md:w-4.5 xl:h-5 xl:w-5" />
+                                            </motion.a>
+                                        );
+                                    })}
+                                </div>
+                            </div>
 
-                                return (
-                                    <motion.a
-                                        key={platform.key}
-                                        href={platform.href}
-                                        target={platform.target}
-                                        rel="noopener noreferrer"
-                                        className="group flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-white/78 transition-colors duration-300 hover:bg-white/[0.06] hover:text-white"
-                                        initial={{ opacity: 0, y: 16 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.35, delay: index * 0.04 }}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-white/[0.05]">
-                                                <Icon className="h-4.5 w-4.5" style={{ color: platform.iconColor }} />
-                                            </span>
-                                            <div>
-                                                <p className="text-[14px] font-semibold text-white">{platform.title}</p>
-                                                <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-                                                    {platform.key === "web" ? "abrir" : "baixar"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="h-4 w-4 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
-                                    </motion.a>
-                                );
-                            })}
+                            <div className="hidden sm:block w-px bg-white/10 self-stretch mt-8 mb-2"></div>
+
+                            {/* Mobile Platforms */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-[11px] xl:text-[12px] font-semibold text-white/40 uppercase tracking-wider">Dispositivos Móveis</h3>
+                                    <span className="hidden sm:block h-[1px] w-12 bg-white/10"></span>
+                                </div>
+                                <div className="grid gap-3 grid-cols-2 sm:flex sm:flex-nowrap">
+                                    {mobilePlatforms.map((platform, index) => {
+                                        const Icon = platform.icon;
+                                        return (
+                                            <motion.a
+                                                key={platform.key}
+                                                href={platform.href}
+                                                className="group flex w-full items-center justify-between border border-white/10 bg-white/[0.03] transition-colors duration-300 hover:bg-white/[0.06] hover:text-white h-[3.5rem] rounded-[18px] pl-2.5 pr-3.5 sm:h-[3.6rem] md:h-[3.8rem] md:w-auto md:min-w-[11rem] xl:h-[4.2rem] xl:min-w-[12rem] xl:rounded-[20px] xl:pl-3 xl:pr-4"
+                                                initial={{ opacity: 0, y: 16 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true }}
+                                                transition={{ duration: 0.35, delay: 0.1 + index * 0.04 }}
+                                            >
+                                                <div className="flex items-center gap-2.5 xl:gap-3.5">
+                                                    <span className="inline-flex items-center justify-center bg-white/[0.055] ring-1 ring-white/[0.045] h-10 w-10 text-white/80 rounded-[14px] sm:h-11 sm:w-11 md:h-12 md:w-12 md:rounded-[15px] xl:h-[3.2rem] xl:w-[3.2rem] xl:rounded-[16px]">
+                                                        <Icon className="-translate-y-[1px] -translate-x-[1px] h-[1.8rem] w-[1.8rem] sm:h-[2rem] sm:w-[2rem] md:h-[2.1rem] md:w-[2.1rem] xl:h-[2.3rem] xl:w-[2.3rem]" style={{ color: platform.iconColor }} />
+                                                    </span>
+                                                    <p className="text-[14px] font-semibold leading-none text-white/90 sm:text-[14.5px] md:text-[15px] xl:text-[16px]">{platform.title}</p>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60 md:h-4.5 md:w-4.5 xl:h-5 xl:w-5" />
+                                            </motion.a>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
