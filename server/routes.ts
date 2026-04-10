@@ -5054,6 +5054,43 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Delete clinic (admin only, must keep at least 1)
+  app.delete("/api/clinics/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      const clinic = await storage.getClinic(clinicId);
+      if (!clinic) {
+        return res.status(404).json({ message: "Clínica não encontrada" });
+      }
+
+      if (clinic.adminUserId !== userId) {
+        return res.status(403).json({ message: "Apenas o administrador pode excluir a clínica" });
+      }
+
+      // Garantir que o usuário mantém pelo menos 1 clínica
+      const userClinics = await storage.getClinicsForUser(userId);
+      if (userClinics.length <= 1) {
+        return res.status(400).json({ message: "Você precisa manter ao menos uma clínica" });
+      }
+
+      await storage.deleteClinic(clinicId);
+
+      // Se o usuário estava nessa clínica, troca para outra
+      const remaining = await storage.getClinicsForUser(userId);
+      if (remaining.length > 0) {
+        const nextClinic = remaining[0].clinic ?? remaining[0];
+        await storage.setActiveClinicForUser(userId, (nextClinic as any).id);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error deleting clinic:", error);
+      res.status(500).json({ message: "Erro ao excluir clínica" });
+    }
+  });
+
   // Invite member to clinic
   app.post("/api/clinics/:id/invite", ensureAuthenticated, async (req, res) => {
     try {

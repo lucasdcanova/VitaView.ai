@@ -155,6 +155,7 @@ const MyClinic = () => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedClinicName, setEditedClinicName] = useState('');
     const [editingClinicId, setEditingClinicId] = useState<number | null>(null);
+    const [deletingClinicId, setDeletingClinicId] = useState<number | null>(null);
     const suggestedClinicName = getSuggestedClinicName(user);
 
     const openCreateClinicDialog = () => {
@@ -317,6 +318,26 @@ const MyClinic = () => {
         onSuccess: (updatedUser, clinicId) => {
             queryClient.setQueryData(['/api/user'], updatedUser);
             queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        },
+        onError: (error: Error) => {
+            toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+        }
+    });
+
+    const deleteClinicMutation = useMutation({
+        mutationFn: async (clinicId: number) => {
+            const res = await apiRequest('DELETE', `/api/clinics/${clinicId}`);
+            if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Erro ao excluir clínica'); }
+            return res.json();
+        },
+        onSuccess: async () => {
+            setDeletingClinicId(null);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/my-clinic'] }),
+                queryClient.invalidateQueries({ queryKey: ['/api/profiles'] }),
+                refetchClinic(),
+            ]);
         },
         onError: (error: Error) => {
             toast({ title: 'Erro', description: error.message, variant: 'destructive' });
@@ -620,6 +641,17 @@ const MyClinic = () => {
                                                     <Star className="h-4 w-4 mr-2" />
                                                     {isDefaultClinic ? 'Clínica padrão' : compactIOSClinicLabels ? 'Padrão' : 'Definir como padrão'}
                                                 </Button>
+                                                {canRenameClinic && accessibleClinics.length > 1 && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+                                                        onClick={() => setDeletingClinicId(accessibleClinic.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Excluir
+                                                    </Button>
+                                                )}
                                             </div>
 
                                             {isEditingThisClinic && (
@@ -1096,6 +1128,29 @@ const MyClinic = () => {
                                     className="bg-primary hover:bg-primary/90">
                                     {createClinicMutation.isPending && <BrandLoader className="h-4 w-4 mr-2 animate-spin" />}
                                     Criar Clínica
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={!!deletingClinicId} onOpenChange={(open) => { if (!open) setDeletingClinicId(null); }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="text-destructive">Excluir Clínica</DialogTitle>
+                                <DialogDescription className="text-muted-foreground">
+                                    Todos os dados desta clínica (membros, convites) serão removidos permanentemente.
+                                    Pacientes e prontuários não serão afetados.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setDeletingClinicId(null)} className="border-border">Cancelar</Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => { if (deletingClinicId) deleteClinicMutation.mutate(deletingClinicId); }}
+                                    disabled={deleteClinicMutation.isPending}
+                                >
+                                    {deleteClinicMutation.isPending && <BrandLoader className="h-4 w-4 mr-2 animate-spin" />}
+                                    Excluir permanentemente
                                 </Button>
                             </DialogFooter>
                         </DialogContent>

@@ -179,6 +179,7 @@ export interface IStorage {
   setActiveClinicForUser(userId: number, clinicId: number): Promise<boolean>;
   updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
   updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
+  deleteClinic(id: number): Promise<boolean>;
   addClinicMember(clinicId: number, userId: number, role?: string): Promise<boolean>;
   removeClinicMember(clinicId: number, userId: number): Promise<boolean>;
   removeClinicMember(clinicId: number, userId: number): Promise<boolean>;
@@ -1383,6 +1384,20 @@ export class MemStorage implements IStorage {
     const updated = { ...clinic, ...data };
     this.clinicsMap.set(id, updated);
     return updated;
+  }
+
+  async deleteClinic(id: number): Promise<boolean> {
+    if (!this.clinicsMap.has(id)) return false;
+    // Remove memberships
+    for (const [key, m] of this.clinicMembershipsMap) {
+      if (m.clinicId === id) this.clinicMembershipsMap.delete(key);
+    }
+    // Remove invitations
+    for (const [key, inv] of this.clinicInvitationsMap) {
+      if (inv.clinicId === id) this.clinicInvitationsMap.delete(key);
+    }
+    this.clinicsMap.delete(id);
+    return true;
   }
 
   async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
@@ -3224,6 +3239,17 @@ export class DatabaseStorage implements IStorage {
   async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
     const [updated] = await db.update(clinics).set(data).where(eq(clinics.id, id)).returning();
     return updated;
+  }
+
+  async deleteClinic(id: number): Promise<boolean> {
+    // clinic_memberships e clinic_invitations têm ON DELETE CASCADE no FK,
+    // mas limpamos explicitamente para qualquer orfão no campo legado users.clinicId.
+    await db.delete(clinicMemberships).where(eq(clinicMemberships.clinicId, id));
+    await db.delete(clinicInvitations).where(eq(clinicInvitations.clinicId, id));
+    // Limpa referência legada em users
+    await db.update(users).set({ clinicId: null }).where(eq(users.clinicId, id));
+    const result = await db.delete(clinics).where(eq(clinics.id, id));
+    return (result?.rowCount ?? 0) > 0;
   }
 
   async addClinicMember(clinicId: number, userId: number, role: string = 'member'): Promise<boolean> {
