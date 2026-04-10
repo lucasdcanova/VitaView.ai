@@ -317,7 +317,7 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                 Novo Paciente
                                             </Button>
                                         </div>
-                                        <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                        <Popover open={openCombobox} onOpenChange={setOpenCombobox} modal={false}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
@@ -336,7 +336,10 @@ export function NewAppointmentModal({ open, onOpenChange, onSuccess, initialData
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[400px] p-0">
+                                            <PopoverContent
+                                                className="w-[400px] p-0"
+                                                onOpenAutoFocus={(e) => e.preventDefault()}
+                                            >
                                                 <Command>
                                                     <CommandInput placeholder="Buscar paciente..." />
                                                     <CommandList>
