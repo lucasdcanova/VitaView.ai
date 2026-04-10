@@ -17,14 +17,10 @@ const isMAS =
    (process as NodeJS.Process & { sandboxed?: boolean }).sandboxed === true ||
    process.execPath.includes("/Wrapper/"));
 
-// macOS 26+ enforces strict W^X (Write XOR Execute) in the App Store sandbox,
-// breaking ALL V8 JIT tiers including TurboFan. The allow-jit entitlement no
-// longer permits MAP_JIT mmap in sandboxed MAS apps on macOS 26.4+.
-// Running V8 in jitless (interpreter-only) mode eliminates every JIT code path.
-// Performance impact is negligible since VitaView loads a remote web app.
-if (isMAS) {
-  app.commandLine.appendSwitch("js-flags", "--jitless");
-}
+// Note: --jitless was previously applied here for MAS builds to work around
+// macOS 26 W^X enforcement. Removed because it crashes V8 initialization
+// on Electron 41 + ARM64 (EXC_BREAKPOINT in v8::Isolate::Initialize).
+// The allow-jit entitlement in entitlements.mas.plist handles this instead.
 
 let mainWindow: BrowserWindow | null = null;
 

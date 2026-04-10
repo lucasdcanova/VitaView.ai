@@ -20,7 +20,7 @@ module.exports = {
       },
     ],
     bundleShortVersion: "1.3",
-    bundleVersion: "254",
+    bundleVersion: "256",
   },
   mas: {
     ...(baseConfig.mas || {}),
@@ -32,7 +32,7 @@ module.exports = {
     timestamp: "none",
     type: "distribution",
     bundleShortVersion: "1.3",
-    bundleVersion: "254",
+    bundleVersion: "256",
   },
   afterPack: "./scripts/after-pack-mas.cjs",
 };
