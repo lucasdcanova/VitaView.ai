@@ -191,18 +191,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   });
 
   // Switch active profile
+  // Sem toast de sucesso: a troca de paciente já é visível na UI (sidebar,
+  // header, cards) e o popup de confirmação só polui a tela.
   const setActiveProfileMutation = useMutation({
     mutationFn: async (profile: Profile) => {
       const res = await apiRequest("PUT", `/api/users/active-profile`, {
         profileId: profile.id,
       });
       return profile;
-    },
-    onSuccess: (profile) => {
-      toast({
-        title: "Paciente selecionado",
-        description: `Visualizando histórico de "${profile.name}"`,
-      });
     },
     onError: (error) => {
       toast({
